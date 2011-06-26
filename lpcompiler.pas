@@ -1352,7 +1352,9 @@ begin
         LapeExceptionFmt(lpeDuplicateDeclaration, [Name], Tokenizer.DocPos);
       Expect(tk_sym_Equals, True, False);
 
-      Typ := ParseType(TypeForwards).CreateCopy();
+      Typ := ParseType(TypeForwards);
+      if (Typ.DeclarationList <> nil) and (not TypeForwards.ExistsItem(Typ)) then
+        Typ := Typ.CreateCopy();
       Typ.Name := Name;
       addLocalDecl(Typ);
 
@@ -1363,7 +1365,7 @@ begin
       with __LapeType_Pointer(TypeForwards.ItemsI[0]) do
       begin
         FPType := TLapeType(getDeclarationNoWith(TypeForwards.Key[0]));
-        if (PType = nil) then
+        if (not HasType()) then
           LapeExceptionFmt(lpeInvalidForward, [TypeForwards.Key[0]], DocPos);
         TypeForwards.Delete(0);
       end;
