@@ -1339,9 +1339,9 @@ begin
         {if Left.isConstant then
           LapeException(lpeVariableExpected)
         else}
-          Exit(ResType.NewGlobalVarP(@Left.Ptr))
+          Exit(TLapeGlobalVar.Create(ResType, @Left.Ptr))
       else if (op = op_Deref) then
-        Exit(ResType.NewGlobalVarP(PPointer(Left.Ptr)^));
+        Exit(TLapeGlobalVar.Create(ResType, PPointer(Left.Ptr)^));
 
       EvalProc := getEvalProc(Op, FBaseType, ltUnknown);
     end
