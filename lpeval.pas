@@ -29,6 +29,8 @@ procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer);
 procedure _LapeFreeMem(const Params: PParamArray);
 procedure _LapeFreeMemSize(const Params: PParamArray);
 procedure _LapeReallocMem(const Params: PParamArray);
+procedure _LapeFillMem(const Params: PParamArray);
+procedure _LapeMove(const Params: PParamArray);
 
 procedure _LapeHigh(const Params: PParamArray; const Result: Pointer);
 procedure _LapeLength(const Params: PParamArray; const Result: Pointer);
@@ -166,6 +168,16 @@ end;
 procedure _LapeReallocMem(const Params: PParamArray);
 begin
   ReallocMem(PPointer(Params^[0])^, PInt32(Params^[1])^);
+end;
+
+procedure _LapeFillMem(const Params: PParamArray);
+begin
+  FillChar(Params^[0]^, PInt32(Params^[1])^, PUInt8(Params^[2])^);
+end;
+
+procedure _LapeMove(const Params: PParamArray);
+begin
+  Move(Params^[0]^, Params^[1]^, PInt32(Params^[2])^);
 end;
 
 procedure _LapeHigh(const Params: PParamArray; const Result: Pointer);

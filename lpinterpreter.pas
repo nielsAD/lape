@@ -379,8 +379,7 @@ var
       begin
         Code := CalledFrom;
         VarStackPos := VarStackP;
-        Assert(StackPos = StackP);
-        Assert(VarStackPos = VarStackP);
+        StackPos := StackP;
       end;
     end;
   end;

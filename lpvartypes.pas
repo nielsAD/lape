@@ -714,6 +714,7 @@ procedure getDestVar(var Dest, Res: TResVar; Op: EOperator; Compiler: TLapeCompi
 
 procedure setConstant(var AVar: TResVar; IsConst: Boolean; ChangeStack: Boolean = True); {$IFDEF Lape_Inline}inline;{$ENDIF}
 function isVariable(AVar: TResVar): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function isConstant(AVar: TResVar): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
 var
   EmptyStackInfo: TLapeEmptyStack = nil;
@@ -856,6 +857,18 @@ begin
   Result := ((AVar.VarPos.MemPos = mpStack) and (AVar.VarPos.isPointer or AVar.VarPos.ForceVariable)) or
     ((AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) and (not AVar.VarPos.GlobalVar.isConstant)) or
     ((AVar.VarPos.MemPos = mpVar) and (AVar.VarPos.StackVar <> nil) and (not AVar.VarPos.StackVar.isConstant));
+end;
+
+function isConstant(AVar: TResVar): Boolean;
+begin
+  if (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) then
+    Result := AVar.VarPos.GlobalVar.isConstant
+  else if (AVar.VarPos.MemPos = mpVar) and (AVar.VarPos.StackVar <> nil) then
+    Result := AVar.VarPos.StackVar.isConstant
+  else if (AVar.VarPos.MemPos = mpStack) then
+    Result := not AVar.VarPos.ForceVariable
+  else
+    Result := True;
 end;
 
 function TLapeVar.getBaseType: ELapeBaseType;
@@ -1090,13 +1103,8 @@ begin
     Result := ltUnknown
   else if (FBaseType in LapeIntegerTypes) then
     Result := FBaseType
-  else case Size of
-    1: Result := ltUInt8;
-    2: Result := ltUInt16;
-    4: Result := ltUInt32;
-    8: Result := ltUInt64;
-    else LapeException(lpeImpossible);
-  end;
+  else 
+    Result := DetermineIntType(Size, False);
 end;
 
 function TLapeType.getInitialization: Boolean;
@@ -1277,22 +1285,30 @@ var
   var
     CastVar: TLapeGlobalVar;
   begin
-    if Left.VarType.Equals(Right.VarType) or
-       (DoRight and (not Left.VarType.CompatibleWith(Right.VarType))) or
-       ((not DoRight) and (not Right.VarType.CompatibleWith(Left.VarType)))
+    if ((Left.VarType = nil) and (Right.VarType = nil)) or
+       ((Left.VarType <> nil) and Left.VarType.Equals(Right.VarType, False)) or
+       (DoRight       and ((Left.VarType  = nil) or ((Right.VarType <> nil) and (not Left.VarType.CompatibleWith(Right.VarType))))) or
+       ((not DoRight) and ((Right.VarType = nil) or ((Left.VarType <> nil)  and (not Right.VarType.CompatibleWith(Left.VarType)))))
     then
       Exit(False);
 
     try
-      if DoRight then
-        CastVar := Left.VarType.NewGlobalVarP()
+      if ((Left.VarType = nil) or (Right.VarType = nil)) then
+        if DoRight then
+          CastVar := Left.VarType.NewGlobalVarP(Right.Ptr)
+        else
+          CastVar := Right.VarType.NewGlobalVarP(Left.Ptr)
       else
-        CastVar := Right.VarType.NewGlobalVarP();
+        if DoRight then
+          CastVar := Left.VarType.EvalConst(op_Assign, Left.VarType.NewGlobalVarP(), Right)
+        else
+          CastVar := Right.VarType.EvalConst(op_Assign, Right.VarType.NewGlobalVarP(), Left);
+
       try
         if DoRight then
-          Res := CastVar.VarType.EvalConst(op, Left, CastVar.VarType.EvalConst(op_Assign, CastVar, Right))
+          Res := CastVar.VarType.EvalConst(op, Left, CastVar)
         else
-          Res := CastVar.VarType.EvalConst(op, CastVar.VarType.EvalConst(op_Assign, CastVar, Left), Right);
+          Res := CastVar.VarType.EvalConst(op, CastVar, Right);
         Result := True;
       finally
         CastVar.Free();
@@ -1340,13 +1356,14 @@ begin
     if (ResType = nil) or (not ValidEvalFunction(EvalProc)) then
       if (op = op_Assign) and (Right <> nil) and (Right.VarType <> nil) then
         LapeExceptionFmt(lpeIncompatibleAssignment, [Right.VarType.AsString, AsString])
-      else if (not (op in UnaryOperators)) and (Right <> nil) and (Right.VarType <> nil) and (not Left.VarType.Equals(Right.VarType)) then
-      begin
-        if Left.VarType.Equals(Right.VarType) or
-          ((Left.VarType.Size >= Right.VarType.Size) and (not TryCast(True, Result)) and (not TryCast(False, Result))) or
-          ((Left.VarType.Size <  Right.VarType.Size) and (not TryCast(False, Result)) and (not TryCast(True, Result))) then
-        LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString])
-      end
+      else if (not (op in UnaryOperators)) and (Right <> nil) and ((Left.VarType = nil) or (Right.VarType = nil) or (not Left.VarType.Equals(Right.VarType, False))) then
+        if ((Left.VarType <> nil) and (Right.VarType <> nil)  and Left.VarType.Equals(Right.VarType, False)) or
+          (((Left.VarType = nil)  or  (Right.VarType = nil)   or  (Left.VarType.Size >= Right.VarType.Size)) and (not TryCast(True, Result)) and (not TryCast(False, Result))) or
+          (((Left.VarType <> nil) and (Right.VarType <> nil)) and (Left.VarType.Size <  Right.VarType.Size)  and (not TryCast(False, Result)) and (not TryCast(True, Result)))
+        then
+          LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString])
+        else
+          Exit
       else if (op in UnaryOperators) then
         LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
       else
@@ -1381,11 +1398,25 @@ var
   var
     tmpVar, CastVar: TResVar;
   begin
-    if Left.VarType.Equals(Right.VarType, False) or
-       (DoRight and (not Left.VarType.CompatibleWith(Right.VarType))) or
-       ((not DoRight) and (not Right.VarType.CompatibleWith(Left.VarType)))
+    if ((Left.VarType = nil) and (Right.VarType = nil)) or
+       ((Left.VarType <> nil) and Left.VarType.Equals(Right.VarType, False)) or
+       (DoRight       and ((Left.VarType  = nil) or ((Right.VarType <> nil) and (not Left.VarType.CompatibleWith(Right.VarType))))) or
+       ((not DoRight) and ((Right.VarType = nil) or ((Left.VarType <> nil)  and (not Right.VarType.CompatibleWith(Left.VarType)))))
     then
       Exit(False);
+
+    if ((Left.VarType = nil) or (Right.VarType = nil)) then
+    try
+      if DoRight then
+        Right.VarType := Left.VarType
+      else
+        Left.VarType := Right.VarType;
+      Res := Left.VarType.Eval(op, Dest, Left, Right, Offset, Pos);
+      Exit(True);
+    except
+      Result := False;
+      Exit;
+    end;
 
     tmpVar := NullResVar;
     CastVar := NullResVar;
@@ -1394,6 +1425,7 @@ var
       CastVar.VarType := Left.VarType
     else
       CastVar.VarType := Right.VarType;
+
     try
       CastVar.VarPos.StackVar := FCompiler.getTempVar(CastVar.VarType);
       try
@@ -1408,18 +1440,6 @@ var
     except
       Result := False;
     end;
-  end;
-
-  function isConstant(AVar: TResVar): Boolean;
-  begin
-    if (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) then
-      Result := AVar.VarPos.GlobalVar.isConstant
-    else if (AVar.VarPos.MemPos = mpVar) and (AVar.VarPos.StackVar <> nil) then
-      Result := AVar.VarPos.StackVar.isConstant
-    else if (AVar.VarPos.MemPos = mpStack) then
-      Result := not AVar.VarPos.ForceVariable
-    else
-      Result := True;
   end;
 
 begin
@@ -1439,48 +1459,58 @@ begin
   end;
 
   Result.VarType := EvalRes(Op, Right.VarType);
-  getDestVar(Dest, Result, Op, FCompiler);
+  if (Result.VarType = nil) and (op = op_Deref) and (Left.VarType = nil) or (Left.VarType.BaseType = ltPointer) then
+    Result.VarType := TLapeType.Create(ltUnknown, FCompiler);
 
-  if (Right.VarType = nil) then
-    EvalProc := getEvalProc(Op, FBaseType, ltUnknown)
-  else if (op <> op_Assign) or Left.VarType.CompatibleWith(Right.VarType) then
-    EvalProc := getEvalProc(Op, FBaseType, Right.VarType.BaseType)
-  else
-    EvalProc := nil;
+  try
+    getDestVar(Dest, Result, op, FCompiler);
 
-  if (Result.VarType = nil) or (not ValidEvalFunction(EvalProc)) then
-    if (op = op_Assign) and (Right.VarType <> nil) then
-      LapeExceptionFmt(lpeIncompatibleAssignment, [Right.VarType.AsString, AsString])
-    else if (not (op in UnaryOperators)) and (Right.VarType <> nil) and (not Left.VarType.Equals(Right.VarType)) then
-      if ((Left.VarType.Size >= Right.VarType.Size) and (not TryCast(True, Result)) and (not TryCast(False, Result))) or
-         ((Left.VarType.Size <  Right.VarType.Size) and (not TryCast(False, Result)) and (not TryCast(True, Result))) then
-        LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString])
-      else
-        Exit
-    else if (op in UnaryOperators) then
-      LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
+    if (Right.VarType = nil) then
+      EvalProc := getEvalProc(Op, FBaseType, ltUnknown)
+    else if (op <> op_Assign) or Left.VarType.CompatibleWith(Right.VarType) then
+      EvalProc := getEvalProc(Op, FBaseType, Right.VarType.BaseType)
     else
-      LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
+      EvalProc := nil;
 
-  if (op = op_Assign) then
-  begin
-    if (Left.VarType = nil) or (Right.VarType = nil) or (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
-      LapeException(lpeInvalidAssignment);
+    if (Result.VarType = nil) or (not ValidEvalFunction(EvalProc)) then
+      if (op = op_Assign) and (Right.VarType <> nil) then
+        LapeExceptionFmt(lpeIncompatibleAssignment, [Right.VarType.AsString, AsString])
+      else if (not (op in UnaryOperators)) and ((Left.VarType = nil) or (Right.VarType = nil) or (not Left.VarType.Equals(Right.VarType, False))) then
+        if ((Left.VarType <> nil) and (Right.VarType <> nil)  and Left.VarType.Equals(Right.VarType, False)) or
+          (((Left.VarType = nil)  or  (Right.VarType = nil)   or  (Left.VarType.Size >= Right.VarType.Size)) and (not TryCast(True, Result)) and (not TryCast(False, Result))) or
+          (((Left.VarType <> nil) and (Right.VarType <> nil)) and (Left.VarType.Size <  Right.VarType.Size)  and (not TryCast(False, Result)) and (not TryCast(True, Result)))
+        then
+          LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString])
+        else
+          Exit
+      else if (op in UnaryOperators) then
+        LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
+      else
+        LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
 
-    FCompiler.Emitter._Eval(EvalProc, Left, Right, NullResVar, Offset, Pos);
-    Result := Left;
-  end
-  else
-  begin
-    //if (op = op_Addr) and (not isVariable(Left)) then
-    //  LapeException(lpeVariableExpected);
-    FCompiler.Emitter._Eval(EvalProc, Result, Left, Right, Offset, Pos);
+    if (op = op_Assign) then
+    begin
+      if (Left.VarType = nil) or (Right.VarType = nil) or (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+        LapeException(lpeInvalidAssignment);
+
+      FCompiler.Emitter._Eval(EvalProc, Left, Right, NullResVar, Offset, Pos);
+      Result := Left;
+    end
+    else
+    begin
+      //if (op = op_Addr) and (not isVariable(Left)) then
+      //  LapeException(lpeVariableExpected);
+      FCompiler.Emitter._Eval(EvalProc, Result, Left, Right, Offset, Pos);
+    end;
+
+    if (op = op_Deref) then
+      Result.VarPos.isPointer := (Result.VarPos.MemPos = mpVar);
+    if (op <> op_Assign) then
+      setConstant(Result, (op <> op_Deref) and isConstant(Result) {and isConstant(Left) and isConstant(Right)}, False);
+  finally
+    if (Result.VarType <> nil) and (Result.VarType.ClassType = TLapeType) and (Result.VarType.BaseType = ltUnknown) then
+      FreeAndNil(Result.VarType);
   end;
-
-  if (op = op_Deref) then
-    Result.VarPos.isPointer := (Result.VarPos.MemPos = mpVar);
-  if (op <> op_Assign) then
-    setConstant(Result, (op <> op_Deref) and isConstant(Dest) and isConstant(Left) and isConstant(Right), False);
 end;
 
 function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Pos: PDocPos = nil): TResVar;
@@ -2384,7 +2414,7 @@ begin
       TypeSize := FCompiler.getBaseType(ltInt32).NewGlobalVarStr('1');
     IndexVar := nil;
     try
-      if HasType() and (FPType.Size <> 1) then
+      if (TypeSize <> nil) and (TypeSize.AsInteger > 1) then
         IndexVar := Right.VarType.EvalConst(op_Multiply, Right, TypeSize)
       else
         IndexVar := Right;
@@ -2395,6 +2425,7 @@ begin
           Left,
           IndexVar
         );
+      Result.isConstant := Left.isConstant;
     finally
       if (IndexVar <> nil) and (IndexVar <> Right) then
         IndexVar.Free();
@@ -2410,6 +2441,7 @@ function TLapeType_Pointer.Eval(Op: EOperator; var Dest: TResVar; Left, Right: T
 var
   tmpType: TLapeType;
   tmpVar, IndexVar: TResVar;
+  wasConstant: Boolean;
 begin
   Assert(FCompiler <> nil);
   Assert(Left.VarType is TLapeType_Pointer);
@@ -2417,7 +2449,9 @@ begin
 
   if (op = op_Index) then
   begin
+    wasConstant := isConstant(Left);
     tmpType := Right.VarType;
+
     if (Right.VarType = nil) or (Right.VarType.BaseIntType = ltUnknown) then
       if (Right.VarType <> nil) then
         LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
@@ -2447,6 +2481,8 @@ begin
         Offset,
         Pos
       );
+
+    setConstant(Result, wasConstant, False);
     Right.VarType := tmpType;
   end
   else
@@ -2752,6 +2788,7 @@ begin
               LeftVar,
               RightVar
             );
+          Result.isConstant := Left.isConstant;
         finally
           if (LowIndex <> nil) then
             LowIndex.Free();
@@ -2801,9 +2838,7 @@ begin
 
   if (op = op_Index) then
   try
-    wasConstant := ((Left.VarPos.MemPos = mpMem) and (Left.VarPos.GlobalVar <> nil) and Left.VarPos.GlobalVar.isConstant) or
-      ((Left.VarPos.MemPos = mpVar) and (Left.VarPos.StackVar <> nil) and Left.VarPos.StackVar.isConstant) or
-      ((Left.VarPos.MemPos = mpStack) and (not Left.VarPos.ForceVariable));
+    wasConstant := isConstant(Left);
     if wasConstant then
       setConstant(Left, False);
 
@@ -2856,17 +2891,51 @@ begin
     end;
   end
   else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and (Right.VarType <> nil) and CompatibleWith(Right.VarType) then
-    if (not NeedInitialization) and Equals(Right.VarType) and (Size in [1, 2, 4, 8]) then
+    if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) then
     try
       tmpType := Right.VarType;
-      case Size of
-        1: Left.VarType := FCompiler.getBaseType(ltUInt8);
-        2: Left.VarType := FCompiler.getBaseType(ltUInt16);
-        4: Left.VarType := FCompiler.getBaseType(ltUInt32);
-        8: Left.VarType := FCompiler.getBaseType(ltUInt64);
+	    Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
+
+      if (Left.VarType <> nil) then
+	    begin
+        Right.VarType := Left.VarType;
+        Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, Offset, Pos);
+	    end
+      else
+	    begin
+        Left.VarType := Self;
+        if (Left.VarPos.MemPos = mpStack) and (not Left.VarPos.ForceVariable) then
+        begin
+          FCompiler.Emitter._GrowStack(Size, Offset, Pos);
+          Left.VarPos.ForceVariable := True;
+
+          IndexLow := FCompiler.getTempVar(ltPointer);
+          FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), getResVar(IndexLow), Left, NullResVar, Offset, Pos);
+
+          wasConstant := True;
+        end
+        else
+          wasConstant := False;
+
+        IndexHigh := FCompiler.addManagedVar(FCompiler.getBaseType(ltInt32).NewGlobalVarStr(IntToStr(Size)));
+        tmpVar := StackResVar;
+        tmpVar.VarType := Compiler.getBaseType(ltPointer);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, Pos);
+        if wasConstant then
+          FCompiler.Emitter._Eval(getEvalProc(op_Assign, ltPointer, ltPointer), tmpVar, getResVar(IndexLow), NullResVar, Offset, Pos)
+        else
+          FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, Pos);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, getResVar(IndexHigh), NullResVar, Offset, Pos);
+        FCompiler.Emitter._InvokeImportedProc(getResVar(FCompiler.getDeclaration('!move') as TLapeVar), SizeOf(Pointer)*3, Offset, Pos);
+        Result := Left;
+
+        if wasConstant then
+        begin
+          TLapeStackTempVar(IndexLow).Declock();
+          Left.VarPos.ForceVariable := False;
+        end;
       end;
-      Right.VarType := Left.VarType;
-      Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, Offset, Pos);
+
     finally
       Left.VarType := Self;
       Right.VarType := tmpType;
@@ -3409,17 +3478,28 @@ begin
     end
   end
   else if (op = op_Assign) and (Right.VarType <> nil) and CompatibleWith(Right.VarType) then
-    if (not NeedInitialization) and Equals(Right.VarType) and (Size in [1, 2, 4, 8]) then
+    if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
     try
       tmpType := Right.VarType;
-      case Size of
-        1: Left.VarType := FCompiler.getBaseType(ltUInt8);
-        2: Left.VarType := FCompiler.getBaseType(ltUInt16);
-        4: Left.VarType := FCompiler.getBaseType(ltUInt32);
-        8: Left.VarType := FCompiler.getBaseType(ltUInt64);
-      end;
-      Right.VarType := Left.VarType;
-      Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, Offset, Pos);
+	    Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
+
+      if (Left.VarType <> nil) then
+	    begin
+        Right.VarType := Left.VarType;
+        Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, Offset, Pos);
+	    end
+	    else
+	    begin
+        RightVar := getResVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltInt32).NewGlobalVarStr(IntToStr(Size))));
+        tmpVar := StackResVar;
+        tmpVar.VarType := Compiler.getBaseType(ltPointer);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar, Offset, @Self._DocPos);
+        FCompiler.Emitter._InvokeImportedProc(getResVar(FCompiler.getDeclaration('!move') as TLapeVar), SizeOf(Pointer) * 3, Offset, @Self._DocPos);
+        Result := Left;
+	    end;
+
     finally
       Left.VarType := Self;
       Right.VarType := tmpType;
@@ -4044,7 +4124,7 @@ begin
         Result.isConstant := True;
         Exit;
       end;
-    Result := TLapeStackTempVar(addVar(VarType));
+    Result := addVar(VarType) as TLapeStackTempVar;
   finally
     if (Result <> nil) then
       TLapeStackTempVar(Result).IncLock(Lock);

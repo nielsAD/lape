@@ -624,9 +624,9 @@ begin
       if (t <> nil) then
       begin
         //Ensure smallest possible integer type
-        if t.isConstant and (t.BaseType in LapeIntegerTypes) then
+        {if t.isConstant and (t.BaseType in LapeIntegerTypes) then
           Replacement := TLapeTree_Integer.Create(t.AsString, Root.Compiler)
-        else
+        else}
           Replacement := TLapeTree_GlobalVar.Create(t, Root.Compiler);
 
         Replacement.Parent := Root.FParent;
@@ -954,12 +954,12 @@ begin
           Res := TLapeTree_Range(FValues[i]).Hi.resType();
           if (Res = nil) or (not (Res is TLapeType_SubRange)) or ((Result <> nil) and (not Res.CompatibleWith(Result))) then
             Exit(nil);
-          Exit(FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_SubRange(ResType), FCompiler, '', @_DocPos)))
+          Exit(FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_SubRange(Res), FCompiler, '', @_DocPos)))
         end
         else if (not (FValues[i] is TLapeTree_ExprBase)) then
           Exit(nil)
         else
-          Res := determineArrType(TLapeTree_ExprBase(FValues[i]).ResType());
+          Res := determineArrType(TLapeTree_ExprBase(FValues[i]).resType());
 
         if (Result = nil) then
           Result := Res
@@ -1619,8 +1619,11 @@ var
             getTempVar(FParams[i], Offset, ParamVars[i], 0)
           else
             ParamVars[i] := getStackVar(FParams[i], Offset);
-        if (ParamVars[i].VarPos.MemPos = NullResVar.VarPos.MemPos) or (ParamVars[i].VarType = nil) then
-          LapeException(lpeCannotInvoke);
+
+        if (ParamVars[i].VarPos.MemPos = NullResVar.VarPos.MemPos) or
+           ((Params[i].VarType <> ParamVars[i].VarType) and (ParamVars[i].VarType = nil))
+        then
+          LapeException(lpeCannotInvoke, FParams[i].DocPos);
 
         if (Params[i].ParType in Lape_RefParams) then
         begin
@@ -1692,7 +1695,9 @@ var
         if (ParamVars[i].VarPos.MemPos = NullResVar.VarPos.MemPos) then
           getTempVar(FParams[i], Offset, ParamVars[i], 0);
 
-        if (ParamVars[i].VarPos.MemPos = mpStack) or (ParamVars[i].VarType = nil) then
+        if (ParamVars[i].VarPos.MemPos = mpStack) or
+           ((Params[i].VarType <> ParamVars[i].VarType) and (ParamVars[i].VarType = nil))
+        then
           LapeException(lpeCannotInvoke, FParams[i].DocPos)
         else if (not (Params[i].ParType in Lape_ValParams)) and (not isVariable(ParamVars[i])) then
           LapeException(lpeVariableExpected, FParams[i].DocPos);

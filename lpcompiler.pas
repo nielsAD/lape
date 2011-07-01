@@ -2191,7 +2191,10 @@ begin
   addGlobalFunc([getBaseType(ltPointer)], [lptNormal], [TLapeGlobalVar(nil)], @_LapeFreeMem, 'FreeMem').isConstant := True;
   addGlobalFunc([getBaseType(ltPointer), getBaseType(ltInt32)], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeFreeMemSize, 'FreeMemSize').isConstant := True;
   addGlobalFunc([getBaseType(ltPointer), getBaseType(ltInt32)], [lptVar,    lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeReallocMem, 'ReallocMem').isConstant := True;
+  addGlobalFunc([TLapeType(nil), getBaseType(ltInt32), getBaseType(ltUInt8)], [lptVar, lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeFillMem, 'FillMem').isConstant := True;
+  addGlobalFunc([TLapeType(nil), TLapeType(nil),       getBaseType(ltInt32)], [lptVar, lptVar,    lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeMove, 'Move').isConstant := True;
 
+  addGlobalFunc([TLapeType(nil), TLapeType(nil), getBaseType(ltInt32)], [lptVar, lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeMove, '!move').isConstant := True;
   addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeHigh, '!high').isConstant := True;
   addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeLength, '!length').isConstant := True;
   addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeAStrLen, '!astrlen').isConstant := True;

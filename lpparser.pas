@@ -362,6 +362,7 @@ function StrToFloatDot(Str: lpString): Extended; {$IFDEF Lape_Inline}inline;{$EN
 function StrToFloatDotDef(Str: lpString; Default: Extended): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function DetermineIntType(Str: lpString): ELapeBaseType; overload;
 function DetermineIntType(i: Int64): ELapeBaseType; overload;
+function DetermineIntType(Size: Integer; Signed: Boolean): ELapeBaseType; overload;
 
 implementation
 
@@ -464,6 +465,17 @@ end;
 function DetermineIntType(i: Int64): ELapeBaseType;
 begin
   Result := DetermineIntType(IntToStr(i));
+end;
+
+function DetermineIntType(Size: Integer; Signed: Boolean): ELapeBaseType;
+begin
+  case Size of
+    1: if Signed then Result := ltInt8  else Result := ltUInt8;
+    2: if Signed then Result := ltInt16 else Result := ltUInt16;
+    4: if Signed then Result := ltInt32 else Result := ltUInt32;
+    8: if Signed then Result := ltInt64 else Result := ltUInt64;
+    else Result := ltUnknown;
+  end;
 end;
 
 function Lape_HashKeyword(const Str: lpString): Byte;
