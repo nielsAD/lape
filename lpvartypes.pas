@@ -1459,7 +1459,7 @@ begin
   end;
 
   Result.VarType := EvalRes(Op, Right.VarType);
-  if (Result.VarType = nil) and (op = op_Deref) and (Left.VarType = nil) or (Left.VarType.BaseType = ltPointer) then
+  if (Result.VarType = nil) and (op = op_Deref) and ((Left.VarType = nil) or (Left.VarType.BaseType = ltPointer)) then
     Result.VarType := TLapeType.Create(ltUnknown, FCompiler);
 
   try
