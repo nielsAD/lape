@@ -679,7 +679,7 @@ type
     function addLocalDecl(ADecl: TLapeDeclaration): TLapeDeclaration; overload; virtual;
     function addGlobalDecl(ADecl: TLapeDeclaration): TLapeDeclaration; virtual;
     function addManagedDecl(ADecl: TLapeDeclaration): TLapeDeclaration; virtual;
-    function addManagedVar(AVar: TLapeVar): TLapeVar; virtual;
+    function addManagedVar(AVar: TLapeVar; PtrCheckOnly: Boolean = False): TLapeVar; virtual;
     function addManagedType(AType: TLapeType): TLapeType; virtual;
     function addStackVar(VarType: TLapeType; Name: lpString): TLapeStackVar; virtual;
 
@@ -2882,11 +2882,8 @@ begin
     if (not Left.VarPos.isPointer) then
       SetNullResVar(LeftVar, 1);
 
-    if wasConstant then
-    begin
-      setConstant(Left, True);
-      setConstant(Result, True);
-    end;
+    setConstant(Left, wasConstant);
+    setConstant(Result, wasConstant);
   end
   else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and (Right.VarType <> nil) and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) then
@@ -3459,7 +3456,7 @@ begin
     case Left.VarPos.MemPos of
       mpMem:
         begin
-          Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + FFieldMap[FieldName].Offset))));
+          Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + FFieldMap[FieldName].Offset)), True));
           Result.VarPos.GlobalVar.isConstant := Left.VarPos.GlobalVar.isConstant;
         end;
       mpVar:
@@ -3538,7 +3535,7 @@ begin
     case FieldVar.VarPos.MemPos of
       mpMem:
         if UseCompiler and (FCompiler <> nil) then
-          FieldVar.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset))))
+          FieldVar.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset)), True))
         else
           FieldVar.VarPos.GlobalVar := FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset));
       mpVar: FieldVar.VarPos.Offset := FieldVar.VarPos.Offset + FFieldMap.ItemsI[i].Offset;
@@ -4757,7 +4754,7 @@ begin
     FManagedDeclarations.addDeclaration(ADecl);
 end;
 
-function TLapeCompilerBase.addManagedVar(AVar: TLapeVar): TLapeVar;
+function TLapeCompilerBase.addManagedVar(AVar: TLapeVar; PtrCheckOnly: Boolean = False): TLapeVar;
 var
   i: Integer;
   EvalProc: TLapeEvalProc;
@@ -4767,27 +4764,40 @@ begin
   if (AVar = nil) or (AVar.DeclarationList <> nil) then
     Exit(AVar);
   if (AVar is TLapeGlobalVar) and (AVar.VarType <> nil) and AVar.isConstant and (AVar.Name = '') then
-  begin
-    EvalProc := getEvalProc(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType);
-    if ValidEvalFunction(EvalProc) and (getEvalRes(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType) = ltEvalBool) then
+    if PtrCheckOnly then
     begin
-
       GlobalVars := FManagedDeclarations.getByClass(TLapeGlobalVar);
       for i := 0 to High(GlobalVars) do
         if (AVar = GlobalVars[i]) then
           Exit(AVar)
-        else if TLapeGlobalVar(GlobalVars[i]).isConstant and (GlobalVars[i].Name = '') and (TLapeGlobalVar(GlobalVars[i]).VarType <> nil) and TLapeGlobalVar(GlobalVars[i]).VarType.Equals(AVar.VarType, False) then
+        else if TLapeGlobalVar(GlobalVars[i]).isConstant and (GlobalVars[i].Name = '') and (TLapeGlobalVar(GlobalVars[i]).Ptr = TLapeGlobalVar(AVar).Ptr) then
         begin
-          EvalProc(@Equal, TLapeGlobalVar(GlobalVars[i]).Ptr, TLapeGlobalVar(AVar).Ptr);
-          if Equal then
-          begin
-            AVar.Free();
-            Exit(TLapeGlobalVar(GlobalVars[i]));
-          end;
+          AVar.Free();
+          Exit(TLapeGlobalVar(GlobalVars[i]));
         end;
+    end
+    else
+    begin
+      EvalProc := getEvalProc(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType);
+      if ValidEvalFunction(EvalProc) and (getEvalRes(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType) = ltEvalBool) then
+      begin
 
+        GlobalVars := FManagedDeclarations.getByClass(TLapeGlobalVar);
+        for i := 0 to High(GlobalVars) do
+          if (AVar = GlobalVars[i]) then
+            Exit(AVar)
+          else if TLapeGlobalVar(GlobalVars[i]).isConstant and (GlobalVars[i].Name = '') and (TLapeGlobalVar(GlobalVars[i]).VarType <> nil) and TLapeGlobalVar(GlobalVars[i]).VarType.Equals(AVar.VarType, False) then
+          begin
+            EvalProc(@Equal, TLapeGlobalVar(GlobalVars[i]).Ptr, TLapeGlobalVar(AVar).Ptr);
+            if Equal then
+            begin
+              AVar.Free();
+              Exit(TLapeGlobalVar(GlobalVars[i]));
+            end;
+          end;
+
+      end;
     end;
-  end;
   Result := TLapeVar(addManagedDecl(AVar));
 end;
 

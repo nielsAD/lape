@@ -137,9 +137,12 @@ var
   atpa: T2DPointArray;
   a: TLapeGlobalVar;
 begin
-  Parser := TLapeTokenizerString.Create(e.Lines.Text);
-  Compiler := TLapeCompiler.Create(Parser);
+  Parser := nil;
+  Compiler := nil;
   try
+    Parser := TLapeTokenizerString.Create(e.Lines.Text);
+    Compiler := TLapeCompiler.Create(Parser);
+
     di := 112233;
     dp := @di;
     MyString := 'a string';
@@ -214,18 +217,22 @@ begin
         m.Lines.add('Compilation error: "' + E.Message + '"');
     end;
   finally
-    Dispose(q.z^.test);
-    Dispose(q.z);
-
-    Compiler.Free();
-    rec2.Free();
-    rec.Free();
-    tp.Free();
-    ttpa.Free();
-    t2dpa.Free();
-    func1.Free();
-    func2.Free();
-    func3.Free();
+    if (Compiler <> nil) then
+    begin
+      Dispose(q.z^.test);
+      Dispose(q.z);
+      Compiler.Free();
+      rec2.Free();
+      rec.Free();
+      tp.Free();
+      ttpa.Free();
+      t2dpa.Free();
+      func1.Free();
+      func2.Free();
+      func3.Free();
+    end
+    else if (Parser <> nil) then
+      Parser.Free();
   end;
 end;
 
