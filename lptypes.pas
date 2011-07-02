@@ -39,6 +39,8 @@ type
   {$ELSE}
   PtrInt = NativeInt;
   PtrUInt = NativeUInt;
+  SizeInt = NativeInt;
+  SizeUInt = NativeUInt;
   PLongBool = ^LongBool;
   {$ENDIF}
 
@@ -327,6 +329,10 @@ type
 
 const
   op_Invoke = op_Index;
+
+  {$IFNDEF FPC}
+  LineEnding = #13#10;
+  {$ENDIF}
 
   {$IFDEF Lape_Unicode}
   ltString = ltUnicodeString;

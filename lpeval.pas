@@ -87,120 +87,120 @@ var
   LapeEvalArr: TLapeEvalArr;
 
   _LapeToString_Enum: lpString =
-    'function _EnumToString(s: ^string; Index, Lo, Hi: Int32): string;'                  +
-    'begin'                                                                              +
-    '  if (Index >= Lo) and (Index <= Hi) then'                                          +
-    '    Result := s[Index]^'                                                            +
-    '  else '                                                                            +
-    '    Result := '#39#39';'                                                            +
-    '  if (Result = '#39#39') then'                                                      +
-    '    Result := '#39'InvalidEnum('#39'+ToString(Index)+'#39')'#39';'                  +
+    'function _EnumToString(s: ^string; Index, Lo, Hi: Int32): string;'                  + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  if (Index >= Lo) and (Index <= Hi) then'                                          + LineEnding +
+    '    Result := s[Index]^'                                                            + LineEnding +
+    '  else '                                                                            + LineEnding +
+    '    Result := '#39#39';'                                                            + LineEnding +
+    '  if (Result = '#39#39') then'                                                      + LineEnding +
+    '    Result := '#39'InvalidEnum('#39'+ToString(Index)+'#39')'#39';'                  + LineEnding +
     'end;';
 
   _LapeToString_Set: lpString =
-    'function _%sSetToString(ASet, AToString: Pointer; Lo, Hi: Int32): string;'          +
-    'type'                                                                               +
-    '  TEnum = (se0, se1 = %d);'                                                         +
-    '  TSet = set of TEnum;'                                                             +
-    '  PSet = ^TSet;'                                                                    +
-    '  TToString = private function(const Enum: TEnum): string;'                         +
-    'var'                                                                                +
-    '  i: Int32;'                                                                        +
-    'begin'                                                                              +
-    '  Result := '#39#39';'                                                              +
-    '  for i := Lo to Hi do'                                                             +
-    '    if (TEnum(i) in PSet(ASet)^) then'                                              +
-    '    begin'                                                                          +
-    '      if (Result <> '#39#39') then'                                                 +
-    '        Result := Result + '#39', '#39';'                                           +
-    '      Result := Result + TToString(AToString)(TEnum(i));'                           +
-    '    end;'                                                                           +
-    '  Result := '#39'['#39'+Result+'#39']'#39';'                                        +
+    'function _%sSetToString(ASet, AToString: Pointer; Lo, Hi: Int32): string;'          + LineEnding +
+    'type'                                                                               + LineEnding +
+    '  TEnum = (se0, se1 = %d);'                                                         + LineEnding +
+    '  TSet = set of TEnum;'                                                             + LineEnding +
+    '  PSet = ^TSet;'                                                                    + LineEnding +
+    '  TToString = private function(const Enum: TEnum): string;'                         + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  i: Int32;'                                                                        + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  Result := '#39#39';'                                                              + LineEnding +
+    '  for i := Lo to Hi do'                                                             + LineEnding +
+    '    if (TEnum(i) in PSet(ASet)^) then'                                              + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      if (Result <> '#39#39') then'                                                 + LineEnding +
+    '        Result := Result + '#39', '#39';'                                           + LineEnding +
+    '      Result := Result + TToString(AToString)(TEnum(i));'                           + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    '  Result := '#39'['#39'+Result+'#39']'#39';'                                        + LineEnding +
     'end;';
 
   _LapeToString_Array: lpString =
-    'function _ArrayToString(Arr: Pointer; AToString: private function(const p: Pointer): string; Len, Size: Int32): string;' +
-    'var'                                                                                +
-    '  i: Int32;'                                                                        +
-    'begin'                                                                              +
-    '  Result := '#39#39';'                                                              +
-    '  for i := 1 to Len do'                                                             +
-    '  begin'                                                                            +
-    '    if (i > 1) then'                                                                +
-    '      Result := Result + '#39', '#39';'                                             +
-    '    Result := Result + AToString(Arr);'                                             +
-    '    Inc(Arr, Size);'                                                                +
-    '  end;'                                                                             +
-    '  Result := '#39'['#39'+Result+'#39']'#39';'                                        +
+    'function _ArrayToString(Arr: Pointer; AToString: private function(const p: Pointer): string; Len, Size: Int32): string;' + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  i: Int32;'                                                                        + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  Result := '#39#39';'                                                              + LineEnding +
+    '  for i := 1 to Len do'                                                             + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    if (i > 1) then'                                                                + LineEnding +
+    '      Result := Result + '#39', '#39';'                                             + LineEnding +
+    '    Result := Result + AToString(Arr);'                                             + LineEnding +
+    '    Inc(Arr, Size);'                                                                + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    '  Result := '#39'['#39'+Result+'#39']'#39';'                                        + LineEnding +
     'end;';
 
   _LapeSetLength: lpString =
-    'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: Int32;'                   +
-    '  Dispose: private procedure(const p: Pointer);'                                    +
-    '  Copy: private procedure(const Src, Dst: Pointer));'                               +
-    'var'                                                                                +
-    '  i, OldLen, NewSize: SizeInt;'                                                     +
-    '  NewP: Pointer;'                                                                   +
-    '  DoFree: Boolean;'                                                                 +
-    'begin'                                                                              +
-    '  NewSize := NewLen * ElSize;'                                                      +
-    '  DoFree := NewSize <= 0;'                                                          +
-    '  Inc(NewSize, SizeOf(PtrInt) + SizeOf(SizeInt));'                                  +
-    ''                                                                                   +
-    '  if (p = nil) then'                                                                +
-    '  begin'                                                                            +
-    '    if DoFree then'                                                                 +
-    '      Exit;'                                                                        +
-    '    p := GetMem(NewSize);'                                                          +
-    '    PtrInt(p^) := 1;'                                                               +
-    '    Inc(p, SizeOf(PtrInt));'                                                        +
-    '    SizeInt(p^) := NewLen;'                                                         +
-    '    Inc(p, SizeOf(SizeInt));'                                                       +
-    '    Exit;'                                                                          +
-    '  end;'                                                                             +
-    ''                                                                                   +
-    '  Dec(p, SizeOf(SizeInt));'                                                         +
-    '  OldLen := p^;'                                                                    +
-    '  Dec(p, SizeOf(PtrInt));'                                                          +
-    ''                                                                                   +
-    '  if (PtrInt(p^) <= 1) then'                                                        +
-    '  begin'                                                                            +
-    '    if (NewLen < OldLen) and (Pointer(Dispose) <> nil) then'                        +
-    '      for i := NewLen to OldLen - 1 do'                                             +
-    '        Dispose(p[i * ElSize]);'                                                    +
-    ''                                                                                   +
-    '    if DoFree then'                                                                 +
-    '    begin'                                                                          +
-    '      FreeMem(p);'                                                                  +
-    '      p := nil;'                                                                    +
-    '      Exit;'                                                                        +
-    '    end;'                                                                           +
-    '    ReallocMem(p, NewSize);'                                                        +
-    '    PtrInt(p^) := 1;'                                                               +
-    '    Inc(p, SizeOf(PtrInt));'                                                        +
-    '    SizeInt(p^) := NewLen;'                                                         +
-    '    Inc(p, SizeOf(SizeInt));'                                                       +
-    '  end'                                                                              +
-    '  else'                                                                             +
-    '  begin'                                                                            +
-    '    Dec(PtrInt(p^));'                                                               +
-    '    NewP := nil;'                                                                   +
-    '    _ArraySetLength(NewP, NewLen, ElSize, Dispose, Copy);'                          +
-    ''                                                                                   +
-    '    i := OldLen;'                                                                   +
-    '    if (NewLen < OldLen) then'                                                      +
-    '      i := NewLen;'                                                                 +
-    '    if (i >= 0) then'                                                               +
-    '    begin'                                                                          +
-    '      Inc(p, SizeOf(PtrInt) + SizeOf(SizeInt));'                                    +
-    '      if (Pointer(Copy) = nil) then'                                                +
-    '        Move(p^, NewP^, (i + 1) * ElSize)'                                          +
-    '      else for i := i - 1 downto 0 do'                                              +
-    '        Copy(p[i * ElSize], NewP[i * ElSize]);'                                     +
-    '    end;'                                                                           +
-    ''                                                                                   +
-    '    p := NewP;'                                                                     +
-    '  end;'                                                                             +
+    'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: Int32;'                   + LineEnding +
+    '  Dispose: private procedure(const p: Pointer);'                                    + LineEnding +
+    '  Copy: private procedure(const Src, Dst: Pointer));'                               + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  i, OldLen, NewSize: SizeInt;'                                                     + LineEnding +
+    '  NewP: Pointer;'                                                                   + LineEnding +
+    '  DoFree: Boolean;'                                                                 + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  NewSize := NewLen * ElSize;'                                                      + LineEnding +
+    '  DoFree := NewSize <= 0;'                                                          + LineEnding +
+    '  Inc(NewSize, SizeOf(PtrInt) + SizeOf(SizeInt));'                                  + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  if (p = nil) then'                                                                + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    if DoFree then'                                                                 + LineEnding +
+    '      Exit;'                                                                        + LineEnding +
+    '    p := GetMem(NewSize);'                                                          + LineEnding +
+    '    PtrInt(p^) := 1;'                                                               + LineEnding +
+    '    Inc(p, SizeOf(PtrInt));'                                                        + LineEnding +
+    '    SizeInt(p^) := NewLen' {$IFDEF FPC}+'-1'{$ENDIF}+';'                            + LineEnding +
+    '    Inc(p, SizeOf(SizeInt));'                                                       + LineEnding +
+    '    Exit;'                                                                          + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  Dec(p, SizeOf(SizeInt));'                                                         + LineEnding +
+    '  OldLen := p^' {$IFDEF FPC}+'+1'{$ENDIF}+';'                                       + LineEnding +
+    '  Dec(p, SizeOf(PtrInt));'                                                          + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  if (PtrInt(p^) <= 1) then'                                                        + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    if (NewLen < OldLen) and (Pointer(Dispose) <> nil) then'                        + LineEnding +
+    '      for i := NewLen to OldLen - 1 do'                                             + LineEnding +
+    '        Dispose(p[i * ElSize]);'                                                    + LineEnding +
+    ''                                                                                   + LineEnding +
+    '    if DoFree then'                                                                 + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      FreeMem(p);'                                                                  + LineEnding +
+    '      p := nil;'                                                                    + LineEnding +
+    '      Exit;'                                                                        + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    '    ReallocMem(p, NewSize);'                                                        + LineEnding +
+    '    PtrInt(p^) := 1;'                                                               + LineEnding +
+    '    Inc(p, SizeOf(PtrInt));'                                                        + LineEnding +
+    '    SizeInt(p^) := NewLen' {$IFDEF FPC}+'-1'{$ENDIF}+';'                            + LineEnding +
+    '    Inc(p, SizeOf(SizeInt));'                                                       + LineEnding +
+    '  end'                                                                              + LineEnding +
+    '  else'                                                                             + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    Dec(PtrInt(p^));'                                                               + LineEnding +
+    '    NewP := nil;'                                                                   + LineEnding +
+    '    _ArraySetLength(NewP, NewLen, ElSize, Dispose, Copy);'                          + LineEnding +
+    ''                                                                                   + LineEnding +
+    '    i := OldLen;'                                                                   + LineEnding +
+    '    if (NewLen < OldLen) then'                                                      + LineEnding +
+    '      i := NewLen;'                                                                 + LineEnding +
+    '    if (i >= 0) then'                                                               + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      Inc(p, SizeOf(PtrInt) + SizeOf(SizeInt));'                                    + LineEnding +
+    '      if (Pointer(Copy) = nil) then'                                                + LineEnding +
+    '        Move(p^, NewP^, (i + 1) * ElSize)'                                          + LineEnding +
+    '      else for i := i - 1 downto 0 do'                                              + LineEnding +
+    '        Copy(p[i * ElSize], NewP[i * ElSize]);'                                     + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    ''                                                                                   + LineEnding +
+    '    p := NewP;'                                                                     + LineEnding +
+    '  end;'                                                                             + LineEnding +
     'end;';
 
 implementation
