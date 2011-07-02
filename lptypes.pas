@@ -344,6 +344,15 @@ const
   ltCharInt = ltUInt8;
   {$ENDIF}
 
+  {$IFDEF CPU64}
+  ltNativeInt = ltInt64;
+  ltNativeUInt = ltUInt64;
+  {$ELSE}
+  ltNativeInt = ltInt32;
+  ltNativeUInt = ltUInt32;
+  {$ENDIF}
+
+
   {$IFDEF Lape_SmallCode}
   ltEvalBool = ltBoolean;
   {$ELSE}
@@ -371,6 +380,14 @@ const
   {$IFEND}
 
   LapeIntegerTypes = [Low(LapeIntegerTypeRange)..High(LapeIntegerTypeRange)];
+  LapeSignedIntegerTypes = [ltInt8, ltInt16, ltInt32, ltInt64];
+  LapeUnsignedIntegerTypes = [ltUInt8, ltUInt16, ltUInt32, ltUInt64];
+  _LapeIntegerTypes = LapeSignedIntegerTypes + LapeUnsignedIntegerTypes;
+
+  {$IF _LapeIntegerTypes <> LapeIntegerTypes}
+    {$MESSAGE Fatal 'Integer types aren''t correctly split'}
+  {$IFEND}
+
   LapeRealTypes = [ltSingle..ltExtended];
   LapeBoolTypes = [ltBoolean..ltLongBool];
   LapeStringTypes = [ltShortString..ltUnicodeString];

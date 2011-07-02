@@ -1779,14 +1779,11 @@ constructor TLapeType_SubRange.Create(ARange: TLapeRange; ACompiler: TLapeCompil
 begin
   inherited Create(ltUnknown, ACompiler, AName, ADocPos);
   if (AVarType = nil) then
-    if (FRange.Lo < 0) then
-      AVarType := FCompiler.getBaseType(DetermineIntType('-'+IntToStr(ARange.Hi)))
-    else
-      AVarType := FCompiler.getBaseType(DetermineIntType(ARange.Hi));
- if (AVarType <> nil) then
-   FBaseType := AVarType.BaseType;
- FRange := ARange;
- FVarType := AVarType;
+    AVarType := FCompiler.getBaseType(DetermineIntType(ARange.Lo, ARange.Hi));
+  if (AVarType <> nil) then
+    FBaseType := AVarType.BaseType;
+  FRange := ARange;
+  FVarType := AVarType;
 end;
 
 function TLapeType_SubRange.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
@@ -2781,7 +2778,7 @@ begin
       begin
         RightVar := nil;
         try
-          LowIndex := FCompiler.getBaseType(DetermineIntType(FRange.Lo)).NewGlobalVarStr(IntToStr(FRange.Lo));
+          LowIndex := FCompiler.getBaseType(DetermineIntType(FRange.Lo, Right.BaseType, False)).NewGlobalVarStr(IntToStr(FRange.Lo));
           RightVar := Right.VarType.EvalConst(op_Minus, Right, LowIndex);
           Result := //Result := @Pointer[Index - Lo]^
             inherited EvalConst(
@@ -2872,7 +2869,7 @@ begin
           LeftVar,
           Right.VarType.Eval(op_Minus, tmpVar, Right, getResVar(
             FCompiler.addManagedVar(
-              FCompiler.getBaseType(DetermineIntType(FRange.Lo)).NewGlobalVarStr(IntToStr(FRange.Lo))
+              FCompiler.getBaseType(DetermineIntType(FRange.Lo, Right.VarType.BaseType, False)).NewGlobalVarStr(IntToStr(FRange.Lo))
             )
           ), Offset, Pos),
           Offset,
@@ -2895,7 +2892,7 @@ begin
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) then
     try
       tmpType := Right.VarType;
-	    Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
+      Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
 
       if (Left.VarType <> nil) then
 	    begin
@@ -2952,9 +2949,9 @@ begin
       else
         wasConstant := False;
 
-      CounterVar := FCompiler.getTempVar(ltInt64, 2);
-      IndexLow := FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(FRange.Lo - 1)).NewGlobalVarStr(IntToStr(FRange.Lo)));
-      IndexHigh := FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(FRange.Hi + 1)).NewGlobalVarStr(IntToStr(FRange.Hi)));
+      CounterVar := FCompiler.getTempVar(DetermineIntType(FRange.Lo, FRange.Hi, ltNativeInt), 2);
+      IndexLow := FCompiler.addManagedVar(CounterVar.VarType.NewGlobalVarStr(IntToStr(FRange.Lo)));
+      IndexHigh := FCompiler.addManagedVar(CounterVar.VarType.NewGlobalVarStr(IntToStr(FRange.Hi)));
       LeftVar := CounterVar.VarType.Eval(op_Assign, LeftVar, GetResVar(CounterVar), GetResVar(IndexLow), Offset, Pos);
       LoopOffset := Offset;
       FPType.Eval(op_Assign, tmpVar, Eval(op_Index, tmpVar, Left, LeftVar, Offset, Pos), Eval(op_Index, tmpVar, Right, LeftVar, Offset, Pos), Offset, Pos);
@@ -2984,9 +2981,9 @@ begin
   tmpVar := NullResVar;
   if UseCompiler and (FCompiler <> nil) then
   begin
-    Counter := FCompiler.getTempVar(ltInt64, 2);
-    LowIndex := FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(FRange.Lo - 1)).NewGlobalVarStr(IntToStr(FRange.Lo)));
-    HighIndex := FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(FRange.Hi + 1)).NewGlobalVarStr(IntToStr(FRange.Hi)));
+    Counter := FCompiler.getTempVar(DetermineIntType(FRange.Lo, FRange.Hi, ltNativeInt), 2);
+    LowIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(IntToStr(FRange.Lo)));
+    HighIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(IntToStr(FRange.Hi)));
     IndexVar := Counter.VarType.Eval(op_Assign, IndexVar, GetResVar(Counter), GetResVar(LowIndex), Offset, Pos);
     LoopOffset := Offset;
     FPType.Finalize(Eval(op_Index, tmpVar, AVar, IndexVar, Offset, Pos), Offset, UseCompiler, Pos);

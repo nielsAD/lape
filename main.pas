@@ -62,28 +62,9 @@ type
   end;
 
 procedure TForm1.btnGoClick(Sender: TObject);
-type
-  arr = array of integer;
 var
   i: Integer;
-  p: pdynarraytypeinfo;
 begin
-  p := TypeInfo(arr);       //TTypeData;
-  WriteLn('1: ', p^.Kind);
-
-  inc(Pointer(p), ord(p^.namelen)+2);
-  {$ifdef FPC_REQUIRES_PROPER_ALIGNMENT}p:=align(p,sizeof(p));{$endif FPC_REQUIRES_PROPER_ALIGNMENT}
-  Inc(Pointer(p), sizeof(sizeint));
-  WriteLn('1: ', ' -> ', PUInt32(p)^);
-
-  p := PPointer(p)^;
-  WriteLn('2: ', p^.Kind);
-
-  inc(Pointer(p), ord(p^.namelen)+2);
-  {$ifdef FPC_REQUIRES_PROPER_ALIGNMENT}p:=align(p,sizeof(p));{$endif FPC_REQUIRES_PROPER_ALIGNMENT}
-  Inc(Pointer(p), sizeof(sizeint));
-  WriteLn('2: ', ' -> ', PUInt32(p)^);
-
   WriteLn(Ord(Low(opCode)), '..', Ord(High(opCode)));
   {$IFDEF Lape_TrackObjects}
   for i := 0 to lpgList.Count - 1 do

@@ -623,13 +623,9 @@ begin
 
       if (t <> nil) then
       begin
-        //Ensure smallest possible integer type
-        {if t.isConstant and (t.BaseType in LapeIntegerTypes) then
-          Replacement := TLapeTree_Integer.Create(t.AsString, Root.Compiler)
-        else}
-          Replacement := TLapeTree_GlobalVar.Create(t, Root.Compiler);
-
+        Replacement := TLapeTree_GlobalVar.Create(t, Root.Compiler);
         Replacement.Parent := Root.FParent;
+
         Root.FParent := nil;
         if DoFree then
           Root.Free();
@@ -1207,8 +1203,8 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           Right := TLapeTree_Operator.Create(op_Minus, FCompiler, @FValues[i]._DocPos);
           with TLapeTree_Operator(Right) do
           begin
-            Left := TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(i)).NewGlobalVarStr(IntToStr(i)))), FCompiler, @FValues[i]._DocPos);
-            Right := TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(TLapeType_StaticArray(ToType).Range.Lo)).NewGlobalVarStr(IntToStr(TLapeType_StaticArray(ToType).Range.Lo)))), FCompiler, @FValues[i]._DocPos);
+            Left := TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(i, ltNativeInt, False)).NewGlobalVarStr(IntToStr(i)))), FCompiler, @FValues[i]._DocPos);
+            Right := TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(TLapeType_StaticArray(ToType).Range.Lo, ltNativeInt, False)).NewGlobalVarStr(IntToStr(TLapeType_StaticArray(ToType).Range.Lo)))), FCompiler, @FValues[i]._DocPos);
           end;
         end;
         Right := TLapeTree_ExprBase(FValues[i]);
@@ -3100,14 +3096,14 @@ end;
 
 constructor TLapeTree_Integer.Create(AValue: Integer; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  Assert(ACompiler <> nil);
-  inherited Create(TLapeType_UInt32(ACompiler.getBaseType(ltUInt32)).NewGlobalVar(AValue), ACompiler, ADocPos);
+  //inherited Create(TLapeType_UInt32(ACompiler.getBaseType(ltUInt32)).NewGlobalVar(AValue), ACompiler, ADocPos);
+  Create(IntToStr(AValue), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Integer.Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getBaseType(DetermineIntType(AStr)).NewGlobalVarStr(AStr), ACompiler, ADocPos);
+  inherited Create(ACompiler.getBaseType(DetermineIntType(AStr, ltNativeInt, False)).NewGlobalVarStr(AStr), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Float.Create(AValue: Extended; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

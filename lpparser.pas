@@ -360,8 +360,17 @@ function LapeTokenToString(Token: EParserToken): lpString; {$IFDEF Lape_Inline}i
 function ParserTokenToOperator(Token: EParserToken): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function StrToFloatDot(Str: lpString): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function StrToFloatDotDef(Str: lpString; Default: Extended): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function DetermineIntType(IntType: ELapeBaseType; MinSize: UInt8): ELapeBaseType; overload;
+function DetermineIntType(Left, Right: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
+function DetermineIntType(Str: lpString; MinSize: UInt8): ELapeBaseType; overload;
+function DetermineIntType(Str: lpString; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
 function DetermineIntType(Str: lpString): ELapeBaseType; overload;
+function DetermineIntType(i: Int64; MinSize: UInt8): ELapeBaseType; overload;
+function DetermineIntType(i: Int64; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
 function DetermineIntType(i: Int64): ELapeBaseType; overload;
+function DetermineIntType(i1, i2: Int64; MinSize: UInt8): ELapeBaseType; overload;
+function DetermineIntType(i1, i2: Int64; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
+function DetermineIntType(i1, i2: Int64): ELapeBaseType; overload;
 function DetermineIntType(Size: Integer; Signed: Boolean): ELapeBaseType; overload;
 
 implementation
@@ -397,6 +406,29 @@ end;
 function StrToFloatDotDef(Str: lpString; Default: Extended): Extended;
 begin
   Result := StrToFloatDef(StringReplace(Str, '.', DecimalSeparator, []), Default);
+end;
+
+function DetermineIntType(IntType: ELapeBaseType; MinSize: UInt8): ELapeBaseType; overload;
+begin
+  Result := IntType;
+  while (Result in LapeIntegerTypes) and (LapeTypeSize[Result] < MinSize) do
+  begin
+    IntType := ELapeBaseType(Ord(Result) + 2);
+    if (IntType in LapeIntegerTypes) then
+      Result := IntType
+    else
+      Break;
+  end;
+end;
+
+function DetermineIntType(Str: lpString; MinSize: UInt8): ELapeBaseType;
+begin
+  Result := DetermineIntType(DetermineIntType(Str), MinSize);
+end;
+
+function DetermineIntType(Str: lpString; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType;
+begin
+  Result := DetermineIntType(DetermineIntType(Str), MinType, DoGrow);
 end;
 
 function DetermineIntType(Str: lpString): ELapeBaseType;
@@ -462,18 +494,61 @@ begin
     Result := ltUInt64
 end;
 
+function DetermineIntType(i: Int64; MinSize: UInt8): ELapeBaseType;
+begin
+  Result := DetermineIntType(DetermineIntType(i), MinSize);
+end;
+
+function DetermineIntType(i: Int64;  MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType;
+begin
+  Result := DetermineIntType(DetermineIntType(i), MinType, DoGrow);
+end;
+
 function DetermineIntType(i: Int64): ELapeBaseType;
 begin
   Result := DetermineIntType(IntToStr(i));
 end;
 
+function DetermineIntType(i1, i2: Int64; MinSize: UInt8): ELapeBaseType;
+begin
+  Result := DetermineIntType(DetermineIntType(i1, i2), MinSize);
+end;
+
+function DetermineIntType(i1, i2: Int64; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType;
+begin
+  Result := DetermineIntType(DetermineIntType(i1, i2), MinType, DoGrow);
+end;
+
+function DetermineIntType(i1, i2: Int64): ELapeBaseType;
+begin
+  Result := DetermineIntType(DetermineIntType(i1), DetermineIntType(i2));
+end;
+
+function DetermineIntType(Left, Right: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType;
+begin
+  if (not (Left in LapeIntegerTypes)) or (not (Right in LapeIntegerTypes)) then
+    Exit(ltUnknown);
+
+  Result := Left;
+  if (Right > Result) and (LapeTypeSize[Left] <> LapeTypeSize[Right]) then
+    Result := Right;
+
+  if DoGrow and (Left <> Right) and ((LapeTypeSize[Left] = LapeTypeSize[Right]) or
+     ((Left in LapeSignedIntegerTypes) <> (Right in LapeSignedIntegerTypes)))
+  then
+    if (Left in LapeSignedIntegerTypes) then
+      Result := DetermineIntType(Left, LapeTypeSize[Result] + 1)
+    else
+      Result := DetermineIntType(Right, LapeTypeSize[Result] + 1);
+end;
+
 function DetermineIntType(Size: Integer; Signed: Boolean): ELapeBaseType;
 begin
   case Size of
-    1: if Signed then Result := ltInt8  else Result := ltUInt8;
-    2: if Signed then Result := ltInt16 else Result := ltUInt16;
-    4: if Signed then Result := ltInt32 else Result := ltUInt32;
-    8: if Signed then Result := ltInt64 else Result := ltUInt64;
+    SizeOf(Int8):  if Signed then Result := ltInt8  else Result := ltUInt8;
+    SizeOf(Int16): if Signed then Result := ltInt16 else Result := ltUInt16;
+    SizeOf(Int32): if Signed then Result := ltInt32 else Result := ltUInt32;
+    SizeOf(Int64): if Signed then Result := ltInt64 else Result := ltUInt64;
     else Result := ltUnknown;
   end;
 end;
