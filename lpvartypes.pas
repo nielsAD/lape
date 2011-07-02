@@ -1335,13 +1335,14 @@ begin
     if (Right = nil) then
     begin
       ResType := EvalRes(Op);
-      if (op = op_Addr) then
-        {if Left.isConstant then
-          LapeException(lpeVariableExpected)
-        else}
-          Exit(TLapeGlobalVar.Create(ResType, @Left.Ptr))
-      else if (op = op_Deref) then
-        Exit(TLapeGlobalVar.Create(ResType, PPointer(Left.Ptr)^));
+      if (ResType <> nil) or ((op = op_Deref) and ((Left.VarType = nil) or (Left.VarType.BaseType = ltPointer))) then
+        if (op = op_Addr) then
+          {if Left.isConstant then
+            LapeException(lpeVariableExpected)
+          else}
+            Exit(TLapeGlobalVar.Create(ResType, @Left.Ptr))
+        else if (op = op_Deref) then
+          Exit(TLapeGlobalVar.Create(ResType, PPointer(Left.Ptr)^));
 
       EvalProc := getEvalProc(Op, FBaseType, ltUnknown);
     end

@@ -581,7 +581,7 @@ type
     property FinallyBody: TLapeTree_Base read FFinally write setFinally;
   end;
 
-function FoldConstants(Root: TLapeTree_Base): TLapeTree_Base;
+function FoldConstants(Root: TLapeTree_Base; DoFree: Boolean = True): TLapeTree_Base;
 procedure PrintTree(Root: TLapeTree_Base; Indent: Integer = 0);
 function setExpectedType(Node: TLapeTree_Base; ToType: TLapeType): TLapeTree_Base; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function isEmptyNode(Node: TLapeTree_Base): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -597,7 +597,7 @@ implementation
 uses
   lpexceptions, lpeval, lpinterpreter;
 
-function FoldConstants(Root: TLapeTree_Base): TLapeTree_Base;
+function FoldConstants(Root: TLapeTree_Base; DoFree: Boolean = True): TLapeTree_Base;
 var
   Replacement: TLapeTree_GlobalVar;
   t: TLapeGlobalVar;
@@ -631,7 +631,8 @@ begin
 
         Replacement.Parent := Root.FParent;
         Root.FParent := nil;
-        Root.Free();
+        if DoFree then
+          Root.Free();
         Result := Replacement;
       end;
     end;
@@ -2538,7 +2539,7 @@ begin
   begin
     Negation := TLapeTree_Operator.Create(op_UnaryMinus, FCompiler, @_DocPos);
     Negation.Left := FParams.Delete(1);
-    addParam(Negation);
+    addParam(FoldConstants(Negation, False) as TLapeTree_ExprBase);
   end;
 
   Result := inherited;
@@ -2546,7 +2547,11 @@ begin
   if (FParams.Count = 2) then
   begin
     if (Negation <> nil) then
-      addParam(Negation.Left)
+    begin
+      addParam(Negation.Left);
+      if (Negation.Parent = nil) then
+        Negation.Free();
+    end
     else
       TLapeTree_GlobalVar(FParams[1]).GlobalVar.Free();
     FParams.Delete(1).Free();
@@ -2565,7 +2570,7 @@ begin
   begin
     Negation := TLapeTree_Operator.Create(op_UnaryMinus, FCompiler, @_DocPos);
     Negation.Left := FParams.Delete(1);
-    addParam(Negation);
+    addParam(FoldConstants(Negation, False) as TLapeTree_ExprBase);
   end;
 
   Result := inherited;
@@ -2573,7 +2578,11 @@ begin
   if (FParams.Count = 2) then
   begin
     if (Negation <> nil) then
+    begin
       addParam(Negation.Left);
+      if (Negation.Parent = nil) then
+        Negation.Free();
+    end;
     FParams.Delete(1).Free();
   end;
 end;

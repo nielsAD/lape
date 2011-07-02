@@ -87,7 +87,7 @@ var
   LapeEvalArr: TLapeEvalArr;
 
   _LapeToString_Enum: lpString =
-    'function _EnumToString(const s: ^string; const Index, Lo, Hi: Int32): string;'      +
+    'function _EnumToString(s: ^string; Index, Lo, Hi: Int32): string;'                  +
     'begin'                                                                              +
     '  if (Index >= Lo) and (Index <= Hi) then'                                          +
     '    Result := s[Index]^'                                                            +
@@ -98,12 +98,12 @@ var
     'end;';
 
   _LapeToString_Set: lpString =
-    'function _%sSetToString(const ASet, AToString: Pointer; const Lo, Hi: Int32): string;' +
+    'function _%sSetToString(ASet, AToString: Pointer; Lo, Hi: Int32): string;'          +
     'type'                                                                               +
     '  TEnum = (se0, se1 = %d);'                                                         +
     '  TSet = set of TEnum;'                                                             +
     '  PSet = ^TSet;'                                                                    +
-    '  TToString = function(const Enum: TEnum): string;'                                 +
+    '  TToString = private function(const Enum: TEnum): string;'                         +
     'var'                                                                                +
     '  i: Int32;'                                                                        +
     'begin'                                                                              +
@@ -119,7 +119,7 @@ var
     'end;';
 
   _LapeToString_Array: lpString =
-    'function _ArrayToString(Arr: Pointer; const AToString: function(const p: Pointer): string; const Len, Size: Int32): string;' +
+    'function _ArrayToString(Arr: Pointer; AToString: private function(const p: Pointer): string; Len, Size: Int32): string;' +
     'var'                                                                                +
     '  i: Int32;'                                                                        +
     'begin'                                                                              +
@@ -132,6 +132,75 @@ var
     '    Inc(Arr, Size);'                                                                +
     '  end;'                                                                             +
     '  Result := '#39'['#39'+Result+'#39']'#39';'                                        +
+    'end;';
+
+  _LapeSetLength: lpString =
+    'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: Int32;'                   +
+    '  Dispose: private procedure(const p: Pointer);'                                    +
+    '  Copy: private procedure(const Src, Dst: Pointer));'                               +
+    'var'                                                                                +
+    '  i, OldLen, NewSize: SizeInt;'                                                     +
+    '  NewP: Pointer;'                                                                   +
+    '  DoFree: Boolean;'                                                                 +
+    'begin'                                                                              +
+    '  NewSize := NewLen * ElSize;'                                                      +
+    '  DoFree := NewSize <= 0;'                                                          +
+    '  Inc(NewSize, SizeOf(PtrInt) + SizeOf(SizeInt));'                                  +
+    ''                                                                                   +
+    '  if (p = nil) then'                                                                +
+    '  begin'                                                                            +
+    '    if DoFree then'                                                                 +
+    '      Exit;'                                                                        +
+    '    p := GetMem(NewSize);'                                                          +
+    '    PtrInt(p^) := 1;'                                                               +
+    '    Inc(p, SizeOf(PtrInt));'                                                        +
+    '    SizeInt(p^) := NewLen;'                                                         +
+    '    Inc(p, SizeOf(SizeInt));'                                                       +
+    '    Exit;'                                                                          +
+    '  end;'                                                                             +
+    ''                                                                                   +
+    '  Dec(p, SizeOf(SizeInt));'                                                         +
+    '  OldLen := p^;'                                                                    +
+    '  Dec(p, SizeOf(PtrInt));'                                                          +
+    ''                                                                                   +
+    '  if (PtrInt(p^) <= 1) then'                                                        +
+    '  begin'                                                                            +
+    '    if (NewLen < OldLen) and (Pointer(Dispose) <> nil) then'                        +
+    '      for i := NewLen to OldLen - 1 do'                                             +
+    '        Dispose(p[i * ElSize]);'                                                    +
+    ''                                                                                   +
+    '    if DoFree then'                                                                 +
+    '    begin'                                                                          +
+    '      FreeMem(p);'                                                                  +
+    '      p := nil;'                                                                    +
+    '      Exit;'                                                                        +
+    '    end;'                                                                           +
+    '    ReallocMem(p, NewSize);'                                                        +
+    '    PtrInt(p^) := 1;'                                                               +
+    '    Inc(p, SizeOf(PtrInt));'                                                        +
+    '    SizeInt(p^) := NewLen;'                                                         +
+    '    Inc(p, SizeOf(SizeInt));'                                                       +
+    '  end'                                                                              +
+    '  else'                                                                             +
+    '  begin'                                                                            +
+    '    Dec(PtrInt(p^));'                                                               +
+    '    NewP := nil;'                                                                   +
+    '    _ArraySetLength(NewP, NewLen, ElSize, Dispose, Copy);'                          +
+    ''                                                                                   +
+    '    i := OldLen;'                                                                   +
+    '    if (NewLen < OldLen) then'                                                      +
+    '      i := NewLen;'                                                                 +
+    '    if (i >= 0) then'                                                               +
+    '    begin'                                                                          +
+    '      Inc(p, SizeOf(PtrInt) + SizeOf(SizeInt));'                                    +
+    '      if (Pointer(Copy) = nil) then'                                                +
+    '        Move(p^, NewP^, (i + 1) * ElSize)'                                          +
+    '      else for i := i - 1 downto 0 do'                                              +
+    '        Copy(p[i * ElSize], NewP[i * ElSize]);'                                     +
+    '    end;'                                                                           +
+    ''                                                                                   +
+    '    p := NewP;'                                                                     +
+    '  end;'                                                                             +
     'end;';
 
 implementation

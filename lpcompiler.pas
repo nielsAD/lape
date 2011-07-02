@@ -111,7 +111,7 @@ type
     function ParseMethod(FuncForwards: TLapeFuncForwards; FuncHeader: TLapeType_Method; FuncName: lpString; isExternal: Boolean): TLapeTree_Method; overload; virtual;
     function ParseMethod(FuncForwards: TLapeFuncForwards; FuncHeader: TLapeType_Method; FuncName: lpString): TLapeTree_Method; overload; virtual;
     function ParseMethod(FuncForwards: TLapeFuncForwards; isExternal: Boolean = False): TLapeTree_Method; overload; virtual;
-    function ParseType(TypeForwards: TLapeTypeForwards): TLapeType; virtual;
+    function ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False): TLapeType; virtual;
     procedure ParseTypeBlock; virtual;
     function ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList; virtual;
 
@@ -155,6 +155,7 @@ type
     procedure CheckAfterCompile; virtual;
 
     function getDeclaration(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; override;
+    function hasDeclaration(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean; override;
     function getDeclarationNoWith(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
     function getDeclarationNoWith(Name: lpString; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
     function getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
@@ -434,6 +435,10 @@ begin
   addGlobalType(getBaseType(ltString).createCopy(), 'String');
   addGlobalType(getBaseType(ltChar).createCopy(), 'Char');
   addGlobalType(getBaseType(ltEvalBool).createCopy(), 'EvalBool');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeInt), True)).createCopy(), 'SizeInt');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeUInt), False)).createCopy(), 'SizeUInt');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrInt), True)).createCopy(), 'PtrInt');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrUInt), False)).createCopy(), 'PtrUInt');
   addGlobalVar(True, 'True').isConstant := True;
   addGlobalVar(False, 'False').isConstant := True;
   addGlobalVar(nil, 'nil').isConstant := True;
@@ -445,7 +450,8 @@ begin
     _LapeToString_Enum +
     Format(_LapeToString_Set, ['Small', Ord(High(ELapeSmallEnum))]) +
     Format(_LapeToString_Set, ['Large', Ord(High(ELapeLargeEnum))]) +
-    _LapeToString_Array
+    _LapeToString_Array +
+    _LapeSetLength
   );
 end;
 
@@ -809,7 +815,7 @@ begin
         Expect([tk_sym_Colon, tk_sym_SemiColon, tk_sym_ParenthesisClose], False, False);
         if (Tokenizer.Tok = tk_sym_Colon) then
         begin
-          Param.VarType := ParseType(nil);
+          Param.VarType := ParseType(nil, True);
           if (Param.VarType = nil) then
             LapeException(lpeTypeExpected, Tokenizer.DocPos);
           Expect([tk_sym_Equals, tk_sym_SemiColon, tk_sym_ParenthesisClose], True, False);
@@ -1087,7 +1093,7 @@ begin
   end;
 end;
 
-function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards): TLapeType;
+function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False): TLapeType;
   procedure ParseArray;
   var
     TypeExpr: TLapeTree_Base;
@@ -1195,8 +1201,8 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards): TLapeType;
   begin
     //Expect(tk_sym_ParenthesisOpen, True, False);
     Enum := TLapeType_Enum.Create(Self, nil, '', getPDocPos());
-    if (FStackInfo = nil) then
-      StackOwner := nil
+    if (FStackInfo = nil) or (not addToStackOwner) then
+      StackOwner := FStackInfo
     else
       StackOwner := FStackInfo.Owner;
 
@@ -2427,6 +2433,13 @@ begin
     Result := inherited getDeclaration(Name, nil, Localonly);
 end;
 
+function TLapeCompiler.hasDeclaration(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean;
+begin
+  Result := inherited;
+  if (not Result) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
+    Result := inherited hasDeclaration(Name, nil, Localonly);
+end;
+
 function TLapeCompiler.getDeclarationNoWith(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;
 begin
   Result := getDeclaration(Name, AStackInfo, LocalOnly);
@@ -2707,7 +2720,7 @@ function TLapeCompiler.addGlobalFunc(AHeader: TLapeType_Method; AName, Body: lpS
 var
   OldState: Pointer;
 begin
-  OldState := getTempTokenizerState(Body);
+  OldState := getTempTokenizerState(Body, '!import');
   try
     Result := ParseMethod(nil, AHeader, AName);
     CheckAfterCompile();
@@ -2733,7 +2746,7 @@ var
   OldState: Pointer;
 begin
   Index := FDelayedTree.Statements.Count;
-  OldState := getTempTokenizerState(ACode);
+  OldState := getTempTokenizerState(ACode, '!delayed');
 
   try
     Result := ParseFile();
