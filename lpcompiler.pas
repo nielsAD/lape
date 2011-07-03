@@ -2017,8 +2017,8 @@ begin
     if (Tokenizer.Tok = tk_kw_DownTo) then
       Result.WalkDown := True;
     Result.Limit := ParseExpression();
-    Expect([tk_kw_Step, tk_kw_Do], False, False);
-    if (Tokenizer.Tok = tk_kw_Step) then
+    Expect([tk_kw_With, tk_kw_Do], False, False);
+    if (Tokenizer.Tok = tk_kw_With) then
     begin
       Result.Step := ParseExpression();
       Expect(tk_kw_Do, False, False);

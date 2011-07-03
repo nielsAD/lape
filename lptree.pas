@@ -725,9 +725,9 @@ begin
       if getBaseType(ltEvalBool).CompatibleWith(ConditionVar.VarType) then
         ConditionVar := getBaseType(ltEvalBool).Eval(op_Assign, tmpVar, getTempStackVar(ltEvalBool), ConditionVar, Offset, @Node._DocPos)
       else if (ConditionVar.VarType.BaseType in LapeStringTypes) then
-        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, getResVar(addManagedVar(getBaseType(ltString).NewGlobalVarStr(''))), Offset, @Node._DocPos)
+        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, getResVar(getConstant('')), Offset, @Node._DocPos)
       else
-        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, getResVar(addManagedVar(getBaseType(ltInt32).NewGlobalVarStr('0'))), Offset, @Node._DocPos);
+        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, getResVar(getConstant(0)), Offset, @Node._DocPos);
       setNullResVar(tmpCondition);
     end;
 
@@ -1073,7 +1073,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         Inc(CounterInt);
       end;
 
-      if (CounterInt <> TLapeType_StaticArray(ToType).Range.Hi - TLapeType_StaticArray(ToType).Range.Lo + 1) then
+      if (CounterInt <> TLapeType_StaticArray(ToType).Range.Hi + 1) then
         LapeException(lpeInvalidRange, DocPos);
     finally
       Counter.Free();
@@ -1203,8 +1203,8 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           Right := TLapeTree_Operator.Create(op_Plus, FCompiler, @FValues[i]._DocPos);
           with TLapeTree_Operator(Right) do
           begin
-            Left := TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(i, ltNativeInt, False)).NewGlobalVarStr(IntToStr(i)))), FCompiler, @FValues[i]._DocPos);
-            Right := TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(DetermineIntType(TLapeType_StaticArray(ToType).Range.Lo, ltNativeInt, False)).NewGlobalVarStr(IntToStr(TLapeType_StaticArray(ToType).Range.Lo)))), FCompiler, @FValues[i]._DocPos);
+            Left := TLapeTree_GlobalVar.Create(FCompiler.getConstant(i), FCompiler, @FValues[i]._DocPos);
+            Right := TLapeTree_GlobalVar.Create(FCompiler.getConstant(TLapeType_StaticArray(ToType).Range.Lo), FCompiler, @FValues[i]._DocPos);
           end;
         end;
         Left := FoldConstants(Left) as TLapeTree_ExprBase;
@@ -1230,7 +1230,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           with TLapeTree_Operator(Left) do
           begin
             Left := TLapeTree_ResVar.Create(Result, FCompiler, @FValues[i]._DocPos);
-            Right := TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltString).NewGlobalVarStr(TLapeType_Record(ToType).FieldMap.Key[i]))), FCompiler, @FValues[i]._DocPos);
+            Right := TLapeTree_GlobalVar.Create(FCompiler.getConstant(TLapeType_Record(ToType).FieldMap.Key[i]), FCompiler, @FValues[i]._DocPos);
           end;
           Left := FoldConstants(Left) as TLapeTree_ExprBase;
           Right := FValues[i] as TLapeTree_ExprBase;
@@ -2086,7 +2086,7 @@ begin
   if (ParamType = nil) then
     LapeException(lpeInvalidEvaluation, DocPos);
 
-  Result := TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltInt32).NewGlobalVarStr(IntToStr(ParamType.Size))));
+  Result := FCompiler.getConstant(ParamType.Size, ltInt32, False, True);
 end;
 
 function TLapeTree_InternalMethod_SizeOf.Compile(var Offset: Integer): TResVar;
@@ -2303,7 +2303,7 @@ begin
     LapeException(lpeInvalidEvaluation, DocPos);
 
   with TLapeType_StaticArray(ParamType) do
-    Result := TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltInt32).NewGlobalVarStr(IntToStr(Range.Hi - Range.Lo + 1))));
+    Result := FCompiler.getConstant(Range.Hi - Range.Lo + 1, ltInt32, False, True);
 end;
 
 function TLapeTree_InternalMethod_Length.Compile(var Offset: Integer): TResVar;
@@ -2458,7 +2458,7 @@ begin
     if (OldCountParam <> nil) then
       CountParam := OldCountParam.Compile(Offset)
     else
-      CountParam := getResVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltInt8).NewGlobalVarStr('1')));
+      CountParam := getResVar(FCompiler.getConstant(1));
 
     VarParam := FParams[0].Compile(Offset);
     if (VarParam.VarType = nil) or (VarParam.VarType.BaseIntType = ltUnknown) then
@@ -2553,7 +2553,7 @@ begin
   Negation := nil;
 
   if (FParams.Count < 2) then
-    addParam(TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltInt8).NewGlobalVarStr('-1'))), FCompiler, @_DocPos))
+    addParam(TLapeTree_GlobalVar.Create(FCompiler.getConstant(-1), FCompiler, @_DocPos))
   else if (not isEmptyNode(FParams[1])) and (FParams.Count = 2) then
   begin
     Negation := TLapeTree_Operator.Create(op_UnaryMinus, FCompiler, @_DocPos);
@@ -3088,14 +3088,13 @@ end;
 
 constructor TLapeTree_Integer.Create(AValue: Integer; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  //inherited Create(TLapeType_UInt32(ACompiler.getBaseType(ltUInt32)).NewGlobalVar(AValue), ACompiler, ADocPos);
   Create(IntToStr(AValue), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Integer.Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getBaseType(DetermineIntType(AStr, ltNativeInt, False)).NewGlobalVarStr(AStr), ACompiler, ADocPos);
+  inherited Create(ACompiler.getConstant(AStr, ltNativeInt), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Float.Create(AValue: Extended; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

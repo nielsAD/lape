@@ -683,12 +683,15 @@ type
     function addManagedType(AType: TLapeType): TLapeType; virtual;
     function addStackVar(VarType: TLapeType; Name: lpString): TLapeStackVar; virtual;
 
+    function getConstant(Str: lpString; BaseType: ELapeBaseType = ltString; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar; overload; virtual;
+    function getConstant(i: Int64; IntType: ELapeBaseType = ltNativeInt; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar; overload; virtual;
     function getTempVar(VarType: ELapeBaseType; Lock: Integer = 1): TLapeStackTempVar; overload; virtual;
     function getTempVar(VarType: TLapeType; Lock: Integer = 1): TLapeStackTempVar; overload; virtual;
     function getTempStackVar(VarType: ELapeBaseType): TResVar; overload; virtual;
     function getTempStackVar(VarType: TLapeType): TResVar; overload; virtual;
     function getPointerType(PType: ELapeBaseType): TLapeType_Pointer; overload; virtual;
     function getPointerType(PType: TLapeType): TLapeType_Pointer; overload; virtual;
+
     function getDeclaration(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
     function getDeclaration(Name: lpString; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
     function hasDeclaration(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean; overload; virtual;
@@ -1191,6 +1194,7 @@ function TLapeType.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolea
 begin
   Result := (Other = Self) or (
     (Other <> nil) and
+    ((not ContextOnly) or (ClassType = Other.ClassType)) and
     (Other.BaseType = BaseType) and
     (Other.Size = Size) and
     (Other.AsString = AsString)
@@ -1839,13 +1843,13 @@ begin
 
   Result := NewGlobalVarP(nil, AName);
   case BaseIntType of
-    ltInt8: PInt8(Result.Ptr)^ := Value;
-    ltUInt8: PUInt8(Result.Ptr)^ := Value;
-    ltInt16: PInt16(Result.Ptr)^ := Value;
+    ltInt8:   PInt8(Result.Ptr)^   := Value;
+    ltUInt8:  PUInt8(Result.Ptr)^  := Value;
+    ltInt16:  PInt16(Result.Ptr)^  := Value;
     ltUInt16: PUInt16(Result.Ptr)^ := Value;
-    ltInt32: PInt32(Result.Ptr)^ := Value;
+    ltInt32:  PInt32(Result.Ptr)^  := Value;
     ltUInt32: PUInt32(Result.Ptr)^ := Value;
-    ltInt64: PInt64(Result.Ptr)^ := Value;
+    ltInt64:  PInt64(Result.Ptr)^  := Value;
     ltUInt64: PUInt64(Result.Ptr)^ := Value;
   end;
 end;
@@ -2347,7 +2351,7 @@ begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, FPType, Name, @_DocPos);
 end;
 
-function TLapeType_Pointer.NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil;  AsValue: Boolean = True): TLapeGlobalVar;
+function TLapeType_Pointer.NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil; AsValue: Boolean = True): TLapeGlobalVar;
 begin
   if AsValue then
   begin
@@ -2465,7 +2469,7 @@ begin
           op_Multiply,
           tmpVar,
           Right,
-          getResVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltInt32).NewGlobalVarStr(IntToStr(FPType.Size)))),
+          getResVar(FCompiler.getConstant(FPType.Size)),
           Offset,
           Pos
         );
@@ -2555,16 +2559,16 @@ function TLapeType_DynArray.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FCompiler = nil) then
     Result := nil
-  else with FCompiler, getBaseType(ltInt32) do
-    Result := addManagedVar(NewGlobalVarStr('0')) as TLapeGlobalVar;
+  else
+    Result := FCompiler.getConstant(0);
 end;
 
 function TLapeType_DynArray.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FCompiler = nil) or (AVar = nil) then
     Result := nil
-  else with FCompiler, getBaseType(ltInt32) do
-    Result := addManagedVar(NewGlobalVarStr(IntToStr(High(PCodeArray(AVar)^)))) as TLapeGlobalVar;
+  else
+    Result := FCompiler.getConstant(High(PCodeArray(AVar)^));
 end;
 
 function TLapeType_DynArray.CreateCopy: TLapeType;
@@ -2712,16 +2716,16 @@ function TLapeType_StaticArray.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FCompiler = nil) then
     Result := nil
-  else with FCompiler, getBaseType(ltInt32) do
-    Result := addManagedVar(NewGlobalVarStr(IntToStr(FRange.Lo))) as TLapeGlobalVar;
+  else
+    Result := FCompiler.getConstant(FRange.Lo);
 end;
 
 function TLapeType_StaticArray.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FCompiler = nil) then
     Result := nil
-  else with FCompiler, getBaseType(ltInt32) do
-    Result := addManagedVar(NewGlobalVarStr(IntToStr(FRange.Hi))) as TLapeGlobalVar;
+  else 
+    Result := FCompiler.getConstant(FRange.Hi);
 end;
 
 function TLapeType_StaticArray.CreateCopy: TLapeType;
@@ -2868,9 +2872,7 @@ begin
           Dest,
           LeftVar,
           Right.VarType.Eval(op_Minus, tmpVar, Right, getResVar(
-            FCompiler.addManagedVar(
-              FCompiler.getBaseType(DetermineIntType(FRange.Lo, Right.VarType.BaseType, False)).NewGlobalVarStr(IntToStr(FRange.Lo))
-            )
+            FCompiler.getConstant(FRange.Lo, DetermineIntType(FRange.Lo, Right.VarType.BaseType, False), False, True)
           ), Offset, Pos),
           Offset,
           Pos
@@ -2912,7 +2914,7 @@ begin
         else
           wasConstant := False;
 
-        IndexHigh := FCompiler.addManagedVar(FCompiler.getBaseType(ltInt32).NewGlobalVarStr(IntToStr(Size)));
+        IndexHigh := FCompiler.getConstant(Size);
         tmpVar := StackResVar;
         tmpVar.VarType := Compiler.getBaseType(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, Pos);
@@ -2947,12 +2949,12 @@ begin
         wasConstant := False;
 
       CounterVar := FCompiler.getTempVar(DetermineIntType(FRange.Lo, FRange.Hi, ltNativeInt), 2);
-      IndexLow := FCompiler.addManagedVar(CounterVar.VarType.NewGlobalVarStr(IntToStr(FRange.Lo)));
-      IndexHigh := FCompiler.addManagedVar(CounterVar.VarType.NewGlobalVarStr(IntToStr(FRange.Hi)));
+      IndexLow := FCompiler.getConstant(FRange.Lo, CounterVar.VarType.BaseType, False, True);
+      IndexHigh := FCompiler.getConstant(FRange.Hi, CounterVar.VarType.BaseType, False, True);
       LeftVar := CounterVar.VarType.Eval(op_Assign, LeftVar, GetResVar(CounterVar), GetResVar(IndexLow), Offset, Pos);
       LoopOffset := Offset;
       FPType.Eval(op_Assign, tmpVar, Eval(op_Index, tmpVar, Left, LeftVar, Offset, Pos), Eval(op_Index, tmpVar, Right, LeftVar, Offset, Pos), Offset, Pos);
-      CounterVar.VarType.Eval(op_Assign, tmpVar, LeftVar, CounterVar.VarType.Eval(op_Plus, tmpVar, LeftVar, getResVar(FCompiler.addManagedVar(CounterVar.VarType.NewGlobalVarStr('1'))), Offset, Pos), Offset, Pos);
+      CounterVar.VarType.Eval(op_Assign, tmpVar, LeftVar, CounterVar.VarType.Eval(op_Plus, tmpVar, LeftVar, getResVar(FCompiler.getConstant(1, CounterVar.VarType.BaseType, False, True)), Offset, Pos), Offset, Pos);
       FCompiler.Emitter._JmpRIf(LoopOffset - Offset, CounterVar.VarType.Eval(op_cmp_LessThanOrEqual, tmpVar, LeftVar, getResVar(IndexHigh), Offset, Pos), Offset, Pos);
       setNullResVar(LeftVar, 2);
 
@@ -3218,7 +3220,7 @@ begin
     begin
       EvalProc := getEvalProc(op_Assign, ltShortString, ltUInt8);
       Assert(ValidEvalFunction(EvalProc));
-      FCompiler.Emitter._Eval(EvalProc, Left, Right, getResVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltUInt8).NewGlobalVarStr(IntToStr(FRange.Hi)))), Offset, Pos);
+      FCompiler.Emitter._Eval(EvalProc, Left, Right, getResVar(FCompiler.getConstant(FRange.Hi, ltUInt8, False, True)), Offset, Pos);
       Result := Left;
     end
     else
@@ -3485,7 +3487,7 @@ begin
 	    end
 	    else
 	    begin
-        RightVar := getResVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltInt32).NewGlobalVarStr(IntToStr(Size))));
+        RightVar := getResVar(FCompiler.getConstant(Size));
         tmpVar := StackResVar;
         tmpVar.VarType := Compiler.getBaseType(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
@@ -3503,8 +3505,8 @@ begin
     begin
       for i := 0 to FFieldMap.Count - 1 do
       try
-        LeftFieldName := getResVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltString).NewGlobalVarStr(FFieldMap.Key[i])));
-        RightFieldName := getResVar(FCompiler.addManagedVar(FCompiler.getBaseType(ltString).NewGlobalVarStr(TLapeType_Record(Right.VarType).FieldMap.Key[i])));
+        LeftFieldName := getResVar(FCompiler.getConstant(FFieldMap.Key[i]));
+        RightFieldName := getResVar(FCompiler.getConstant(TLapeType_Record(Right.VarType).FieldMap.Key[i]));
 
         LeftVar := Eval(op_Dot, tmpVar, Left, LeftFieldName, Offset, Pos);
         RightVar := Right.VarType.Eval(op_Dot, tmpVar, Right, RightFieldName, Offset, Pos);
@@ -4764,29 +4766,16 @@ begin
   if (AVar = nil) or (AVar.DeclarationList <> nil) then
     Exit(AVar);
   if (AVar is TLapeGlobalVar) and (AVar.VarType <> nil) and AVar.isConstant and (AVar.Name = '') then
-    if PtrCheckOnly then
+  begin
+    EvalProc := getEvalProc(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType);
+    if PtrCheckOnly or (ValidEvalFunction(EvalProc) and (getEvalRes(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType) = ltEvalBool)) then
     begin
-      GlobalVars := FManagedDeclarations.getByClass(TLapeGlobalVar);
+      GlobalVars := FManagedDeclarations.getByClass(TLapeGlobalVar, True);
       for i := 0 to High(GlobalVars) do
         if (AVar = GlobalVars[i]) then
           Exit(AVar)
-        else if TLapeGlobalVar(GlobalVars[i]).isConstant and (GlobalVars[i].Name = '') and (TLapeGlobalVar(GlobalVars[i]).Ptr = TLapeGlobalVar(AVar).Ptr) then
-        begin
-          AVar.Free();
-          Exit(TLapeGlobalVar(GlobalVars[i]));
-        end;
-    end
-    else
-    begin
-      EvalProc := getEvalProc(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType);
-      if ValidEvalFunction(EvalProc) and (getEvalRes(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType) = ltEvalBool) then
-      begin
-
-        GlobalVars := FManagedDeclarations.getByClass(TLapeGlobalVar);
-        for i := 0 to High(GlobalVars) do
-          if (AVar = GlobalVars[i]) then
-            Exit(AVar)
-          else if TLapeGlobalVar(GlobalVars[i]).isConstant and (GlobalVars[i].Name = '') and (TLapeGlobalVar(GlobalVars[i]).VarType <> nil) and TLapeGlobalVar(GlobalVars[i]).VarType.Equals(AVar.VarType, False) then
+        else if TLapeGlobalVar(GlobalVars[i]).isConstant and (GlobalVars[i].Name = '') and (TLapeGlobalVar(GlobalVars[i]).VarType <> nil) and TLapeGlobalVar(GlobalVars[i]).VarType.Equals(AVar.VarType, False) then
+          if (not PtrCheckOnly) then
           begin
             EvalProc(@Equal, TLapeGlobalVar(GlobalVars[i]).Ptr, TLapeGlobalVar(AVar).Ptr);
             if Equal then
@@ -4794,10 +4783,14 @@ begin
               AVar.Free();
               Exit(TLapeGlobalVar(GlobalVars[i]));
             end;
+          end
+          else if (TLapeGlobalVar(GlobalVars[i]).Ptr = TLapeGlobalVar(AVar).Ptr) then
+          begin
+            AVar.Free();
+            Exit(TLapeGlobalVar(GlobalVars[i]));
           end;
-
-      end;
     end;
+  end;
   Result := TLapeVar(addManagedDecl(AVar));
 end;
 
@@ -4809,7 +4802,7 @@ begin
   if (AType = nil) or (AType.DeclarationList <> nil) then
     Exit(AType);
 
-  Types := FManagedDeclarations.getByClass(TLapeType);
+  Types := FManagedDeclarations.getByClass(TLapeDeclarationClass(AType.ClassType), True);
   for i := 0 to High(Types) do
     if (AType = Types[i]) then
       Exit(AType)
@@ -4826,6 +4819,26 @@ begin
   Assert(FStackInfo <> nil);
   Result := FStackInfo.addVar(VarType, Name);
   Assert(not (Result is TLapeStackTempVar));
+end;
+
+function TLapeCompilerBase.getConstant(Str: lpString; BaseType: ELapeBaseType = ltString; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar;
+begin
+  if (BaseType in LapeIntegerTypes) or ((BaseType = ltUnknown) and (not ForceType)) then
+  begin
+    if (BaseType = ltUnknown) then
+      BaseType := DetermineIntType(Str)
+    else if (not ForceType) then
+      BaseType := DetermineIntType(Str, BaseType, DoGrow);
+    Assert(BaseType in LapeIntegerTypes);
+  end;
+
+  Assert(getBaseType(BaseType) <> nil);
+  Result := addManagedVar(getBaseType(BaseType).NewGlobalVarStr(Str)) as TLapeGlobalVar;
+end;
+
+function TLapeCompilerBase.getConstant(i: Int64; IntType: ELapeBaseType = ltNativeInt; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar;
+begin
+  Result := getConstant(IntToStr(i), IntType, DoGrow, ForceType);
 end;
 
 function TLapeCompilerBase.getTempVar(VarType: ELapeBaseType; Lock: Integer = 1): TLapeStackTempVar;

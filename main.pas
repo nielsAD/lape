@@ -184,7 +184,7 @@ begin
     Compiler.addGlobalFunc('procedure MyStupidProc', @MyStupidProc);
     Compiler.addGlobalVar(func3.NewGlobalVar(@MyStringToInt, 'StrToInt'));
 
-    Compiler.addGlobalVar(Compiler.addGlobalType('record x, y: Int32; end', 'TPoint'), @tpa[0], 'myPoint');
+    Compiler.addGlobalVar(Compiler.addGlobalType('record x, y: Int32; end', 'TPoint'), @atpa[0,0], 'myPoint');
     Compiler.addGlobalType('(enum1, enum2)', 'TMyEnum');
     Compiler.addGlobalVar(Compiler.getBaseType(ltString).NewGlobalVarP(@MyString, 'MyString'));
     Compiler.addGlobalVar(456, 'b');
@@ -193,7 +193,7 @@ begin
     Compiler.addGlobalVar(Compiler.getPointerType(Compiler.getPointerType(ltInt32)).NewGlobalVar(@dp, 'dp'));
     Compiler.addGlobalVar('abc', 's');
     Compiler.addGlobalVar('cde', 't');
-    Compiler.addGlobalVar(ttpa.NewGlobalVar(@tpa[0]), 'tpa');
+    Compiler.addGlobalVar(ttpa.NewGlobalVarP(@tpa), 'tpa');
     Compiler.addGlobalVar(t2dpa.NewGlobalVar(@atpa[0]), 'atpa');
     Compiler.addGlobalVar(rec.NewGlobalVarP(@q), 'q');
     Compiler.addGlobalVar(Compiler.getPointerType(rec).NewGlobalVar(@q, 'qp'));

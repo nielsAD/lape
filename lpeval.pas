@@ -194,7 +194,7 @@ var
     '    begin'                                                                          + LineEnding +
     '      Inc(p, SizeOf(PtrInt) + SizeOf(SizeInt));'                                    + LineEnding +
     '      if (Pointer(Copy) = nil) then'                                                + LineEnding +
-    '        Move(p^, NewP^, (i + 1) * ElSize)'                                          + LineEnding +
+    '        Move(p^, NewP^, i * ElSize)'                                                + LineEnding +
     '      else for i := i - 1 downto 0 do'                                              + LineEnding +
     '        Copy(p[i * ElSize], NewP[i * ElSize]);'                                     + LineEnding +
     '    end;'                                                                           + LineEnding +

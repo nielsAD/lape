@@ -61,7 +61,7 @@ var
     WriteLn(IntToStr(Code) + ' :: ' + s);
   end;
 
-  procedure _WriteLn(s: string; args: array of const); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure _WriteLn(s: string; args: array of const); overload;
   begin
     _WriteLn(Format(s, args));
   end;

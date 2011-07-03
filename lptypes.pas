@@ -305,7 +305,7 @@ type
     procedure Clear; virtual;
     function addDeclaration(d: TLapeDeclaration): Integer; virtual;
     function getByName(AName: lpString): TLapeDeclArray; virtual;
-    function getByClass(AClass: TLapeDeclarationClass): TLapeDeclArray; virtual;
+    function getByClass(AClass: TLapeDeclarationClass; FullMatch: Boolean = False): TLapeDeclArray; virtual;
     procedure Delete(d: TLapeDeclaration; DoFree: Boolean = False); overload; virtual;
     procedure Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False); overload; virtual;
 
@@ -1092,7 +1092,7 @@ begin
       end;
 end;
 
-function TLapeDeclarationList.getByClass(AClass: TLapeDeclarationClass): TLapeDeclArray;
+function TLapeDeclarationList.getByClass(AClass: TLapeDeclarationClass; FullMatch: Boolean = False): TLapeDeclArray;
 var
   i, Current, GrowSize, Len: Integer;
 begin
@@ -1105,7 +1105,7 @@ begin
     SetLength(Result, Len);
     Current := 0;
     for i := 0 to FList.Count - 1 do
-      if (FList[i] <> nil) and (FList[i] is AClass) then
+      if (FList[i] <> nil) and ((FList[i].ClassType = AClass) or ((not FullMatch) and (FList[i] is AClass))) then
       begin
         if (Current = Len) then
         begin
