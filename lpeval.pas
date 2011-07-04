@@ -165,6 +165,8 @@ var
     ''                                                                                   + LineEnding +
     '  if (PtrInt(p^) <= 1) then'                                                        + LineEnding +
     '  begin'                                                                            + LineEnding +
+    '    if (NewLen = OldLen) then'                                                      + LineEnding +
+    '      Exit;'                                                                        + LineEnding +
     '    if (NewLen < OldLen) and (Pointer(Dispose) <> nil) then'                        + LineEnding +
     '      for i := NewLen to OldLen - 1 do'                                             + LineEnding +
     '        Dispose(p[i * ElSize]);'                                                    + LineEnding +

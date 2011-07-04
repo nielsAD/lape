@@ -141,8 +141,8 @@ type
     procedure setState(const State: Pointer; DoFreeState: Boolean = True); virtual;
     procedure freeState(const State: Pointer); virtual;
 
-    function getTempTokenizerState(const ATokenizer: TLapeTokenizerBase): Pointer; overload; virtual;
-    function getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''): Pointer; overload; virtual;
+    function getTempTokenizerState(const ATokenizer: TLapeTokenizerBase; FirstStackInfo: Boolean = True): Pointer; overload; virtual;
+    function getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''; FirstStackInfo: Boolean = True): Pointer; overload; virtual;
     procedure resetTokenizerState(const State: Pointer; DoFreeState: Boolean = True); virtual;
     procedure freeTempTokenizerState(const State: Pointer); virtual;
 
@@ -151,13 +151,14 @@ type
 
     function addDelayedExpression(Node: TLapeTree_Base; AfterCompilation: Boolean = True; IsGlobal: Boolean = False): TLapeTree_Base; virtual;
     function ParseFile: TLapeTree_Base; virtual;
+    procedure EmitCode(ACode: lpString; var Offset: Integer; Pos: PDocPos = nil); override;
     function Compile: Boolean; virtual;
     procedure CheckAfterCompile; virtual;
 
-    function getDeclaration(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; override;
-    function hasDeclaration(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean; override;
-    function getDeclarationNoWith(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
-    function getDeclarationNoWith(Name: lpString; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
+    function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; override;
+    function hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean; override;
+    function getDeclarationNoWith(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
+    function getDeclarationNoWith(AName: lpString; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
     function getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
     function getExpression(AName: lpString; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
 
@@ -292,9 +293,9 @@ end;
 procedure TLapeCompiler.setImporting(Import: Boolean);
 begin
   if Import then
-    StartImporting
+    StartImporting()
   else
-    EndImporting;
+    EndImporting();
 end;
 
 procedure TLapeCompiler.setBaseDefines(Defines: TStringList);
@@ -2283,7 +2284,7 @@ begin
   Dispose(PCompilerState(State));
 end;
 
-function TLapeCompiler.getTempTokenizerState(const ATokenizer: TLapeTokenizerBase): Pointer;
+function TLapeCompiler.getTempTokenizerState(const ATokenizer: TLapeTokenizerBase; FirstStackInfo: Boolean = True): Pointer;
 begin
   if (not hasTokenizer()) then
     SetLength(FTokenizers, 1);
@@ -2305,15 +2306,16 @@ begin
   FTokenizer := 0;
   FTokenizers[0] := ATokenizer;
 
-  while (FStackInfo <> nil) and (FStackInfo.Owner <> nil) do
-    FStackInfo := FStackInfo.Owner;
+  if FirstStackInfo then
+    while (FStackInfo <> nil) and (FStackInfo.Owner <> nil) do
+      FStackInfo := FStackInfo.Owner;
   if (FStackInfo = nil) then
     FStackInfo := EmptyStackInfo;
 end;
 
-function TLapeCompiler.getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''): Pointer;
+function TLapeCompiler.getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''; FirstStackInfo: Boolean = True): Pointer;
 begin
-  Result := getTempTokenizerState(TLapeTokenizerString.Create(AStr, AFileName));
+  Result := getTempTokenizerState(TLapeTokenizerString.Create(AStr, AFileName), FirstStackInfo);
 end;
 
 procedure TLapeCompiler.resetTokenizerState(const State: Pointer; DoFreeState: Boolean = True);
@@ -2397,6 +2399,32 @@ begin
   end;
 end;
 
+procedure TLapeCompiler.EmitCode(ACode: lpString; var Offset: Integer; Pos: PDocPos = nil);
+var
+  OldState: Pointer;
+  FileName: lpString;
+begin
+  if hasTokenizer() then
+    FileName := Tokenizer.FileName
+  else
+    FileName := '!emit';
+
+  OldState := getTempTokenizerState(ACode, FileName, False);
+  if (Pos <> nil) then
+    Tokenizer.NullPos := Pos^;
+
+  try
+    with ParseStatementList() do
+    try
+      Compile(Offset);
+    finally
+      Free();
+    end;
+  finally
+    resetTokenizerState(OldState);
+  end;
+end;
+
 function TLapeCompiler.Compile: Boolean;
 begin
   Result := False;
@@ -2428,38 +2456,45 @@ begin
     LapeException(lpeConditionalNotClosed, popConditional());
 end;
 
-function TLapeCompiler.getDeclaration(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;
+function TLapeCompiler.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;
 begin
   Result := inherited;
   if (Result = nil) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
-    Result := inherited getDeclaration(Name, nil, Localonly);
+    Result := inherited getDeclaration(AName, nil, Localonly);
 end;
 
-function TLapeCompiler.hasDeclaration(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean;
+function TLapeCompiler.hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean;
 begin
   Result := inherited;
   if (not Result) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
-    Result := inherited hasDeclaration(Name, nil, Localonly);
+    Result := inherited hasDeclaration(AName, nil, Localonly);
 end;
 
-function TLapeCompiler.getDeclarationNoWith(Name: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;
+function TLapeCompiler.getDeclarationNoWith(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;
 begin
-  Result := getDeclaration(Name, AStackInfo, LocalOnly);
+  Result := getDeclaration(AName, AStackInfo, LocalOnly);
   if (Result is TLapeWithDeclaration) then
-    with TLapeWithDeclaration(Result).WithDeclRec do
+    with TLapeWithDeclaration(Result), WithDeclRec do
       try
-        if (WithVar <> nil) and (WithVar^ <> nil) and (WithVar^ is TLapeGlobalVar) and TLapeGlobalVar(WithVar^).isConstant then
-          Result := WithVar^ as TLapeGlobalVar
+        if (not ((WithVar <> nil) and (WithVar^ <> nil) and (WithVar^ is TLapeGlobalVar) and TLapeGlobalVar(WithVar^).isConstant)) then
+          Result := nil
         else
-          Result := nil;
+          with TLapeTree_Operator.Create(op_Dot, Self) do
+          try
+            Left := TLapeTree_WithVar.Create(WithDeclRec, Self);
+            Right := TLapeTree_Field.Create(AName, Self);
+            Result := Evaluate();
+          finally
+            Free();
+          end;
       finally
         Free();
       end;
 end;
 
-function TLapeCompiler.getDeclarationNoWith(Name: lpString; LocalOnly: Boolean = False): TLapeDeclaration;
+function TLapeCompiler.getDeclarationNoWith(AName: lpString; LocalOnly: Boolean = False): TLapeDeclaration;
 begin
-  Result := getDeclarationNoWith(Name, FStackInfo, LocalOnly);
+  Result := getDeclarationNoWith(AName, FStackInfo, LocalOnly);
 end;
 
 function TLapeCompiler.getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase;

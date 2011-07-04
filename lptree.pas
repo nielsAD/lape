@@ -3521,7 +3521,6 @@ begin
         LapeException(lpeInvalidCondition, FWithList[i].DocPos);
 
       FVarList[i] := ResVarList[i].VarPos.StackVar;
-      FVarList[i].isConstant := FWithList[i].isConstant();
     end;
 
   if (FBody <> nil) then

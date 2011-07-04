@@ -155,6 +155,8 @@ type
     procedure setPos(APos: Integer); virtual;
     function getDocPos: TDocPos; override;
   public
+    NullPos: TDocPos;
+
     constructor Create(AFileName: lpString = ''); reintroduce; virtual;
     procedure Reset(ClearDoc: Boolean = False); virtual;
     function getState: Pointer; virtual;
@@ -963,12 +965,15 @@ end;
 
 function TLapeTokenizerBase.getDocPos: TDocPos;
 begin
-  Result.Line := FDocPos.Line;
+  Result.Line := FDocPos.Line + NullPos.Line;
   if (FDocPos.Col > FTokStart) then
     Result.Col := 0
   else
-    Result.Col := FTokStart - FDocPos.Col + 1;
-  Result.FileName := FFileName;
+    Result.Col := FTokStart - FDocPos.Col + NullPos.Col;
+  if (FFileName <> '') then
+    Result.FileName := FFileName
+  else
+    Result.FileName := NullPos.FileName;
 end;
 
 constructor TLapeTokenizerBase.Create(AFileName: lpString = '');
@@ -978,6 +983,13 @@ begin
   FFileName := AFileName;
   FOnParseDirective := nil;
   FOnHandleDirective := nil;
+
+  NullPos := NullDocPos;
+  with NullPos do
+  begin
+    Line := 1;
+    Col := 1;
+  end;
 
   Reset();
 end;
@@ -989,14 +1001,9 @@ begin
   FTokStart := 0;
   FPos := -1;
   FInPeek := False;
+  FDocPos := NullDocPos;
   if ClearDoc then
     FLen := 0;
-
-  with FDocPos do
-  begin
-    Line := 1;
-    Col := 0;
-  end;
 end;
 
 function TLapeTokenizerBase.getState: Pointer;
