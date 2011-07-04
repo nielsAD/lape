@@ -2188,6 +2188,7 @@ begin
   FInternalMethodMap['Low'] := TLapeTree_InternalMethod_Low;
   FInternalMethodMap['High'] := TLapeTree_InternalMethod_High;
   FInternalMethodMap['Length'] := TLapeTree_InternalMethod_Length;
+  FInternalMethodMap['SetLength'] := TLapeTree_InternalMethod_SetLength;
   FInternalMethodMap['Succ'] := TLapeTree_InternalMethod_Succ;
   FInternalMethodMap['Pred'] := TLapeTree_InternalMethod_Pred;
   FInternalMethodMap['Inc'] := TLapeTree_InternalMethod_Inc;
@@ -2200,7 +2201,7 @@ begin
   addGlobalFunc([getBaseType(ltPointer)], [lptNormal], [TLapeGlobalVar(nil)], @_LapeFreeMem, 'FreeMem').isConstant := True;
   addGlobalFunc([getBaseType(ltPointer), getBaseType(ltInt32)], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeFreeMemSize, 'FreeMemSize').isConstant := True;
   addGlobalFunc([getBaseType(ltPointer), getBaseType(ltInt32)], [lptVar,    lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeReallocMem, 'ReallocMem').isConstant := True;
-  addGlobalFunc([TLapeType(nil), getBaseType(ltInt32), getBaseType(ltUInt8)], [lptVar, lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeFillMem, 'FillMem').isConstant := True;
+  addGlobalFunc([TLapeType(nil), getBaseType(ltInt32), getBaseType(ltUInt8)], [lptVar, lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), getConstant(0, ltUInt8, False, True)], @_LapeFillMem, 'FillMem').isConstant := True;
   addGlobalFunc([TLapeType(nil), TLapeType(nil),       getBaseType(ltInt32)], [lptVar, lptVar,    lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeMove, 'Move').isConstant := True;
 
   addGlobalFunc([TLapeType(nil), TLapeType(nil), getBaseType(ltInt32)], [lptVar, lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeMove, '!move').isConstant := True;

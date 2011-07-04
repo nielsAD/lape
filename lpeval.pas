@@ -152,6 +152,8 @@ var
     '    if DoFree then'                                                                 + LineEnding +
     '      Exit;'                                                                        + LineEnding +
     '    p := GetMem(NewSize);'                                                          + LineEnding +
+    '    FillMem(p^, NewSize, 0);'                                                       + LineEnding +
+    ''                                                                                   + LineEnding +
     '    PtrInt(p^) := 1;'                                                               + LineEnding +
     '    Inc(p, SizeOf(PtrInt));'                                                        + LineEnding +
     '    SizeInt(p^) := NewLen' {$IFDEF FPC}+'-1'{$ENDIF}+';'                            + LineEnding +
@@ -182,6 +184,9 @@ var
     '    Inc(p, SizeOf(PtrInt));'                                                        + LineEnding +
     '    SizeInt(p^) := NewLen' {$IFDEF FPC}+'-1'{$ENDIF}+';'                            + LineEnding +
     '    Inc(p, SizeOf(SizeInt));'                                                       + LineEnding +
+    ''                                                                                   + LineEnding +
+    '    if (NewLen > OldLen) then'                                                      + LineEnding +
+    '      FillMem(p[OldLen * ElSize]^, (NewLen - OldLen) * ElSize);'                    + LineEnding +
     '  end'                                                                              + LineEnding +
     '  else'                                                                             + LineEnding +
     '  begin'                                                                            + LineEnding +
