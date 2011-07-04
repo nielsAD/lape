@@ -2316,9 +2316,9 @@ begin
     getDestVar(FDest, Result, op_Unknown, FCompiler);
 
     case Param.VarType.BaseType of
-      ltAnsiString: FCompiler.Emitter._InvokeImportedFunc(getResVar(FCompiler.getDeclaration('!astrlen') as TLapeVar), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      ltWideString: FCompiler.Emitter._InvokeImportedFunc(getResVar(FCompiler.getDeclaration('!wstrlen') as TLapeVar), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      ltUnicodeString: FCompiler.Emitter._InvokeImportedFunc(getResVar(FCompiler.getDeclaration('!ustrlen') as TLapeVar), Result, SizeOf(Pointer), Offset, @Self._DocPos);
+      ltAnsiString: FCompiler.Emitter._InvokeImportedFunc(getResVar(FCompiler.getDeclaration('!astr_getlen') as TLapeVar), Result, SizeOf(Pointer), Offset, @Self._DocPos);
+      ltWideString: FCompiler.Emitter._InvokeImportedFunc(getResVar(FCompiler.getDeclaration('!wstr_getlen') as TLapeVar), Result, SizeOf(Pointer), Offset, @Self._DocPos);
+      ltUnicodeString: FCompiler.Emitter._InvokeImportedFunc(getResVar(FCompiler.getDeclaration('!ustr_getlen') as TLapeVar), Result, SizeOf(Pointer), Offset, @Self._DocPos);
       else FCompiler.Emitter._InvokeImportedFunc(getResVar(FCompiler.getDeclaration('!length') as TLapeVar), Result, SizeOf(Pointer), Offset, @Self._DocPos);
     end;
   end;
@@ -2347,14 +2347,23 @@ begin
 
   tmpType := Param.VarType;
   ArrayType := TLapeType_DynArray(Param.VarType).PType;
-  Param.VarType := FCompiler.getBaseType(ltPointer);
 
   if (not getTempVar(FParams[1], Offset, Len, 3)) or (ArrayType = nil) or
      (Len.VarType = nil) or (not (Len.VarType.BaseType in LapeIntegerTypes))
   then
     LapeException(lpeInvalidEvaluation, DocPos);
 
-  _ArraySetLength := FCompiler.getDeclaration('_ArraySetLength') as TLapeGlobalVar;
+  case Param.VarType.BaseType of
+    ltAnsiString:    _ArraySetLength := FCompiler.getDeclaration('!astr_setlen') as TLapeGlobalVar;
+    ltWideString:    _ArraySetLength := FCompiler.getDeclaration('!wstr_setlen') as TLapeGlobalVar;
+    ltUnicodeString: _ArraySetLength := FCompiler.getDeclaration('!ustr_setlen') as TLapeGlobalVar;
+    else
+    begin
+      _ArraySetLength := FCompiler.getDeclaration('_ArraySetLength') as TLapeGlobalVar;
+      Param.VarType := FCompiler.getBaseType(ltPointer);
+    end;
+  end;
+
   if (_ArraySetLength.VarType is TLapeType_OverloadedMethod) then
     _ArraySetLength := TLapeType_OverloadedMethod(_ArraySetLength.VarType).Methods.Items[0] as TLapeGlobalVar;
   Assert(_ArraySetLength <> nil);
@@ -2363,10 +2372,13 @@ begin
     with TLapeTree_Invoke.Create(TLapeTree_GlobalVar.Create(_ArraySetLength, FCompiler, @_DocPos), FCompiler, @_DocPos) do
     try
       addParam(TLapeTree_ResVar.Create(Param, FCompiler, @_DocPos));
-      addParam(TlapeTree_ResVar.Create(Len, FCompiler, @_DocPos));
-      addParam(TLapeTree_Integer.Create(ArrayType.Size, FCompiler, @_DocPos));
-      addParam(TLapeTree_GlobalVar.Create(FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar, FCompiler, @_DocPos));
-      addParam(TLapeTree_GlobalVar.Create(FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar, FCompiler, @_DocPos));
+      addParam(TLapeTree_ResVar.Create(Len, FCompiler, @_DocPos));
+      if (not (Param.VarType.BaseType in LapeStringTypes)) then
+      begin
+        addParam(TLapeTree_Integer.Create(ArrayType.Size, FCompiler, @_DocPos));
+        addParam(TLapeTree_GlobalVar.Create(FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar, FCompiler, @_DocPos));
+        addParam(TLapeTree_GlobalVar.Create(FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar, FCompiler, @_DocPos));
+      end;
       Compile(Offset);
     finally
       Free();

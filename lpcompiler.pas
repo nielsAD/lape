@@ -1362,7 +1362,7 @@ begin
       Expect(tk_sym_Equals, True, False);
 
       Typ := ParseType(TypeForwards);
-      if (Typ.DeclarationList <> nil) and (not TypeForwards.ExistsItem(Typ)) then
+      if ((Typ.DeclarationList <> nil) or (Typ.Name <> '')) and (not TypeForwards.ExistsItem(Typ)) then
         Typ := Typ.CreateCopy();
       Typ.Name := Name;
       addLocalDecl(Typ);
@@ -2207,10 +2207,13 @@ begin
   addGlobalFunc([TLapeType(nil), TLapeType(nil), getBaseType(ltInt32)], [lptVar, lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeMove, '!move').isConstant := True;
   addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeHigh, '!high').isConstant := True;
   addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeLength, '!length').isConstant := True;
-  addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeAStrLen, '!astrlen').isConstant := True;
-  addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeWStrLen, '!wstrlen').isConstant := True;
-  addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeUStrLen, '!ustrlen').isConstant := True;
 
+  addGlobalFunc([getBaseType(ltAnsiString)],    [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeAStr_GetLen, '!astr_getlen').isConstant := True;
+  addGlobalFunc([getBaseType(ltWideString)],    [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeWStr_GetLen, '!wstr_getlen').isConstant := True;
+  addGlobalFunc([getBaseType(ltUnicodeString)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeUStr_GetLen, '!ustr_getlen').isConstant := True;
+  addGlobalFunc([getBaseType(ltAnsiString),    getBaseType(ltInt32)], [lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeAStr_SetLen, '!astr_setlen').isConstant := True;
+  addGlobalFunc([getBaseType(ltWideString),    getBaseType(ltInt32)], [lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeWStr_SetLen, '!wstr_setlen').isConstant := True;
+  addGlobalFunc([getBaseType(ltUnicodeString), getBaseType(ltInt32)], [lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeUStr_SetLen, '!ustr_setlen').isConstant := True;
   setTokenizer(ATokenizer);
   Reset();
 
@@ -2411,8 +2414,7 @@ begin
     FileName := '!emit';
 
   OldState := getTempTokenizerState(ACode, FileName, False);
-  if (Pos <> nil) then
-    Tokenizer.NullPos := Pos^;
+  Tokenizer.OverridePos := Pos;
 
   try
     with ParseStatementList() do

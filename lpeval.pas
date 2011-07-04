@@ -34,9 +34,12 @@ procedure _LapeMove(const Params: PParamArray);
 
 procedure _LapeHigh(const Params: PParamArray; const Result: Pointer);
 procedure _LapeLength(const Params: PParamArray; const Result: Pointer);
-procedure _LapeAStrLen(const Params: PParamArray; const Result: Pointer);
-procedure _LapeWStrLen(const Params: PParamArray; const Result: Pointer);
-procedure _LapeUStrLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeAStr_SetLen(const Params: PParamArray);
+procedure _LapeWStr_SetLen(const Params: PParamArray);
+procedure _LapeUStr_SetLen(const Params: PParamArray);
 
 procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer);
 procedure _LapeToString_Int8(const Params: PParamArray; const Result: Pointer);
@@ -266,19 +269,34 @@ begin
   PInt32(Result)^ := Length(PCodeArray(Params^[0])^);
 end;
 
-procedure _LapeAStrLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer);
 begin
   PInt32(Result)^ := Length(PAnsiString(Params^[0])^);
 end;
 
-procedure _LapeWStrLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer);
 begin
   PInt32(Result)^ := Length(PWideString(Params^[0])^);
 end;
 
-procedure _LapeUStrLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer);
 begin
   PInt32(Result)^ := Length(PUnicodeString(Params^[0])^);
+end;
+
+procedure _LapeAStr_SetLen(const Params: PParamArray);
+begin
+  SetLength(PAnsiString(Params^[0])^, PInt32(Params^[1])^);
+end;
+
+procedure _LapeWStr_SetLen(const Params: PParamArray);
+begin
+  SetLength(PWideString(Params^[0])^, PInt32(Params^[1])^);
+end;
+
+procedure _LapeUStr_SetLen(const Params: PParamArray);
+begin
+  SetLength(PUnicodeString(Params^[0])^, PInt32(Params^[1])^);
 end;
 
 procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer);

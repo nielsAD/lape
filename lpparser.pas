@@ -155,6 +155,7 @@ type
     procedure setPos(APos: Integer); virtual;
     function getDocPos: TDocPos; override;
   public
+    OverridePos: PDocPos;
     NullPos: TDocPos;
 
     constructor Create(AFileName: lpString = ''); reintroduce; virtual;
@@ -965,6 +966,9 @@ end;
 
 function TLapeTokenizerBase.getDocPos: TDocPos;
 begin
+  if (OverridePos <> nil) then
+    Exit(OverridePos^);
+
   Result.Line := FDocPos.Line + NullPos.Line;
   if (FDocPos.Col > FTokStart) then
     Result.Col := 0
@@ -984,6 +988,7 @@ begin
   FOnParseDirective := nil;
   FOnHandleDirective := nil;
 
+  OverridePos := nil;
   NullPos := NullDocPos;
   with NullPos do
   begin
