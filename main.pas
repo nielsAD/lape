@@ -75,11 +75,13 @@ end;
 procedure MyWrite(Params: PParamArray);
 begin
   Form1.d.Text := Form1.d.Text + PlpString(Params^[0])^;
+  Write(PlpString(Params^[0])^);
 end;
 
 procedure MyWriteLn(Params: PParamArray);
 begin
   Form1.d.Text := Form1.d.Text + LineEnding;
+  WriteLn();
 end;
 
 procedure MyRandom(const Params: PParamArray; const Result: Pointer);
@@ -193,8 +195,8 @@ begin
     Compiler.addGlobalVar(Compiler.getPointerType(Compiler.getPointerType(ltInt32)).NewGlobalVar(@dp, 'dp'));
     Compiler.addGlobalVar('abc', 's');
     Compiler.addGlobalVar('cde', 't');
-    Compiler.addGlobalVar(ttpa.NewGlobalVarP(@tpa), 'tpa');
-    Compiler.addGlobalVar(t2dpa.NewGlobalVar(@atpa[0]), 'atpa');
+    Compiler.addGlobalVar(ttpa.NewGlobalVarP(@tpa), 'tpa').isConstant := True;
+    Compiler.addGlobalVar(t2dpa.NewGlobalVarP(@atpa), 'atpa');
     Compiler.addGlobalVar(rec.NewGlobalVarP(@q), 'q');
     Compiler.addGlobalVar(Compiler.getPointerType(rec).NewGlobalVar(@q, 'qp'));
     Compiler.addGlobalVar(Compiler.getPointerType(ttpa).NewGlobalVar(@tpa, 'tpap'));

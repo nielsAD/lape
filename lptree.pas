@@ -2364,7 +2364,7 @@ begin
     end;
   end;
 
-  if (_ArraySetLength.VarType is TLapeType_OverloadedMethod) then
+  if (_ArraySetLength <> nil) and (_ArraySetLength.VarType is TLapeType_OverloadedMethod) then
     _ArraySetLength := TLapeType_OverloadedMethod(_ArraySetLength.VarType).Methods.Items[0] as TLapeGlobalVar;
   Assert(_ArraySetLength <> nil);
 
@@ -2400,7 +2400,7 @@ begin
           Left := TLapeTree_ResVar.Create(Len, FCompiler, @_DocPos);
           Right := TLapeTree_Integer.Create(1, FCompiler, @_DocPos);
         end;
-        Body := TSetLength(Self.ClassType).Create(FIdent, FCompiler, @_DocPos);
+        Body := TSetLength(Self.ClassType).Create(FCompiler, @_DocPos);
         with TLapeTree_InternalMethod_SetLength(Body) do
           for i := 0 to Self.FParams.Count - 1 do
             if (i = 0) then

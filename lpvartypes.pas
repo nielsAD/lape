@@ -394,10 +394,12 @@ type
     function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
     function VarHi(AVar: Pointer = nil): TLapeGlobalVar; override;
 
+    procedure VarSetLength(var AVar: Pointer; ALen: Integer); overload; virtual;
+    procedure VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
+
     function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
-    procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); override;
   end;
 
   TLapeType_StaticArray = class(TLapeType_DynArray)
@@ -2488,9 +2490,9 @@ begin
       Right.FVarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
 
     if HasType() then
-      TypeSize := FCompiler.getBaseType(ltInt32).NewGlobalVarStr(IntToStr(FPType.Size))
+      TypeSize := FCompiler.getConstant(FPType.Size)
     else
-      TypeSize := FCompiler.getBaseType(ltInt32).NewGlobalVarStr('1');
+      TypeSize := FCompiler.getConstant(1);
     IndexVar := nil;
     try
       if (TypeSize <> nil) and (TypeSize.AsInteger > 1) then
@@ -2508,7 +2510,6 @@ begin
     finally
       if (IndexVar <> nil) and (IndexVar <> Right) then
         IndexVar.Free();
-      TypeSize.Free();
       Right.FVarType := tmpType;
     end;
   end
@@ -2584,6 +2585,14 @@ begin
   FBaseType := ltDynArray;
 end;
 
+function TLapeType_DynArray.CreateCopy: TLapeType;
+type
+  TLapeClassType = class of TLapeType_DynArray;
+begin
+  Result := TLapeClassType(Self.ClassType).Create(FPType, FCompiler, Name, @_DocPos);
+  Result.FBaseType := FBaseType;
+end;
+
 function TLapeType_DynArray.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
   Index: Integer;
@@ -2648,18 +2657,122 @@ begin
     Result := FCompiler.getConstant(High(PCodeArray(AVar)^));
 end;
 
-function TLapeType_DynArray.CreateCopy: TLapeType;
-type
-  TLapeClassType = class of TLapeType_DynArray;
+procedure TLapeType_DynArray.VarSetLength(var AVar: Pointer; ALen: Integer);
+var
+  i, OldLen, NewSize: SizeInt;
+  NewP: Pointer;
+  DoFree: Boolean;
+  tmpLeft, tmpRight: TLapeGlobalVar;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FPType, FCompiler, Name, @_DocPos);
-  Result.FBaseType := FBaseType;
+  if (not (BaseType in LapeArrayTypes - [ltStaticArray, ltShortString])) then
+    LapeException(lpeInvalidEvaluation);
+  if (not HasType()) then
+    Exit;
+
+  if (BaseType in LapeStringTypes) then
+  begin
+    case BaseType of
+      ltAnsiString:    SetLength(AnsiString(AVar), ALen);
+      ltWideString:    SetLength(WideString(AVar), ALen);
+      ltUnicodeString: SetLength(UnicodeString(AVar), ALen);
+      else LapeException(lpeImpossible);
+    end;
+    Exit;
+  end;
+
+  NewSize := ALen * PType.Size;
+  DoFree := NewSize <= 0;
+  Inc(NewSize, SizeOf(PtrInt) + SizeOf(SizeInt));
+
+  if (AVar = nil) then
+  begin
+    if DoFree then
+      Exit;
+    GetMem(AVar, NewSize);
+    FillChar(AVar^, NewSize, 0);
+
+    PtrInt(AVar^) := 1;
+    Inc(PtrUInt(AVar), SizeOf(PtrInt));
+    SizeInt(AVar^) := ALen {$IFDEF FPC}-1{$ENDIF};
+    Inc(PtrUInt(AVar), SizeOf(SizeInt));
+    Exit;
+  end;
+
+  Dec(PtrUInt(AVar), SizeOf(SizeInt));
+  OldLen := SizeInt(AVar^) {$IFDEF FPC}+1{$ENDIF};
+  Dec(PtrUInt(AVar), SizeOf(PtrInt));
+
+  if (PtrInt(AVar^) <= 1) then
+  begin
+    if (ALen = OldLen) then
+      Exit;
+    if (ALen < OldLen) and PType.NeedFinalization then
+      for i := ALen to OldLen - 1 do
+      begin
+        tmpLeft := PType.NewGlobalVarP(Pointer(PtrInt(AVar) + (i * PType.Size)));
+        try
+          PType.Finalize(tmpLeft);
+        finally
+          tmpLeft.Free();
+        end;
+      end;
+
+    if DoFree then
+    begin
+      FreeMem(AVar);
+      AVar := nil;
+      Exit;
+    end;
+    ReallocMem(AVar, NewSize);
+    PtrInt(AVar^) := 1;
+    Inc(PtrUInt(AVar), SizeOf(PtrInt));
+    SizeInt(AVar^) := ALen {$IFDEF FPC}-1{$ENDIF};
+    Inc(PtrUInt(AVar), SizeOf(SizeInt));
+
+    if (ALen > OldLen) then
+      FillChar(Pointer(PtrInt(AVar) + (OldLen * PType.Size))^, (ALen - OldLen) * PType.Size, 0);
+  end
+  else
+  begin
+    Dec(PtrInt(AVar^));
+    NewP := nil;
+    VarSetLength(NewP, ALen);
+
+    i := OldLen;
+    if (ALen < OldLen) then
+      i := ALen;
+    if (i >= 0) then
+    begin
+      Inc(PtrUInt(AVar), SizeOf(PtrInt) + SizeOf(SizeInt));
+      for i := i - 1 downto 0 do
+      begin
+        tmpLeft := PType.NewGlobalVarP(Pointer(PtrInt(NewP) + (i * PType.Size)));
+        tmpRight := PType.NewGlobalVarP(Pointer(PtrInt(AVar) + (i * PType.Size)));
+        try
+          PType.EvalConst(op_Assign, tmpLeft, tmpRight);
+        finally
+          tmpLeft.Free();
+          tmpRight.Free();
+        end;
+      end;
+    end;
+
+    AVar := NewP;
+  end;
+end;
+
+procedure TLapeType_DynArray.VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil);
+begin
+  Assert(FCompiler <> nil);
+  FCompiler.EmitCode('SetLength(AVar, ALen);', ['AVar', 'ALen'], [TLapeVar(nil), TLapeVar(nil)], [AVar, ALen], Offset, Pos);
 end;
 
 function TLapeType_DynArray.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
 begin
   if (op = op_Index) then
     Result := FPType
+  else if (op = op_Assign) and HasType() and (Right <> nil) and (Right is ClassType) and FPType.Equals(TLapeType_DynArray(Right).FPType) then
+    Result := Self
   else
     Result := inherited;
 end;
@@ -2688,6 +2801,17 @@ begin
         IndexVar.Free();
       FBaseType := tmpType;
     end;
+  end
+  else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and (Left <> nil) and (Right <> nil) and (Right.VarType is ClassType) and FPType.Equals(TLapeType_DynArray(Right.VarType).FPType) then
+  begin
+    Assert(HasType());
+    if (PPointer(Left.Ptr)^ = PPointer(Right.Ptr)^) then
+      Exit(Left);
+
+    VarSetLength(PPointer(Left.Ptr)^, 0);
+    Result := inherited;
+    if (Result <> nil) and (Result.Ptr <> nil) and (PPointer(Result.Ptr)^ <> nil) then
+      Inc(PtrInt(Pointer(PtrInt(Result.Ptr^) - SizeOf(SizeInt) - SizeOf(PtrInt))^));
   end
   else
     Result := inherited;
@@ -2728,19 +2852,21 @@ begin
   finally
     FBaseType := tmpType;
   end
+  else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and (Right.VarType is ClassType) and FPType.Equals(TLapeType_DynArray(Right.VarType).FPType) then
+  begin
+    FCompiler.EmitCode(
+      'if (Pointer(Left) <> Pointer(Right)) then begin'                               +
+      '  SetLength(Left, 0);'                                                         +
+      '  Pointer(Left) := Pointer(Right);'                                            +
+      '  if (Pointer(Left) <> nil) then'                                              +
+      '    Inc(PtrInt(Pointer(Left)[-'                                                +
+             IntToStr(SizeOf(SizeInt)+SizeOf(PtrInt))                                 +
+           ']^));'                                                                    +
+      'end;'
+    , ['Left', 'Right'], [], [Left, Right], Offset, Pos);
+  end
   else
     Result := inherited;
-end;
-
-procedure TLapeType_DynArray.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
-begin
-  Assert(AVar.VarType = Self);
-  if (FBaseType in LapeStringTypes) then
-  begin
-    inherited;
-    Exit;
-  end else if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) or (not NeedFinalization) then
-    Exit;
 end;
 
 function TLapeType_StaticArray.getSize: Integer;
@@ -2880,8 +3006,9 @@ begin
       Right.FVarType := tmpType;
     end;
   end
-  else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and (Right <> nil) and (Right.VarType <> nil) and CompatibleWith(Right.VarType) then
+  else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and (Left <> nil) and (Right <> nil) and (Right.VarType <> nil) and CompatibleWith(Right.VarType) then
   begin
+    Assert(HasType());
     LeftVar := nil;
     RightVar := nil;
 
@@ -3016,6 +3143,7 @@ begin
     end
     else
     begin
+      Assert(HasType());
       if (Left.VarPos.MemPos = mpStack) and (not Left.VarPos.ForceVariable) then
       begin
         FCompiler.Emitter._GrowStack(Size, Offset, Pos);
@@ -3131,7 +3259,7 @@ end;
 function TLapeType_String.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
 var
   tmpType: TLapeType;
-  One, IndexVar: TLapeGlobalVar;
+  IndexVar: TLapeGlobalVar;
 begin
   Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType is TLapeType_Pointer));
@@ -3151,8 +3279,7 @@ begin
 
     IndexVar := nil;
     try
-      One := FCompiler.getBaseType(ltUInt8).NewGlobalVarStr('1');
-      IndexVar := Right.VarType.EvalConst(op_Minus, Right, One);
+      IndexVar := Right.VarType.EvalConst(op_Minus, Right, FCompiler.getConstant(1, ltUInt8, False, True));
       Result := //Result := Pointer[Index - 1]^
         inherited EvalConst(
           Op,
@@ -3160,8 +3287,6 @@ begin
           IndexVar
         );
     finally
-      if (One <> nil) then
-        One.Free();
       if (IndexVar <> nil) then
         IndexVar.Free();
       Right.FVarType := tmpType;
