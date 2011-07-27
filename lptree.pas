@@ -48,6 +48,7 @@ type
   protected
     FParent: TLapeTree_Base;
     FCompiler: TLapeCompilerBase;
+    FCompilerOptions: ECompilerOptionsSet;
 
     function getDocPos: TDocPos; override;
     procedure setParent(Parent: TLapeTree_Base); virtual;
@@ -765,10 +766,14 @@ begin
 
   FParent := nil;
   FCompiler := ACompiler;
+
   if (ADocPos <> nil) then
     _DocPos := ADocPos^
   else
     _DocPos := NullDocPos;
+
+  if (FCompiler <> nil) then
+    FCompilerOptions := FCompiler.Options;
 end;
 
 destructor TLapeTree_Base.Destroy;
@@ -2767,7 +2772,7 @@ function TLapeTree_Operator.isConstant: Boolean;
 begin
   Result := ((FLeft = nil) or (not (TLapeTree_Base(FLeft) is TLapeTree_If))) and (
     ((FLeft <> nil) and (FLeft is TLapeTree_GlobalVar) and (TLapeTree_GlobalVar(FLeft).GlobalVar.VarType <> nil) and (
-        ((FOperatorType = op_Dot)   and (TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.BaseType in [ltRecord, ltUnion])) or
+        ((FOperatorType = op_Dot)   and TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.CanHaveChild()) or
         ((FOperatorType = op_Index) and (TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.BaseType in [ltUnknown{overloaded method}, ltShortString, ltStaticArray]))
       ) and (FRight <> nil) and FRight.isConstant()) or
     ((FLeft = nil) or FLeft.isConstant()) and ((FRight = nil) or FRight.isConstant())

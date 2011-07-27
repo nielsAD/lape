@@ -30,6 +30,8 @@ type
     ocExpandVarAndInit,                                        //ExpandVarAndInit TStackOffset
     ocGrowVar,                                                 //GrowVar TStackOffset
     ocGrowVarAndInit,                                          //GrowVarAndInit TStackOffset
+    ocPopStackToVar,                                           //PopStackToVar TStackOffset TVarStackOffset
+    ocPopVarToStack,                                           //PopVarToStack TStackOffset TVarStackOffset
     ocPopVar,                                                  //PopVar TStackOffset
     ocJmpSafe,                                                 //JmpSafe TCodePos
     ocJmpSafeR,                                                //JmpSafeR TCodeOffset
@@ -56,6 +58,12 @@ type
   TCallRec = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
     CalledFrom: PByte;
     StackP, VarStackP: UInt32;
+  end;
+
+  POC_PopStackToVar = ^TOC_PopStackToVar;
+  TOC_PopStackToVar = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+    Size: TStackOffset;
+    VOffset: TVarStackOffset;
   end;
 
   POC_IncTry = ^TOC_IncTry;
@@ -282,6 +290,27 @@ var
     {$ENDIF}
     FillChar(VarStack[OldLen], GrowSize, 0);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
+  end;
+
+  procedure DoPopStackToVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
+    begin
+      Dec(StackPos, Size);
+      Move(Stack[StackPos], VarStack[VarStackPos + VOffset], Size);
+    end;
+    Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
+  end;
+
+  procedure DoPopVarToStack; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
+    begin
+      Move(VarStack[VarStackPos + VOffset], Stack[StackPos], Size);
+      FillChar(VarStack[VarStackPos + VOffset], Size, 0);
+      Inc(StackPos, Size);
+    end;
+    Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
   end;
 
   procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}

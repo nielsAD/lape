@@ -87,6 +87,10 @@ type
     function _GrowVar(Len: TStackOffset; Pos: PDocPos = nil): Integer; overload;
     function _GrowVarAndInit(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _GrowVarAndInit(Len: TStackOffset; Pos: PDocPos = nil): Integer; overload;
+    function _PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset; Pos: PDocPos = nil): Integer; overload;
+    function _PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset; Pos: PDocPos = nil): Integer; overload;
     function _PopVar(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _PopVar(Len: TStackOffset; Pos: PDocPos = nil): Integer; overload;
     function _JmpSafe(Target: TCodePos; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
@@ -401,6 +405,30 @@ begin
   _StackOffset(Len, Offset);
 end;
 
+function TLapeCodeEmitterBase._PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
+begin
+  Result := _op(ocPopStackToVar, Offset, Pos);
+  CheckOffset(Offset, SizeOf(TOC_PopStackToVar));
+  with POC_PopStackToVar(@FCode[Offset])^ do
+  begin
+    Size := ASize;
+    VOffset := VarStackOffset;
+  end;
+  Inc(Offset, SizeOf(TOC_PopStackToVar));
+end;
+
+function TLapeCodeEmitterBase._PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
+begin
+  Result := _op(ocPopVarToStack, Offset, Pos);
+  CheckOffset(Offset, SizeOf(TOC_PopStackToVar));
+  with POC_PopStackToVar(@FCode[Offset])^ do
+  begin
+    Size := ASize;
+    VOffset := VarStackOffset;
+  end;
+  Inc(Offset, SizeOf(TOC_PopStackToVar));
+end;
+
 function TLapeCodeEmitterBase._PopVar(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocPopVar, Offset, Pos);
@@ -483,7 +511,11 @@ function TLapeCodeEmitterBase._ExpandVarAndInit(Len: TStackOffset; Pos: PDocPos 
 function TLapeCodeEmitterBase._GrowVar(Len: TStackOffset; Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _ExpandVar(Len, o, Pos); end;
 function TLapeCodeEmitterBase._GrowVarAndInit(Len: TStackOffset; Pos: PDocPos = nil): Integer;
-  var o: Integer; begin o := -1; Result := _ExpandVarAndInit(Len, o, Pos); end;
+  var o: Integer; begin o := -1; Result := _GrowVarAndInit(Len, o, Pos); end;
+function TLapeCodeEmitterBase._PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset; Pos: PDocPos = nil): Integer;
+  var o: Integer; begin o := -1; Result := _PopStackToVar(ASize, VarStackOffset, o, Pos); end;
+function TLapeCodeEmitterBase._PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset; Pos: PDocPos = nil): Integer;
+  var o: Integer; begin o := -1; Result := _PopVarToStack(ASize, VarStackOffset, o, Pos); end;
 function TLapeCodeEmitterBase._PopVar(Len: TStackOffset; Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _PopVar(Len, o, Pos); end;
 function TLapeCodeEmitterBase._JmpSafe(Target: TCodePos; Pos: PDocPos = nil): Integer;

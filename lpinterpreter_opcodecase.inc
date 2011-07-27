@@ -18,6 +18,8 @@ case opCode(opCodeTypeP(Code)^) of
   ocExpandVarAndInit: DoExpandVarAndInit();
   ocGrowVar: DoGrowVar();
   ocGrowVarAndInit: DoGrowVarAndInit();
+  ocPopStackToVar: DoPopStackToVar();
+  ocPopVarToStack: DoPopVarToStack();
   ocPopVar: DoPopVar();
   ocJmpSafe: DoJmpSafe();
   ocJmpSafeR: DoJmpSafeR();
