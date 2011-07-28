@@ -601,6 +601,7 @@ type
     function HasChild(AName: lpString): Boolean; override;
 
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
+    function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
@@ -4297,6 +4298,13 @@ begin
       Result := FVarMap[PlpString(Right.Ptr)^].ResVar.VarType
   else
     Result := inherited;
+end;
+
+function TLapeType_VarRefMap.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
+begin
+  Result := inherited;
+  if Result and (op = op_Dot) then
+    Result := (FVarMap[PlpString(Right.Ptr)^].RefVar is TLapeGlobalVar);
 end;
 
 function TLapeType_VarRefMap.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
