@@ -1621,8 +1621,7 @@ end;
 
 procedure TLapeType.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
 var
-  EvalProc: TLapeEvalProc;
-  LeftVar, RightVar: TResVar;
+  EmptyVar, tmpVar: TResVar;
 
   function FullNil(p: Pointer; Size: Integer): Boolean;
   var
@@ -1652,25 +1651,23 @@ begin
   if (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) and FullNil(AVar.VarPos.GlobalVar.Ptr, Size) then
     Exit;
 
-  RightVar := NullResVar;
-  LeftVar := NullResVar;
-  LeftVar.VarType := Self;
-  LeftVar.VarPos.MemPos := mpMem;
+  tmpVar := NullResVar;
+  EmptyVar := NullResVar;
+  EmptyVar.VarType := Self;
+  EmptyVar.VarPos.MemPos := mpMem;
   if UseCompiler and (FCompiler <> nil) then
-    LeftVar.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(NewGlobalVarP()))
+    EmptyVar.VarPos.GlobalVar := FCompiler.addManagedVar(NewGlobalVarP()) as TLapeGlobalVar
   else
-    LeftVar.VarPos.GlobalVar := NewGlobalVarP();
+    EmptyVar.VarPos.GlobalVar := NewGlobalVarP();
 
   try
-    EvalProc := getEvalProc(op_Assign, FBaseType, FBaseType);
-    if ValidEvalFunction(EvalProc) then
-      if UseCompiler and (FCompiler <> nil) then
-        FCompiler.Emitter._Eval(EvalProc, AVar, LeftVar, RightVar, Offset, Pos)
-      else if (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) then
-        EvalProc(AVar.VarPos.GlobalVar.Ptr, LeftVar.VarPos.GlobalVar.Ptr, nil);
+    if UseCompiler and (FCompiler <> nil) then
+      Eval(op_Assign, tmpVar, AVar, EmptyVar, Offset, Pos)
+    else if (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) then
+      EvalConst(op_Assign, AVar.VarPos.GlobalVar, EmptyVar.VarPos.GlobalVar);
   finally
     if (not UseCompiler) or (FCompiler = nil) then
-      FreeAndNil(LeftVar.VarPos.GlobalVar);
+      FreeAndNil(EmptyVar.VarPos.GlobalVar);
   end;
 end;
 
@@ -2768,8 +2765,14 @@ begin
   if (PtrInt(AVar^) <= 1) then
   begin
     if (ALen = OldLen) then
+    begin
+      Inc(PtrUInt(AVar), SizeOf(SizeInt) + SizeOf(PtrInt));
       Exit;
+    end;
+
     if (ALen < OldLen) and PType.NeedFinalization then
+    begin
+      Inc(PtrUInt(AVar), SizeOf(SizeInt) + SizeOf(PtrInt));
       for i := ALen to OldLen - 1 do
       begin
         tmpLeft := PType.NewGlobalVarP(Pointer(PtrInt(AVar) + (i * PType.Size)));
@@ -2779,6 +2782,8 @@ begin
           tmpLeft.Free();
         end;
       end;
+      Dec(PtrUInt(AVar), SizeOf(SizeInt) + SizeOf(PtrInt));
+    end;
 
     if DoFree then
     begin

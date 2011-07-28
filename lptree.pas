@@ -425,6 +425,15 @@ type
     property Vars: TLapeVarDeclList read FVars;
   end;
 
+  TLapeTree_FinalizeVar = class(TLapeTree_Base)
+  protected
+    FVariable: TLapeVar;
+  public
+    constructor Create(AVar: TLapeVar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; virtual;
+    function Compile(var Offset: Integer): TResVar; override;
+    property Variable: TLapeVar read FVariable;
+  end;
+
   TLapeTree_With = class(TLapeTree_Base)
   protected
     FWithList: TLapeExpressionList;
@@ -2330,6 +2339,20 @@ begin
 end;
 
 function TLapeTree_InternalMethod_SetLength.Compile(var Offset: Integer): TResVar;
+
+  function GetMagicMethod(AName: lpString; AParams: array of TLapeType; AResult: TLapeType = nil): TResVar;
+  var
+    Method: TLapeGlobalVar;
+  begin
+    Method := FCompiler.getDeclaration(AName) as TLapeGlobalVar;
+    if (Method <> nil) and (Method.VarType is TLapeType_OverloadedMethod) then
+      Method := TLapeType_OverloadedMethod(Method.VarType).getMethod(getTypeArray(AParams), AResult);
+
+    if (Method = nil) then
+      Method := FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar;
+    Result := getResVar(Method);
+  end;
+
 type
   TSetLength = class of TLapeTree_InternalMethod_SetLength;
 var
@@ -2381,7 +2404,7 @@ begin
       if (not (Param.VarType.BaseType in LapeStringTypes)) then
       begin
         addParam(TLapeTree_Integer.Create(ArrayType.Size, FCompiler, @_DocPos));
-        addParam(TLapeTree_GlobalVar.Create(FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar, FCompiler, @_DocPos));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethod('_Dispose', [ArrayType]), FCompiler, @_DocPos));
         addParam(TLapeTree_GlobalVar.Create(FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar, FCompiler, @_DocPos));
       end;
       Result := Compile(Offset);
@@ -3527,6 +3550,19 @@ begin
       end
     else
       Inc(i);
+end;
+
+constructor TLapeTree_FinalizeVar.Create(AVar: TLapeVar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited Create(ACompiler, ADocPos);
+  FVariable := AVar;
+end;
+
+function TLapeTree_FinalizeVar.Compile(var Offset: Integer): TResVar;
+begin
+  Result := NullResVar;
+  if (FVariable <> nil) and (FVariable.VarType <> nil) then
+    FVariable.VarType.Finalize(FVariable, Offset, True, @_DocPos);
 end;
 
 procedure TLapeTree_With.setBody(Node: TLapeTree_Base);

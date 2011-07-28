@@ -86,6 +86,8 @@ type
     procedure pushConditional(AEval: Boolean; ADocPos: TDocPos); virtual;
     function popConditional: TDocPos; virtual;
 
+    function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     procedure InitBaseDefinitions; virtual;
 
@@ -370,17 +372,60 @@ begin
     LapeException(lpeLostConditional, Tokenizer.DocPos);
 end;
 
+procedure GetMethod_FixupParams(var Sender: TLapeType_OverloadedMethod; var AType: TLapeType_Method; var AParams: TLapeTypeArray; var AResult: TLapeType);
+var
+  i: Integer;
+begin
+  if (Sender <> nil) and (AType <> nil) and (AType.Params.Count > 0) then
+  begin
+    SetLength(AParams, AType.Params.Count);
+    for i := 0 to AType.Params.Count - 1 do
+      AParams[i] := AType.Params[i].VarType;
+    AResult := AType.Res;
+  end;
+end;
+
+function TLapeCompiler.GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  Method := nil;
+  GetMethod_FixupParams(Sender, AType, AParams, AResult);
+  if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or (not AParams[0].NeedFinalization) or (AResult <> nil) then
+    Exit;
+
+  if (AType = nil) then
+    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptVar], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+
+  IncStackInfo();
+  try
+    Result := AType.NewGlobalVar(EndJump);
+    Sender.addMethod(Result);
+
+    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
+    Method.Statements := TLapeTree_StatementList.Create(Self);
+    Method.Statements.addStatement(TLapeTree_FinalizeVar.Create(FStackInfo.addVar(lptVar, AParams[0]), Self));
+    addDelayedExpression(Method);
+  finally
+    DecStackInfo(True, False, Method = nil);
+  end;
+end;
+
+function TLapeCompiler.GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+begin
+  Result := nil;
+  GetMethod_FixupParams(Sender, AType, AParams, AResult);
+  if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or (AResult <> nil) then
+    Exit;
+end;
+
 function TLapeCompiler.GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Body: lpString;
 begin
   Result := nil;
-  if (Sender <> nil) and (AType <> nil) and (AType.Params.Count = 1) and (AType.Params[0].VarType <> nil) then
-  begin
-    SetLength(AParams, 1);
-    AParams[0] := AType.Params[0].VarType;
-    AResult := AType.Res;
-  end;
+  GetMethod_FixupParams(Sender, AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or ((AResult <> nil) and (AResult.BaseType <> ltString)) then
     Exit;
 
@@ -398,16 +443,20 @@ begin
 end;
 
 procedure TLapeCompiler.InitBaseDefinitions;
+  function NewMagicMethod(GetMethod: TLapeGetOverloadedMethod; NeedFullMatch: Boolean = True): TLapeType_OverloadedMethod;
+  begin
+    Result := TLapeType_OverloadedMethod.Create(Self, nil);
+    Result.OnFunctionNotFound := GetMethod;
+    Result.NeedFullMatch := NeedFullMatch;
+    addManagedDecl(Result);
+  end;
+
   procedure addToString;
   var
     OLMethod: TLapeType_OverloadedMethod;
     BaseType: ELapeBaseType;
   begin
-    OLMethod := TLapeType_OverloadedMethod.Create(Self, nil);
-    OLMethod.OnFunctionNotFound := {$IFDEF FPC}@{$ENDIF}GetToStringMethod;
-    OLMethod.NeedFullMatch := True;
-    addManagedDecl(OLMethod);
-
+    OLMethod := NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetToStringMethod);
     for BaseType := Low(ELapeBaseType) to High(ELapeBaseType) do
       if ({$IFNDEF FPC}@{$ENDIF}LapeToStrArr[BaseType] <> nil) then
         OLMethod.addMethod(
@@ -448,6 +497,8 @@ begin
   addGlobalVar(Null, 'Null').isConstant := True;
   addGlobalVar(Unassigned, 'Unassigned').isConstant := True;
 
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Copy'));
   addToString();
   addDelayedCode(
     _LapeToString_Enum +
@@ -2375,6 +2426,8 @@ begin
   if (Node = nil) or (FDelayedTree = nil) then
     Exit;
   FDelayedTree.addStatement(Node, AfterCompilation, IsGlobal);
+  if (Node is TLapeTree_Method) then
+    FTreeMethodMap[IntToStr(PtrUInt(TLapeTree_Method(Node).Method))] := Node as TLapeTree_Method;
 end;
 
 function TLapeCompiler.ParseFile: TLapeTree_Base;

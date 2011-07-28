@@ -141,8 +141,8 @@ var
 
   _LapeSetLength: lpString =
     'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: Int32;'                   + LineEnding +
-    '  Dispose: private procedure(const p: Pointer);'                                    + LineEnding +
-    '  Copy: private procedure(const Src, Dst: Pointer));'                               + LineEnding +
+    '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
+    '  Copy: private procedure(Src, Dst: Pointer));'                                     + LineEnding +
     'const'                                                                              + LineEnding +
     '  HeaderSize = SizeOf(PtrInt) + SizeOf(SizeInt);'                                   + LineEnding +
     'var'                                                                                + LineEnding +

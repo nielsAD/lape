@@ -206,7 +206,7 @@ begin
       if Compiler.Compile() then
       begin
         m.Lines.add('Compiling Time: ' + IntToStr(getTickCount - t) + 'ms.');
-        DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.getByClass(TLapeGlobalVar), Compiler.GlobalDeclarations.getByClass(TLapeGlobalVar)));
+        //DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.getByClass(TLapeGlobalVar), Compiler.GlobalDeclarations.getByClass(TLapeGlobalVar)));
 
         t := getTickCount;
         RunCode(Compiler.Emitter.Code);
