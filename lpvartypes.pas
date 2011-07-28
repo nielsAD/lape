@@ -5047,13 +5047,11 @@ begin
               TLapeStackTempVar(Items[i]).Locked := False;
         end;
 
+        Emitter._PopVar(FStackInfo.TotalSize, Offset, Pos);
         if InFunction then
           Emitter._DecCall_EndTry(Offset, Pos)
         else
-        begin
-          Emitter._PopVar(FStackInfo.TotalSize, Offset, Pos);
           Emitter._EndTry(Offset, Pos);
-        end;
 
         WriteLn('Vars on stack: ', FStackInfo.Count);
 

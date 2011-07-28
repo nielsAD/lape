@@ -2384,7 +2384,7 @@ begin
         addParam(TLapeTree_GlobalVar.Create(FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar, FCompiler, @_DocPos));
         addParam(TLapeTree_GlobalVar.Create(FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar, FCompiler, @_DocPos));
       end;
-      Compile(Offset);
+      Result := Compile(Offset);
     finally
       Free();
     end;

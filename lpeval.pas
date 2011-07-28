@@ -122,7 +122,9 @@ var
     'end;';
 
   _LapeToString_Array: lpString =
-    'function _ArrayToString(Arr: Pointer; AToString: private function(const p: Pointer): string; Len, Size: Int32): string;' + LineEnding +
+    'function _ArrayToString(Arr: Pointer;'                                              + LineEnding +
+    '  AToString: private function(const p: Pointer): string;'                           + LineEnding +
+    '  Len, Size: Int32): string;'                                                       + LineEnding +
     'var'                                                                                + LineEnding +
     '  i: Int32;'                                                                        + LineEnding +
     'begin'                                                                              + LineEnding +
@@ -141,6 +143,8 @@ var
     'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: Int32;'                   + LineEnding +
     '  Dispose: private procedure(const p: Pointer);'                                    + LineEnding +
     '  Copy: private procedure(const Src, Dst: Pointer));'                               + LineEnding +
+    'const'                                                                              + LineEnding +
+    '  HeaderSize = SizeOf(PtrInt) + SizeOf(SizeInt);'                                   + LineEnding +
     'var'                                                                                + LineEnding +
     '  i, OldLen, NewSize: SizeInt;'                                                     + LineEnding +
     '  NewP: Pointer;'                                                                   + LineEnding +
@@ -148,7 +152,7 @@ var
     'begin'                                                                              + LineEnding +
     '  NewSize := NewLen * ElSize;'                                                      + LineEnding +
     '  DoFree := NewSize <= 0;'                                                          + LineEnding +
-    '  Inc(NewSize, SizeOf(PtrInt) + SizeOf(SizeInt));'                                  + LineEnding +
+    '  Inc(NewSize, HeaderSize);'                                                        + LineEnding +
     ''                                                                                   + LineEnding +
     '  if (p = nil) then'                                                                + LineEnding +
     '  begin'                                                                            + LineEnding +
@@ -171,10 +175,18 @@ var
     '  if (PtrInt(p^) <= 1) then'                                                        + LineEnding +
     '  begin'                                                                            + LineEnding +
     '    if (NewLen = OldLen) then'                                                      + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      Inc(p, HeaderSize);'                                                          + LineEnding +
     '      Exit;'                                                                        + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    ''                                                                                   + LineEnding +
     '    if (NewLen < OldLen) and (Pointer(Dispose) <> nil) then'                        + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      Inc(p, HeaderSize);'                                                          + LineEnding +
     '      for i := NewLen to OldLen - 1 do'                                             + LineEnding +
     '        Dispose(p[i * ElSize]);'                                                    + LineEnding +
+    '      Dec(p, HeaderSize);'                                                          + LineEnding +
+    '    end;'                                                                           + LineEnding +
     ''                                                                                   + LineEnding +
     '    if DoFree then'                                                                 + LineEnding +
     '    begin'                                                                          + LineEnding +
@@ -202,7 +214,7 @@ var
     '      i := NewLen;'                                                                 + LineEnding +
     '    if (i >= 0) then'                                                               + LineEnding +
     '    begin'                                                                          + LineEnding +
-    '      Inc(p, SizeOf(PtrInt) + SizeOf(SizeInt));'                                    + LineEnding +
+    '      Inc(p, HeaderSize);'                                                          + LineEnding +
     '      if (Pointer(Copy) = nil) then'                                                + LineEnding +
     '        Move(p^, NewP^, i * ElSize)'                                                + LineEnding +
     '      else for i := i - 1 downto 0 do'                                              + LineEnding +
