@@ -2770,13 +2770,24 @@ end;
 
 function TLapeTree_Operator.isConstant: Boolean;
 begin
-  Result := ((FLeft = nil) or (not (TLapeTree_Base(FLeft) is TLapeTree_If))) and (
-    ((FLeft <> nil) and (FLeft is TLapeTree_GlobalVar) and (TLapeTree_GlobalVar(FLeft).GlobalVar.VarType <> nil) and (
-        ((FOperatorType = op_Dot)   and TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.CanHaveChild()) or
-        ((FOperatorType = op_Index) and (TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.BaseType in [ltUnknown{overloaded method}, ltShortString, ltStaticArray]))
-      ) and (FRight <> nil) and FRight.isConstant()) or
-    ((FLeft = nil) or FLeft.isConstant()) and ((FRight = nil) or FRight.isConstant())
-  );
+  if (FLeft <> nil) and (TLapeTree_Base(FLeft) is TLapeTree_If) then
+    Result := False
+  else if (FLeft <> nil) and (FLeft is TLapeTree_GlobalVar) and
+    (TLapeTree_GlobalVar(FLeft).GlobalVar.VarType <> nil) and
+    ((FRight = nil) or (FRight is TLapeTree_GlobalVar))
+  then
+    if (FRight <> nil) then
+      Result := TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.CanEvalConst(
+        OperatorType,
+        TLapeTree_GlobalVar(FLeft).GlobalVar,
+        TLapeTree_GlobalVar(FRight).GlobalVar)
+    else
+      Result := TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.CanEvalConst(
+        OperatorType,
+        TLapeTree_GlobalVar(FLeft).GlobalVar,
+        nil)
+  else
+    Result := ((FLeft = nil) or FLeft.isConstant()) and ((FRight = nil) or FRight.isConstant());
 end;
 
 function TLapeTree_Operator.resType: TLapeType;

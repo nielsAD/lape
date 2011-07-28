@@ -169,6 +169,7 @@ type
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; overload; virtual;
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; overload; virtual;
+    function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; virtual;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; virtual;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; overload; virtual;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Pos: PDocPos = nil): TResVar; overload; virtual;
@@ -1357,6 +1358,18 @@ begin
     Result := EvalRes(Op, Right.VarType)
   else
     Result := EvalRes(Op, TLapeType(nil));
+end;
+
+function TLapeType.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
+begin
+  Assert((Left = nil) or (Left.VarType = Self));
+
+  Result := ((Left = nil) or Left.isConstant) and ((Right = nil) or Right.isConstant);
+  if (not Result) and (Right <> nil) and Right.isConstant then
+    if (op = op_Dot) and CanHaveChild() and (Right.BaseType = ltString) then
+      Result := HasChild(PlpString(Right.Ptr)^)
+    else if (op = op_Index) and (BaseType in [ltUnknown{overloaded method}, ltShortString, ltStaticArray]) then
+      Result := (Right.VarType <> nil) and (Right.VarType.BaseIntType <> ltUnknown);
 end;
 
 function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
