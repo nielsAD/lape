@@ -264,6 +264,7 @@ var
   procedure DoInitVarLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     SetLength(VarStack, PStackOffset(PtrUInt(Code) + ocSize)^);
+    VarStackStack[VarStackIndex].Stack := VarStack;
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
