@@ -54,6 +54,7 @@ type
     function _Int64(v: Int64; var Offset: Integer): Integer;
     function _UInt64(v: UInt64; var Offset: Integer): Integer;
 
+    function _StackInc(v: TStackInc; var Offset: Integer): Integer;
     function _StackOffset(v: TStackOffset; var Offset: Integer): Integer;
     function _ParamSize(v: TParamSize; var Offset: Integer): Integer;
     function _CodePos(v: TCodePos; var Offset: Integer): Integer;
@@ -291,6 +292,13 @@ begin
   Result := CheckOffset(Offset, SizeOf(UInt64));
   PUInt64(@FCode[Offset])^ := v;
   Inc(Offset, SizeOf(UInt64));
+end;
+
+function TLapeCodeEmitterBase._StackInc(v: TStackInc; var Offset: Integer): Integer;
+begin
+  Result := CheckOffset(Offset, SizeOf(TStackInc));
+  PStackInc(@FCode[Offset])^ := v;
+  Inc(Offset, SizeOf(TStackInc));
 end;
 
 function TLapeCodeEmitterBase._StackOffset(v: TStackOffset; var Offset: Integer): Integer;

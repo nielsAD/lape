@@ -212,7 +212,7 @@ var
     '    i := OldLen;'                                                                   + LineEnding +
     '    if (NewLen < OldLen) then'                                                      + LineEnding +
     '      i := NewLen;'                                                                 + LineEnding +
-    '    if (i >= 0) then'                                                               + LineEnding +
+    '    if (i >= 1) then'                                                               + LineEnding +
     '    begin'                                                                          + LineEnding +
     '      Inc(p, HeaderSize);'                                                          + LineEnding +
     '      if (Pointer(Copy) = nil) then'                                                + LineEnding +

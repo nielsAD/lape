@@ -95,6 +95,7 @@ type
   EvalBool = LongBool;
   {$ENDIF}
 
+  PStackInc = ^TStackInc;
   PStackOffset = ^TStackOffset;
   PParamSize = ^TParamSize;
   PCodePos = ^TCodePos;

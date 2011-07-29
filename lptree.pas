@@ -735,7 +735,7 @@ begin
         ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, getResVar(getConstant('')), Offset, @Node._DocPos)
       else
         ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, getResVar(getConstant(0)), Offset, @Node._DocPos);
-      setNullResVar(tmpCondition);
+      setNullResVar(tmpCondition, 1);
     end;
 
   Result := True;
@@ -1169,7 +1169,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         end
       else if (FValues[i] is TLapeTree_Range) then
       begin
-        Counter := FCompiler.getTempVar(TLapeType_Set(ToType).Range, 2);
+        Counter := FCompiler.getTempVar(TLapeType_Set(ToType).Range, BigLock);
         Counter.isConstant := False;
         tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, GetResVar(Counter), TLapeTree_Range(FValues[i]).Lo.Compile(Offset), Offset, @FValues[i]._DocPos);
 
@@ -1187,7 +1187,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           Compile(Offset);
         finally
           Free();
-          SetNullResVar(tmpVar, 2);
+          SetNullResVar(tmpVar, BigLock);
         end;
       end
       else
@@ -1626,7 +1626,7 @@ var
           else if (Params[i].VarType <> nil) and (not Params[i].VarType.Equals(ParamVars[i].VarType)) then
             AssignToTempVar(ParamVars[i], Params[i], mpVar, _DocPos);
 
-          if ParamVars[i].VarPos.isPointer then
+          {if ParamVars[i].VarPos.isPointer then
           begin
             Par.VarPos.MemPos := mpStack;
             Par.VarType := FCompiler.getBaseType(ltPointer);
@@ -1638,7 +1638,7 @@ var
             ParamVars[i] := Par.VarType.Eval(op_Assign, tmpVar, Par, ParamVars[i], Offset, @Self._DocPos);
             setNullResVar(tmpRes, 1);
           end
-          else
+          else}
           begin
             Par.VarPos.MemPos := mpStack;
             Par.VarType := FCompiler.getBaseType(ltPointer);
@@ -2368,7 +2368,7 @@ begin
   ArrayType := nil;
   tmpVar := NullResVar;
 
-  if (not getTempVar(FParams[0], Offset, Param, 3)) or (Param.VarType = nil) or
+  if (not getTempVar(FParams[0], Offset, Param, BigLock)) or (Param.VarType = nil) or
      (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray, ltShortString]))
   then
     LapeException(lpeInvalidEvaluation, DocPos);
@@ -2376,7 +2376,7 @@ begin
   tmpType := Param.VarType;
   ArrayType := TLapeType_DynArray(Param.VarType).PType;
 
-  if (not getTempVar(FParams[1], Offset, Len, 3)) or (ArrayType = nil) or
+  if (not getTempVar(FParams[1], Offset, Len, BigLock)) or (ArrayType = nil) or
      (Len.VarType = nil) or (not (Len.VarType.BaseType in LapeIntegerTypes))
   then
     LapeException(lpeInvalidEvaluation, DocPos);
@@ -2415,7 +2415,7 @@ begin
     if (FParams.Count > 2) then
     begin
       Param.VarType := tmpType;
-      Counter := FCompiler.getTempVar(ltInt32, 2);
+      Counter := FCompiler.getTempVar(ltInt32, BigLock);
       Counter.isConstant := False;
       tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, getResVar(Counter), getResVar(FCompiler.getConstant(0)), Offset, @_DocPos);
 
@@ -2445,12 +2445,12 @@ begin
         Compile(Offset);
       finally
         Free();
-        SetNullResVar(tmpVar, 2);
+        SetNullResVar(tmpVar, BigLock);
       end;
     end;
   finally
-    SetNullResVar(Param, 3);
-    SetNullResVar(Len, 3);
+    SetNullResVar(Param, BigLock);
+    SetNullResVar(Len, BigLock);
   end;
 end;
 
@@ -3636,7 +3636,7 @@ begin
   for i := 0 to FWithList.Count - 1 do
     if (FVarList[i] = nil) then
     begin
-      if (not getTempVar(FWithList[i], Offset, ResVarList[i], 2)) or
+      if (not getTempVar(FWithList[i], Offset, ResVarList[i], BigLock)) or
          (ResVarList[i].VarPos.MemPos in [mpNone, mpStack])
       then
         LapeException(lpeInvalidCondition, FWithList[i].DocPos);
@@ -3648,7 +3648,7 @@ begin
     Result := FBody.Compile(Offset);
 
   for i := 0 to High(ResVarList) do
-    setNullResVar(ResVarList[i], 2);
+    setNullResVar(ResVarList[i], BigLock);
 
   if NewStack then
     FCompiler.DecStackInfo(False, True, True);
@@ -3808,7 +3808,7 @@ begin
 
   CheckField := nil;
   opOR := nil;
-  if (not getTempVar(FCondition, Offset, ConditionVar)) then
+  if (not getTempVar(FCondition, Offset, ConditionVar, BigLock)) then
     LapeException(lpeInvalidCondition, DocPos);
 
   try
@@ -3874,7 +3874,7 @@ begin
     raise;
   end;
 
-  setNullResVar(ConditionVar, 2);
+  setNullResVar(ConditionVar, BigLock);
 end;
 
 procedure TLapeTree_Case.setCondition(Node: TLapeTree_ExprBase);
@@ -3943,7 +3943,7 @@ begin
 
   if (FFields.Count > 0) then
   begin
-    if (not getTempVar(FCondition, Offset, ConditionVar)) then
+    if (not getTempVar(FCondition, Offset, ConditionVar, BigLock)) then
       LapeException(lpeInvalidCondition, DocPos);
 
     for i := 0 to FFields.Count - 1 do
@@ -3953,7 +3953,7 @@ begin
       FFields[i - 1].ElseBody := FFields[i];
     Result := FFields[0].Compile(Offset);
 
-    setNullResVar(ConditionVar, 2);
+    setNullResVar(ConditionVar, BigLock);
   end
   else if (FElse <> nil) then
     Result := FElse.Compile(Offset);
@@ -4166,12 +4166,12 @@ begin
   CounterVar := nil;
   Count := FCounter.Compile(Offset);
   try
-    if (not getTempVar(FLimit, Offset, Lim)) or (Lim.VarType = nil) or (Lim.VarType.BaseIntType = ltUnknown) then
+    if (not getTempVar(FLimit, Offset, Lim, BigLock)) or (Lim.VarType = nil) or (Lim.VarType.BaseIntType = ltUnknown) then
       LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
     if (Count.VarType <> nil) and (not isVariable(Count)) then
     begin
-      CounterVar := FCompiler.getTempVar(Count.VarType, 2);
+      CounterVar := FCompiler.getTempVar(Count.VarType, BigLock);
       CounterVar.isConstant := False;
       Count := CounterVar.VarType.Eval(op_Assign, Result, GetResVar(CounterVar), Count, Offset, @FCounter._DocPos);
     end;
@@ -4189,10 +4189,10 @@ begin
   finally
     setCondition(nil);
     if (CounterVar <> nil) then
-      setNullResVar(Count, 2)
+      setNullResVar(Count, BigLock)
     else
       setNullResVar(Count, 1);
-    setNullResVar(Lim, 2);
+    setNullResVar(Lim, BigLock);
   end;
 end;
 
@@ -4278,7 +4278,7 @@ begin
         FCompiler.Emitter._JmpR(Offset - co, co, @DocPos);
     end;
 
-  setNullResVar(ConditionVar);
+  setNullResVar(ConditionVar, 1);
 end;
 
 procedure TLapeTree_Repeat.addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
