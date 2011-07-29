@@ -80,6 +80,7 @@ const
   Try_NoFinally: UInt32 = UInt32(-1);
   Try_NoExcept: UInt32 = UInt32(-2);
   EndJump: TCodePos = TCodePos(-1);
+  VarStackStackSize = 32;
 
 
   {$IFDEF Lape_UnlimitedStackSize}
@@ -120,11 +121,15 @@ const
   opNone: opCodeType = opCodeType(ocNone);
 var
   CodeBase: PByte;
-  Stack: array of Byte;
+  Stack: TByteArray;
   StackPos: UInt32;
 
-  VarStack: array of Byte;
-  VarStackPos, VarStackLen: UInt32;
+  VarStack: TByteArray;
+  VarStackIndex, VarStackPos, VarStackLen: UInt32;
+  VarStackStack: array of record
+    Stack: TByteArray;
+    Pos, Len: UInt32;
+  end;
 
   TryStack: array of record
     Jmp: PByte;
@@ -136,6 +141,58 @@ var
 
   CallStack: array of TCallRec;
   CallStackPos: UInt32;
+
+  procedure ExpandVarStack(Size: UInt32); {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    {$IFDEF Lape_UnlimitedVarStackSize}
+    if (VarStackLen + Size > Length(VarStack)) then
+    begin
+      with VarStackStack[VarStackIndex] do
+      begin
+        Assert(Stack = VarStack);
+        Pos := VarStackPos;
+        Len := VarStackLen;
+      end;
+
+      Inc(VarStackIndex);
+      if (VarStackIndex >= Length(VarStackStack)) then
+        SetLength(VarStackStack, VarStackIndex + (VarStackStackSize div 2));
+
+      VarStackPos := 0;
+      VarStackLen := Size;
+      VarStack := VarStackStack[VarStackIndex].Stack;
+
+      if (Size > VarStackSize) then
+        SetLength(VarStack, Size)
+      else if (VarStack = nil) then
+        SetLength(VarStack, VarStackSize);
+
+      VarStackStack[VarStackIndex].Stack := VarStack;
+    end
+    else
+    {$ENDIF}
+    begin
+      VarStackPos := VarStackLen;
+      Inc(VarStackLen, Size);
+    end;
+  end;
+
+  procedure GrowVarStack(Size: UInt32); {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    {$IFDEF Lape_UnlimitedVarStackSize}
+    if (VarStackLen + Size > Length(VarStack)) then
+    begin
+      ExpandVarStack(Size + (VarStackLen - VarStackPos));
+      with VarStackStack[VarStackIndex - 1] do
+      begin
+        Move(Stack[VarStackPos], VarStack[0], VarStackLen - VarStackPos);
+        VarStackLen := VarStackPos;
+      end;
+    end
+    else
+    {$ENDIF}
+      Inc(VarStackLen, Size);
+  end;
 
   procedure JumpTo(const Target: TCodePos); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
@@ -187,12 +244,7 @@ var
   procedure PushToVar(const Size: TStackOffset); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     Dec(StackPos, Size);
-    VarStackPos := VarStackLen;
-    Inc(VarStackLen, Size);
-    {$IFDEF Lape_UnlimitedVarStackSize}
-    if (VarStackLen > Length(VarStack)) then
-      SetLength(VarStack, VarStackLen + (VarStackSize div 2));
-    {$ENDIF}
+    ExpandVarStack(Size);
     Move(Stack[StackPos], VarStack[VarStackPos], Size);
   end;
 
@@ -243,12 +295,7 @@ var
 
   procedure DoExpandVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    VarStackPos := VarStackLen;
-    Inc(VarStackLen, PStackOffset(PtrUInt(Code) + ocSize)^);
-    {$IFDEF Lape_UnlimitedVarStackSize}
-    if (VarStackLen > Length(VarStack)) then
-      SetLength(VarStack, VarStackLen + (VarStackSize div 2));
-    {$ENDIF}
+    ExpandVarStack(PStackOffset(PtrUInt(Code) + ocSize)^);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -257,23 +304,14 @@ var
     ExpandSize: Integer;
   begin
     ExpandSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    VarStackPos := VarStackLen;
-    Inc(VarStackLen, ExpandSize);
-    {$IFDEF Lape_UnlimitedVarStackSize}
-    if (VarStackLen > Length(VarStack)) then
-      SetLength(VarStack, VarStackLen + (VarStackSize div 2));
-    {$ENDIF}
+    ExpandVarStack(ExpandSize);
     FillChar(VarStack[VarStackPos], ExpandSize, 0);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoGrowVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    Inc(VarStackLen, PStackOffset(PtrUInt(Code) + ocSize)^);
-    {$IFDEF Lape_UnlimitedVarStackSize}
-    if (VarStackLen > Length(VarStack)) then
-      SetLength(VarStack, VarStackLen + (VarStackSize div 2));
-    {$ENDIF}
+    GrowVarStack(PStackOffset(PtrUInt(Code) + ocSize)^);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -283,12 +321,11 @@ var
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     OldLen := VarStackLen;
-    Inc(VarStackLen, GrowSize);
-    {$IFDEF Lape_UnlimitedVarStackSize}
-    if (VarStackLen > Length(VarStack)) then
-      SetLength(VarStack, VarStackLen + (VarStackSize div 2));
-    {$ENDIF}
-    FillChar(VarStack[OldLen], GrowSize, 0);
+    GrowVarStack(GrowSize);
+    if (VarStackLen < OldLen) then
+      FillChar(VarStack[OldLen - VarStackLen], GrowSize, 0)
+    else
+      FillChar(VarStack[OldLen], GrowSize, 0);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -320,6 +357,20 @@ var
     PopSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     Dec(VarStackPos, PopSize);
     Dec(VarStackLen, PopSize);
+
+    {$IFDEF Lape_UnlimitedVarStackSize}
+    if (VarStackLen = 0) and (VarStackIndex > 0) then
+    begin
+      Dec(VarStackIndex);
+      with VarStackStack[VarStackIndex] do
+      begin
+        VarStack := Stack;
+        VarStackPos := Pos;
+        VarStackLen := Len;
+      end;
+    end;
+    {$ENDIF}
+
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -454,9 +505,13 @@ var
 begin
   CodeBase := Code;
   SetLength(Stack, StackSize);
-  SetLength(VarStack, VarStackSize);
   SetLength(TryStack, TryStackSize);
   SetLength(CallStack, CallStackSize);
+
+  VarStackIndex := 0;
+  SetLength(VarStackStack, VarStackStackSize);
+  SetLength(VarStackStack[0].Stack, VarStackSize);
+  VarStack := VarStackStack[0].Stack;
 
   try
     Code := CodeBase;

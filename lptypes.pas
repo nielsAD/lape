@@ -59,8 +59,9 @@ type
 
   TStringArray = array of lpString;
 
+  TByteArray = array of Byte;
+  TCodeArray = TByteArray;
   PCodeArray = ^TCodeArray;
-  TCodeArray = array of Byte;
 
   PParamArray = ^TParamArray;
   TParamArray = array[Word] of Pointer;
