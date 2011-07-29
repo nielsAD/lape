@@ -244,37 +244,31 @@ end;
 procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer);
 begin
   GetMem(PPointer(Result)^, PInt32(Params^[0])^);
-  WriteLn(Format('GetMem(%d, %d)', [PtrUInt(Result^), PInt32(Params^[0])^]));
 end;
 
 procedure _LapeFreeMem(const Params: PParamArray);
 begin
   FreeMem(PPointer(Params^[0])^);
-  WriteLn(Format('FreeMem(%d)', [PtrUInt(Params^[0]^)]));
 end;
 
 procedure _LapeFreeMemSize(const Params: PParamArray);
 begin
   FreeMem(PPointer(Params^[0])^, PInt32(Params^[1])^);
-  WriteLn(Format('FreeMem(%d, %d)', [PtrUInt(Params^[0]^), PInt32(Params^[1])^]));
 end;
 
 procedure _LapeReallocMem(const Params: PParamArray);
 begin
   ReallocMem(PPointer(Params^[0])^, PInt32(Params^[1])^);
-  WriteLn(Format('ReallocMem(%d, %d)', [PtrUInt(Params^[0]^), PInt32(Params^[1])^]));
 end;
 
 procedure _LapeFillMem(const Params: PParamArray);
 begin
   FillChar(Params^[0]^, PInt32(Params^[1])^, PUInt8(Params^[2])^);
-  WriteLn(Format('FillMem(%d, %d, %d)', [PtrUInt(Params^[0]), PInt32(Params^[1])^, PUInt8(Params^[2])^]));
 end;
 
 procedure _LapeMove(const Params: PParamArray);
 begin
   Move(Params^[0]^, Params^[1]^, PInt32(Params^[2])^);
-  WriteLn(Format('Move(%d, %d, %d)', [PtrUInt(Params^[0]), PtrUInt(Params^[1]), PInt32(Params^[2])^]));
 end;
 
 procedure _LapeHigh(const Params: PParamArray; const Result: Pointer);

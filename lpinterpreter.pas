@@ -221,7 +221,7 @@ var
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     {$IFDEF Lape_UnlimitedStackSize}
-    if (StackPos + InitStackSize > Length(VarStack)) then
+    if (StackPos + InitStackSize > Length(Stack)) then
       SetLength(Stack, StackPos + InitStackSize + (StackSize div 2));
     {$ENDIF}
     FillChar(Stack[StackPos], InitStackSize, 0);
@@ -234,7 +234,7 @@ var
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     {$IFDEF Lape_UnlimitedStackSize}
-    if (StackPos + GrowSize > Length(VarStack)) then
+    if (StackPos + GrowSize > Length(Stack)) then
       SetLength(Stack, StackPos + GrowSize + (StackSize div 2));
     {$ENDIF}
     Inc(StackPos, GrowSize);
