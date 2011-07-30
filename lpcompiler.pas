@@ -372,16 +372,26 @@ begin
     LapeException(lpeLostConditional, Tokenizer.DocPos);
 end;
 
-procedure GetMethod_FixupParams(var Sender: TLapeType_OverloadedMethod; var AType: TLapeType_Method; var AParams: TLapeTypeArray; var AResult: TLapeType);
+procedure GetMethod_FixupParams(var AType: TLapeType_Method; var AParams: TLapeTypeArray; var AResult: TLapeType; AddResultToParams: Boolean = False);
 var
   i: Integer;
 begin
-  if (Sender <> nil) and (AType <> nil) and (AType.Params.Count > 0) then
+  if (AType <> nil) then
   begin
-    SetLength(AParams, AType.Params.Count);
-    for i := 0 to AType.Params.Count - 1 do
-      AParams[i] := AType.Params[i].VarType;
+    if (AType.Params.Count > 0) then
+    begin
+      SetLength(AParams, AType.Params.Count);
+      for i := 0 to AType.Params.Count - 1 do
+        AParams[i] := AType.Params[i].VarType;
+    end;
     AResult := AType.Res;
+  end;
+
+  if AddResultToParams and (AResult <> nil) then
+  begin
+    SetLength(AParams, Length(AParams) + 1);
+    AParams[High(AParams)] := AResult;
+    AResult := nil;
   end;
 end;
 
@@ -391,7 +401,7 @@ var
 begin
   Result := nil;
   Method := nil;
-  GetMethod_FixupParams(Sender, AType, AParams, AResult);
+  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or (not AParams[0].NeedFinalization) or (AResult <> nil) then
     Exit;
 
@@ -413,11 +423,35 @@ begin
 end;
 
 function TLapeCompiler.GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  Method: TLapeTree_Method;
+  Assignment: TLapeTree_Operator;
 begin
   Result := nil;
-  GetMethod_FixupParams(Sender, AType, AParams, AResult);
-  if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or (AResult <> nil) then
+  Method := nil;
+  GetMethod_FixupParams(AType, AParams, AResult, True);
+  if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult <> nil) or (not AParams[0].CompatibleWith(AParams[1])) then
     Exit;
+
+  if (AType = nil) then
+    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptVar, lptOut], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+
+  IncStackInfo();
+  try
+    Result := AType.NewGlobalVar(EndJump);
+    Sender.addMethod(Result);
+
+    Assignment := TLapeTree_Operator.Create(op_Assign, Self);
+    Assignment.Left := TLapeTree_ResVar.Create(getResVar(FStackInfo.addVar(lptVar, AParams[0])), Self);
+    Assignment.Right := TLapeTree_ResVar.Create(getResVar(FStackInfo.addVar(lptOut, AParams[1])), Self);
+
+    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
+    Method.Statements := TLapeTree_StatementList.Create(Self);
+    Method.Statements.addStatement(Assignment);
+    addDelayedExpression(Method);
+  finally
+    DecStackInfo(True, False, Method = nil);
+  end;
 end;
 
 function TLapeCompiler.GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
@@ -425,7 +459,7 @@ var
   Body: lpString;
 begin
   Result := nil;
-  GetMethod_FixupParams(Sender, AType, AParams, AResult);
+  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or ((AResult <> nil) and (AResult.BaseType <> ltString)) then
     Exit;
 
