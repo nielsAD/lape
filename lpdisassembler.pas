@@ -121,6 +121,12 @@ var
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
+  procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    _WriteLn('PopVarStack %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, SizeOf(TStackOffset) + ocSize);
+  end;
+
   procedure DoPopStackToVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
@@ -139,12 +145,6 @@ var
       _WriteLn('IncStackPos %d', [Size]);
     end;
     Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
-  end;
-
-  procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
-  begin
-    _WriteLn('PopVarStack %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
-    Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoJmpSafe; {$IFDEF Lape_Inline}inline;{$ENDIF}

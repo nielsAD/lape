@@ -2826,7 +2826,6 @@ Arr[op_Minus][ltPointer][ltInt64] := ltPointer;
 //Array
 Arr[op_cmp_Equal][ltDynArray][ltDynArray] := Arr[op_cmp_Equal][ltPointer][ltPointer];
 Arr[op_cmp_NotEqual][ltDynArray][ltDynArray] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
-Arr[op_Assign][ltDynArray][ltDynArray] := Arr[op_Assign][ltPointer][ltPointer];
 
 //Method
 Arr[op_Assign][ltImportedMethod][ltPointer] := ltImportedMethod;

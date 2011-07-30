@@ -5106,7 +5106,11 @@ begin
             begin
               Items[i].VarType.Finalize(Items[i], Offset, True, Pos);
               if (Items[i] is TLapeStackTempVar) then
+              begin
+                if TLapeStackTempVar(Items[i]).Locked then
+                  WriteLn(Items[i].Name, ' ', Items[i].VarType.AsString, ' still locked! ', TLapeStackTempVar(Items[i]).FLock);
                 TLapeStackTempVar(Items[i]).Locked := True;
+              end;
             end;
             Inc(i);
           end;
