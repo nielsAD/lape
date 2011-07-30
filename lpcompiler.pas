@@ -442,8 +442,8 @@ begin
     Sender.addMethod(Result);
 
     Assignment := TLapeTree_Operator.Create(op_Assign, Self);
-    Assignment.Left := TLapeTree_ResVar.Create(getResVar(FStackInfo.addVar(lptVar, AParams[0])), Self);
     Assignment.Right := TLapeTree_ResVar.Create(getResVar(FStackInfo.addVar(lptOut, AParams[1])), Self);
+    Assignment.Left := TLapeTree_ResVar.Create(getResVar(FStackInfo.addVar(lptVar, AParams[0])), Self);
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Self);

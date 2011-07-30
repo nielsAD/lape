@@ -2399,7 +2399,7 @@ begin
       begin
         addParam(TLapeTree_Integer.Create(ArrayType.Size, FCompiler, @_DocPos));
         addParam(TLapeTree_ResVar.Create(GetMagicMethod('_Dispose', [ArrayType]), FCompiler, @_DocPos));
-        addParam(TLapeTree_GlobalVar.Create(FCompiler.addManagedVar(FCompiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar, FCompiler, @_DocPos));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethod('_Copy', [ArrayType, ArrayType]), FCompiler, @_DocPos));
       end;
       Result := Compile(Offset);
     finally
