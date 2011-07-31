@@ -26,6 +26,7 @@ procedure _LapeWrite(const Params: PParamArray);
 procedure _LapeWriteLn(const Params: PParamArray);
 
 procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer);
+procedure _LapeGetMemZF(const Params: PParamArray; const Result: Pointer);
 procedure _LapeFreeMem(const Params: PParamArray);
 procedure _LapeFreeMemSize(const Params: PParamArray);
 procedure _LapeReallocMem(const Params: PParamArray);
@@ -158,8 +159,7 @@ var
     '  begin'                                                                            + LineEnding +
     '    if DoFree then'                                                                 + LineEnding +
     '      Exit;'                                                                        + LineEnding +
-    '    p := GetMem(NewSize);'                                                          + LineEnding +
-    '    FillMem(p^, NewSize);'                                                          + LineEnding +
+    '    p := GetMemZF(NewSize);'                                                        + LineEnding +
     ''                                                                                   + LineEnding +
     '    PtrInt(p^) := 1;'                                                               + LineEnding +
     '    Inc(p, SizeOf(PtrInt));'                                                        + LineEnding +
@@ -244,6 +244,12 @@ end;
 procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer);
 begin
   GetMem(PPointer(Result)^, PInt32(Params^[0])^);
+end;
+
+procedure _LapeGetMemZF(const Params: PParamArray; const Result: Pointer);
+begin
+  GetMem(PPointer(Result)^, PInt32(Params^[0])^);
+  FillChar(PPointer(Result)^^, PInt32(Params^[0])^, 0);
 end;
 
 procedure _LapeFreeMem(const Params: PParamArray);

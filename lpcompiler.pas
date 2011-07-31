@@ -532,7 +532,7 @@ begin
   addGlobalVar(Unassigned, 'Unassigned').isConstant := True;
 
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
-  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Copy'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
   addToString();
   addDelayedCode(
     _LapeToString_Enum +
@@ -682,6 +682,7 @@ begin
   begin
     if ({$IFNDEF FPC}@{$ENDIF}FOnFindFile <> nil) then
       NewTokenizer := FOnFindFile(Self, Argument);
+    Argument := ExpandFileName(Argument);
 
     if (not Sender.InPeek) then
       if (Directive = 'include_once') and (FIncludes.IndexOf(Argument) > -1) then
@@ -2283,6 +2284,7 @@ begin
   addGlobalFunc([], [], [], @_LapeWriteLn, '_writeln').isConstant := True;
 
   addGlobalFunc([getBaseType(ltInt32)],   [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltPointer), @_LapeGetMem, 'GetMem').isConstant := True;
+  addGlobalFunc([getBaseType(ltInt32)],   [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltPointer), @_LapeGetMemZF, 'GetMemZF').isConstant := True;
   addGlobalFunc([getBaseType(ltPointer)], [lptNormal], [TLapeGlobalVar(nil)], @_LapeFreeMem, 'FreeMem').isConstant := True;
   addGlobalFunc([getBaseType(ltPointer), getBaseType(ltInt32)], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeFreeMemSize, 'FreeMemSize').isConstant := True;
   addGlobalFunc([getBaseType(ltPointer), getBaseType(ltInt32)], [lptVar,    lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeReallocMem, 'ReallocMem').isConstant := True;
