@@ -531,6 +531,9 @@ begin
   addGlobalVar(Null, 'Null').isConstant := True;
   addGlobalVar(Unassigned, 'Unassigned').isConstant := True;
 
+  addGlobalFunc('procedure _assert(Expr: EvalBool); overload;', @_LapeAssert).isConstant := True;
+  addGlobalFunc('procedure _assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg).isConstant := True;
+
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
   addToString();
@@ -2265,10 +2268,13 @@ begin
   FInternalMethodMap := TLapeInternalMethodMap.Create(nil);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
   FInternalMethodMap['WriteLn'] := TLapeTree_InternalMethod_WriteLn;
+  FInternalMethodMap['Assert'] := TLapeTree_InternalMethod_Assert;
   FInternalMethodMap['IsScriptMethod'] := TLapeTree_InternalMethod_IsScriptMethod;
   FInternalMethodMap['Break'] := TLapeTree_InternalMethod_Break;
   FInternalMethodMap['Continue'] := TLapeTree_InternalMethod_Continue;
   FInternalMethodMap['Exit'] := TLapeTree_InternalMethod_Exit;
+  FInternalMethodMap['New'] := TLapeTree_InternalMethod_New;
+  FInternalMethodMap['Dispose'] := TLapeTree_InternalMethod_Dispose;
   FInternalMethodMap['SizeOf'] := TLapeTree_InternalMethod_SizeOf;
   FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
   FInternalMethodMap['Low'] := TLapeTree_InternalMethod_Low;

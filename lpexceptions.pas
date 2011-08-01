@@ -20,6 +20,8 @@ type
 
 resourcestring
   lpeArrayLengthsDontMatch = 'Length of arrays (%s) don''t match';
+  lpeAssertionFailure = 'Assertion failure';
+  lpeAssertionFailureMsg = 'Assertion failure: %s';
   lpeBlockExpected = 'Block expected';
   lpeCannotAssign = 'Target cannot be assigned to';
   lpeCannotBreak = 'Cannot break out of this statement';

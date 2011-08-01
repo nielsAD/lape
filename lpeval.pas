@@ -25,6 +25,9 @@ type
 procedure _LapeWrite(const Params: PParamArray);
 procedure _LapeWriteLn(const Params: PParamArray);
 
+procedure _LapeAssert(const Params: PParamArray);
+procedure _LapeAssertMsg(const Params: PParamArray);
+
 procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer);
 procedure _LapeAllocMem(const Params: PParamArray; const Result: Pointer);
 procedure _LapeFreeMem(const Params: PParamArray);
@@ -239,6 +242,18 @@ end;
 procedure _LapeWriteLn(const Params: PParamArray);
 begin
   WriteLn('');
+end;
+
+procedure _LapeAssert(const Params: PParamArray);
+begin
+  if (not PEvalBool(Params^[0])^) then
+    LapeException(lpeAssertionFailure);
+end;
+
+procedure _LapeAssertMsg(const Params: PParamArray);
+begin
+  if (not PEvalBool(Params^[0])^) then
+    LapeExceptionFmt(lpeAssertionFailureMsg, [PlpString(Params^[1])^]);
 end;
 
 procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer);
