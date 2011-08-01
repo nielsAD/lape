@@ -1104,15 +1104,14 @@ begin
   if Initialize and (FVarType.Size > 0) then
   begin
     {$IFDEF Lape_SmallCode}
-    //getMem(FPtr, FVarType.Size);
-    getMem(FBasePtr, FVarType.Size + 4);
+    //FPtr := AllocMem(FVarType.Size);
+    FBasePtr := AllocMem(FVarType.Size + 4);
     FPtr := {$IFDEF FPC}Align(FBasePtr, 4){$ELSE}Pointer(PtrUInt(FBasePtr) + PtrUInt(FBasePtr) mod 4){$ENDIF};
     {$ELSE}
     //Assure aligned memory
-    getMem(FBasePtr, FVarType.Size + 16);
+    FBasePtr := AllocMem(FVarType.Size + 16);
     FPtr := {$IFDEF FPC}Align(FBasePtr, 16){$ELSE}Pointer(PtrUInt(FBasePtr) + PtrUInt(FBasePtr) mod 16){$ENDIF};
     {$ENDIF}
-    FillChar(FPtr^, FVarType.Size, 0);
   end;
 end;
 
@@ -2758,8 +2757,7 @@ begin
   begin
     if DoFree then
       Exit;
-    GetMem(AVar, NewSize);
-    FillChar(AVar^, NewSize, 0);
+    AVar := AllocMem(NewSize);
 
     PtrInt(AVar^) := 1;
     Inc(PtrUInt(AVar), SizeOf(PtrInt));

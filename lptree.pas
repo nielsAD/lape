@@ -671,29 +671,43 @@ function setExpectedType(Node: TLapeTree_Base; ToType: TLapeType): TLapeTree_Bas
 var
   Typ: TLapeType;
   Cast: TLapeTree_Invoke;
+  Method: TLapeGlobalVar;
 begin
   Result := Node;
   if isEmptyNode(Node) or (Node.Compiler = nil) then
     Exit
   else if (Node is TLapeTree_OpenArray) then
-      if (ToType <> nil) then
-        TLapeTree_OpenArray(Node).ToType := ToType
-      else
-        TLapeTree_OpenArray(Node).ToType := TLapeTree_OpenArray(Node).resType()
-    else if (Node is TLapeTree_Operator) and (ToType <> nil) then
-      with TLapeTree_Operator(Node) do
-        if (OperatorType = op_Deref) and (Left <> nil) then
-        begin
-          Typ := Left.resType();
-          if (Typ <> nil) and (Typ is TLapeType_Pointer) and (not TLapeType_Pointer(Typ).HasType()) then
-          begin
-            Cast := TLapeTree_Invoke.Create(TLapeTree_VarType.Create(ToType.Compiler.getPointerType(ToType), Node.Compiler, @Node._DocPos), Node.Compiler, @Node._DocPos);
-            Cast.addParam(Left);
-            Left := Cast;
-          end;
-        end
+    if (ToType <> nil) then
+      TLapeTree_OpenArray(Node).ToType := ToType
     else
-      Exit;
+      TLapeTree_OpenArray(Node).ToType := TLapeTree_OpenArray(Node).resType()
+  else if (Node is TLapeTree_Operator) and (ToType <> nil) then
+    with TLapeTree_Operator(Node) do
+    begin
+      if (OperatorType = op_Deref) and (Left <> nil) then
+      begin
+        Typ := Left.resType();
+        if (Typ <> nil) and (Typ is TLapeType_Pointer) and (not TLapeType_Pointer(Typ).HasType()) then
+        begin
+          Cast := TLapeTree_Invoke.Create(TLapeTree_VarType.Create(ToType.Compiler.getPointerType(ToType), Node.Compiler, @Node._DocPos), Node.Compiler, @Node._DocPos);
+          Cast.addParam(Left);
+          Left := Cast;
+        end;
+      end
+    end
+  else if (Node is TLapeTree_Invoke) and (TLapeTree_Invoke(Node).Ident is TLapeTree_GlobalVar) then
+    with TLapeTree_Invoke(Node), TLapeTree_GlobalVar(Ident), GlobalVar do
+    begin
+      if (GlobalVar <> nil) and (VarType <> nil) and (VarType is TLapeType_OverloadedMethod) then
+        Method := TLapeType_OverloadedMethod(VarType).getMethod(getParamTypes(), ToType)
+      else
+        Method := nil;
+      if (Method <> nil) then
+        FGlobalVar := Method;
+    end
+  else
+    Exit;
+
   Result := FoldConstants(Node);
 end;
 

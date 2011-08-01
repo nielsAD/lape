@@ -1150,9 +1150,9 @@ begin
   begin
     if (FList <> nil) then
       FList.Delete(Self);
+    FList := AList;
     if (AList <> nil) then
       FList.addDeclaration(Self);
-    FList := AList;
   end;
 end;
 
