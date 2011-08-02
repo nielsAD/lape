@@ -307,7 +307,8 @@ type
     procedure Clear; virtual;
     function addDeclaration(d: TLapeDeclaration): Integer; virtual;
     function getByName(AName: lpString): TLapeDeclArray; virtual;
-    function getByClass(AClass: TLapeDeclarationClass; FullMatch: Boolean = False): TLapeDeclArray; virtual;
+    function getByClass(AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray; virtual;
+    function getByClassAndName(AName: lpString; AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray; virtual;
     procedure Delete(d: TLapeDeclaration; DoFree: Boolean = False); overload; virtual;
     procedure Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False); overload; virtual;
 
@@ -1094,7 +1095,7 @@ begin
       end;
 end;
 
-function TLapeDeclarationList.getByClass(AClass: TLapeDeclarationClass; FullMatch: Boolean = False): TLapeDeclArray;
+function TLapeDeclarationList.getByClass(AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray;
 var
   i, Current, GrowSize, Len: Integer;
 begin
@@ -1107,7 +1108,7 @@ begin
     SetLength(Result, Len);
     Current := 0;
     for i := 0 to FList.Count - 1 do
-      if (FList[i] <> nil) and ((FList[i].ClassType = AClass) or ((not FullMatch) and (FList[i] is AClass))) then
+      if (FList[i] <> nil) and ((FList[i].ClassType = AClass) or ((not FullClassMatch) and (FList[i] is AClass))) then
       begin
         if (Current = Len) then
         begin
@@ -1120,6 +1121,24 @@ begin
       end;
     SetLength(Result, Current);
   end;
+end;
+
+function TLapeDeclarationList.getByClassAndName(AName: lpString; AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray;
+var
+  i: Integer;
+begin
+  Result := nil;
+  AName := LapeCase(AName);
+  if (FList <> nil) then
+    for i := 0 to FList.Count - 1 do
+      if (FList[i] <> nil) and
+         ((FList[i].ClassType = AClass) or ((not FullClassMatch) and (FList[i] is AClass))) and
+         (LapeCase(FList[i].Name) = AName)
+      then
+      begin
+        SetLength(Result, Length(Result) + 1);
+        Result[High(Result)] := FList[i];
+      end;
 end;
 
 procedure TLapeDeclarationList.Delete(d: TLapeDeclaration; DoFree: Boolean = False);

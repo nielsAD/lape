@@ -442,8 +442,8 @@ begin
     Sender.addMethod(Result);
 
     Assignment := TLapeTree_Operator.Create(op_Assign, Self);
-    Assignment.Right := TLapeTree_ResVar.Create(getResVar(FStackInfo.addVar(lptOut, AParams[1])), Self);
-    Assignment.Left := TLapeTree_ResVar.Create(getResVar(FStackInfo.addVar(lptVar, AParams[0])), Self);
+    Assignment.Right := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptOut, AParams[1])), Self);
+    Assignment.Left := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptVar, AParams[0])), Self);
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Self);
@@ -604,8 +604,8 @@ begin
 
     Lo := Range.Lo.Evaluate();
     Hi := Range.Hi.Evaluate();
-    if (Lo = nil) or (Lo.VarType = nil) or (Lo.VarType.BaseIntType = ltUnknown) or
-       (Hi = nil) or (Hi.VarType = nil) or (Hi.VarType.BaseIntType = ltUnknown)
+    if (Lo = nil) or (not Lo.HasType()) or (Lo.VarType.BaseIntType = ltUnknown) or
+       (Hi = nil) or (not Hi.HasType()) or (Hi.VarType.BaseIntType = ltUnknown)
     then
       LapeException(lpeInvalidRange, Node.DocPos)
     else if (not Lo.isConstant) or (not Hi.isConstant) then
@@ -967,10 +967,6 @@ begin
   end;
 end;
 
-type
-  __LapeTree_Method = class(TLapeTree_Method);
-  __LapeType = class(TLapeType);
-  __LapeVar = class(TLapeVar);
 function TLapeCompiler.ParseMethod(FuncForwards: TLapeFuncForwards; FuncHeader: TLapeType_Method; FuncName: lpString; isExternal: Boolean): TLapeTree_Method;
 var
   Pos: TDocPos;
@@ -984,7 +980,7 @@ var
     if (Method <> nil) then
     begin
       varTo.isConstant := True;
-      __LapeTree_Method(Method).FMethod := varTo;
+      Method.Method := varTo;
       FTreeMethodMap[IntToStr(PtrUInt(varTo))] := Method;
     end;
   end;
@@ -1001,7 +997,7 @@ var
       Exit;
 
     NewMethod := TLapeClassType(AMethod.ClassType).Create(Self, nil, AMethod.Res, AMethod.Name, @AMethod._DocPos);
-    __LapeType(NewMethod).FBaseType := AMethod.BaseType;
+    NewMethod.BaseType := AMethod.BaseType;
 
     ii := 0;
     Params := AMethod.Params.ExportToArray();
@@ -1021,7 +1017,7 @@ var
       Inc(ii);
     end;
 
-    __LapeVar(AVar).FVarType := addManagedType(NewMethod);
+    AVar.VarType := addManagedType(NewMethod);
   end;
 
 begin
@@ -1083,7 +1079,7 @@ begin
       setMethodDefaults(Result.Method, Result.Method.VarType as TLapeType_Method);
       addLocalDecl(Result.Method, FStackInfo);
 
-      __LapeTree_Method(Result).FMethod := TLapeGlobalVar(OldDeclaration);
+      Result.Method := OldDeclaration as TLapeGlobalVar;
       TLapeType_Method(Result.Method.VarType).setImported(Result.Method, isExternal);
     end
     else
@@ -1314,7 +1310,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
           else
             Default := nil;
 
-          if (Default = nil) or (Default.VarType = nil) or (Default.VarType.BaseIntType = ltUnknown) or (not Default.isConstant) then
+          if (Default = nil) or (not Default.HasType()) or (Default.VarType.BaseIntType = ltUnknown) or (not Default.isConstant) then
             LapeException(lpeExpressionExpected, Tokenizer.DocPos);
           TLapeGlobalVar(addLocalDecl(Enum.NewGlobalVar(Enum.addMember(Default.AsInteger, Name), Name), StackOwner)).isConstant := True;
         finally
@@ -1352,7 +1348,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       LapeException(lpeTypeExpected, Tokenizer.DocPos);
 
     Result := Result.CreateCopy();
-    __LapeType(Result).FBaseType := BaseType;
+    Result.BaseType := BaseType;
     Result := addManagedType(Result);
   end;
 
@@ -2091,12 +2087,12 @@ begin
           Result.Counter := TLapeTree_Operator.Create(op_Assign, Compiler, @_DocPos);
           with TLapeTree_Operator(Result.Counter) do
           begin
-            Left := TLapeTree_ResVar.Create(getResVar(Vars[0].VarDecl), Compiler, @_DocPos);
+            Left := TLapeTree_ResVar.Create(_ResVar.New(Vars[0].VarDecl), Compiler, @_DocPos);
             Right := Vars[0].Default;
           end;
         end
         else
-          Result.Counter := TLapeTree_ResVar.Create(getResVar(Vars[0].VarDecl), Compiler, @_DocPos);
+          Result.Counter := TLapeTree_ResVar.Create(_ResVar.New(Vars[0].VarDecl), Compiler, @_DocPos);
       finally
         Free();
       end
@@ -2616,7 +2612,7 @@ begin
     else if (Decl is TLapeGlobalVar) then
       Result := TLapeTree_GlobalVar.Create(TLapeGlobalVar(Decl), Self, Pos)
     else if (Decl is TLapeVar) then
-      Result := TlapeTree_ResVar.Create(getResVar(TLapeVar(Decl)), Self, Pos)
+      Result := TlapeTree_ResVar.Create(_ResVar.New(TLapeVar(Decl)), Self, Pos)
     else if (Decl is TLapeType) then
       Result := TLapeTree_VarType.Create(TLapeType(Decl), Self, Pos);
 end;
@@ -2836,7 +2832,7 @@ begin
     CheckAfterCompile();
 
     try
-      if (Method.Method = nil) or (Method.Method.VarType = nil) or
+      if (Method.Method = nil) or (not Method.Method.HasType()) or
          (Method.Method.VarType.BaseType <> ltImportedMethod)
       then
         LapeException(lpeInvalidEvaluation);
