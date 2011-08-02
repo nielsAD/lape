@@ -633,6 +633,17 @@ var
   NewTokenizer: TLapeTokenizerBase;
   Pos: TDocPos;
 
+  procedure setOption(Option: ECompilerOption);
+  begin
+    Argument := LowerCase(Trim(Argument));
+    if (Argument = 'on') or (Argument = '+') then
+      Include(FOptions, Option)
+    else if (Argument = 'off') or (Argument = '-') then
+      Exclude(FOptions, Option)
+    else
+      LapeException(lpeInvalidCondition, [Self]);
+  end;
+
   procedure switchConditional;
   var
     Conditional: TLapeConditional;
@@ -706,12 +717,38 @@ begin
 
     pushTokenizer(NewTokenizer);
   end
-  else if Sender.InPeek then
-    {nothing}
+  else if (Directive = 'a') or (Directive = 'align') then
+  begin
+    Argument := LowerCase(Argument);
+    if (Argument = 'on') then
+      FOptions_PackRecords := Lape_PackRecordsDef
+    else if (Argument = 'off') then
+      FOptions_PackRecords := 1
+    else
+    begin
+      FOptions_PackRecords := StrToIntDef(Argument, 0);
+      if (not (FOptions_PackRecords in [1, 2, 4, 8, 16])) then
+        LapeException(lpeInvalidCondition, [Self]);
+    end;
+  end
+  else if (Directive = 'c') or (Directive = 'assertions') then
+    setOption(lcoAssertions)
+  else if (Directive = 'r') or (Directive = 'rangechecks') then
+    setOption(lcoRangeCheck)
+  else if (Directive = 'b') or (Directive = 'booleval') then
+    setOption(lcoShortCircuit)
+  else if (Directive = 'm') or (Directive = 'memoryinit') then
+    setOption(lcoAlwaysInitialize)
+  else if (Directive = 'x') or (Directive = 'extendedsyntax') then
+    setOption(lcoLooseSyntax)
+  else if (Directive = 's') or (Directive = 'scopedenums') then
+    setOption(lcoScopedEnums)
+  else if (Directive = 'v') or (Directive = 'varstringchecks') then
+    setOption(lcoVarStringChecks)
   else
     Result := False;
 
-  WriteLn('DIRECTIVE: '+Directive);
+  WriteLn('DIRECTIVE: '+Directive, ' (', Sender.InPeek, ')');
 end;
 
 function TLapeCompiler.InIgnore: Boolean;
@@ -839,10 +876,8 @@ begin
             tk_kw_Function, tk_kw_Procedure: addDelayedExpression(ParseMethod(FuncForwards));
             tk_kw_Type: ParseTypeBlock();
           end
-        {$IFNDEF Lape_ForceBlock}
-        else if (not StopAfterBeginEnd) then
+        else if (lcoLooseSyntax in FOptions) and (not StopAfterBeginEnd) then
           Statement := ParseStatement()
-        {$ENDIF}
         else
           LapeException(lpeBlockExpected, Tokenizer.DocPos);
 
@@ -1951,10 +1986,14 @@ end;
 function TLapeCompiler.ParseStatement: TLapeTree_Base;
 var
   Token: EParserToken;
+  AcceptTokens: EParserTokenSet;
 begin
   Result := nil;
+  AcceptTokens := [tk_NULL, tk_Identifier, tk_kw_Begin, tk_kw_Case, tk_kw_For, tk_kw_If, tk_kw_Repeat, tk_kw_While, tk_kw_With, tk_kw_Try, tk_sym_SemiColon, tk_kw_Else];
+  if (lcoLooseSyntax in FOptions) then
+    AcceptTokens := AcceptTokens + [tk_kw_Const, tk_kw_Var];
 
-  if isNext([tk_NULL, tk_Identifier, tk_kw_Begin, tk_kw_Case {$IFNDEF Lape_ForceBlock}, tk_kw_Const, tk_kw_Var {$ENDIF}, tk_kw_For, tk_kw_If, tk_kw_Repeat, tk_kw_While, tk_kw_With, tk_kw_Try, tk_sym_SemiColon, tk_kw_Else], Token) then
+  if isNext(AcceptTokens, Token) then
     case Token of
       tk_Identifier: Result := ParseExpression([], False);
       tk_kw_Begin: Result := ParseBeginEnd();
@@ -2075,8 +2114,7 @@ begin
   Result := TLapeTree_For.Create(Self, getPDocPos());
   try
 
-    {$IFNDEF Lape_ForceBlock}
-    if (Peek() = tk_kw_Var) then
+    if (lcoLooseSyntax in FOptions) and (Peek() = tk_kw_Var) then
       with ParseVarBlock(True, [tk_kw_To]) do
       try
         if (Vars.Count <> 1) then
@@ -2097,7 +2135,6 @@ begin
         Free();
       end
     else
-    {$ENDIF}
       Result.Counter := ParseExpression();
     Expect([tk_kw_To, tk_kw_DownTo], False, False);
     if (Tokenizer.Tok = tk_kw_DownTo) then

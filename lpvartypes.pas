@@ -699,7 +699,7 @@ type
     lcoRangeCheck,                     // {$R} {$RANGECHECKS}
     lcoShortCircuit,                   // {$B} {$BOOLEVAL}
     lcoAlwaysInitialize,               // {$M} {$MEMORYINIT}
-    lcoForceBlock,                     // {$X} {$EXTENDEDSYNTAX}
+    lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
     lcoVarStringChecks                 // {$V} {$VARSTRINGCHECKS}
   );
@@ -707,7 +707,7 @@ type
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoShortCircuit, lcoAlwaysInitialize, lcoForceBlock];
+  Lape_OptionsDef = [lcoShortCircuit, lcoAlwaysInitialize];
   Lape_PackRecordsDef = 2;
 
 type
@@ -4467,9 +4467,6 @@ begin
 end;
 
 function TLapeStackInfo.getInitialization: Boolean;
-{$IFDEF Lape_AlwaysInitialize}
-begin Result := True;
-{$ELSE}
 var
   i: Integer;
 begin
@@ -4477,7 +4474,6 @@ begin
     if FVarStack[i].NeedInitialization then
       Exit(True);
   Result := False;
-{$ENDIF}
 end;
 
 function TLapeStackInfo.getFinalization: Boolean;
@@ -5139,12 +5135,12 @@ begin
         WriteLn('Vars on stack: ', FStackInfo.Count);
 
         if (not InFunction) then
-          if FStackInfo.NeedInitialization then
+          if (lcoAlwaysInitialize in FOptions) or FStackInfo.NeedInitialization then
             Emitter._ExpandVarAndInit(FStackInfo.TotalSize, FStackInfo.CodePos, Pos)
           else
             Emitter._ExpandVar(FStackInfo.TotalSize, FStackInfo.CodePos, Pos)
         else if (FStackInfo.TotalNoParamSize > 0) then
-          if FStackInfo.NeedInitialization then
+          if (lcoAlwaysInitialize in FOptions) or FStackInfo.NeedInitialization then
             Emitter._GrowVarAndInit(FStackInfo.TotalNoParamSize, FStackInfo.CodePos, Pos)
           else
             Emitter._GrowVar(FStackInfo.TotalNoParamSize, FStackInfo.CodePos, Pos);
