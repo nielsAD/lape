@@ -90,6 +90,7 @@
         <ComponentName Value="Form1"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Main"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
         <TopLine Value="77"/>
@@ -166,11 +167,10 @@
       <Unit8>
         <Filename Value="lape.inc"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
-        <CursorPos X="9" Y="10"/>
+        <CursorPos X="98" Y="12"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit8>

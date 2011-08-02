@@ -453,8 +453,8 @@ type
   protected
     FVariable: TLapeVar;
   public
-    constructor Create(AVar: TLapeVar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; virtual;
-    constructor Create(AVar: TLapeVar; ASource: TLapeTree_Base); overload;
+    constructor Create(AVar: TLapeVar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
+    constructor Create(AVar: TLapeVar; ASource: TLapeTree_Base); overload; virtual;
 
     function Compile(var Offset: Integer): TResVar; override;
     property Variable: TLapeVar read FVariable;

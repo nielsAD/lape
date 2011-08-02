@@ -16,6 +16,23 @@ uses
   lptypes, lpparser, lpcodeemitter;
 
 type
+  ECompilerOption = (
+    lcoAssertions,                     // {$C} {$ASSERTIONS}
+    lcoRangeCheck,                     // {$R} {$RANGECHECKS}
+    lcoShortCircuit,                   // {$B} {$BOOLEVAL}
+    lcoAlwaysInitialize,               // {$M} {$MEMORYINIT}
+    lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
+    lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
+    lcoVarStringChecks                 // {$V} {$VARSTRINGCHECKS}
+  );
+  ECompilerOptionsSet = set of ECompilerOption;
+  PCompilerOptionsSet = ^ECompilerOptionsSet;
+
+const
+  Lape_OptionsDef = [lcoShortCircuit, lcoAlwaysInitialize];
+  Lape_PackRecordsDef = 2;
+
+type
   TLapeType = class;
   TLapeVar = class;
   TLapeStackVar = class;
@@ -694,23 +711,6 @@ type
     function _Eval(AProc: TLapeEvalProc; Dest, Left, Right: TResVar; Pos: PDocPos = nil): Integer; overload; virtual;
   end;
 
-  ECompilerOption = (
-    lcoAssertions,                     // {$C} {$ASSERTIONS}
-    lcoRangeCheck,                     // {$R} {$RANGECHECKS}
-    lcoShortCircuit,                   // {$B} {$BOOLEVAL}
-    lcoAlwaysInitialize,               // {$M} {$MEMORYINIT}
-    lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
-    lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
-    lcoVarStringChecks                 // {$V} {$VARSTRINGCHECKS}
-  );
-  ECompilerOptionsSet = set of ECompilerOption;
-  PCompilerOptionsSet = ^ECompilerOptionsSet;
-
-const
-  Lape_OptionsDef = [lcoShortCircuit, lcoAlwaysInitialize];
-  Lape_PackRecordsDef = 2;
-
-type
   TLapeCompilerBase = class(TLapeBaseDeclClass)
   protected
     FEmitter: TLapeCodeEmitter;
