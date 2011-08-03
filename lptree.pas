@@ -258,11 +258,13 @@ type
 
   TLapeTree_InternalMethod_Inc = class(TLapeTree_InternalMethod)
   public
+    function resType: TLapeType; override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
   TLapeTree_InternalMethod_Dec = class(TLapeTree_InternalMethod)
   public
+    function resType: TLapeType; override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
@@ -1964,6 +1966,7 @@ var
   tmpVar, DestVar, Param: TResVar;
 begin
   Result := NullResVar;
+  FDest := NullResVar;
   if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
@@ -1991,6 +1994,7 @@ var
   JumpSafe: Boolean;
 begin
   Result := NullResVar;
+  FDest := NullResVar;
   Node := FParent;
 
   if (not (FParams.Count in [0, 1])) then
@@ -2041,6 +2045,7 @@ var
   JumpSafe: Boolean;
 begin
   Result := NullResVar;
+  FDest := NullResVar;
   Node := FParent;
 
   if (not (FParams.Count in [0, 1])) then
@@ -2090,6 +2095,7 @@ var
   ResultDecl: TLapeDeclaration;
 begin
   Result := NullResVar;
+  FDest := NullResVar;
   Node := FParent;
 
   if (FParams.Count <> 0) then
@@ -2134,6 +2140,7 @@ var
   IsPointer: Boolean;
 begin
   Result := NullResVar;
+  FDest := NullResVar;
   if (FParams.Count <> 1) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
@@ -2180,6 +2187,7 @@ var
   _Dispose: TLapeGlobalVar;
 begin
   Result := NullResVar;
+  FDest := NullResVar;
   if (FParams.Count <> 1) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
@@ -2550,6 +2558,8 @@ var
   Counter: TLapeVar;
   i: Integer;
 begin
+  Result := NullResVar;
+  FDest := NullResVar;
   if (FParams.Count < 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
 
@@ -2868,13 +2878,27 @@ begin
   end;
 end;
 
+function TLapeTree_InternalMethod_Inc.resType: TLapeType;
+begin
+  Result := nil;
+  if (FParams.Count in [1, 2]) and (not isEmpty(FParams[0])) then
+  begin
+    Result := FParams[0].resType();
+    if (Result <> nil) and (Result is TLapeType_Type) then
+      Result := TLapeType_Type(Result).TType;
+  end;
+end;
+
 function TLapeTree_InternalMethod_Inc.Compile(var Offset: Integer): TResVar;
 var
   OldVarParam, OldCountParam: TLapeTree_ExprBase;
   Succ: TLapeTree_Operator;
 begin
+  Result := NullResVar;
+  FDest := NullResVar;
   if (not (FParams.Count in [1, 2])) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
   OldVarParam := FParams.Delete(0);
   if (FParams.Count > 0) then
     OldCountParam := FParams.Delete(0)
@@ -2900,13 +2924,27 @@ begin
   end;
 end;
 
+function TLapeTree_InternalMethod_Dec.resType: TLapeType;
+begin
+  Result := nil;
+  if (FParams.Count in [1, 2]) and (not isEmpty(FParams[0])) then
+  begin
+    Result := FParams[0].resType();
+    if (Result <> nil) and (Result is TLapeType_Type) then
+      Result := TLapeType_Type(Result).TType;
+  end;
+end;
+
 function TLapeTree_InternalMethod_Dec.Compile(var Offset: Integer): TResVar;
 var
   OldVarParam, OldCountParam: TLapeTree_ExprBase;
   Pred: TLapeTree_Operator;
 begin
+  Result := NullResVar;
+  FDest := NullResVar;
   if (not (FParams.Count in [1, 2])) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
   OldVarParam := FParams.Delete(0);
   if (FParams.Count > 0) then
     OldCountParam := FParams.Delete(0)

@@ -4499,7 +4499,7 @@ begin
   Result := False;
 end;
 
-constructor TLapeStackInfo.Create(AlwaysInitialize: Boolean; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
+constructor TLapeStackInfo.Create(AlwaysInitialize: Boolean = True; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
 begin
   inherited Create();
 
