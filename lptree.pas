@@ -1708,7 +1708,20 @@ var
       begin
         Result.VarPos.MemPos := mpVar;
         Result.VarType := Res;
-        Result.VarPos.StackVar := FCompiler.getTempVar(Res);
+        if (lcoAlwaysInitialize in FCompilerOptions) then
+          Result.VarPos.StackVar := FCompiler.getTempVar(Res, 2)
+        else
+          Result.VarPos.StackVar := FCompiler.getTempVar(Res, 1);
+        Result.isConstant := False;
+
+        if (lcoAlwaysInitialize in FCompilerOptions) then
+          with TLapeTree_InternalMethod_Dispose.Create(Self) do
+          try
+            addParam(TLapeTree_ResVar.Create(Result, Self));
+            Compile(Offset);
+          finally
+            Free();
+          end;
 
         Par := NullResVar;
         Par.VarPos.MemPos := mpStack;
