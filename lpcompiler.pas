@@ -949,9 +949,8 @@ begin
 
           if (Tokenizer.Tok = tk_sym_Equals) then
           begin
-            Default := ParseExpression([tk_sym_ParenthesisClose], True, False);
+            Default := ParseExpression([tk_sym_ParenthesisClose], True, False).setExpectedType(Param.VarType) as TLapeTree_ExprBase;
             try
-              Default := setExpectedType(Default, Param.VarType) as TLapeTree_ExprBase;
               Param.Default := Default.Evaluate();
               if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or Param.Default.isConstant) then
                 LapeException(lpeVariableExpected, Default.DocPos);
@@ -1540,7 +1539,7 @@ begin
 
       if (Tokenizer.Tok = tk_sym_Equals) then
       begin
-        Default := setExpectedType(ParseExpression([], True, False), VarType) as TLapeTree_ExprBase;
+        Default := ParseExpression([], True, False).setExpectedType(VarType) as TLapeTree_ExprBase;
         if (Default <> nil) and (not Default.isConstant()) then
           LapeException(lpeConstantExpected, Default.DocPos);
 
@@ -1885,7 +1884,7 @@ begin
             begin
               PopOpStack(op_Invoke);
               if (Method = nil) then
-                Method := TLapeTree_Invoke.Create(FoldConstants(VarStack.Pop()) as TLapeTree_ExprBase, Self, getPDocPos());
+                Method := TLapeTree_Invoke.Create(VarStack.Pop().FoldConstants() as TLapeTree_ExprBase, Self, getPDocPos());
               if (Next() <> tk_sym_ParenthesisClose) then
               begin
                 Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False)));
@@ -1936,9 +1935,8 @@ begin
         LapeException(lpeInvalidEvaluation, Tokenizer.DocPos);
 
     Result := VarStack.Pop();
-    if DoFold then
-      Result := TLapeTree_ExprBase(FoldConstants(Result));
-    PrintTree(Result);
+    if DoFold and (not TLapeTree_Base.isEmpty(Result)) then
+      Result := Result.FoldConstants() as TLapeTree_ExprBase;
   finally
     if (Method <> nil) then
       Method.Free();
@@ -2642,7 +2640,7 @@ begin
         Result := TLapeTree_Operator.Create(op_Dot, Self, Pos);
         TLapeTree_Operator(Result).Left := TLapeTree_WithVar.Create(WithDeclRec, Self, Pos);
         TLapeTree_Operator(Result).Right := TLapeTree_Field.Create(AName, Self, Pos);
-        Result := FoldConstants(Result) as TLapeTree_ExprBase;
+        Result := Result.FoldConstants() as TLapeTree_ExprBase;
       finally
         Free();
       end
