@@ -2849,6 +2849,7 @@ Arr[op_IN][ltUInt32][ltSmallSet] := ltEvalBool;
 Arr[op_IN][ltInt64][ltSmallSet] := ltEvalBool;
 Arr[op_IN][ltUInt64][ltSmallSet] := ltEvalBool;
 Arr[op_IN][ltSmallEnum][ltSmallSet] := ltEvalBool;
+Arr[op_IN][ltBoolean][ltSmallSet] := Arr[op_IN][ltUInt8][ltSmallSet];
 Arr[op_IN][ltAnsiChar][ltLargeSet] := Arr[op_IN][ltUInt8][ltSmallSet];
 Arr[op_IN][ltWideChar][ltLargeSet] := Arr[op_IN][ltUInt16][ltSmallSet];
 
@@ -2861,6 +2862,7 @@ Arr[op_Plus][ltSmallSet][ltUInt32] := ltSmallSet;
 Arr[op_Plus][ltSmallSet][ltInt64] := ltSmallSet;
 Arr[op_Plus][ltSmallSet][ltUInt64] := ltSmallSet;
 Arr[op_Plus][ltSmallSet][ltSmallEnum] := ltSmallSet;
+Arr[op_Plus][ltSmallSet][ltBoolean] := Arr[op_Plus][ltSmallSet][ltUInt8];
 Arr[op_Plus][ltSmallSet][ltAnsiChar] := Arr[op_Plus][ltUInt8][ltSmallSet];
 Arr[op_Plus][ltSmallSet][ltWideChar] := Arr[op_Plus][ltUInt16][ltSmallSet];
 

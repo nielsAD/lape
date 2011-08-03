@@ -113,7 +113,7 @@ type
     function ParseMethod(FuncForwards: TLapeFuncForwards; FuncHeader: TLapeType_Method; FuncName: lpString; isExternal: Boolean): TLapeTree_Method; overload; virtual;
     function ParseMethod(FuncForwards: TLapeFuncForwards; FuncHeader: TLapeType_Method; FuncName: lpString): TLapeTree_Method; overload; virtual;
     function ParseMethod(FuncForwards: TLapeFuncForwards; isExternal: Boolean = False): TLapeTree_Method; overload; virtual;
-    function ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False): TLapeType; virtual;
+    function ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False; ScopedEnums: Boolean = False): TLapeType; virtual;
     procedure ParseTypeBlock; virtual;
     function ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList; virtual;
 
@@ -1215,7 +1215,7 @@ begin
   end;
 end;
 
-function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False): TLapeType;
+function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False; ScopedEnums: Boolean = False): TLapeType;
   procedure ParseArray;
   var
     TypeExpr: TLapeTree_Base;
@@ -1233,14 +1233,14 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         Range := EnsureConstantRange(TypeExpr);
         Expect(tk_sym_BracketClose, False, False);
         Expect(tk_kw_Of, True, False);
-        Result := addManagedType(TLapeType_StaticArray.Create(Range, ParseType(nil), Self, '', @DocPos));
+        Result := addManagedType(TLapeType_StaticArray.Create(Range, ParseType(nil, addToStackOwner, ScopedEnums), Self, '', @DocPos));
       finally
         if (TypeExpr <> nil) then
           TypeExpr.Free();
       end;
     end
     else
-      Result := addManagedType(TLapeType_DynArray.Create(ParseType(nil), Self, '', @DocPos));
+      Result := addManagedType(TLapeType_DynArray.Create(ParseType(nil, addToStackOwner, ScopedEnums), Self, '', @DocPos));
   end;
 
   procedure ParseRecord(IsPacked: Boolean = False);
@@ -1259,7 +1259,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     repeat
       Identifiers := ParseIdentifierList();
       Expect(tk_sym_Colon, False, False);
-      FieldType := ParseType(nil);
+      FieldType := ParseType(nil, addToStackOwner, ScopedEnums);
       Expect(tk_sym_SemiColon, True, False);
       for i := 0 to High(Identifiers) do
         if IsPacked then
@@ -1280,7 +1280,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
   begin
     //Expect(tk_kw_Set, True, False);
     Expect(tk_kw_Of, True, False);
-    SetType := ParseType(nil);
+    SetType := ParseType(nil, addToStackOwner, ScopedEnums);
     if (not (SetType is TLapeType_SubRange)) then
       LapeException(lpeInvalidRange, Tokenizer.DocPos);
 
@@ -1320,6 +1320,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     Member: TLapeTree_ExprBase;
     Default: TLapeGlobalVar;
     StackOwner: TLapeStackInfo;
+    Val: Int64;
   begin
     //Expect(tk_sym_ParenthesisOpen, True, False);
     Enum := TLapeType_Enum.Create(Self, nil, '', getPDocPos());
@@ -1331,7 +1332,9 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     repeat
       Expect(tk_Identifier, True, False);
       Name := Tokenizer.TokString;
-      if hasDeclaration(Name, StackOwner, True) then
+      if (ScopedEnums and Enum.hasMember(Name)) or
+         ((not ScopedEnums) and hasDeclaration(Name, StackOwner, True))
+      then
         LapeExceptionFmt(lpeDuplicateDeclaration, [Name], Tokenizer.DocPos);
 
       Expect([tk_sym_Comma, tk_sym_ParenthesisClose, tk_sym_Equals], True, False);
@@ -1346,7 +1349,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
 
           if (Default = nil) or (not Default.HasType()) or (Default.VarType.BaseIntType = ltUnknown) or (not Default.isConstant) then
             LapeException(lpeExpressionExpected, Tokenizer.DocPos);
-          TLapeGlobalVar(addLocalDecl(Enum.NewGlobalVar(Enum.addMember(Default.AsInteger, Name), Name), StackOwner)).isConstant := True;
+          Val := Enum.addMember(Default.AsInteger, Name);
         finally
           Member.Free();
         end;
@@ -1354,9 +1357,16 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         LapeException(E.Message, Tokenizer.DocPos);
       end
       else
-        TLapeGlobalVar(addLocalDecl(Enum.NewGlobalVar(Enum.addMember(Name), Name), StackOwner)).isConstant := True;
+        Val := Enum.addMember(Name);
+
+      if (not ScopedEnums) then
+        TLapeGlobalVar(addLocalDecl(Enum.NewGlobalVar(Val, Name), StackOwner)).isConstant := True;
     until (Tokenizer.Tok in [tk_NULL, tk_sym_ParenthesisClose]);
-    Result := addManagedType(Enum);
+
+    if ScopedEnums then
+      Result := addManagedType(Enum)
+    else
+      Result := addManagedDecl(Enum) as TLapeType;
   end;
 
   procedure ParseMethodType;
@@ -1480,7 +1490,7 @@ begin
         LapeExceptionFmt(lpeDuplicateDeclaration, [Name], Tokenizer.DocPos);
       Expect(tk_sym_Equals, True, False);
 
-      Typ := ParseType(TypeForwards);
+      Typ := ParseType(TypeForwards, False, lcoScopedEnums in FOptions);
       if ((Typ.DeclarationList <> nil) or (Typ.Name <> '')) and (not TypeForwards.ExistsItem(Typ)) then
         Typ := Typ.CreateCopy();
       Typ.Name := Name;

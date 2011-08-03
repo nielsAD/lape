@@ -395,7 +395,7 @@ const
   LapeBoolTypes = [ltBoolean..ltLongBool];
   LapeStringTypes = [ltShortString..ltUnicodeString];
   LapeCharTypes = [ltAnsiChar..ltWideChar];
-  LapeEnumTypes = [ltSmallEnum..ltLargeEnum, ltBoolean];
+  LapeEnumTypes = [ltSmallEnum..ltLargeEnum] + LapeBoolTypes;
   LapeSetTypes = [ltSmallSet..ltLargeSet];
   LapeArrayTypes = [ltDynArray..ltStaticArray] + LapeStringTypes;
   LapeStructTypes = [ltRecord..ltUnion];

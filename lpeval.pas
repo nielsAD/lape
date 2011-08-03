@@ -110,24 +110,24 @@ var
     '  TEnum = (se0, se1 = %d);'                                                         + LineEnding +
     '  TSet = set of TEnum;'                                                             + LineEnding +
     '  PSet = ^TSet;'                                                                    + LineEnding +
-    '  TToString = private function(const Enum: TEnum): string;'                         + LineEnding +
+    '  TToString = function(const Enum: TEnum): string;'                                 + LineEnding +
     'var'                                                                                + LineEnding +
-    '  i: Int32;'                                                                        + LineEnding +
+    '  e: TEnum;'                                                                        + LineEnding +
     'begin'                                                                              + LineEnding +
     '  Result := '#39#39';'                                                              + LineEnding +
-    '  for i := Lo to Hi do'                                                             + LineEnding +
-    '    if (TEnum(i) in PSet(ASet)^) then'                                              + LineEnding +
+    '  for e := TEnum(Lo) to TEnum(Hi) do'                                               + LineEnding +
+    '    if (e in PSet(ASet)^) then'                                                     + LineEnding +
     '    begin'                                                                          + LineEnding +
     '      if (Result <> '#39#39') then'                                                 + LineEnding +
     '        Result := Result + '#39', '#39';'                                           + LineEnding +
-    '      Result := Result + TToString(AToString)(TEnum(i));'                           + LineEnding +
+    '      Result := Result + TToString(AToString)(e);'                                  + LineEnding +
     '    end;'                                                                           + LineEnding +
     '  Result := '#39'['#39'+Result+'#39']'#39';'                                        + LineEnding +
     'end;';
 
   _LapeToString_Array: lpString =
     'function _ArrayToString(Arr: Pointer;'                                              + LineEnding +
-    '  AToString: private function(const p: Pointer): string;'                           + LineEnding +
+    '  AToString: function(const p: Pointer): string;'                                   + LineEnding +
     '  Len, Size: Int32): string;'                                                       + LineEnding +
     'var'                                                                                + LineEnding +
     '  i: Int32;'                                                                        + LineEnding +

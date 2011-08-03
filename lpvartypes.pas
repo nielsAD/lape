@@ -658,9 +658,10 @@ type
   public
     Owner: TLapeStackInfo;
     FreeVars: Boolean;
+    ForceInitialization: Boolean;
     CodePos: Integer;
 
-    constructor Create(AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True); reintroduce; virtual;
+    constructor Create(AlwaysInitialize: Boolean = True; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True); reintroduce; virtual;
     destructor Destroy; override;
 
     function getDeclaration(Name: lpString): TLapeDeclaration; virtual;
@@ -1613,7 +1614,7 @@ begin
     if (op = op_Deref) then
       Result.VarPos.isPointer := (Result.VarPos.MemPos = mpVar);
     if (op <> op_Assign) then
-      Result.setConstant((op <> op_Deref) and Result.isConstant {and Left.isConstant and Right.isConstant}, False);
+      Result.setConstant((op <> op_Deref) and Result.isConstant, False);
   finally
     if Result.HasType() and (Result.VarType.ClassType = TLapeType) and (Result.VarType.BaseType = ltUnknown) then
       FreeAndNil(Result.VarType);
@@ -2099,15 +2100,25 @@ end;
 function TLapeType_Enum.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
   i: Integer;
+  LongName: Boolean;
 begin
   Result := '';
+  LongName := False;
+
   for i := 0 to FMemberMap.Count - 1 do
     if (FMemberMap[i] <> '') then
     begin
       if (Result <> '') then
         Result := Result + ', ';
       Result := Result + #39 + FMemberMap[i] + #39;
+
+      if (not LongName) and (Length(FMemberMap[i]) > 1) then
+        LongName := True;
     end;
+
+  //To prevent casting to char array
+  if (not LongName) and (Result <> '') then
+    Result := Result + ', '#39'PLACEHOLDER'#39;
 
   if (Result <> '') then
     Result := '@['+Result+']'
@@ -2167,11 +2178,10 @@ end;
 
 function TLapeType_Enum.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
-  try
-    Result := NewGlobalVar(StrToInt(Str), AName, ADocPos);
-  except
+  if (Str <> '') and (Str[1] in ['-', '0'..'9']) then
+    Result := NewGlobalVar(StrToInt(Str), AName, ADocPos)
+  else
     Result := NewGlobalVar(FMemberMap.IndexOf(Str), AName, ADocPos);
-  end;
 end;
 
 function TLapeType_Enum.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
@@ -3909,7 +3919,7 @@ end;
 
 procedure TLapeType_Method.setBaseType(ABaseType: ELapeBaseType);
 begin
-  Assert(ABaseType in [ltScriptMethod, ltImportedMethod]);
+  Assert(ABaseType in [ltPointer, ltScriptMethod, ltImportedMethod]);
   FBaseType := ABaseType;
 end;
 
@@ -4470,6 +4480,9 @@ function TLapeStackInfo.getInitialization: Boolean;
 var
   i: Integer;
 begin
+  if ForceInitialization then
+    Exit(True);
+
   for i := 0 to FVarStack.Count - 1 do
     if FVarStack[i].NeedInitialization then
       Exit(True);
@@ -4486,7 +4499,7 @@ begin
   Result := False;
 end;
 
-constructor TLapeStackInfo.Create(AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
+constructor TLapeStackInfo.Create(AlwaysInitialize: Boolean; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
 begin
   inherited Create();
 
@@ -4495,6 +4508,7 @@ begin
   FVarStack := TLapeVarStack.Create(nil, dupIgnore);
   FWithStack := TLapeWithDeclarationList.Create(NullWithDecl, dupIgnore);
   FreeVars := ManageVars;
+  ForceInitialization := AlwaysInitialize;
   CodePos := -1;
 end;
 
@@ -5074,7 +5088,7 @@ end;
 
 function TLapeCompilerBase.IncStackInfo(var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo;
 begin
-  Result := IncStackInfo(TLapeStackInfo.Create(FStackInfo), Offset, Emit, Pos);
+  Result := IncStackInfo(TLapeStackInfo.Create(lcoAlwaysInitialize in FOptions, FStackInfo), Offset, Emit, Pos);
 end;
 
 function TLapeCompilerBase.IncStackInfo(Emit: Boolean = False): TLapeStackInfo;
@@ -5135,12 +5149,12 @@ begin
         WriteLn('Vars on stack: ', FStackInfo.Count);
 
         if (not InFunction) then
-          if (lcoAlwaysInitialize in FOptions) or FStackInfo.NeedInitialization then
+          if FStackInfo.NeedInitialization then
             Emitter._ExpandVarAndInit(FStackInfo.TotalSize, FStackInfo.CodePos, Pos)
           else
             Emitter._ExpandVar(FStackInfo.TotalSize, FStackInfo.CodePos, Pos)
         else if (FStackInfo.TotalNoParamSize > 0) then
-          if (lcoAlwaysInitialize in FOptions) or FStackInfo.NeedInitialization then
+          if FStackInfo.NeedInitialization then
             Emitter._GrowVarAndInit(FStackInfo.TotalNoParamSize, FStackInfo.CodePos, Pos)
           else
             Emitter._GrowVar(FStackInfo.TotalNoParamSize, FStackInfo.CodePos, Pos);
