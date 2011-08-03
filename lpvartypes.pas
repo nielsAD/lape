@@ -18,12 +18,12 @@ uses
 type
   ECompilerOption = (
     lcoAssertions,                     // {$C} {$ASSERTIONS}
-    lcoRangeCheck,                     // {$R} {$RANGECHECKS}
+    lcoRangeCheck,                     // {$R} {$RANGECHECKS}      TODO
     lcoShortCircuit,                   // {$B} {$BOOLEVAL}
     lcoAlwaysInitialize,               // {$M} {$MEMORYINIT}
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
-    lcoVarStringChecks                 // {$V} {$VARSTRINGCHECKS}
+    lcoVarStringChecks                 // {$V} {$VARSTRINGCHECKS}  TODO
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;

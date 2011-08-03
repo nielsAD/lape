@@ -1278,15 +1278,10 @@ begin
 
   if FDest.HasType() and (FDest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and ToType.Equals(FDest.VarType) then
     Result := FDest
-  else if (ToType is TLapeType_DynArray) then
+  else
   begin
     FDest := NullResVar;
     Result := _ResVar.New(FCompiler.getTempVar(ToType));
-  end
-  else
-  begin
-    Result.VarType := ToType;
-    FCompiler.getDestVar(FDest, Result, op_Unknown);
   end;
 
   wasConstant := Result.isConstant;
@@ -1709,9 +1704,9 @@ var
         Result.VarPos.MemPos := mpVar;
         Result.VarType := Res;
         if (lcoAlwaysInitialize in FCompilerOptions) then
-          Result.VarPos.StackVar := FCompiler.getTempVar(Res, 2)
+          Result.VarPos.StackVar := FCompiler.getTempVar(Res, 3)
         else
-          Result.VarPos.StackVar := FCompiler.getTempVar(Res, 1);
+          Result.VarPos.StackVar := FCompiler.getTempVar(Res, 2);
         Result.isConstant := False;
 
         if (lcoAlwaysInitialize in FCompilerOptions) then
