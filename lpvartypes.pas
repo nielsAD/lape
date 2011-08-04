@@ -759,6 +759,8 @@ type
     function getTempStackVar(VarType: TLapeType): TResVar; overload; virtual;
     function getPointerType(PType: ELapeBaseType): TLapeType_Pointer; overload; virtual;
     function getPointerType(PType: TLapeType): TLapeType_Pointer; overload; virtual;
+    function getTypeVar(AType: ELapeBaseType): TLapeGlobalVar; overload; virtual;
+    function getTypeVar(AType: TLapeType): TLapeGlobalVar; overload; virtual;
 
     function getGlobalVar(AName: lpString): TLapeGlobalVar; virtual;
     function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
@@ -2861,7 +2863,9 @@ function TLapeType_DynArray.EvalRes(Op: EOperator; Right: TLapeType = nil): TLap
 begin
   if (op = op_Index) then
     Result := FPType
-  else if (op = op_Assign) and HasType() and (Right <> nil) and (Right is ClassType) and FPType.Equals(TLapeType_DynArray(Right).FPType) then
+  else if (op = op_Assign) and (BaseType = ltDynArray) and HasType() and (Right <> nil) and (Right is ClassType) and FPType.Equals(TLapeType_DynArray(Right).FPType) then
+    Result := Self
+  else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(Right) then
     Result := Self
   else
     Result := inherited;
@@ -2892,16 +2896,44 @@ begin
       FBaseType := tmpType;
     end;
   end
-  else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and (Left <> nil) and (Right <> nil) and (Right.VarType is ClassType) and FPType.Equals(TLapeType_DynArray(Right.VarType).FPType) then
-  begin
-    Assert(HasType());
-    if (PPointer(Left.Ptr)^ = PPointer(Right.Ptr)^) then
-      Exit(Left);
+  else if (op = op_Assign) and (BaseType = ltDynArray) and (Left <> nil) and (Right <> nil) and CompatibleWith(Right.VarType) then
+    if (Right.VarType.BaseType = ltDynArray) then
+    begin
+      if (PPointer(Left.Ptr)^ = PPointer(Right.Ptr)^) then
+        Exit(Left);
 
-    VarSetLength(PPointer(Left.Ptr)^, 0);
-    Result := inherited;
-    if (Result <> nil) and (Result.Ptr <> nil) and (PPointer(Result.Ptr)^ <> nil) then
-      Inc(PtrInt(Pointer(PtrInt(Result.Ptr^) - SizeOf(SizeInt) - SizeOf(PtrInt))^));
+      VarSetLength(PPointer(Left.Ptr)^, 0);
+      Result := inherited;
+      if (Result <> nil) and (Result.Ptr <> nil) and (PPointer(Result.Ptr)^ <> nil) then
+        Inc(PtrInt(Pointer(PtrInt(Result.Ptr^) - SizeOf(SizeInt) - SizeOf(PtrInt))^));
+    end
+    else if (Right.VarType is TLapeType_StaticArray) then
+    begin
+      VarSetLength(PPointer(Left.Ptr)^, TLapeType_StaticArray(Right.VarType).Range.Hi - TLapeType_StaticArray(Right.VarType).Range.Lo + 1);
+      Result := Left;
+
+      IndexVar := EvalConst(op_Index, Left, FCompiler.getConstant(0));
+      try
+        IndexVar.VarType := Right.VarType;
+        IndexVar.VarType.EvalConst(op_Assign, IndexVar, Right);
+      finally
+        IndexVar.Free();
+      end;
+    end
+    else
+      LapeException(lpeImpossible)
+  else if (op = op_Plus) and (BaseType = ltDynArray) and (Left <> nil) and (Right <> nil) and HasType() and FPType.CompatibleWith(Right.VarType) then
+  begin
+    Result := EvalConst(op_Assign, NewGlobalVarP(), Left);
+    IndexVar := FCompiler.getConstant(Length(PCodeArray(Result.Ptr)^));
+    VarSetLength(PPointer(Result.Ptr)^, IndexVar.AsInteger + 1);
+
+    IndexVar := EvalConst(op_Index, Result, IndexVar);
+    try
+      PType.EvalConst(op_Assign, IndexVar, Right);
+    finally
+      IndexVar.Free();
+    end;
   end
   else
     Result := inherited;
@@ -2911,10 +2943,12 @@ function TLapeType_DynArray.Eval(Op: EOperator; var Dest: TResVar; Left, Right: 
 var
   tmpType: ELapeBaseType;
   tmpVar: TLapeStackTempVar;
-  IndexVar: TResVar;
+  IndexVar, tmpResVar: TResVar;
+  wasConstant: Boolean;
 begin
   Assert(Left.VarType is TLapeType_Pointer);
   IndexVar := NullResVar;
+  tmpResVar := NullResVar;
   tmpVar := nil;
 
   if (op = op_Index) then
@@ -2944,7 +2978,7 @@ begin
   finally
     FBaseType := tmpType;
   end
-  else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and (Right.VarType is ClassType) and FPType.Equals(TLapeType_DynArray(Right.VarType).FPType) then
+  else if (op = op_Assign) and (BaseType = ltDynArray) and CompatibleWith(Right.VarType) then
   begin
     Result := Left;
     if (Left.VarPos.MemPos = mpStack) then
@@ -2954,22 +2988,59 @@ begin
       Left := _ResVar.New(tmpVar);
     end;
 
-    FCompiler.EmitCode(
-      'if (Pointer(Left) <> Pointer(Right)) then begin'                   +
-      '  SetLength(Left, 0);'                                             +
-      '  Pointer(Left) := Pointer(Right);'                                +
-      '  if (Pointer(Left) <> nil) then'                                  +
-      '    Inc(PtrInt(Pointer(Left)[-'                                    +
-             IntToStr(SizeOf(SizeInt)+SizeOf(PtrInt))                     +
-           ']^));'                                                        +
-      'end;'
-    , ['Left', 'Right'], [], [Left, Right], Offset, Pos);
+    if (Right.VarType.BaseType = ltDynArray) then
+      FCompiler.EmitCode(
+        'if (Pointer(Left) <> Pointer(Right)) then begin'                   +
+        '  SetLength(Left, 0);'                                             +
+        '  Pointer(Left) := Pointer(Right);'                                +
+        '  if (Pointer(Left) <> nil) then'                                  +
+        '    Inc(PtrInt(Pointer(Left)[-'                                    +
+               IntToStr(SizeOf(SizeInt)+SizeOf(PtrInt))                     +
+             ']^));'                                                        +
+        'end;'
+      , ['Left', 'Right'], [], [Left, Right], Offset, Pos)
+    else if (Right.VarType is TLapeType_StaticArray) then
+      FCompiler.EmitCode(
+        'SetLength(Left, '+IntToStr(
+          TLapeType_StaticArray(Right.VarType).Range.Hi -
+          TLapeType_StaticArray(Right.VarType).Range.Lo + 1)                +
+        ');'                                                                +
+        'PType(@Left[0])^ := Right;',
+        ['PType', 'Left', 'Right'], [FCompiler.getTypeVar(FCompiler.getPointerType(Right.VarType))],
+        [Left, Right], Offset, Pos)
+    else
+      LapeException(lpeImpossible);
 
     if (tmpVar <> nil) then
     begin
       FCompiler.Emitter._PopVarToStack(Size, tmpVar.Offset, Offset, Pos);
       Left.Spill(BigLock);
     end;
+  end
+  else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(Right.VarType) then
+  begin
+    Result := NullResVar;
+    Result.VarType := Self;
+    FCompiler.getDestVar(Dest, Result, op);
+
+    if (Result.VarPos.MemPos = mpStack) then
+    begin
+      tmpVar := FCompiler.getTempVar(Self);
+      Result := _ResVar.New(tmpVar);
+    end;
+
+    wasConstant := Result.isConstant;
+    if wasConstant then
+      Result.isConstant := False;
+
+    Result := Eval(op_Assign, tmpResVar, Result, Left, Offset, Pos);
+    FCompiler.EmitCode(
+      'SetLength(Result, Length(Result) + 1);' +
+      'Result[High(Result)] := Right;'
+    , ['Result', 'Right'], [], [Result, Right], Offset, Pos);
+
+    if wasConstant then
+      Result.isConstant := True;
   end
   else
     Result := inherited;
@@ -3052,7 +3123,7 @@ end;
 
 function TLapeType_StaticArray.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
 begin
-  if (op = op_Assign) and HasType() and (Right <> nil) and (Right is TLapeType_StaticArray) and
+  if (op = op_Assign) and (BaseType = ltStaticArray) and HasType() and (Right <> nil) and (Right is ClassType) and
      ((TLapeType_StaticArray(Right).Range.Hi - TLapeType_StaticArray(Right).Range.Lo) = (Range.Hi - Range.Lo)) and
      FPType.CompatibleWith(TLapeType_StaticArray(Right).FPType)
   then
@@ -3112,7 +3183,7 @@ begin
       Right.VarType := tmpType;
     end;
   end
-  else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and (Left <> nil) and (Right <> nil) and Right.HasType() and CompatibleWith(Right.VarType) then
+  else if (op = op_Assign) and (BaseType = ltStaticArray) and (Left <> nil) and (Right <> nil) and CompatibleWith(Right.VarType) then
   begin
     Assert(HasType());
     LeftVar := nil;
@@ -3197,7 +3268,7 @@ begin
     Left.setConstant(wasConstant);
     Result.setConstant(wasConstant);
   end
-  else if (op = op_Assign) and (not (BaseType in LapeStringTypes)) and Right.HasType() and CompatibleWith(Right.VarType) then
+  else if (op = op_Assign) and (BaseType = ltStaticArray) and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) then
     try
       tmpType := Right.VarType;
@@ -4394,6 +4465,7 @@ begin
     else
       FieldName := '';
 
+    Dest.Spill();
     if (FieldName <> '') and (FVarMap[FieldName].RefVar <> nil) then
       Result := _ResVar.New(FVarMap[FieldName].RefVar)
     else if (FieldName <> '') and (FVarMap[FieldName].ResVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
@@ -4413,10 +4485,11 @@ begin
   Rec.RefVar := RefVar;
   if (RefVar is TLapeStackTempVar) then
     with TLapeStackTempVar(RefVar) do
-    begin
-      Rec.Lock := FLock;
-      FLock := BigLock * BigLock;
-    end;
+      if (FLock <> BigLock * BigLock) then
+      begin
+        Rec.Lock := FLock;
+        FLock := BigLock * BigLock;
+      end;
 
   FVarMap.add(AName, Rec);
 end;
@@ -4429,10 +4502,11 @@ begin
   Rec.ResVar := RefVar;
   if (RefVar.VarPos.MemPos = mpVar) and (RefVar.VarPos.StackVar is TLapeStackTempVar) then
     with TLapeStackTempVar(RefVar.VarPos.StackVar) do
-    begin
-      Rec.Lock := FLock;
-      FLock := BigLock * BigLock;
-    end;
+      if (FLock <> BigLock * BigLock) then
+      begin
+        Rec.Lock := FLock;
+        FLock := BigLock * BigLock;
+      end;
 
   FVarMap.add(AName, Rec);
 end;
@@ -5410,6 +5484,16 @@ end;
 function TLapeCompilerBase.getPointerType(PType: TLapeType): TLapeType_Pointer;
 begin
   Result := TLapeType_Pointer(addManagedType(TLapeType_Pointer.Create(Self, PType)));
+end;
+
+function TLapeCompilerBase.getTypeVar(AType: ELapeBaseType): TLapeGlobalVar;
+begin
+  Result := getTypeVar(FBaseTypes[AType]);
+end;
+
+function TLapeCompilerBase.getTypeVar(AType: TLapeType): TLapeGlobalVar;
+begin
+  Result := addManagedVar(addManagedType(TLapeType_Type.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
 end;
 
 function TLapeCompilerBase.getGlobalVar(AName: lpString): TLapeGlobalVar;

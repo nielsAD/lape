@@ -501,7 +501,7 @@ end;
 
 function ValidEvalFunction(p: TLapeEvalProc): Boolean;
 begin
-   Result := ValidEvalFunction(@p);
+   Result := ValidEvalFunction(Pointer({$IFNDEF FPC}@{$ENDIF}p));
 end;
 
 procedure LapeEval_Error(const Dest, Left, Right: Pointer);

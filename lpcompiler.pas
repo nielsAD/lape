@@ -993,7 +993,7 @@ begin
           FStackInfo.addVar(lptOut, Result.Res, 'Result');
     end;
 
-    Result := TLapeType_Method(addManagedType(Result));
+    Result := addManagedType(Result) as TLapeType_Method;
 
   except
     Result.Free();
