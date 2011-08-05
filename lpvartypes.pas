@@ -65,6 +65,9 @@ type
     function HasType: Boolean;
 
     procedure Spill(Unlock: Integer = 0);
+    function IncLock(Count: Integer = 1): TResVar;
+    function Declock(Count: Integer = 1): TResVar;
+
     procedure setConstant(IsConst: Boolean; ChangeStack: Boolean); overload;
     procedure setConstant(IsConst: Boolean); overload;
 
@@ -783,7 +786,7 @@ procedure ClearBaseTypes(var Arr: TLapeBaseTypes);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
 
 const
-  BigLock = 128;
+  BigLock = 256;
 
   NullResVar: TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpNone;  GlobalVar: nil));
   VarResVar:  TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpVar;   StackVar : nil));
@@ -899,12 +902,26 @@ end;
 
 procedure TResVar.Spill(Unlock: Integer = 0);
 begin
-  if (Unlock > 0) and (VarPos.MemPos = mpVar) and
+  DecLock(Unlock);
+  Self := NullResVar;
+end;
+
+function TResVar.IncLock(Count: Integer = 1): TResVar;
+begin
+  Result := Self;
+  if (Count > 0) and (VarPos.MemPos = mpVar) and
      (VarPos.StackVar <> nil) and (VarPos.StackVar is TLapeStackTempVar)
   then
-    TLapeStackTempVar(VarPos.StackVar).DecLock(Unlock);
+    TLapeStackTempVar(VarPos.StackVar).IncLock(Count);
+end;
 
-  Self := NullResVar;
+function TResVar.Declock(Count: Integer = 1): TResVar;
+begin
+  Result := Self;
+  if (Count > 0) and (VarPos.MemPos = mpVar) and
+     (VarPos.StackVar <> nil) and (VarPos.StackVar is TLapeStackTempVar)
+  then
+    TLapeStackTempVar(VarPos.StackVar).DecLock(Count);
 end;
 
 procedure TResVar.setConstant(IsConst: Boolean; ChangeStack: Boolean);
