@@ -644,6 +644,34 @@ var
       LapeException(lpeInvalidCondition, [Self]);
   end;
 
+  function HasDefine(Def: lpString): Boolean;
+  begin
+    if (FDefines.IndexOf(Def) > -1) then
+      Result := True
+    else
+    begin
+      Def := LowerCase(Def);
+      if (Def = 'assertions') then
+        Result := (lcoAssertions in FOptions)
+      else if (Def = 'rangechecks') then
+        Result := (lcoRangeCheck in FOptions)
+      else if (Def = 'booleval') then
+        Result := (lcoShortCircuit in FOptions)
+      else if (Def = 'memoryinit') then
+        Result := (lcoAlwaysInitialize in FOptions)
+      else if (Def = 'extendedsyntax') then
+        Result := (lcoLooseSyntax in FOptions)
+      else if (Def = 'autoinvoke') then
+        Result := (lcoAutoInvoke in FOptions)
+      else if (Def = 'scopedenums') then
+        Result := (lcoScopedEnums in FOptions)
+      else if (Def = 'varstringchecks') then
+        Result := (lcoVarStringChecks in FOptions)
+      else
+        Result := False;
+    end;
+  end;
+
   procedure switchConditional;
   var
     Conditional: TLapeConditional;
@@ -681,7 +709,7 @@ begin
 
   Directive := LowerCase(Directive);
   if (Directive = 'ifdef') or (Directive = 'ifndef') then
-    pushConditional((not InIgnore()) and ((FDefines.IndexOf(Trim(Argument)) > -1) xor (Directive = 'ifndef')), Sender.DocPos)
+    pushConditional((not InIgnore()) and (HasDefine(Trim(Argument)) xor (Directive = 'ifndef')), Sender.DocPos)
   else if (Directive = 'else') then
     switchConditional()
   else if (Directive = 'endif') then
@@ -741,6 +769,8 @@ begin
     setOption(lcoAlwaysInitialize)
   else if (Directive = 'x') or (Directive = 'extendedsyntax') then
     setOption(lcoLooseSyntax)
+  else if (Directive = 'f') or (Directive = 'autoinvoke') then
+    setOption(lcoAutoInvoke)
   else if (Directive = 's') or (Directive = 'scopedenums') then
     setOption(lcoScopedEnums)
   else if (Directive = 'v') or (Directive = 'varstringchecks') then
@@ -748,7 +778,7 @@ begin
   else
     Result := False;
 
-  WriteLn('DIRECTIVE: '+Directive, ' (', Sender.InPeek, ')');
+  WriteLn('DIRECTIVE: ', Directive, ' ', Argument, ' (', Sender.InPeek, ')');
 end;
 
 function TLapeCompiler.InIgnore: Boolean;
@@ -1837,6 +1867,34 @@ var
     end;
   end;
 
+  function ResolveMethods(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
+    function MethodType(Typ: TLapeType): Boolean;
+    begin
+      Result := (Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod);
+    end;
+  begin
+    Result := Node;
+    if TLapeTree_Base.isEmpty(Node) or (not (lcoAutoInvoke in Node.CompilerOptions)) or (Node is TLapeTree_Invoke) then
+      Exit;
+
+    if MethodType(Node.resType()) and ((not (Node is TLapeTree_Operator)) or (TLapeTree_Operator(Node).OperatorType <> op_Assign)) then
+      Result := TLapeTree_Invoke.Create(Node, Node)
+    else if (Node is TLapeTree_Operator) and (TLapeTree_Operator(Node).Left is TLapeTree_ExprBase) then
+      with TLapeTree_Operator(Node) do
+        if (OperatorType = op_Addr) and MethodType(Left.resType()) then
+        begin
+          Result := Left;
+          Left.Parent := nil;
+          Free();
+        end
+        else
+        begin
+          if (OperatorType <> op_Assign) then
+            Left := ResolveMethods(Left);
+          Right := ResolveMethods(Right);
+        end;
+  end;
+
 begin
   Result := nil;
   Method := nil;
@@ -1859,22 +1917,19 @@ begin
         tk_typ_Integer_Bin: PushVarStack(TLapeTree_Integer.Create(IntToStr(Tokenizer.TokInt64), Self, getPDocPos()));
         tk_typ_Float: PushVarStack(TLapeTree_Float.Create(Tokenizer.TokString, Self, getPDocPos()));
         tk_typ_String: ParseAndPushString();
-        tk_typ_Char:
-          begin
-            //if (Peek() in [tk_typ_String, tk_typ_Char]) then
-              ParseAndPushString()
-            //else
-            //  PushVarStack(TLapeTree_Char.Create(Tokenizer.TokChar, Self, getPDocPos()));
-          end;
+        tk_typ_Char: ParseAndPushString();
 
         tk_Identifier:
           begin
             Expr := getExpression(Tokenizer.TokString, getPDocPos());
-            if (Expr <> nil) then
-              PushVarStack(Expr)
-            else if (FInternalMethodMap[Tokenizer.TokString] <> nil) then
+            if (Expr = nil) and (FInternalMethodMap[Tokenizer.TokString] <> nil) then
+              Expr := FInternalMethodMap[Tokenizer.TokString].Create(Self, getPDocPos());
+
+            if (Expr = nil) then
+              LapeExceptionFmt(lpeUnknownDeclaration, [Tokenizer.TokString], Tokenizer.DocPos)
+            else if (Expr is TLapeTree_Invoke) then
             begin
-              Method := FInternalMethodMap[Tokenizer.TokString].Create(Self, getPDocPos());
+              Method := Expr as TLapeTree_Invoke;
               DoNext := False;
               if (Next() = tk_sym_ParenthesisOpen) then
                 _LastNode := _Var
@@ -1885,7 +1940,7 @@ begin
               end;
             end
             else
-              LapeExceptionFmt(lpeUnknownDeclaration, [Tokenizer.TokString], Tokenizer.DocPos);
+              PushVarStack(Expr);
           end;
 
         tk_sym_ParenthesisOpen:
@@ -1944,7 +1999,7 @@ begin
       else
         LapeException(lpeInvalidEvaluation, Tokenizer.DocPos);
 
-    Result := VarStack.Pop();
+    Result := ResolveMethods(VarStack.Pop());
     if DoFold and (not TLapeTree_Base.isEmpty(Result)) then
       Result := Result.FoldConstants() as TLapeTree_ExprBase;
   finally
@@ -2442,7 +2497,8 @@ begin
   end;
 
   FTokenizer := 0;
-  FTokenizers[0] := ATokenizer;
+  FTokenizers[0] := nil;
+  Tokenizer := ATokenizer;
 
   if FirstStackInfo then
     while (FStackInfo <> nil) and (FStackInfo.Owner <> nil) do
@@ -2574,9 +2630,11 @@ begin
     FTree := ParseFile();
     if (FTree = nil) and (FDelayedTree.GlobalCount(False) <= 0) then
       LapeException(lpeExpressionExpected);
-    FDelayedTree.Compile(False);
-    FTree.Compile();
-    FDelayedTree.Compile(True);
+
+    FDelayedTree.Compile(False).Spill(1);
+    FTree.Compile().Spill(1);
+    FDelayedTree.Compile(True).Spill(1);
+
     DecStackInfo(False, True, True);
     FEmitter._op(ocNone);
     Result := True;

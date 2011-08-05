@@ -1704,7 +1704,8 @@ var
 
           Par.VarPos.MemPos := mpStack;
           Par.VarType := FCompiler.getBaseType(ltPointer);
-          ParamVars[i].VarType.Eval(op_Addr, Par, ParamVars[i], tmpVar, Offset, @Self._DocPos);
+          //ParamVars[i].VarType.Eval(op_Addr, Par, ParamVars[i], tmpVar, Offset, @Self._DocPos);
+          FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Par, ParamVars[i], NullResVar, Offset, @Self._DocPos);
         end
         else if (Params[i].VarType <> nil) and ((ParamVars[i].VarPos.MemPos <> mpStack) or (not Params[i].VarType.Equals(ParamVars[i].VarType))) then
         begin
@@ -3643,7 +3644,10 @@ begin
   Result := NullResVar;
   for i := 0 to FStatements.Count - 1 do
     if (FStatements[i] <> nil) then
+    begin
+      Result.Spill(1);
       Result := FStatements[i].Compile(Offset);
+    end;
 end;
 
 procedure TLapeTree_DelayedStatementList.DeleteChild(Node: TLapeTree_Base);

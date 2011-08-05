@@ -22,6 +22,7 @@ type
     lcoShortCircuit,                   // {$B} {$BOOLEVAL}
     lcoAlwaysInitialize,               // {$M} {$MEMORYINIT}
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
+    lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
     lcoVarStringChecks                 // {$V} {$VARSTRINGCHECKS}  TODO
   );
@@ -29,7 +30,7 @@ type
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoShortCircuit, lcoAlwaysInitialize];
+  Lape_OptionsDef = [lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke];
   Lape_PackRecordsDef = 2;
 
 type
@@ -1463,9 +1464,9 @@ begin
       ResType := EvalRes(Op);
       if (ResType <> nil) or ((op = op_Deref) and ((not Left.HasType()) or (Left.VarType.BaseType = ltPointer))) then
         if (op = op_Addr) then
-          {if Left.isConstant then
+          if Left.isConstant then
             LapeException(lpeVariableExpected)
-          else}
+          else
             Exit(TLapeGlobalVar.Create(ResType, @Left.Ptr))
         else if (op = op_Deref) then
           Exit(TLapeGlobalVar.Create(ResType, PPointer(Left.Ptr)^));
@@ -1625,8 +1626,11 @@ begin
     end
     else
     begin
-      //if (op = op_Addr) and (not isVariable(Left)) then
-      //  LapeException(lpeVariableExpected);
+      { Cannot be uncommented yet, because some ToString functions rely on it
+
+      if (op = op_Addr) and (not Left.isVariable) then
+        LapeException(lpeVariableExpected);
+      }
       FCompiler.Emitter._Eval(EvalProc, Result, Left, Right, Offset, Pos);
     end;
 
@@ -2425,9 +2429,9 @@ begin
     Exit;
 
   if FSmall then
-    Result := 'begin Result := _SmallSetToString(@Param0, Pointer(ToString[%d]), %d, %d); end;'
+    Result := 'begin Result := _SmallSetToString(@Param0, Pointer({$IFDEF AUTOINVOKE}@{$ENDIF}ToString[%d]), %d, %d); end;'
   else
-    Result := 'begin Result := _LargeSetToString(@Param0, Pointer(ToString[%d]), %d, %d); end;';
+    Result := 'begin Result := _LargeSetToString(@Param0, Pointer({$IFDEF AUTOINVOKE}@{$ENDIF}ToString[%d]), %d, %d); end;';
   Result := Format(Result, [Index, FRange.Range.Lo, FRange.Range.Hi]);
 end;
 
@@ -2723,7 +2727,7 @@ begin
     '    Result := '#39'[]'#39''                                                         +
     '  else'                                                                             +
     '    Result := _ArrayToString(@Param0['+IntToStr(VarLo().AsInteger)+'],'             +
-    '      _ElementToString, Len, SizeOf(Param0[0]));'                                   +
+    '      {$IFDEF AUTOINVOKE}@{$ENDIF}_ElementToString, Len, SizeOf(Param0[0]));'       +
     'end;';
 end;
 
@@ -3152,57 +3156,29 @@ end;
 function TLapeType_StaticArray.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
 var
   i: Integer;
-  tmpType: TLapeType;
-  LowIndex, LeftVar, RightVar: TLapeGlobalVar;
+  LeftVar, RightVar: TLapeGlobalVar;
 begin
   Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType is TLapeType_Pointer));
 
-  if (op = op_Index) and (Right <> nil) then
+  if (op = op_Index) and (Left <> nil) and (Right <> nil) then
   begin
-    tmpType := Right.VarType;
+    Assert(HasType());
+
+    i := Right.AsInteger;
     if (not Right.HasType()) or (Right.VarType.BaseIntType = ltUnknown) then
       if Right.HasType() then
         LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
       else
         LapeException(lpeInvalidEvaluation)
-    else if (Right.AsInteger < FRange.Lo) or (Right.AsInteger > FRange.Hi) then
-      LapeException(lpeOutOfTypeRange)
-    else
-      Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
+    else if (i < FRange.Lo) or (i > FRange.Hi) then
+      LapeException(lpeOutOfTypeRange);
 
-    LeftVar := EvalConst(op_Addr, Left, nil);
-    try
-      if (FRange.Lo = 0) then
-        Result := inherited EvalConst(Op, LeftVar, Right)
-      else
-      begin
-        RightVar := nil;
-        try
-          LowIndex := FCompiler.getBaseType(DetermineIntType(FRange.Lo, Right.BaseType, False)).NewGlobalVarStr(IntToStr(FRange.Lo));
-          RightVar := Right.VarType.EvalConst(op_Minus, Right, LowIndex);
-          Result := //Result := @Pointer[Index - Lo]^
-            inherited EvalConst(
-              Op,
-              LeftVar,
-              RightVar
-            );
-          Result.isConstant := Left.isConstant;
-        finally
-          if (LowIndex <> nil) then
-            LowIndex.Free();
-          if (RightVar <> nil) then
-            RightVar.Free();
-        end;
-      end;
-    finally
-      LeftVar.Free();
-      Right.VarType := tmpType;
-    end;
+    Result := FPType.NewGlobalVarP(Pointer(PtrInt(Left.Ptr) + (FPType.Size * (i - FRange.Lo))));
+    Result.isConstant := Left.isConstant;
   end
   else if (op = op_Assign) and (BaseType = ltStaticArray) and (Left <> nil) and (Right <> nil) and CompatibleWith(Right.VarType) then
   begin
-    Assert(HasType());
     LeftVar := nil;
     RightVar := nil;
 
@@ -5360,39 +5336,29 @@ end;
 function TLapeCompilerBase.addManagedVar(AVar: TLapeVar; PtrCheckOnly: Boolean = False): TLapeVar;
 var
   i: Integer;
-  EvalProc: TLapeEvalProc;
-  Equal: EvalBool;
   GlobalVars: TLapeDeclArray;
 begin
   if (AVar = nil) or (AVar.DeclarationList <> nil) then
     Exit(AVar);
-  if (AVar is TLapeGlobalVar) and AVar.HasType() and AVar.isConstant and (AVar.Name = '') then
+  if (AVar is TLapeGlobalVar) and AVar.HasType() and AVar.isConstant and (AVar.Name = '') and
+     (PtrCheckOnly or (AVar.VarType.EvalRes(op_cmp_Equal, AVar.VarType) <> nil))
+  then
   begin
-    EvalProc := getEvalProc(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType);
-    if PtrCheckOnly or (ValidEvalFunction(EvalProc) and (getEvalRes(op_cmp_Equal, AVar.VarType.BaseType, AVar.VarType.BaseType) = ltEvalBool)) then
-    begin
-      GlobalVars := FManagedDeclarations.getByClass(TLapeDeclarationClass(AVar.ClassType), True);
-      for i := 0 to High(GlobalVars) do
-        if (AVar = GlobalVars[i]) then
-          Exit(AVar)
-        else if TLapeGlobalVar(GlobalVars[i]).isConstant and (GlobalVars[i].Name = '') and (TLapeGlobalVar(GlobalVars[i]).HasType()) and TLapeGlobalVar(GlobalVars[i]).VarType.Equals(AVar.VarType, False) then
-          if (not PtrCheckOnly) then
-          begin
-            EvalProc(@Equal, TLapeGlobalVar(GlobalVars[i]).Ptr, TLapeGlobalVar(AVar).Ptr);
-            if Equal then
-            begin
-              AVar.Free();
-              Exit(TLapeGlobalVar(GlobalVars[i]));
-            end;
-          end
-          else if (TLapeGlobalVar(GlobalVars[i]).Ptr = TLapeGlobalVar(AVar).Ptr) then
+    GlobalVars := FManagedDeclarations.getByClass(TLapeDeclarationClass(AVar.ClassType), True);
+    for i := 0 to High(GlobalVars) do
+      if (AVar = GlobalVars[i]) then
+        Exit(AVar)
+      else with TLapeGlobalVar(GlobalVars[i]) do
+        if DoManage and isConstant and (Name = '') and HasType() and VarType.Equals(TLapeGlobalVar(AVar).VarType, False) then
+          if (PtrCheckOnly and (Ptr = TLapeGlobalVar(AVar).Ptr)) or
+             ((not PtrCheckOnly) and Equals(TLapeGlobalVar(AVar)))
+          then
           begin
             AVar.Free();
             Exit(TLapeGlobalVar(GlobalVars[i]));
           end;
-    end;
   end;
-  Result := TLapeVar(addManagedDecl(AVar));
+  Result := addManagedDecl(AVar) as TLapeVar;
 end;
 
 function TLapeCompilerBase.addManagedType(AType: TLapeType): TLapeType;
@@ -5412,7 +5378,7 @@ begin
       AType.Free();
       Exit(TLapeType(Types[i]));
     end;
-  Result := TLapeType(addManagedDecl(AType));
+  Result := addManagedDecl(AType) as TLapeType;
 end;
 
 function TLapeCompilerBase.addStackVar(VarType: TLapeType; Name: lpString): TLapeStackVar;
