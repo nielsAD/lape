@@ -430,9 +430,7 @@ var
 
   procedure DoCatchException; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    ReleaseExceptionObject();
-    //InException.Free();
-    InException.Obj := nil;
+    FreeAndNil(InException.Obj);
     Inc(Code, ocSize);
   end;
 
