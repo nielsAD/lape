@@ -27,6 +27,8 @@ procedure _LapeAnsiSameStr(const Params: PParamArray; const Result: Pointer);
 procedure _LapeTrim(const Params: PParamArray; const Result: Pointer);
 procedure _LapeTrimLeft(const Params: PParamArray; const Result: Pointer);
 procedure _LapeTrimRight(const Params: PParamArray; const Result: Pointer);
+procedure _LapePadL(const Params: PParamArray; const Result: Pointer);
+procedure _LapePadR(const Params: PParamArray; const Result: Pointer);
 procedure _LapeQuotedStr(const Params: PParamArray; const Result: Pointer);
 procedure _LapeAnsiQuotedStr(const Params: PParamArray; const Result: Pointer);
 procedure _LapeAnsiDequotedStr(const Params: PParamArray; const Result: Pointer);

@@ -30,6 +30,8 @@ addGlobalFunc('function AnsiSameStr(s1,s2:String): EvalBool;', @_LapeAnsiSameStr
 addGlobalFunc('function Trim(s: string): string;', @_LapeTrim);
 addGlobalFunc('function TrimLeft(s: string): string;', @_LapeTrimLeft);
 addGlobalFunc('function TrimRight(s: string): string;', @_LapeTrimRight);
+addGlobalFunc('function PadL(s: string; Len: SizeInt; c: Char = '' ''): string;', @_LapePadL);
+addGlobalFunc('function PadR(s: string; Len: SizeInt; c: Char = '' ''): string;', @_LapePadR);
 addGlobalFunc('function QuotedStr(s: string): string;', @_LapeQuotedStr);
 addGlobalFunc('function AnsiQuotedStr(s: string; Quote: Char): string;', @_LapeAnsiQuotedStr);
 addGlobalFunc('function AnsiDequotedStr(s: string; AQuote: Char): string;', @_LapeAnsiDequotedStr);

@@ -20,6 +20,8 @@ procedure _LapeRound(const Params: PParamArray; const Result: Pointer);
 procedure _LapeFrac(const Params: PParamArray; const Result: Pointer);
 procedure _LapeInt(const Params: PParamArray; const Result: Pointer);
 procedure _LapeTrunc(const Params: PParamArray; const Result: Pointer);
+procedure _LapeCeil(const Params: PParamArray; const Result: Pointer);
+procedure _LapeFloor(const Params: PParamArray; const Result: Pointer);
 
 procedure _LapeRandomRange(const Params: PParamArray; const Result: Pointer);
 procedure _LapeRandom(const Params: PParamArray; const Result: Pointer);

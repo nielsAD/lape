@@ -72,6 +72,16 @@ begin
   PInt64(Result)^ := Trunc(PExtended(Params^[0])^);
 end;
 
+procedure _LapeCeil(const Params: PParamArray; const Result: Pointer);
+begin
+  PInt64(Result)^ := Ceil(PExtended(Params^[0])^);
+end;
+
+procedure _LapeFloor(const Params: PParamArray; const Result: Pointer);
+begin
+  PInt64(Result)^ := Floor(PExtended(Params^[0])^);
+end;
+
 procedure _LapeRandomRange(const Params: PParamArray; const Result: Pointer);
 begin
   Pint64(Result)^ := PInt64(Params^[0])^ + Random(PInt64(Params^[1])^ - PInt64(Params^[0])^ + 1);

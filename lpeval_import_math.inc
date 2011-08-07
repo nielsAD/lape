@@ -7,7 +7,7 @@
 }
 {%MainUnit lpcompiler.pas}
 
-addGlobalVar(Pi(), 'Pi').isConstant := True;
+addGlobalVar(Pi, 'Pi').isConstant := True;
 
 addGlobalFunc('function Abs(d: Extended): Extended; overload;', @_LapeAbs);
 addGlobalFunc('function Abs(d: Int64): Int64; overload;', @_LapeAbsI);
@@ -22,6 +22,8 @@ addGlobalFunc('function Round(d: Extended): Int64;', @_LapeRound);
 addGlobalFunc('function Frac(d: Extended): Extended;', @_LapeFrac);
 addGlobalFunc('function Int(d: Extended): Extended;', @_LapeInt);
 addGlobalFunc('function Trunc(d: Extended): Int64;', @_LapeTrunc);
+addGlobalFunc('function Ceil(d: Extended): Int64;', @_LapeCeil);
+addGlobalFunc('function Floor(d: Extended): Int64;', @_LapeFloor);
 
 addGlobalFunc('function Random(Min, Max: Int64): Int64; overload;', @_LapeRandomRange);
 addGlobalFunc('function Random(l: Int64): Int64; overload;', @_LapeRandom);

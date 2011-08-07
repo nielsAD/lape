@@ -92,6 +92,16 @@ begin
   PlpString(Result)^ := TrimRight(PlpString(Params^[0])^);
 end;
 
+procedure _LapePadL(const Params: PParamArray; const Result: Pointer);
+begin
+  PlpString(Result)^ := StringOfChar(PlpChar(Params^[2])^, PUInt32(Params^[1])^ - Length(PlpString(Params^[0])^)) + PlpString(Params^[0])^;
+end;
+
+procedure _LapePadR(const Params: PParamArray; const Result: Pointer);
+begin
+  PlpString(Result)^ := PlpString(Params^[0])^ + StringOfChar(PlpChar(Params^[2])^, PUInt32(Params^[1])^ - Length(PlpString(Params^[0])^));
+end;
+
 procedure _LapeQuotedStr(const Params: PParamArray; const Result: Pointer);
 begin
   PlpString(Result)^ := QuotedStr(PlpString(Params^[0])^);

@@ -239,8 +239,8 @@ var
 implementation
 
 uses
-  Variants,
-  {$IFDEF LCL}LCLIntf,{$ENDIF}
+  Variants, Math,
+  {$IFDEF LCL}LCLIntf{$ELSE}Windows{$ENDIF},
   lpexceptions;
 
 procedure _LapeWrite(const Params: PParamArray);

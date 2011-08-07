@@ -214,11 +214,46 @@ type
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
   end;
 
+procedure InitializePascalScriptBasics(Compiler: TLapeCompiler);
+
 implementation
 
 uses
   Variants,
   lpexceptions, lpinterpreter, lpeval;
+
+procedure InitializePascalScriptBasics(Compiler: TLapeCompiler);
+begin
+  if (Compiler = nil) then
+    Exit;
+
+  with Compiler do
+  begin
+    InternalMethodMap['GetArrayLength'] := InternalMethodMap['Length'];
+    InternalMethodMap['SetArrayLength'] := InternalMethodMap['SetLength'];
+
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(Byte), False)).createCopy(), 'Byte');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(ShortInt), True)).createCopy(), 'ShortInt');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(Word), False)).createCopy(), 'Word');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(SmallInt), True)).createCopy(), 'SmallInt');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(LongWord), False)).createCopy(), 'LongWord');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(LongInt), True)).createCopy(), 'LongInt');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(Cardinal), False)).createCopy(), 'Cardinal');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(Integer), True)).createCopy(), 'Integer');
+    addGlobalType(getPointerType(ltChar).createCopy(), 'PChar');
+
+    addDelayedCode(
+      'function StrGet(var s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
+      'function StrGet2(s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
+      'procedure StrSet(c: Char; Index: SizeInt; var s: string); begin s[Index] := c; end;' + LineEnding +
+      'function WStrGet(var s: WideString; Index: SizeInt): WideChar; begin Result := s[Index]; end;' + LineEnding +
+      'function VarArrayGet(var s: Variant; Index: Int32): Variant; overload; begin Result := VarArrayGet(s, [Index]); end;' + LineEnding +
+      'procedure VarArraySet(c: Variant; Index: Int32; var s: Variant); overload; begin VarArraySet(s, c, [Index]); end;' + LineEnding +
+      'function PadZ(s: string; Len: SizeInt): string; begin Result := PadL(s, Len, ''0''); end;' + LineEnding +
+      'function Replicate(c: Char; l: SizeInt): string; begin Result := StringOfChar(c, l); end;'
+    );
+  end;
+end;
 
 function TLapeCompiler.getPDocPos: PDocPos;
 begin

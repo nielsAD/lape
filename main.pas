@@ -124,6 +124,7 @@ begin
   try
     Parser := TLapeTokenizerString.Create(e.Lines.Text);
     Compiler := TLapeCompiler.Create(Parser);
+    InitializePascalScriptBasics(Compiler);
 
     di := 112233;
     dp := @di;
