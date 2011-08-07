@@ -89,21 +89,6 @@ begin
   PInt32(Result)^ := PInt32(Params^[0])^ + Random(PInt32(Params^[1])^ - PInt32(Params^[0])^ + 1);
 end;
 
-procedure MyIntToString(const Params: PParamArray; const Result: Pointer);
-begin
-  PlpString(Result)^ := IntToStr(PInt32(Params^[0])^);
-end;
-
-procedure MyInt64ToString(const Params: PParamArray; const Result: Pointer);
-begin
-  PlpString(Result)^ := IntToStr(PInt64(Params^[0])^);
-end;
-
-procedure MyStringToInt(const Params: PParamArray; const Result: Pointer);
-begin
-  PInt32(Result)^ := StrToInt(PlpString(Params^[0])^);
-end;
-
 procedure MyStupidProc(Params: PParamArray);
 begin
   raise Exception.Create('Stupid Proc!!');
@@ -134,7 +119,7 @@ var
   rec, rec2, tp: TLapeType_Record;
   ttpa, t2dpa: TLapeType_DynArray;
   q: _rec;
-  func1, func2, func3: TLapeType_Method;
+  func1, func2: TLapeType_Method;
   tpa: TPointArray;
   atpa: T2DPointArray;
   a: TLapeGlobalVar;
@@ -167,7 +152,6 @@ begin
 
     func1 := TLapeType_Method.Create(Compiler, [Compiler.getBaseType(ltInt32), Compiler.getBaseType(ltInt32)], [lptNormal, lptNormal], [nil, a], Compiler.getBaseType(ltInt32));
     func2 := TLapeType_Method.Create(Compiler, [Compiler.getBaseType(ltInt32)], [lptNormal], [TLapeGlobalVar(nil)], Compiler.getBaseType(ltString));
-    func3 := TLapeType_Method.Create(Compiler, [Compiler.getBaseType(ltString)], [lptNormal], [TLapeGlobalVar(nil)], Compiler.getBaseType(ltInt32));
 
     New(q.z);
     New(q.z^.test);
@@ -181,10 +165,7 @@ begin
     Compiler.addGlobalVar(func1.NewGlobalVar(@MyRandom, 'Random'));
     Compiler.addGlobalFunc('procedure _write(s: string); override;', @MyWrite);
     Compiler.addGlobalFunc('procedure _writeln; override;', @MyWriteLn);
-    Compiler.addGlobalFunc('function IntToStr(x: Int32): AnsiString; overload;', @MyIntToString);
-    Compiler.addGlobalFunc('function IntToStr(x: Int64 = 123): AnsiString; overload;', @MyInt64ToString);
     Compiler.addGlobalFunc('procedure MyStupidProc', @MyStupidProc);
-    Compiler.addGlobalVar(func3.NewGlobalVar(@MyStringToInt, 'StrToInt'));
 
     Compiler.addGlobalVar(Compiler.addGlobalType('record x, y: Int32; end', 'TPoint'), @atpa[0,0], 'myPoint');
     Compiler.addGlobalType('(enum1, enum2)', 'TMyEnum');
@@ -231,7 +212,6 @@ begin
       t2dpa.Free();
       func1.Free();
       func2.Free();
-      func3.Free();
     end
     else if (Parser <> nil) then
       Parser.Free();

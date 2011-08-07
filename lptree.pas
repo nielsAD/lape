@@ -1661,7 +1661,7 @@ var
   function DoScriptMethod(IdentVar: TResVar; var ParamVars: TResVarArray): TResVar;
   var
     i: Integer;
-    Par, tmpVar: TResVar;
+    Par: TResVar;
 
     function getStackVar(Node: TLapeTree_Base; var Offset: Integer): TResVar;
     begin
@@ -1675,7 +1675,6 @@ var
     Assert(IdentVar.VarType.BaseType in [ltPointer, ltScriptMethod]);
     Assert(Length(ParamVars) = TLapeType_Method(IdentVar.VarType).Params.Count);
     Result := NullResVar;
-    tmpVar := NullResVar;
 
     with TLapeType_Method(IdentVar.VarType) do
     begin
@@ -1704,7 +1703,6 @@ var
 
           Par.VarPos.MemPos := mpStack;
           Par.VarType := FCompiler.getBaseType(ltPointer);
-          //ParamVars[i].VarType.Eval(op_Addr, Par, ParamVars[i], tmpVar, Offset, @Self._DocPos);
           FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Par, ParamVars[i], NullResVar, Offset, @Self._DocPos);
         end
         else if (Params[i].VarType <> nil) and ((ParamVars[i].VarPos.MemPos <> mpStack) or (not Params[i].VarType.Equals(ParamVars[i].VarType))) then
@@ -3059,7 +3057,7 @@ function TLapeTree_Operator.FoldConstants(DoFree: Boolean = True): TLapeTree_Bas
 begin
   if (not isEmpty(Self)) and (FLeft is TLapeTree_ExprBase) then
   begin
-    FLeft := FLeft.FoldConstants() as TLapeTree_ExprBase;
+    FLeft := TLapeTree_ExprBase(FLeft.FoldConstants());
     if (not isEmpty(FRight)) then
       FRight := FRight.setExpectedType(FLeft.resType()).FoldConstants() as TLapeTree_ExprBase;
   end;

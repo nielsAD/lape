@@ -5130,6 +5130,8 @@ procedure TLapeCompilerBase.Clear;
 begin
   FGlobalDeclarations.Delete(TLapeVar, True);
   FManagedDeclarations.Delete(TLapeVar, True);
+  FGlobalDeclarations.Delete(TLapeType_OverloadedMethod, True);
+  FManagedDeclarations.Delete(TLapeType_OverloadedMethod, True);
   FGlobalDeclarations.Clear();
   FManagedDeclarations.Clear();
   Reset();
