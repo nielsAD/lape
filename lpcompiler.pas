@@ -472,7 +472,7 @@ begin
       AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConst], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
     Sender.addMethod(AType.NewGlobalVarP());
-    Result := addGlobalFunc(AType, 'ToString', 'override;' + Body).Method;
+    Result := addGlobalFunc(AType, 'ToString', 'override;' + Body + LineEnding).Method;
   end;
 end;
 
@@ -2617,16 +2617,13 @@ end;
 procedure TLapeCompiler.EmitCode(ACode: lpString; var Offset: Integer; Pos: PDocPos = nil);
 var
   OldState: Pointer;
-  FileName: lpString;
 begin
   if hasTokenizer() then
-    FileName := Tokenizer.FileName
+    OldState := getTempTokenizerState(ACode, Tokenizer.FileName, False)
   else
-    FileName := '!emit';
+    OldState := getTempTokenizerState(ACode, '!emit', False);
 
-  OldState := getTempTokenizerState(ACode, FileName, False);
   Tokenizer.OverridePos := Pos;
-
   try
     with ParseStatementList() do
     try
@@ -3000,7 +2997,10 @@ var
   OldState: Pointer;
 begin
   Index := FDelayedTree.Statements.Count;
-  OldState := getTempTokenizerState(ACode, '!delayed');
+  if hasTokenizer() and (not Importing) then
+    OldState := getTempTokenizerState(ACode, Tokenizer.FileName)
+  else
+    OldState := getTempTokenizerState(ACode, '!delayed');
 
   try
     Result := ParseFile();

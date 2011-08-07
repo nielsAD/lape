@@ -633,6 +633,23 @@ begin
 end;
 
 function TLapeTokenizerBase.Identify: EParserToken;
+
+  procedure NextPos_CountLines;
+  begin
+    repeat
+      case CurChar of
+        #10: Inc(FDocPos.Line);
+        #13:
+          begin
+            if (getChar(1) = #10) then
+              Inc(FPos);
+            Inc(FDocPos.Line);
+          end;
+      end;
+      Inc(FPos);
+    until (not (CurChar in [#9, #32, #10, #13]));
+  end;
+
 var
   Char: lpChar;
   Str: lpString;
@@ -744,7 +761,7 @@ begin
         if (getChar(1) = '*') then
         begin
           Inc(FPos);
-          while (not ((getChar(1) in ['*', #0]) and (getChar(2) in [')', #0]))) do Inc(FPos);
+          while (not ((getChar(1) in ['*', #0]) and (getChar(2) in [')', #0]))) do NextPos_CountLines();
           Result := setTok(tk_Comment);
         end
         else
@@ -761,7 +778,7 @@ begin
         end
         else
         begin
-          while (not (CurChar in ['}', #0])) do Inc(FPos);
+          while (not (CurChar in ['}', #0])) do NextPos_CountLines();
           Result := setTok(tk_Comment);
         end;
       end;
@@ -826,7 +843,7 @@ begin
     #39:
       begin
         Inc(FPos);
-        while (not (CurChar in [#39, #0])) do Inc(FPos);
+        while (not (CurChar in [#39, #0])) do NextPos_CountLines();
         Result := setTok(tk_typ_String);
       end;
     '#':

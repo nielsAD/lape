@@ -136,7 +136,10 @@ var
     JmpFinally: PByte;
   end;
   TryStackPos: UInt32;
-  InException: Exception;
+  InException: record
+    Obj: Exception;
+    Pos: TDocPos;
+  end;
   InSafeJump: PByte;
 
   CallStack: array of TCallRec;
@@ -214,7 +217,7 @@ var
       Code := TryStack[TryStackPos].Jmp;
     end
     else
-      raise InException;
+      raise InException.Obj;
   end;
 
   procedure HandleSafeJump; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -417,7 +420,7 @@ var
 
   procedure DoEndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (InException <> nil) then
+    if (InException.Obj <> nil) then
       HandleException()
     else if (InSafeJump <> nil) then
       HandleSafeJump()
@@ -429,7 +432,7 @@ var
   begin
     ReleaseExceptionObject();
     //InException.Free();
-    InException := nil;
+    InException.Obj := nil;
     Inc(Code, ocSize);
   end;
 
@@ -470,7 +473,7 @@ var
   procedure DoDecCall_EndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     DoDecCall();
-    if (InException <> nil) then
+    if (InException.Obj <> nil) then
       HandleException()
     else if (InSafeJump <> nil) then
       HandleSafeJump();
@@ -499,7 +502,12 @@ var
     try
       while True do {$I lpinterpreter_opcodecase.inc}
     except
-      InException := Exception(AcquireExceptionObject());
+      {$IFDEF Lape_EmitPos}
+      if (ExceptObject <> InException.Obj) then
+        InException.Pos := PDocPos(PtrUInt(Code) + SizeOf(opCodeType))^;
+      {$ENDIF}
+
+      InException.Obj := Exception(AcquireExceptionObject());
       HandleException();
       DaLoop();
     end;
@@ -516,20 +524,24 @@ begin
   SetLength(VarStackStack[0].Stack, VarStackSize);
   VarStack := VarStackStack[0].Stack;
 
+  StackPos := 0;
+  VarStackPos := 0;
+  VarStackLen := 0;
+  TryStackPos := 0;
+  CallStackpos := 0;
+  InException.Obj := nil;
+  InException.Pos := NullDocPos;
+  InSafeJump := nil;
+
   try
     Code := CodeBase;
-    StackPos := 0;
-    VarStackPos := 0;
-    VarStackLen := 0;
-    TryStackPos := 0;
-    CallStackpos := 0;
-    InException := nil;
-    InSafeJump := nil;
-
     DaLoop();
   except
     on E: Exception do
-      LapeExceptionFmt(lpeRuntime, [E.Message] {$IFDEF Lape_EmitPos}, PDocPos(PtrUInt(Code) + SizeOf(opCodeType))^ {$ENDIF});
+      if (E = InException.Obj) then
+        LapeExceptionFmt(lpeRuntime, [E.Message], InException.Pos)
+      else
+        LapeExceptionFmt(lpeRuntime, [E.Message]);
   end;
 end;
 

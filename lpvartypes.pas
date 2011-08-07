@@ -2715,19 +2715,19 @@ begin
     Exit;
 
   Result :=
-    '  function _ElementToString(const p: Pointer): string;'                             +
-    '  begin'                                                                            +
-    '    Result := ToString['+IntToStr(Index)+'](p^);'                                   +
-    '  end;'                                                                             +
-    'var'                                                                                +
-    '  Len: Int32;'                                                                      +
-    'begin'                                                                              +
-    '  Len := Length(Param0);'                                                           +
-    '  if (Len <= 0) then'                                                               +
-    '    Result := '#39'[]'#39''                                                         +
-    '  else'                                                                             +
-    '    Result := _ArrayToString(@Param0['+IntToStr(VarLo().AsInteger)+'],'             +
-    '      {$IFDEF AUTOINVOKE}@{$ENDIF}_ElementToString, Len, SizeOf(Param0[0]));'       +
+    '  function _ElementToString(const p: Pointer): string;'                             + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    Result := ToString['+IntToStr(Index)+'](p^);'                                   + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  Len: Int32;'                                                                      + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  Len := Length(Param0);'                                                           + LineEnding +
+    '  if (Len <= 0) then'                                                               + LineEnding +
+    '    Result := '#39'[]'#39''                                                         + LineEnding +
+    '  else'                                                                             + LineEnding +
+    '    Result := _ArrayToString(@Param0['+IntToStr(VarLo().AsInteger)+'],'             + LineEnding +
+    '      {$IFDEF AUTOINVOKE}@{$ENDIF}_ElementToString, Len, SizeOf(Param0[0]));'       + LineEnding +
     'end;';
 end;
 
@@ -5209,7 +5209,8 @@ begin
               TLapeStackTempVar(Items[i]).Locked := False;
         end;
 
-        Emitter._PopVar(FStackInfo.TotalSize, Offset, Pos);
+        if (FStackInfo.TotalSize > 0) then
+          Emitter._PopVar(FStackInfo.TotalSize, Offset, Pos);
         if InFunction then
           Emitter._DecCall_EndTry(Offset, Pos)
         else
