@@ -84,11 +84,6 @@ begin
   WriteLn();
 end;
 
-procedure MyRandom(const Params: PParamArray; const Result: Pointer);
-begin
-  PInt32(Result)^ := PInt32(Params^[0])^ + Random(PInt32(Params^[1])^ - PInt32(Params^[0])^ + 1);
-end;
-
 procedure MyStupidProc(Params: PParamArray);
 begin
   raise Exception.Create('Stupid Proc!!');
@@ -119,7 +114,7 @@ var
   rec, rec2, tp: TLapeType_Record;
   ttpa, t2dpa: TLapeType_DynArray;
   q: _rec;
-  func1, func2: TLapeType_Method;
+  func2: TLapeType_Method;
   tpa: TPointArray;
   atpa: T2DPointArray;
   a: TLapeGlobalVar;
@@ -150,7 +145,6 @@ begin
 
     a := Compiler.addGlobalVar(123, 'a');
 
-    func1 := TLapeType_Method.Create(Compiler, [Compiler.getBaseType(ltInt32), Compiler.getBaseType(ltInt32)], [lptNormal, lptNormal], [nil, a], Compiler.getBaseType(ltInt32));
     func2 := TLapeType_Method.Create(Compiler, [Compiler.getBaseType(ltInt32)], [lptNormal], [TLapeGlobalVar(nil)], Compiler.getBaseType(ltString));
 
     New(q.z);
@@ -162,7 +156,6 @@ begin
     q.arr := tpa;
 
     //Compiler.addGlobalVar(proc1.NewGlobalVar(@MyWriteLn, 'WriteLn'));
-    Compiler.addGlobalVar(func1.NewGlobalVar(@MyRandom, 'Random'));
     Compiler.addGlobalFunc('procedure _write(s: string); override;', @MyWrite);
     Compiler.addGlobalFunc('procedure _writeln; override;', @MyWriteLn);
     Compiler.addGlobalFunc('procedure MyStupidProc', @MyStupidProc);
@@ -210,7 +203,6 @@ begin
       tp.Free();
       ttpa.Free();
       t2dpa.Free();
-      func1.Free();
       func2.Free();
     end
     else if (Parser <> nil) then

@@ -71,15 +71,7 @@ procedure _LapeToString_UnicodeString(const Params: PParamArray; const Result: P
 procedure _LapeToString_Variant(const Params: PParamArray; const Result: Pointer);
 procedure _LapeToString_Pointer(const Params: PParamArray; const Result: Pointer);
 
-procedure _LapeStrToInt(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToIntDef(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToInt64(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToInt64Def(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToUInt64(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToUInt64Def(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToFloat(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToFloatDef(const Params: PParamArray; const Result: Pointer);
-
+{$I lpeval_headers_string.inc}
 {$I lpeval_headers_variant.inc}
 
 procedure ClearToStrArr(var Arr: TLapeToStrArr);
@@ -477,46 +469,11 @@ begin
     PlpString(Result)^ := '0x'+IntToHex(PtrUInt(PPointer(Params^[0])^), 1);
 end;
 
-procedure _LapeStrToInt(const Params: PParamArray; const Result: Pointer);
-begin
-  PInt32(Result)^ := StrToInt(PlpString(Params^[0])^);
-end;
+type
+  TVariantArray = array of Variant;
+  PVariantArray = ^TVariantArray;
 
-procedure _LapeStrToIntDef(const Params: PParamArray; const Result: Pointer);
-begin
-  PInt32(Result)^ := StrToIntDef(PlpString(Params^[0])^, PInt32(Params^[1])^);
-end;
-
-procedure _LapeStrToInt64(const Params: PParamArray; const Result: Pointer);
-begin
-  PInt64(Result)^ := StrToInt64(PlpString(Params^[0])^);
-end;
-
-procedure _LapeStrToInt64Def(const Params: PParamArray; const Result: Pointer);
-begin
-  PInt64(Result)^ := StrToInt64Def(PlpString(Params^[0])^, PInt64(Params^[1])^);
-end;
-
-procedure _LapeStrToUInt64(const Params: PParamArray; const Result: Pointer);
-begin
-  PUInt64(Result)^ := {$IFDEF FPC}StrToQWord{$ELSE}StrToInt64{$ENDIF}(PlpString(Params^[0])^);
-end;
-
-procedure _LapeStrToUInt64Def(const Params: PParamArray; const Result: Pointer);
-begin
-  PUInt64(Result)^ := {$IFDEF FPC}StrToQWordDef{$ELSE}StrToInt64Def{$ENDIF}(PlpString(Params^[0])^, PUInt64(Params^[1])^);
-end;
-
-procedure _LapeStrToFloat(const Params: PParamArray; const Result: Pointer);
-begin
-  PExtended(Result)^ := StrToFloat(PlpString(Params^[0])^);
-end;
-
-procedure _LapeStrToFloatDef(const Params: PParamArray; const Result: Pointer);
-begin
-  PExtended(Result)^ := StrToFloatDef(PlpString(Params^[0])^, PExtended(Params^[1])^);
-end;
-
+{$I lpeval_wrappers_string.inc}
 {$I lpeval_wrappers_variant.inc}
 
 procedure ClearToStrArr(var Arr: TLapeToStrArr);

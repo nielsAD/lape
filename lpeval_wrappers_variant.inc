@@ -142,8 +142,8 @@ begin
 end;
 
 type
-  TIn32Array = array of Int32;
-  PInt32Array = ^TIn32Array;
+  TIntArray = array of Int32;
+  PIntArray = ^TIntArray;
 
 procedure _LapeVarTypeIsValidArrayType(const Params: PParamArray; const Result: Pointer);
 begin
@@ -157,12 +157,9 @@ end;
 
 procedure _LapeVarArrayCreate(const Params: PParamArray; const Result: Pointer);
 begin
-  PVariant(Result)^ := VarArrayCreate(PInt32Array(Params^[0])^, PVarType(Params^[1])^);
+  PVariant(Result)^ := VarArrayCreate(PIntArray(Params^[0])^, PVarType(Params^[1])^);
 end;
 
-type
-  TVariantArray = array of Variant;
-  PVariantArray = ^TVariantArray;
 procedure _LapeVarArrayOf(const Params: PParamArray; const Result: Pointer);
 begin
   PVariant(Result)^ := VarArrayOf(PVariantArray(Params^[0])^);
@@ -170,7 +167,7 @@ end;
 
 procedure _LapeVarArrayRedim(const Params: PParamArray);
 begin
-  VarArrayRedim(PVariant(Params^[0])^, PInt32(Params^[0])^);
+  VarArrayRedim(PVariant(Params^[0])^, PSizeInt(Params^[0])^);
 end;
 
 procedure _LapeVarArrayAsPSafeArray(const Params: PParamArray; const Result: Pointer);
@@ -185,17 +182,17 @@ end;
 
 procedure _LapeVarArrayDimCount(const Params: PParamArray; const Result: Pointer);
 begin
-  PInt32(Result)^ := VarArrayDimCount(PVariant(Params^[0])^);
+  PSizeInt(Result)^ := VarArrayDimCount(PVariant(Params^[0])^);
 end;
 
 procedure _LapeVarArrayLowBound(const Params: PParamArray; const Result: Pointer);
 begin
-  PInt32(Result)^ := VarArrayLowBound(PVariant(Params^[0])^, PInt32(Params^[1])^);
+  PSizeInt(Result)^ := VarArrayLowBound(PVariant(Params^[0])^, PSizeInt(Params^[1])^);
 end;
 
 procedure _LapeVarArrayHighBound(const Params: PParamArray; const Result: Pointer);
 begin
-  PInt32(Result)^ := VarArrayHighBound(PVariant(Params^[0])^, PInt32(Params^[1])^);
+  PSizeInt(Result)^ := VarArrayHighBound(PVariant(Params^[0])^, PSizeInt(Params^[1])^);
 end;
 
 procedure _LapeVarArrayLock(const Params: PParamArray; const Result: Pointer);
@@ -215,10 +212,10 @@ end;
 
 procedure _LapeVarArrayGet(const Params: PParamArray; const Result: Pointer);
 begin
-  PVariant(Result)^ := VarArrayGet(PVariant(Params^[0])^, PInt32Array(Params^[1])^);
+  PVariant(Result)^ := VarArrayGet(PVariant(Params^[0])^, PIntArray(Params^[1])^);
 end;
 
 procedure _LapeVarArraySet(const Params: PParamArray);
 begin
-  VarArrayPut(PVariant(Params^[0])^, PVariant(Params^[1])^, PInt32Array(Params^[2])^);
+  VarArrayPut(PVariant(Params^[0])^, PVariant(Params^[1])^, PIntArray(Params^[2])^);
 end;

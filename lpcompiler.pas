@@ -95,6 +95,7 @@ type
     function EnsureTypeExpression(Node: TLapeTree_Base): TLapeTree_Base; virtual;
     function EnsureRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeTree_Range; overload; virtual;
     function EnsureRange(Node: TLapeTree_Base): TLapeTree_Range; overload; virtual;
+    function EnsureRange(VarType: TLapeType): TLapeType; overload; virtual;
     function EnsureConstantRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeRange; overload; virtual;
     function EnsureConstantRange(Node: TLapeTree_Base): TLapeRange; overload; virtual;
 
@@ -535,18 +536,7 @@ begin
   addGlobalFunc('procedure _assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
   addGlobalFunc('function Assigned(p: Pointer): EvalBool;', @_LapeAssigned);
 
-  addGlobalFunc('function IntToStr(i: Int64): string;', @_LapeToString_Int64);
-  addGlobalFunc('function StrToInt(s: string): Int32;', @_LapeStrToInt);
-  addGlobalFunc('function StrToIntDef(s: string; def: Int32): Int32;', @_LapeStrToIntDef);
-  addGlobalFunc('function StrToInt64(s: string): Int64;', @_LapeStrToInt64);
-  addGlobalFunc('function StrToInt64Def(s: string; def: Int64): Int64;', @_LapeStrToInt64Def);
-  addGlobalFunc('function UIntToStr(i: UInt64): string;', @_LapeToString_UInt64);
-  addGlobalFunc('function StrToUInt64(s: string): UInt64;', @_LapeStrToUInt64);
-  addGlobalFunc('function StrToUInt64Def(s: string; def: UInt64): UInt64;', @_LapeStrToUInt64Def);
-  addGlobalFunc('function FloatToStr(f: Extended): string;', @_LapeToString_Extended);
-  addGlobalFunc('function StrToFloat(s: string): Extended;', @_LapeStrToFloat);
-  addGlobalFunc('function StrToFloatDef(s: string; def: Extended): Extended;', @_LapeStrToFloatDef);
-
+  {$I lpeval_import_string.inc}
   {$I lpeval_import_variant.inc}
 
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
@@ -605,6 +595,23 @@ var
   VarType: TLapeType;
 begin
   Result := EnsureRange(Node, VarType);
+end;
+
+function TLapeCompiler.EnsureRange(VarType: TLapeType): TLapeType;
+var
+  Node: TLapeTree_VarType;
+  Range: TLapeRange;
+begin
+  if (VarType = nil) or (VarType is TLapeType_SubRange) then
+    Exit(VarType);
+
+  Node := TLapeTree_VarType.Create(VarType, Self);
+  try
+    Range := EnsureConstantRange(Node, VarType);
+    Result := addManagedType(TLapeType_SubRange.Create(Range, Self, VarType));
+  finally
+    Node.Free();
+  end;
 end;
 
 function TLapeCompiler.EnsureConstantRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeRange;
@@ -1325,7 +1332,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
   begin
     //Expect(tk_kw_Set, True, False);
     Expect(tk_kw_Of, True, False);
-    SetType := ParseType(nil, addToStackOwner, ScopedEnums);
+    SetType := EnsureRange(ParseType(nil, addToStackOwner, ScopedEnums));
     if (not (SetType is TLapeType_SubRange)) then
       LapeException(lpeInvalidRange, Tokenizer.DocPos);
 
