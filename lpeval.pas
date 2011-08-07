@@ -71,7 +71,9 @@ procedure _LapeToString_UnicodeString(const Params: PParamArray; const Result: P
 procedure _LapeToString_Variant(const Params: PParamArray; const Result: Pointer);
 procedure _LapeToString_Pointer(const Params: PParamArray; const Result: Pointer);
 
+{$I lpeval_headers_math.inc}
 {$I lpeval_headers_string.inc}
+{$I lpeval_headers_datetime.inc}
 {$I lpeval_headers_variant.inc}
 
 procedure ClearToStrArr(var Arr: TLapeToStrArr);
@@ -238,6 +240,7 @@ implementation
 
 uses
   Variants,
+  {$IFDEF LCL}LCLIntf,{$ENDIF}
   lpexceptions;
 
 procedure _LapeWrite(const Params: PParamArray);
@@ -473,7 +476,9 @@ type
   TVariantArray = array of Variant;
   PVariantArray = ^TVariantArray;
 
+{$I lpeval_wrappers_math.inc}
 {$I lpeval_wrappers_string.inc}
+{$I lpeval_wrappers_datetime.inc}
 {$I lpeval_wrappers_variant.inc}
 
 procedure ClearToStrArr(var Arr: TLapeToStrArr);

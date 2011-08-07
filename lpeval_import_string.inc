@@ -65,12 +65,8 @@ addGlobalFunc('function LastDelimiter(Delimiters, s: string): SizeInt;', @_LapeL
 addGlobalFunc('function StringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags): string;', @_LapeStringReplace);
 addGlobalFunc('Function IsDelimiter(Delimiters, s: string; Index: SizeInt): EvalBool;', @_LapeIsDelimiter);
 
-addGlobalFunc('function Random(Min, Max: Int64): Int64; overload;', @_LapeRandomRange);
-addGlobalFunc('function Random(l: Int64): Int64; overload;', @_LapeRandom);
-addGlobalFunc('function Random: Extended; overload;', @_LapeRandomF);
-addGlobalFunc('procedure Randomize;', @_LapeRandomize);
-
 addGlobalFunc('function Pos(Substr: string; Source: string): SizeInt;', @_LapePos);
+addGlobalFunc('function Copy(Source: string; Index, Size: SizeInt): string;', @_LapeCopy);
 addGlobalFunc('procedure Insert(Source: string; var s: string; Index: SizeInt);', @_LapeInsert);
 addGlobalFunc('procedure Delete(var s: string; Index, Size: SizeInt);', @_LapeDelete);
 addGlobalFunc('function StringOfChar(c: Char; l: SizeInt): string;', @_LapeStringOfChar);

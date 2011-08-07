@@ -229,29 +229,14 @@ begin
   PEvalBool(Result)^ := IsDelimiter(PlpString(Params^[0])^, PlpString(Params^[1])^, PSizeInt(Params^[2])^);
 end;
 
-procedure _LapeRandomRange(const Params: PParamArray; const Result: Pointer);
-begin
-  Pint64(Result)^ := PInt64(Params^[0])^ + Random(PInt64(Params^[1])^ - PInt64(Params^[0])^ + 1);
-end;
-
-procedure _LapeRandom(const Params: PParamArray; const Result: Pointer);
-begin
-  Pint64(Result)^ := Random(PInt64(Params^[0])^);
-end;
-
-procedure _LapeRandomF(const Params: PParamArray; const Result: Pointer);
-begin
-  PExtended(Result)^ := Random();
-end;
-
-procedure _LapeRandomize(const Params: PParamArray);
-begin
-  Randomize();
-end;
-
 procedure _LapePos(const Params: PParamArray; const Result: Pointer);
 begin
   PSizeInt(Result)^ := Pos(PlpString(Params^[0])^, PlpString(Params^[1])^);
+end;
+
+procedure _LapeCopy(const Params: PParamArray; const Result: Pointer);
+begin
+  PlpString(Result)^ := Copy(PlpString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
 end;
 
 procedure _LapeInsert(const Params: PParamArray);

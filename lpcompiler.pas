@@ -521,7 +521,6 @@ begin
   addGlobalType(getBaseType(ltString).createCopy(), 'String');
   addGlobalType(getBaseType(ltChar).createCopy(), 'Char');
   addGlobalType(getBaseType(ltEvalBool).createCopy(), 'EvalBool');
-  addGlobalType(getBaseType(ltDouble).createCopy(), 'TDateTime');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeInt), True)).createCopy(), 'SizeInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeUInt), False)).createCopy(), 'SizeUInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(NativeInt), True)).createCopy(), 'NativeInt');
@@ -536,7 +535,9 @@ begin
   addGlobalFunc('procedure _assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
   addGlobalFunc('function Assigned(p: Pointer): EvalBool;', @_LapeAssigned);
 
+  {$I lpeval_import_math.inc}
   {$I lpeval_import_string.inc}
+  {$I lpeval_import_datetime.inc}
   {$I lpeval_import_variant.inc}
 
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));

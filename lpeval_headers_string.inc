@@ -58,12 +58,8 @@ procedure _LapeLastDelimiter(const Params: PParamArray; const Result: Pointer);
 procedure _LapeStringReplace(const Params: PParamArray; const Result: Pointer);
 procedure _LapeIsDelimiter(const Params: PParamArray; const Result: Pointer);
 
-procedure _LapeRandomRange(const Params: PParamArray; const Result: Pointer);
-procedure _LapeRandom(const Params: PParamArray; const Result: Pointer);
-procedure _LapeRandomF(const Params: PParamArray; const Result: Pointer);
-procedure _LapeRandomize(const Params: PParamArray);
-
 procedure _LapePos(const Params: PParamArray; const Result: Pointer);
+procedure _LapeCopy(const Params: PParamArray; const Result: Pointer);
 procedure _LapeInsert(const Params: PParamArray);
 procedure _LapeDelete(const Params: PParamArray);
 procedure _LapeStringOfChar(const Params: PParamArray; const Result: Pointer);
