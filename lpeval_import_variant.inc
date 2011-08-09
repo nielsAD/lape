@@ -77,16 +77,16 @@ addGlobalFunc('function VarCompareValue(const A, B: Variant): TVariantRelationsh
 addGlobalFunc('function VarTypeIsValidArrayType(aVarType: TVarType): EvalBool;', @_LapeVarTypeIsValidArrayType);
 addGlobalFunc('function VarTypeIsValidElementType(aVarType: TVarType): EvalBool;', @_LapeVarTypeIsValidElementType);
 
-addGlobalFunc('function VarArrayCreate(Bounds: array of Int32; aVarType: TVarType): Variant;', @_LapeVarArrayCreate);
+addGlobalFunc('function VarArrayCreate(Bounds: array of SizeInt; aVarType: TVarType): Variant;', @_LapeVarArrayCreate);
 addGlobalFunc('function VarArrayOf(Values: array of Variant): Variant;', @_LapeVarArrayOf);
-addGlobalFunc('procedure VarArrayRedim(var A: Variant; HighBound: Int32);', @_LapeVarArrayRedim);
+addGlobalFunc('procedure VarArrayRedim(var A: Variant; HighBound: SizeInt);', @_LapeVarArrayRedim);
 
 addGlobalFunc('function VarArrayAsPSafeArray(const A: Variant): Pointer;', @_LapeVarArrayAsPSafeArray);
 addGlobalFunc('procedure VarCopyNoInd(var Dest: Variant; const Source: Variant);', @_LapeVarCopyNoInd);
 
-addGlobalFunc('function VarArrayDimCount(const A: Variant): Int32;', @_LapeVarArrayDimCount);
-addGlobalFunc('function VarArrayLowBound(const A: Variant; Dim: Int32): Int32;', @_LapeVarArrayLowBound);
-addGlobalFunc('function VarArrayHighBound(const A: Variant; Dim: Int32): Int32;', @_LapeVarArrayHighBound);
+addGlobalFunc('function VarArrayDimCount(const A: Variant): SizeInt;', @_LapeVarArrayDimCount);
+addGlobalFunc('function VarArrayLowBound(const A: Variant; Dim: SizeInt): SizeInt;', @_LapeVarArrayLowBound);
+addGlobalFunc('function VarArrayHighBound(const A: Variant; Dim: SizeInt): SizeInt;', @_LapeVarArrayHighBound);
 
 addGlobalFunc('function VarArrayLock(const A: Variant): Pointer;', @_LapeVarArrayLock);
 addGlobalFunc('procedure VarArrayUnlock(const A: Variant);', @_LapeVarArrayUnlock);

@@ -142,8 +142,8 @@ begin
 end;
 
 type
-  TIntArray = array of Int32;
-  PIntArray = ^TIntArray;
+  TSizeIntArray = array of SizeInt;
+  PSizeIntArray = ^TSizeIntArray;
 
 procedure _LapeVarTypeIsValidArrayType(const Params: PParamArray; const Result: Pointer);
 begin
@@ -157,7 +157,7 @@ end;
 
 procedure _LapeVarArrayCreate(const Params: PParamArray; const Result: Pointer);
 begin
-  PVariant(Result)^ := VarArrayCreate(PIntArray(Params^[0])^, PVarType(Params^[1])^);
+  PVariant(Result)^ := VarArrayCreate(PSizeIntArray(Params^[0])^, PVarType(Params^[1])^);
 end;
 
 procedure _LapeVarArrayOf(const Params: PParamArray; const Result: Pointer);
@@ -209,6 +209,10 @@ procedure _LapeVarArrayRef(const Params: PParamArray; const Result: Pointer);
 begin
   PVariant(Result)^ := VarArrayRef(PVariant(Params^[0])^);
 end;
+
+type
+  TIntArray = array of Int32;
+  PIntArray = ^TIntArray;
 
 procedure _LapeVarArrayGet(const Params: PParamArray; const Result: Pointer);
 begin

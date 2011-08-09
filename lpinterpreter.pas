@@ -55,11 +55,6 @@ type
   opCodeType = Integer; //Better alignment
   {$ENDIF}
 
-  TCallRec = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
-    CalledFrom: PByte;
-    StackP, VarStackP: UInt32;
-  end;
-
   POC_PopStackToVar = ^TOC_PopStackToVar;
   TOC_PopStackToVar = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
     Size: TStackOffset;
@@ -102,9 +97,9 @@ const
   {$ENDIF}
 
   {$IFDEF Lape_UnlimitedCallStackSize}
-  CallStackSize = 128; //TCallRecs
+  CallStackSize = 128;
   {$ELSE}
-  CallStackSize = 512; //TCallRecs
+  CallStackSize = 512;
   {$ENDIF}
 
   ocSize = SizeOf(opCodeType) {$IFDEF Lape_EmitPos}+SizeOf(TDocPos){$ENDIF};
@@ -142,7 +137,10 @@ var
   end;
   InSafeJump: PByte;
 
-  CallStack: array of TCallRec;
+  CallStack: array of record
+    CalledFrom: PByte;
+    StackP, VarStackP: UInt32;
+  end;
   CallStackPos: UInt32;
 
   procedure ExpandVarStack(Size: UInt32); {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -305,7 +303,7 @@ var
 
   procedure DoExpandVarAndInit; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
-    ExpandSize: Integer;
+    ExpandSize: TStackOffset;
   begin
     ExpandSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     ExpandVarStack(ExpandSize);
@@ -321,7 +319,8 @@ var
 
   procedure DoGrowVarAndInit; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
-    GrowSize, OldLen: UInt32;
+    GrowSize: TStackOffset;
+    OldLen: UInt32;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     OldLen := VarStackLen;
@@ -335,7 +334,7 @@ var
 
   procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
-    PopSize: Integer;
+    PopSize: TStackOffset;
   begin
     PopSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     Dec(VarStackPos, PopSize);

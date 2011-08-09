@@ -10,7 +10,7 @@
 procedure DoIncCall_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_Invoke_Stk(PtrUInt(Code) + ocSize)^ do
-    DoIncCall(SizeOf(TOC_Invoke_Stk), PUInt32(@Stack[StackPos - SOffset])^, ParamSize, ParamSize - SOffset);
+    DoIncCall(SizeOf(TOC_Invoke_Stk), PCodePos(@Stack[StackPos - SOffset])^, ParamSize, ParamSize - SOffset);
 end;
 
 procedure DoIncCall_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -24,19 +24,19 @@ end;
 procedure DoIncCall_Var; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_Invoke_Var(PtrUInt(Code) + ocSize)^ do
-    DoIncCall(SizeOf(TOC_Invoke_Var), PUInt32(@VarStack[VarStackPos + VOffset])^, ParamSize);
+    DoIncCall(SizeOf(TOC_Invoke_Var), PCodePos(@VarStack[VarStackPos + VOffset])^, ParamSize);
 end;
 
 procedure DoIncCall_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_Invoke_PVar(PtrUInt(Code) + ocSize)^ do
-    DoIncCall(SizeOf(TOC_Invoke_PVar), PUInt32(PtrUInt(PPointer(@VarStack[VarStackPos + VOffset])^) + POffset)^, ParamSize);
+    DoIncCall(SizeOf(TOC_Invoke_PVar), PCodePos(PtrUInt(PPointer(@VarStack[VarStackPos + VOffset])^) + POffset)^, ParamSize);
 end;
 
 procedure DoIncCall_Ptr; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_Invoke_Ptr(PtrUInt(Code) + ocSize)^ do
-    DoIncCall(SizeOf(TOC_Invoke_Ptr), PUInt32(Ptr)^, ParamSize);
+    DoIncCall(SizeOf(TOC_Invoke_Ptr), PCodePos(Ptr)^, ParamSize);
 end;
 
 procedure DoInvokeImported_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -188,5 +188,5 @@ end;
 procedure DoInvokeImported_Ptr_Ptr; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_Invoke_Ptr_Ptr(PtrUInt(Code) + ocSize)^ do
-    DoInvokeImportedFunc(SizeOf(TOC_Invoke_Ptr_Ptr),PPointer(PtrS)^, PtrD, ParamSize);
+    DoInvokeImportedFunc(SizeOf(TOC_Invoke_Ptr_Ptr), PPointer(PtrS)^, PtrD, ParamSize);
 end;

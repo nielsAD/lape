@@ -44,8 +44,8 @@ type
   PPtrInt = ^PtrInt;
   PPtrUInt = ^PtrUInt;
 
-  SizeInt = NativeInt;
-  SizeUInt = NativeUInt;
+  SizeInt = {$IFDEF CPUX64}Int64{$ELSE}Int32{$ENDIF};
+  SizeUInt = {$IFDEF CPUX64}UInt64{$ELSE}UInt32{$ENDIF};
   PSizeInt = ^SizeInt;
   PSizeUInt = ^SizeUInt;
 
