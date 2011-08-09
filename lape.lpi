@@ -14,7 +14,7 @@
     <VersionInfo>
       <StringTable ProductVersion=""/>
     </VersionInfo>
-    <BuildModes Count="3" Active="x64">
+    <BuildModes Count="3" Active="Debug">
       <Item1 Name="Debug" Default="True"/>
       <Item2 Name="Deploy">
         <CompilerOptions>
@@ -127,10 +127,10 @@
         <ComponentName Value="Form1"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Main"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="50"/>
-        <CursorPos X="42" Y="65"/>
+        <TopLine Value="161"/>
+        <CursorPos X="21" Y="152"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -148,10 +148,11 @@
         <Filename Value="lpcompiler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpcompiler"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="218"/>
-        <CursorPos X="22" Y="239"/>
+        <TopLine Value="56"/>
+        <CursorPos X="29" Y="72"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit3>
@@ -170,7 +171,7 @@
         <Filename Value="lpeval.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpeval"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
         <TopLine Value="112"/>
         <CursorPos X="41" Y="121"/>
@@ -181,11 +182,10 @@
         <Filename Value="lpinterpreter.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpinterpreter"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="483"/>
-        <CursorPos X="54" Y="483"/>
+        <TopLine Value="513"/>
+        <CursorPos X="58" Y="497"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit6>
@@ -193,12 +193,10 @@
         <Filename Value="lpexceptions.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpexceptions"/>
-        <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
         <TopLine Value="76"/>
         <CursorPos X="1" Y="92"/>
         <UsageCount Value="201"/>
-        <Loaded Value="True"/>
       </Unit7>
       <Unit8>
         <Filename Value="lape.inc"/>
@@ -214,8 +212,8 @@
         <UnitName Value="lpvartypes"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="4153"/>
-        <CursorPos X="57" Y="4168"/>
+        <TopLine Value="5192"/>
+        <CursorPos X="18" Y="5219"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit9>
@@ -223,12 +221,10 @@
         <Filename Value="lpcodeemitter.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpcodeemitter"/>
-        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="10"/>
-        <CursorPos X="69" Y="19"/>
+        <TopLine Value="13"/>
+        <CursorPos X="30" Y="21"/>
         <UsageCount Value="201"/>
-        <Loaded Value="True"/>
       </Unit10>
       <Unit11>
         <Filename Value="_lpgenerateevalfunctions.pas"/>
@@ -370,10 +366,10 @@
         <Filename Value="lptree.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lptree"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
         <TopLine Value="3776"/>
-        <CursorPos X="11" Y="3787"/>
+        <CursorPos X="55" Y="3787"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit28>
@@ -428,12 +424,10 @@
       <Unit35>
         <Filename Value="lpinterpreter_doinvoke.inc"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
         <TopLine Value="13"/>
         <CursorPos X="1" Y="1"/>
         <UsageCount Value="201"/>
-        <Loaded Value="True"/>
       </Unit35>
       <Unit36>
         <Filename Value="lpinterpreter_invokeopcodes.inc"/>
@@ -554,7 +548,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="193"/>
         <CursorPos X="30" Y="213"/>
-        <UsageCount Value="49"/>
+        <UsageCount Value="51"/>
       </Unit51>
       <Unit52>
         <Filename Value="lpeval_headers_variant.inc"/>
@@ -562,7 +556,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="16" Y="8"/>
-        <UsageCount Value="48"/>
+        <UsageCount Value="50"/>
       </Unit52>
       <Unit53>
         <Filename Value="lpeval_import_variant.inc"/>
@@ -570,7 +564,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="64"/>
         <CursorPos X="68" Y="87"/>
-        <UsageCount Value="48"/>
+        <UsageCount Value="50"/>
       </Unit53>
       <Unit54>
         <Filename Value="D:\FPC\Source\rtl\objpas\sysutils\sysutilh.inc"/>
@@ -613,7 +607,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="42"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="31"/>
+        <UsageCount Value="33"/>
       </Unit59>
       <Unit60>
         <Filename Value="lpeval_wrappers_string.inc"/>
@@ -621,7 +615,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="78"/>
         <CursorPos X="41" Y="90"/>
-        <UsageCount Value="31"/>
+        <UsageCount Value="33"/>
       </Unit60>
       <Unit61>
         <Filename Value="lpeval_headers_string.inc"/>
@@ -629,7 +623,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="13"/>
         <CursorPos X="19" Y="29"/>
-        <UsageCount Value="31"/>
+        <UsageCount Value="33"/>
       </Unit61>
       <Unit62>
         <Filename Value="..\FPC\Source\rtl\inc\objpash.inc"/>
@@ -651,7 +645,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="10"/>
-        <UsageCount Value="28"/>
+        <UsageCount Value="30"/>
       </Unit64>
       <Unit65>
         <Filename Value="lpeval_wrappers_datetime.inc"/>
@@ -659,7 +653,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="55" Y="6"/>
-        <UsageCount Value="28"/>
+        <UsageCount Value="30"/>
       </Unit65>
       <Unit66>
         <Filename Value="lpeval_headers_datetime.inc"/>
@@ -667,7 +661,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="28"/>
+        <UsageCount Value="30"/>
       </Unit66>
       <Unit67>
         <Filename Value="..\LazSVN\lcl\lclintf.pas"/>
@@ -712,7 +706,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="23" Y="30"/>
-        <UsageCount Value="26"/>
+        <UsageCount Value="28"/>
       </Unit72>
       <Unit73>
         <Filename Value="lpeval_wrappers_math.inc"/>
@@ -720,7 +714,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="61"/>
         <CursorPos X="16" Y="70"/>
-        <UsageCount Value="26"/>
+        <UsageCount Value="28"/>
       </Unit73>
       <Unit74>
         <Filename Value="lpeval_headers_math.inc"/>
@@ -728,118 +722,110 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="24"/>
-        <UsageCount Value="26"/>
+        <UsageCount Value="28"/>
       </Unit74>
     </Units>
-    <JumpHistory Count="27" HistoryIndex="26">
+    <JumpHistory Count="25" HistoryIndex="24">
       <Position1>
         <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="495" Column="18" TopLine="468"/>
+        <Caret Line="126" Column="21" TopLine="110"/>
       </Position1>
       <Position2>
         <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="112" Column="16" TopLine="110"/>
+        <Caret Line="133" Column="22" TopLine="110"/>
       </Position2>
       <Position3>
         <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="120" Column="19" TopLine="110"/>
+        <Caret Line="142" Column="30" TopLine="115"/>
       </Position3>
       <Position4>
         <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="123" Column="50" TopLine="110"/>
+        <Caret Line="144" Column="23" TopLine="117"/>
       </Position4>
       <Position5>
         <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="126" Column="21" TopLine="110"/>
+        <Caret Line="146" Column="40" TopLine="119"/>
       </Position5>
       <Position6>
         <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="133" Column="22" TopLine="110"/>
+        <Caret Line="181" Column="38" TopLine="154"/>
       </Position6>
       <Position7>
         <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="142" Column="30" TopLine="115"/>
+        <Caret Line="500" Column="83" TopLine="488"/>
       </Position7>
       <Position8>
         <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="144" Column="23" TopLine="117"/>
+        <Caret Line="494" Column="24" TopLine="476"/>
       </Position8>
       <Position9>
-        <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="146" Column="40" TopLine="119"/>
-      </Position9>
-      <Position10>
-        <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="181" Column="38" TopLine="154"/>
-      </Position10>
-      <Position11>
-        <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="500" Column="83" TopLine="488"/>
-      </Position11>
-      <Position12>
-        <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="494" Column="24" TopLine="476"/>
-      </Position12>
-      <Position13>
-        <Filename Value="lpcodeemitter.pas"/>
-        <Caret Line="116" Column="27" TopLine="97"/>
-      </Position13>
-      <Position14>
-        <Filename Value="lpcodeemitter.pas"/>
-        <Caret Line="171" Column="17" TopLine="157"/>
-      </Position14>
-      <Position15>
-        <Filename Value="lpcodeemitter.pas"/>
-        <Caret Line="205" Column="19" TopLine="193"/>
-      </Position15>
-      <Position16>
-        <Filename Value="lpcodeemitter.pas"/>
-        <Caret Line="19" Column="69" TopLine="10"/>
-      </Position16>
-      <Position17>
         <Filename Value="lptypes.pas"/>
         <Caret Line="110" Column="21" TopLine="94"/>
-      </Position17>
-      <Position18>
+      </Position9>
+      <Position10>
         <Filename Value="lpvartypes.pas"/>
         <Caret Line="3" Column="99" TopLine="1"/>
-      </Position18>
-      <Position19>
+      </Position10>
+      <Position11>
         <Filename Value="lpvartypes.pas"/>
         <Caret Line="571" Column="44" TopLine="550"/>
-      </Position19>
-      <Position20>
+      </Position11>
+      <Position12>
         <Filename Value="lpvartypes.pas"/>
         <Caret Line="708" Column="39" TopLine="681"/>
-      </Position20>
-      <Position21>
+      </Position12>
+      <Position13>
         <Filename Value="lpvartypes.pas"/>
         <Caret Line="709" Column="39" TopLine="682"/>
-      </Position21>
-      <Position22>
+      </Position13>
+      <Position14>
         <Filename Value="lptree.pas"/>
         <Caret Line="4698" Column="42" TopLine="4664"/>
-      </Position22>
-      <Position23>
+      </Position14>
+      <Position15>
         <Filename Value="lptree.pas"/>
         <Caret Line="147" Column="27" TopLine="131"/>
-      </Position23>
-      <Position24>
+      </Position15>
+      <Position16>
         <Filename Value="lptree.pas"/>
         <Caret Line="3" Column="113" TopLine="1"/>
-      </Position24>
-      <Position25>
+      </Position16>
+      <Position17>
         <Filename Value="lptree.pas"/>
         <Caret Line="147" Column="68" TopLine="129"/>
-      </Position25>
-      <Position26>
+      </Position17>
+      <Position18>
         <Filename Value="lptree.pas"/>
         <Caret Line="148" Column="27" TopLine="129"/>
-      </Position26>
-      <Position27>
+      </Position18>
+      <Position19>
         <Filename Value="lptree.pas"/>
         <Caret Line="298" Column="92" TopLine="285"/>
-      </Position27>
+      </Position19>
+      <Position20>
+        <Filename Value="lptree.pas"/>
+        <Caret Line="3787" Column="55" TopLine="3776"/>
+      </Position20>
+      <Position21>
+        <Filename Value="lpcompiler.pas"/>
+        <Caret Line="26" Column="118" TopLine="25"/>
+      </Position21>
+      <Position22>
+        <Filename Value="lpcompiler.pas"/>
+        <Caret Line="3" Column="118" TopLine="1"/>
+      </Position22>
+      <Position23>
+        <Filename Value="lpcompiler.pas"/>
+        <Caret Line="2426" Column="68" TopLine="2399"/>
+      </Position23>
+      <Position24>
+        <Filename Value="lpvartypes.pas"/>
+        <Caret Line="120" Column="108" TopLine="119"/>
+      </Position24>
+      <Position25>
+        <Filename Value="lpvartypes.pas"/>
+        <Caret Line="5201" Column="26" TopLine="5177"/>
+      </Position25>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>

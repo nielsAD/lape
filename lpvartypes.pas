@@ -5216,7 +5216,7 @@ begin
         else
           Emitter._EndTry(Offset, Pos);
 
-        WriteLn('Vars on stack: ', FStackInfo.Count);
+        //WriteLn('Vars on stack: ', FStackInfo.Count);
 
         if (not InFunction) then
           if FStackInfo.NeedInitialization then

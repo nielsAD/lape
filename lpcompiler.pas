@@ -782,7 +782,7 @@ begin
   begin
     if ({$IFNDEF FPC}@{$ENDIF}FOnFindFile <> nil) then
       NewTokenizer := FOnFindFile(Self, Argument);
-    Argument := ExpandFileName(Argument);
+    Argument := StringReplace(ExpandFileName(Argument), '\', '/', [rfReplaceAll]);
 
     if (not Sender.InPeek) then
       if (Directive = 'include_once') and (FIncludes.IndexOf(Argument) > -1) then
@@ -835,8 +835,6 @@ begin
     setOption(lcoVarStringChecks)
   else
     Result := False;
-
-  WriteLn('DIRECTIVE: ', Directive, ' ', Argument, ' (', Sender.InPeek, ')');
 end;
 
 function TLapeCompiler.InIgnore: Boolean;
