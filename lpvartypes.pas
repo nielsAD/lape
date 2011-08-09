@@ -1626,11 +1626,8 @@ begin
     end
     else
     begin
-      { Cannot be uncommented yet, because some ToString functions rely on it
-
       if (op = op_Addr) and (not Left.isVariable) then
         LapeException(lpeVariableExpected);
-      }
       FCompiler.Emitter._Eval(EvalProc, Result, Left, Right, Offset, Pos);
     end;
 
@@ -2123,10 +2120,8 @@ end;
 function TLapeType_Enum.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
   i: Integer;
-  LongName: Boolean;
 begin
   Result := '';
-  LongName := False;
 
   for i := 0 to FMemberMap.Count - 1 do
     if (FMemberMap[i] <> '') then
@@ -2134,21 +2129,12 @@ begin
       if (Result <> '') then
         Result := Result + ', ';
       Result := Result + #39 + FMemberMap[i] + #39;
-
-      if (not LongName) and (Length(FMemberMap[i]) > 1) then
-        LongName := True;
     end;
-
-  //To prevent casting to char array
-  if (not LongName) and (Result <> '') then
-    Result := Result + ', '#39'PLACEHOLDER'#39;
-
-  if (Result <> '') then
-    Result := '@['+Result+']'
-  else
-    Result := 'nil';
-
-  Result := Format('begin Result := _EnumToString(%s, Ord(Param0), %d, %d); end;', [Result, FRange.Lo, FRange.Hi]);
+  Result := Format(
+    'type TEnumToString = function(const Arr; Index, Lo, Hi: Int32): string;' + LineEnding +
+    'begin Result := TEnumToString({$IFDEF AUTOINVOKE}@{$ENDIF}_EnumToString)([%s], Ord(Param0), %d, %d); end;',
+    [Result, FRange.Lo, FRange.Hi]
+  );
 end;
 
 function TLapeType_Enum.VarToString(AVar: Pointer): lpString;
@@ -2428,11 +2414,12 @@ begin
   if (Index < 0) then
     Exit;
 
+  Result := 'type TSetToString = function(const ASet; AToString: Pointer; Lo, Hi: Int32): string;' + LineEnding + 'begin ';
   if FSmall then
-    Result := 'begin Result := _SmallSetToString(@Param0, Pointer({$IFDEF AUTOINVOKE}@{$ENDIF}ToString[%d]), %d, %d); end;'
+    Result := Result + 'Result := TSetToString({$IFDEF AUTOINVOKE}@{$ENDIF}_SmallSetToString)'
   else
-    Result := 'begin Result := _LargeSetToString(@Param0, Pointer({$IFDEF AUTOINVOKE}@{$ENDIF}ToString[%d]), %d, %d); end;';
-  Result := Format(Result, [Index, FRange.Range.Lo, FRange.Range.Hi]);
+    Result := Result + 'Result := TSetToString({$IFDEF AUTOINVOKE}@{$ENDIF}_LargeSetToString)';
+  Result := Format(Result + '(Param0, {$IFDEF AUTOINVOKE}@{$ENDIF}ToString[%d], %d, %d); end;', [Index, FRange.Range.Lo, FRange.Range.Hi]);
 end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;
@@ -2715,19 +2702,22 @@ begin
     Exit;
 
   Result :=
-    '  function _ElementToString(const p: Pointer): string;'                             + LineEnding +
-    '  begin'                                                                            + LineEnding +
-    '    Result := ToString['+IntToStr(Index)+'](p^);'                                   + LineEnding +
-    '  end;'                                                                             + LineEnding +
-    'var'                                                                                + LineEnding +
-    '  Len: Int32;'                                                                      + LineEnding +
-    'begin'                                                                              + LineEnding +
-    '  Len := Length(Param0);'                                                           + LineEnding +
-    '  if (Len <= 0) then'                                                               + LineEnding +
-    '    Result := '#39'[]'#39''                                                         + LineEnding +
-    '  else'                                                                             + LineEnding +
-    '    Result := _ArrayToString(@Param0['+IntToStr(VarLo().AsInteger)+'],'             + LineEnding +
-    '      {$IFDEF AUTOINVOKE}@{$ENDIF}_ElementToString, Len, SizeOf(Param0[0]));'       + LineEnding +
+    '  function _ElementToString(const p: Pointer): string;'                                + LineEnding +
+    '  begin'                                                                               + LineEnding +
+    '    Result := ToString['+IntToStr(Index)+'](p^);'                                      + LineEnding +
+    '  end;'                                                                                + LineEnding +
+    'type'                                                                                  + LineEnding +
+    '  TArrayToString = function(const Arr; AToString: Pointer; Len, Size: Int32): string;' + LineEnding +
+    'var'                                                                                   + LineEnding +
+    '  Len: Int32;'                                                                         + LineEnding +
+    'begin'                                                                                 + LineEnding +
+    '  Len := Length(Param0);'                                                              + LineEnding +
+    '  if (Len <= 0) then'                                                                  + LineEnding +
+    '    Result := '#39'[]'#39''                                                            + LineEnding +
+    '  else'                                                                                + LineEnding +
+    '    Result := TArrayToString({$IFDEF AUTOINVOKE}@{$ENDIF}_ArrayToString)('             + LineEnding +
+    '      Param0['+IntToStr(VarLo().AsInteger)+'],'                                        + LineEnding +
+    '      {$IFDEF AUTOINVOKE}@{$ENDIF}_ElementToString, Len, SizeOf(Param0[0]));'          + LineEnding +
     'end;';
 end;
 
