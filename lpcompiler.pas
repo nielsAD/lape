@@ -158,8 +158,9 @@ type
     function Compile: Boolean; virtual;
     procedure CheckAfterCompile; virtual;
 
-    function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; override;
-    function hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean; override;
+    function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration; override;
+    function hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; override;
+    function hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; override;
     function getDeclarationNoWith(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
     function getDeclarationNoWith(AName: lpString; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
     function getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
@@ -209,7 +210,7 @@ type
     property Importing: Boolean read getImporting write setImporting;
   published
     property Tokenizer: TLapeTokenizerBase read getTokenizer write setTokenizer;
-    property BaseDefines: TStringList read FBaseDefines write setBaseDefines;
+    property Defines: TStringList read FDefines write setBaseDefines;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
   end;
@@ -2710,18 +2711,25 @@ begin
     LapeException(lpeConditionalNotClosed, popConditional());
 end;
 
-function TLapeCompiler.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;
+function TLapeCompiler.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration;
 begin
   Result := inherited;
   if (Result = nil) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
-    Result := inherited getDeclaration(AName, nil, Localonly);
+    Result := inherited getDeclaration(AName, nil, Localonly, CheckWith);
 end;
 
-function TLapeCompiler.hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean;
+function TLapeCompiler.hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean;
 begin
   Result := inherited;
   if (not Result) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
-    Result := inherited hasDeclaration(AName, nil, Localonly);
+    Result := inherited hasDeclaration(AName, nil, Localonly, CheckWith);
+end;
+
+function TLapeCompiler.hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean;
+begin
+  Result := inherited;
+  if (not Result) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
+    Result := inherited hasDeclaration(ADecl, nil, Localonly, CheckWith);
 end;
 
 function TLapeCompiler.getDeclarationNoWith(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;

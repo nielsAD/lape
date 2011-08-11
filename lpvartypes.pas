@@ -199,7 +199,8 @@ type
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; overload; virtual;
 
     function CanHaveChild: Boolean; virtual;
-    function HasChild(AName: lpString): Boolean; virtual;
+    function HasChild(AName: lpString): Boolean; overload; virtual;
+    function HasChild(ADecl: TLapeDeclaration): Boolean; overload; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; overload; virtual;
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; overload; virtual;
@@ -599,6 +600,7 @@ type
     function getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar; overload; virtual;
     function NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; virtual;
 
+    function HasChild(ADecl: TLapeDeclaration): Boolean; override;
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
 
@@ -668,8 +670,10 @@ type
     constructor Create(AlwaysInitialize: Boolean = True; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True); reintroduce; virtual;
     destructor Destroy; override;
 
-    function getDeclaration(Name: lpString): TLapeDeclaration; virtual;
-    function hasDeclaration(Name: lpString): Boolean; virtual;
+    function getDeclaration(Name: lpString; CheckWith: Boolean = True): TLapeDeclaration; virtual;
+    function hasDeclaration(Name: lpString; CheckWith: Boolean = True): Boolean; overload; virtual;
+    function hasDeclaration(Decl: TLapeDeclaration; CheckWith: Boolean = True): Boolean; overload; virtual;
+
     function getTempVar(VarType: TLapeType; Lock: Integer = 1): TLapeStackTempVar; virtual;
     function addDeclaration(Decl: TLapeDeclaration): Integer; virtual;
     function addVar(StackVar: TLapeStackVar): TLapeStackVar; overload; virtual;
@@ -724,6 +728,8 @@ type
     FGlobalDeclarations: TLapeDeclarationList;
     FManagedDeclarations: TLapeDeclarationList;
 
+    FBaseOptions: ECompilerOptionsSet;
+    FBaseOptions_PackRecords: UInt8;
     FOptions: ECompilerOptionsSet;
     FOptions_PackRecords: UInt8;
 
@@ -767,10 +773,12 @@ type
     function getTypeVar(AType: TLapeType): TLapeGlobalVar; overload; virtual;
 
     function getGlobalVar(AName: lpString): TLapeGlobalVar; virtual;
-    function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
-    function getDeclaration(AName: lpString; LocalOnly: Boolean = False): TLapeDeclaration; overload; virtual;
-    function hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean; overload; virtual;
-    function hasDeclaration(AName: lpString; LocalOnly: Boolean = False): Boolean; overload; virtual;
+    function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration; overload; virtual;
+    function getDeclaration(AName: lpString; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration; overload; virtual;
+    function hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; overload; virtual;
+    function hasDeclaration(AName: lpString; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; overload; virtual;
+    function hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; overload; virtual;
+    function hasDeclaration(ADecl: TLapeDeclaration; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; overload; virtual;
 
     property StackInfo: TLapeStackInfo read FStackInfo;
     property BaseTypes: TLapeBaseTypes read FBaseTypes;
@@ -778,8 +786,8 @@ type
     property ManagedDeclarations: TLapeDeclarationList read FManagedDeclarations;
   published
     property Emitter: TLapeCodeEmitter read FEmitter write setEmitter;
-    property Options: ECompilerOptionsSet read FOptions write FOptions default Lape_OptionsDef;
-    property Options_PackRecords: UInt8 read FOptions_PackRecords write FOptions_PackRecords default Lape_PackRecordsDef;
+    property Options: ECompilerOptionsSet read FOptions write FBaseOptions default Lape_OptionsDef;
+    property Options_PackRecords: UInt8 read FOptions_PackRecords write FBaseOptions_PackRecords default Lape_PackRecordsDef;
   end;
 
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
@@ -1367,6 +1375,11 @@ begin
   finally
     DotName.Free();
   end;
+end;
+
+function TLapeType.HasChild(ADecl: TLapeDeclaration): Boolean;
+begin
+  Result := False;
 end;
 
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
@@ -4336,6 +4349,11 @@ begin
   Result := NewGlobalVarP(nil, AName, ADocPos);
 end;
 
+function TLapeType_OverloadedMethod.HasChild(ADecl: TLapeDeclaration): Boolean;
+begin
+  Result := FMethods.Items.ExistsItem(ADecl);
+end;
+
 function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
 begin
   if (Op = op_Index) and (Right <> nil) and (Right.BaseType in LapeIntegerTypes) then
@@ -4585,13 +4603,14 @@ begin
   inherited;
 end;
 
-function TLapeStackInfo.getDeclaration(Name: lpString): TLapeDeclaration;
+function TLapeStackInfo.getDeclaration(Name: lpString; CheckWith: Boolean = True): TLapeDeclaration;
 var
   i: Integer;
 begin
-  for i := FWithStack.Count - 1 downto 0 do
-    if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasChild(Name) then
-      Exit(TLapeWithDeclaration.Create(FWithStack[i]));
+  if CheckWith then
+    for i := FWithStack.Count - 1 downto 0 do
+      if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasChild(Name) then
+        Exit(TLapeWithDeclaration.Create(FWithStack[i]));
 
   Name := LapeCase(Name);
   for i := 0 to FDeclarations.Count - 1 do
@@ -4601,13 +4620,14 @@ begin
   Result := nil;
 end;
 
-function TLapeStackInfo.hasDeclaration(Name: lpString): Boolean;
+function TLapeStackInfo.hasDeclaration(Name: lpString; CheckWith: Boolean = True): Boolean;
 var
   i: Integer;
 begin
-  for i := FWithStack.Count - 1 downto 0 do
-    if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasChild(Name) then
-      Exit(True);
+  if CheckWith then
+    for i := FWithStack.Count - 1 downto 0 do
+      if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasChild(Name) then
+        Exit(True);
 
   Name := LapeCase(Name);
   for i := 0 to FDeclarations.Count - 1 do
@@ -4615,6 +4635,18 @@ begin
       Exit(True);
 
   Result := False;
+end;
+
+function TLapeStackInfo.hasDeclaration(Decl: TLapeDeclaration; CheckWith: Boolean = True): Boolean;
+var
+  i: Integer;
+begin
+  if CheckWith then
+    for i := FWithStack.Count - 1 downto 0 do
+      if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasChild(Decl) then
+        Exit(True);
+
+  Result := FDeclarations.ExistsItem(Decl);
 end;
 
 function TLapeStackInfo.getTempVar(VarType: TLapeType; Lock: Integer = 1): TLapeStackTempVar;
@@ -5081,6 +5113,9 @@ end;
 
 procedure TLapeCompilerBase.Reset;
 begin
+  FOptions := FBaseOptions;
+  FOptions_PackRecords := FBaseOptions_PackRecords;
+
   if (FEmitter <> nil) then
     FEmitter.Reset();
   while (DecStackInfo(False, False, (FStackInfo <> nil) and (FStackInfo.Owner = nil)) <> nil) do ;
@@ -5090,8 +5125,8 @@ constructor TLapeCompilerBase.Create(AEmitter: TLapeCodeEmitter = nil; ManageEmi
 begin
   inherited Create();
 
-  Options := Lape_OptionsDef;
-  Options_PackRecords := Lape_PackRecordsDef;
+  FBaseOptions := Lape_OptionsDef;
+  FBaseOptions_PackRecords := Lape_PackRecordsDef;
 
   FreeEmitter := ManageEmitter;
   if (AEmitter = nil) then
@@ -5485,13 +5520,13 @@ begin
     Result := nil;
 end;
 
-function TLapeCompilerBase.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;
+function TLapeCompilerBase.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration;
 var
   Declarations: TLapeDeclArray;
 begin
   if (AStackInfo <> nil) then
   begin
-    Result := AStackInfo.getDeclaration(AName);
+    Result := AStackInfo.getDeclaration(AName, CheckWith);
     if (Result <> nil) or LocalOnly then
       Exit;
   end;
@@ -5505,16 +5540,16 @@ begin
     Result := getBaseType(AName);
 end;
 
-function TLapeCompilerBase.getDeclaration(AName: lpString; LocalOnly: Boolean = False): TLapeDeclaration;
+function TLapeCompilerBase.getDeclaration(AName: lpString; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration;
 begin
-  Result := getDeclaration(AName, FStackInfo, LocalOnly);
+  Result := getDeclaration(AName, FStackInfo, LocalOnly, CheckWith);
 end;
 
-function TLapeCompilerBase.hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): Boolean;
+function TLapeCompilerBase.hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean;
 begin
   if (AStackInfo <> nil) then
   begin
-    Result := AStackInfo.hasDeclaration(AName);
+    Result := AStackInfo.hasDeclaration(AName, CheckWith);
     if Result or LocalOnly then
       Exit;
   end;
@@ -5525,9 +5560,31 @@ begin
     Result := getBaseType(AName) <> nil;
 end;
 
-function TLapeCompilerBase.hasDeclaration(AName: lpString; LocalOnly: Boolean = False): Boolean;
+function TLapeCompilerBase.hasDeclaration(AName: lpString; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean;
 begin
-  Result := hasDeclaration(AName, FStackInfo, LocalOnly);
+  Result := hasDeclaration(AName, FStackInfo, LocalOnly, CheckWith);
+end;
+
+function TLapeCompilerBase.hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean;
+begin
+   if (AStackInfo <> nil) then
+  begin
+    Result := AStackInfo.hasDeclaration(ADecl, CheckWith);
+    if Result or LocalOnly then
+      Exit;
+  end;
+
+  if GlobalDeclarations.Items.ExistsItem(ADecl) then
+    Result := True
+  else if (ADecl <> nil) then
+    Result := (getBaseType(ADecl.Name) <> nil)
+  else
+    Result := False;
+end;
+
+function TLapeCompilerBase.hasDeclaration(ADecl: TLapeDeclaration; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean;
+begin
+  Result := hasDeclaration(ADecl, FStackInfo, LocalOnly, CheckWith);
 end;
 
 initialization

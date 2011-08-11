@@ -67,7 +67,7 @@ type
 
     function Compile(var Offset: Integer): TResVar; overload; virtual;
     function Compile: TResVar; overload; virtual;
-    function getTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean; virtual;
+    function CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean; virtual;
 
     property Parent: TLapeTree_Base read FParent write setParent;
     property Compiler: TLapeCompilerBase read FCompiler;
@@ -82,7 +82,7 @@ type
     function resType: TLapeType; virtual;
     function Evaluate: TLapeGlobalVar; virtual;
 
-    function getBoolVar(var Offset: Integer; out ConditionVar: TResVar): Boolean; virtual;
+    function CompileToBoolVar(var Offset: Integer; out ConditionVar: TResVar): Boolean; virtual;
   end;
 
   TLapeTree_DestExprBase = class(TLapeTree_ExprBase)
@@ -90,7 +90,7 @@ type
     FDest: TResVar;
     procedure setDest(ResVar: TResVar); virtual;
   public
-    function getTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean; override;
+    function CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean; override;
     property Dest: TResVar read FDest write setDest;
   end;
 
@@ -725,7 +725,7 @@ begin
   Result := Compile(Offset);
 end;
 
-function TLapeTree_Base.getTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean;
+function TLapeTree_Base.CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean;
 begin
   v := Compile(Offset).IncLock(Lock);
   Result := (v.VarPos.MemPos <> mpStack) and v.HasType();
@@ -790,7 +790,7 @@ begin
   LapeException(lpeImpossible);
 end;
 
-function TLapeTree_ExprBase.getBoolVar(var Offset: Integer; out ConditionVar: TResVar): Boolean;
+function TLapeTree_ExprBase.CompileToBoolVar(var Offset: Integer; out ConditionVar: TResVar): Boolean;
 var
   tmpVar, tmpCondition: TResVar;
 begin
@@ -823,7 +823,7 @@ begin
   FDest := ResVar;
 end;
 
-function TLapeTree_DestExprBase.getTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean;
+function TLapeTree_DestExprBase.CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean;
 begin
   Dest := VarResVar;
   Result := inherited;
@@ -1685,7 +1685,7 @@ var
         Par := NullResVar;
         if (ParamVars[i].VarPos.MemPos = NullResVar.VarPos.MemPos) then
           if (Params[i].ParType in Lape_RefParams) then
-            FParams[i].getTempVar(Offset, ParamVars[i], 0)
+            FParams[i].CompileToTempVar(Offset, ParamVars[i], 0)
           else
             ParamVars[i] := getStackVar(FParams[i], Offset);
 
@@ -1758,7 +1758,7 @@ var
       begin
         Par := NullResVar;
         if (ParamVars[i].VarPos.MemPos = NullResVar.VarPos.MemPos) then
-          FParams[i].getTempVar(Offset, ParamVars[i], 0);
+          FParams[i].CompileToTempVar(Offset, ParamVars[i], 0);
 
         if (ParamVars[i].VarPos.MemPos = mpStack) or
            ((Params[i].VarType <> ParamVars[i].VarType) and (not ParamVars[i].HasType()))
@@ -2578,7 +2578,7 @@ begin
   ArrayType := nil;
   tmpVar := NullResVar;
 
-  if (not FParams[0].getTempVar(Offset, Param, BigLock)) or (not Param.HasType()) or
+  if (not FParams[0].CompileToTempVar(Offset, Param, BigLock)) or (not Param.HasType()) or
      (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray, ltShortString]))
   then
     LapeException(lpeInvalidEvaluation, DocPos);
@@ -2586,7 +2586,7 @@ begin
   tmpType := Param.VarType;
   ArrayType := TLapeType_DynArray(Param.VarType).PType;
 
-  if (not FParams[1].getTempVar(Offset, Len, BigLock)) or (ArrayType = nil) or
+  if (not FParams[1].CompileToTempVar(Offset, Len, BigLock)) or (ArrayType = nil) or
      (not Len.HasType()) or (not (Len.VarType.BaseType in LapeIntegerTypes))
   then
     LapeException(lpeInvalidEvaluation, DocPos);
@@ -3960,7 +3960,7 @@ begin
   for i := 0 to FWithList.Count - 1 do
     if (FVarList[i] = nil) then
     begin
-      if (not FWithList[i].getTempVar(Offset, ResVarList[i], BigLock)) or
+      if (not FWithList[i].CompileToTempVar(Offset, ResVarList[i], BigLock)) or
          (ResVarList[i].VarPos.MemPos in [mpNone, mpStack])
       then
         LapeException(lpeInvalidCondition, FWithList[i].DocPos);
@@ -4051,7 +4051,7 @@ begin
   Result := NullResVar;
   FStartBodyOffset := 0;
 
-  if (not FCondition.getBoolVar(Offset, ConditionVar)) then
+  if (not FCondition.CompileToBoolVar(Offset, ConditionVar)) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
 
   if_o := FCompiler.Emitter._JmpRIfNot(0, ConditionVar, Offset, @_DocPos);
@@ -4132,7 +4132,7 @@ begin
 
   CheckField := nil;
   opOR := nil;
-  if (not FCondition.getTempVar(Offset, ConditionVar, BigLock)) then
+  if (not FCondition.CompileToTempVar(Offset, ConditionVar, BigLock)) then
     LapeException(lpeInvalidCondition, DocPos);
 
   try
@@ -4267,7 +4267,7 @@ begin
 
   if (FFields.Count > 0) then
   begin
-    if (not FCondition.getTempVar(Offset, ConditionVar, BigLock)) then
+    if (not FCondition.CompileToTempVar(Offset, ConditionVar, BigLock)) then
       LapeException(lpeInvalidCondition, DocPos);
 
     for i := 0 to FFields.Count - 1 do
@@ -4304,7 +4304,7 @@ begin
       end;
   end;
 
-  if (not FCondition.getBoolVar(Offset, ConditionVar)) then
+  if (not FCondition.CompileToBoolVar(Offset, ConditionVar)) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
 
   FCompiler.Emitter._JmpRIf(FStartBodyOffset - Offset, ConditionVar, Offset, @_DocPos);
@@ -4490,7 +4490,7 @@ begin
   CounterVar := nil;
   Count := FCounter.Compile(Offset);
   try
-    if (not FLimit.getTempVar(Offset, Lim, BigLock)) or (not Lim.HasType()) or (Lim.VarType.BaseIntType = ltUnknown) then
+    if (not FLimit.CompileToTempVar(Offset, Lim, BigLock)) or (not Lim.HasType()) or (Lim.VarType.BaseIntType = ltUnknown) then
       LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
     if Count.HasType() and (not Count.isVariable) then
@@ -4586,7 +4586,7 @@ begin
         FCompiler.Emitter._JmpR(Offset - co, co, @DocPos);
     end;
 
-  if (not FCondition.getBoolVar(Offset, ConditionVar)) then
+  if (not FCondition.CompileToBoolVar(Offset, ConditionVar)) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
   FCompiler.Emitter._JmpRIfNot(StartOffset - Offset, ConditionVar, Offset, @_DocPos);
 
