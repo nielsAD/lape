@@ -1124,16 +1124,16 @@ var
     Params := AMethod.Params.ExportToArray();
     for i := 0 to High(Params) do
     begin
-      while (ii < FStackInfo.Declarations.Count) do
+      while (ii < FStackInfo.Items.Count) do
       begin
-        if (FStackInfo.Declarations[ii] is TLapeParameterVar) then
+        if (FStackInfo.Items[ii] is TLapeParameterVar) then
           Break;
         Inc(ii);
       end;
-      if (ii >= FStackInfo.Declarations.Count) then
+      if (ii >= FStackInfo.Items.Count) then
         LapeException(lpeImpossible);
 
-      Params[i].Default := FStackInfo.Declarations[ii] as TLapeVar;
+      Params[i].Default := FStackInfo.Items[ii] as TLapeVar;
       NewMethod.addParam(Params[i]);
       Inc(ii);
     end;
@@ -2867,7 +2867,7 @@ begin
   with addGlobalVar(Typ, '', AName) do
   begin
     Name := '';
-    Result := AddGlobalVar(VarType.NewGlobalVarP(Value), AName);
+    Result := addGlobalVar(VarType.NewGlobalVarP(Value), AName);
     Free();
   end;
 end;

@@ -44,6 +44,7 @@ type
   TLapeBaseTypes = array[ELapeBaseType] of TLapeType;
   TLapeTypeArray = array of TLapeType;
   TLapeVarStack = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeStackVar>;
+  TLapeVarMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeGlobalVar>;
 
   TVarPos = record
     isPointer: Boolean;
@@ -648,9 +649,8 @@ type
     property VarMap: TLapeVarRefMap read FVarMap;
   end;
 
-  TLapeStackInfo = class(TLapeBaseClass)
+  TLapeStackInfo = class(TLapeDeclarationList)
   protected
-    FDeclarations: TLapeDeclCollection;
     FVarStack: TLapeVarStack;
     FWithStack: TLapeWithDeclarationList;
 
@@ -675,14 +675,13 @@ type
     function hasDeclaration(Decl: TLapeDeclaration; CheckWith: Boolean = True): Boolean; overload; virtual;
 
     function getTempVar(VarType: TLapeType; Lock: Integer = 1): TLapeStackTempVar; virtual;
-    function addDeclaration(Decl: TLapeDeclaration): Integer; virtual;
+    function addDeclaration(Decl: TLapeDeclaration): Integer; override;
     function addVar(StackVar: TLapeStackVar): TLapeStackVar; overload; virtual;
     function addVar(VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
     function addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
     function addWith(AWith: TLapeWithDeclRec): Integer; virtual;
     procedure delWith(Count: Integer); virtual;
 
-    property Declarations: TLapeDeclCollection read FDeclarations;
     property VarStack: TLapeVarStack read FVarStack;
     property WithStack: TLapeWithDeclarationList read FWithStack;
     property Vars[Index: Integer]: TLapeStackVar read getVar; default;
@@ -725,8 +724,10 @@ type
     FEmitter: TLapeCodeEmitter;
     FStackInfo: TLapeStackInfo;
     FBaseTypes: TLapeBaseTypes;
+
     FGlobalDeclarations: TLapeDeclarationList;
     FManagedDeclarations: TLapeDeclarationList;
+    FCachedDeclarations: TLapeVarMap;
 
     FBaseOptions: ECompilerOptionsSet;
     FBaseOptions_PackRecords: UInt8;
@@ -760,8 +761,10 @@ type
     function addManagedType(AType: TLapeType): TLapeType; virtual;
     function addStackVar(VarType: TLapeType; Name: lpString): TLapeStackVar; virtual;
 
+    function getCachedConstant(Str: lpString; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar; virtual;
     function getConstant(Str: lpString; BaseType: ELapeBaseType = ltString; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar; overload; virtual;
     function getConstant(i: Int64; IntType: ELapeBaseType = ltNativeInt; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar; overload; virtual;
+
     procedure getDestVar(var Dest, Res: TResVar; Op: EOperator); virtual;
     function getTempVar(VarType: ELapeBaseType; Lock: Integer = 1): TLapeStackTempVar; overload; virtual;
     function getTempVar(VarType: TLapeType; Lock: Integer = 1): TLapeStackTempVar; overload; virtual;
@@ -4576,10 +4579,9 @@ end;
 
 constructor TLapeStackInfo.Create(AlwaysInitialize: Boolean = True; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
 begin
-  inherited Create();
+  inherited Create(nil, False);
 
   Owner := AOwner;
-  FDeclarations := TLapeDeclCollection.Create(nil, dupAccept);
   FVarStack := TLapeVarStack.Create(nil, dupIgnore);
   FWithStack := TLapeWithDeclarationList.Create(NullWithDecl, dupIgnore);
   FreeVars := ManageVars;
@@ -4591,7 +4593,6 @@ destructor TLapeStackInfo.Destroy;
 var
   i: Integer;
 begin
-  FDeclarations.Free();
   for i := FVarStack.Count - 1 downto 0 do
     if FreeVars then
       FVarStack[i].Free()
@@ -4606,18 +4607,20 @@ end;
 function TLapeStackInfo.getDeclaration(Name: lpString; CheckWith: Boolean = True): TLapeDeclaration;
 var
   i: Integer;
+  Declarations: TLapeDeclArray;
 begin
   if CheckWith then
     for i := FWithStack.Count - 1 downto 0 do
       if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasChild(Name) then
         Exit(TLapeWithDeclaration.Create(FWithStack[i]));
 
-  Name := LapeCase(Name);
-  for i := 0 to FDeclarations.Count - 1 do
-    if (LapeCase(FDeclarations[i].Name) = Name) then
-      Exit(FDeclarations[i]);
-
-  Result := nil;
+  Declarations := getByName(Name);
+  if (Length(Declarations) > 1) then
+    LapeExceptionFmt(lpeDuplicateDeclaration, [Name])
+  else if (Length(Declarations) > 0) and (Declarations[0] <> nil) then
+    Result := Declarations[0]
+  else
+    Result := nil;
 end;
 
 function TLapeStackInfo.hasDeclaration(Name: lpString; CheckWith: Boolean = True): Boolean;
@@ -4629,12 +4632,7 @@ begin
       if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasChild(Name) then
         Exit(True);
 
-  Name := LapeCase(Name);
-  for i := 0 to FDeclarations.Count - 1 do
-    if (LapeCase(FDeclarations[i].Name) = Name) then
-      Exit(True);
-
-  Result := False;
+  Result := (Length(getByName(Name)) > 0);
 end;
 
 function TLapeStackInfo.hasDeclaration(Decl: TLapeDeclaration; CheckWith: Boolean = True): Boolean;
@@ -4646,7 +4644,7 @@ begin
       if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasChild(Decl) then
         Exit(True);
 
-  Result := FDeclarations.ExistsItem(Decl);
+  Result := FList.ExistsItem(Decl);
 end;
 
 function TLapeStackInfo.getTempVar(VarType: TLapeType; Lock: Integer = 1): TLapeStackTempVar;
@@ -4677,9 +4675,9 @@ function TLapeStackInfo.addDeclaration(Decl: TLapeDeclaration): Integer;
 begin
   if (Decl = nil) then
     Result := -1
-  else if FDeclarations.ExistsItem(Decl) or ((Decl.Name <> '') and hasDeclaration(Decl.Name)) then
+  else if FList.ExistsItem(Decl) or ((Decl.Name <> '') and hasDeclaration(Decl.Name)) then
     LapeExceptionFmt(lpeDuplicateDeclaration, [Decl.Name]);
-  Result := FDeclarations.add(Decl);
+  Result := FList.add(Decl);
 end;
 
 function TLapeStackInfo.addVar(StackVar: TLapeStackVar): TLapeStackVar;
@@ -5135,8 +5133,10 @@ begin
 
   LoadBaseTypes(FBaseTypes, Self);
   FStackInfo := nil;
+
   FGlobalDeclarations := TLapeDeclarationList.Create(nil);
   FManagedDeclarations := TLapeDeclarationList.Create(nil);
+  FCachedDeclarations := TLapeVarMap.Create(nil);
 end;
 
 destructor TLapeCompilerBase.Destroy;
@@ -5146,6 +5146,7 @@ begin
 
   FreeAndNil(FGlobalDeclarations);
   FreeAndNil(FManagedDeclarations);
+  FreeAndNil(FCachedDeclarations);
   ClearBaseTypes(FBaseTypes);
 
   inherited;
@@ -5159,6 +5160,7 @@ begin
   FManagedDeclarations.Delete(TLapeType_OverloadedMethod, True);
   FGlobalDeclarations.Clear();
   FManagedDeclarations.Clear();
+  FCachedDeclarations.Clear();
   Reset();
 end;
 
@@ -5386,7 +5388,13 @@ begin
             Exit(TLapeGlobalVar(GlobalVars[i]));
           end;
   end;
+
   Result := addManagedDecl(AVar) as TLapeVar;
+  {$IFNDEF Lape_SmallCode}
+  if (AVar is TLapeGlobalVar) and AVar.HasType() and AVar.isConstant and (AVar.Name = '') then
+    with AVar as TLapeGlobalVar do
+      FCachedDeclarations.add(AsString + ':' + LapeTypeToString(BaseType), TLapeGlobalVar(AVar));
+  {$ENDIF}
 end;
 
 function TLapeCompilerBase.addManagedType(AType: TLapeType): TLapeType;
@@ -5416,6 +5424,22 @@ begin
   Assert(not (Result is TLapeStackTempVar));
 end;
 
+function TLapeCompilerBase.getCachedConstant(Str: lpString; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar;
+begin
+  Assert(getBaseType(BaseType) <> nil);
+  Result := nil;
+
+  {$IFNDEF Lape_SmallCode}
+  if (BaseType in LapeStringTypes) then
+    Result := FCachedDeclarations['"' + Str + '":' + LapeTypeToString(BaseType)]
+  else
+    Result := FCachedDeclarations[Str + ':' + LapeTypeToString(BaseType)];
+  {$ENDIF}
+
+  if (Result = nil) then
+    Result := addManagedVar(getBaseType(BaseType).NewGlobalVarStr(Str)) as TLapeGlobalVar;
+end;
+
 function TLapeCompilerBase.getConstant(Str: lpString; BaseType: ELapeBaseType = ltString; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar;
 begin
   if (BaseType in LapeIntegerTypes) or ((BaseType = ltUnknown) and (not ForceType)) then
@@ -5427,8 +5451,7 @@ begin
     Assert(BaseType in LapeIntegerTypes);
   end;
 
-  Assert(getBaseType(BaseType) <> nil);
-  Result := addManagedVar(getBaseType(BaseType).NewGlobalVarStr(Str)) as TLapeGlobalVar;
+  Result := getCachedConstant(Str, BaseType);
 end;
 
 function TLapeCompilerBase.getConstant(i: Int64; IntType: ELapeBaseType = ltNativeInt; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar;

@@ -326,16 +326,20 @@ type
   TLapeDeclaration = class(TLapeBaseDeclClass)
   protected
     FList: TLapeDeclarationList;
+    FName: lpString;
+    FNameHash: UInt32;
     function getDocPos: TDocPos; override;
     procedure setList(AList: TLapeDeclarationList); virtual;
+    procedure setName(AName: lpString); virtual;
   public
     _DocPos: TDocPos;
-    Name: lpString;
     Used: Boolean;
     constructor Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil); reintroduce; virtual;
     destructor Destroy; override;
 
     property DeclarationList: TLapeDeclarationList read FList write setList;
+    property Name: lpString read FName write setName;
+    property NameHash: UInt32 read FNameHash;
   end;
 
 const
@@ -447,6 +451,7 @@ var
   );
 
 function LapeCase(const Str: lpString): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function LapeHash(const Value: string): UInt32; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
@@ -476,6 +481,22 @@ begin
   {$ELSE}
   Result := LowerCase(Str);
   {$ENDIF}
+end;
+
+//ElfHash
+function LapeHash(const Value: string): UInt32;
+var
+  i, x: Integer;
+begin
+  Result := 0;
+  for i := 1 to Length(Value) do
+  begin
+    Result := (Result shl 4) + Ord(Value[i]);
+    x := Result and $F0000000;
+    if (x <> 0) then
+      Result := Result xor (x shr 24);
+    Result := Result and (not x);
+  end;
 end;
 
 function LapeTypeToString(Token: ELapeBaseType): lpString;
@@ -1090,13 +1111,15 @@ end;
 
 function TLapeDeclarationList.getByName(AName: lpString): TLapeDeclArray;
 var
-  i: Integer;
+  i, Hash: Integer;
 begin
   Result := nil;
   AName := LapeCase(AName);
+  Hash := LapeHash(AName);
+
   if (FList <> nil) then
     for i := 0 to FList.Count - 1 do
-      if (FList[i] <> nil) and (LapeCase(FList[i].Name) = AName) then
+      if (FList[i] <> nil) and (FList[i].NameHash = Hash) and (LapeCase(FList[i].Name) = AName) then
       begin
         SetLength(Result, Length(Result) + 1);
         Result[High(Result)] := FList[i];
@@ -1133,15 +1156,17 @@ end;
 
 function TLapeDeclarationList.getByClassAndName(AName: lpString; AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray;
 var
-  i: Integer;
+  i, Hash: Integer;
 begin
   Result := nil;
   AName := LapeCase(AName);
+  Hash := LapeHash(AName);
+
   if (FList <> nil) then
     for i := 0 to FList.Count - 1 do
       if (FList[i] <> nil) and
          ((FList[i].ClassType = AClass) or ((not FullClassMatch) and (FList[i] is AClass))) and
-         (LapeCase(FList[i].Name) = AName)
+         (FList[i].NameHash = Hash) and (LapeCase(FList[i].Name) = AName)
       then
       begin
         SetLength(Result, Length(Result) + 1);
@@ -1180,6 +1205,15 @@ begin
     FList := AList;
     if (AList <> nil) then
       FList.addDeclaration(Self);
+  end;
+end;
+
+procedure TLapeDeclaration.setName(AName: lpString);
+begin
+  if (FName <> AName) then
+  begin
+    FName := AName;
+    FNameHash := LapeHash(LapeCase(AName));
   end;
 end;
 
