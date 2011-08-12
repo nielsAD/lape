@@ -7,29 +7,19 @@ object Form1: TForm1
   ClientHeight = 407
   ClientWidth = 470
   LCLVersion = '0.9.31'
-  object btnGo: TButton
-    Left = 8
-    Height = 25
-    Top = 8
-    Width = 75
-    Caption = 'Go'
-    OnClick = btnGoClick
-    TabOrder = 0
-  end
   inline e: TSynEdit
     Left = 0
-    Height = 183
-    Top = 224
+    Height = 246
+    Top = 42
     Width = 470
-    Align = alBottom
-    Anchors = [akTop, akLeft, akRight, akBottom]
+    Align = alClient
     Font.Height = -13
     Font.Name = 'Consolas'
     Font.Pitch = fpFixed
     Font.Quality = fqProof
     ParentColor = False
     ParentFont = False
-    TabOrder = 1
+    TabOrder = 0
     Gutter.Width = 55
     Gutter.MouseActions = <    
       item
@@ -624,13 +614,35 @@ object Form1: TForm1
         Priority = 0
       end>
     Lines.Strings = (
-      'begin'
-      '  for c := 1 to 5000000 do'
-      '  begin'
-      '    b := Random(100, a);'
-      '    s := IntToStr(b);'
+      'type'
+      '  TPoint = record'
+      '    x, y: Integer;'
       '  end;'
-      '  WriteLn(c);'
+      '  TPointArray = array of TPoint;'
+      ''
+      'procedure test(a: ^Integer);'
+      'begin'
+      '  WriteLn(a);'
+      'end;'
+      ''
+      'procedure test(a: ^Integer); override;'
+      'begin'
+      '  Write(''Dumping: '');'
+      '  inherited;'
+      'end;'
+      ''
+      'var'
+      '  tpa: TPointArray = [[1, 2], [3, 4]];'
+      '  i = 1;'
+      'begin'
+      '  WriteLn(''tpa: '', tpa + tpa[0]);'
+      ''
+      '  for i to Random(0, 2) do'
+      '    WriteLn(''hoi '', i)'
+      '  else'
+      '    WriteLn(''no hoi'');'
+      ''
+      '  test(@tpa[1].y);'
       'end;'
     )
     BracketHighlightStyle = sbhsBoth
@@ -743,68 +755,81 @@ object Form1: TForm1
     end
   end
   object m: TMemo
-    Left = 88
-    Height = 128
-    Top = 0
-    Width = 382
-    Align = alRight
-    Anchors = [akTop, akLeft, akRight]
+    Left = 0
+    Height = 114
+    Top = 293
+    Width = 470
+    Align = alBottom
     ScrollBars = ssAutoBoth
-    TabOrder = 2
+    TabOrder = 1
   end
   object Splitter1: TSplitter
     Cursor = crVSplit
     Left = 0
     Height = 5
-    Top = 219
+    Top = 288
     Width = 470
     Align = alBottom
     ResizeAnchor = akBottom
   end
-  object btnGo2: TButton
-    Left = 8
-    Height = 25
-    Top = 36
-    Width = 75
-    Caption = 'Go2'
-    OnClick = btnGo2Click
-    TabOrder = 4
-  end
-  object btnGo3: TButton
-    Left = 8
-    Height = 25
-    Top = 64
-    Width = 75
-    Caption = 'Go3'
-    OnClick = btnGo3Click
-    TabOrder = 5
-  end
-  object btnGo4: TButton
-    Left = 8
-    Height = 25
-    Top = 92
-    Width = 75
-    Caption = 'Go4'
-    OnClick = btnGo4Click
-    TabOrder = 6
-  end
-  object d: TMemo
+  object pnlTop: TPanel
     Left = 0
-    Height = 86
-    Top = 133
+    Height = 42
+    Top = 0
     Width = 470
-    Align = alBottom
-    Anchors = [akTop, akLeft, akRight]
-    TabOrder = 7
-  end
-  object Splitter2: TSplitter
-    Cursor = crVSplit
-    Left = 0
-    Height = 5
-    Top = 128
-    Width = 470
-    Align = alBottom
-    ResizeAnchor = akBottom
+    Align = alTop
+    ClientHeight = 42
+    ClientWidth = 470
+    TabOrder = 3
+    object btnEvalArr: TButton
+      Left = 384
+      Height = 25
+      Top = 8
+      Width = 75
+      Anchors = [akTop, akRight]
+      Caption = 'EvalArr'
+      OnClick = btnEvalArrClick
+      TabOrder = 0
+    end
+    object btnEvalRes: TButton
+      Left = 304
+      Height = 25
+      Top = 8
+      Width = 75
+      Anchors = [akTop, akRight]
+      Caption = 'EvalRes'
+      OnClick = btnEvalResClick
+      TabOrder = 1
+    end
+    object btnMemLeaks: TButton
+      Left = 224
+      Height = 25
+      Top = 8
+      Width = 75
+      Anchors = [akTop, akRight]
+      Caption = 'MemLeaks'
+      OnClick = btnMemLeaksClick
+      TabOrder = 2
+    end
+    object btnRun: TButton
+      Left = 8
+      Height = 25
+      Top = 8
+      Width = 75
+      Caption = 'Run'
+      Default = True
+      OnClick = btnRunClick
+      TabOrder = 3
+    end
+    object btnDisassemble: TButton
+      Left = 88
+      Height = 25
+      Top = 8
+      Width = 75
+      Caption = 'Disassemble'
+      OnClick = btnDisassembleClick
+      TabOrder = 4
+    end
   end
   object PasSyn: TSynPasSyn
     Enabled = False

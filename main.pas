@@ -13,20 +13,21 @@ type
   { TForm1 }
 
   TForm1 = class(TForm)
-    btnGo: TButton;
-    btnGo2: TButton;
-    btnGo3: TButton;
-    btnGo4: TButton;
+    btnRun: TButton;
+    btnMemLeaks: TButton;
+    btnEvalRes: TButton;
+    btnEvalArr: TButton;
+    btnDisassemble: TButton;
     e: TSynEdit;
     m: TMemo;
-    d: TMemo;
+    pnlTop: TPanel;
     Splitter1: TSplitter;
     PasSyn: TSynPasSyn;
-    Splitter2: TSplitter;
-    procedure btnGo2Click(Sender: TObject);
-    procedure btnGo3Click(Sender: TObject);
-    procedure btnGo4Click(Sender: TObject);
-    procedure btnGoClick(Sender: TObject);
+    procedure btnDisassembleClick(Sender: TObject);
+    procedure btnMemLeaksClick(Sender: TObject);
+    procedure btnEvalResClick(Sender: TObject);
+    procedure btnEvalArrClick(Sender: TObject);
+    procedure btnRunClick(Sender: TObject);
   private
     { private declarations }
   public
@@ -39,60 +40,31 @@ var
 implementation
 
 uses
-  lpparser, lpcompiler, lptypes, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
+  lpparser, lpcompiler, lptypes, lpvartypes, lpeval, lpinterpreter, lpdisassembler, _lpgenerateevalfunctions,
   LCLIntf, Variants, typinfo;
 
 {$R *.lfm}
 
 { TForm1 }
 
-type
-  TPointArray = array of TPoint;
-  T2DPointArray = array of TPointArray;
-
-  _rec2 = record
-    a: Integer;
-    test: PInteger;
-  end;
-  _prec2 = ^_rec2;
-  _rec = record
-    x, y: string;
-    z: _prec2;
-    arr: TPointArray;
-  end;
-
-procedure TForm1.btnGoClick(Sender: TObject);
-var
-  i: Integer;
-begin
-  WriteLn(Ord(Low(opCode)), '..', Ord(High(opCode)));
-  {$IFDEF Lape_TrackObjects}
-  for i := 0 to lpgList.Count - 1 do
-    WriteLn('unfreed: ', TLapeBaseClass(lpgList[i]).ClassName, ' -- [',  PtrInt(lpgList[i]), ']');
-  {$ENDIF}
-end;
-
 procedure MyWrite(Params: PParamArray);
 begin
-  Form1.d.Text := Form1.d.Text + PlpString(Params^[0])^;
+  Form1.m.Text := Form1.m.Text + PlpString(Params^[0])^;
   Write(PlpString(Params^[0])^);
 end;
 
 procedure MyWriteLn(Params: PParamArray);
 begin
-  Form1.d.Text := Form1.d.Text + LineEnding;
+  Form1.m.Text := Form1.m.Text + LineEnding;
   WriteLn();
 end;
 
 procedure MyStupidProc(Params: PParamArray);
 begin
-  raise Exception.Create('Stupid Proc!!');
+  raise Exception.Create('Wat! Exception!');
 end;
 
-var
-  MyString: lpString;
-
-procedure TForm1.btnGo2Click(Sender: TObject);
+procedure Compile(Run, Disassemble: Boolean);
 
   function CombineDeclArray(a, b: TLapeDeclArray): TLapeDeclArray;
   var
@@ -106,119 +78,89 @@ procedure TForm1.btnGo2Click(Sender: TObject);
   end;
 
 var
-  Parser: TLapeTokenizerString;
-  Compiler: TLapeCompiler;
-  {i,} di: Integer;
-  dp: PInteger;
   t: Cardinal;
-  rec, rec2, tp: TLapeType_Record;
-  ttpa, t2dpa: TLapeType_DynArray;
-  q: _rec;
-  func2: TLapeType_Method;
-  tpa: TPointArray;
-  atpa: T2DPointArray;
-  a: TLapeGlobalVar;
+  Parser: TLapeTokenizerBase;
+  Compiler: TLapeCompiler;
 begin
   Parser := nil;
   Compiler := nil;
-  try
-    Parser := TLapeTokenizerString.Create(e.Lines.Text);
-    Compiler := TLapeCompiler.Create(Parser);
-    InitializePascalScriptBasics(Compiler);
-
-    di := 112233;
-    dp := @di;
-    MyString := 'a string';
-
-    tp := TLapeType_Record.Create(Compiler, nil);
-    tp.addField(Compiler.BaseTypes[ltInt32], 'x');
-    tp.addField(Compiler.BaseTypes[ltInt32], 'y');
-    ttpa := TLapeType_DynArray.Create(tp, Compiler);
-    t2dpa := TLapeType_DynArray.Create(ttpa, Compiler);
-    rec2 := TLapeType_Record.Create(Compiler, nil);
-    rec2.addField(Compiler.BaseTypes[ltInt32], 'a');
-    rec2.addField(Compiler.getPointerType(ltInt32), 'test');
-    rec := TLapeType_Record.Create(Compiler, nil);
-    rec.addField(Compiler.BaseTypes[ltString], 'x');
-    rec.addField(Compiler.BaseTypes[ltString], 'y');
-    rec.addField(Compiler.getPointerType(rec2), 'z');
-    rec.addField(ttpa, 'arr');
-
-    a := Compiler.addGlobalVar(123, 'a');
-
-    func2 := TLapeType_Method.Create(Compiler, [Compiler.getBaseType(ltInt32)], [lptNormal], [TLapeGlobalVar(nil)], Compiler.getBaseType(ltString));
-
-    New(q.z);
-    New(q.z^.test);
-    SetLength(tpa, 10);
-    tpa[0] := Point(123, 456);
-    SetLength(atpa, 10, 10);
-    atpa[0,0] := Point(123, 456);
-    q.arr := tpa;
-
-    //Compiler.addGlobalVar(proc1.NewGlobalVar(@MyWriteLn, 'WriteLn'));
-    Compiler.addGlobalFunc('procedure _write(s: string); override;', @MyWrite);
-    Compiler.addGlobalFunc('procedure _writeln; override;', @MyWriteLn);
-    Compiler.addGlobalFunc('procedure MyStupidProc', @MyStupidProc);
-
-    Compiler.addGlobalVar(Compiler.addGlobalType('record x, y: Int32; end', 'TPoint'), @atpa[0,0], 'myPoint');
-    Compiler.addGlobalType('(enum1, enum2)', 'TMyEnum');
-    Compiler.addGlobalVar(Compiler.getBaseType(ltString).NewGlobalVarP(@MyString, 'MyString'));
-    Compiler.addGlobalVar(456, 'b');
-    Compiler.addGlobalVar(789, 'c');
-    Compiler.addGlobalVar(Compiler.getPointerType(ltInt32).NewGlobalVar(@di, 'd'));
-    Compiler.addGlobalVar(Compiler.getPointerType(Compiler.getPointerType(ltInt32)).NewGlobalVar(@dp, 'dp'));
-    Compiler.addGlobalVar('abc', 's');
-    Compiler.addGlobalVar('cde', 't');
-    Compiler.addGlobalVar(ttpa.NewGlobalVarP(@tpa), 'tpa').isConstant := True;
-    Compiler.addGlobalVar(t2dpa.NewGlobalVarP(@atpa), 'atpa');
-    Compiler.addGlobalVar(rec.NewGlobalVarP(@q), 'q');
-    Compiler.addGlobalVar(Compiler.getPointerType(rec).NewGlobalVar(@q, 'qp'));
-    Compiler.addGlobalVar(Compiler.getPointerType(ttpa).NewGlobalVar(@tpa, 'tpap'));
-
+  with Form1 do
     try
-      t := getTickCount;
-      if Compiler.Compile() then
-      begin
-        m.Lines.add('Compiling Time: ' + IntToStr(getTickCount - t) + 'ms.');
-        //DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.getByClass(TLapeGlobalVar), Compiler.GlobalDeclarations.getByClass(TLapeGlobalVar)));
+      Parser := TLapeTokenizerString.Create(e.Lines.Text);
+      Compiler := TLapeCompiler.Create(Parser);
+      InitializePascalScriptBasics(Compiler);
 
+      Compiler.addGlobalFunc('procedure _write(s: string); override;', @MyWrite);
+      Compiler.addGlobalFunc('procedure _writeln; override;', @MyWriteLn);
+      Compiler.addGlobalFunc('procedure MyStupidProc', @MyStupidProc);
+
+      try
         t := getTickCount;
-        RunCode(Compiler.Emitter.Code);
-        m.Lines.add('Running Time: ' + IntToStr(getTickCount - t) + 'ms.');
-      end
-      else
-        m.Lines.add('Error!');
-    except
-      on E: Exception do
-        m.Lines.add('Compilation error: "' + E.Message + '"');
+        if Compiler.Compile() then
+          m.Lines.add('Compiling Time: ' + IntToStr(getTickCount - t) + 'ms.')
+        else
+          m.Lines.add('Error!');
+      except
+        on E: Exception do
+        begin
+          m.Lines.add('Compilation error: "' + E.Message + '"');
+          Exit;
+        end;
+      end;
+
+      try
+        if Disassemble then
+          DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.getByClass(TLapeGlobalVar), Compiler.GlobalDeclarations.getByClass(TLapeGlobalVar)));
+
+        if Run then
+        begin
+          t := getTickCount;
+          RunCode(Compiler.Emitter.Code);
+          m.Lines.add('Running Time: ' + IntToStr(getTickCount - t) + 'ms.');
+        end;
+      except
+        on E: Exception do
+          m.Lines.add(E.Message);
+      end;
+    finally
+      if (Compiler <> nil) then
+        Compiler.Free()
+      else if (Parser <> nil) then
+        Parser.Free();
     end;
-  finally
-    if (Compiler <> nil) then
-    begin
-      Dispose(q.z^.test);
-      Dispose(q.z);
-      Compiler.Free();
-      rec2.Free();
-      rec.Free();
-      tp.Free();
-      ttpa.Free();
-      t2dpa.Free();
-      func2.Free();
-    end
-    else if (Parser <> nil) then
-      Parser.Free();
-  end;
 end;
 
-procedure TForm1.btnGo3Click(Sender: TObject);
+procedure TForm1.btnRunClick(Sender: TObject);
 begin
-  //LapePrintEvalRes;
+  Compile(True, False);
 end;
 
-procedure TForm1.btnGo4Click(Sender: TObject);
+procedure TForm1.btnDisassembleClick(Sender: TObject);
 begin
-  //LapePrintEvalArr;
+  Compile(False, True);
+end;
+
+procedure TForm1.btnMemLeaksClick(Sender: TObject);
+var
+  i: Integer;
+begin
+  WriteLn(Ord(Low(opCode)), '..', Ord(High(opCode)));
+  {$IFDEF Lape_TrackObjects}
+  for i := 0 to lpgList.Count - 1 do
+    WriteLn('unfreed: ', TLapeBaseClass(lpgList[i]).ClassName, ' -- [',  PtrInt(lpgList[i]), ']');
+  {$ENDIF}
+end;
+
+procedure TForm1.btnEvalResClick(Sender: TObject);
+begin
+  e.ClearAll;
+  LapePrintEvalRes;
+end;
+
+procedure TForm1.btnEvalArrClick(Sender: TObject);
+begin
+  m.Clear;
+  LapePrintEvalArr;
 end;
 
 end.
