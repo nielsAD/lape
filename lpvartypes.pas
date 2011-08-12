@@ -596,7 +596,9 @@ type
     function CreateCopy: TLapeType; override;
     destructor Destroy; override;
 
-    procedure addMethod(AMethod: TLapeGlobalVar); virtual;
+    procedure addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False); virtual;
+    function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; virtual;
+
     function getMethod(AType: TLapeType_Method): TLapeGlobalVar; overload; virtual;
     function getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar; overload; virtual;
     function NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; virtual;
@@ -4248,15 +4250,47 @@ begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, FMethods, Name, @_DocPos);
 end;
 
-procedure TLapeType_OverloadedMethod.addMethod(AMethod: TLapeGlobalVar);
+procedure TLapeType_OverloadedMethod.addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False);
 var
   i: Integer;
 begin
-  if (AMethod = nil) or (not AMethod.HasType()) or (not (AMethod.VarType is TLapeType_Method)) then
+  if (AMethod = nil) or (not AMethod.HasType()) or
+     (not ((AMethod.VarType is TLapeType_Method) or (AMethod.VarType is TLapeType_OverloadedMethod)))
+  then
     LapeException(lpeImpossible);
+
+  if (AMethod.VarType is TLapeType_OverloadedMethod) then
+    with TLapeType_OverloadedMethod(AMethod.VarType) do
+      for i := 0 to Methods.Items.Count - 1 do
+        Self.addMethod(TLapeGlobalVar(Methods.Items[i]).CreateCopy(False))
+  else if DoOverride then
+  begin
+    AMethod := overrideMethod(AMethod);
+    if FList.FreeDecls and (AMethod <> nil) then
+      AMethod.Free();
+  end
+  else
+  begin
+    for i := 0 to FMethods.Items.Count - 1 do
+      if TLapeType_Method(TLapeGlobalVar(FMethods.Items[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
+        LapeExceptionFmt(lpeDuplicateDeclaration, [AMethod.VarType.AsString]);
+
+    FMethods.addDeclaration(AMethod);
+  end;
+end;
+
+function TLapeType_OverloadedMethod.overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar;
+var
+  i: Integer;
+begin
+  Result := nil;
   for i := 0 to FMethods.Items.Count - 1 do
     if TLapeType_Method(TLapeGlobalVar(FMethods.Items[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
-      LapeExceptionFmt(lpeDuplicateDeclaration, [AMethod.VarType.AsString]);
+    begin
+      Result := FMethods.Items[i] as TLapeGlobalVar;
+      FMethods.Delete(i);
+      Break;
+    end;
   FMethods.addDeclaration(AMethod);
 end;
 

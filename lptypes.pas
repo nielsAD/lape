@@ -317,6 +317,7 @@ type
     function getByName(AName: lpString): TLapeDeclArray; virtual;
     function getByClass(AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray; virtual;
     function getByClassAndName(AName: lpString; AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray; virtual;
+    procedure Delete(i: Integer; DoFree: Boolean = False); overload; virtual;
     procedure Delete(d: TLapeDeclaration; DoFree: Boolean = False); overload; virtual;
     procedure Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False); overload; virtual;
 
@@ -1174,11 +1175,25 @@ begin
       end;
 end;
 
+procedure TLapeDeclarationList.Delete(i: Integer; DoFree: Boolean = False);
+begin
+  if (FList <> nil) and (FList[i] <> nil) then
+  begin
+    with FList.Delete(i) do
+      if DoFree then
+        Free()
+      else
+        FList := nil;
+  end;
+end;
+
 procedure TLapeDeclarationList.Delete(d: TLapeDeclaration; DoFree: Boolean = False);
 begin
   if (FList <> nil) and (FList.DeleteItem(d) <> nil) then
     if DoFree then
-      d.Free();
+      d.Free()
+    else
+      d.FList := nil;
 end;
 
 procedure TLapeDeclarationList.Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False);
