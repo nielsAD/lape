@@ -193,7 +193,7 @@ type
     {$IFDEF Lape_TrackObjects}
     destructor Destroy; override;
     {$ENDIF}
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; stdcall;
   end;
 
   TLapeBaseDeclClass = class(TLapeBaseClass)
@@ -487,7 +487,7 @@ end;
 //ElfHash
 function LapeHash(const Value: string): UInt32;
 var
-  i, x: Integer;
+  i, x: UInt32;
 begin
   Result := 0;
   for i := 1 to Length(Value) do
@@ -614,7 +614,7 @@ begin
 end;
 {$ENDIF}
 
-function TLapeBaseClass.QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+function TLapeBaseClass.QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; stdcall;
 begin
   if getInterface(IId, Obj) then
     Result := 0
@@ -804,6 +804,9 @@ var
   ItemA, ItemB: PByteArray;
   Match: Boolean;
 begin
+  if (FLen < 1) then
+    Exit(-1);
+
   case SizeOf(_T) of
     SizeOf(UInt8) : Result := _Compare8 (@FItems[0], PUInt8 (@Item)^, High(FItems));
     SizeOf(UInt16): Result := _Compare16(@FItems[0], PUInt16(@Item)^, High(FItems));
@@ -1014,6 +1017,9 @@ var
   ItemA, ItemB: PByteArray;
   Match: Boolean;
 begin
+  if (FLen < 1) then
+    Exit('');
+
   case SizeOf(_T) of
     SizeOf(UInt8) : Index := _Compare8 (@FItems[0], PUInt8 (@Item)^, High(FItems));
     SizeOf(UInt16): Index := _Compare16(@FItems[0], PUInt16(@Item)^, High(FItems));

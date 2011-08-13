@@ -243,6 +243,8 @@ uses
   {$IFDEF LCL}LCLIntf{$ELSE}Windows{$ENDIF},
   lpexceptions;
 
+{$RangeChecks Off}
+
 procedure _LapeWrite(const Params: PParamArray);
 begin
   Write(PlpString(Params^[0])^);

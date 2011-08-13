@@ -75,23 +75,21 @@ const
   Try_NoFinally: UInt32 = UInt32(-1);
   Try_NoExcept: UInt32 = UInt32(-2);
   EndJump: TCodePos = TCodePos(-1);
-  VarStackStackSize = 32;
-
 
   {$IFDEF Lape_UnlimitedStackSize}
-  StackSize = 512 * SizeOf(Pointer); //bytes
-  {$ELSE}
   StackSize = 2048 * SizeOf(Pointer); //bytes
+  {$ELSE}
+  StackSize = 4096 * SizeOf(Pointer); //bytes
   {$ENDIF}
 
   {$IFDEF Lape_UnlimitedVarStackSize}
-  VarStackSize = 256 * SizeOf(Pointer); //bytes
+  VarStackSize = 512 * SizeOf(Pointer); //bytes
   {$ELSE}
   VarStackSize = 4096 * SizeOf(Pointer); //bytes
   {$ENDIF}
 
   {$IFDEF Lape_UnlimitedTryStackSize}
-  TryStackSize = 128; //pointers
+  TryStackSize = 256; //pointers
   {$ELSE}
   TryStackSize = 1024; //pointers
   {$ENDIF}
@@ -102,6 +100,9 @@ const
   CallStackSize = 512;
   {$ENDIF}
 
+  AvgStackLen = StackSize div CallStackSize; //Minimal stacksize a function call should have
+  VarStackStackSize = 32;
+
   ocSize = SizeOf(opCodeType) {$IFDEF Lape_EmitPos}+SizeOf(TDocPos){$ENDIF};
 
 procedure RunCode(Code: PByte); {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -110,6 +111,8 @@ implementation
 
 uses
   lpexceptions;
+
+{$OverFlowChecks Off}
 
 procedure RunCode(Code: PByte);
 const
@@ -123,7 +126,7 @@ var
   VarStackIndex, VarStackPos, VarStackLen: UInt32;
   VarStackStack: array of record
     Stack: TByteArray;
-    Pos, Len: UInt32;
+    Pos: UInt32;
   end;
 
   TryStack: array of record
@@ -148,12 +151,7 @@ var
     {$IFDEF Lape_UnlimitedVarStackSize}
     if (VarStackLen + Size > Length(VarStack)) then
     begin
-      with VarStackStack[VarStackIndex] do
-      begin
-        Assert(Stack = VarStack);
-        Pos := VarStackPos;
-        Len := VarStackLen;
-      end;
+      VarStackStack[VarStackIndex].Pos := VarStackLen;
 
       Inc(VarStackIndex);
       if (VarStackIndex >= Length(VarStackStack)) then
@@ -179,15 +177,18 @@ var
   end;
 
   procedure GrowVarStack(Size: UInt32); {$IFDEF Lape_Inline}inline;{$ENDIF}
+  var
+    OldLen: UInt32;
   begin
     {$IFDEF Lape_UnlimitedVarStackSize}
     if (VarStackLen + Size > Length(VarStack)) then
     begin
-      ExpandVarStack(Size + (VarStackLen - VarStackPos));
+      OldLen := VarStackLen - VarStackPos;
+      ExpandVarStack(Size + OldLen);
       with VarStackStack[VarStackIndex - 1] do
       begin
-        Move(Stack[VarStackPos], VarStack[0], VarStackLen - VarStackPos);
-        VarStackLen := VarStackPos;
+        Dec(Pos, OldLen);
+        Move(Stack[Pos], VarStack[0], OldLen);
       end;
     end
     else
@@ -324,15 +325,10 @@ var
   procedure DoGrowVarAndInit; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
     GrowSize: TStackOffset;
-    OldLen: UInt32;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    OldLen := VarStackLen;
     GrowVarStack(GrowSize);
-    if (VarStackLen < OldLen) then
-      FillChar(VarStack[OldLen - VarStackLen], GrowSize, 0)
-    else
-      FillChar(VarStack[OldLen], GrowSize, 0);
+    FillChar(VarStack[VarStackLen - GrowSize], GrowSize, 0);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -341,22 +337,20 @@ var
     PopSize: TStackOffset;
   begin
     PopSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    Dec(VarStackPos, PopSize);
-    Dec(VarStackLen, PopSize);
 
     {$IFDEF Lape_UnlimitedVarStackSize}
-    if (VarStackLen = 0) and (VarStackIndex > 0) then
+    if (VarStackPos = 0) and (VarStackIndex > 0) then
     begin
       Dec(VarStackIndex);
       with VarStackStack[VarStackIndex] do
       begin
         VarStack := Stack;
         VarStackPos := Pos;
-        VarStackLen := Len;
       end;
     end;
     {$ENDIF}
 
+    VarStackLen := VarStackPos;
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -450,8 +444,13 @@ var
       PushToVar(ParamSize);
       StackP := StackPos + StackPosOffset;
       JumpTo(Jmp);
-      Inc(CallStackPos);
+
+      {$IFDEF Lape_UnlimitedStackSize}
+      if (StackPos + AvgStackLen > Length(Stack)) then
+        SetLength(Stack, StackPos + AvgStackLen + (StackSize div 2));
+      {$ENDIF}
     end;
+    Inc(CallStackPos);
   end;
 
   procedure DoDecCall; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -465,7 +464,6 @@ var
       begin
         Code := CalledFrom;
         VarStackPos := VarStackP;
-        Assert(StackPos = StackP);
         StackPos := StackP;
       end;
     end;

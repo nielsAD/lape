@@ -1293,7 +1293,7 @@ begin
       ltInt32: Result := PInt32(AVar)^;
       ltUInt32: Result := PUInt32(AVar)^;
       ltInt64: Result := PInt64(AVar)^;
-      ltUInt64: Result := PUInt64(AVar)^;
+      ltUInt64: UInt64(Result) := PUInt64(AVar)^;
       else Result := -1;
     end;
 end;
@@ -5270,8 +5270,7 @@ begin
               TLapeStackTempVar(Items[i]).Locked := False;
         end;
 
-        if (FStackInfo.TotalSize > 0) then
-          Emitter._PopVar(FStackInfo.TotalSize, Offset, Pos);
+        Emitter._PopVar(FStackInfo.TotalSize, Offset, Pos);
         if InFunction then
           Emitter._DecCall_EndTry(Offset, Pos)
         else
