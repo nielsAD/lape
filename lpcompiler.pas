@@ -215,6 +215,18 @@ type
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
   end;
 
+  TLapeType_SystemUnit = class(TLapeType)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase); reintroduce; virtual;
+
+    function CanHaveChild: Boolean; override;
+    function HasChild(AName: lpString): Boolean; override;
+    function HasChild(ADecl: TLapeDeclaration): Boolean; override;
+
+    function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
+  end;
+
 procedure InitializePascalScriptBasics(Compiler: TLapeCompiler);
 
 implementation
@@ -553,6 +565,8 @@ begin
     add('Lape');
     add('Sesquipedalian');
   end;
+
+  addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System');
 
   addGlobalType(getBaseType(ltString).createCopy(), 'String');
   addGlobalType(getBaseType(ltChar).createCopy(), 'Char');
@@ -3090,6 +3104,80 @@ begin
   finally
     resetTokenizerState(OldState);
   end;
+end;
+
+constructor TLapeType_SystemUnit.Create(ACompiler: TLapeCompilerBase);
+begin
+  inherited Create(ltUnknown, ACompiler);
+end;
+
+function TLapeType_SystemUnit.CanHaveChild: Boolean;
+begin
+  Result := (FCompiler <> nil);
+end;
+
+function TLapeType_SystemUnit.HasChild(AName: lpString): Boolean;
+begin
+  Result := CanHaveChild() and (FCompiler.hasDeclaration(AName, nil) or
+    ((FCompiler is TLapeCompiler) and (TLapeCompiler(FCompiler).InternalMethodMap[AName] <> nil)));
+end;
+
+function TLapeType_SystemUnit.HasChild(ADecl: TLapeDeclaration): Boolean;
+begin
+  Result := CanHaveChild() and FCompiler.hasDeclaration(ADecl, nil);
+end;
+
+function TLapeType_SystemUnit.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
+
+  function getType(d: TLapeDeclaration): TLapeType;
+  begin
+    Result := nil;
+    if (d is TLapeVar) then
+      Result := TLapeVar(d).VarType
+    else if (d is TLapeType) then
+      Result := TLapeType(PlpString(Right.Ptr)^);
+  end;
+
+begin
+  if (Op = op_Dot) and (Right <> nil) and (Right.BaseType = ltString) then
+    Result := getType(FCompiler.getDeclaration(PlpString(Right.Ptr)^, nil))
+  else
+    Result := inherited;
+end;
+
+function TLapeType_SystemUnit.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+var
+  FieldName: lpString;
+  Decl: TLapeTree_ExprBase;
+  tmpDocPos: TDocPos;
+
+  function getPDocPos: PDocPos;
+  begin
+    tmpDocPos := FCompiler.DocPos;
+    Result := @tmpDocPos;
+  end;
+
+begin
+  Assert((Left = nil) or (Left.VarType = Self));
+  if (Op = op_Dot) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType = ltString) then
+  begin
+    Assert(Right.Ptr <> nil);
+    FieldName := PlpString(Right.Ptr)^;
+
+    Result := FCompiler.getGlobalVar(FieldName);
+    if (Result = nil) and (FCompiler is TLapeCompiler) then
+    begin
+      Decl := TLapeCompiler(FCompiler).getExpression(FieldName, TLapeStackInfo(nil));
+      if (Decl = nil) and (FCompiler is TLapeCompiler) and (TLapeCompiler(FCompiler).InternalMethodMap[FieldName] <> nil) then
+        Decl := TLapeCompiler(FCompiler).InternalMethodMap[FieldName].Create(FCompiler, getPDocPos());
+      if (Decl <> nil) then
+        Result := TLapeTreeType.Create(Decl).NewGlobalVarP();
+    end;
+    if (Result = nil) then
+      LapeExceptionFmt(lpeUnknownDeclaration, [FieldName])
+  end
+  else
+    Result := inherited;
 end;
 
 end.

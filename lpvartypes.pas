@@ -1790,10 +1790,9 @@ begin
   Assert((Left = nil) or (Left.VarType = Self));
   if (Op = op_Dot) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType = ltString) and (FTType is TLapeType_Enum) then
   begin
-    if (Right.Ptr <> nil) then
-      FieldName := PlpString(Right.Ptr)^
-    else
-      FieldName := '';
+    Assert(Right.Ptr <> nil);
+    FieldName := PlpString(Right.Ptr)^;
+
     if (FieldName <> '') and TLapeType_Enum(FTType).hasMember(FieldName) then
       Result := FTType.NewGlobalVarStr(FieldName)
     else
@@ -3775,10 +3774,9 @@ begin
   Assert((Left = nil) or (Left.VarType = Self));
   if (Op = op_Dot) and (Left <> nil) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType = ltString) then
   begin
-    if (Right.Ptr <> nil) then
-      FieldName := PlpString(Right.Ptr)^
-    else
-      FieldName := '';
+    Assert(Right.Ptr <> nil);
+    FieldName := PlpString(Right.Ptr)^;
+
     if (FieldName <> '') and FFieldMap.ExistsKey(FieldName) then
       Result := FFieldMap[FieldName].FieldType.NewGlobalVarP(Pointer(PtrUInt(Left.Ptr) + FFieldMap[FieldName].Offset))
     else
@@ -3829,10 +3827,8 @@ begin
 
   if (Op = op_Dot) and (Right.VarPos.MemPos = mpMem) and Right.HasType() and (Right.VarType.BaseType = ltString) then
   begin
-    if (Right.VarPos.GlobalVar.Ptr <> nil) then
-      FieldName := PlpString(Right.VarPos.GlobalVar.Ptr)^
-    else
-      FieldName := '';
+    Assert(Right.VarPos.GlobalVar.Ptr <> nil);
+    FieldName := PlpString(Right.VarPos.GlobalVar.Ptr)^;
 
     Dest.Spill();
     Result := Left;
@@ -4275,6 +4271,7 @@ begin
       if TLapeType_Method(TLapeGlobalVar(FMethods.Items[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
         LapeExceptionFmt(lpeDuplicateDeclaration, [AMethod.VarType.AsString]);
 
+    AMethod.Name := Name;
     FMethods.addDeclaration(AMethod);
   end;
 end;
@@ -4477,10 +4474,8 @@ begin
   Assert((Left = nil) or (Left.VarType = Self));
   if (Op = op_Dot) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType = ltString) then
   begin
-    if (Right.Ptr <> nil) then
-      FieldName := PlpString(Right.Ptr)^
-    else
-      FieldName := '';
+    Assert(Right.Ptr <> nil);
+    FieldName := PlpString(Right.Ptr)^;
 
     if (FieldName <> '') and (FVarMap[FieldName].RefVar <> nil) and (FVarMap[FieldName].RefVar is TLapeGlobalVar) then
       Result := FVarMap[FieldName].RefVar as TLapeGlobalVar
@@ -4498,10 +4493,8 @@ begin
   Assert(Left.VarType = Self);
   if (Op = op_Dot) and (Right.VarPos.MemPos = mpMem) and Right.HasType() and (Right.VarType.BaseType = ltString) then
   begin
-    if (Right.VarPos.GlobalVar.Ptr <> nil) then
-      FieldName := PlpString(Right.VarPos.GlobalVar.Ptr)^
-    else
-      FieldName := '';
+    Assert(Right.VarPos.GlobalVar.Ptr <> nil);
+    FieldName := PlpString(Right.VarPos.GlobalVar.Ptr)^;
 
     Dest.Spill();
     if (FieldName <> '') and (FVarMap[FieldName].RefVar <> nil) then

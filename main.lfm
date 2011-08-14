@@ -13,14 +13,13 @@ object Form1: TForm1
     Top = 42
     Width = 470
     Align = alClient
+    Font.CharSet = ANSI_CHARSET
     Font.Height = -13
-    Font.Name = 'Consolas'
-    Font.Pitch = fpFixed
-    Font.Quality = fqProof
+    Font.Name = 'Courier New'
     ParentColor = False
     ParentFont = False
-    TabOrder = 0
-    Gutter.Width = 55
+    TabOrder = 1
+    Gutter.Width = 57
     Gutter.MouseActions = <    
       item
         Shift = []
@@ -651,7 +650,7 @@ object Form1: TForm1
         Width = 24
       end
       object SynGutterLineNumber1: TSynGutterLineNumber
-        Width = 15
+        Width = 17
         MouseActions = <>
         MarkupInfo.Background = clBtnFace
         MarkupInfo.Foreground = clNone
@@ -761,7 +760,7 @@ object Form1: TForm1
     Width = 470
     Align = alBottom
     ScrollBars = ssAutoBoth
-    TabOrder = 1
+    TabOrder = 2
   end
   object Splitter1: TSplitter
     Cursor = crVSplit
@@ -780,17 +779,7 @@ object Form1: TForm1
     Align = alTop
     ClientHeight = 42
     ClientWidth = 470
-    TabOrder = 3
-    object btnEvalArr: TButton
-      Left = 384
-      Height = 25
-      Top = 8
-      Width = 75
-      Anchors = [akTop, akRight]
-      Caption = 'EvalArr'
-      OnClick = btnEvalArrClick
-      TabOrder = 0
-    end
+    TabOrder = 0
     object btnEvalRes: TButton
       Left = 304
       Height = 25
@@ -799,7 +788,17 @@ object Form1: TForm1
       Anchors = [akTop, akRight]
       Caption = 'EvalRes'
       OnClick = btnEvalResClick
-      TabOrder = 1
+      TabOrder = 3
+    end
+    object btnEvalArr: TButton
+      Left = 384
+      Height = 25
+      Top = 8
+      Width = 75
+      Anchors = [akTop, akRight]
+      Caption = 'EvalArr'
+      OnClick = btnEvalArrClick
+      TabOrder = 4
     end
     object btnMemLeaks: TButton
       Left = 224
@@ -819,7 +818,7 @@ object Form1: TForm1
       Caption = 'Run'
       Default = True
       OnClick = btnRunClick
-      TabOrder = 3
+      TabOrder = 0
     end
     object btnDisassemble: TButton
       Left = 88
@@ -828,7 +827,7 @@ object Form1: TForm1
       Width = 75
       Caption = 'Disassemble'
       OnClick = btnDisassembleClick
-      TabOrder = 4
+      TabOrder = 1
     end
   end
   object PasSyn: TSynPasSyn

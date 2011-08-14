@@ -44,6 +44,17 @@ type
     procedure addExitStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
   end;
 
+  TLapeTreeType = class(TLapeType)
+  protected
+    FDecl: TLapeTree_ExprBase;
+  public
+    constructor Create(ADecl: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase = nil); reintroduce; virtual;
+    destructor Destroy; override;
+
+    function getDecl: TLapeTree_ExprBase;
+    property Decl: TLapeTree_ExprBase read FDecl;
+  end;
+
   TLapeTree_Base = class(TLapeBaseDeclClass)
   protected
     FParent: TLapeTree_Base;
@@ -663,6 +674,27 @@ begin
   Result.JumpSafe := JumpSafe;
 end;
 
+constructor TLapeTreeType.Create(ADecl: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase);
+begin
+  if (ACompiler = nil) and (ADecl <> nil) then
+    ACompiler := ADecl.Compiler;
+  inherited Create(ltUnknown, ACompiler);
+  FDecl := ADecl;
+end;
+
+destructor TLapeTreeType.Destroy;
+begin
+  if (FDecl <> nil) and (FDecl.Parent = nil) then
+    FDecl.Free();
+  inherited;
+end;
+
+function TLapeTreeType.getDecl: TLapeTree_ExprBase;
+begin
+  Result := FDecl;
+  FDecl := nil;
+end;
+
 function TLapeTree_Base.getDocPos: TDocPos;
 begin
   Result := _DocPos;
@@ -753,7 +785,7 @@ end;
 
 function TLapeTree_ExprBase.FoldConstants(DoFree: Boolean = True): TLapeTree_Base;
 var
-  Replacement: TLapeTree_GlobalVar;
+  Replacement: TLapeTree_ExprBase;
   t: TLapeGlobalVar;
 begin
   Result := inherited;
@@ -768,7 +800,14 @@ begin
 
     if (t <> nil) then
     begin
-      Replacement := TLapeTree_GlobalVar.Create(t, Self);
+      if (t.VarType is TLapeTreeType) then
+      begin
+        Replacement := TLapeTreeType(t.VarType).getDecl();
+        FreeAndNil(t.VarType);
+        FreeAndNil(t);
+      end
+      else
+        Replacement := TLapeTree_GlobalVar.Create(t, Self);
       Replacement.Parent := FParent;
 
       FParent := nil;
@@ -1492,7 +1531,7 @@ var
 
       Result := FParams[0].Evaluate();
       if VarType.Equals(Result.VarType) or (not Result.HasType()) or (VarType.Size = Result.VarType.Size) then
-        Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.NewGlobalVarP(Result.Ptr)))
+        Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.NewGlobalVarP(Result.Ptr), Result.Name <> ''))
       else if VarType.CompatibleWith(Result.VarType) then
         Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.EvalConst(op_Assign, VarType.NewGlobalVarP(), Result)))
       else
