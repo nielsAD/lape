@@ -20,7 +20,6 @@ type
   TLapeCodeEmitterBase = class(TLapeBaseClass)
   protected
     FCode: TCodeArray;
-    FCodeStart: Integer;
     FCodeCur: Integer;
     FCodeSize: Integer;
     FCodePointers: TLapeCodePointers;
@@ -125,7 +124,7 @@ implementation
 
 function TLapeCodeEmitterBase.getCode: Pointer;
 begin
-  Result := @FCode[FCodeStart];
+  Result := @FCode[0];
 end;
 
 constructor TLapeCodeEmitterBase.Create;
@@ -148,14 +147,7 @@ begin
   FCodeSize := CodeGrowSize;
   SetLength(FCode, FCodeSize);
   FCodePointers.Clear();
-
-  {$IFDEF Lape_SmallCode}
-  FCodeStart := 0;
-  {$ELSE}
-  //16 byte alignment
-  FCodeStart := (16 - (PtrUInt(FCode) mod 16)) mod 16;
-  {$ENDIF}
-  FCodeCur := FCodeStart;
+  FCodeCur := 0;
 end;
 
 procedure TLapeCodeEmitterBase.Delete(StartOffset, Len: Integer);
@@ -223,7 +215,7 @@ begin
   if (Offset < 0) then
     Result := 0
   else
-    Result := Offset - FCodeStart;
+    Result := Offset;
 end;
 
 function TLapeCodeEmitterBase.CheckOffset(var Offset: Integer; Len: Word = 0): Integer;

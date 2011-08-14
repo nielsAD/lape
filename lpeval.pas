@@ -158,7 +158,7 @@ var
     'var'                                                                                + LineEnding +
     '  i, OldLen, NewSize: SizeInt;'                                                     + LineEnding +
     '  NewP: Pointer;'                                                                   + LineEnding +
-    '  DoFree: Boolean;'                                                                 + LineEnding +
+    '  DoFree: EvalBool;'                                                                + LineEnding +
     'begin'                                                                              + LineEnding +
     '  NewSize := NewLen * ElSize;'                                                      + LineEnding +
     '  DoFree := NewSize <= 0;'                                                          + LineEnding +

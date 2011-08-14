@@ -43,7 +43,7 @@ type
   end;
 
   PTempTokenizerState = ^TTempTokenizerState;
-  TTempTokenizerState = record
+  TTempTokenizerState = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
     OldStackInfo: TLapeStackInfo;
     OldTokenizer: TLapeTokenizerBase;
     OldTokenizerIndex: Integer;

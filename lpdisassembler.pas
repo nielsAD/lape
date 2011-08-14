@@ -162,7 +162,7 @@ var
   procedure DoIncTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     with POC_IncTry(PtrUInt(Code) + ocSize)^ do
-      _WriteLn('IncTry %d %d', [Jmp, JmpFinally]);
+      _WriteLn('IncTry %d %d', [Jmp, NativeInt(JmpFinally)]);
     Inc(Code, ocSize + SizeOf(TOC_IncTry));
   end;
 
