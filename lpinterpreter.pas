@@ -72,19 +72,17 @@ type
   {$I lpinterpreter_evalrecords.inc}
 
 const
+  ocSize = SizeOf(opCodeType) {$IFDEF Lape_EmitPos}+SizeOf(TDocPos){$ENDIF};
+
   Try_NoFinally: UInt32 = UInt32(-1);
   Try_NoExcept: UInt32 = UInt32(-2);
   EndJump: TCodePos = TCodePos(-1);
 
   StackSize = 2048 * SizeOf(Pointer);
   VarStackSize = 512 * SizeOf(Pointer);
+  VarStackStackSize = 32;
   TryStackSize = 256;
   CallStackSize = 512;
-
-  AvgStackLen = StackSize div CallStackSize; //Minimal stacksize a function call should have
-  VarStackStackSize = 32;
-
-  ocSize = SizeOf(opCodeType) {$IFDEF Lape_EmitPos}+SizeOf(TDocPos){$ENDIF};
 
 procedure RunCode(Code: PByte); {$IFDEF Lape_Inline}inline;{$ENDIF}
 
@@ -239,8 +237,12 @@ var
   end;
 
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  var
+    InitStackSize: TStackOffset;
   begin
-    SetLength(Stack, PStackOffset(PtrUInt(Code) + ocSize)^);
+    InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    if (StackPos + InitStackSize > Length(Stack)) then
+      SetLength(Stack, StackPos + InitStackSize + (StackSize div 2));
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -408,9 +410,6 @@ var
       PushToVar(ParamSize);
       StackP := StackPos + StackPosOffset;
       JumpTo(Jmp);
-
-      if (StackPos + AvgStackLen > Length(Stack)) then
-        SetLength(Stack, StackPos + AvgStackLen + (StackSize div 2));
     end;
     Inc(CallStackPos);
   end;

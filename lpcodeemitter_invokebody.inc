@@ -13,9 +13,10 @@ begin
   Result := _op(ocIncCall_Stk, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Stk));
   with POC_Invoke_Stk(@FCode[Offset])^ do begin
-    SOffset := ASOffset;
-    ParamSize := AParamSize;
+    _StackOffset(ASOffset, @SOffset);
+    _ParamSize(AParamSize, @ParamSize);
   end;
+  IncStack(AParamSize - ASOffset);
   Inc(Offset, SizeOf(TOC_Invoke_Stk));
 end;
 
@@ -23,6 +24,7 @@ function TLapeCodeEmitterBase._IncCall_PStk(AParamSize: TParamSize; var Offset: 
 begin
   Result := _op(ocIncCall_PStk, Offset, Pos);
   _ParamSize(AParamSize, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 }
 
@@ -31,8 +33,8 @@ begin
   Result := _op(ocIncCall_Var, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Var));
   with POC_Invoke_Var(@FCode[Offset])^ do begin
-    VOffset := AVOffset;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffset, @VOffset);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Var));
 end;
@@ -42,9 +44,9 @@ begin
   Result := _op(ocIncCall_PVar, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_PVar));
   with POC_Invoke_PVar(@FCode[Offset])^ do begin
-    VOffset := AVOffset;
-    POffset := APOffset;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffset, @VOffset);
+    _PointerOffset(APOffset, @POffset);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_PVar));
 end;
@@ -54,8 +56,8 @@ begin
   Result := _op(ocIncCall_Ptr, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr));
   with POC_Invoke_Ptr(@FCode[Offset])^ do begin
-    Ptr := APtr;
-    ParamSize := AParamSize;
+    _Pointer(APtr, @Ptr);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Ptr));
 end;
@@ -108,9 +110,9 @@ begin
   Result := _op(ocInvokeImported_Stk_Stk, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Stk_Stk));
   with POC_Invoke_Stk_Stk(@FCode[Offset])^ do begin
-    SOffset := ASOffset;
-    ParamSize := AParamSize;
-    StackInc := AStackInc;
+    _StackOffset(ASOffset, @SOffset);
+    _ParamSize(AParamSize, @ParamSize);
+    _StackInc(AStackInc, @StackInc);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Stk_Stk));
 end;
@@ -120,8 +122,8 @@ begin
   Result := _op(ocInvokeImported_Stk_PStk, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Stk_PStk));
   with POC_Invoke_Stk_PStk(@FCode[Offset])^ do begin
-    SOffset := ASOffset;
-    ParamSize := AParamSize;
+    _StackOffset(ASOffset, @SOffset);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Stk_PStk));
 end;
@@ -131,9 +133,9 @@ begin
   Result := _op(ocInvokeImported_Stk_Var, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Stk_Var));
   with POC_Invoke_Stk_Var(@FCode[Offset])^ do begin
-    SOffset := ASOffset;
-    VOffsetD := AVOffsetD;
-    ParamSize := AParamSize;
+    _StackOffset(ASOffset, @SOffset);
+    _VarStackOffset(AVOffsetD, @VOffsetD);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Stk_Var));
 end;
@@ -143,10 +145,10 @@ begin
   Result := _op(ocInvokeImported_Stk_PVar, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Stk_PVar));
   with POC_Invoke_Stk_PVar(@FCode[Offset])^ do begin
-    SOffset := ASOffset;
-    VOffsetD := AVOffsetD;
-    POffset := APOffset;
-    ParamSize := AParamSize;
+    _StackOffset(ASOffset, @SOffset);
+    _VarStackOffset(AVOffsetD, @VOffsetD);
+    _PointerOffset(APOffset, @POffset);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Stk_PVar));
 end;
@@ -156,9 +158,9 @@ begin
   Result := _op(ocInvokeImported_Stk_Ptr, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Stk_Ptr));
   with POC_Invoke_Stk_Ptr(@FCode[Offset])^ do begin
-    SOffset := ASOffset;
-    PtrD := APtrD;
-    ParamSize := AParamSize;
+    _StackOffset(ASOffset, @SOffset);
+    _Pointer(APtrD, @PtrD);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Stk_Ptr));
 end;
@@ -169,9 +171,9 @@ begin
   Result := _op(ocInvokeImported_Var_Stk, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Var_Stk));
   with POC_Invoke_Var_Stk(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    ParamSize := AParamSize;
-    StackInc := AStackInc;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _ParamSize(AParamSize, @ParamSize);
+    _StackInc(AStackInc, @StackInc);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Var_Stk));
 end;
@@ -181,8 +183,8 @@ begin
   Result := _op(ocInvokeImported_Var_PStk, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Var_PStk));
   with POC_Invoke_Var_PStk(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Var_PStk));
 end;
@@ -192,9 +194,9 @@ begin
   Result := _op(ocInvokeImported_Var_Var, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Var_Var));
   with POC_Invoke_Var_Var(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    VOffsetD := AVOffsetD;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _VarStackOffset(AVOffsetD, @VOffsetD);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Var_Var));
 end;
@@ -204,10 +206,10 @@ begin
   Result := _op(ocInvokeImported_Var_PVar, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Var_PVar));
   with POC_Invoke_Var_PVar(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    VOffsetD := AVOffsetS;
-    POffset := APOffset;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _VarStackOffset(AVOffsetD, @VOffsetD);
+    _PointerOffset(APOffset, @POffset);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Var_PVar));
 end;
@@ -217,9 +219,9 @@ begin
   Result := _op(ocInvokeImported_Var_Ptr, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Var_Ptr));
   with POC_Invoke_Var_Ptr(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    PtrD := APtrD;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _Pointer(APtrD, @PtrD);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Var_Ptr));
 end;
@@ -230,10 +232,10 @@ begin
   Result := _op(ocInvokeImported_PVar_Stk, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_Stk));
   with POC_Invoke_PVar_Stk(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    POffsetS := APOffsetS;
-    ParamSize := AParamSize;
-    StackInc := AStackInc;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _PointerOffset(APOffsetS, @POffsetS);
+    _ParamSize(AParamSize, @ParamSize);
+    _StackInc(AStackInc, @StackInc);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_PVar_Stk));
 end;
@@ -243,9 +245,9 @@ begin
   Result := _op(ocInvokeImported_PVar_PStk, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_PStk));
   with POC_Invoke_PVar_PStk(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    POffsetS := APOffsetS;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _PointerOffset(APOffsetS, @POffsetS);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_PVar_PStk));
 end;
@@ -255,10 +257,10 @@ begin
   Result := _op(ocInvokeImported_PVar_Var, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_Var));
   with POC_Invoke_PVar_Var(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    VOffsetD := AVOffsetD;
-    POffsetS := APOffsetS;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _VarStackOffset(AVOffsetD, @VOffsetD);
+    _PointerOffset(APOffsetS, @POffsetS);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_PVar_Var));
 end;
@@ -268,11 +270,11 @@ begin
   Result := _op(ocInvokeImported_PVar_PVar, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_PVar));
   with POC_Invoke_PVar_PVar(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    VOffsetD := AVOffsetD;
-    POffsetS := APOffsetS;
-    POffsetD := APOffsetD;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _VarStackOffset(AVOffsetD, @VOffsetD);
+    _PointerOffset(APOffsetS, @POffsetS);
+    _PointerOffset(APOffsetD, @POffsetD);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_PVar_PVar));
 end;
@@ -282,10 +284,10 @@ begin
   Result := _op(ocInvokeImported_PVar_Ptr, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_Ptr));
   with POC_Invoke_PVar_Ptr(@FCode[Offset])^ do begin
-    VOffsetS := AVOffsetS;
-    POffsetS := APOffsetS;
-    PtrD := APtrD;
-    ParamSize := AParamSize;
+    _VarStackOffset(AVOffsetS, @VOffsetS);
+    _PointerOffset(APOffsetS, @POffsetS);
+    _Pointer(APtrD, @PtrD);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_PVar_Ptr));
 end;
@@ -296,9 +298,9 @@ begin
   Result := _op(ocInvokeImported_Ptr_Stk, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_Stk));
   with POC_Invoke_Ptr_Stk(@FCode[Offset])^ do begin
-    PtrS := APtrS;
-    ParamSize := AParamSize;
-    StackInc := AStackInc;
+    _Pointer(APtrS, @PtrS);
+    _ParamSize(AParamSize, @ParamSize);
+    _StackInc(AStackInc, @StackInc);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Ptr_Stk));
 end;
@@ -308,8 +310,8 @@ begin
   Result := _op(ocInvokeImported_Ptr_PStk, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_PStk));
   with POC_Invoke_Ptr_PStk(@FCode[Offset])^ do begin
-    PtrS := APtrS;
-    ParamSize := AParamSize;
+    _Pointer(APtrS, @PtrS);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Ptr_PStk));
 end;
@@ -319,9 +321,9 @@ begin
   Result := _op(ocInvokeImported_Ptr_Var, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_Var));
   with POC_Invoke_Ptr_Var(@FCode[Offset])^ do begin
-    PtrS := APtrS;
-    VOffsetD := AVOffsetD;
-    ParamSize := AParamSize;
+    _Pointer(APtrS, @PtrS);
+    _VarStackOffset(AVOffsetD, @VOffsetD);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Ptr_Var));
 end;
@@ -331,10 +333,10 @@ begin
   Result := _op(ocInvokeImported_Ptr_PVar, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_PVar));
   with POC_Invoke_Ptr_PVar(@FCode[Offset])^ do begin
-    PtrS := APtrS;
-    VOffsetD := AVOffsetD;
-    POffset := APOffset;
-    ParamSize := AParamSize;
+    _Pointer(APtrS, @PtrS);
+    _VarStackOffset(AVOffsetD, @VOffsetD);
+    _PointerOffset(APOffset, @POffset);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Ptr_PVar));
 end;
@@ -344,9 +346,9 @@ begin
   Result := _op(ocInvokeImported_Ptr_Ptr, Offset, Pos);
   CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_Ptr));
   with POC_Invoke_Ptr_Ptr(@FCode[Offset])^ do begin
-    PtrS := APtrS;
-    PtrD := APtrD;
-    ParamSize := AParamSize;
+    _Pointer(APtrS, @PtrS);
+    _Pointer(APtrD, @PtrD);
+    _ParamSize(AParamSize, @ParamSize);
   end;
   Inc(Offset, SizeOf(TOC_Invoke_Ptr_Ptr));
 end;

@@ -656,6 +656,9 @@ type
     FVarStack: TLapeVarStack;
     FWithStack: TLapeWithDeclarationList;
 
+    FOldStackPos: Integer;
+    FOldMaxStack: Integer;
+
     function getVar(Index: Integer): TLapeStackVar; virtual;
     function getCount: Integer; virtual;
     function getTotalSize: Integer; virtual;
@@ -693,6 +696,8 @@ type
     property TotalNoParamSize: Integer read getTotalNoParamSize;
     property NeedInitialization: Boolean read getInitialization;
     property NeedFinalization: Boolean read getFinalization;
+    property OldStackPos: Integer read FOldStackPos;
+    property OldMaxStack: Integer read FOldMaxStack;
   end;
 
   TLapeEmptyStack = class(TLapeStackInfo)
@@ -5206,10 +5211,14 @@ begin
     if (AStackInfo <> FStackInfo) then
       AStackInfo.Owner := FStackInfo;
 
+    AStackInfo.FOldMaxStack := Emitter.MaxStack;
+    AStackInfo.FOldStackPos := Emitter.NewStack();
+
     if Emit then
     begin
-      AStackInfo.CodePos := Emitter._ExpandVar(0, Offset, Pos);
-      Emitter._IncTry(0, Try_NoExcept, Offset, Pos);
+      AStackInfo.CodePos := Emitter._IncTry(0, Try_NoExcept, Offset, Pos);
+      Emitter._ExpandVar(0, Offset, Pos);
+      Emitter._InitStackLen(0, Offset, Pos);
     end;
   end;
 
@@ -5233,6 +5242,20 @@ end;
 function TLapeCompilerBase.DecStackInfo(var Offset: Integer; InFunction: Boolean = False; Emit: Boolean = True; DoFree: Boolean = False; Pos: PDocPos = nil): TLapeStackInfo;
 var
   i: Integer;
+  InitStackPos: Integer;
+
+  procedure RemoveIncTry;
+  begin
+    Emitter.Delete(FStackInfo.CodePos, ocSize + SizeOf(TOC_IncTry), Offset);
+    Dec(InitStackPos, ocSize + SizeOf(TOC_IncTry));
+  end;
+
+  procedure RemoveExpandVar;
+  begin
+    Emitter.Delete(FStackInfo.CodePos + ocSize + SizeOf(TOC_IncTry), ocSize + SizeOf(TStackOffset), Offset);
+    Dec(InitStackPos, ocSize + SizeOf(TStackOffset));
+  end;
+
 begin
   if (FStackInfo = nil) or (FStackInfo = EmptyStackInfo) then
     Result := nil
@@ -5241,11 +5264,14 @@ begin
     Result := FStackInfo.Owner;
 
     if Emit then
-      if (FStackInfo.TotalSize > 0) or InFunction then
+    begin
+      InitStackPos := FStackInfo.CodePos + ocSize*2 + SizeOf(TOC_IncTry) + SizeOf(TStackOffset);
+      if (FStackInfo.TotalNoParamSize <= 0) then
+        RemoveExpandVar();
+      if (FStackInfo.TotalSize <= 0) and (not InFunction) then
+        RemoveIncTry()
+      else
       begin
-        if InFunction and (FStackInfo.TotalNoParamSize <= 0) then
-          Emitter.Delete(FStackInfo.CodePos, ocSize + SizeOf(TStackOffset), Offset);
-
         Emitter._DecTry(Offset, Pos);
         Emitter._IncTry(Offset - FStackInfo.CodePos, Try_NoExcept, FStackInfo.CodePos, Pos);
 
@@ -5291,10 +5317,15 @@ begin
             Emitter._GrowVarAndInit(FStackInfo.TotalNoParamSize, FStackInfo.CodePos, Pos)
           else
             Emitter._GrowVar(FStackInfo.TotalNoParamSize, FStackInfo.CodePos, Pos);
-      end
-      else
-        Emitter.Delete(FStackInfo.CodePos, ocSize*2 + SizeOf(TStackOffset) + SizeOf(TOC_IncTry), Offset);
+      end;
 
+      if (Emitter.MaxStack > 0) then
+        Emitter._InitStackLen(Emitter.MaxStack, InitStackPos, Pos)
+      else
+        Emitter.Delete(InitStackPos, ocSize + SizeOf(TStackOffset), Offset);
+    end;
+
+    Emitter.NewStack(FStackInfo.FOldStackPos, FStackInfo.FOldMaxStack);
     if DoFree then
       FStackInfo.Free();
     FStackInfo := Result;

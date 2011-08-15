@@ -85,20 +85,23 @@ type
   end;
 
   TCodePos = NativeUInt;
+  PCodePos = ^TCodePos;
+
   TCodeOffset = NativeInt;
+  PCodeOffset = ^TCodeOffset;
 
   {$IFDEF Lape_SmallCode}
   //Means Lape can only locate up to 65kb of local variables (per stackframe)
   TStackInc = Int16;
-  TVarStackOffset = UInt16;
   TStackOffset = UInt16;
+  TVarStackOffset = UInt16;
   TPointerOffset = Int16;
   TParamSize = UInt16;
   EvalBool = Boolean;
   {$ELSE}
   TStackInc = NativeInt;
-  TVarStackOffset = NativeUInt;
   TStackOffset = NativeUInt;
+  TVarStackOffset = NativeUInt;
   TPointerOffset = NativeInt;
   TParamSize = NativeUInt;
   EvalBool = LongBool;
@@ -106,9 +109,9 @@ type
 
   PStackInc = ^TStackInc;
   PStackOffset = ^TStackOffset;
+  PVarStackOffset = ^TVarStackOffset;
+  PPointerOffset = ^TPointerOffset;
   PParamSize = ^TParamSize;
-  PCodePos = ^TCodePos;
-  PCodeOffset = ^TCodeOffset;
   PEvalBool = ^EvalBool;
 
   EMemoryPos = (mpNone, mpStack, mpMem, mpVar);

@@ -24,8 +24,8 @@ function TLapeCodeEmitterBase._Jmp_Var(ATarget: TCodePos; AVarStackOffset: TVarS
 begin
   Result := CheckOffset(Offset, SizeOf(TOC_Jmp_Var));
   with POC_Jmp_Var(@FCode[Offset])^ do begin
-    Target := ATarget;
-    VarStackOffset := AVarStackOffset;
+    _CodePos(ATarget, @Target);
+    _VarStackOffset(AVarStackOffset, @VarStackOffset);
   end;
   Inc(Offset, SizeOf(TOC_Jmp_Var));
 end;
@@ -34,8 +34,8 @@ function TLapeCodeEmitterBase._Jmp_Ptr(ATarget: TCodePos; APtr: Pointer; var Off
 begin
   Result := CheckOffset(Offset, SizeOf(TOC_Jmp_Ptr));
   with POC_Jmp_Ptr(@FCode[Offset])^ do begin
-    Target := ATarget;
-    Ptr := APtr;
+    _CodePos(ATarget, @Target);
+    _Pointer(APtr, @Ptr);
   end;
   Inc(Offset, SizeOf(TOC_Jmp_Ptr));
 end;
@@ -44,9 +44,9 @@ function TLapeCodeEmitterBase._Jmp_PVar(ATarget: TCodePos; AVarStackOffset: TVar
 begin
   Result := CheckOffset(Offset, SizeOf(TOC_Jmp_PVar));
   with POC_Jmp_PVar(@FCode[Offset])^ do begin
-    Target := ATarget;
-    VarStackOffset := AVarStackOffset;
-    PointerOffset := APointerOffset;
+    _CodePos(ATarget, @Target);
+    _VarStackOffset(AVarStackOffset, @VarStackOffset);
+    _PointerOffset(APointerOffset, @PointerOffset);
   end;
   Inc(Offset, SizeOf(TOC_Jmp_PVar));
 end;
@@ -56,8 +56,8 @@ function TLapeCodeEmitterBase._JmpR_Var(Jmp: TCodeOffset; AVarStackOffset: TVarS
 begin
   Result := CheckOffset(Offset, SizeOf(TOC_JmpR_Var));
   with POC_JmpR_Var(@FCode[Offset])^ do begin
-    Offset := Jmp;
-    VarStackOffset := AVarStackOffset;
+    _CodeOffset(Jmp, @Offset);
+    _VarStackOffset(AVarStackOffset, @VarStackOffset);
   end;
   Inc(Offset, SizeOf(TOC_JmpR_Var));
 end;
@@ -66,8 +66,8 @@ function TLapeCodeEmitterBase._JmpR_Ptr(Jmp: TCodeOffset; APtr: Pointer; var Off
 begin
   Result := CheckOffset(Offset, SizeOf(TOC_JmpR_Ptr));
   with POC_JmpR_Ptr(@FCode[Offset])^ do begin
-    Offset := Jmp;
-    Ptr := APtr;
+    _CodeOffset(Jmp, @Offset);
+    _Pointer(APtr, @Ptr);
   end;
   Inc(Offset, SizeOf(TOC_JmpR_Ptr));
 end;
@@ -76,9 +76,9 @@ function TLapeCodeEmitterBase._JmpR_PVar(Jmp: TCodeOffset; AVarStackOffset: TVar
 begin
   Result := CheckOffset(Offset, SizeOf(TOC_JmpR_PVar));
   with POC_JmpR_PVar(@FCode[Offset])^ do begin
-    Offset := Jmp;
-    VarStackOffset := AVarStackOffset;
-    PointerOffset := APointerOffset;
+    _CodeOffset(Jmp, @Offset);
+    _VarStackOffset(AVarStackOffset, @VarStackOffset);
+    _PointerOffset(APointerOffset, @PointerOffset);
   end;
   Inc(Offset, SizeOf(TOC_JmpR_PVar));
 end;
@@ -89,24 +89,28 @@ function TLapeCodeEmitterBase._JmpIf8_Stk(Target: TCodePos; var Offset: Integer;
 begin
   Result := _op(ocJmpIf8_Stk, Offset, Pos);
   _CodePos(Target, Offset);
+  DecStack(SizeOf(UInt8));
 end;
 
 function TLapeCodeEmitterBase._JmpIf16_Stk(Target: TCodePos; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpIf16_Stk, Offset, Pos);
   _CodePos(Target, Offset);
+  DecStack(SizeOf(UInt16));
 end;
 
 function TLapeCodeEmitterBase._JmpIf32_Stk(Target: TCodePos; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpIf32_Stk, Offset, Pos);
   _CodePos(Target, Offset);
+  DecStack(SizeOf(UInt32));
 end;
 
 function TLapeCodeEmitterBase._JmpIf64_Stk(Target: TCodePos; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpIf64_Stk, Offset, Pos);
   _CodePos(Target, Offset);
+  DecStack(SizeOf(UInt64));
 end;
 
 function TLapeCodeEmitterBase._JmpIf8_Var(Target: TCodePos; VarStackOffset: TVarStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
@@ -161,24 +165,28 @@ function TLapeCodeEmitterBase._JmpIf8_PStk(Target: TCodePos; var Offset: Integer
 begin
   Result := _op(ocJmpIf8_PStk, Offset, Pos);
   _CodePos(Target, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpIf16_PStk(Target: TCodePos; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpIf16_PStk, Offset, Pos);
   _CodePos(Target, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpIf32_PStk(Target: TCodePos; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpIf32_PStk, Offset, Pos);
   _CodePos(Target, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpIf64_PStk(Target: TCodePos; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpIf64_PStk, Offset, Pos);
   _CodePos(Target, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpIf8_PVar(Target: TCodePos; VarStackOffset: TVarStackOffset; PointerOffset: TPointerOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
@@ -211,24 +219,28 @@ function TLapeCodeEmitterBase._JmpRIf8_Stk(Jmp: TCodeOffset; var Offset: Integer
 begin
   Result := _op(ocJmpRIf8_Stk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(UInt8));
 end;
 
 function TLapeCodeEmitterBase._JmpRIf16_Stk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIf16_Stk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(UInt16));
 end;
 
 function TLapeCodeEmitterBase._JmpRIf32_Stk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIf32_Stk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(UInt32));
 end;
 
 function TLapeCodeEmitterBase._JmpRIf64_Stk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIf64_Stk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(UInt64));
 end;
 
 function TLapeCodeEmitterBase._JmpRIf8_Var(Jmp: TCodeOffset; VarStackOffset: TVarStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
@@ -283,24 +295,28 @@ function TLapeCodeEmitterBase._JmpRIf8_PStk(Jmp: TCodeOffset; var Offset: Intege
 begin
   Result := _op(ocJmpRIf8_PStk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpRIf16_PStk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIf16_PStk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpRIf32_PStk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIf32_PStk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpRIf64_PStk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIf64_PStk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpRIf8_PVar(Jmp: TCodeOffset; VarStackOffset: TVarStackOffset; PointerOffset: TPointerOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
@@ -332,24 +348,28 @@ function TLapeCodeEmitterBase._JmpRIfNot8_Stk(Jmp: TCodeOffset; var Offset: Inte
 begin
   Result := _op(ocJmpRIfNot8_Stk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(UInt8));
 end;
 
 function TLapeCodeEmitterBase._JmpRIfNot16_Stk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIfNot16_Stk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(UInt16));
 end;
 
 function TLapeCodeEmitterBase._JmpRIfNot32_Stk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIfNot32_Stk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(UInt32));
 end;
 
 function TLapeCodeEmitterBase._JmpRIfNot64_Stk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIfNot64_Stk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(UInt64));
 end;
 
 function TLapeCodeEmitterBase._JmpRIfNot8_Var(Jmp: TCodeOffset; VarStackOffset: TVarStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
@@ -404,24 +424,28 @@ function TLapeCodeEmitterBase._JmpRIfNot8_PStk(Jmp: TCodeOffset; var Offset: Int
 begin
   Result := _op(ocJmpRIfNot8_PStk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpRIfNot16_PStk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIfNot16_PStk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpRIfNot32_PStk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIfNot32_PStk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpRIfNot64_PStk(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpRIfNot64_PStk, Offset, Pos);
   _CodeOffset(Jmp, Offset);
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._JmpRIfNot8_PVar(Jmp: TCodeOffset; VarStackOffset: TVarStackOffset; PointerOffset: TPointerOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;

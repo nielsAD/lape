@@ -133,7 +133,7 @@ begin
     JumpTo(PCodePos(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt8));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpIf16_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -142,7 +142,7 @@ begin
     JumpTo(PCodePos(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt16));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpIf32_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -151,7 +151,7 @@ begin
     JumpTo(PCodePos(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt32));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpIf64_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -160,7 +160,7 @@ begin
     JumpTo(PCodePos(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt64));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpIf8_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -315,7 +315,7 @@ begin
     JumpToRelative(PCodeOffset(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt8));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpRIf16_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -324,7 +324,7 @@ begin
     JumpToRelative(PCodeOffset(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt16));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpRIf32_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -333,7 +333,7 @@ begin
     JumpToRelative(PCodeOffset(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt32));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpRIf64_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -342,7 +342,7 @@ begin
     JumpToRelative(PCodeOffset(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt64));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpRIf8_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -496,7 +496,7 @@ begin
     JumpToRelative(PCodeOffset(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt8));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpRIfNot16_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -505,7 +505,7 @@ begin
     JumpToRelative(PCodeOffset(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt16));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpRIfNot32_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -514,7 +514,7 @@ begin
     JumpToRelative(PCodeOffset(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt32));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpRIfNot64_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -523,7 +523,7 @@ begin
     JumpToRelative(PCodeOffset(PtrUInt(Code) + ocSize)^)
   else
     Inc(Code, SizeOf(TCodePos) + ocSize);
-  Dec(StackPos, SizeOf(UInt64));
+  Dec(StackPos, SizeOf(Pointer));
 end;
 
 procedure DoJmpRIfNot8_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
