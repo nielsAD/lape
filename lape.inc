@@ -18,8 +18,3 @@
 {.$DEFINE Lape_SmallCode}                //Try to keep compiled code as small as possible (packed records, no aligning -- less memory, slower)
 {.$DEFINE Lape_TrackObjects}             //Track all created classes with a list to check for leaks
 {.$DEFINE Lape_Unicode}                  //Use unicodestrings
-
-{$DEFINE Lape_UnlimitedCallStackSize}   //Increase callstack size when needed at runtime (less memory, slower)
-{$DEFINE Lape_UnlimitedStackSize}       //Increase stack size when needed at runtime (less memory, slower)
-{$DEFINE Lape_UnlimitedTryStackSize}    //Increase trystack size when needed at runtime (less memory, slower)
-{$DEFINE Lape_UnlimitedVarStackSize}    //Increase varstack size when needed at runtime (less memory, slower)

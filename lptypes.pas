@@ -75,12 +75,12 @@ type
   TParamArray = array[Word] of Pointer;
 
   PDocPos = ^TDocPos;
-  TDocPos = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TDocPos = record
     Line, Col: {$IFDEF Lape_SmallCode}UInt16{$ELSE}UInt32{$ENDIF};
     FileName: lpString;
   end;
 
-  TLapeRange = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TLapeRange = record
     Lo, Hi: Int64;
   end;
 

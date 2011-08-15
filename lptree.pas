@@ -19,7 +19,7 @@ type
   TLapeTree_Base = class;
   TLapeTree_ExprBase = class;
 
-  TLapeFlowStatement = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TLapeFlowStatement = record
     CodeOffset: Integer;
     DocPos: TDocPos;
     JumpSafe: Boolean;
@@ -720,14 +720,12 @@ begin
 
   FParent := nil;
   FCompiler := ACompiler;
+  FCompilerOptions := FCompiler.Options;
 
   if (ADocPos <> nil) then
     _DocPos := ADocPos^
   else
     _DocPos := NullDocPos;
-
-  if (FCompiler <> nil) then
-    FCompilerOptions := FCompiler.Options;
 end;
 
 constructor TLapeTree_Base.Create(ASource: TLapeTree_Base);
@@ -840,7 +838,7 @@ begin
   if (not ConditionVar.HasType()) or (not (ConditionVar.VarType.BaseType in LapeIfTypes)) then
     Exit;
 
-  if (not (ConditionVar.VarType.Size in [1, 2, 4, 8])) and (FCompiler <> nil) then
+  if (not (ConditionVar.VarType.Size in [1, 2, 4, 8])) then
     with FCompiler do
     begin
       tmpCondition := ConditionVar;
@@ -1579,7 +1577,7 @@ var
           LapeException(lpeCannotInvoke, FParams[i].DocPos);
 
         if (Params[i].VarType <> nil) and (not Params[i].VarType.Equals(Par.VarType)) then
-          if (FCompiler <> nil) and Params[i].VarType.CompatibleWith(Par.VarType) then
+          if Params[i].VarType.CompatibleWith(Par.VarType) then
           try
             Par := TLapeGlobalVar(FCompiler.addManagedVar(Params[i].VarType.EvalConst(op_Assign, Params[i].VarType.NewGlobalVarP(), Par)));
           except on E: lpException do
@@ -3819,7 +3817,6 @@ function TLapeTree_Method.Compile(var Offset: Integer): TResVar;
 var
   if_o, i, co: Integer;
 begin
-  Assert(FCompiler <> nil);
   Assert(Method <> nil);
   FExitStatements.Clear();
   if_o := FCompiler.Emitter._JmpR(0, Offset, @_DocPos);
@@ -3989,7 +3986,6 @@ var
   ResVarList: array of TResVar;
 begin
   Result := NullResVar;
-  Assert(FCompiler <> nil);
 
   SetLength(ResVarList, Length(FVarList));
   NewStack := (FCompiler.StackInfo = nil);

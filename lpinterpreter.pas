@@ -32,7 +32,7 @@ type
     ocGrowVarAndInit,                                          //GrowVarAndInit TStackOffset
     ocPopStackToVar,                                           //PopStackToVar TStackOffset TVarStackOffset
     ocPopVarToStack,                                           //PopVarToStack TStackOffset TVarStackOffset
-    ocPopVar,                                                  //PopVar TStackOffset
+    ocPopVar,                                                  //PopVar
     ocJmpSafe,                                                 //JmpSafe TCodePos
     ocJmpSafeR,                                                //JmpSafeR TCodeOffset
 
@@ -56,13 +56,13 @@ type
   {$ENDIF}
 
   POC_PopStackToVar = ^TOC_PopStackToVar;
-  TOC_PopStackToVar = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TOC_PopStackToVar = record
     Size: TStackOffset;
     VOffset: TVarStackOffset;
   end;
 
   POC_IncTry = ^TOC_IncTry;
-  TOC_IncTry = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TOC_IncTry = record
     Jmp: TCodeOffset;
     JmpFinally: UInt32;
   end;
@@ -76,29 +76,10 @@ const
   Try_NoExcept: UInt32 = UInt32(-2);
   EndJump: TCodePos = TCodePos(-1);
 
-  {$IFDEF Lape_UnlimitedStackSize}
-  StackSize = 2048 * SizeOf(Pointer); //bytes
-  {$ELSE}
-  StackSize = 4096 * SizeOf(Pointer); //bytes
-  {$ENDIF}
-
-  {$IFDEF Lape_UnlimitedVarStackSize}
-  VarStackSize = 512 * SizeOf(Pointer); //bytes
-  {$ELSE}
-  VarStackSize = 4096 * SizeOf(Pointer); //bytes
-  {$ENDIF}
-
-  {$IFDEF Lape_UnlimitedTryStackSize}
-  TryStackSize = 256; //pointers
-  {$ELSE}
-  TryStackSize = 1024; //pointers
-  {$ENDIF}
-
-  {$IFDEF Lape_UnlimitedCallStackSize}
-  CallStackSize = 128;
-  {$ELSE}
+  StackSize = 2048 * SizeOf(Pointer);
+  VarStackSize = 512 * SizeOf(Pointer);
+  TryStackSize = 256;
   CallStackSize = 512;
-  {$ENDIF}
 
   AvgStackLen = StackSize div CallStackSize; //Minimal stacksize a function call should have
   VarStackStackSize = 32;
@@ -148,7 +129,6 @@ var
 
   procedure ExpandVarStack(Size: UInt32); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    {$IFDEF Lape_UnlimitedVarStackSize}
     if (VarStackLen + Size > Length(VarStack)) then
     begin
       VarStackStack[VarStackIndex].Pos := VarStackLen;
@@ -169,7 +149,6 @@ var
       VarStackStack[VarStackIndex].Stack := VarStack;
     end
     else
-    {$ENDIF}
     begin
       VarStackPos := VarStackLen;
       Inc(VarStackLen, Size);
@@ -180,7 +159,6 @@ var
   var
     OldLen: UInt32;
   begin
-    {$IFDEF Lape_UnlimitedVarStackSize}
     if (VarStackLen + Size > Length(VarStack)) then
     begin
       OldLen := VarStackLen - VarStackPos;
@@ -192,7 +170,6 @@ var
       end;
     end
     else
-    {$ENDIF}
       Inc(VarStackLen, Size);
   end;
 
@@ -279,10 +256,8 @@ var
     InitStackSize: TStackOffset;
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    {$IFDEF Lape_UnlimitedStackSize}
     if (StackPos + InitStackSize > Length(Stack)) then
       SetLength(Stack, StackPos + InitStackSize + (StackSize div 2));
-    {$ENDIF}
     FillChar(Stack[StackPos], InitStackSize, 0);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
@@ -292,10 +267,8 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    {$IFDEF Lape_UnlimitedStackSize}
     if (StackPos + GrowSize > Length(Stack)) then
       SetLength(Stack, StackPos + GrowSize + (StackSize div 2));
-    {$ENDIF}
     Inc(StackPos, GrowSize);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
@@ -333,12 +306,7 @@ var
   end;
 
   procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
-  var
-    PopSize: TStackOffset;
   begin
-    PopSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-
-    {$IFDEF Lape_UnlimitedVarStackSize}
     if (VarStackPos = 0) and (VarStackIndex > 0) then
     begin
       Dec(VarStackIndex);
@@ -348,10 +316,9 @@ var
         VarStackPos := Pos;
       end;
     end;
-    {$ENDIF}
 
     VarStackLen := VarStackPos;
-    Inc(Code, SizeOf(TStackOffset) + ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoPopStackToVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -389,10 +356,8 @@ var
 
   procedure DoIncTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    {$IFDEF Lape_UnlimitedTryStackSize}
     if (TryStackPos >= Length(TryStack)) then
       SetLength(TryStack, TryStackPos + (TryStackSize div 2));
-    {$ENDIF}
 
     with POC_IncTry(PtrUInt(Code) + ocSize)^ do
     begin
@@ -433,10 +398,9 @@ var
 
   procedure DoIncCall(RecSize: Integer; Jmp: TCodePos; ParamSize: TParamSize; StackPosOffset: TStackInc = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    {$IFDEF Lape_UnlimitedCallStackSize}
     if (CallStackPos >= Length(CallStack)) then
       SetLength(CallStack, CallStackPos + (CallStackSize div 2));
-    {$ENDIF}
+
     with CallStack[CallStackPos] do
     begin
       CalledFrom := PByte(PtrUInt(Code) + ocSize + RecSize);
@@ -445,10 +409,8 @@ var
       StackP := StackPos + StackPosOffset;
       JumpTo(Jmp);
 
-      {$IFDEF Lape_UnlimitedStackSize}
       if (StackPos + AvgStackLen > Length(Stack)) then
         SetLength(Stack, StackPos + AvgStackLen + (StackSize div 2));
-      {$ENDIF}
     end;
     Inc(CallStackPos);
   end;
@@ -459,6 +421,7 @@ var
       Code := @opNone
     else
     begin
+	  DoPopVar();
       Dec(CallStackPos);
       with CallStack[CallStackPos] do
       begin

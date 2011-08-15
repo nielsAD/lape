@@ -28,14 +28,14 @@ type
   TLapeFindFile = function(Sender: TLapeCompiler; var FileName: lpString): TLapeTokenizerBase of object;
   TLapeTokenizerArray = array of TLapeTokenizerBase;
 
-  TLapeConditional = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TLapeConditional = record
     Eval: Boolean;
     Pos: TDocPos;
   end;
   TLapeConditionalStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeConditional>;
 
   PCompilerState = ^TCompilerState;
-  TCompilerState = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TCompilerState = record
     Tokenizer: Integer;
     Tokenizers: array of Pointer;
     Defines: lpString;
@@ -43,7 +43,7 @@ type
   end;
 
   PTempTokenizerState = ^TTempTokenizerState;
-  TTempTokenizerState = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TTempTokenizerState = record
     OldStackInfo: TLapeStackInfo;
     OldTokenizer: TLapeTokenizerBase;
     OldTokenizerIndex: Integer;
@@ -3139,7 +3139,7 @@ function TLapeType_SystemUnit.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLa
   end;
 
 begin
-  if (Op = op_Dot) and (Right <> nil) and (Right.BaseType = ltString) then
+  if (Op = op_Dot) and CanHaveChild() and (Right <> nil) and (Right.BaseType = ltString) then
     Result := getType(FCompiler.getDeclaration(PlpString(Right.Ptr)^, nil))
   else
     Result := inherited;
@@ -3158,7 +3158,9 @@ var
   end;
 
 begin
+  Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType = Self));
+
   if (Op = op_Dot) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType = ltString) then
   begin
     Assert(Right.Ptr <> nil);

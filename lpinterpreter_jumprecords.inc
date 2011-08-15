@@ -8,38 +8,38 @@
 {%MainUnit lpinterpreter.pas}
 
 POC_Jmp_Var = ^TOC_Jmp_Var;
-TOC_Jmp_Var = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+TOC_Jmp_Var = record
   Target: TCodePos;
   VarStackOffset: TVarStackOffset;
 end;
 
 POC_Jmp_Ptr = ^TOC_Jmp_Ptr;
-TOC_Jmp_Ptr = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+TOC_Jmp_Ptr = record
   Target: TCodePos;
   Ptr: Pointer;
 end;
 
 POC_Jmp_PVar = ^TOC_Jmp_PVar;
-TOC_Jmp_PVar = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+TOC_Jmp_PVar = record
   Target: TCodePos;
   VarStackOffset: TVarStackOffset;
   PointerOffset: TPointerOffset;
 end;
 
 POC_JmpR_Var = ^TOC_JmpR_Var;
-TOC_JmpR_Var = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+TOC_JmpR_Var = record
   Offset: TCodeOffset;
   VarStackOffset: TVarStackOffset;
 end;
 
 POC_JmpR_Ptr = ^TOC_JmpR_Ptr;
-TOC_JmpR_Ptr = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+TOC_JmpR_Ptr = record
   Offset: TCodeOffset;
   Ptr: Pointer;
 end;
 
 POC_JmpR_PVar = ^TOC_JmpR_PVar;
-TOC_JmpR_PVar = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+TOC_JmpR_PVar = record
   Offset: TCodeOffset;
   VarStackOffset: TVarStackOffset;
   PointerOffset: TPointerOffset;

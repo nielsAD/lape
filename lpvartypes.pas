@@ -1970,8 +1970,8 @@ end;
 constructor TLapeType_SubRange.Create(ARange: TLapeRange; ACompiler: TLapeCompilerBase; AVarType: TLapeType; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited Create(ltUnknown, ACompiler, AName, ADocPos);
-  if (AVarType = nil) then
-    AVarType := FCompiler.getBaseType(DetermineIntType(ARange.Lo, ARange.Hi));
+  if (AVarType = nil) and (ACompiler <> nil) then
+    AVarType := ACompiler.getBaseType(DetermineIntType(ARange.Lo, ARange.Hi));
   if (AVarType <> nil) then
     FBaseType := AVarType.BaseType;
   FRange := ARange;
@@ -2212,6 +2212,8 @@ end;
 
 function TLapeType_Enum.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
 begin
+  Assert(FCompiler <> nil);
+
   if (Right <> nil) and (Right.BaseIntType <> ltUnknown) and
      (((BaseType in LapeBoolTypes) and (op in BinaryOperators + EnumOperators) and (Right.BaseType in LapeBoolTypes)) or
      ((op in EnumOperators) and ((not (Right.BaseType in LapeEnumTypes)) or Equals(Right))))
@@ -2904,7 +2906,9 @@ var
   tmpType: ELapeBaseType;
   IndexVar: TLapeGlobalVar;
 begin
+  Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType is TLapeType_Pointer));
+
   if (op = op_Index) then
   begin
     tmpType := FBaseType;
@@ -2974,7 +2978,9 @@ var
   IndexVar, tmpResVar: TResVar;
   wasConstant: Boolean;
 begin
+  Assert(FCompiler <> nil);
   Assert(Left.VarType is TLapeType_Pointer);
+
   IndexVar := NullResVar;
   tmpResVar := NullResVar;
   tmpVar := nil;
@@ -3771,7 +3777,9 @@ var
   FieldName: lpString;
   LeftVar, RightVar, LeftFieldName, RightFieldName: TLapeGlobalVar;
 begin
+  Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType = Self));
+
   if (Op = op_Dot) and (Left <> nil) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType = ltString) then
   begin
     Assert(Right.Ptr <> nil);
@@ -5263,11 +5271,13 @@ begin
               TLapeStackTempVar(Items[i]).Locked := False;
         end;
 
-        Emitter._PopVar(FStackInfo.TotalSize, Offset, Pos);
         if InFunction then
           Emitter._DecCall_EndTry(Offset, Pos)
         else
+        begin
+          Emitter._PopVar(Offset, Pos);
           Emitter._EndTry(Offset, Pos);
+        end;
 
         //WriteLn('Vars on stack: ', FStackInfo.Count);
 

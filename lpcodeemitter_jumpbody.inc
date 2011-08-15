@@ -449,9 +449,9 @@ begin
 end;
 
 function TLapeCodeEmitterBase._Jmp(Target: TCodePos; Pos: PDocPos = nil): Integer;
-  var o: Integer; begin o := -1; Result := _PopVar(Target, o, Pos); end;
+  var o: Integer; begin o := -1; Result := _Jmp(Target, o, Pos); end;
 function TLapeCodeEmitterBase._JmpR(Jmp: TCodeOffset; Pos: PDocPos = nil): Integer;
-  var o: Integer; begin o := -1; Result := _PopVar(Jmp, o, Pos); end;
+  var o: Integer; begin o := -1; Result := _JmpR(Jmp, o, Pos); end;
 
 //jump if
 {

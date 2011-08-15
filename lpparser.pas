@@ -115,7 +115,7 @@ type
   EParserTokenSet = set of EParserToken;
 
   PTokenizerState = ^TTokenizerState;
-  TTokenizerState = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TTokenizerState = record
     TokStart, Pos: Integer;
     LastTok, Tok: EParserToken;
     InPeek: Boolean;
@@ -213,7 +213,7 @@ type
     constructor Create(AFileName: lpString = ''); reintroduce; virtual;
   end;
 
-  TLapeKeyword = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TLapeKeyword = record
     Keyword: lpString;
     Token: EParserToken;
   end;
