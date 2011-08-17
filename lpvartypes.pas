@@ -792,8 +792,10 @@ type
 
     property StackInfo: TLapeStackInfo read FStackInfo;
     property BaseTypes: TLapeBaseTypes read FBaseTypes;
+
     property GlobalDeclarations: TLapeDeclarationList read FGlobalDeclarations;
     property ManagedDeclarations: TLapeDeclarationList read FManagedDeclarations;
+    property Globals[AName: lpString]: TLapeGlobalVar read getGlobalVar; default;
   published
     property Emitter: TLapeCodeEmitter read FEmitter write setEmitter;
     property Options: ECompilerOptionsSet read FOptions write FBaseOptions default Lape_OptionsDef;
