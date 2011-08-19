@@ -123,8 +123,8 @@ var
 
   procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('PopVarStack %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
-    Inc(Code, SizeOf(TStackOffset) + ocSize);
+    _WriteLn('PopVarStack');
+    Inc(Code, ocSize);
   end;
 
   procedure DoPopStackToVar; {$IFDEF Lape_Inline}inline;{$ENDIF}

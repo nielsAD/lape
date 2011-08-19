@@ -237,8 +237,8 @@
         <UnitName Value="lpcompiler"/>
         <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="838"/>
-        <CursorPos X="38" Y="846"/>
+        <TopLine Value="841"/>
+        <CursorPos X="102" Y="850"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit3>
@@ -299,8 +299,8 @@
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="10"/>
-        <CursorPos X="58" Y="34"/>
+        <TopLine Value="73"/>
+        <CursorPos X="17" Y="91"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit9>
