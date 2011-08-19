@@ -158,6 +158,8 @@ type
     function Compile: Boolean; virtual;
     procedure CheckAfterCompile; virtual;
 
+    procedure FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); override;
+
     function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration; override;
     function hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; override;
     function hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; override;
@@ -451,7 +453,9 @@ begin
   Result := nil;
   Method := nil;
   GetMethod_FixupParams(AType, AParams, AResult);
-  if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or (not AParams[0].NeedFinalization) or (AResult <> nil) then
+  if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or (AResult <> nil) then
+    Exit;
+  if (not (lcoFullDisposal in FOptions)) and (not AParams[0].NeedFinalization) then
     Exit;
 
   if (AType = nil) then
@@ -732,6 +736,8 @@ var
         Result := (lcoShortCircuit in FOptions)
       else if (Def = 'memoryinit') then
         Result := (lcoAlwaysInitialize in FOptions)
+      else if (Def = 'fulldisposal') then
+        Result := (lcoFullDisposal in FOptions)
       else if (Def = 'extendedsyntax') then
         Result := (lcoLooseSyntax in FOptions)
       else if (Def = 'autoinvoke') then
@@ -840,6 +846,8 @@ begin
     setOption(lcoShortCircuit)
   else if (Directive = 'm') or (Directive = 'memoryinit') then
     setOption(lcoAlwaysInitialize)
+  else if (Directive = 'd') or (Directive = 'fulldisposal') then
+    setOption(lcoFullDisposal)
   else if (Directive = 'x') or (Directive = 'extendedsyntax') then
     setOption(lcoLooseSyntax)
   else if (Directive = 'f') or (Directive = 'autoinvoke') then
@@ -2735,9 +2743,11 @@ begin
 
     FDelayedTree.Compile(False).Spill(1);
     FTree.Compile().Spill(1);
-    FDelayedTree.Compile(True).Spill(1);
 
+    FDelayedTree.Compile(True, ldfStatements).Spill(1);
     DecStackInfo(False, True, True);
+    FDelayedTree.Compile(True, ldfMethods).Spill(1);
+
     FEmitter._op(ocNone);
     Result := True;
 
@@ -2753,6 +2763,28 @@ begin
 
   if (FConditionalStack.Cur >= 0) then
     LapeException(lpeConditionalNotClosed, popConditional());
+end;
+
+procedure TLapeCompiler.FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
+var
+  wasConstant: Boolean;
+begin
+  wasConstant := False;
+  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and (AVar.VarType <> nil) then
+    with TLapeTree_InternalMethod_Dispose.Create(Self, Pos) do
+    try
+      wasConstant := AVar.isConstant;
+      if wasConstant then
+        AVar.isConstant := False;
+
+      FunctionOnly := True;
+      addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Self));
+      Compile(Offset);
+    finally
+      if wasConstant then
+        AVar.isConstant := True;
+      Free();
+    end;
 end;
 
 function TLapeCompiler.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration;

@@ -21,6 +21,7 @@ type
     lcoRangeCheck,                     // {$R} {$RANGECHECKS}      TODO
     lcoShortCircuit,                   // {$B} {$BOOLEVAL}
     lcoAlwaysInitialize,               // {$M} {$MEMORYINIT}
+    lcoFullDisposal,                   // {$D} {$FULLDISPOSAL}
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
@@ -749,6 +750,9 @@ type
     constructor Create(AEmitter: TLapeCodeEmitter = nil; ManageEmitter: Boolean = True); reintroduce; virtual;
     destructor Destroy; override;
     procedure Clear; virtual;
+
+    procedure FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
+    procedure FinalizeVar(AVar: TResVar; Pos: PDocPos = nil); overload; virtual;
 
     function IncStackInfo(AStackInfo: TLapeStackInfo; var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
     function IncStackInfo(var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
@@ -2156,7 +2160,7 @@ begin
     end;
   Result := Format(
     'type TEnumToString = function(const Arr; Index, Lo, Hi: Int32): string;' + LineEnding +
-    'begin Result := TEnumToString({$IFDEF AUTOINVOKE}@{$ENDIF}_EnumToString)([%s], Ord(Param0), %d, %d); end;',
+    'begin Result := TEnumToString('+AIA+'_EnumToString)([%s], Ord(Param0), %d, %d); end;',
     [Result, FRange.Lo, FRange.Hi]
   );
 end;
@@ -2442,10 +2446,10 @@ begin
 
   Result := 'type TSetToString = function(const ASet; AToString: Pointer; Lo, Hi: Int32): string;' + LineEnding + 'begin ';
   if FSmall then
-    Result := Result + 'Result := TSetToString({$IFDEF AUTOINVOKE}@{$ENDIF}_SmallSetToString)'
+    Result := Result + 'Result := TSetToString('+AIA+'_SmallSetToString)'
   else
-    Result := Result + 'Result := TSetToString({$IFDEF AUTOINVOKE}@{$ENDIF}_LargeSetToString)';
-  Result := Format(Result + '(Param0, {$IFDEF AUTOINVOKE}@{$ENDIF}ToString[%d], %d, %d); end;', [Index, FRange.Range.Lo, FRange.Range.Hi]);
+    Result := Result + 'Result := TSetToString('+AIA+'_LargeSetToString)';
+  Result := Format(Result + '(Param0, '+AIA+'ToString[%d], %d, %d); end;', [Index, FRange.Range.Lo, FRange.Range.Hi]);
 end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;
@@ -2741,9 +2745,9 @@ begin
     '  if (Len <= 0) then'                                                                  + LineEnding +
     '    Result := '#39'[]'#39''                                                            + LineEnding +
     '  else'                                                                                + LineEnding +
-    '    Result := TArrayToString({$IFDEF AUTOINVOKE}@{$ENDIF}_ArrayToString)('             + LineEnding +
+    '    Result := TArrayToString('+AIA+'_ArrayToString)('                                  + LineEnding +
     '      Param0['+IntToStr(VarLo().AsInteger)+'],'                                        + LineEnding +
-    '      {$IFDEF AUTOINVOKE}@{$ENDIF}_ElementToString, Len, SizeOf(Param0[0]));'          + LineEnding +
+    '      '+AIA+'_ElementToString, Len, SizeOf(Param0[0]));'                               + LineEnding +
     'end;';
 end;
 
@@ -3368,7 +3372,7 @@ var
   Counter, LowIndex, HighIndex: TLapeVar;
 begin
   Assert(AVar.VarType = Self);
-  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) or (not NeedFinalization) then
+  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) {or (not NeedFinalization)} then
     Exit;
 
   IndexVar := NullResVar;
@@ -3380,14 +3384,14 @@ begin
     HighIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(IntToStr(FRange.Hi)));
     IndexVar := Counter.VarType.Eval(op_Assign, IndexVar, _ResVar.New(Counter), _ResVar.New(LowIndex), Offset, Pos);
     LoopOffset := Offset;
-    FPType.Finalize(Eval(op_Index, tmpVar, AVar, IndexVar, Offset, Pos), Offset, UseCompiler, Pos);
+    FCompiler.FinalizeVar(Eval(op_Index, tmpVar, AVar, IndexVar, Offset, Pos), Offset, Pos);
     Counter.VarType.Eval(op_Assign, tmpVar, IndexVar, Counter.VarType.Eval(op_Plus, tmpVar, IndexVar, _ResVar.New(FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr('1'))), Offset, Pos), Offset, Pos);
     FCompiler.Emitter._JmpRIf(LoopOffset - Offset, Counter.VarType.Eval(op_cmp_LessThanOrEqual, tmpVar, IndexVar, _ResVar.New(HighIndex), Offset, Pos), Offset, Pos);
     IndexVar.Spill(BigLock);
   end
   else if (AVar.VarPos.MemPos <> mpMem) then
     LapeException(lpeImpossible)
-  else
+  else if NeedFinalization then
     for i := 0 to FRange.Hi - FRange.Lo do
     try
       IndexVar := AVar;
@@ -3934,7 +3938,7 @@ var
   FieldVar: TResVar;
 begin
   Assert(AVar.VarType = Self);
-  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) or (not NeedFinalization) then
+  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) {or (not NeedFinalization)} then
     Exit;
 
   for i := 0 to FFieldMap.Count - 1 do
@@ -3950,7 +3954,11 @@ begin
       mpVar: FieldVar.VarPos.Offset := FieldVar.VarPos.Offset + FFieldMap.ItemsI[i].Offset;
       else LapeException(lpeImpossible);
     end;
-    FieldVar.VarType.Finalize(FieldVar, Offset, UseCompiler, Pos);
+
+    if UseCompiler and (FCompiler <> nil) then
+      FCompiler.FinalizeVar(FieldVar, Offset, Pos)
+    else if NeedFinalization then
+      FieldVar.VarType.Finalize(FieldVar, Offset, UseCompiler, Pos);
   finally
     if ((not UseCompiler) or (FCompiler = nil)) and (FieldVar.VarPos.MemPos = mpMem) and (FieldVar.VarPos.GlobalVar <> nil) then
       FreeAndNil(FieldVar.VarPos.GlobalVar);
@@ -5206,6 +5214,20 @@ begin
   Reset();
 end;
 
+procedure TLapeCompilerBase.FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
+begin
+  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and (AVar.VarType <> nil) then
+    AVar.VarType.Finalize(AVar, Offset, True, Pos);
+end;
+
+procedure TLapeCompilerBase.FinalizeVar(AVar: TResVar; Pos: PDocPos = nil);
+var
+  Offset: Integer;
+begin
+  Offset := -1;
+  FinalizeVar(AVar, Offset, Pos);
+end;
+
 function TLapeCompilerBase.IncStackInfo(AStackInfo: TLapeStackInfo; var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo;
 begin
   if (AStackInfo <> nil) and (AStackInfo <> EmptyStackInfo) then
@@ -5258,6 +5280,14 @@ var
     Dec(InitStackPos, ocSize + SizeOf(TStackOffset));
   end;
 
+  function NeedFinalization(v: TLapeVar): Boolean;
+  begin
+    if (v is TLapeParameterVar) then
+      Result := (not (TLapeParameterVar(v).ParType in Lape_RefParams))
+    else
+      Result := (v <> nil) and ((lcoFullDisposal in FOptions) or v.NeedFinalization);
+  end;
+
 begin
   if (FStackInfo = nil) or (FStackInfo = EmptyStackInfo) then
     Result := nil
@@ -5282,9 +5312,9 @@ begin
           i := 0;
           while (i < Count) do
           begin
-            if Items[i].NeedFinalization then
+            if NeedFinalization(Items[i]) then
             begin
-              Items[i].VarType.Finalize(Items[i], Offset, True, Pos);
+              FinalizeVar(_ResVar.New(Items[i]), Offset, Pos);
               if (Items[i] is TLapeStackTempVar) then
               begin
                 if TLapeStackTempVar(Items[i]).Locked then

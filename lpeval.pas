@@ -90,6 +90,10 @@ procedure LoadEvalArr(var Arr: TLapeEvalArr);
 function LapeEval_GetRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType;
 function LapeEval_GetProc(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc;
 
+const
+  //AutoInvokeAddress
+  AIA = '{$IFDEF AUTOINVOKE}@{$ENDIF}';
+
 var
   LapeEvalErrorProc: TLapeEvalProc = {$IFDEF FPC}@{$ENDIF}LapeEval_Error;
   getEvalRes: TGetEvalRes = {$IFDEF FPC}@{$ENDIF}LapeEval_GetRes;
@@ -189,8 +193,7 @@ var
     '      Exit;'                                                                        + LineEnding +
     '    end;'                                                                           + LineEnding +
     ''                                                                                   + LineEnding +
-    '    if (NewLen < OldLen) and'                                                       + LineEnding +
-    '       (Pointer({$IFDEF AUTOINVOKE}@{$ENDIF}Dispose) <> nil) then'                  + LineEnding +
+    '    if (NewLen < OldLen) and (Pointer('+AIA+'Dispose) <> nil) then'                 + LineEnding +
     '    begin'                                                                          + LineEnding +
     '      Inc(p, HeaderSize);'                                                          + LineEnding +
     '      for i := NewLen to OldLen - 1 do'                                             + LineEnding +
@@ -217,8 +220,7 @@ var
     '  begin'                                                                            + LineEnding +
     '    Dec(PtrInt(p^));'                                                               + LineEnding +
     '    NewP := nil;'                                                                   + LineEnding +
-    '    _ArraySetLength(NewP, NewLen, ElSize,'                                          + LineEnding +
-    '      {$IFDEF AUTOINVOKE}@{$ENDIF}Dispose, {$IFDEF AUTOINVOKE}@{$ENDIF}Copy);'      + LineEnding +
+    '    _ArraySetLength(NewP, NewLen, ElSize, '+AIA+'Dispose, '+AIA+'Copy);'            + LineEnding +
     ''                                                                                   + LineEnding +
     '    i := OldLen;'                                                                   + LineEnding +
     '    if (NewLen < OldLen) then'                                                      + LineEnding +
@@ -226,7 +228,7 @@ var
     '    if (i >= 1) then'                                                               + LineEnding +
     '    begin'                                                                          + LineEnding +
     '      Inc(p, HeaderSize);'                                                          + LineEnding +
-    '      if (Pointer({$IFDEF AUTOINVOKE}@{$ENDIF}Copy) = nil) then'                    + LineEnding +
+    '      if (Pointer('+AIA+'Copy) = nil) then'                                         + LineEnding +
     '        Move(p^, NewP^, i * ElSize)'                                                + LineEnding +
     '      else for i := i - 1 downto 0 do'                                              + LineEnding +
     '        Copy(p[i * ElSize], NewP[i * ElSize]);'                                     + LineEnding +

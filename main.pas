@@ -50,13 +50,13 @@ uses
 procedure MyWrite(Params: PParamArray);
 begin
   Form1.m.Text := Form1.m.Text + PlpString(Params^[0])^;
-  //Write(PlpString(Params^[0])^);
+  Write(PlpString(Params^[0])^);
 end;
 
 procedure MyWriteLn(Params: PParamArray);
 begin
   Form1.m.Text := Form1.m.Text + LineEnding;
-  //WriteLn();
+  WriteLn();
 end;
 
 procedure MyStupidProc(Params: PParamArray);
