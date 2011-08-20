@@ -3246,7 +3246,7 @@ begin
       LeftVar := Eval(op_Addr, tmpVar, Left, NullResVar, Offset, Pos)
     else
     begin
-      LeftVar := Left;
+      LeftVar := Left.IncLock();
       LeftVar.VarPos.isPointer := False;
       LeftVar.VarType := FCompiler.getPointerType(PType);
     end;
@@ -3850,7 +3850,7 @@ begin
     FieldName := PlpString(Right.VarPos.GlobalVar.Ptr)^;
 
     Dest.Spill();
-    Result := Left;
+    Result := Left.IncLock();
     if (FieldName = '') or (not FFieldMap.ExistsKey(FieldName)) then
       LapeExceptionFmt(lpeUnknownDeclaration, [FieldName]);
 

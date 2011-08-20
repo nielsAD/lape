@@ -3926,7 +3926,6 @@ begin
   Result := NullResVar;
   if (FVariable <> nil) and FVariable.HasType() then
     FVariable.VarType.Finalize(FVariable, Offset, True, @_DocPos);
-    //FCompiler.FinalizeVar(_ResVar.New(FVariable), Offset, @_DocPos);
 end;
 
 procedure TLapeTree_With.setBody(Node: TLapeTree_Base);

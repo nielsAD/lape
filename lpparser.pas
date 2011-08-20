@@ -792,13 +792,25 @@ begin
           Inc(FPos);
           Char := getChar(1);
         end;
+
         if (Char <> '.') or (not (getChar(2) in ['0'..'9'])) then
           Result := setTok(tk_typ_Integer)
         else
         begin
           Inc(FPos, 2);
-          while (getChar(1) in ['0'..'9']) do
+          Char := getChar(1);
+          while (Char in ['0'..'9']) do
+          begin
             Inc(FPos);
+            Char := getChar(1);
+          end;
+          if (Char in ['e', 'E']) and (getChar(2) in ['+', '-']) and (getChar(3) in ['0'..'9']) then
+          begin
+            Inc(FPos, 3);
+            while (getChar(1) in ['0'..'9']) do
+              Inc(FPos);
+          end;
+
           Result := setTok(tk_typ_Float);
         end;
       end;
