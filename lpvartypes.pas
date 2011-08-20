@@ -670,10 +670,12 @@ type
   public
     Owner: TLapeStackInfo;
     FreeVars: Boolean;
-    ForceInitialization: Boolean;
     CodePos: Integer;
 
-    constructor Create(AlwaysInitialize: Boolean = True; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True); reintroduce; virtual;
+    ForceInitialization: Boolean;
+    FullDisposal: Boolean;
+
+    constructor Create(AlwaysInitialize: Boolean = True; ForceDisposal: Boolean = False; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True); reintroduce; virtual;
     destructor Destroy; override;
 
     function getDeclaration(Name: lpString; CheckWith: Boolean = True): TLapeDeclaration; virtual;
@@ -4627,7 +4629,7 @@ begin
   Result := False;
 end;
 
-constructor TLapeStackInfo.Create(AlwaysInitialize: Boolean = True; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
+constructor TLapeStackInfo.Create(AlwaysInitialize: Boolean = True; ForceDisposal: Boolean = False; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
 begin
   inherited Create(nil, False);
 
@@ -4635,8 +4637,10 @@ begin
   FVarStack := TLapeVarStack.Create(nil, dupIgnore);
   FWithStack := TLapeWithDeclarationList.Create(NullWithDecl, dupIgnore);
   FreeVars := ManageVars;
-  ForceInitialization := AlwaysInitialize;
   CodePos := -1;
+
+  ForceInitialization := AlwaysInitialize;
+  FullDisposal := ForceDisposal;
 end;
 
 destructor TLapeStackInfo.Destroy;
@@ -5252,7 +5256,7 @@ end;
 
 function TLapeCompilerBase.IncStackInfo(var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo;
 begin
-  Result := IncStackInfo(TLapeStackInfo.Create(lcoAlwaysInitialize in FOptions, FStackInfo), Offset, Emit, Pos);
+  Result := IncStackInfo(TLapeStackInfo.Create(lcoAlwaysInitialize in FOptions, lcoFullDisposal in FOptions, FStackInfo), Offset, Emit, Pos);
 end;
 
 function TLapeCompilerBase.IncStackInfo(Emit: Boolean = False): TLapeStackInfo;
@@ -5285,7 +5289,7 @@ var
     if (v is TLapeParameterVar) then
       Result := (not (TLapeParameterVar(v).ParType in Lape_RefParams))
     else
-      Result := (v <> nil) and ((lcoFullDisposal in FOptions) or v.NeedFinalization);
+      Result := (v <> nil) and (FStackInfo.FullDisposal or v.NeedFinalization);
   end;
 
 begin
