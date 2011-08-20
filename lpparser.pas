@@ -760,9 +760,13 @@ begin
       begin
         if (getChar(1) = '*') then
         begin
-          Inc(FPos);
-          while (not ((getChar(1) in ['*', #0]) and (getChar(2) in [')', #0]))) do NextPos_CountLines();
+          Inc(FPos, 2);
+          while (not ((CurChar in ['*', #0]) and (getChar(1) in [')', #0]))) do
+            NextPos_CountLines();
+
           Result := setTok(tk_Comment);
+          if (CurChar = '*') then
+            Inc(FPos);
         end
         else
           Result := setTok(tk_sym_ParenthesisOpen);
