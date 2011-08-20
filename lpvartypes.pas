@@ -5359,7 +5359,9 @@ begin
         Emitter._InitStackLen(Emitter.MaxStack, InitStackPos, Pos)
       else
         Emitter.Delete(InitStackPos, ocSize + SizeOf(TStackOffset), Offset);
-    end;
+    end
+    else
+      FStackInfo.FullDisposal := lcoFullDisposal in FOptions;
 
     Emitter.NewStack(FStackInfo.FOldStackPos, FStackInfo.FOldMaxStack);
     if DoFree then
