@@ -1833,8 +1833,11 @@ var
       Free();
     end;
 
-    ParamsCopy := Copy(ParamVars);
+    FCompiler.Emitter.FullEmit := False;
     o_if := FCompiler.Emitter._JmpRIfNot(0, IsScriptMethod, Offset, @_DocPos);
+    FCompiler.Emitter.FullEmit := True;
+
+    ParamsCopy := Copy(ParamVars);
     tmpRes := DoScriptMethod(IdentVar, ParamsCopy);
     tmpDest := FDest;
     FDest := tmpRes;
@@ -4092,7 +4095,10 @@ begin
   if (not FCondition.CompileToBoolVar(Offset, ConditionVar)) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
 
+  FCompiler.Emitter.FullEmit := False;
   if_o := FCompiler.Emitter._JmpRIfNot(0, ConditionVar, Offset, @_DocPos);
+  FCompiler.Emitter.FullEmit := True;
+
   if (FBody <> nil) or (FElse = nil) then
   begin
     Result := CompileBody(Offset);
@@ -4717,7 +4723,10 @@ begin
   Result := NullResVar;
   Assert((FExcept <> nil) or (FFinally <> nil));
 
+  FCompiler.Emitter.FullEmit := False;
   o_try := FCompiler.Emitter._IncTry(0, 0, Offset, @_DocPos);
+  FCompiler.Emitter.FullEmit := True;
+
   o_except := 0;
   if (FBody <> nil) then
     Result := FBody.Compile(Offset);

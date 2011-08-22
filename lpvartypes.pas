@@ -5244,9 +5244,11 @@ begin
 
     if Emit then
     begin
+      Emitter.FullEmit := False;
       AStackInfo.CodePos := Emitter._IncTry(0, Try_NoExcept, Offset, Pos);
       Emitter._ExpandVar(0, Offset, Pos);
       Emitter._InitStackLen(0, Offset, Pos);
+      Emitter.FullEmit := True;
     end;
   end;
 
@@ -5286,10 +5288,12 @@ var
 
   function NeedFinalization(v: TLapeVar): Boolean;
   begin
-    if (v is TLapeParameterVar) then
-      Result := (not (TLapeParameterVar(v).ParType in Lape_RefParams))
-    else
-      Result := (v <> nil) and (FStackInfo.FullDisposal or v.NeedFinalization);
+    Result := v <> nil;
+    if Result then
+      if (not FStackInfo.FullDisposal) then
+        Result := v.NeedFinalization
+      else if (v is TLapeParameterVar) then
+        Result := (not (TLapeParameterVar(v).ParType in Lape_RefParams));
   end;
 
 begin

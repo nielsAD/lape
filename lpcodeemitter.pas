@@ -53,20 +53,21 @@ type
     function getCode: Pointer;
     procedure IncStack(Size: TStackInc); virtual;
     procedure DecStack(Size: TStackInc); virtual;
-   public
+  public
     CodeGrowSize: Word;
-    Tokenizer: TLapeTokenizerBase;
+    FullEmit: Boolean;
 
     constructor Create; override;
     destructor Destroy; override;
     procedure Reset; virtual;
-    procedure Delete(StartOffset, Len: Integer); overload; virtual;
-    procedure Delete(StartOffset, Len: Integer; var Offset: Integer); overload; virtual;
 
     function addCodePointer(p: PCodePos): Integer; virtual;
     procedure deleteCodePointer(i: Integer); overload; virtual;
     procedure deleteCodePointer(p: PCodePos); overload; virtual;
     procedure adjustCodePointers(Pos, Offset: Integer); virtual;
+
+    procedure Delete(StartOffset, Len: Integer); overload; virtual;
+    procedure Delete(StartOffset, Len: Integer; var Offset: Integer); overload; virtual;
 
     procedure EnsureCodeGrowth(Len: Word); virtual;
     function getCodeOffset(Offset: Integer): Integer; virtual;
@@ -191,6 +192,9 @@ end;
 
 procedure TLapeCodeEmitterBase.IncStack(Size: TStackInc);
 begin
+  if (not FullEmit) then
+    Exit;
+
   Inc(FStackPos, Size);
   if (FStackPos < 0) then
     FStackPos := 0;
@@ -209,6 +213,7 @@ begin
 
   FCodePointers := TLapeCodePointers.Create(nil, dupIgnore);
   CodeGrowSize := 256;
+  FullEmit := True;
   Reset();
 end;
 
@@ -225,26 +230,6 @@ begin
   FCodePointers.Clear();
   FCodeCur := 0;
   NewStack();
-end;
-
-procedure TLapeCodeEmitterBase.Delete(StartOffset, Len: Integer);
-var
-  i: Integer;
-begin
-  if (Len <= 0) or (StartOffset < 0) or (StartOffset + Len > FCodeCur) then
-    Exit;
-  for i := StartOffset + Len to FCodeCur - 1 do
-    FCode[i - Len] := FCode[i];
-
-  Dec(FCodeCur, Len);
-  adjustCodePointers(StartOffset, -Len);
-end;
-
-procedure TLapeCodeEmitterBase.Delete(StartOffset, Len: Integer; var Offset: Integer);
-begin
-  Delete(StartOffset, Len);
-  if (Offset > StartOffset) then
-    Dec(Offset, Len);
 end;
 
 function TLapeCodeEmitterBase.addCodePointer(p: PCodePos): Integer;
@@ -272,6 +257,26 @@ begin
   for i := 0 to FCodePointers.Count - 1 do
     if (FCodePointers[i]^ > Pos) then
       Inc(FCodePointers[i]^, Offset);
+end;
+
+procedure TLapeCodeEmitterBase.Delete(StartOffset, Len: Integer);
+var
+  i: Integer;
+begin
+  if (Len <= 0) or (StartOffset < 0) or (StartOffset + Len > FCodeCur) then
+    Exit;
+  for i := StartOffset + Len to FCodeCur - 1 do
+    FCode[i - Len] := FCode[i];
+
+  Dec(FCodeCur, Len);
+  adjustCodePointers(StartOffset, -Len);
+end;
+
+procedure TLapeCodeEmitterBase.Delete(StartOffset, Len: Integer; var Offset: Integer);
+begin
+  Delete(StartOffset, Len);
+  if (Offset > StartOffset) then
+    Dec(Offset, Len);
 end;
 
 procedure TLapeCodeEmitterBase.EnsureCodeGrowth(Len: Word);
