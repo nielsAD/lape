@@ -575,6 +575,7 @@ begin
   addGlobalType(getBaseType(ltString).createCopy(), 'String');
   addGlobalType(getBaseType(ltChar).createCopy(), 'Char');
   addGlobalType(getBaseType(ltEvalBool).createCopy(), 'EvalBool');
+  addGlobalType('packed record Func, Obj: Pointer; end;', 'TMethod');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeInt), True)).createCopy(), 'SizeInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeUInt), False)).createCopy(), 'SizeUInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(NativeInt), True)).createCopy(), 'NativeInt');
@@ -2035,9 +2036,6 @@ begin
         tk_Identifier:
           begin
             Expr := getExpression(Tokenizer.TokString, getPDocPos());
-            if (Expr = nil) and (FInternalMethodMap[Tokenizer.TokString] <> nil) then
-              Expr := FInternalMethodMap[Tokenizer.TokString].Create(Self, getPDocPos());
-
             if (Expr = nil) then
               LapeExceptionFmt(lpeUnknownDeclaration, [Tokenizer.TokString], Tokenizer.DocPos)
             else if (Expr is TLapeTree_Invoke) then
@@ -2062,7 +2060,13 @@ begin
             begin
               PopOpStack(op_Invoke);
               if (Method = nil) then
-                Method := TLapeTree_Invoke.Create(VarStack.Pop().FoldConstants() as TLapeTree_ExprBase, Self, getPDocPos());
+              begin
+                Expr := VarStack.Pop().FoldConstants() as TLapeTree_ExprBase;
+                if (Expr is TLapeTree_Invoke) and (TLapeTree_Invoke(Expr).Params.Count < 1) then
+                  Method := Expr as TLapeTree_Invoke
+                else
+                  Method := TLapeTree_Invoke.Create(Expr, Self, getPDocPos());
+              end;
               if (Next() <> tk_sym_ParenthesisClose) then
               begin
                 Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False)));
@@ -2799,6 +2803,8 @@ begin
   Result := inherited;
   if (not Result) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
     Result := inherited hasDeclaration(AName, nil, Localonly, CheckWith);
+  if (not Result) and ((AStackInfo = nil) or (not LocalOnly)) then
+    Result := FInternalMethodMap.ExistsKey(AName);
 end;
 
 function TLapeCompiler.hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean;
@@ -2806,6 +2812,8 @@ begin
   Result := inherited;
   if (not Result) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
     Result := inherited hasDeclaration(ADecl, nil, Localonly, CheckWith);
+  if (not Result) and ((AStackInfo = nil) or (not LocalOnly)) then
+    Result := FInternalMethodMap.ExistsItem(TLapeTree_InternalMethodClass(ADecl.ClassType));
 end;
 
 function TLapeCompiler.getDeclarationNoWith(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;
@@ -2858,7 +2866,11 @@ begin
     else if (Decl is TLapeVar) then
       Result := TlapeTree_ResVar.Create(_ResVar.New(TLapeVar(Decl)), Self, Pos)
     else if (Decl is TLapeType) then
-      Result := TLapeTree_VarType.Create(TLapeType(Decl), Self, Pos);
+      Result := TLapeTree_VarType.Create(TLapeType(Decl), Self, Pos)
+    else
+      {nothing}
+  else if FInternalMethodMap.ExistsKey(AName) then
+    Result := FInternalMethodMap[AName].Create(Self, Pos);
 end;
 
 function TLapeCompiler.getExpression(AName: lpString; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase;
@@ -3150,8 +3162,7 @@ end;
 
 function TLapeType_SystemUnit.HasChild(AName: lpString): Boolean;
 begin
-  Result := CanHaveChild() and (FCompiler.hasDeclaration(AName, nil) or
-    ((FCompiler is TLapeCompiler) and (TLapeCompiler(FCompiler).InternalMethodMap[AName] <> nil)));
+  Result := CanHaveChild() and FCompiler.hasDeclaration(AName, nil);
 end;
 
 function TLapeType_SystemUnit.HasChild(ADecl: TLapeDeclaration): Boolean;
@@ -3202,8 +3213,6 @@ begin
     if (Result = nil) and (FCompiler is TLapeCompiler) then
     begin
       Decl := TLapeCompiler(FCompiler).getExpression(FieldName, TLapeStackInfo(nil));
-      if (Decl = nil) and (FCompiler is TLapeCompiler) and (TLapeCompiler(FCompiler).InternalMethodMap[FieldName] <> nil) then
-        Decl := TLapeCompiler(FCompiler).InternalMethodMap[FieldName].Create(FCompiler, getPDocPos());
       if (Decl <> nil) then
         Result := TLapeTreeType.Create(Decl).NewGlobalVarP();
     end;

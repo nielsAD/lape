@@ -582,6 +582,16 @@ type
     property ParamInitialization: Boolean read getParamInitialization;
   end;
 
+  TLapeType_MethodOfObject = class(TLapeType_Method)
+  protected
+    function getSize: Integer; override;
+    function getAsString: lpString; override;
+    function getParamSize: Integer; override;
+  public
+    constructor Create(AMethod: TLapeType_Method); overload; virtual;
+    function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean; override;
+  end;
+
   TLapeGetOverloadedMethod = function(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method;
     AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar of object;
 
@@ -2899,7 +2909,7 @@ end;
 procedure TLapeType_DynArray.VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil);
 begin
   Assert(FCompiler <> nil);
-  FCompiler.EmitCode('SetLength(AVar, ALen);', ['AVar', 'ALen'], [TLapeVar(nil), TLapeVar(nil)], [AVar, ALen], Offset, Pos);
+  FCompiler.EmitCode('System.SetLength(AVar, ALen);', ['AVar', 'ALen'], [TLapeVar(nil), TLapeVar(nil)], [AVar, ALen], Offset, Pos);
 end;
 
 function TLapeType_DynArray.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
@@ -3037,18 +3047,18 @@ begin
 
     if (Right.VarType.BaseType = ltDynArray) then
       FCompiler.EmitCode(
-        'if (Pointer(Left) <> Pointer(Right)) then begin'                   +
-        '  SetLength(Left, 0);'                                             +
-        '  Pointer(Left) := Pointer(Right);'                                +
-        '  if (Pointer(Left) <> nil) then'                                  +
-        '    Inc(PtrInt(Pointer(Left)[-'                                    +
+        'if (System.Pointer(Left) <> System.Pointer(Right)) then begin'     +
+        '  System.SetLength(Left, 0);'                                      +
+        '  System.Pointer(Left) := System.Pointer(Right);'                  +
+        '  if (System.Pointer(Left) <> nil) then'                           +
+        '    System.Inc(System.PtrInt(System.Pointer(Left)[-'               +
                IntToStr(SizeOf(SizeInt)+SizeOf(PtrInt))                     +
              ']^));'                                                        +
         'end;'
       , ['Left', 'Right'], [], [Left, Right], Offset, Pos)
     else if (Right.VarType is TLapeType_StaticArray) then
       FCompiler.EmitCode(
-        'SetLength(Left, '+IntToStr(
+        'System.SetLength(Left, '+IntToStr(
           TLapeType_StaticArray(Right.VarType).Range.Hi -
           TLapeType_StaticArray(Right.VarType).Range.Lo + 1)                +
         ');'                                                                +
@@ -3082,8 +3092,8 @@ begin
 
     Result := Eval(op_Assign, tmpResVar, Result, Left, Offset, Pos);
     FCompiler.EmitCode(
-      'SetLength(Result, Length(Result) + 1);' +
-      'Result[High(Result)] := Right;'
+      'System.SetLength(Result, System.Length(Result) + 1);' +
+      'Result[System.High(Result)] := Right;'
     , ['Result', 'Right'], [], [Result, Right], Offset, Pos);
 
     if wasConstant then
@@ -4153,12 +4163,14 @@ var
   i: Integer;
 begin
   Result := False;
-  if (Other = nil) or (TLapeType_Method(Other).Params.Count <> Params.Count) or (not _EqualTypes(Res, TLapeType_Method(Other).Res)) then
+  if (Other = nil) or
+     (TLapeType_Method(Other).Params.Count <> Params.Count) or
+     (not _EqualTypes(Res, TLapeType_Method(Other).Res))
+  then
     Exit
-  else
-    for i := 0 to Params.Count - 1 do
-      if (not _EqualParams(Params[i], TLapeType_Method(Other).Params[i])) then
-        Exit;
+  else for i := 0 to Params.Count - 1 do
+    if (not _EqualParams(Params[i], TLapeType_Method(Other).Params[i])) then
+      Exit;
   Result := True;
 end;
 
@@ -4242,6 +4254,34 @@ begin
       Right := _ResVar.New(m);
   end;
   Result := inherited;
+end;
+
+function TLapeType_MethodOfObject.getSize: Integer;
+begin
+  Result := inherited;
+  Result := Result + SizeOf(Pointer);
+end;
+
+function TLapeType_MethodOfObject.getAsString: lpString;
+begin
+  Result := inherited;
+  Result := Result + ' of object';
+end;
+
+function TLapeType_MethodOfObject.getParamSize: Integer;
+begin
+  Result := inherited;
+  Result := Result + SizeOf(Pointer);
+end;
+
+constructor TLapeType_MethodOfObject.Create(AMethod: TLapeType_Method);
+begin
+  inherited Create(FCompiler, FParams, Res, Name, @_DocPos);
+end;
+
+function TLapeType_MethodOfObject.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean;
+begin
+  Result := (Other is TLapeType_MethodOfObject) and inherited;
 end;
 
 constructor TLapeType_OverloadedMethod.Create(ACompiler: TLapeCompilerBase; AMethods: TLapeDeclarationList; AName: lpString = ''; ADocPos: PDocPos = nil);
@@ -5406,6 +5446,8 @@ begin
         VarRefs.addVar(AVars[i], AVarNames[i])
       else
         VarRefs.addVar(AResVars[i - Length(AVars)], AVarNames[i]);
+
+    VarRefs.addVar(getGlobalVar('System'), 'System');
     VarRefsVar := VarRefs.NewGlobalVarP();
 
     WithVar.WithType := VarRefs;
