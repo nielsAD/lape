@@ -1534,6 +1534,12 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     Result := Result.CreateCopy();
     Result.BaseType := BaseType;
     Result := addManagedType(Result);
+
+    if isNext([tk_kw_Of]) then
+    begin
+      Expect(tk_kw_Object, True, False);
+      Result := addManagedType(TLapeType_MethodOfObject.Create(Result as TLapeType_Method));
+    end;
   end;
 
   procedure ParseDef;
@@ -3178,7 +3184,7 @@ function TLapeType_SystemUnit.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLa
     if (d is TLapeVar) then
       Result := TLapeVar(d).VarType
     else if (d is TLapeType) then
-      Result := TLapeType(PlpString(Right.Ptr)^);
+      Result := TLapeType(d);
   end;
 
 begin

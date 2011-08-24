@@ -43,6 +43,7 @@ type
     tk_kw_Function,
     tk_kw_If,
     tk_kw_Of,
+    tk_kw_Object,
     tk_kw_Out,
     tk_kw_Overload,
     tk_kw_Override,
@@ -234,7 +235,7 @@ const
   ParserToken_Symbols = [tk_sym_BracketClose..tk_sym_SemiColon];
   ParserToken_Types = [tk_typ_Float..tk_typ_Char];
 
-  Lape_Keywords: array[0..43] of TLapeKeyword = (
+  Lape_Keywords: array[0..44] of TLapeKeyword = (
       (Keyword: 'AND';          Token: tk_op_AND),
       (Keyword: 'DIV';          Token: tk_op_DIV),
       (Keyword: 'IN';           Token: tk_op_IN),
@@ -260,6 +261,7 @@ const
       (Keyword: 'FORWARD';      Token: tk_kw_Forward),
       (Keyword: 'FUNCTION';     Token: tk_kw_Function),
       (Keyword: 'IF';           Token: tk_kw_If),
+      (Keyword: 'OBJECT';       Token: tk_kw_Object),
       (Keyword: 'OF';           Token: tk_kw_Of),
       (Keyword: 'OUT';          Token: tk_kw_Out),
       (Keyword: 'OVERLOAD';     Token: tk_kw_Overload),

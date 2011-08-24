@@ -228,8 +228,8 @@
         <UnitName Value="lpparser"/>
         <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1189"/>
-        <CursorPos X="1" Y="1203"/>
+        <TopLine Value="285"/>
+        <CursorPos X="34" Y="290"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit2>
@@ -237,11 +237,10 @@
         <Filename Value="lpcompiler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpcompiler"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="2052"/>
-        <CursorPos X="92" Y="2065"/>
+        <TopLine Value="1981"/>
+        <CursorPos X="42" Y="1998"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit3>
@@ -299,10 +298,11 @@
         <Filename Value="lpvartypes.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpvartypes"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="5507"/>
-        <CursorPos X="1" Y="5521"/>
+        <TopLine Value="4265"/>
+        <CursorPos X="71" Y="4279"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit9>
@@ -459,8 +459,8 @@
         <UnitName Value="lptree"/>
         <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1845"/>
-        <CursorPos X="1" Y="1859"/>
+        <TopLine Value="3128"/>
+        <CursorPos X="1" Y="3150"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit28>
@@ -799,123 +799,123 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="lptree.pas"/>
-        <Caret Line="3241" Column="1" TopLine="3227"/>
+        <Caret Line="3132" Column="1" TopLine="3116"/>
       </Position1>
       <Position2>
         <Filename Value="lptree.pas"/>
-        <Caret Line="3233" Column="43" TopLine="3218"/>
+        <Caret Line="3135" Column="1" TopLine="3116"/>
       </Position2>
       <Position3>
         <Filename Value="lptree.pas"/>
-        <Caret Line="47" Column="16" TopLine="33"/>
+        <Caret Line="3430" Column="1" TopLine="3416"/>
       </Position3>
       <Position4>
         <Filename Value="lptree.pas"/>
-        <Caret Line="680" Column="26" TopLine="671"/>
+        <Caret Line="3135" Column="1" TopLine="3121"/>
       </Position4>
       <Position5>
         <Filename Value="lptree.pas"/>
-        <Caret Line="2" Column="111" TopLine="1"/>
+        <Caret Line="3139" Column="1" TopLine="3121"/>
       </Position5>
       <Position6>
-        <Filename Value="lpcompiler.pas"/>
-        <Caret Line="3198" Column="26" TopLine="3196"/>
+        <Filename Value="lptree.pas"/>
+        <Caret Line="3141" Column="1" TopLine="3121"/>
       </Position6>
       <Position7>
-        <Filename Value="lpcompiler.pas"/>
-        <Caret Line="265" Column="115" TopLine="263"/>
+        <Filename Value="lptree.pas"/>
+        <Caret Line="774" Column="1" TopLine="760"/>
       </Position7>
       <Position8>
         <Filename Value="lptree.pas"/>
-        <Caret Line="36" Column="48" TopLine="32"/>
+        <Caret Line="775" Column="1" TopLine="760"/>
       </Position8>
       <Position9>
         <Filename Value="lptree.pas"/>
-        <Caret Line="47" Column="16" TopLine="32"/>
+        <Caret Line="3142" Column="1" TopLine="3128"/>
       </Position9>
       <Position10>
         <Filename Value="lptree.pas"/>
-        <Caret Line="3241" Column="1" TopLine="3227"/>
+        <Caret Line="3430" Column="1" TopLine="3416"/>
       </Position10>
       <Position11>
         <Filename Value="lptree.pas"/>
-        <Caret Line="797" Column="1" TopLine="792"/>
+        <Caret Line="3142" Column="1" TopLine="3128"/>
       </Position11>
       <Position12>
         <Filename Value="lptree.pas"/>
-        <Caret Line="806" Column="1" TopLine="792"/>
+        <Caret Line="3147" Column="1" TopLine="3128"/>
       </Position12>
       <Position13>
         <Filename Value="lptree.pas"/>
-        <Caret Line="820" Column="1" TopLine="796"/>
+        <Caret Line="3149" Column="1" TopLine="3128"/>
       </Position13>
       <Position14>
-        <Filename Value="lpcompiler.pas"/>
-        <Caret Line="1790" Column="1" TopLine="1776"/>
+        <Filename Value="lptree.pas"/>
+        <Caret Line="3150" Column="1" TopLine="3128"/>
       </Position14>
       <Position15>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="1815" Column="1" TopLine="1801"/>
+        <Caret Line="3199" Column="1" TopLine="3185"/>
       </Position15>
       <Position16>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="2067" Column="40" TopLine="2047"/>
+        <Caret Line="3174" Column="1" TopLine="3160"/>
       </Position16>
       <Position17>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="2071" Column="54" TopLine="2053"/>
+        <Caret Line="3199" Column="1" TopLine="3185"/>
       </Position17>
       <Position18>
-        <Filename Value="lpcompiler.pas"/>
-        <Caret Line="1770" Column="3" TopLine="1756"/>
+        <Filename Value="lpvartypes.pas"/>
+        <Caret Line="981" Column="1" TopLine="967"/>
       </Position18>
       <Position19>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="2125" Column="14" TopLine="2113"/>
+        <Caret Line="3199" Column="1" TopLine="3185"/>
       </Position19>
       <Position20>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="3217" Column="1" TopLine="3199"/>
+        <Caret Line="3200" Column="1" TopLine="3185"/>
       </Position20>
       <Position21>
-        <Filename Value="lpexceptions.pas"/>
-        <Caret Line="92" Column="1" TopLine="78"/>
+        <Filename Value="lpcompiler.pas"/>
+        <Caret Line="2809" Column="1" TopLine="2795"/>
       </Position21>
       <Position22>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="2061" Column="37" TopLine="2052"/>
+        <Caret Line="3200" Column="1" TopLine="3186"/>
       </Position22>
       <Position23>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="2068" Column="1" TopLine="2052"/>
+        <Caret Line="3191" Column="1" TopLine="3186"/>
       </Position23>
       <Position24>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="2066" Column="1" TopLine="2052"/>
+        <Caret Line="3192" Column="1" TopLine="3186"/>
       </Position24>
       <Position25>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="3143" Column="1" TopLine="3129"/>
+        <Caret Line="3194" Column="1" TopLine="3186"/>
       </Position25>
       <Position26>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="607" Column="1" TopLine="593"/>
+        <Caret Line="3193" Column="38" TopLine="3195"/>
       </Position26>
       <Position27>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="2066" Column="1" TopLine="2052"/>
+        <Caret Line="1992" Column="11" TopLine="1984"/>
       </Position27>
       <Position28>
         <Filename Value="lpcompiler.pas"/>
-        <Caret Line="607" Column="1" TopLine="593"/>
+        <Caret Line="1768" Column="1" TopLine="1756"/>
       </Position28>
       <Position29>
-        <Filename Value="lpcompiler.pas"/>
-        <Caret Line="2066" Column="1" TopLine="2052"/>
+        <Filename Value="lpvartypes.pas"/>
+        <Caret Line="974" Column="15" TopLine="967"/>
       </Position29>
       <Position30>
-        <Filename Value="lpcompiler.pas"/>
-        <Caret Line="2178" Column="1" TopLine="2164"/>
+        <Filename Value="lpvartypes.pas"/>
+        <Caret Line="59" Column="3" TopLine="45"/>
       </Position30>
     </JumpHistory>
   </ProjectOptions>

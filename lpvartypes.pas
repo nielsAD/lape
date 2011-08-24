@@ -4276,7 +4276,9 @@ end;
 
 constructor TLapeType_MethodOfObject.Create(AMethod: TLapeType_Method);
 begin
-  inherited Create(FCompiler, FParams, Res, Name, @_DocPos);
+  Assert(AMethod <> nil);
+  inherited Create(AMethod.Compiler, AMethod.Params, AMethod.Res, AMethod.Name, @AMethod._DocPos);
+  FBaseType := AMethod.BaseType;
 end;
 
 function TLapeType_MethodOfObject.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean;
