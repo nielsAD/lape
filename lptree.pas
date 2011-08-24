@@ -1538,7 +1538,7 @@ var
 
   function DoImportedMethod(IdentVar: TLapeGlobalVar): TLapeGlobalVar;
   var
-    i: Integer;
+    i, Index: Integer;
     Par: TLapeGlobalVar;
     ParamVars: array of Pointer;
   begin
@@ -1556,7 +1556,15 @@ var
         else
           LapeException(lpeTooMuchParameters, Self.DocPos);
 
-      SetLength(ParamVars, FParams.Count);
+      SetLength(ParamVars, FParams.Count + 1);
+      Index := 0;
+
+      if (IdentVar.VarType is TLapeType_MethodOfObject) then
+      begin
+        ParamVars[0] := TMethod(IdentVar.Ptr^).Data;
+        Inc(Index);
+      end;
+
       for i := 0 to FParams.Count - 1 do
       begin
         if (i > FParams.Count) or isEmpty(FParams[i]) then
@@ -1583,7 +1591,8 @@ var
           else
             LapeExceptionFmt(lpeVariableOfTypeExpected, [Params[i].VarType.AsString, Par.VarType.AsString], FParams[i].DocPos);
 
-        ParamVars[i] := Par.Ptr;
+        ParamVars[Index] := Par.Ptr;
+        Inc(Index);
       end;
 
       Result := Res.NewGlobalVarP();
