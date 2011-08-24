@@ -17,6 +17,7 @@ procedure _LapeSin(const Params: PParamArray; const Result: Pointer);
 procedure _LapeCos(const Params: PParamArray; const Result: Pointer);
 procedure _LapeExp(const Params: PParamArray; const Result: Pointer);
 procedure _LapeRound(const Params: PParamArray; const Result: Pointer);
+procedure _LapeRoundTo(const Params: PParamArray; const Result: Pointer);
 procedure _LapeFrac(const Params: PParamArray; const Result: Pointer);
 procedure _LapeInt(const Params: PParamArray; const Result: Pointer);
 procedure _LapeTrunc(const Params: PParamArray; const Result: Pointer);

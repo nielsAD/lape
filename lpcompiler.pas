@@ -3198,14 +3198,6 @@ function TLapeType_SystemUnit.EvalConst(Op: EOperator; Left, Right: TLapeGlobalV
 var
   FieldName: lpString;
   Decl: TLapeTree_ExprBase;
-  tmpDocPos: TDocPos;
-
-  function getPDocPos: PDocPos;
-  begin
-    tmpDocPos := FCompiler.DocPos;
-    Result := @tmpDocPos;
-  end;
-
 begin
   Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType = Self));

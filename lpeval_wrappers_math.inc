@@ -57,6 +57,11 @@ begin
   PInt64(Result)^ := Round(PExtended(Params^[0])^);
 end;
 
+procedure _LapeRoundTo(const Params: PParamArray; const Result: Pointer);
+begin
+  PExtended(Result)^ := RoundTo(PExtended(Params^[0])^, -PInt8(Params^[1])^);
+end;
+
 procedure _LapeFrac(const Params: PParamArray; const Result: Pointer);
 begin
   PExtended(Result)^ := Frac(PExtended(Params^[0])^);
