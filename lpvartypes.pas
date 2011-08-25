@@ -844,6 +844,7 @@ const
   Lape_ValParams = [lptConst, lptNormal];
 
 var
+  LapeReservedLocals: lpString = '|System|';
   EmptyStackInfo: TLapeEmptyStack = nil;
   _ResVar: TResVar;
 
@@ -2022,7 +2023,7 @@ begin
   if (Index < 0) then
     Exit;
 
-  Result := 'begin Result := ToString['+IntToStr(Index)+'](Param0); end;';
+  Result := 'begin Result := System.ToString['+IntToStr(Index)+'](Param0); end;';
 end;
 
 function TLapeType_SubRange.VarToString(AVar: Pointer): lpString;
@@ -2180,8 +2181,8 @@ begin
       Result := Result + #39 + FMemberMap[i] + #39;
     end;
   Result := Format(
-    'type TEnumToString = function(const Arr; Index, Lo, Hi: Int32): string;' + LineEnding +
-    'begin Result := TEnumToString('+AIA+'_EnumToString)([%s], Ord(Param0), %d, %d); end;',
+    'type TEnumToString = function(const Arr; Index, Lo, Hi: System.Int32): System.string;' + LineEnding +
+    'begin Result := TEnumToString('+AIA+'System._EnumToString)([%s], System.Ord(Param0), %d, %d); end;',
     [Result, FRange.Lo, FRange.Hi]
   );
 end;
@@ -2465,12 +2466,12 @@ begin
   if (Index < 0) then
     Exit;
 
-  Result := 'type TSetToString = function(const ASet; AToString: Pointer; Lo, Hi: Int32): string;' + LineEnding + 'begin ';
+  Result := 'type TSetToString = function(const ASet; AToString: System.Pointer; Lo, Hi: System.Int32): System.string;' + LineEnding + 'begin ';
   if FSmall then
-    Result := Result + 'Result := TSetToString('+AIA+'_SmallSetToString)'
+    Result := Result + 'Result := TSetToString('+AIA+'System._SmallSetToString)'
   else
-    Result := Result + 'Result := TSetToString('+AIA+'_LargeSetToString)';
-  Result := Format(Result + '(Param0, '+AIA+'ToString[%d], %d, %d); end;', [Index, FRange.Range.Lo, FRange.Range.Hi]);
+    Result := Result + 'Result := TSetToString('+AIA+'System._LargeSetToString)';
+  Result := Format(Result + '(Param0, '+AIA+'System.ToString[%d], %d, %d); end;', [Index, FRange.Range.Lo, FRange.Range.Hi]);
 end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;
@@ -2549,10 +2550,10 @@ end;
 
 function TLapeType_Pointer.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 begin
-  Result := 'begin Result := ToString(Pointer(Param0));';
+  Result := 'begin Result := System.ToString(Pointer(Param0));';
   if HasType() and (ToStr <> nil) and (ToStr.getMethod(getTypeArray([PType])) <> nil) then
     Result := Result + 'if (Param0 <> nil) then ' +
-      'try Result := Result + '#39' ('#39' + ToString(Param0^) + '#39')'#39'; except end;';
+      'try Result := Result + '#39' ('#39' + System.ToString(Param0^) + '#39')'#39'; except end;';
   Result := Result + 'end;';
 end;
 
@@ -2753,22 +2754,22 @@ begin
     Exit;
 
   Result :=
-    '  function _ElementToString(const p: Pointer): string;'                                + LineEnding +
+    '  function _ElementToString(const p: System.Pointer): System.string;'                  + LineEnding +
     '  begin'                                                                               + LineEnding +
-    '    Result := ToString['+IntToStr(Index)+'](p^);'                                      + LineEnding +
+    '    Result := System.ToString['+IntToStr(Index)+'](p^);'                               + LineEnding +
     '  end;'                                                                                + LineEnding +
     'type'                                                                                  + LineEnding +
-    '  TArrayToString = function(const Arr; AToString: Pointer; Len, Size: Int32): string;' + LineEnding +
+    '  TArrayToString = function(const Arr; AToString: System.Pointer; Len, Size: System.Int32): System.string;' + LineEnding +
     'var'                                                                                   + LineEnding +
-    '  Len: Int32;'                                                                         + LineEnding +
+    '  Len: System.Int32;'                                                                  + LineEnding +
     'begin'                                                                                 + LineEnding +
-    '  Len := Length(Param0);'                                                              + LineEnding +
+    '  Len := System.Length(Param0);'                                                       + LineEnding +
     '  if (Len <= 0) then'                                                                  + LineEnding +
     '    Result := '#39'[]'#39''                                                            + LineEnding +
     '  else'                                                                                + LineEnding +
-    '    Result := TArrayToString('+AIA+'_ArrayToString)('                                  + LineEnding +
+    '    Result := TArrayToString('+AIA+'System._ArrayToString)('                           + LineEnding +
     '      Param0['+IntToStr(VarLo().AsInteger)+'],'                                        + LineEnding +
-    '      '+AIA+'_ElementToString, Len, SizeOf(Param0[0]));'                               + LineEnding +
+    '      '+AIA+'_ElementToString, Len, System.SizeOf(Param0[0]));'                        + LineEnding +
     'end;';
 end;
 
@@ -3738,7 +3739,7 @@ begin
   begin
     if (i > 0) then
       Result := Result + ' + ' + #39', '#39;
-    Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + ToString(Param0.' + FFieldMap.Key[i] + ')';
+    Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(Param0.' + FFieldMap.Key[i] + ')';
   end;
   Result := Result + ' + '#39'}'#39'; end;';
 end;
@@ -4871,7 +4872,9 @@ function TLapeStackInfo.addDeclaration(Decl: TLapeDeclaration): Integer;
 begin
   if (Decl = nil) then
     Result := -1
-  else if FList.ExistsItem(Decl) or ((Decl.Name <> '') and hasDeclaration(Decl.Name)) then
+  else if FList.ExistsItem(Decl) or ((Decl.Name <> '') and hasDeclaration(Decl.Name)) or
+         (Pos(LapeCase('|'+Decl.Name+'|'), LapeReservedLocals) > 0)
+  then
     LapeExceptionFmt(lpeDuplicateDeclaration, [Decl.Name]);
   Result := FList.add(Decl);
 end;
@@ -5877,6 +5880,7 @@ begin
 end;
 
 initialization
+  LapeReservedLocals := LapeCase(LapeReservedLocals);
   EmptyStackInfo := TLapeEmptyStack.Create();
 finalization
   EmptyStackInfo.Free();
