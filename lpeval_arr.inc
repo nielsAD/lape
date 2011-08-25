@@ -2437,6 +2437,11 @@ Arr[op_Assign][ltVariant][ltWideString] := @lpeVariant_ASGN_WString;
 Arr[op_Assign][ltVariant][ltUnicodeString] := @lpeVariant_ASGN_UString;
 
 //Boolean
+Arr[op_NOT][ltBoolean][ltUnknown] := @lpeBoolean_NOT;
+Arr[op_NOT][ltByteBool][ltUnknown] := Arr[op_NOT][ltBoolean][ltUnknown];
+Arr[op_NOT][ltWordBool][ltUnknown] := @lpeWBool_NOT;
+Arr[op_NOT][ltLongBool][ltUnknown] := @lpeLBool_NOT;
+
 Arr[op_Assign][ltBoolean][ltVariant] := @lpeBoolean_ASGN_Variant;
 Arr[op_Assign][ltByteBool][ltVariant] := Arr[op_Assign][ltBoolean][ltVariant];
 Arr[op_Assign][ltWordBool][ltVariant] := @lpeWBool_ASGN_Variant;

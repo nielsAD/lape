@@ -2437,6 +2437,11 @@ Arr[op_Assign][ltVariant][ltWideString] := ltVariant;
 Arr[op_Assign][ltVariant][ltUnicodeString] := ltVariant;
 
 //Boolean
+Arr[op_NOT][ltBoolean][ltUnknown] := ltBoolean;
+Arr[op_NOT][ltByteBool][ltUnknown] := ltByteBool;
+Arr[op_NOT][ltWordBool][ltUnknown] := ltWordBool;
+Arr[op_NOT][ltLongBool][ltUnknown] := ltLongBool;
+
 Arr[op_Assign][ltBoolean][ltVariant] := ltBoolean;
 Arr[op_Assign][ltByteBool][ltVariant] := ltByteBool;
 Arr[op_Assign][ltWordBool][ltVariant] := ltWordBool;

@@ -425,7 +425,7 @@ const
   NullRange: TLapeRange = (Lo: 0; Hi: 0);
 
   UnaryOperators = [op_Addr, op_Deref, op_NOT, op_UnaryMinus, op_UnaryPlus];
-  BinaryOperators = [op_AND, op_NOT, op_OR, op_XOR];
+  BinaryOperators = [op_AND, op_OR, op_XOR];
   CompareOperators = [op_cmp_Equal, op_cmp_GreaterThan, op_cmp_GreaterThanOrEqual, op_cmp_LessThan, op_cmp_LessThanOrEqual, op_cmp_NotEqual];
   EnumOperators = [op_Plus, op_Minus, op_Assign] + CompareOperators;
 

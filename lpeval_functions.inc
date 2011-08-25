@@ -2436,6 +2436,10 @@ procedure lpeVariant_ASGN_WString(const Dest, Left, Right: Pointer); begin PVari
 procedure lpeVariant_ASGN_UString(const Dest, Left, Right: Pointer); begin PVariant(Dest)^ := PUnicodeString(Left)^; end;
 
 //Boolean
+procedure lpeBoolean_NOT(const Dest, Left, Right: Pointer); begin PBoolean(Dest)^ := not PBoolean(Left)^; end;
+procedure lpeWBool_NOT(const Dest, Left, Right: Pointer); begin PWordBool(Dest)^ := not PWordBool(Left)^; end;
+procedure lpeLBool_NOT(const Dest, Left, Right: Pointer); begin PLongBool(Dest)^ := not PLongBool(Left)^; end;
+
 procedure lpeBoolean_ASGN_Variant(const Dest, Left, Right: Pointer); begin PBoolean(Dest)^ := PVariant(Left)^; end;
 procedure lpeWBool_ASGN_Variant(const Dest, Left, Right: Pointer); begin PWordBool(Dest)^ := PVariant(Left)^; end;
 procedure lpeLBool_ASGN_Variant(const Dest, Left, Right: Pointer); begin PLongBool(Dest)^ := PVariant(Left)^; end;
