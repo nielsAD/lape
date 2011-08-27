@@ -69,7 +69,11 @@ type
 
     procedure Spill(Unlock: Integer = 0);
     function IncLock(Count: Integer = 1): TResVar;
-    function Declock(Count: Integer = 1): TResVar;
+    function DecLock(Count: Integer = 1): TResVar;
+
+    procedure IncOffset(Offset: Integer);
+    procedure DecOffset(Offset: Integer);
+    procedure setOffset(Offset: Integer);
 
     procedure setConstant(IsConst: Boolean; ChangeStack: Boolean); overload;
     procedure setConstant(IsConst: Boolean); overload;
@@ -589,6 +593,7 @@ type
     function getAsString: lpString; override;
     function getParamSize: Integer; override;
   public
+    constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); override;
     constructor Create(AMethod: TLapeType_Method); overload; virtual;
     function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean; override;
 
@@ -960,13 +965,34 @@ begin
     TLapeStackTempVar(VarPos.StackVar).IncLock(Count);
 end;
 
-function TResVar.Declock(Count: Integer = 1): TResVar;
+function TResVar.DecLock(Count: Integer = 1): TResVar;
 begin
   Result := Self;
   if (Count > 0) and (VarPos.MemPos = mpVar) and
      (VarPos.StackVar <> nil) and (VarPos.StackVar is TLapeStackTempVar)
   then
     TLapeStackTempVar(VarPos.StackVar).DecLock(Count);
+end;
+
+procedure TResVar.IncOffset(Offset: Integer);
+begin
+  if VarPos.isPointer or ((VarPos.MemPos = mpVar) and (VarPos.StackVar <> nil)) then
+    Inc(VarPos.Offset, Offset)
+  else if (VarPos.MemPos = mpMem) and (VarPos.GlobalVar <> nil) then
+    Inc(PtrInt(VarPos.GlobalVar.FPtr), Offset)
+  else if (VarPos.MemPos = mpStack) then
+    Dec(VarPos.Offset, Offset);
+end;
+
+procedure TResVar.DecOffset(Offset: Integer);
+begin
+  IncOffset(-Offset);
+end;
+
+procedure TResVar.setOffset(Offset: Integer);
+begin
+  VarPos.Offset := 0;
+  IncOffset(Offset);
 end;
 
 procedure TResVar.setConstant(IsConst: Boolean; ChangeStack: Boolean);
@@ -3522,7 +3548,7 @@ begin
   begin
     if (not Result.VarPos.isPointer) then
       LapeException(lpeImpossible);
-    Result.VarPos.Offset := -FPType.Size;
+    Result.DecOffset(FPType.Size);
   end;
 end;
 
@@ -3878,23 +3904,11 @@ begin
 
     Result.VarType := FFieldMap[FieldName].FieldType;
     case Left.VarPos.MemPos of
-      mpMem:
-        begin
-          Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + FFieldMap[FieldName].Offset)), True));
-          Result.VarPos.GlobalVar.isConstant := Left.VarPos.GlobalVar.isConstant;
-        end;
-      mpVar:
-        begin
-          Result.VarPos.Offset := Result.VarPos.Offset + FFieldMap[FieldName].Offset;
-          Result.VarPos.StackVar.isConstant := Left.VarPos.StackVar.isConstant;
-        end;
-      mpStack:
-        begin
-          Result.VarPos.Offset := Result.VarPos.Offset - FFieldMap[FieldName].Offset;
-          Result.VarPos.ForceVariable := Left.VarPos.ForceVariable;
-        end;
+      mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + FFieldMap[FieldName].Offset)), True));
+      mpVar, mpStack: Result.IncLock(FFieldMap[FieldName].Offset);
       else LapeException(lpeImpossible);
-    end
+    end;
+    Result.isConstant := Left.isConstant;
   end
   else if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
@@ -3973,7 +3987,7 @@ begin
           FieldVar.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset)), True))
         else
           FieldVar.VarPos.GlobalVar := FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset));
-      mpVar: FieldVar.VarPos.Offset := FieldVar.VarPos.Offset + FFieldMap.ItemsI[i].Offset;
+      mpVar: FieldVar.IncOffset(FFieldMap.ItemsI[i].Offset);
       else LapeException(lpeImpossible);
     end;
 
@@ -4284,13 +4298,19 @@ begin
   Result := Result + SizeOf(Pointer);
 end;
 
+
+constructor TLapeType_MethodOfObject.Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FMethodRecord := FCompiler.getGlobalType('TMethod') as TLapeType_Record;
+  Assert(FMethodRecord <> nil);
+end;
+
 constructor TLapeType_MethodOfObject.Create(AMethod: TLapeType_Method);
 begin
   Assert(AMethod <> nil);
-  inherited Create(AMethod.Compiler, AMethod.Params, AMethod.Res, AMethod.Name, @AMethod._DocPos);
+  Create(AMethod.Compiler, AMethod.Params, AMethod.Res, AMethod.Name, @AMethod._DocPos);
   FBaseType := AMethod.BaseType;
-  FMethodRecord := FCompiler.getGlobalType('TMethod') as TLapeType_Record;
-  Assert(FMethodRecord <> nil);
 end;
 
 function TLapeType_MethodOfObject.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean;

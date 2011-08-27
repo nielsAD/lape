@@ -575,7 +575,7 @@ begin
   addGlobalType(getBaseType(ltString).createCopy(), 'String');
   addGlobalType(getBaseType(ltChar).createCopy(), 'Char');
   addGlobalType(getBaseType(ltEvalBool).createCopy(), 'EvalBool');
-  addGlobalType('packed record Func, Obj: Pointer; end;', 'TMethod');
+  addGlobalType('packed record Method, Self: Pointer; end;', 'TMethod');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeInt), True)).createCopy(), 'SizeInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeUInt), False)).createCopy(), 'SizeUInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(NativeInt), True)).createCopy(), 'NativeInt');
