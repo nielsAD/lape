@@ -229,7 +229,10 @@ type
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
   end;
 
-procedure InitializePascalScriptBasics(Compiler: TLapeCompiler);
+  PSInit = (psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions, psiUselessTypes);
+  PSInitSet = set of PSInit;
+
+procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);
 
 implementation
 
@@ -237,36 +240,74 @@ uses
   Variants,
   lpexceptions, lpinterpreter, lpeval;
 
-procedure InitializePascalScriptBasics(Compiler: TLapeCompiler);
+procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);
 begin
   if (Compiler = nil) then
     Exit;
 
   with Compiler do
   begin
-    InternalMethodMap['GetArrayLength'] := InternalMethodMap['Length'];
-    InternalMethodMap['SetArrayLength'] := InternalMethodMap['SetLength'];
+    if (psiMagicMethod in Initialize) then
+    begin
+      InternalMethodMap['GetArrayLength'] := InternalMethodMap['Length'];
+      InternalMethodMap['SetArrayLength'] := InternalMethodMap['SetLength'];
+    end;
 
-    addGlobalType(getBaseType(DetermineIntType(SizeOf(Byte), False)).createCopy(), 'Byte');
-    addGlobalType(getBaseType(DetermineIntType(SizeOf(ShortInt), True)).createCopy(), 'ShortInt');
-    addGlobalType(getBaseType(DetermineIntType(SizeOf(Word), False)).createCopy(), 'Word');
-    addGlobalType(getBaseType(DetermineIntType(SizeOf(SmallInt), True)).createCopy(), 'SmallInt');
-    addGlobalType(getBaseType(DetermineIntType(SizeOf(LongWord), False)).createCopy(), 'LongWord');
-    addGlobalType(getBaseType(DetermineIntType(SizeOf(LongInt), True)).createCopy(), 'LongInt');
-    addGlobalType(getBaseType(DetermineIntType(SizeOf(Cardinal), False)).createCopy(), 'Cardinal');
-    addGlobalType(getBaseType(DetermineIntType(SizeOf(Integer), True)).createCopy(), 'Integer');
-    addGlobalType(getPointerType(ltChar).createCopy(), 'PChar');
+    if (psiTypeAlias in Initialize) then
+    begin
+      addGlobalType(getBaseType(DetermineIntType(SizeOf(Byte), False)).createCopy(), 'Byte');
+      addGlobalType(getBaseType(DetermineIntType(SizeOf(ShortInt), True)).createCopy(), 'ShortInt');
+      addGlobalType(getBaseType(DetermineIntType(SizeOf(Word), False)).createCopy(), 'Word');
+      addGlobalType(getBaseType(DetermineIntType(SizeOf(SmallInt), True)).createCopy(), 'SmallInt');
+      addGlobalType(getBaseType(DetermineIntType(SizeOf(LongWord), False)).createCopy(), 'LongWord');
+      addGlobalType(getBaseType(DetermineIntType(SizeOf(LongInt), True)).createCopy(), 'LongInt');
+      addGlobalType(getBaseType(DetermineIntType(SizeOf(Cardinal), False)).createCopy(), 'Cardinal');
+      addGlobalType(getBaseType(DetermineIntType(SizeOf(Integer), True)).createCopy(), 'Integer');
+      addGlobalType(getPointerType(ltChar).createCopy(), 'PChar');
+    end;
 
-    addDelayedCode(
-      'function StrGet(var s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
-      'function StrGet2(s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
-      'procedure StrSet(c: Char; Index: SizeInt; var s: string); begin s[Index] := c; end;' + LineEnding +
-      'function WStrGet(var s: WideString; Index: SizeInt): WideChar; begin Result := s[Index]; end;' + LineEnding +
-      'function VarArrayGet(var s: Variant; Index: Int32): Variant; overload; begin Result := VarArrayGet(s, [Index]); end;' + LineEnding +
-      'procedure VarArraySet(c: Variant; Index: Int32; var s: Variant); overload; begin VarArraySet(s, c, [Index]); end;' + LineEnding +
-      'function PadZ(s: string; Len: SizeInt): string; begin Result := PadL(s, Len, ''0''); end;' + LineEnding +
-      'function Replicate(c: Char; l: SizeInt): string; begin Result := StringOfChar(c, l); end;'
-    );
+    if (psiUselessTypes in Initialize) then
+    begin
+      addGlobalType(getPointerType({$IFDEF Delphi}ltUnicodeString{$ELSE}ltAnsiString{$ENDIF}).createCopy(), 'NativeString');
+      addGlobalType(getPointerType(ltString).createCopy(), 'AnyString');
+      addGlobalType(getPointerType(ltString).createCopy(), 'tbtString');
+      addGlobalType(getPointerType(ltPointer).createCopy(), '___Pointer');
+      addGlobalType('array of Variant', 'TVariantArray');
+    end;
+
+    if (psiFunctionWrappers in Initialize) then
+      addDelayedCode(
+        'function StrGet(var s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
+        'function StrGet2(s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
+        'procedure StrSet(c: Char; Index: SizeInt; var s: string); begin s[Index] := c; end;' + LineEnding +
+        'function WStrGet(var s: WideString; Index: SizeInt): WideChar; begin Result := s[Index]; end;' + LineEnding +
+        'function VarArrayGet(var s: Variant; Index: Int32): Variant; overload; begin Result := VarArrayGet(s, [Index]); end;' + LineEnding +
+        'procedure VarArraySet(c: Variant; Index: Int32; var s: Variant); overload; begin VarArraySet(s, c, [Index]); end;' + LineEnding +
+        'function PadZ(s: string; Len: SizeInt): string; begin Result := PadL(s, Len, ''0''); end;' + LineEnding +
+        'function Replicate(c: Char; l: SizeInt): string; begin Result := StringOfChar(c, l); end;' + LineEnding +
+        'function Int64ToStr(i: Int64): string; begin Result := IntToStr(i); end;' + LineEnding +
+        'function UInt64ToStr(i: UInt64): string; begin Result := IntToStr(i); end;'
+      );
+
+    if (psiExceptions in Initialize) then
+    begin
+      addGlobalType('('+
+        'erNoError, erCannotImport, erInvalidType, ErInternalError,' +
+        'erInvalidHeader, erInvalidOpcode, erInvalidOpcodeParameter,' +
+        'erNoMainProc, erOutOfGlobalVarsRange, erOutOfProcRange, erOutOfRange,' +
+        'erOutOfStackRange, erTypeMismatch, erUnexpectedEof, erVersionError,' +
+        'erDivideByZero, erMathError, erCouldNotCallProc, erOutofRecordRange,' +
+        'erOutOfMemory, erException, erNullPointerException, erNullVariantError,' +
+        'erInterfaceNotSupported, erCustomError)',
+        'TIFException');
+      addDelayedCode(
+        'function ExceptionToString(Ex: TIFException; Param: string): string; begin ' +
+          'Result := ToString(Ex);'                                                   +
+          'if (Param <> '''') then Result := Result + ''('' + Param + '')'';'         +
+        'end;'                                                                        + LineEnding +
+        'procedure RaiseException(Ex: TIFException; Param: string); overload; begin RaiseException(ExceptionToString(Ex, Param)); end;'
+      );
+    end;
   end;
 end;
 
@@ -586,9 +627,11 @@ begin
   addGlobalVar(False, 'False').isConstant := True;
   addGlobalVar(nil, 'nil').isConstant := True;
 
+  addGlobalFunc('function Assigned(p: Pointer): EvalBool;', @_LapeAssigned);
+  //addGlobalFunc('procedure RaiseException(Ex: TExceptionObject); overload;', @_LapeRaise);
+  addGlobalFunc('procedure RaiseException(Ex: string); overload;', @_LapeRaiseString);
   addGlobalFunc('procedure _assert(Expr: EvalBool); overload;', @_LapeAssert);
   addGlobalFunc('procedure _assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
-  addGlobalFunc('function Assigned(p: Pointer): EvalBool;', @_LapeAssigned);
 
   {$I lpeval_import_math.inc}
   {$I lpeval_import_string.inc}
@@ -2605,7 +2648,7 @@ begin
   if (not hasTokenizer()) then
     SetLength(FTokenizers, 1);
 
-  if (FImporting <> nil) then
+  if Importing and ((FTokenizers[0] = nil) or (FTokenizers[0].PeekNoJunk() in [tk_NULL, tk_sym_SemiColon])) then
     Result := nil
   else
   begin
@@ -2653,7 +2696,7 @@ procedure TLapeCompiler.freeTempTokenizerState(const State: Pointer);
 begin
   if (State = nil) then
   begin
-    if (FImporting <> nil) and (FTokenizers[0] <> nil) then
+    if Importing and (FTokenizers[0] <> nil) then
       FreeAndNil(FTokenizers[0]);
     Exit;
   end;
@@ -2669,13 +2712,13 @@ end;
 
 procedure TLapeCompiler.StartImporting;
 begin
-  if (FImporting = nil) then
+  if (not Importing) then
     FImporting := getTempTokenizerState(nil);
 end;
 
 procedure TLapeCompiler.EndImporting;
 begin
-  if (FImporting <> nil) then
+  if Importing then
   begin
     resetTokenizerState(FImporting);
     FImporting := nil;

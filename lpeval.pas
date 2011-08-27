@@ -26,6 +26,8 @@ procedure _LapeWrite(const Params: PParamArray);
 procedure _LapeWriteLn(const Params: PParamArray);
 
 procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer);
+procedure _LapeRaise(const Params: PParamArray);
+procedure _LapeRaiseString(const Params: PParamArray);
 procedure _LapeAssert(const Params: PParamArray);
 procedure _LapeAssertMsg(const Params: PParamArray);
 
@@ -260,6 +262,16 @@ end;
 procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer);
 begin
   PEvalBool(Result)^ := Assigned(PPointer(Params^[0])^);
+end;
+
+procedure _LapeRaise(const Params: PParamArray);
+begin
+  raise Exception(Params^[0]^);
+end;
+
+procedure _LapeRaiseString(const Params: PParamArray);
+begin
+  LapeException(PlpString(Params^[0])^);
 end;
 
 procedure _LapeAssert(const Params: PParamArray);
