@@ -56,6 +56,7 @@ type
       mpStack: (ForceVariable: Boolean);
   end;
 
+  PResVar = ^TResVar;
   TResVar = {$IFDEF FPC}object{$ELSE}record{$ENDIF}
   private
     function getVariable: Boolean;
@@ -90,7 +91,6 @@ type
   end;
   TLapeParameterList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeParameter>;
 
-  PLapeVar = ^TLapeVar;
   TLapeVar = class(TLapeDeclaration)
   protected
     function getBaseType: ELapeBaseType; virtual;
@@ -632,7 +632,7 @@ type
   end;
 
   TLapeWithDeclRec = record
-    WithVar: PLapeVar;
+    WithVar: PResVar;
     WithType: TLapeType;
   end;
   TLapeWithDeclarationList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeWithDeclRec>;
@@ -5552,13 +5552,13 @@ procedure TLapeCompilerBase.EmitCode(ACode: lpString; AVarNames: array of lpStri
 var
   FreeStack: Boolean;
   VarRefs: TLapeType_VarRefMap;
-  VarRefsVar: TLapeGlobalVar;
+  VarRefsVar: TResVar;
   WithVar: TLapeWithDeclRec;
   i: Integer;
 begin
   Assert(Length(AVarNames) = Length(AVars) + Length(AResVars));
   VarRefs := nil;
-  VarRefsVar := nil;
+  VarRefsVar := NullResVar;
   WithVar := NullWithDecl;
 
   FreeStack := (FStackInfo = nil);
@@ -5574,7 +5574,7 @@ begin
         VarRefs.addVar(AResVars[i - Length(AVars)], AVarNames[i]);
 
     VarRefs.addVar(getGlobalVar('System'), 'System');
-    VarRefsVar := VarRefs.NewGlobalVarP();
+    VarRefsVar := _ResVar.New(VarRefs.NewGlobalVarP());
 
     WithVar.WithType := VarRefs;
     WithVar.WithVar := @VarRefsVar;
@@ -5586,8 +5586,8 @@ begin
       FStackInfo.delWith(1);
     end;
   finally
-    if (VarRefsVar <> nil) then
-      VarRefsVar.Free();
+    if (VarRefsVar.VarPos.GlobalVar <> nil) then
+      VarRefsVar.VarPos.GlobalVar.Free();
     if (VarRefs <> nil) then
       VarRefs.Free();
     if FreeStack then

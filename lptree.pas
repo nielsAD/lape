@@ -508,7 +508,7 @@ type
   TLapeTree_With = class(TLapeTree_Base)
   protected
     FWithList: TLapeExpressionList;
-    FVarList: array of TLapeVar;
+    FVarList: array of TResVar;
     FBody: TLapeTree_Base;
     procedure setBody(Node: TLapeTree_Base); virtual;
   public
@@ -1908,7 +1908,7 @@ begin
         Result.VarType := FCompiler.getBaseType(ltPointer);
 
         Result.IncOffset(SizeOf(Pointer));
-        AssignToStack(Result, Ident.DocPos);
+        AssignToStack(Result, Ident.DocPos, False);
         Result.DecOffset(SizeOf(Pointer));
       end;
 
@@ -3507,9 +3507,9 @@ end;
 function TLapeTree_WithVar.isConstant: Boolean;
 begin
   Result := (FWithDeclRec.WithVar <> nil) and
-    (FWithDeclRec.WithVar^ <> nil) and
-    (FWithDeclRec.WithVar^ is TLapeGlobalVar) and
-    TLapeGlobalVar(FWithDeclRec.WithVar^).isConstant;
+    (FWithDeclRec.WithVar^.VarPos.MemPos = mpMem) and
+    (FWithDeclRec.WithVar^.VarPos.GlobalVar <> nil) and
+    FWithDeclRec.WithVar^.VarPos.GlobalVar.isConstant;
 end;
 
 function TLapeTree_WithVar.resType: TLapeType;
@@ -3520,24 +3520,16 @@ end;
 function TLapeTree_WithVar.Evaluate: TLapeGlobalVar;
 begin
   if isConstant then
-    Result := TLapeGlobalVar(FWithDeclRec.WithVar^)
+    Result := FWithDeclRec.WithVar^.VarPos.GlobalVar
   else
     Result := nil;
 end;
 
 function TLapeTree_WithVar.Compile(var Offset: Integer): TResVar;
 begin
-  if (FWithDeclRec.WithVar = nil) or (FWithDeclRec.WithVar^ = nil) then
+  if (FWithDeclRec.WithVar = nil) or (FWithDeclRec.WithVar^.VarPos.MemPos = NullResVar.VarPos.MemPos) then
     LapeException(lpeInvalidWithReference, DocPos);
-  Result := _ResVar.New(FWithDeclRec.WithVar^);
-  if (Result.VarType <> FWithDeclRec.WithType) and
-     Result.HasType() and (Result.VarType.BaseType = ltPointer) and
-     (not Result.VarType.Equals(FWithDeclRec.WithType))
-  then
-  begin
-    Result.VarType := FWithDeclRec.WithType;
-    Result.VarPos.isPointer := True;
-  end;
+  Result := FWithDeclRec.WithVar^.IncLock();
 end;
 
 constructor TLapeTree_VarType.Create(AVarType: TLapeType; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
@@ -4018,9 +4010,9 @@ begin
     SetLength(FVarList, FWithList.Count);
 
     if (AWith is TLapeTree_GlobalVar) and TLapeTree_GlobalVar(AWith).isConstant then
-      FVarList[i] := TLapeTree_GlobalVar(AWith).GlobalVar
+      FVarList[i] := _ResVar.New(TLapeTree_GlobalVar(AWith).GlobalVar)
     else
-      FVarList[i] := nil;
+      FVarList[i] := NullResVar;
 
     Result.WithVar := @FVarList[i];
     Result.WithType := AWith.resType();
@@ -4039,19 +4031,21 @@ begin
   Result := NullResVar;
 
   SetLength(ResVarList, Length(FVarList));
+  for i := 0 to High(FVarList) do
+    ResVarList[i] := FVarList[i].IncLock(BigLock);
+
   NewStack := (FCompiler.StackInfo = nil);
   if NewStack then
     FCompiler.IncStackInfo(True);
 
   for i := 0 to FWithList.Count - 1 do
-    if (FVarList[i] = nil) then
+    if (FVarList[i].VarPos.MemPos = NullResVar.VarPos.MemPos) then
     begin
       if (not FWithList[i].CompileToTempVar(Offset, ResVarList[i], BigLock)) or
          (ResVarList[i].VarPos.MemPos in [mpNone, mpStack])
       then
         LapeException(lpeInvalidCondition, FWithList[i].DocPos);
-
-      FVarList[i] := ResVarList[i].VarPos.StackVar;
+      FVarList[i] := ResVarList[i];
     end;
 
   if (FBody <> nil) then

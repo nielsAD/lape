@@ -2826,22 +2826,18 @@ function TLapeCompiler.getDeclarationNoWith(AName: lpString; AStackInfo: TLapeSt
 begin
   Result := getDeclaration(AName, AStackInfo, LocalOnly);
   if (Result is TLapeWithDeclaration) then
-    with TLapeWithDeclaration(Result), WithDeclRec do
+    try
+      with TLapeWithDeclaration(Result), TLapeTree_Operator.Create(op_Dot, Self) do
       try
-        if (not ((WithVar <> nil) and (WithVar^ <> nil) and (WithVar^ is TLapeGlobalVar) and TLapeGlobalVar(WithVar^).isConstant)) then
-          Result := nil
-        else
-          with TLapeTree_Operator.Create(op_Dot, Self) do
-          try
-            Left := TLapeTree_WithVar.Create(WithDeclRec, Self);
-            Right := TLapeTree_Field.Create(AName, Self);
-            Result := Evaluate();
-          finally
-            Free();
-          end;
+        Left := TLapeTree_WithVar.Create(WithDeclRec, Self);
+        Right := TLapeTree_Field.Create(AName, Self);
+        Result := Evaluate();
       finally
         Free();
       end;
+    finally
+      Free();
+    end;
 end;
 
 function TLapeCompiler.getDeclarationNoWith(AName: lpString; LocalOnly: Boolean = False): TLapeDeclaration;
