@@ -3905,7 +3905,8 @@ begin
     Result.VarType := FFieldMap[FieldName].FieldType;
     case Left.VarPos.MemPos of
       mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + FFieldMap[FieldName].Offset)), True));
-      mpVar, mpStack: Result.IncLock(FFieldMap[FieldName].Offset);
+      mpVar,
+      mpStack: Result.IncOffset(FFieldMap[FieldName].Offset);
       else LapeException(lpeImpossible);
     end;
     Result.isConstant := Left.isConstant;
