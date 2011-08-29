@@ -4330,9 +4330,9 @@ begin
       Right := m.VarType;
   end;
 
-  if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
+  if (Op in [op_cmp_Equal, op_cmp_NotEqual, op_Assign]) then
     Result := inherited
-  else if (Right <> nil) and Right.Equals(Self) then
+  else if CompatibleWith(Right) then
     Result := FMethodRecord.EvalRes(Op, FMethodRecord)
   else
     Result := FMethodRecord.EvalRes(Op, Right);
@@ -4359,7 +4359,7 @@ begin
   try
     if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
       Result := inherited
-    else if (Right <> nil) and Equals(Right.VarType) then
+    else if CompatibleWith(Right.VarType) then
     try
       VarType := Right.VarType;
       Right.VarType := FMethodRecord;
@@ -4393,7 +4393,7 @@ begin
   try
     if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
       Result := inherited
-    else if Equals(Right.VarType) then
+    else if CompatibleWith(Right.VarType) then
     try
       VarType := Right.VarType;
       Right.VarType := FMethodRecord;

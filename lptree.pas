@@ -376,7 +376,7 @@ type
   public
     constructor Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload;
     constructor Create(AStr: lpString; ASource: TLapeTree_Base); overload;
-    constructor Create(AValue: Integer; ASource: TLapeTree_Base); overload;
+    constructor Create(AValue: Int64; ASource: TLapeTree_Base); overload;
   end;
 
   TLapeTree_Float = class(TLapeTree_GlobalVar)
@@ -3559,7 +3559,7 @@ begin
   FCompilerOptions := ASource.CompilerOptions;
 end;
 
-constructor TLapeTree_Integer.Create(AValue: Integer; ASource: TLapeTree_Base);
+constructor TLapeTree_Integer.Create(AValue: Int64; ASource: TLapeTree_Base);
 begin
   Create(IntToStr(AValue), ASource);
 end;

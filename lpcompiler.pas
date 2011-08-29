@@ -2079,8 +2079,8 @@ begin
         tk_typ_Integer_Hex: PushVarStack(TLapeTree_Integer.Create(IntToStr(Tokenizer.TokInt64), Self, getPDocPos()));
         tk_typ_Integer_Bin: PushVarStack(TLapeTree_Integer.Create(IntToStr(Tokenizer.TokInt64), Self, getPDocPos()));
         tk_typ_Float: PushVarStack(TLapeTree_Float.Create(Tokenizer.TokString, Self, getPDocPos()));
+        tk_typ_Char,
         tk_typ_String: ParseAndPushString();
-        tk_typ_Char: ParseAndPushString();
 
         tk_Identifier:
           begin
