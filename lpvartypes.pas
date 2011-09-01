@@ -229,6 +229,7 @@ type
     property AsString: lpString read getAsString;
   end;
 
+  TLapeTTypeClass = class of TLapeType_Type;
   TLapeType_Type = class(TLapeType)
   protected
     FTType: TLapeType;
@@ -237,11 +238,14 @@ type
     constructor Create(AType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy: TLapeType; override;
 
+    property TType: TLapeType read FTType;
+  end;
+
+  TLapeType_TypeEnum = class(TLapeType_Type)
+  public
     function HasChild(AName: lpString): Boolean; override;
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
-
-    property TType: TLapeType read FTType;
   end;
 
   {$IFDEF FPC}generic{$ENDIF} TLapeType_Integer<_Type> = class(TLapeType)
@@ -1821,18 +1825,16 @@ begin
 end;
 
 function TLapeType_Type.CreateCopy: TLapeType;
-type
-  TLapeClassType = class of TLapeType_Type;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FTType, FCompiler, Name, @_DocPos);
+  Result := TLapeTTypeClass(Self.ClassType).Create(FTType, FCompiler, Name, @_DocPos);
 end;
 
-function TLapeType_Type.HasChild(AName: lpString): Boolean;
+function TLapeType_TypeEnum.HasChild(AName: lpString): Boolean;
 begin
   Result := (FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(AName);
 end;
 
-function TLapeType_Type.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
+function TLapeType_TypeEnum.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
 begin
   if (Op = op_Dot) and (FTType <> nil) and (Right <> nil) and (Right.BaseType = ltString) and
      (FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(PlpString(Right.Ptr)^)
@@ -1842,7 +1844,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Type.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_TypeEnum.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
 var
   FieldName: lpString;
 begin
@@ -5803,8 +5805,14 @@ begin
 end;
 
 function TLapeCompilerBase.getTypeVar(AType: TLapeType): TLapeGlobalVar;
+var
+  TType: TLapeTTypeClass;
 begin
-  Result := addManagedVar(addManagedType(TLapeType_Type.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
+  if (AType is TLapeType_Enum) then
+    TType := TLapeType_TypeEnum
+  else
+    TType := TLapeType_Type;
+  Result := addManagedVar(addManagedType(TType.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
 end;
 
 function TLapeCompilerBase.getGlobalVar(AName: lpString): TLapeGlobalVar;
