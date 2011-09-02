@@ -10,30 +10,6 @@
 ocJmp: DoJmp();
 ocJmpR: DoJmpR();
 
-//jump if
-{
-ocJmpIf8_Stk: DoJmpIf8_Stk();
-ocJmpIf16_Stk: DoJmpIf16_Stk();
-ocJmpIf32_Stk: DoJmpIf32_Stk();
-ocJmpIf64_Stk: DoJmpIf64_Stk();
-ocJmpIf8_Var: DoJmpIf8_Var();
-ocJmpIf16_Var: DoJmpIf16_Var();
-ocJmpIf32_Var: DoJmpIf32_Var();
-ocJmpIf64_Var: DoJmpIf64_Var();
-ocJmpIf8_Ptr: DoJmpIf8_Ptr();
-ocJmpIf16_Ptr: DoJmpIf16_Ptr();
-ocJmpIf32_Ptr: DoJmpIf32_Ptr();
-ocJmpIf64_Ptr: DoJmpIf64_Ptr();
-ocJmpIf8_PStk: DoJmpIf8_PStk();
-ocJmpIf16_PStk: DoJmpIf16_PStk();
-ocJmpIf32_PStk: DoJmpIf32_PStk();
-ocJmpIf64_PStk: DoJmpIf64_PStk();
-ocJmpIf8_PVar: DoJmpIf8_PVar();
-ocJmpIf16_PVar: DoJmpIf16_PVar();
-ocJmpIf32_PVar: DoJmpIf32_PVar();
-ocJmpIf64_PVar: DoJmpIf64_PVar();
-}
-
 //jump relative if
 ocJmpRIf8_Stk: DoJmpRIf8_Stk();
 ocJmpRIf16_Stk: DoJmpRIf16_Stk();

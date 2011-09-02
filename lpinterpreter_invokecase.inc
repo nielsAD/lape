@@ -7,25 +7,13 @@
 }
 {%MainUnit lpinterpreter.pas}
 
-//ocIncCall_Stk: DoIncCall_Stk();
-//ocIncCall_PStk: DoIncCall_PStk();
 ocIncCall_Var: DoIncCall_Var();
 ocIncCall_PVar: DoIncCall_PVar();
 ocIncCall_Ptr: DoIncCall_Ptr();
 
-//ocInvokeImported_Stk: DoInvokeImported_Stk();
-//ocInvokeImported_PStk: DoInvokeImported_PStk();
 ocInvokeImported_Var: DoInvokeImported_Var();
 ocInvokeImported_PVar: DoInvokeImported_PVar();
 ocInvokeImported_Ptr: DoInvokeImported_Ptr();
-
-{
-ocInvokeImported_Stk_Stk: DoInvokeImported_Stk_Stk();
-ocInvokeImported_Stk_PStk: DoInvokeImported_Stk_PStk();
-ocInvokeImported_Stk_Var: DoInvokeImported_Stk_Var();
-ocInvokeImported_Stk_PVar: DoInvokeImported_Stk_PVar();
-ocInvokeImported_Stk_Ptr: DoInvokeImported_Stk_Ptr();
-}
 
 ocInvokeImported_Var_Stk: DoInvokeImported_Var_Stk();
 ocInvokeImported_Var_PStk: DoInvokeImported_Var_PStk();

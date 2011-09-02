@@ -7,25 +7,13 @@
 }
 {%MainUnit lpinterpreter.pas}
 
-//ocIncCall_Stk,                                             //IncCall_Stk TStackOffset TParamSize
-//ocIncCall_PStk,                                            //IncCall_PStk TStackOffset TParamSize
 ocIncCall_Var,                                             //IncCall_Var TVarStackOffset TParamSize
 ocIncCall_PVar,                                            //IncCall_PVar TVarStackOffset TPointerOffset TParamSize
 ocIncCall_Ptr,                                             //IncCall_Ptr Pointer TParamSize
 
-//ocInvokeImported_Stk,                                      //InvokeImported_Stk TStackOffset TParamSize
-//ocInvokeImported_PStk,                                     //InvokeImported_PStk TStackOffset TParamSize
 ocInvokeImported_Var,                                      //InvokeImported_Var TVarStackOffset TParamSize
 ocInvokeImported_PVar,                                     //InvokeImported_PVar TVarStackOffset TPointerOffset TParamSize
 ocInvokeImported_Ptr,                                      //InvokeImported_Ptr Pointer TParamSize
-
-{
-ocInvokeImported_Stk_Stk,                                  //InvokeImported_Stk_Stk TStackOffset TParamSize TStackInc
-ocInvokeImported_Stk_PStk,                                 //InvokeImported_Stk_Stk TStackOffset TParamSize
-ocInvokeImported_Stk_Var,                                  //InvokeImported_Stk_Var TStackOffset TVarStackOffset TParamSize
-ocInvokeImported_Stk_PVar,                                 //InvokeImported_Stk_PVar TStackOffset TVarStackOffset TPointerOffset TParamSize
-ocInvokeImported_Stk_Ptr,                                  //InvokeImported_Stk_Ptr TStackOffset Pointer TParamSize
-}
 
 ocInvokeImported_Var_Stk,                                  //InvokeImported_Var_Stk TVarStackOffset TParamSize TStackInc
 ocInvokeImported_Var_PStk,                                 //InvokeImported_Var_PStk TVarStackOffset TParamSize
