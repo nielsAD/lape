@@ -363,13 +363,13 @@ const
   ltCharInt = ltUInt8;
   {$ENDIF}
 
-  {$IFDEF CPU64}
+  {$IF SizeOf(NativeInt) = SizeOf(Int64)}
   ltNativeInt = ltInt64;
   ltNativeUInt = ltUInt64;
   {$ELSE}
   ltNativeInt = ltInt32;
   ltNativeUInt = ltUInt32;
-  {$ENDIF}
+  {$IFEND}
 
 
   {$IFDEF Lape_SmallCode}
