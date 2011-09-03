@@ -67,6 +67,25 @@ type
 
   TStringArray = array of lpString;
 
+  TVarRecArray = array of TVarRec;
+  TVarRecContainer = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+    CVar: Variant;
+    case SizeInt of
+      vtExtended: (CExtended: Extended);
+      vtString  : (CShortString: shortstring);
+      vtCurrency: (CCurrency: Currency);
+      vtInt64   : (CInt64: Int64);
+      {$IFDEF FPC}
+      vtQWord   : (CQWord: QWord);
+      {$ENDIF}
+  end;
+  TVarRecContainerArray = array of TVarRecContainer;
+
+  TVarRecList = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+    Containers: TVarRecContainerArray;
+    VarRecs: TVarRecArray;
+  end;
+
   TByteArray = array of Byte;
   TCodeArray = TByteArray;
   PCodeArray = ^TCodeArray;
@@ -459,6 +478,11 @@ function LapeHash(const Value: string): UInt32; {$IFDEF Lape_Inline}inline;{$END
 function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
+function VarTypeToVType(v: TVarType): SizeInt;
+function VariantToVarRec(const v: Variant): TVarRec; overload;
+function VariantToVarRec(const v: Variant; out Container: TVarRecContainer): TVarRec; overload;
+function VariantArrToConstArr(v: array of Variant): TVarRecList;
+
 procedure Swap(var A, B: Pointer); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 procedure Swap(var A, B: Boolean); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function _Compare8(Arr: PUInt8; Item: UInt8; Hi: Integer): Integer;
@@ -475,7 +499,7 @@ var
 implementation
 
 uses
-  typinfo,
+  typinfo, variants,
   lpexceptions;
 
 function LapeCase(const Str: lpString): lpString;
@@ -513,6 +537,103 @@ function LapeOperatorToString(Token: EOperator): lpString;
 begin
   Result := getEnumName(TypeInfo(EOperator), Ord(Token));
   Delete(Result, 1, 3);
+end;
+
+function VarTypeToVType(v: TVarType): SizeInt;
+begin
+  Result := vtVariant;
+  v := v and VarTypeMask;
+
+  case v of
+    varSingle,
+    varDouble:   Result := vtExtended;
+    varCurrency: Result := vtCurrency;
+    varOleStr:   Result := vtWideString;
+    varDispatch: Result := vtInterface;
+    varBoolean:  Result := vtBoolean;
+    varVariant:  Result := vtVariant;
+    varSmallint,
+    varShortInt,
+    varByte,
+    varWord,
+    varLongWord,
+    varInteger:  Result := vtInteger;
+    varInt64:    Result := vtInt64;
+    varString:   Result := vtString;
+    {$IFDEF FPC}
+    varDecimal:  Result := vtInteger;
+    varQWord:    Result := vtQWord;
+    {$ENDIF}
+  end;
+end;
+
+function VariantToVarRec(const v: Variant): TVarRec;
+begin
+  Result.VType := VarTypeToVType(VarType(v));
+  case Result.VType of
+    vtInteger:    Result.VInteger := v;
+    vtBoolean:    Result.VBoolean := v;
+    vtAnsiString: Result.VAnsiString := TVarData(v).VString;
+    vtCurrency:   Result.VCurrency := @TVarData(v).VCurrency;
+    vtVariant:    Result.VVariant := @v;
+    vtInterface:  Result.VInterface := TVarData(v).VDispatch;
+    vtWideString: Result.VWideString := TVarData(v).VOleStr;
+    vtInt64:      Result.VInt64 := @TVarData(v).VInt64;
+    {$IFDEF FPC}
+    vtChar:       Result.VChar := v;
+    vtWideChar:   Result.VWideChar := v;
+    vtQWord:      Result.VQWord := @TVarData(v).VQWord;
+    {$ENDIF}
+    else VarCastError();
+  end;
+end;
+
+function VariantToVarRec(const v: Variant; out Container: TVarRecContainer): TVarRec;
+begin
+  Container.CVar := v;
+  Result.VType := VarTypeToVType(VarType(v));
+
+  case Result.VType of
+    vtExtended:
+      begin
+        Container.CExtended := Container.CVar;
+        Result.VExtended := @Container.CExtended;
+      end;
+    vtString:
+      begin
+        Container.CShortString := Container.CVar;
+        Result.VString := @Container.CShortString;
+      end;
+    vtCurrency:
+      begin
+        Container.CCurrency := Container.CVar;
+        Result.VCurrency := @Container.CCurrency;
+      end;
+    vtInt64:
+      begin
+        Container.CInt64 := Container.CVar;
+        Result.VInt64 := @Container.CInt64;
+      end;
+    {$IFDEF FPC}
+    vtQWord:
+      begin
+        Container.CQWord := Container.CVar;
+        Result.VQWord := @Container.CQWord;
+      end;
+    {$ENDIF}
+    else Result := VariantToVarRec(Container.CVar);
+  end;
+end;
+
+function VariantArrToConstArr(v: array of Variant): TVarRecList;
+var
+  i: Integer;
+begin
+  SetLength(Result.VarRecs, Length(v));
+  SetLength(Result.Containers, Length(v));
+
+  for i := 0 to High(v) do
+    Result.VarRecs[i] := VariantToVarRec(v[i], Result.Containers[i]);
 end;
 
 procedure Swap(var A, B: Pointer);

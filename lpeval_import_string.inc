@@ -59,7 +59,7 @@ addGlobalFunc('function StrToBool(s: string): EvalBool;', @_LapeStrToBool);
 addGlobalFunc('function BoolToStr(B: EvalBool; TrueS: string = ''True''; FalseS: string = ''False''): string;', @_LapeBoolToStr);
 addGlobalFunc('function StrToBoolDef(s: string; Default: EvalBool): EvalBool;', @_LapeStrToBoolDef);
 
-//addGlobalFunc('function Format(Fmt: string; Args: array of Variant): string;', @_LapeFormat);
+addGlobalFunc('function Format(Fmt: string; Args: array of Variant): string;', @_LapeFormat);
 addGlobalFunc('function FormatFloat(Format: string; Value: Extended): string;', @_LapeFormatFloat);
 addGlobalFunc('function FormatCurr(Format: string; Value: Currency): string;', @_LapeFormatCurr);
 

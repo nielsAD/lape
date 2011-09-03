@@ -210,8 +210,11 @@ begin
 end;
 
 procedure _LapeFormat(const Params: PParamArray; const Result: Pointer);
+var
+  ConstArr: TVarRecList;
 begin
-  {PlpString(Result)^ := Format(PlpString(Params^[0])^, PVariantArray(Params^[1])^));}
+  ConstArr := VariantArrToConstArr(PVariantArray(Params^[1])^);
+  PlpString(Result)^ := Format(PlpString(Params^[0])^, ConstArr.VarRecs);
 end;
 
 procedure _LapeFormatFloat(const Params: PParamArray; const Result: Pointer);
