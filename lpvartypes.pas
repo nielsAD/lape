@@ -179,6 +179,9 @@ type
     FInit: (__Unknown, __Yes, __No);
     FAsString: lpString;
 
+    function getEvalRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType; virtual;
+    function getEvalProc(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc; virtual;
+
     procedure setBaseType(ABaseType: ELapeBaseType); virtual;
     function getBaseIntType: ELapeBaseType; virtual;
     function getSize: Integer; virtual;
@@ -1261,6 +1264,16 @@ end;
 function TLapeGlobalVar.CompatibleWith(Other: TLapeGlobalVar): Boolean;
 begin
   Result := (Other <> nil) and HasType() and VarType.CompatibleWith(Other.VarType);
+end;
+
+function TLapeType.getEvalRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType;
+begin
+  Result := lpeval.getEvalRes(Op, Left, Right);
+end;
+
+function TLapeType.getEvalProc(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc;
+begin
+  Result := lpeval.getEvalProc(Op, Left, Right);
 end;
 
 function TLapeType.getSize: Integer;
