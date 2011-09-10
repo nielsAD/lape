@@ -1960,7 +1960,7 @@ begin
   inherited;
   _Write := ACompiler.getGlobalVar('_write');
   if (_Write.VarType is TLapeType_OverloadedMethod) then
-    _Write := TLapeType_OverloadedMethod(_Write.VarType).Methods.Items[0] as TLapeGlobalVar;
+    _Write := _Write.VarType.ManagedDecls.Items[0] as TLapeGlobalVar;
   setIdent(TLapeTree_GlobalVar.Create(_Write, Self));
 end;
 
@@ -2009,7 +2009,7 @@ begin
 
   _WriteLn := FCompiler.getGlobalVar('_writeln');
   if (_WriteLn.VarType is TLapeType_OverloadedMethod) then
-    _WriteLn := TLapeType_OverloadedMethod(_WriteLn.VarType).Methods.Items[0] as TLapeGlobalVar;
+    _WriteLn := _WriteLn.VarType.ManagedDecls.Items[0] as TLapeGlobalVar;
   Assert(_WriteLn <> nil);
 
   with TLapeTree_Invoke.Create(_WriteLn, Self) do
@@ -2678,7 +2678,7 @@ begin
   end;
 
   if (_ArraySetLength <> nil) and (_ArraySetLength.VarType is TLapeType_OverloadedMethod) then
-    _ArraySetLength := TLapeType_OverloadedMethod(_ArraySetLength.VarType).Methods.Items[0] as TLapeGlobalVar;
+    _ArraySetLength := _ArraySetLength.VarType.ManagedDecls.Items[0] as TLapeGlobalVar;
   Assert(_ArraySetLength <> nil);
 
   try

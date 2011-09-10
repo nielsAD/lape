@@ -335,13 +335,16 @@ type
     destructor Destroy; override;
 
     procedure Clear; virtual;
+    procedure ClearSubDeclarations; virtual;
+
     function addDeclaration(d: TLapeDeclaration): Integer; virtual;
-    function getByName(AName: lpString): TLapeDeclArray; virtual;
-    function getByClass(AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray; virtual;
-    function getByClassAndName(AName: lpString; AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray; virtual;
     procedure Delete(i: Integer; DoFree: Boolean = False); overload; virtual;
     procedure Delete(d: TLapeDeclaration; DoFree: Boolean = False); overload; virtual;
     procedure Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False); overload; virtual;
+
+    function getByName(AName: lpString): TLapeDeclArray; virtual;
+    function getByClass(AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray; virtual;
+    function getByClassAndName(AName: lpString; AClass: TLapeDeclarationClass; FullClassMatch: Boolean = False): TLapeDeclArray; virtual;
 
     property Items: TLapeDeclCollection read FList;
   end;
@@ -363,6 +366,24 @@ type
     property DeclarationList: TLapeDeclarationList read FList write setList;
     property Name: lpString read FName write setName;
     property NameHash: UInt32 read FNameHash;
+  end;
+
+  TLapeManagingDeclaration = class(TLapeDeclaration)
+  protected
+    FManagedDecls: TLapeDeclarationList;
+  public
+    FreeDecls: Boolean;
+
+    constructor Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil); override;
+    destructor Destroy; override;
+
+    procedure setManagedDecls(ADecls: TLapeDeclarationList; DoManage: Boolean); overload; virtual;
+    procedure setManagedDecls(ADecls: TLapeDeclarationList); overload; virtual;
+
+    function addSubDeclaration(d: TLapeDeclaration): Integer; virtual;
+    procedure ClearSubDeclarations; virtual;
+
+    property ManagedDecls: TLapeDeclarationList read FManagedDecls write setManagedDecls;
   end;
 
 const
@@ -1213,6 +1234,8 @@ procedure TLapeDeclarationList.Clear;
 begin
   if (FList <> nil) then
   begin
+    if FreeDecls then
+      ClearSubDeclarations();
     while (FList.Count > 0) do
       if (FList[0] = nil) or (not FreeDecls) then
         FList.Delete(0)
@@ -1220,6 +1243,16 @@ begin
         FList[0].Free();
     FList.Clear();
   end;
+end;
+
+procedure TLapeDeclarationList.ClearSubDeclarations;
+var
+  ClassItems: TLapeDeclArray;
+  i: Integer;
+begin
+  ClassItems := getByClass(TLapeManagingDeclaration);
+  for i := High(ClassItems) downto 0 do
+    TLapeManagingDeclaration(ClassItems[i]).ClearSubDeclarations();
 end;
 
 function TLapeDeclarationList.addDeclaration(d: TLapeDeclaration): Integer;
@@ -1238,6 +1271,37 @@ begin
   end
   else
     Result := -1;
+end;
+
+procedure TLapeDeclarationList.Delete(i: Integer; DoFree: Boolean = False);
+begin
+  if (FList <> nil) and (FList[i] <> nil) then
+  begin
+    with FList.Delete(i) do
+      if DoFree then
+        Free()
+      else
+        FList := nil;
+  end;
+end;
+
+procedure TLapeDeclarationList.Delete(d: TLapeDeclaration; DoFree: Boolean = False);
+begin
+  if (FList <> nil) and (FList.DeleteItem(d) <> nil) then
+    if DoFree then
+      d.Free()
+    else
+      d.FList := nil;
+end;
+
+procedure TLapeDeclarationList.Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False);
+var
+  ClassItems: TLapeDeclArray;
+  i: Integer;
+begin
+  ClassItems := getByClass(AClass);
+  for i := High(ClassItems) downto 0 do
+    Delete(ClassItems[i], DoFree);
 end;
 
 function TLapeDeclarationList.getByName(AName: lpString): TLapeDeclArray;
@@ -1264,7 +1328,7 @@ begin
   Result := nil;
   if (FList <> nil) and (FList.Count > 0) then
   begin
-    GrowSize := FList.Count shl 2;
+    GrowSize := (FList.Count div 4) + 1;
     Len := GrowSize;
 
     SetLength(Result, Len);
@@ -1303,37 +1367,6 @@ begin
         SetLength(Result, Length(Result) + 1);
         Result[High(Result)] := FList[i];
       end;
-end;
-
-procedure TLapeDeclarationList.Delete(i: Integer; DoFree: Boolean = False);
-begin
-  if (FList <> nil) and (FList[i] <> nil) then
-  begin
-    with FList.Delete(i) do
-      if DoFree then
-        Free()
-      else
-        FList := nil;
-  end;
-end;
-
-procedure TLapeDeclarationList.Delete(d: TLapeDeclaration; DoFree: Boolean = False);
-begin
-  if (FList <> nil) and (FList.DeleteItem(d) <> nil) then
-    if DoFree then
-      d.Free()
-    else
-      d.FList := nil;
-end;
-
-procedure TLapeDeclarationList.Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False);
-var
-  ClassItems: TLapeDeclArray;
-  i: Integer;
-begin
-  ClassItems := getByClass(AClass);
-  for i := High(ClassItems) downto 0 do
-    Delete(ClassItems[i], DoFree);
 end;
 
 function TLapeDeclaration.getDocPos: TDocPos;
@@ -1378,6 +1411,44 @@ destructor TLapeDeclaration.Destroy;
 begin
   setList(nil);
   inherited;
+end;
+
+constructor TLapeManagingDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil);
+begin
+  inherited;
+  FreeDecls := True;
+  FManagedDecls := TLapeDeclarationList.Create(nil);
+end;
+
+destructor TLapeManagingDeclaration.Destroy;
+begin
+  if FreeDecls then
+    FManagedDecls.Free();
+  inherited;
+end;
+
+procedure TLapeManagingDeclaration.setManagedDecls(ADecls: TLapeDeclarationList; DoManage: Boolean);
+begin
+  Assert(ADecls <> nil);
+  if FreeDecls then
+    FManagedDecls.Free();
+  FManagedDecls := ADecls;
+  FreeDecls := DoManage;
+end;
+
+procedure TLapeManagingDeclaration.setManagedDecls(ADecls: TLapeDeclarationList);
+begin
+  setManagedDecls(ADecls, False);
+end;
+
+function TLapeManagingDeclaration.addSubDeclaration(d: TLapeDeclaration): Integer;
+begin
+  Result := FManagedDecls.addDeclaration(d);
+end;
+
+procedure TLapeManagingDeclaration.ClearSubDeclarations;
+begin
+  FManagedDecls.Clear();
 end;
 
 {$IFDEF Lape_TrackObjects}

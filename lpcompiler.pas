@@ -574,7 +574,7 @@ procedure TLapeCompiler.InitBaseDefinitions;
 
   function NewMagicMethod(GetMethod: TLapeGetOverloadedMethod; NeedFullMatch: Boolean = True): TLapeType_OverloadedMethod;
   begin
-    Result := TLapeType_OverloadedMethod.Create(Self, nil);
+    Result := TLapeType_OverloadedMethod.Create(Self);
     Result.OnFunctionNotFound := GetMethod;
     Result.NeedFullMatch := NeedFullMatch;
     addManagedDecl(Result);
@@ -1229,7 +1229,7 @@ begin
       Expect(tk_sym_SemiColon, True, False);
 
       if (OldDeclaration = nil) or (not LocalDecl) or ((OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
-        with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, nil, '', @Pos), FStackInfo.Owner)) do
+        with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
         begin
           if (OldDeclaration <> nil) then
             addMethod(OldDeclaration as TLapeGlobalVar);
@@ -1253,7 +1253,7 @@ begin
       if (OldDeclaration <> nil) and (OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod) then
       begin
         if (not LocalDecl) then
-          with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, nil, '', @Pos), FStackInfo.Owner)) do
+          with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
           begin
             addMethod(OldDeclaration as TLapeGlobalVar);
             OldDeclaration := addLocalDecl(NewGlobalVar(FuncName, @_DocPos), FStackInfo.Owner);
