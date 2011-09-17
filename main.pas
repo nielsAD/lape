@@ -47,6 +47,11 @@ uses
 
 { TForm1 }
 
+procedure IntTest(Params: PParamArray);
+begin
+  PInt32(Params^[0])^ := PInt32(Params^[0])^ + 1;
+end;
+
 procedure MyWrite(Params: PParamArray);
 begin
   Form1.m.Text := Form1.m.Text + PlpString(Params^[0])^;
@@ -89,6 +94,10 @@ begin
       Parser := TLapeTokenizerString.Create(e.Lines.Text);
       Compiler := TLapeCompiler.Create(Parser);
       InitializePascalScriptBasics(Compiler);
+
+      Compiler.getBaseType(ltInt32).addSubDeclaration(
+        TLapeType_MethodOfObject(Compiler.addManagedType(TLapeType_MethodOfObject.Create(Compiler.addGlobalFunc('procedure _Int32Inc;', @IntTest).VarType as TLapeType_Method))).NewGlobalVar(@IntTest, 'Test')
+      );
 
       Compiler.addGlobalFunc('procedure _write(s: string); override;', @MyWrite);
       Compiler.addGlobalFunc('procedure _writeln; override;', @MyWriteLn);

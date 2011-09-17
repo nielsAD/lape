@@ -535,7 +535,7 @@ end;
 
 function ValidEvalFunction(p: Pointer): Boolean;
 begin
-   Result := (p <> nil) and (p <> @LapeEvalErrorProc);
+   Result := (p <> nil) and (p <> Pointer({$IFNDEF FPC}@{$ENDIF}LapeEvalErrorProc));
 end;
 
 function ValidEvalFunction(p: TLapeEvalProc): Boolean;

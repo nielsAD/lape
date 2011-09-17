@@ -1830,15 +1830,19 @@ var
         AssignToStack(ParamVars[i], Self._DocPos);
       end;
 
+      i := Params.Count;
+      if (IdentVar.VarType is TLapeType_MethodOfObject) then
+        Inc(i);
+
       if (Res = nil) then
-        FCompiler.Emitter._InvokeImportedProc(IdentVar, Params.Count * SizeOf(Pointer), Offset, @Self._DocPos)
+        FCompiler.Emitter._InvokeImportedProc(IdentVar, i * SizeOf(Pointer), Offset, @Self._DocPos)
       else
       begin
         Result.VarType := Res;
         if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
           FDest := VarResVar;
         FCompiler.getDestVar(FDest, Result, op_Unknown);
-        FCompiler.Emitter._InvokeImportedFunc(IdentVar, Result, Params.Count * SizeOf(Pointer), Offset, @Self._DocPos)
+        FCompiler.Emitter._InvokeImportedFunc(IdentVar, Result, i * SizeOf(Pointer), Offset, @Self._DocPos)
       end;
     end;
   end;

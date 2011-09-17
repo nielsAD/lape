@@ -207,7 +207,9 @@ type
 	{$ENDIF}
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; overload; virtual;
 
+    function addSubDeclaration(ADecl: TLapeDeclaration): Integer; override;
     function CanHaveChild: Boolean; virtual;
+
     function HasChild(AName: lpString): Boolean; overload; virtual;
     function HasChild(ADecl: TLapeDeclaration): Boolean; overload; virtual;
 
@@ -620,7 +622,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy: TLapeType; override;
 
-    function addSubDeclaration(d: TLapeDeclaration): Integer; override;
+    function addSubDeclaration(ADecl: TLapeDeclaration): Integer; override;
     procedure addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False); virtual;
     function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; virtual;
 
@@ -836,6 +838,9 @@ function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
 
+function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function ValidFieldName(Field: TResVar): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
+
 const
   BigLock = 256;
 
@@ -905,6 +910,16 @@ begin
   Arr[ltUnicodeString] := TLapeType_UnicodeString.Create(Compiler, LapeTypeToString(ltUnicodeString));
   Arr[ltVariant] := TLapeType_Variant.Create(Compiler, LapeTypeToString(ltVariant));
   Arr[ltPointer] := TLapeType_Pointer.Create(Compiler, nil, LapeTypeToString(ltPointer));
+end;
+
+function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload;
+begin
+  Result := (Field <> nil) and Field.isConstant and (Field.BaseType = ltString) and (Field.Ptr <> nil);
+end;
+
+function ValidFieldName(Field: TResVar): Boolean; overload;
+begin
+  Result := (Field.VarPos.MemPos = mpMem) and Field.isConstant and Field.HasType() and (Field.VarType.BaseType = ltString) and (Field.VarPos.GlobalVar.Ptr <> nil);
 end;
 
 function TResVar.getVariable: Boolean;
@@ -1433,9 +1448,18 @@ begin
   LapeException(lpeImpossible);
 end;
 
+function TLapeType.addSubDeclaration(ADecl: TLapeDeclaration): Integer;
+begin
+  if (not (ADecl is TLapeGlobalVar)) then
+    LapeException(lpeImpossible);
+  if (ADecl.Name = '') or HasChild(ADecl.Name) then
+    LapeExceptionFmt(lpeDuplicateDeclaration, [ADecl.Name]);
+  Result := inherited;
+end;
+
 function TLapeType.CanHaveChild: Boolean;
 begin
-  Result := FBaseType in LapeStructTypes;
+  Result := (FBaseType in LapeStructTypes) or (FManagedDecls.Items.Count > 0);
 end;
 
 function TLapeType.HasChild(AName: lpString): Boolean;
@@ -1444,17 +1468,22 @@ var
 begin
   if (not CanHaveChild()) or (FCompiler = nil) then
     Exit(False);
-  DotName := FCompiler.getBaseType(ltString).NewGlobalVarStr(AName);
-  try
-    Result := EvalRes(op_Dot, DotName) <> nil;
-  finally
-    DotName.Free();
+
+  Result := HasSubDeclaration(AName);
+  if (not Result) then
+  begin
+    DotName := FCompiler.getBaseType(ltString).NewGlobalVarStr(AName);
+    try
+      Result := EvalRes(op_Dot, DotName) <> nil;
+    finally
+      DotName.Free();
+    end;
   end;
 end;
 
 function TLapeType.HasChild(ADecl: TLapeDeclaration): Boolean;
 begin
-  Result := FManagedDecls.Items.ExistsItem(ADecl);
+  Result := HasSubDeclaration(ADecl);
 end;
 
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
@@ -1472,11 +1501,21 @@ begin
 end;
 
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
+var
+  d: TLapeDeclArray;
 begin
-  if (Right <> nil) then
-    Result := EvalRes(Op, Right.VarType)
+  if (Right = nil) then
+    Result := EvalRes(Op, TLapeType(nil))
   else
-    Result := EvalRes(Op, TLapeType(nil));
+  begin
+    Result := EvalRes(Op, Right.VarType);
+    if (Result = nil) and (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
+    begin
+      d := FManagedDecls.getByName(PlpString(Right.Ptr)^);
+      if (Length(d) = 1) and (d[0] is TLapeVar) then
+        Result := TLapeVar(d[0]).VarType;
+    end;
+  end;
 end;
 
 function TLapeType.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
@@ -1485,16 +1524,13 @@ begin
 
   Result := ((Left = nil) or Left.isConstant) and ((Right = nil) or Right.isConstant);
   if (not Result) and (Right <> nil) and Right.isConstant then
-    if (op = op_Dot) and CanHaveChild() and (Right.BaseType = ltString) then
+    if (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
       Result := HasChild(PlpString(Right.Ptr)^)
     else if (op = op_Index) and (BaseType in [ltUnknown{overloaded method}, ltShortString, ltStaticArray]) then
       Result := Right.HasType() and (Right.VarType.BaseIntType <> ltUnknown);
 end;
 
 function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
-var
-  EvalProc: TLapeEvalProc;
-  ResType: TLapeType;
 
   function TryCast(DoRight: Boolean; out Res: TLapeGlobalVar): Boolean;
   var
@@ -1533,6 +1569,29 @@ var
     end;
   end;
 
+  function EvalDot(Field: lpString): TLapeGlobalVar;
+  var
+    d: TLapeDeclArray;
+  begin
+    if (Left = nil) or (not HasSubDeclaration(Field)) then
+      LapeExceptionFmt(lpeUnknownDeclaration, [Field]);
+
+    d := FManagedDecls.getByName(Field);
+    Assert(Length(d) = 1);
+    Result := d[0] as TLapeGlobalVar;
+
+    if (Result <> nil) {and Result.isConstant} and Result.HasType() and (Result.VarType is TLapeType_MethodOfObject) then
+    begin
+      if (not Left.isConstant) then
+        LapeException(lpeCannotEvalConst);
+      Result := Result.CreateCopy();
+      TMethod(Result.Ptr^).Data := Left.Ptr;
+    end;
+  end;
+
+var
+  EvalProc: TLapeEvalProc;
+  ResType: TLapeType;
 begin
   Result := nil;
   Assert(FCompiler <> nil);
@@ -1551,7 +1610,7 @@ begin
     if (Right = nil) then
     begin
       ResType := EvalRes(Op);
-      if (ResType <> nil) or ((op = op_Deref) and ((not Left.HasType()) or (Left.VarType.BaseType = ltPointer))) then
+      if (ResType <> nil) or ((op = op_Deref) and ((not Left.HasType()) or (Left.BaseType = ltPointer))) then
         if (op = op_Addr) then
           if Left.isConstant then
             LapeException(lpeVariableExpected)
@@ -1571,7 +1630,9 @@ begin
       EvalProc := nil;
 
     if (ResType = nil) or (not ValidEvalFunction(EvalProc)) then
-      if (op = op_Assign) and (Right <> nil) and Right.HasType() then
+      if (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
+        Exit(EvalDot(PlpString(Right.Ptr)^))
+      else if (op = op_Assign) and (Right <> nil) and Right.HasType() then
         LapeExceptionFmt(lpeIncompatibleAssignment, [Right.VarType.AsString, AsString])
       else if (not (op in UnaryOperators)) and (Right <> nil) and ((not Left.HasType()) or (not Right.HasType()) or (not Left.VarType.Equals(Right.VarType, False))) then
         if (Left.HasType()       and     Right.HasType()  and Left.VarType.Equals(Right.VarType, False)) or
@@ -1602,14 +1663,12 @@ begin
         EvalProc(Result.Ptr, Left.Ptr, Right.Ptr);
     end;
   finally
-    if (op <> op_Assign) and (Result <> nil) and (Left <> nil) then
+    if (not (op in [op_Assign, op_Dot])) and (Result <> nil) and (Left <> nil) then
       Result.isConstant := (op <> op_Deref) and Left.isConstant and ((Right = nil) or Right.isConstant);
   end;
 end;
 
 function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
-var
-  EvalProc: TLapeEvalProc;
 
   function TryCast(DoRight: Boolean; out Res: TResVar): Boolean;
   var
@@ -1659,6 +1718,30 @@ var
     end;
   end;
 
+  function EvalDot(Field: lpString): TResVar;
+  var
+    d: TLapeDeclArray;
+    Res: TResVar;
+  begin
+    Res := NullResVar;
+    if (not HasSubDeclaration(Field)) then
+      LapeExceptionFmt(lpeUnknownDeclaration, [Field]);
+
+    d := FManagedDecls.getByName(Field);
+    Assert(Length(d) = 1);
+    Result := _ResVar.New(d[0] as TLapeGlobalVar);
+
+    if {Result.isConstant and} Result.HasType() and (Result.VarType is TLapeType_MethodOfObject) then
+    begin
+      Res.VarType := Result.VarType;
+      FCompiler.getDestVar(Dest, Res, op_Dot);
+      FCompiler.Emitter._Eval(getEvalProc(op_Dot, ltUnknown, ltPointer), Res, Left, Result, Offset, Pos);
+      Result := Res;
+    end;
+  end;
+
+var
+  EvalProc: TLapeEvalProc;
 begin
   Result := NullResVar;
   Assert(FCompiler <> nil);
@@ -1691,7 +1774,9 @@ begin
       EvalProc := nil;
 
     if (not Result.HasType()) or (not ValidEvalFunction(EvalProc)) then
-      if (op = op_Assign) and Right.HasType() then
+      if (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
+        Exit(EvalDot(PlpString(Right.VarPos.GlobalVar.Ptr)^))
+      else if (op = op_Assign) and Right.HasType() then
         LapeExceptionFmt(lpeIncompatibleAssignment, [Right.VarType.AsString, AsString])
       else if (not (op in UnaryOperators)) and ((not Left.HasType()) or (not Right.HasType()) or (not Left.VarType.Equals(Right.VarType, False))) then
         if (Left.HasType() and Right.HasType() and Left.VarType.Equals(Right.VarType, False)) or
@@ -1740,9 +1825,6 @@ begin
 end;
 
 procedure TLapeType.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
-var
-  EmptyVar, tmpVar: TResVar;
-  wasConstant: Boolean;
 
   function FullNil(p: Pointer; Size: Integer): Boolean;
   var
@@ -1765,6 +1847,9 @@ var
     end;
   end;
 
+var
+  EmptyVar, tmpVar: TResVar;
+  wasConstant: Boolean;
 begin
   Assert(AVar.VarType = Self);
   if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) or (not NeedFinalization) then
@@ -1841,12 +1926,12 @@ end;
 
 function TLapeType_TypeEnum.HasChild(AName: lpString): Boolean;
 begin
-  Result := (FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(AName);
+  Result := ((FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(AName)) or HasSubDeclaration(AName);
 end;
 
 function TLapeType_TypeEnum.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
 begin
-  if (Op = op_Dot) and (FTType <> nil) and (Right <> nil) and (Right.BaseType = ltString) and
+  if (Op = op_Dot) and (FTType <> nil) and ValidFieldName(Right) and
      (FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(PlpString(Right.Ptr)^)
   then
     Result := FTType
@@ -1855,20 +1940,10 @@ begin
 end;
 
 function TLapeType_TypeEnum.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
-var
-  FieldName: lpString;
 begin
   Assert((Left = nil) or (Left.VarType = Self));
-  if (Op = op_Dot) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType = ltString) and (FTType is TLapeType_Enum) then
-  begin
-    Assert(Right.Ptr <> nil);
-    FieldName := PlpString(Right.Ptr)^;
-
-    if (FieldName <> '') and TLapeType_Enum(FTType).hasMember(FieldName) then
-      Result := FTType.NewGlobalVarStr(FieldName)
-    else
-      LapeExceptionFmt(lpeUnknownDeclaration, [FieldName]);
-  end
+  if (Op = op_Dot) and ValidFieldName(Right) and (FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(PlpString(Right.Ptr)^) then
+    Result := FTType.NewGlobalVarStr(PlpString(Right.Ptr)^)
   else
     Result := inherited;
 end;
@@ -2309,8 +2384,8 @@ begin
   Assert((Left = nil) or (Left.VarType = Self));
 
   if (Right <> nil) and Right.HasType() and (Right.VarType.BaseIntType <> ltUnknown) and
-     (((BaseType in LapeBoolTypes) and (op in BinaryOperators + EnumOperators) and (Right.VarType.BaseType in LapeBoolTypes)) or
-     ((op in EnumOperators) and ((not (Right.VarType.BaseType in LapeEnumTypes)) or Equals(Right.VarType))))
+     (((BaseType in LapeBoolTypes) and (op in BinaryOperators + EnumOperators) and (Right.BaseType in LapeBoolTypes)) or
+     ((op in EnumOperators) and ((not (Right.BaseType in LapeEnumTypes)) or Equals(Right.VarType))))
   then
   try
     tmpType := Right.VarType;
@@ -3006,7 +3081,7 @@ begin
     end;
   end
   else if (op = op_Assign) and (BaseType = ltDynArray) and (Left <> nil) and (Right <> nil) and CompatibleWith(Right.VarType) then
-    if (Right.VarType.BaseType = ltDynArray) then
+    if (Right.BaseType = ltDynArray) then
     begin
       if (PPointer(Left.Ptr)^ = PPointer(Right.Ptr)^) then
         Exit(Left);
@@ -3820,7 +3895,7 @@ end;
 
 function TLapeType_Record.HasChild(AName: lpString): Boolean;
 begin
-  Result := FFieldMap.ExistsKey(AName);
+  Result := FFieldMap.ExistsKey(AName) or HasSubDeclaration(AName);
 end;
 
 function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
@@ -3844,7 +3919,7 @@ end;
 
 function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
 begin
-  if (Op = op_Dot) and (Right <> nil) and (Right.BaseType = ltString) then
+  if (Op = op_Dot) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.Ptr)^) then
     Result := FFieldMap[PlpString(Right.Ptr)^].FieldType
   else
     Result := inherited;
@@ -3853,23 +3928,17 @@ end;
 function TLapeType_Record.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
 var
   i: Integer;
-  FieldName: lpString;
   LeftVar, RightVar, LeftFieldName, RightFieldName: TLapeGlobalVar;
 begin
   Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType = Self));
 
-  if (Op = op_Dot) and (Left <> nil) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType = ltString) then
-  begin
-    Assert(Right.Ptr <> nil);
-    FieldName := PlpString(Right.Ptr)^;
-
-    if (FieldName <> '') and FFieldMap.ExistsKey(FieldName) then
-      Result := FFieldMap[FieldName].FieldType.NewGlobalVarP(Pointer(PtrUInt(Left.Ptr) + FFieldMap[FieldName].Offset))
-    else
-      LapeExceptionFmt(lpeUnknownDeclaration, [FieldName]);
-    Result.isConstant := Left.isConstant;
-  end
+  if (Op = op_Dot) and (Left <> nil) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.Ptr)^) then
+    with FFieldMap[PlpString(Right.Ptr)^] do
+    begin
+      Result := FieldType.NewGlobalVarP(Pointer(PtrUInt(Left.Ptr) + Offset));
+      Result.isConstant := Left.isConstant;
+    end
   else if (op = op_Assign) and (Right <> nil) and Right.HasType() and CompatibleWith(Right.VarType) then
   begin
     LeftFieldName := nil;
@@ -3904,7 +3973,6 @@ end;
 function TLapeType_Record.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   i, FieldOffset: Integer;
-  FieldName: lpString;
   tmpVar, LeftVar, RightVar, LeftFieldName, RightFieldName: TResVar;
   tmpType: TLapeType;
 begin
@@ -3912,25 +3980,20 @@ begin
   Assert(Left.VarType = Self);
   tmpVar := NullResVar;
 
-  if (Op = op_Dot) and (Right.VarPos.MemPos = mpMem) and Right.HasType() and (Right.VarType.BaseType = ltString) then
-  begin
-    Assert(Right.VarPos.GlobalVar.Ptr <> nil);
-    FieldName := PlpString(Right.VarPos.GlobalVar.Ptr)^;
-
-    Dest.Spill();
-    Result := Left.IncLock();
-    if (FieldName = '') or (not FFieldMap.ExistsKey(FieldName)) then
-      LapeExceptionFmt(lpeUnknownDeclaration, [FieldName]);
-
-    Result.VarType := FFieldMap[FieldName].FieldType;
-    case Left.VarPos.MemPos of
-      mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + FFieldMap[FieldName].Offset)), True));
-      mpVar,
-      mpStack: Result.IncOffset(FFieldMap[FieldName].Offset);
-      else LapeException(lpeImpossible);
-    end;
-    Result.isConstant := Left.isConstant;
-  end
+  if (Op = op_Dot) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.VarPos.GlobalVar.Ptr)^) then
+    with FFieldMap[PlpString(Right.VarPos.GlobalVar.Ptr)^] do
+    begin
+      Dest.Spill();
+      Result := Left.IncLock();
+       Result.VarType :=FieldType;
+      case Left.VarPos.MemPos of
+        mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + Offset)), True));
+        mpVar,
+        mpStack: Result.IncOffset(Offset);
+        else LapeException(lpeImpossible);
+      end;
+      Result.isConstant := Left.isConstant;
+    end
   else if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
     try
@@ -4236,7 +4299,7 @@ begin
   else
     MethodType := ltScriptMethod;
 
-  if (AVar = nil) or (AVar.HasType() and (AVar.VarType.BaseType = MethodType)) then
+  if (AVar = nil) or (AVar.BaseType = MethodType) then
     Exit;
 
   AVar.VarType := CreateCopy();
@@ -4444,8 +4507,9 @@ begin
   Result.setManagedDecls(FManagedDecls);
 end;
 
-function TLapeType_OverloadedMethod.addSubDeclaration(d: TLapeDeclaration): Integer;
+function TLapeType_OverloadedMethod.addSubDeclaration(ADecl: TLapeDeclaration): Integer;
 begin
+  Result := -1;
   LapeException(lpeImpossible);
 end;
 
@@ -4507,9 +4571,6 @@ begin
 end;
 
 function TLapeType_OverloadedMethod.getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar;
-var
-  MethodIndex, i, Weight, MinWeight: Integer;
-  Match: Boolean;
 
   function SizeWeight(a, b: TLapeType): Integer; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
@@ -4524,6 +4585,9 @@ var
       Result := Result - 1;
   end;
 
+var
+  MethodIndex, i, Weight, MinWeight: Integer;
+  Match: Boolean;
 begin
   Result := nil;
   MinWeight := High(Integer);
@@ -4599,7 +4663,7 @@ end;
 function TLapeType_OverloadedMethod.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
 begin
   Assert((Left = nil) or (Left.VarType = Self));
-  if (Op = op_Index) and (Left <> nil) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType in LapeIntegerTypes) then
+  if (Op = op_Index) and (Left <> nil) and (Right <> nil) and (Right.BaseType in LapeIntegerTypes) then
     if (FManagedDecls.Items[Right.AsInteger] = nil) then
       LapeException(lpeOutOfTypeRange)
     else
@@ -4643,16 +4707,17 @@ end;
 
 function TLapeType_VarRefMap.HasChild(AName: lpString): Boolean;
 begin
-  Result := FVarMap.ExistsKey(AName);
+  Result := FVarMap.ExistsKey(AName) or HasSubDeclaration(AName);
 end;
 
 function TLapeType_VarRefMap.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
 begin
-  if (Op = op_Dot) and (Right <> nil) and (Right.BaseType = ltString) then
-    if (FVarMap[PlpString(Right.Ptr)^].RefVar <> nil) then
-      Result := FVarMap[PlpString(Right.Ptr)^].RefVar.VarType
-    else
-      Result := FVarMap[PlpString(Right.Ptr)^].ResVar.VarType
+  if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.Ptr)^) then
+    with FVarMap[PlpString(Right.Ptr)^] do
+      if (RefVar <> nil) then
+        Result := RefVar.VarType
+      else
+        Result := ResVar.VarType
   else
     Result := inherited;
 end;
@@ -4660,47 +4725,31 @@ end;
 function TLapeType_VarRefMap.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
 begin
   Result := inherited;
-  if Result and (op = op_Dot) then
+  if Result and (op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.Ptr)^) then
     Result := (FVarMap[PlpString(Right.Ptr)^].RefVar is TLapeGlobalVar);
 end;
 
 function TLapeType_VarRefMap.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
-var
-  FieldName: lpString;
 begin
   Assert((Left = nil) or (Left.VarType = Self));
-  if (Op = op_Dot) and (Right <> nil) and Right.HasType() and (Right.VarType.BaseType = ltString) then
-  begin
-    Assert(Right.Ptr <> nil);
-    FieldName := PlpString(Right.Ptr)^;
-
-    if (FieldName <> '') and (FVarMap[FieldName].RefVar <> nil) and (FVarMap[FieldName].RefVar is TLapeGlobalVar) then
-      Result := FVarMap[FieldName].RefVar as TLapeGlobalVar
-    else
-      LapeExceptionFmt(lpeUnknownDeclaration, [FieldName]);
-  end
+  if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.Ptr)^) then
+    Result := FVarMap[PlpString(Right.Ptr)^].RefVar as TLapeGlobalVar
   else
     Result := inherited;
 end;
 
 function TLapeType_VarRefMap.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
-var
-  FieldName: lpString;
 begin
   Assert(Left.VarType = Self);
-  if (Op = op_Dot) and (Right.VarPos.MemPos = mpMem) and Right.HasType() and (Right.VarType.BaseType = ltString) then
-  begin
-    Assert(Right.VarPos.GlobalVar.Ptr <> nil);
-    FieldName := PlpString(Right.VarPos.GlobalVar.Ptr)^;
-
-    Dest.Spill();
-    if (FieldName <> '') and (FVarMap[FieldName].RefVar <> nil) then
-      Result := _ResVar.New(FVarMap[FieldName].RefVar)
-    else if (FieldName <> '') and (FVarMap[FieldName].ResVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
-      Result := FVarMap[FieldName].ResVar
-    else
-      LapeExceptionFmt(lpeUnknownDeclaration, [FieldName]);
-  end
+  if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.VarPos.GlobalVar.Ptr)^) then
+    with FVarMap[PlpString(Right.VarPos.GlobalVar.Ptr)^] do
+    begin
+      Dest.Spill();
+      if (RefVar <> nil) then
+        Result := _ResVar.New(RefVar)
+      else
+        Result := ResVar;
+    end
   else
     Result := inherited;
 end;

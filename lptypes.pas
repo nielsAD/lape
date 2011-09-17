@@ -380,7 +380,9 @@ type
     procedure setManagedDecls(ADecls: TLapeDeclarationList; DoManage: Boolean); overload; virtual;
     procedure setManagedDecls(ADecls: TLapeDeclarationList); overload; virtual;
 
-    function addSubDeclaration(d: TLapeDeclaration): Integer; virtual;
+    function addSubDeclaration(ADecl: TLapeDeclaration): Integer; virtual;
+    function HasSubDeclaration(AName: lpString): Boolean; overload; virtual;
+    function HasSubDeclaration(ADecl: TLapeDeclaration): Boolean; overload; virtual;
     procedure ClearSubDeclarations; virtual;
 
     property ManagedDecls: TLapeDeclarationList read FManagedDecls write setManagedDecls;
@@ -1441,9 +1443,19 @@ begin
   setManagedDecls(ADecls, False);
 end;
 
-function TLapeManagingDeclaration.addSubDeclaration(d: TLapeDeclaration): Integer;
+function TLapeManagingDeclaration.addSubDeclaration(ADecl: TLapeDeclaration): Integer;
 begin
-  Result := FManagedDecls.addDeclaration(d);
+  Result := FManagedDecls.addDeclaration(ADecl);
+end;
+
+function TLapeManagingDeclaration.HasSubDeclaration(AName: lpString): Boolean;
+begin
+  Result := (Length(FManagedDecls.getByName(AName)) > 0);
+end;
+
+function TLapeManagingDeclaration.HasSubDeclaration(ADecl: TLapeDeclaration): Boolean;
+begin
+  Result := FManagedDecls.Items.ExistsItem(ADecl);
 end;
 
 procedure TLapeManagingDeclaration.ClearSubDeclarations;
