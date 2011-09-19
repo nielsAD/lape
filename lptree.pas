@@ -389,9 +389,6 @@ type
   TLapeTree_String = class(TLapeTree_GlobalVar)
   public
     constructor Create(AValue: AnsiString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload;
-    {$IFNDEF Lape_NoWideString}
-    constructor Create(AValue: WideString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload;
-	{$ENDIF}
     constructor Create(AValue: UnicodeString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload;
     constructor Create(AValue: lpString; ASource: TLapeTree_Base); overload;
   end;
@@ -3591,14 +3588,6 @@ begin
   Assert(ACompiler <> nil);
   inherited Create(ACompiler.getBaseType(ltAnsiString).NewGlobalVarStr(AValue), ACompiler, ADocPos);
 end;
-
-{$IFNDEF Lape_NoWideString}
-constructor TLapeTree_String.Create(AValue: WideString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
-begin
-  Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getBaseType(ltWideString).NewGlobalVarStr(AValue), ACompiler, ADocPos);
-end;
-{$ENDIF}
 
 constructor TLapeTree_String.Create(AValue: UnicodeString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin

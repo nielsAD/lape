@@ -187,9 +187,6 @@ type
     function addGlobalVar(Value: EvalBool; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: ShortString; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: AnsiString; AName: lpString): TLapeGlobalVar; overload; virtual;
-	{$IFNDEF Lape_NoWideString}
-    function addGlobalVar(Value: WideString; AName: lpString): TLapeGlobalVar; overload; virtual;
-	{$ENDIF}
     function addGlobalVar(Value: UnicodeString; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: AnsiChar; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: WideChar; AName: lpString): TLapeGlobalVar; overload; virtual;
@@ -3057,13 +3054,6 @@ function TLapeCompiler.addGlobalVar(Value: AnsiString; AName: lpString): TLapeGl
 begin
   Result := addGlobalVar(TLapeType_AnsiString(FBaseTypes[ltAnsiString]).NewGlobalVar(Value), AName);
 end;
-
-{$IFNDEF Lape_NoWideString}
-function TLapeCompiler.addGlobalVar(Value: WideString; AName: lpString): TLapeGlobalVar;
-begin
-  Result := addGlobalVar(TLapeType_WideString(FBaseTypes[ltWideString]).NewGlobalVar(Value), AName);
-end;
-{$ENDIF}
 
 function TLapeCompiler.addGlobalVar(Value: UnicodeString; AName: lpString): TLapeGlobalVar;
 begin

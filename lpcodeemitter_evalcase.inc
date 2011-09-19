@@ -200,55 +200,5 @@ case d of
     end;
     else e := True;
   end;
-  {$IFDEF Lape_PStkD}
-  mmpPStk: case l of
-    mmpPtr: case r of
-      mmpNone: Result := _Eval__PStkD_PtrL_PtrR(AProc, Left.VarPos.GlobalVar.Ptr, nil, Offset, Pos);
-      mmpPtr: Result := _Eval__PStkD_PtrL_PtrR(AProc, Left.VarPos.GlobalVar.Ptr, Right.VarPos.GlobalVar.Ptr, Offset, Pos);
-      mmpVar: Result := _Eval__PStkD_PtrL_VarR(AProc, Left.VarPos.GlobalVar.Ptr, Right.VarPos.StackVar.Offset + Right.VarPos.Offset, Offset, Pos);
-      mmpStk: Result := _Eval__PStkD_PtrL_StkR(AProc, Left.VarPos.GlobalVar.Ptr, Right.VarType.Size, -StackIncR, Offset, Pos);
-      mmpPVar: Result := _Eval__PStkD_PtrL_PVarR(AProc, Left.VarPos.GlobalVar.Ptr, Right.VarPos.StackVar.Offset, Right.VarPos.Offset, Offset, Pos);
-      mmpPStk: Result := _Eval__PStkD_PtrL_PStkR(AProc, Left.VarPos.GlobalVar.Ptr, Offset, Pos);
-      else e := True;
-    end;
-    mmpVar: case r of
-      mmpNone: Result := _Eval__PStkD_VarL_PtrR(AProc, Left.VarPos.StackVar.Offset + Left.VarPos.Offset, nil, Offset, Pos);
-      mmpPtr: Result := _Eval__PStkD_VarL_PtrR(AProc, Left.VarPos.StackVar.Offset + Left.VarPos.Offset, Right.VarPos.GlobalVar.Ptr, Offset, Pos);
-      mmpVar: Result := _Eval__PStkD_VarL_VarR(AProc, Left.VarPos.StackVar.Offset + Left.VarPos.Offset, Right.VarPos.StackVar.Offset + Right.VarPos.Offset, Offset, Pos);
-      mmpStk: Result := _Eval__PStkD_VarL_StkR(AProc, Left.VarPos.StackVar.Offset + Left.VarPos.Offset, Right.VarType.Size, -StackIncR, Offset, Pos);
-      mmpPVar: Result := _Eval__PStkD_VarL_PVarR(AProc, Left.VarPos.StackVar.Offset + Left.VarPos.Offset, Right.VarPos.StackVar.Offset, Right.VarPos.Offset, Offset, Pos);
-      mmpPStk: Result := _Eval__PStkD_VarL_PStkR(AProc, Left.VarPos.StackVar.Offset + Left.VarPos.Offset, Offset, Pos);
-      else e := True;
-    end;
-    mmpStk: case r of
-      mmpNone: Result := _Eval__PStkD_StkL_PtrR(AProc, Left.VarType.Size, nil, -StackIncL, Offset, Pos);
-      mmpPtr: Result := _Eval__PStkD_StkL_PtrR(AProc, Left.VarType.Size, Right.VarPos.GlobalVar.Ptr, -StackIncL, Offset, Pos);
-      mmpVar: Result := _Eval__PStkD_StkL_VarR(AProc, Left.VarType.Size, Right.VarPos.StackVar.Offset + Right.VarPos.Offset, -StackIncL, Offset, Pos);
-      mmpStk: Result := _Eval__PStkD_StkL_StkR(AProc, Left.VarType.Size + Right.VarType.Size, Right.VarType.Size, -StackIncL - StackIncR, Offset, Pos);
-      mmpPVar: Result := _Eval__PStkD_StkL_PVarR(AProc, Left.VarType.Size, Right.VarPos.StackVar.Offset, Right.VarPos.Offset, -StackIncL, Offset, Pos);
-      mmpPStk: Result := _Eval__PStkD_StkL_PStkR(AProc, Left.VarType.Size, -StackIncL - StackIncR, Offset, Pos);
-      else e := True;
-    end;
-    mmpPVar: case r of
-      mmpNone: Result := _Eval__PStkD_PVarL_PtrR(AProc, Left.VarPos.StackVar.Offset, Left.VarPos.Offset, nil, Offset, Pos);
-      mmpPtr: Result := _Eval__PStkD_PVarL_PtrR(AProc, Left.VarPos.StackVar.Offset, Left.VarPos.Offset, Right.VarPos.GlobalVar.Ptr, Offset, Pos);
-      mmpVar: Result := _Eval__PStkD_PVarL_VarR(AProc, Left.VarPos.StackVar.Offset, Left.VarPos.Offset, Right.VarPos.StackVar.Offset + Right.VarPos.Offset, Offset, Pos);
-      mmpStk: Result := _Eval__PStkD_PVarL_StkR(AProc, Left.VarPos.StackVar.Offset, Left.VarPos.Offset, Right.VarType.Size, -StackIncR, Offset, Pos);
-      mmpPVar: Result := _Eval__PStkD_PVarL_PVarR(AProc, Left.VarPos.StackVar.Offset, Left.VarPos.Offset, Right.VarPos.StackVar.Offset, Right.VarPos.Offset, Offset, Pos);
-      mmpPStk: Result := _Eval__PStkD_PVarL_PStkR(AProc, Left.VarPos.StackVar.Offset, Left.VarPos.Offset, Offset, Pos);
-      else e := True;
-    end;
-    mmpPStk: case r of
-      mmpNone: Result := _Eval__PStkD_PStkL_PtrR(AProc, nil, Offset, Pos);
-      mmpPtr: Result := _Eval__PStkD_PStkL_PtrR(AProc, Right.VarPos.GlobalVar.Ptr, Offset, Pos);
-      mmpVar: Result := _Eval__PStkD_PStkL_VarR(AProc, Right.VarPos.StackVar.Offset + Right.VarPos.Offset, Offset, Pos);
-      mmpStk: Result := _Eval__PStkD_PStkL_StkR(AProc, Left.VarType.Size + Right.VarType.Size, Right.VarType.Size, -StackIncL - StackIncR, Offset, Pos);
-      mmpPVar: Result := _Eval__PStkD_PStkL_PVarR(AProc, Right.VarPos.StackVar.Offset, Right.VarPos.Offset, Offset, Pos);
-      mmpPStk: Result := _Eval__PStkD_PStkL_PStkR(AProc, Offset, Pos);
-      else e := True;
-    end;
-    else e := True;
-  end;
-  {$ENDIF}
   else e := True;
 end;

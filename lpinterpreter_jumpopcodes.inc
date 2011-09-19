@@ -10,30 +10,6 @@
 ocJmp,                                                     //Jmp TCodePos
 ocJmpR,                                                    //JmpR TCodeOffset
 
-//jump if
-{
-ocJmpIf8_Stk,                                              //JmpIf8_Stk TCodePos TStackOffset
-ocJmpIf16_Stk,                                             //JmpIf16_Stk TCodePos TStackOffset
-ocJmpIf32_Stk,                                             //JmpIf32_Stk TCodePos TStackOffset
-ocJmpIf64_Stk,                                             //JmpIf64_Stk TCodePos TStackOffset
-ocJmpIf8_Var,                                              //JmpIf8_Var TCodePos TVarStackOffset
-ocJmpIf16_Var,                                             //JmpIf16_Var TCodePos TVarStackOffset
-ocJmpIf32_Var,                                             //JmpIf32_Var TCodePos TVarStackOffset
-ocJmpIf64_Var,                                             //JmpIf64_Var TCodePos TVarStackOffset
-ocJmpIf8_Ptr,                                              //JmpIf8_Ptr TCodePos Pointer
-ocJmpIf16_Ptr,                                             //JmpIf16_Ptr TCodePos Pointer
-ocJmpIf32_Ptr,                                             //JmpIf32_Ptr TCodePos Pointer
-ocJmpIf64_Ptr,                                             //JmpIf64_Ptr TCodePos Pointer
-ocJmpIf8_PStk,                                             //JmpIf8_PStk TCodePos
-ocJmpIf16_PStk,                                            //JmpIf16_PStk TCodePos
-ocJmpIf32_PStk,                                            //JmpIf32_PStk TCodePos
-ocJmpIf64_PStk,                                            //JmpIf64_PStk TCodePos
-ocJmpIf8_PVar,                                             //JmpIf8_PVar TCodePos TVarStackOffset TPointerOffset
-ocJmpIf16_PVar,                                            //JmpIf16_PVar TCodePos TVarStackOffset TPointerOffset
-ocJmpIf32_PVar,                                            //JmpIf32_PVar TCodePos TVarStackOffset TPointerOffset
-ocJmpIf64_PVar,                                            //JmpIf64_PVar TCodePos TVarStackOffset TPointerOffset
-}
-
 //jump relative if
 ocJmpRIf8_Stk,                                              //JmpRIf8_Stk TCodeOffset TStackOffset
 ocJmpRIf16_Stk,                                             //JmpRIf16_Stk TCodeOffset TStackOffset
