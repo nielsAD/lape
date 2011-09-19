@@ -1564,10 +1564,8 @@ function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeG
     Assert(Length(d) = 1);
     Result := d[0] as TLapeGlobalVar;
 
-    if (Result <> nil) {and Result.isConstant} and Result.HasType() and (Result.VarType is TLapeType_MethodOfObject) then
+    if (Result <> nil) and Result.isConstant and Result.HasType() and (Result.VarType is TLapeType_MethodOfObject) then
     begin
-      if (not Left.isConstant) then
-        LapeException(lpeCannotEvalConst);
       Result := Result.CreateCopy();
       TMethod(Result.Ptr^).Data := Left.Ptr;
     end;
@@ -1715,7 +1713,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
     Assert(Length(d) = 1);
     Result := _ResVar.New(d[0] as TLapeGlobalVar);
 
-    if {Result.isConstant and} Result.HasType() and (Result.VarType is TLapeType_MethodOfObject) then
+    if Result.isConstant and Result.HasType() and (Result.VarType is TLapeType_MethodOfObject) then
     begin
       Res.VarType := Result.VarType;
       FCompiler.getDestVar(Dest, Res, op_Dot);
