@@ -779,8 +779,8 @@ begin
         Inc(FPos);
         if (CurChar = '$') then
         begin
-          HandleDirective();
           Result := setTok(tk_Directive);
+          HandleDirective();
         end
         else
         begin
