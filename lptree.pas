@@ -1692,6 +1692,8 @@ var
       end
       else
       begin
+        if AVar.HasType() and AVar.VarType.NeedInitialization then
+          FCompiler.Emitter._InitStack(AVar.VarType.Size, Offset, @DocPos);
         Result.VarType := AVar.VarType;
         Result := AVar.VarType.Eval(op_Assign, tmpVar, Result, AVar, Offset, @DocPos);
       end;
@@ -1712,7 +1714,9 @@ var
       Par.VarPos.MemPos := MemPos;
       Par.VarType := Param.VarType;
       if (MemPos = mpVar) then
-        Par.VarPos.StackVar := Compiler.getTempVar(Par.VarType);
+        Par.VarPos.StackVar := Compiler.getTempVar(Par.VarType)
+      else if (MemPos = mpStack) and Par.HasType() and Par.VarType.NeedInitialization then
+        FCompiler.Emitter._InitStack(Par.VarType.Size, Offset, @DocPos);
 
       tmpRes := ParamVar;
       ParamVar := Param.VarType.Eval(op_Assign, tmpVar, Par, ParamVar, Offset, @DocPos);
@@ -1728,11 +1732,27 @@ var
   var
     i: Integer;
 
-    function getStackVar(Node: TLapeTree_Base; var Offset: Integer): TResVar;
+    function getStackVar(Node: TLapeTree_Base; var Offs: Integer): TResVar;
+
+      function CanStack(t: TLapeType): Boolean;
+      begin
+        Result := (t <> nil) and (t.BaseType in LapeStackTypes);
+      end;
+
     begin
-      if (Node is TLapeTree_DestExprBase) then
+      if (Node is TLapeTree_DestExprBase) and CanStack(TLapeTree_DestExprBase(Node).resType()) then
         TLapeTree_DestExprBase(Node).Dest := StackResVar;
-      Result := Node.Compile(Offset);
+      Result := Node.Compile(Offs);
+      if (Result.VarPos.MemPos = mpVar) and (Result.VarPos.StackVar is TLapeStackTempVar) then
+        with TLapeStackTempVar(Result.VarPos.StackVar) do
+          if (not Result.VarPos.isPointer) and Locked and (not NeedFinalization) then
+          begin
+            DecLock();
+            if (not Locked) then
+              Result := FCompiler.PopVarToStack(Result, Offs, @Node._DocPos)
+            else
+              IncLock();
+          end;
     end;
 
   begin
@@ -1744,8 +1764,8 @@ var
     with TLapeType_Method(IdentVar.VarType) do
     begin
       FDest.Spill();
-      if ParamInitialization then
-        FCompiler.Emitter._InitStack(ParamSize, Offset, @Self._DocPos);
+      //if ParamInitialization then
+      //  FCompiler.Emitter._InitStack(ParamSize, Offset, @Self._DocPos);
 
       for i := 0 to Params.Count - 1 do
       try

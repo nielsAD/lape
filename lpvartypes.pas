@@ -770,6 +770,7 @@ type
 
     procedure FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
     procedure FinalizeVar(AVar: TResVar; Pos: PDocPos = nil); overload; virtual;
+    function PopVarToStack(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; virtual;
 
     function IncStackInfo(AStackInfo: TLapeStackInfo; var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
     function IncStackInfo(var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
@@ -798,6 +799,7 @@ type
     function getTempVar(VarType: TLapeType; Lock: Integer = 1): TLapeStackTempVar; overload; virtual;
     function getTempStackVar(VarType: ELapeBaseType): TResVar; overload; virtual;
     function getTempStackVar(VarType: TLapeType): TResVar; overload; virtual;
+
     function getPointerType(PType: ELapeBaseType): TLapeType_Pointer; overload; virtual;
     function getPointerType(PType: TLapeType): TLapeType_Pointer; overload; virtual;
     function getTypeVar(AType: ELapeBaseType): TLapeGlobalVar; overload; virtual;
@@ -1612,7 +1614,7 @@ begin
       EvalProc := nil;
 
     if (ResType = nil) or (not ValidEvalFunction(EvalProc)) then
-      if (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
+      if (op = op_Dot) and ValidFieldName(Right) then
         Exit(EvalDot(PlpString(Right.Ptr)^))
       else if (op = op_Assign) and (Right <> nil) and Right.HasType() then
         LapeExceptionFmt(lpeIncompatibleAssignment, [Right.VarType.AsString, AsString])
@@ -1756,7 +1758,7 @@ begin
       EvalProc := nil;
 
     if (not Result.HasType()) or (not ValidEvalFunction(EvalProc)) then
-      if (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
+      if (op = op_Dot) and ValidFieldName(Right) then
         Exit(EvalDot(PlpString(Right.VarPos.GlobalVar.Ptr)^))
       else if (op = op_Assign) and Right.HasType() then
         LapeExceptionFmt(lpeIncompatibleAssignment, [Right.VarType.AsString, AsString])
@@ -3437,8 +3439,7 @@ begin
           wasConstant := False;
 
         IndexHigh := FCompiler.getConstant(Size);
-        tmpVar := StackResVar;
-        tmpVar.VarType := Compiler.getBaseType(ltPointer);
+        tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, Pos);
         if wasConstant then
           FCompiler.Emitter._Eval(getEvalProc(op_Assign, ltPointer, ltPointer), tmpVar, _ResVar.New(IndexLow), NullResVar, Offset, Pos)
@@ -3734,8 +3735,7 @@ begin
     begin
       if (FRange.Hi < High(UInt8)) then
       begin
-        tmpString := StackResVar;
-        tmpString.VarType := FCompiler.getBaseType(ltShortString);
+        tmpString := FCompiler.getTempStackVar(ltShortString);
         FCompiler.getDestVar(Dest, tmpString, op_Unknown);
         Result := tmpString.VarType.Eval(Op, Dest, tmpString, Right, Offset, Pos)
       end
@@ -3977,8 +3977,7 @@ begin
 	    else
 	    begin
         RightVar := _ResVar.New(FCompiler.getConstant(Size));
-        tmpVar := StackResVar;
-        tmpVar.VarType := Compiler.getBaseType(ltPointer);
+        tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar, Offset, @Self._DocPos);
@@ -5341,6 +5340,17 @@ begin
   FinalizeVar(AVar, Offset, Pos);
 end;
 
+function TLapeCompilerBase.PopVarToStack(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+begin
+  Result := AVar;
+  if (Result.VarPos.MemPos = mpVar) and Result.HasType() and (Result.DecLock().VarType.Size > 0) then
+  begin
+    Emitter._PopVarToStack(Result.VarType.Size, Result.VarPos.StackVar.Offset + Result.VarPos.Offset, Offset, Pos);
+    Result.VarPos.MemPos := mpStack;
+    Result.VarPos.ForceVariable := False;
+  end;
+end;
+
 function TLapeCompilerBase.IncStackInfo(AStackInfo: TLapeStackInfo; var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo;
 begin
   if (AStackInfo <> nil) and (AStackInfo <> EmptyStackInfo) then
@@ -5683,7 +5693,7 @@ procedure TLapeCompilerBase.getDestVar(var Dest, Res: TResVar; Op: EOperator);
 begin
   if (op = op_Assign) then
     Dest.Spill()
-  else if (op <> op_Deref) and (Dest.VarPos.MemPos <> mpNone) and
+  else if (op <> op_Deref) and (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and
     Res.HasType() and Res.VarType.Equals(Dest.VarType)
   then
     Res := Dest

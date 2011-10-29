@@ -646,6 +646,7 @@ object Form1: TForm1
       '  test(@tpa[1].y);'
       'end;'
     )
+    VisibleSpecialChars = [vscSpace, vscTabAtLast]
     BracketHighlightStyle = sbhsBoth
     inline SynLeftGutterPartList1: TSynGutterPartList
       object SynGutterMarks1: TSynGutterMarks

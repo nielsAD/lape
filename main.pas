@@ -146,7 +146,7 @@ end;
 
 procedure TForm1.btnDisassembleClick(Sender: TObject);
 begin
-  Compile(False, True);
+  Compile(True, True);
 end;
 
 procedure TForm1.btnMemLeaksClick(Sender: TObject);
