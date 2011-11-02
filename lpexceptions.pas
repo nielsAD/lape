@@ -68,7 +68,7 @@ resourcestring
   lpeOutOfTypeRange = 'Out of type range';
   lpeRuntime = 'Runtime error: "%s"';
   lpeStatementNotAllowed = 'Statement not allowed here';
-  lpeTooMuchParameters = 'Too much parameters found';
+  lpeTooMuchParameters = 'Too many parameters found';
   lpeTypeExpected = 'Type expected';
   lpeUnexpectedToken = 'Found unexpected token "%s"';
   lpeUnknownDeclaration = 'Unknown declaration "%s"';
