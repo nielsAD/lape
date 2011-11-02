@@ -3,6 +3,7 @@
 *.or
 *.compiled
 *.rst
+!docs/*.rst
 *.res
 
 *.dcu
