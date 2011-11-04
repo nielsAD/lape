@@ -1308,7 +1308,7 @@ begin
       if (OldDeclaration <> nil) then
         if (FuncForwards <> nil) and FuncForwards.ExistsItem(OldDeclaration as TLapeGlobalVar) then
         begin
-          if (not TLapeGlobalVar(OldDeclaration).VarType.Equals(FuncHeader, False)) then
+          if (not TLapeGlobalVar(OldDeclaration).VarType.Equals(Result.Method.VarType, False)) then
             LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
           Result.FreeStackInfo := False;
           Result.Free();
