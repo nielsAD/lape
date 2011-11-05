@@ -144,8 +144,8 @@ type
     procedure setState(const State: Pointer; DoFreeState: Boolean = True); virtual;
     procedure freeState(const State: Pointer); virtual;
 
-    function getTempTokenizerState(const ATokenizer: TLapeTokenizerBase; FirstStackInfo: Boolean = True): Pointer; overload; virtual;
-    function getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''; FirstStackInfo: Boolean = True): Pointer; overload; virtual;
+    function getTempTokenizerState(const ATokenizer: TLapeTokenizerBase; ResetState: Boolean = True): Pointer; overload; virtual;
+    function getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''; ResetState: Boolean = True): Pointer; overload; virtual;
     procedure resetTokenizerState(const State: Pointer; DoFreeState: Boolean = True); virtual;
     procedure freeTempTokenizerState(const State: Pointer); virtual;
 
@@ -425,11 +425,15 @@ begin
 end;
 
 procedure TLapeCompiler.pushTokenizer(ATokenizer: TLapeTokenizerBase);
+var
+  InPeek: Boolean;
 begin
-  if (Tokenizer <> nil) and (ATokenizer <> nil) then
-    __LapeTokenizerBase(ATokenizer).FInPeek := Tokenizer.InPeek;
+  InPeek := hasTokenizer() and Tokenizer.InPeek;
   Inc(FTokenizer);
   setTokenizer(ATokenizer);
+
+  if InPeek and hasTokenizer() then
+    __LapeTokenizerBase(Tokenizer).FInPeek := True;
 end;
 
 function TLapeCompiler.popTokenizer: TLapeTokenizerBase;
@@ -2640,7 +2644,7 @@ begin
   Dispose(PCompilerState(State));
 end;
 
-function TLapeCompiler.getTempTokenizerState(const ATokenizer: TLapeTokenizerBase; FirstStackInfo: Boolean = True): Pointer;
+function TLapeCompiler.getTempTokenizerState(const ATokenizer: TLapeTokenizerBase; ResetState: Boolean = True): Pointer;
 begin
   if (not hasTokenizer()) then
     SetLength(FTokenizers, 1);
@@ -2663,16 +2667,19 @@ begin
   FTokenizers[0] := nil;
   Tokenizer := ATokenizer;
 
-  if FirstStackInfo then
+  if ResetState then
+  begin
+    FConditionalStack.Reset();
     while (FStackInfo <> nil) and (FStackInfo.Owner <> nil) do
       FStackInfo := FStackInfo.Owner;
+  end;
   if (FStackInfo = nil) then
     FStackInfo := EmptyStackInfo;
 end;
 
-function TLapeCompiler.getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''; FirstStackInfo: Boolean = True): Pointer;
+function TLapeCompiler.getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''; ResetState: Boolean = True): Pointer;
 begin
-  Result := getTempTokenizerState(TLapeTokenizerString.Create(AStr, AFileName), FirstStackInfo);
+  Result := getTempTokenizerState(TLapeTokenizerString.Create(AStr, AFileName), ResetState);
 end;
 
 procedure TLapeCompiler.resetTokenizerState(const State: Pointer; DoFreeState: Boolean = True);
@@ -2735,7 +2742,7 @@ end;
 function TLapeCompiler.ParseFile: TLapeTree_Base;
 begin
   Result := nil;
-  Assert(Tokenizer <> nil);
+  Assert(hasTokenizer());
 
   try
     if (FDefines <> nil) and (FBaseDefines <> nil) then
@@ -2809,7 +2816,7 @@ end;
 
 procedure TLapeCompiler.CheckAfterCompile;
 begin
-  Assert(Tokenizer <> nil);
+  Assert(hasTokenizer());
 
   if (FConditionalStack.Cur >= 0) then
     LapeException(lpeConditionalNotClosed, popConditional());
