@@ -37,7 +37,8 @@ type
   PCompilerState = ^TCompilerState;
   TCompilerState = record
     Tokenizer: Integer;
-    Tokenizers: array of Pointer;
+    Tokenizers: array of TLapeTokenizerBase;
+    TokStates: array of Pointer;
     Defines: lpString;
     Conditionals: TLapeConditionalStack.TTArray;
   end;
@@ -406,8 +407,9 @@ end;
 
 procedure TLapeCompiler.setTokenizer(ATokenizer: TLapeTokenizerBase);
 begin
-  if hasTokenizer() and (FreeTokenizer or hasMoreTokenizers()) and (FTokenizer < Length(FTokenizers)) and
-     (FTokenizers[FTokenizer] <> nil) and (FTokenizers[FTokenizer] <> ATokenizer)
+  if hasTokenizer() and (FreeTokenizer or hasMoreTokenizers()) and
+    (FTokenizer < Length(FTokenizers)) and (Tokenizer <> nil) and
+    (Tokenizer <> ATokenizer) and (not Tokenizer.InPeek)
   then
     FTokenizers[FTokenizer].Free();
 
@@ -428,11 +430,11 @@ procedure TLapeCompiler.pushTokenizer(ATokenizer: TLapeTokenizerBase);
 var
   InPeek: Boolean;
 begin
-  InPeek := hasTokenizer() and Tokenizer.InPeek;
+  InPeek := (Tokenizer <> nil) and Tokenizer.InPeek;
   Inc(FTokenizer);
   setTokenizer(ATokenizer);
 
-  if InPeek and hasTokenizer() then
+  if InPeek and (ATokenizer <> nil) then
     __LapeTokenizerBase(Tokenizer).FInPeek := True;
 end;
 
@@ -2602,11 +2604,15 @@ begin
     Tokenizer := FTokenizer;
 
     SetLength(Tokenizers, Length(FTokenizers));
+    SetLength(TokStates, Length(FTokenizers));
     for i := 0 to High(FTokenizers) do
-      if (FTokenizers[i] <> nil) then
-        Tokenizers[i] := FTokenizers[i].getState()
+    begin
+      Tokenizers[i] := FTokenizers[i];
+      if (Tokenizers[i] <> nil) then
+        TokStates[i] := Tokenizers[i].getState()
       else
-        Tokenizers[i] := nil;
+        TokStates[i] := nil;
+    end;
 
     Defines := FDefines.Text;
     Conditionals := FConditionalStack.ExportToArray();
@@ -2620,11 +2626,20 @@ begin
   with PCompilerState(State)^ do
   begin
     Assert(Length(FTokenizers) >= Length(Tokenizers));
+    Assert(Length(Tokenizers) = Length(TokStates));
     FTokenizer := Tokenizer;
 
     for i := 0 to High(Tokenizers) do
-      if (Tokenizers[i] <> nil) and (FTokenizers[i] <> nil) then
-        FTokenizers[i].setState(Tokenizers[i], False);
+    begin
+      if (TokStates[i] <> nil) then
+        Tokenizers[i].setState(TokStates[i], False);
+      if (FTokenizers[i] <> Tokenizers[i]) then
+      begin
+        if (FTokenizers[i] <> nil) then
+          FTokenizers[i].Free();
+        FTokenizers[i] := Tokenizers[i];
+      end;
+    end;
 
     FDefines.Text := Defines;
     FConditionalStack.ImportFromArray(Conditionals);
@@ -2639,8 +2654,12 @@ var
 begin
   with PCompilerState(State)^ do
     for i := 0 to High(Tokenizers) do
-      if (Tokenizers[i] <> nil) and (FTokenizers[i] <> nil) then
-        FTokenizers[i].freeState(Tokenizers[i]);
+    begin
+      if (TokStates[i] <> nil) then
+        Tokenizers[i].freeState(TokStates[i]);
+      if (FTokenizers[i] <> Tokenizers[i]) and (Tokenizers[i] <> nil) then
+        Tokenizers[i].Free();
+    end;
   Dispose(PCompilerState(State));
 end;
 
@@ -2742,7 +2761,7 @@ end;
 function TLapeCompiler.ParseFile: TLapeTree_Base;
 begin
   Result := nil;
-  Assert(hasTokenizer());
+  Assert(Tokenizer <> nil);
 
   try
     if (FDefines <> nil) and (FBaseDefines <> nil) then
@@ -2816,7 +2835,7 @@ end;
 
 procedure TLapeCompiler.CheckAfterCompile;
 begin
-  Assert(hasTokenizer());
+  Assert(Tokenizer <> nil);
 
   if (FConditionalStack.Cur >= 0) then
     LapeException(lpeConditionalNotClosed, popConditional());
