@@ -57,10 +57,13 @@ type
     function getPDocPos: PDocPos; inline;
     function hasTokenizer: Boolean; inline;
     function hasMoreTokenizers: Boolean; inline;
+    function incTokenizerLock(ATokenizer: TLapeTokenizerBase): TLapeTokenizerBase; inline;
+    procedure decTokenizerLock(var ATokenizer: TLapeTokenizerBase; DoFree: Boolean = True); inline;
     procedure setTokenizersPeek(Peek: Boolean);
   protected
     FTokenizers: TLapeTokenizerArray;
     FTokenizer: Integer;
+
     FTreeMethodMap: TLapeTreeMethodMap;
     FInternalMethodMap: TLapeInternalMethodMap;
     FTree: TLapeTree_Base;
@@ -325,6 +328,23 @@ begin
   Result := FTokenizer > 0;
 end;
 
+function TLapeCompiler.incTokenizerLock(ATokenizer: TLapeTokenizerBase): TLapeTokenizerBase;
+begin
+  Result := ATokenizer;
+  if (Result <> nil) then
+    Inc(Result.Tag);
+end;
+
+procedure TLapeCompiler.decTokenizerLock(var ATokenizer: TLapeTokenizerBase; DoFree: Boolean = True);
+begin
+  if (ATokenizer <> nil) then
+  begin
+    Dec(ATokenizer.Tag);
+    if (ATokenizer.Tag < 0) and DoFree then
+      FreeAndNil(ATokenizer);
+  end;
+end;
+
 type
   __LapeTokenizerBase = class(TLapeTokenizerBase);
 procedure TLapeCompiler.setTokenizersPeek(Peek: Boolean);
@@ -408,10 +428,9 @@ end;
 procedure TLapeCompiler.setTokenizer(ATokenizer: TLapeTokenizerBase);
 begin
   if hasTokenizer() and (FreeTokenizer or hasMoreTokenizers()) and
-    (FTokenizer < Length(FTokenizers)) and (Tokenizer <> nil) and
-    (Tokenizer <> ATokenizer) and (not Tokenizer.InPeek)
+    (FTokenizer < Length(FTokenizers)) and (Tokenizer <> ATokenizer)
   then
-    FTokenizers[FTokenizer].Free();
+    decTokenizerLock(FTokenizers[FTokenizer]);
 
   if (not hasTokenizer()) then
     FTokenizer := 0;
@@ -2607,7 +2626,7 @@ begin
     SetLength(TokStates, Length(FTokenizers));
     for i := 0 to High(FTokenizers) do
     begin
-      Tokenizers[i] := FTokenizers[i];
+      Tokenizers[i] := incTokenizerLock(FTokenizers[i]);
       if (Tokenizers[i] <> nil) then
         TokStates[i] := Tokenizers[i].getState()
       else
@@ -2635,9 +2654,8 @@ begin
         Tokenizers[i].setState(TokStates[i], False);
       if (FTokenizers[i] <> Tokenizers[i]) then
       begin
-        if (FTokenizers[i] <> nil) then
-          FTokenizers[i].Free();
-        FTokenizers[i] := Tokenizers[i];
+        decTokenizerLock(FTokenizers[i]);
+        FTokenizers[i] := incTokenizerLock(Tokenizers[i]);
       end;
     end;
 
@@ -2657,9 +2675,9 @@ begin
     begin
       if (TokStates[i] <> nil) then
         Tokenizers[i].freeState(TokStates[i]);
-      if (FTokenizers[i] <> Tokenizers[i]) and (Tokenizers[i] <> nil) then
-        Tokenizers[i].Free();
+      decTokenizerLock(Tokenizers[i]);
     end;
+
   Dispose(PCompilerState(State));
 end;
 
@@ -2720,14 +2738,14 @@ begin
   if (State = nil) then
   begin
     if Importing and (FTokenizers[0] <> nil) then
-      FreeAndNil(FTokenizers[0]);
+      decTokenizerLock(FTokenizers[0]);
     Exit;
   end;
 
   with PTempTokenizerState(State)^ do
   begin
     if (OldTokenizer <> nil) then
-      OldTokenizer.Free();
+      decTokenizerLock(OldTokenizer);
     freeState(OldState);
   end;
   Dispose(PTempTokenizerState(State));

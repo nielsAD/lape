@@ -222,6 +222,7 @@ type
   protected
     function getDocPos: TDocPos; virtual; abstract;
   public
+    Tag: Int64;
     property DocPos: TDocPos read getDocPos;
   end;
 
