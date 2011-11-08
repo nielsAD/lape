@@ -57,8 +57,8 @@ type
     function getPDocPos: PDocPos; inline;
     function hasTokenizer: Boolean; inline;
     function hasMoreTokenizers: Boolean; inline;
-    function incTokenizerLock(ATokenizer: TLapeTokenizerBase): TLapeTokenizerBase; inline;
-    procedure decTokenizerLock(var ATokenizer: TLapeTokenizerBase; DoFree: Boolean = True); inline;
+    function incTokenizerLock(ATokenizer: TLapeTokenizerBase): TLapeTokenizerBase;
+    procedure decTokenizerLock(var ATokenizer: TLapeTokenizerBase; DoFree: Boolean = True);
     procedure setTokenizersPeek(Peek: Boolean);
   protected
     FTokenizers: TLapeTokenizerArray;
