@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, SynEdit, SynHighlighterPas;
+  StdCtrls, ExtCtrls, SynEdit, SynHighlighterPas, lptypes;
 
 type
 
@@ -40,7 +40,7 @@ var
 implementation
 
 uses
-  lpparser, lpcompiler, lptypes, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
+  lpparser, lpcompiler, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
   LCLIntf, Variants, typinfo;
 
 {$R *.lfm}
@@ -54,13 +54,15 @@ end;
 
 procedure MyWrite(Params: PParamArray);
 begin
-  Form1.m.Text := Form1.m.Text + PlpString(Params^[0])^;
-  Write(PlpString(Params^[0])^);
+  with TForm1(Params^[0]) do
+    m.Text := m.Text + PlpString(Params^[1])^;
+  Write(PlpString(Params^[1])^);
 end;
 
 procedure MyWriteLn(Params: PParamArray);
 begin
-  Form1.m.Text := Form1.m.Text + LineEnding;
+  with TForm1(Params^[0]) do
+    Form1.m.Text := Form1.m.Text + LineEnding;
   WriteLn();
 end;
 
@@ -99,8 +101,8 @@ begin
         TLapeType_MethodOfObject(Compiler.addManagedType(TLapeType_MethodOfObject.Create(Compiler.addGlobalFunc('procedure _Int32Inc;', @IntTest).VarType as TLapeType_Method))).NewGlobalVar(@IntTest, 'Test')
       );
 
-      Compiler.addGlobalFunc('procedure _write(s: string); override;', @MyWrite);
-      Compiler.addGlobalFunc('procedure _writeln; override;', @MyWriteLn);
+      Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
+      Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
       Compiler.addGlobalFunc('procedure MyStupidProc', @MyStupidProc);
 
       try

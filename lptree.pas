@@ -1428,7 +1428,7 @@ end;
 constructor TLapeTree_Invoke.Create(Ident: lpString; ASource: TLapeTree_Base);
 begin
   Assert((ASource <> nil) and (ASource.Compiler <> nil));
-  Create(TLapeTree_GlobalVar.Create(ASource.Compiler.getGlobalVar(Ident), ASource), ASource);
+  Create(TLapeTree_GlobalVar.Create(ASource.Compiler[Ident], ASource), ASource);
 end;
 
 destructor TLapeTree_Invoke.Destroy;
@@ -1979,9 +1979,12 @@ var
   _Write: TLapeGlobalVar;
 begin
   inherited;
-  _Write := ACompiler.getGlobalVar('_write');
-  if (_Write.VarType is TLapeType_OverloadedMethod) then
+
+  _Write := ACompiler['_write'];
+  if (_Write <> nil) and (_Write.VarType is TLapeType_OverloadedMethod) then
     _Write := _Write.VarType.ManagedDecls.Items[0] as TLapeGlobalVar;
+
+  Assert(_Write <> nil);
   setIdent(TLapeTree_GlobalVar.Create(_Write, Self));
 end;
 
@@ -2028,8 +2031,8 @@ begin
   else
     Result := NullResvar;
 
-  _WriteLn := FCompiler.getGlobalVar('_writeln');
-  if (_WriteLn.VarType is TLapeType_OverloadedMethod) then
+  _WriteLn := FCompiler['_writeln'];
+  if (_WriteLn <> nil) and (_WriteLn.VarType is TLapeType_OverloadedMethod) then
     _WriteLn := _WriteLn.VarType.ManagedDecls.Items[0] as TLapeGlobalVar;
   Assert(_WriteLn <> nil);
 
@@ -2044,7 +2047,7 @@ end;
 constructor TLapeTree_InternalMethod_Assert.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  setIdent(TLapeTree_GlobalVar.Create(ACompiler.getGlobalVar('_assert'), Self));
+  setIdent(TLapeTree_GlobalVar.Create(ACompiler['_assert'], Self));
 end;
 
 function TLapeTree_InternalMethod_Assert.Compile(var Offset: Integer): TResVar;
@@ -2311,7 +2314,7 @@ begin
   if ((VarType = nil) and (not IsPointer)) or (not Param.isVariable) then
     LapeException(lpeVariableExpected, [FParams[0], Self]);
 
-  _Dispose := FCompiler.getGlobalVar('_Dispose');
+  _Dispose := FCompiler['_Dispose'];
   Assert((_Dispose <> nil) and (_Dispose.VarType is TLapeType_OverloadedMethod));
   _Dispose := TLapeType_OverloadedMethod(_Dispose.VarType).getMethod(getTypeArray([VarType]));
 
@@ -2543,7 +2546,7 @@ begin
   if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
     FDest := VarResVar;
   FCompiler.getDestVar(FDest, Result, op_Unknown);
-  FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler.getGlobalVar('!high')), Result, SizeOf(Pointer), Offset, @Self._DocPos);
+  FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!high']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
 
   Param.Spill(1);
 end;
@@ -2632,10 +2635,10 @@ begin
     FCompiler.getDestVar(FDest, Result, op_Unknown);
 
     case Param.VarType.BaseType of
-      ltAnsiString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler.getGlobalVar('!astr_getlen')), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      ltWideString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler.getGlobalVar('!wstr_getlen')), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      ltUnicodeString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler.getGlobalVar('!ustr_getlen')), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      else FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler.getGlobalVar('!length')), Result, SizeOf(Pointer), Offset, @Self._DocPos);
+      ltAnsiString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!astr_getlen']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
+      ltWideString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!wstr_getlen']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
+      ltUnicodeString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!ustr_getlen']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
+      else FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!length']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
     end;
   end;
 
@@ -2648,7 +2651,7 @@ function TLapeTree_InternalMethod_SetLength.Compile(var Offset: Integer): TResVa
   var
     Method: TLapeGlobalVar;
   begin
-    Method := FCompiler.getGlobalVar(AName);
+    Method := FCompiler[AName];
     if (Method <> nil) and (Method.VarType is TLapeType_OverloadedMethod) then
       Method := TLapeType_OverloadedMethod(Method.VarType).getMethod(getTypeArray(AParams), AResult);
 
@@ -2688,12 +2691,12 @@ begin
     LapeException(lpeInvalidEvaluation, DocPos);
 
   case Param.VarType.BaseType of
-    ltAnsiString:    _ArraySetLength := FCompiler.getGlobalVar('!astr_setlen');
-    ltWideString:    _ArraySetLength := FCompiler.getGlobalVar('!wstr_setlen');
-    ltUnicodeString: _ArraySetLength := FCompiler.getGlobalVar('!ustr_setlen');
+    ltAnsiString:    _ArraySetLength := FCompiler['!astr_setlen'];
+    ltWideString:    _ArraySetLength := FCompiler['!wstr_setlen'];
+    ltUnicodeString: _ArraySetLength := FCompiler['!ustr_setlen'];
     else
     begin
-      _ArraySetLength := FCompiler.getGlobalVar('_ArraySetLength');
+      _ArraySetLength := FCompiler['_ArraySetLength'];
       Param.VarType := FCompiler.getBaseType(ltPointer);
     end;
   end;

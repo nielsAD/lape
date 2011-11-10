@@ -205,6 +205,12 @@ type
     function addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
 
+    function addGlobalMethod(AFunc: TLapeGlobalVar; Value: TMethod; FreeFunc: Boolean = True): TLapeGlobalVar; overload; virtual;
+    function addGlobalMethod(AHeader: lpString; Value: TMethod): TLapeGlobalVar; overload; virtual;
+    function addGlobalMethod(AHeader: lpString; AMethod, ASelf: Pointer): TLapeGlobalVar; overload; virtual;
+    function addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: TMethod; AName: lpString): TLapeGlobalVar; overload; virtual;
+    function addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: TMethod; AName: lpString): TLapeGlobalVar; overload; virtual;
+
     function addDelayedCode(ACode: lpString; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base; virtual;
 
     property InternalMethodMap: TLapeInternalMethodMap read FInternalMethodMap;
@@ -3207,6 +3213,49 @@ begin
   Result := addGlobalFunc(AParams, AParTypes, AParDefaults, nil, Value, AName);
 end;
 
+function TLapeCompiler.addGlobalMethod(AFunc: TLapeGlobalVar; Value: TMethod; FreeFunc: Boolean = True): TLapeGlobalVar;
+begin
+  Assert(AFunc <> nil);
+
+  Result := TLapeType_MethodOfObject(addManagedType(TLapeType_MethodOfObject.Create(AFunc.VarType as TLapeType_Method))).NewGlobalVar(Value, AFunc.Name);
+  Result.isConstant := True;
+
+  if (AFunc.DeclarationList <> nil) then
+    Result.DeclarationList := AFunc.DeclarationList
+  else
+  begin
+    AFunc.Name := '';
+    Result := addGlobalVar(Result);
+  end;
+
+  if FreeFunc then
+    AFunc.Free();
+end;
+
+function TLapeCompiler.addGlobalMethod(AHeader: lpString; Value: TMethod): TLapeGlobalVar;
+begin
+  Result := addGlobalMethod(addGlobalFunc(AHeader, @Value.Code), Value);
+end;
+
+function TLapeCompiler.addGlobalMethod(AHeader: lpString; AMethod, ASelf: Pointer): TLapeGlobalVar;
+var
+  Val: TMethod;
+begin
+  Val.Code := AMethod;
+  Val.Data := ASelf;
+  Result := addGlobalMethod(AHeader, Val);
+end;
+
+function TLapeCompiler.addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: TMethod; AName: lpString): TLapeGlobalVar;
+begin
+  Result := addGlobalMethod(addGlobalFunc(AParams, AParTypes, AParDefaults, ARes, @Value.Code, AName), Value);
+end;
+
+function TLapeCompiler.addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: TMethod; AName: lpString): TLapeGlobalVar;
+begin
+  Result := addGlobalMethod(AParams, AParTypes, AParDefaults, nil, Value, AName);
+end;
+
 function TLapeCompiler.addDelayedCode(ACode: lpString; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base;
 var
   Index: Integer;
@@ -3280,7 +3329,7 @@ begin
     Assert(Right.Ptr <> nil);
     FieldName := PlpString(Right.Ptr)^;
 
-    Result := FCompiler.getGlobalVar(FieldName);
+    Result := FCompiler[FieldName];
     if (Result = nil) and (FCompiler is TLapeCompiler) then
     begin
       Decl := TLapeCompiler(FCompiler).getExpression(FieldName, TLapeStackInfo(nil));

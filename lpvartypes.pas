@@ -597,7 +597,9 @@ type
   public
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); override;
     constructor Create(AMethod: TLapeType_Method); overload; virtual;
-    function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean; override;
+    function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
+
+    function NewGlobalVar(AMethod: TMethod; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; overload; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
@@ -777,6 +779,7 @@ type
     function IncStackInfo(Emit: Boolean = False): TLapeStackInfo; overload; virtual;
     function DecStackInfo(var Offset: Integer; InFunction: Boolean = False; Emit: Boolean = True; DoFree: Boolean = False; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
     function DecStackInfo(InFunction: Boolean = False; Emit: Boolean = False; DoFree: Boolean = False): TLapeStackInfo; overload; virtual;
+
     procedure EmitCode(ACode: lpString; var Offset: Integer; Pos: PDocPos = nil); overload; virtual; abstract;
     procedure EmitCode(ACode: lpString; AVarNames: array of lpString; AVars: array of TLapeVar; AResVars: array of TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
@@ -805,6 +808,7 @@ type
     function getTypeVar(AType: ELapeBaseType): TLapeGlobalVar; overload; virtual;
     function getTypeVar(AType: TLapeType): TLapeGlobalVar; overload; virtual;
 
+    function SwapGlobalVarList(NewList: TLapeDeclarationList): TLapeDeclarationList; virtual;
     function getGlobalVar(AName: lpString): TLapeGlobalVar; virtual;
     function getGlobalType(AName: lpString): TLapeType; virtual;
 
@@ -3446,7 +3450,7 @@ begin
         else
           FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, Pos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, _ResVar.New(IndexHigh), NullResVar, Offset, Pos);
-        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler.getGlobalVar('!move')), SizeOf(Pointer)*3, Offset, Pos);
+        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer)*3, Offset, Pos);
         Result := Left;
 
         if wasConstant then
@@ -3981,7 +3985,7 @@ begin
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar, Offset, @Self._DocPos);
-        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler.getGlobalVar('!move')), SizeOf(Pointer) * 3, Offset, @Self._DocPos);
+        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3, Offset, @Self._DocPos);
         Result := Left;
 	    end;
 
@@ -4366,9 +4370,15 @@ begin
   FBaseType := AMethod.BaseType;
 end;
 
-function TLapeType_MethodOfObject.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean;
+function TLapeType_MethodOfObject.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
 begin
   Result := (Other is TLapeType_MethodOfObject) and inherited;
+end;
+
+function TLapeType_MethodOfObject.NewGlobalVar(AMethod: TMethod; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
+begin
+  Result := NewGlobalVar(nil, AName, ADocPos);
+  TMethod(Result.Ptr^) := AMethod
 end;
 
 function TLapeType_MethodOfObject.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
@@ -5764,6 +5774,15 @@ begin
   else
     TType := TLapeType_Type;
   Result := addManagedVar(addManagedType(TType.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
+end;
+
+function TLapeCompilerBase.SwapGlobalVarList(NewList: TLapeDeclarationList): TLapeDeclarationList;
+begin
+  if (NewList <> nil) then
+  begin
+    Result := FGlobalDeclarations;
+    FGlobalDeclarations := NewList;
+  end;
 end;
 
 function TLapeCompilerBase.getGlobalVar(AName: lpString): TLapeGlobalVar;
