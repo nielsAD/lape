@@ -66,6 +66,7 @@ resourcestring
   lpeOperatorExpected = 'Operator expected';
   lpeOutOfStackRange = 'Out of stack range';
   lpeOutOfTypeRange = 'Out of type range';
+  lpeParentOutOfScope = 'Parent declaration is out of scope';
   lpeRuntime = 'Runtime error: "%s"';
   lpeStatementNotAllowed = 'Statement not allowed here';
   lpeTooMuchParameters = 'Too many parameters found';

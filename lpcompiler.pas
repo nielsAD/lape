@@ -1256,7 +1256,9 @@ begin
   Result := nil;
   Pos := Tokenizer.DocPos;
   if (FuncHeader = nil) or (FuncName = '') then
-    LapeException(lpeBlockExpected, Tokenizer.DocPos);
+    LapeException(lpeBlockExpected, Tokenizer.DocPos)
+  else if (FuncHeader is TLapeType_MethodOfType) and (not hasDeclaration(TLapeType_MethodOfType(FuncHeader).ObjectType, FStackInfo.Owner, True, False)) then
+    LapeException(lpeParentOutOfScope, Tokenizer.DocPos);
 
   isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
   OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
