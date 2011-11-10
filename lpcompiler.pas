@@ -1082,24 +1082,53 @@ begin
 end;
 
 function TLapeCompiler.ParseMethodHeader(out Name: lpString; addToScope: Boolean = True): TLapeType_Method;
+
+  procedure addVar(ParType: ELapeParameterType; VarType: TLapeType; AVar: lpString);
+  begin
+    if addToScope then
+      if (FStackInfo = nil) then
+        LapeException(lpeImpossible, Tokenizer.DocPos)
+      else if (LapeCase(Name) = LapeCase(AVar)) or hasDeclaration(AVar, True) then
+        LapeExceptionFmt(lpeDuplicateDeclaration, [AVar], Tokenizer.DocPos)
+      else
+        FStackInfo.addVar(ParType, VarType, AVar);
+  end;
+
 var
   i: Integer;
+  Pos: TDocPos;
   isFunction: Boolean;
+  Typ: TLapeType;
   Identifiers: TStringArray;
   Param: TLapeParameter;
   Token: EParserToken;
   Default: TLapeTree_ExprBase;
 begin
   //Expect([tk_kw_Function, tk_kw_Procedure], True, False);
+  Pos := Tokenizer.DocPos;
   isFunction := (Tokenizer.Tok = tk_kw_Function);
-  Result := TLapeType_Method.Create(Self, nil, nil, '', getPDocPos());
+  Result := TLapeType_Method.Create(Self, nil, nil, '', @Pos);
 
   try
 
     if isNext([tk_Identifier, tk_sym_ParenthesisOpen], Token) and (Token = tk_Identifier) then
     begin
       Name := Tokenizer.TokString;
-      Token := tk_NULL;
+
+      if isNext([tk_sym_Dot, tk_sym_ParenthesisOpen], Token) and (Token = tk_sym_Dot) then
+      begin
+        Expect(tk_Identifier, True, False);
+        Token := tk_NULL;
+
+        Typ := getDeclaration(Name) as TLapeType;
+        Name := Tokenizer.TokString;
+        if (not (Typ is TLapeType)) then
+          LapeException(lpeTypeExpected, [Tokenizer]);
+
+        addVar(lptVar, Typ, 'Self');
+        Result.Free();
+        Result := TLapeType_MethodOfType.Create(Self, Typ, nil, nil, '', @Pos);
+      end;
     end;
 
     if (Token = tk_sym_ParenthesisOpen) or ((Token = tk_NULL) and isNext([tk_sym_ParenthesisOpen])) then
@@ -1146,14 +1175,7 @@ begin
 
         for i := 0 to High(Identifiers) do
         begin
-          if addToScope then
-            if (FStackInfo = nil) then
-              LapeException(lpeImpossible, Tokenizer.DocPos)
-            else if (LapeCase(Identifiers[i]) = LapeCase(Name)) or hasDeclaration(Identifiers[i], True) then
-              LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], Tokenizer.DocPos)
-            else
-              FStackInfo.addVar(Param.ParType, Param.VarType, Identifiers[i]);
-
+          addVar(Param.ParType, Param.VarType, Identifiers[i]);
           Result.addParam(Param);
         end;
       until (Tokenizer.Tok = tk_sym_ParenthesisClose);
@@ -1165,13 +1187,7 @@ begin
       if (Result.Res = nil) then
         LapeException(lpeTypeExpected, Tokenizer.DocPos);
 
-      if addToScope then
-        if (FStackInfo = nil) then
-          LapeException(lpeImpossible, Tokenizer.DocPos)
-        else if (LapeCase(Name) = LapeCase('Result')) or hasDeclaration('Result', True) then
-          LapeExceptionFmt(lpeDuplicateDeclaration, ['Result'], Tokenizer.DocPos)
-        else
-          FStackInfo.addVar(lptOut, Result.Res, 'Result');
+      addVar(lptOut, Result.Res, 'Result');
     end;
 
     Result := addManagedType(Result) as TLapeType_Method;
@@ -1400,6 +1416,8 @@ begin
     begin
       for i := 0 to FuncHeader.Params.Count - 1 do
         FStackInfo.addVar(FuncHeader.Params[i].ParType, FuncHeader.Params[i].VarType, 'Param'+IntToStr(i));
+      if (FuncHeader is TLapeType_MethodOfType) then
+        FStackInfo.addVar(lptVar, TLapeType_MethodOfType(FuncHeader).ObjectType, 'Self');
       if (FuncHeader.Res <> nil) then
         FStackInfo.addVar(lptOut, FuncHeader.Res, 'Result');
     end;
@@ -2815,7 +2833,7 @@ begin
   if hasTokenizer() then
     OldState := getTempTokenizerState(ACode, Tokenizer.FileName, False)
   else
-    OldState := getTempTokenizerState(ACode, '!emit', False);
+    OldState := getTempTokenizerState(ACode, '!EmitCode', False);
 
   Tokenizer.OverridePos := Pos;
   try
@@ -3018,7 +3036,7 @@ begin
   Typ := AName + ': ' + Typ;
   if (Value <> '') then
     Typ := Typ + ' = ' + Value;
-  OldState := getTempTokenizerState(Typ + ';', '!import');
+  OldState := getTempTokenizerState(Typ + ';', '!addGlobalVar');
 
   try
     ParseVarBlock().Free();
@@ -3148,7 +3166,7 @@ var
   OldState: Pointer;
 begin
   Result := nil;
-  OldState := getTempTokenizerState(AName + ' = ' + Str + ';', '!import');
+  OldState := getTempTokenizerState(AName + ' = ' + Str + ';', '!addGlobalType');
 
   try
     ParseTypeBlock();
@@ -3165,7 +3183,7 @@ var
   OldState: Pointer;
 begin
   Result := nil;
-  OldState := getTempTokenizerState(AHeader + ';', '!import');
+  OldState := getTempTokenizerState(AHeader + ';', '!addGlobalFunc');
 
   try
     Expect([tk_kw_Function, tk_kw_Procedure]);
@@ -3192,7 +3210,7 @@ function TLapeCompiler.addGlobalFunc(AHeader: TLapeType_Method; AName, Body: lpS
 var
   OldState: Pointer;
 begin
-  OldState := getTempTokenizerState(Body, '!import');
+  OldState := getTempTokenizerState(Body, '!addGlobalFunc');
   try
     Result := ParseMethod(nil, AHeader, AName);
     CheckAfterCompile();
@@ -3265,7 +3283,7 @@ begin
   if hasTokenizer() and (not Importing) then
     OldState := getTempTokenizerState(ACode, Tokenizer.FileName)
   else
-    OldState := getTempTokenizerState(ACode, '!delayed');
+    OldState := getTempTokenizerState(ACode, '!addDelayedCode');
 
   try
     Result := ParseFile();

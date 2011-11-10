@@ -606,6 +606,18 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
   end;
 
+    TLapeType_MethodOfType = class(TLapeType_MethodOfObject)
+    protected
+      FObjectType: TLapeType;
+      function getAsString: lpString; override;
+    public
+      constructor Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
+      constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); reintroduce; overload; virtual;
+      function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
+
+      property ObjectType: TLapeType read FObjectType;
+    end;
+
   TLapeGetOverloadedMethod = function(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method;
     AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar of object;
 
@@ -4468,6 +4480,33 @@ begin
   finally
     Left.VarType := Self;
   end;
+end;
+
+function TLapeType_MethodOfType.getAsString: lpString;
+begin
+  Result := '(' + FObjectType.AsString + ').' + inherited;
+end;
+
+constructor TLapeType_MethodOfType.Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil);
+begin
+  Assert(AObjType <> nil);
+  inherited Create(ACompiler, AParams, ARes, AName, ADocPos);
+  FObjectType := AObjType;
+end;
+
+constructor TLapeType_MethodOfType.Create(AMethod: TLapeType_Method; AObjType: TLapeType);
+begin
+  Assert(AObjType <> nil);
+  inherited Create(AMethod);
+  FObjectType := AObjType;
+end;
+
+function TLapeType_MethodOfType.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
+begin
+  Result :=
+    (Other is TLapeType_MethodOfType) and
+    ObjectType.Equals(TLapeType_MethodOfType(Other).ObjectType, ContextOnly) and
+    inherited;
 end;
 
 constructor TLapeType_OverloadedMethod.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
