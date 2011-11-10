@@ -277,6 +277,10 @@ type
     function add(Item: _T): Integer; virtual;
     function Delete(Index: Integer): _T; overload; virtual;
     function DeleteItem(Item: _T): _T; overload; virtual;
+
+    procedure Move(AFrom, ATo: Integer); virtual;
+    procedure Swap(AFrom, ATo: Integer); virtual;
+
     function IndexOf(Item: _T): Integer; overload; virtual;
     function ExistsItem(Item: _T): Boolean; overload;
 
@@ -947,6 +951,33 @@ begin
     Result := InvalidVal;
 end;
 
+procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.Move(AFrom, ATo: Integer);
+var
+  i: Integer;
+begin
+  if (ATo < 0) or (AFrom < 0) or (AFrom >= FLen) or (ATo >= FLen) then
+    Exit;
+
+  if (ATo > AFrom) then
+    for i := AFrom to ATo - 1 do
+      Swap(i, i + 1)
+  else
+    for i := AFrom downto ATo + 1 do
+      Swap(i - 1, i);
+end;
+
+procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.Swap(AFrom, ATo: Integer);
+var
+  c: _T;
+begin
+  if (ATo < 0) or (AFrom < 0) or (AFrom >= FLen) or (ATo >= FLen) then
+    Exit;
+
+  c := FItems[AFrom];
+  FItems[AFrom] := FItems[ATo];
+  FItems[ATo] := c;
+end;
+
 function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.IndexOf(Item: _T): Integer;
 var
   i, ii: Integer;
@@ -1230,7 +1261,8 @@ end;
 destructor TLapeDeclarationList.Destroy;
 begin
   Clear();
-  FList.Free();
+  if (FList <> nil) then
+    FList.Free();
   inherited;
 end;
 

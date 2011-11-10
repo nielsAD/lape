@@ -1125,7 +1125,7 @@ begin
         if (not (Typ is TLapeType)) then
           LapeException(lpeTypeExpected, [Tokenizer]);
 
-        addVar(lptVar, Typ, 'Self');
+        addVar(Lape_SelfParam, Typ, 'Self');
         Result.Free();
         Result := TLapeType_MethodOfType.Create(Self, Typ, nil, nil, '', @Pos);
       end;
@@ -1218,20 +1218,23 @@ var
   end;
 
   procedure setMethodDefaults(AVar: TLapeGlobalVar; AMethod: TLapeType_Method);
-  type
-    TLapeClassType = class of TLapeType_Method;
   var
     i, ii: Integer;
     Params: TLapeParameterList.TTArray;
     NewMethod: TLapeType_Method;
   begin
-    if (AMethod = nil) or (FStackInfo = nil) or (AMethod.Params.Count <= 0) or (FStackInfo.TotalParamSize <> AMethod.ParamSize) then
+    if (AMethod = nil) or (FStackInfo = nil) or (AMethod.ParamSize <= 0) or (FStackInfo.TotalParamSize <> AMethod.ParamSize) then
       Exit;
 
-    NewMethod := TLapeClassType(AMethod.ClassType).Create(Self, nil, AMethod.Res, AMethod.Name, @AMethod._DocPos);
-    NewMethod.BaseType := AMethod.BaseType;
-
+    NewMethod := AMethod.CreateCopy(False) as TLapeType_Method;
     ii := 0;
+
+    if (AMethod is TLapeType_MethodOfObject) then
+    begin
+      TLapeType_MethodOfObject(NewMethod).SelfVar := FStackInfo.Items[ii] as TLapeVar;
+      Inc(ii);
+    end;
+
     Params := AMethod.Params.ExportToArray();
     for i := 0 to High(Params) do
     begin
@@ -1252,157 +1255,192 @@ var
     AVar.VarType := addManagedType(NewMethod);
   end;
 
+  function SetStackOwner(AStackInfo: TLapeStackInfo): TLapeStackInfo;
+  begin
+    Result := FStackInfo.Owner;
+    if (AStackInfo = nil) then
+      FStackInfo.Owner := Result.Owner
+    else
+    begin
+      AStackInfo.Owner := FStackInfo.Owner;
+      FStackInfo.Owner := AStackInfo;
+    end;
+  end;
+
 begin
   Result := nil;
   Pos := Tokenizer.DocPos;
+
   if (FuncHeader = nil) or (FuncName = '') then
     LapeException(lpeBlockExpected, Tokenizer.DocPos)
   else if (FuncHeader is TLapeType_MethodOfType) and (not hasDeclaration(TLapeType_MethodOfType(FuncHeader).ObjectType, FStackInfo.Owner, True, False)) then
     LapeException(lpeParentOutOfScope, Tokenizer.DocPos);
 
-  isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
-  OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
-  LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
-
-  if isExternal then
-    Result := TLapeTree_Method.Create(TLapeGlobalVar(addLocalDecl(FuncHeader.NewGlobalVar(nil), FStackInfo.Owner)), FStackInfo, Self, @Pos)
-  else
-    Result := TLapeTree_Method.Create(TLapeGlobalVar(addLocalDecl(FuncHeader.NewGlobalVar(EndJump), FStackInfo.Owner)), FStackInfo, Self, @Pos);
-
+  if (FuncHeader is TLapeType_MethodOfType) then
+    SetStackOwner(TLapeDeclStack.Create(TLapeType_MethodOfType(FuncHeader).ObjectType));
   try
-    if (Tokenizer.Tok = tk_kw_Overload) then
-    begin
-      Expect(tk_sym_SemiColon, True, False);
 
-      if (OldDeclaration = nil) or (not LocalDecl) or ((OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
-        with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
-        begin
-          if (OldDeclaration <> nil) then
-            addMethod(OldDeclaration as TLapeGlobalVar);
-          OldDeclaration := addLocalDecl(NewGlobalVar(FuncName, @_DocPos), FStackInfo.Owner);
-        end
-      else if (not (OldDeclaration is TLapeGlobalVar)) or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod)) or (TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).getMethod(FuncHeader) <> nil) then
-        LapeException(lpeCannotOverload, Tokenizer.DocPos);
+    isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
+    OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
+    LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
 
-      try
-        TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).addMethod(Result.Method, not LocalDecl);
-      except on E: lpException do
-        LapeException(E.Message, Tokenizer.DocPos);
-      end;
+    if isExternal then
+      Result := TLapeTree_Method.Create(TLapeGlobalVar(addLocalDecl(FuncHeader.NewGlobalVar(nil), FStackInfo.Owner)), FStackInfo, Self, @Pos)
+    else
+      Result := TLapeTree_Method.Create(TLapeGlobalVar(addLocalDecl(FuncHeader.NewGlobalVar(EndJump), FStackInfo.Owner)), FStackInfo, Self, @Pos);
 
-      isNext([tk_kw_Forward]);
-    end
-    else if (Tokenizer.Tok = tk_kw_Override) then
-    begin
-      Expect(tk_sym_SemiColon, True, False);
-
-      if (OldDeclaration <> nil) and (OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod) then
+    try
+      if (Tokenizer.Tok = tk_kw_Overload) then
       begin
-        if (not LocalDecl) then
+        Expect(tk_sym_SemiColon, True, False);
+
+        if (OldDeclaration = nil) or (not LocalDecl) or ((OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
           with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
           begin
-            addMethod(OldDeclaration as TLapeGlobalVar);
+            if (OldDeclaration <> nil) then
+              addMethod(OldDeclaration as TLapeGlobalVar);
             OldDeclaration := addLocalDecl(NewGlobalVar(FuncName, @_DocPos), FStackInfo.Owner);
+          end
+        else if (not (OldDeclaration is TLapeGlobalVar)) or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod)) or (TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).getMethod(FuncHeader) <> nil) then
+          LapeException(lpeCannotOverload, Tokenizer.DocPos);
+
+        try
+          TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).addMethod(Result.Method, not LocalDecl);
+        except on E: lpException do
+          LapeException(E.Message, Tokenizer.DocPos);
+        end;
+
+        isNext([tk_kw_Forward]);
+      end
+      else if (Tokenizer.Tok = tk_kw_Override) then
+      begin
+        Expect(tk_sym_SemiColon, True, False);
+
+        if (OldDeclaration <> nil) and (OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod) then
+        begin
+          if (not LocalDecl) then
+            with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
+            begin
+              addMethod(OldDeclaration as TLapeGlobalVar);
+              OldDeclaration := addLocalDecl(NewGlobalVar(FuncName, @_DocPos), FStackInfo.Owner);
+            end;
+
+          if LocalDecl then
+            OldDeclaration := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).getMethod(FuncHeader)
+          else
+            OldDeclaration := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).overrideMethod(Result.Method)
+        end;
+
+        if (OldDeclaration = nil) or (not (OldDeclaration is TLapeGlobalVar)) or (not TLapeGlobalVar(OldDeclaration).isConstant) or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
+          LapeException(lpeUnknownParent, Tokenizer.DocPos);
+        if (not TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).EqualParams(FuncHeader, False)) then
+          LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
+        if hasDeclaration('inherited', FStackInfo, True) then
+          LapeExceptionFmt(lpeDuplicateDeclaration, ['inherited'], Tokenizer.DocPos);
+
+        if (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_MethodOfObject) and
+           (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_MethodOfType))
+        then
+        begin
+          Result.Method.VarType := addManagedType(TLapeType_MethodOfObject.Create(Result.Method.VarType as TLapeType_Method));
+          if (not isExternal) then
+          begin
+            FStackInfo.addVar(Lape_SelfParam, getBaseType(ltPointer), 'Self');
+            FStackInfo.Items.Move(FStackInfo.Items.Count - 1, 0);
+            FStackInfo.VarStack.Move(FStackInfo.VarStack.Count - 1, 0);
           end;
+        end;
 
         if LocalDecl then
-          OldDeclaration := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).getMethod(FuncHeader)
+        begin
+          if (TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).BaseType = ltScriptMethod) then
+            swapMethodTree(TLapeGlobalVar(OldDeclaration), Result.Method);
+
+          TLapeType_Method(Result.Method.VarType).setImported(Result.Method, TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).BaseType = ltImportedMethod);
+          Move(TLapeGlobalVar(OldDeclaration).Ptr^, Result.Method.Ptr^, FuncHeader.Size);
+          setMethodDefaults(Result.Method, Result.Method.VarType as TLapeType_Method);
+
+          Result.Method.Name := 'inherited';
+          Result.Method.DeclarationList := nil;
+          addLocalDecl(Result.Method, FStackInfo);
+          Result.Method := OldDeclaration as TLapeGlobalVar;
+        end
         else
-          OldDeclaration := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).overrideMethod(Result.Method)
-      end;
+        begin
+          if (OldDeclaration.DeclarationList <> nil) then
+          begin
+            Result.Method.Name := FuncName;
+            OldDeclaration := TLapeGlobalVar(OldDeclaration).CreateCopy(False);
+          end;
+          OldDeclaration.Name := 'inherited';
+          OldDeclaration := addLocalDecl(OldDeclaration);
+        end;
 
-      if (OldDeclaration = nil) or (not (OldDeclaration is TLapeGlobalVar)) or (not TLapeGlobalVar(OldDeclaration).isConstant) or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
-        LapeException(lpeUnknownParent, Tokenizer.DocPos);
-      if (not TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).EqualParams(FuncHeader, False)) then
-        LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
-      if hasDeclaration('inherited', FStackInfo, True) then
-        LapeExceptionFmt(lpeDuplicateDeclaration, ['inherited'], Tokenizer.DocPos);
-
-      if LocalDecl then
-      begin
-        if (TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).BaseType = ltScriptMethod) then
-          swapMethodTree(TLapeGlobalVar(OldDeclaration), Result.Method);
-
-        TLapeType_Method(Result.Method.VarType).setImported(Result.Method, TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).BaseType = ltImportedMethod);
-        Move(TLapeGlobalVar(OldDeclaration).Ptr^, Result.Method.Ptr^, FuncHeader.Size);
-        setMethodDefaults(Result.Method, Result.Method.VarType as TLapeType_Method);
-
-        Result.Method.Name := 'inherited';
-        Result.Method.DeclarationList := nil;
-        addLocalDecl(Result.Method, FStackInfo);
-        Result.Method := OldDeclaration as TLapeGlobalVar;
+        TLapeType_Method(Result.Method.VarType).setImported(Result.Method, isExternal);
       end
       else
       begin
-        if (OldDeclaration.DeclarationList <> nil) then
+        OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner, True);
+        if (OldDeclaration <> nil) and (OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod) then
         begin
-          Result.Method.Name := FuncName;
-          OldDeclaration := TLapeGlobalVar(OldDeclaration).CreateCopy(False);
+          OldDeclaration := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).getMethod(FuncHeader);
+          if (OldDeclaration = nil) then
+            LapeExceptionFmt(lpeDuplicateDeclaration, [FuncName], Tokenizer.DocPos)
         end;
-        OldDeclaration.Name := 'inherited';
-        OldDeclaration := addLocalDecl(OldDeclaration);
+        if (OldDeclaration <> nil) then
+          if (FuncForwards <> nil) and FuncForwards.ExistsItem(OldDeclaration as TLapeGlobalVar) then
+          begin
+            if (not TLapeGlobalVar(OldDeclaration).VarType.Equals(Result.Method.VarType, False)) then
+              LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
+            Result.FreeStackInfo := False;
+            Result.Free();
+
+            Result := TLapeTree_Method.Create(TLapeGlobalVar(OldDeclaration), FStackInfo, Self, @Pos);
+          end
+          else
+            LapeExceptionFmt(lpeDuplicateDeclaration, [FuncName], Tokenizer.DocPos);
+
+        Result.Method.Name := FuncName;
       end;
 
-      TLapeType_Method(Result.Method.VarType).setImported(Result.Method, isExternal);
-    end
-    else
-    begin
-      OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner, True);
-      if (OldDeclaration <> nil) and (OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod) then
+      if (Tokenizer.Tok = tk_kw_Forward) then
       begin
-        OldDeclaration := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).getMethod(FuncHeader);
-        if (OldDeclaration = nil) then
+        Expect(tk_sym_SemiColon, True, False);
+        if (FuncForwards = nil) then
+          LapeException(lpeBlockExpected, Tokenizer.DocPos)
+        else if FuncForwards.ExistsItem(Result.Method) then
           LapeExceptionFmt(lpeDuplicateDeclaration, [FuncName], Tokenizer.DocPos)
-      end;
-      if (OldDeclaration <> nil) then
-        if (FuncForwards <> nil) and FuncForwards.ExistsItem(OldDeclaration as TLapeGlobalVar) then
-        begin
-          if (not TLapeGlobalVar(OldDeclaration).VarType.Equals(Result.Method.VarType, False)) then
-            LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
-          Result.FreeStackInfo := False;
-          Result.Free();
-
-          Result := TLapeTree_Method.Create(TLapeGlobalVar(OldDeclaration), FStackInfo, Self, @Pos);
-        end
         else
-          LapeExceptionFmt(lpeDuplicateDeclaration, [FuncName], Tokenizer.DocPos);
+          FuncForwards.add(Result.Method);
 
-      Result.Method.Name := FuncName;
-    end;
+        Result.FreeStackInfo := False;
+        FreeAndNil(Result);
+        Exit;
+      end;
 
-    if (Tokenizer.Tok = tk_kw_Forward) then
-    begin
-      Expect(tk_sym_SemiColon, True, False);
-      if (FuncForwards = nil) then
-        LapeException(lpeBlockExpected, Tokenizer.DocPos)
-      else if FuncForwards.ExistsItem(Result.Method) then
-        LapeExceptionFmt(lpeDuplicateDeclaration, [FuncName], Tokenizer.DocPos)
+      Result.Method.isConstant := True;
+      if isExternal then
+        Exit;
+
+      if (FuncForwards <> nil) and (OldDeclaration is TLapeGlobalVar) then
+        FuncForwards.DeleteItem(TLapeGlobalVar(OldDeclaration));
+
+      Result.Statements := ParseBlockList();
+      FTreeMethodMap[IntToStr(PtrUInt(Result.Method))] := Result;
+
+      if (Result.Statements = nil) or (Result.Statements.Statements.Count < 1) or (not (Result.Statements.Statements[Result.Statements.Statements.Count - 1] is TLapeTree_StatementList)) then
+        Expect(tk_kw_Begin, False, False)
       else
-        FuncForwards.add(Result.Method);
-
+        Expect(tk_sym_SemiColon, False, False);
+    except
       Result.FreeStackInfo := False;
       FreeAndNil(Result);
-      Exit;
+      raise;
     end;
 
-    Result.Method.isConstant := True;
-    if isExternal then
-      Exit;
-
-    if (FuncForwards <> nil) and (OldDeclaration is TLapeGlobalVar) then
-      FuncForwards.DeleteItem(TLapeGlobalVar(OldDeclaration));
-
-    Result.Statements := ParseBlockList();
-    FTreeMethodMap[IntToStr(PtrUInt(Result.Method))] := Result;
-
-    if (Result.Statements = nil) or (Result.Statements.Statements.Count < 1) or (not (Result.Statements.Statements[Result.Statements.Statements.Count - 1] is TLapeTree_StatementList)) then
-      Expect(tk_kw_Begin, False, False)
-    else
-      Expect(tk_sym_SemiColon, False, False);
-  except
-    Result.FreeStackInfo := False;
-    FreeAndNil(Result);
-    raise;
+  finally
+    if (FuncHeader is TLapeType_MethodOfType) then
+      SetStackOwner(nil).Free();
   end;
 end;
 
@@ -1419,7 +1457,7 @@ begin
       for i := 0 to FuncHeader.Params.Count - 1 do
         FStackInfo.addVar(FuncHeader.Params[i].ParType, FuncHeader.Params[i].VarType, 'Param'+IntToStr(i));
       if (FuncHeader is TLapeType_MethodOfType) then
-        FStackInfo.addVar(lptVar, TLapeType_MethodOfType(FuncHeader).ObjectType, 'Self');
+        FStackInfo.addVar(Lape_SelfParam, TLapeType_MethodOfType(FuncHeader).ObjectType, 'Self');
       if (FuncHeader.Res <> nil) then
         FStackInfo.addVar(lptOut, FuncHeader.Res, 'Result');
     end;

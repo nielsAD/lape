@@ -1559,7 +1559,10 @@ var
 
       if (IdentVar.VarType is TLapeType_MethodOfObject) then
       begin
-        ParamVars[0] := TMethod(IdentVar.Ptr^).Data;
+        if (TLapeType_MethodOfObject(IdentVar.VarType).SelfVar is TLapeGlobalVar) then
+          ParamVars[0] := TLapeGlobalVar(TLapeType_MethodOfObject(IdentVar.VarType).SelfVar).Ptr
+        else
+          ParamVars[0] := TMethod(IdentVar.Ptr^).Data;
         Inc(Index);
       end;
 
@@ -1679,6 +1682,8 @@ var
   var
     tmpVar: TResVar;
   begin
+    if (AVar.VarPos.MemPos = mpStack) then
+      Exit(AVar);
     if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and ((AVar.VarType <> nil) or Addr) then
     begin
       Result := NullResVar;
@@ -1924,14 +1929,17 @@ begin
           LapeException(lpeTooMuchParameters, Self.DocPos);
 
       if (IdentVar.VarType is TLapeType_MethodOfObject) and (IdentVar.VarPos.MemPos <> mpStack) then
-      begin
-        Result := IdentVar;
-        Result.VarType := FCompiler.getBaseType(ltPointer);
+        if (TLapeType_MethodOfObject(IdentVar.VarType).SelfVar <> nil) then
+          AssignToStack(_ResVar.New(TLapeType_MethodOfObject(IdentVar.VarType).SelfVar), Ident.DocPos, True)
+        else
+        begin
+          Result := IdentVar;
+          Result.VarType := FCompiler.getBaseType(ltPointer);
 
-        Result.IncOffset(SizeOf(Pointer));
-        AssignToStack(Result, Ident.DocPos, False);
-        Result.DecOffset(SizeOf(Pointer));
-      end;
+          Result.IncOffset(SizeOf(Pointer));
+          AssignToStack(Result, Ident.DocPos, False);
+          Result.DecOffset(SizeOf(Pointer));
+        end;
 
       SetLength(ParamVars, Params.Count);
       for i := 0 to Params.Count - 1 do

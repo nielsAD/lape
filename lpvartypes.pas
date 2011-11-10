@@ -568,6 +568,7 @@ type
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
+    function CreateCopy(CopyParams: Boolean): TLapeType; overload; virtual;
     function CreateCopy: TLapeType; override;
     destructor Destroy; override;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
@@ -591,6 +592,7 @@ type
   TLapeType_MethodOfObject = class(TLapeType_Method)
   protected
     FMethodRecord: TLapeType_Record;
+    FSelf: TLapeVar;
     function getSize: Integer; override;
     function getAsString: lpString; override;
     function getParamSize: Integer; override;
@@ -604,6 +606,8 @@ type
     function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+
+    property SelfVar: TLapeVar read FSelf write FSelf;
   end;
 
     TLapeType_MethodOfType = class(TLapeType_MethodOfObject)
@@ -613,6 +617,7 @@ type
     public
       constructor Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
       constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); reintroduce; overload; virtual;
+      function CreateCopy(CopyParams: Boolean): TLapeType; override;
       function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
       property ObjectType: TLapeType read FObjectType;
@@ -734,6 +739,19 @@ type
     property OldMaxStack: Integer read FOldMaxStack;
   end;
 
+  TLapeDeclStack = class(TLapeStackInfo)
+  protected
+    FManagingList: TLapeManagingDeclaration;
+  public
+    //constructor Create(AList: TLapeDeclarationList; AOwner: TLapeStackInfo = nil); reintroduce; overload; virtual;
+    constructor Create(AList: TLapeManagingDeclaration; AOwner: TLapeStackInfo = nil); reintroduce; overload; virtual;
+    destructor Destroy; override;
+
+    function addDeclaration(Decl: TLapeDeclaration): Integer; override;
+    function addVar(StackVar: TLapeStackVar): TLapeStackVar; override;
+    property ManagingList: TLapeManagingDeclaration read FManagingList;
+  end;
+
   TLapeEmptyStack = class(TLapeStackInfo)
   public
     function addDeclaration(Decl: TLapeDeclaration): Integer; override;
@@ -819,8 +837,6 @@ type
     function getPointerType(PType: TLapeType): TLapeType_Pointer; overload; virtual;
     function getTypeVar(AType: ELapeBaseType): TLapeGlobalVar; overload; virtual;
     function getTypeVar(AType: TLapeType): TLapeGlobalVar; overload; virtual;
-
-    function SwapGlobalVarList(NewList: TLapeDeclarationList): TLapeDeclarationList; virtual;
     function getGlobalVar(AName: lpString): TLapeGlobalVar; virtual;
     function getGlobalType(AName: lpString): TLapeType; virtual;
 
@@ -863,6 +879,7 @@ const
 
   Lape_RefParams = [lptConst, lptOut, lptVar];
   Lape_ValParams = [lptConst, lptNormal];
+  Lape_SelfParam = lptVar;
 
 var
   LapeReservedLocals: lpString = '|System|';
@@ -1454,7 +1471,7 @@ function TLapeType.addSubDeclaration(ADecl: TLapeDeclaration): Integer;
 begin
   if (not (ADecl is TLapeGlobalVar)) then
     LapeException(lpeImpossible);
-  if (ADecl.Name = '') or HasChild(ADecl.Name) then
+  if (ADecl.Name <> '') and HasChild(ADecl.Name) then
     LapeExceptionFmt(lpeDuplicateDeclaration, [ADecl.Name]);
   Result := inherited;
 end;
@@ -4214,13 +4231,21 @@ begin
   end;
 end;
 
-function TLapeType_Method.CreateCopy: TLapeType;
+function TLapeType_Method.CreateCopy(CopyParams: Boolean): TLapeType;
 type
   TLapeClassType = class of TLapeType_Method;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, FParams, Res, Name, @_DocPos);
+  if CopyParams then
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FParams, Res, Name, @_DocPos)
+  else
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Res, Name, @_DocPos);
   Result.setManagedDecls(FManagedDecls);
   Result.FBaseType := FBaseType;
+end;
+
+function TLapeType_Method.CreateCopy: TLapeType;
+begin
+  Result := CreateCopy(True);
 end;
 
 destructor TLapeType_Method.Destroy;
@@ -4367,11 +4392,11 @@ begin
   Result := Result + SizeOf(Pointer);
 end;
 
-
 constructor TLapeType_MethodOfObject.Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited;
   FMethodRecord := FCompiler.getGlobalType('TMethod') as TLapeType_Record;
+  FSelf := nil;
   Assert(FMethodRecord <> nil);
 end;
 
@@ -4383,8 +4408,19 @@ begin
 end;
 
 function TLapeType_MethodOfObject.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
+
+  function _EqualTypes(const Left, Right: TLapeVar): Boolean;
+  begin
+    Result := (Left = Right) or ((Left <> nil) and (Right <> nil) and
+      (Left.VarType <> nil) and
+      Left.VarType.Equals(Right.VarType, ContextOnly));
+  end;
+
 begin
-  Result := (Other is TLapeType_MethodOfObject) and inherited;
+  Result :=
+    (Other is TLapeType_MethodOfObject) and
+    _EqualTypes(SelfVar, TLapeType_MethodOfObject(Other).SelfVar) and
+    inherited;
 end;
 
 function TLapeType_MethodOfObject.NewGlobalVar(AMethod: TMethod; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -4499,6 +4535,18 @@ begin
   Assert(AObjType <> nil);
   inherited Create(AMethod);
   FObjectType := AObjType;
+end;
+
+function TLapeType_MethodOfType.CreateCopy(CopyParams: Boolean): TLapeType;
+type
+  TLapeClassType = class of TLapeType_MethodOfType;
+begin
+  if CopyParams then
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FObjectType, FParams, Res, Name, @_DocPos)
+  else
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FObjectType, nil, Res, Name, @_DocPos);
+  Result.setManagedDecls(FManagedDecls);
+  Result.FBaseType := FBaseType;
 end;
 
 function TLapeType_MethodOfType.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
@@ -5014,6 +5062,33 @@ var
 begin
   for i := FWithStack.Count - 1 downto FWithStack.Count - Count do
     FWithStack.Delete(i);
+end;
+
+constructor TLapeDeclStack.Create(AList: TLapeManagingDeclaration; AOwner: TLapeStackInfo = nil);
+begin
+  Assert(AList <> nil);
+  inherited Create(False, False, AOwner, False);
+
+  FList.Free();
+  FList := AList.ManagedDecls.Items;
+  FManagingList := AList;
+end;
+
+destructor TLapeDeclStack.Destroy;
+begin
+  FList := nil;
+  inherited;
+end;
+
+function TLapeDeclStack.addDeclaration(Decl: TLapeDeclaration): Integer;
+begin
+  Result := FManagingList.addSubDeclaration(Decl);
+end;
+
+function TLapeDeclStack.addVar(StackVar: TLapeStackVar): TLapeStackVar;
+begin
+  Result := nil;
+  LapeException(lpeImpossible);
 end;
 
 function TLapeEmptyStack.addDeclaration(Decl: TLapeDeclaration): Integer;
@@ -5813,15 +5888,6 @@ begin
   else
     TType := TLapeType_Type;
   Result := addManagedVar(addManagedType(TType.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
-end;
-
-function TLapeCompilerBase.SwapGlobalVarList(NewList: TLapeDeclarationList): TLapeDeclarationList;
-begin
-  if (NewList <> nil) then
-  begin
-    Result := FGlobalDeclarations;
-    FGlobalDeclarations := NewList;
-  end;
 end;
 
 function TLapeCompilerBase.getGlobalVar(AName: lpString): TLapeGlobalVar;

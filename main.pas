@@ -97,9 +97,7 @@ begin
       Compiler := TLapeCompiler.Create(Parser);
       InitializePascalScriptBasics(Compiler);
 
-      Compiler.getBaseType(ltInt32).addSubDeclaration(
-        TLapeType_MethodOfObject(Compiler.addManagedType(TLapeType_MethodOfObject.Create(Compiler.addGlobalFunc('procedure _Int32Inc;', @IntTest).VarType as TLapeType_Method))).NewGlobalVar(@IntTest, 'Test')
-      );
+      Compiler.addGlobalFunc('procedure Integer.test;', @IntTest);
 
       Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
       Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
