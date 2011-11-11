@@ -209,6 +209,7 @@ type
 
     function HasChild(AName: lpString): Boolean; overload; virtual;
     function HasChild(ADecl: TLapeDeclaration): Boolean; overload; virtual;
+    function HasConstantChild(AName: lpString): Boolean; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; overload; virtual;
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; overload; virtual;
@@ -569,7 +570,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     function CreateCopy(CopyParams: Boolean): TLapeType; overload; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy: TLapeType; overload; override;
     destructor Destroy; override;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
@@ -1505,6 +1506,17 @@ begin
   Result := HasSubDeclaration(ADecl);
 end;
 
+function TLapeType.HasConstantChild(AName: lpString): Boolean;
+var
+  Decls: TLapeDeclArray;
+begin
+  Decls := ManagedDecls.getByClassAndName(AName, TLapeGlobalVar);
+  if (Length(Decls) <= 0) then
+    Result := HasChild(AName)
+  else with TLapeGlobalVar(Decls[0]) do
+    Result := (not (VarType is TLapeType_MethodOfObject)) or (isConstant and (BaseType = ltImportedMethod));
+end;
+
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
 begin
   Assert(FCompiler <> nil);
@@ -1541,10 +1553,10 @@ function TLapeType.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boo
 begin
   Assert((Left = nil) or (Left.VarType = Self));
 
-  Result := ((Left = nil) or Left.isConstant) and ((Right = nil) or Right.isConstant);
+  Result := (op <> op_dot) and ((Left = nil) or Left.isConstant) and ((Right = nil) or Right.isConstant);
   if (not Result) and (Right <> nil) and Right.isConstant then
     if (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
-      Result := HasChild(PlpString(Right.Ptr)^)
+      Result := HasConstantChild(PlpString(Right.Ptr)^)
     else if (op = op_Index) and (BaseType in [ltUnknown{overloaded method}, ltShortString, ltStaticArray]) then
       Result := Right.HasType() and (Right.VarType.BaseIntType <> ltUnknown);
 end;

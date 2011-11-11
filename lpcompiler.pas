@@ -2128,8 +2128,11 @@ var
     begin
       Result := (Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod);
     end;
+  var
+    NewLeft, NewRight: TLapeTree_ExprBase;
   begin
     Result := Node;
+
     if TLapeTree_Base.isEmpty(Node) or (not (lcoAutoInvoke in Node.CompilerOptions)) or
       (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke)
     then
@@ -2150,8 +2153,17 @@ var
         else
         begin
           if (OperatorType <> op_Assign) then
-            Left := TLapeTree_ExprBase(ResolveMethods(Left));
-          Right := TLapeTree_ExprBase(ResolveMethods(Right));
+            NewLeft := TLapeTree_ExprBase(ResolveMethods(Left))
+          else
+            NewLeft := Left;
+          NewRight := TLapeTree_ExprBase(ResolveMethods(Right));
+
+          if (NewLeft <> Left) or (NewRight <> Right) then
+          begin
+            Left := NewLeft;
+            Right := NewRight;
+            Result := ResolveMethods(Result);
+          end;
         end;
   end;
 
