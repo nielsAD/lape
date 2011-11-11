@@ -173,6 +173,12 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_ToStr = class(TLapeTree_InternalMethod)
+  public
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_InternalMethod_Assert = class(TLapeTree_InternalMethod)
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
@@ -2053,10 +2059,55 @@ begin
   end;
 end;
 
+function TLapeTree_InternalMethod_ToStr.resType: TLapeType;
+begin
+  Result := FCompiler.getBaseType(ltString);
+end;
+
+function TLapeTree_InternalMethod_ToStr.Compile(var Offset: Integer): TResVar;
+var
+  i: Integer;
+  Res, Par: TLapeTree_ExprBase;
+begin
+  Result := NullResVar;
+  Res := nil;
+  if (FParams.Count < 1) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  for i := 0 to FParams.Count - 1 do
+    if (not isEmpty(FParams[i])) and (FParams[i].resType() <> nil) and (FParams[i].resType().BaseType <> ltString) then
+    begin
+      Par := FParams[i];
+      FParams[i] := TLapeTree_Invoke.Create('ToString', FParams[i]);
+      TLapeTree_Invoke(FParams[i]).addParam(Par);
+      FParams[i].Parent := Self;
+    end;
+
+  if (FParams.Count < 2) then
+    Result := FParams[0].Compile(Offset)
+  else
+    try
+      for i := 0 to FParams.Count - 2 do
+      begin
+        Par := TLapeTree_Operator.Create(op_Plus, Self);
+        if (Res <> nil) then
+          TLapeTree_Operator(Par).Left := Res
+        else
+          TLapeTree_Operator(Par).FLeft := FParams[i];
+        TLapeTree_Operator(Par).FRight := FParams[i + 1];
+        Res := Par;
+      end;
+
+      Result := Res.Compile(Offset);
+    finally;
+      if (Res <> nil) then
+        Res.Free();
+    end;
+end;
+
 constructor TLapeTree_InternalMethod_Assert.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  inherited;
-  setIdent(TLapeTree_GlobalVar.Create(ACompiler['_assert'], Self));
+  inherited Create(ACompiler['_assert'], Self);
 end;
 
 function TLapeTree_InternalMethod_Assert.Compile(var Offset: Integer): TResVar;

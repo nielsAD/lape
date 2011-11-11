@@ -2639,6 +2639,7 @@ begin
   FInternalMethodMap := TLapeInternalMethodMap.Create(nil);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
   FInternalMethodMap['WriteLn'] := TLapeTree_InternalMethod_WriteLn;
+  FInternalMethodMap['ToStr'] := TLapeTree_InternalMethod_ToStr;
   FInternalMethodMap['Assert'] := TLapeTree_InternalMethod_Assert;
   FInternalMethodMap['IsScriptMethod'] := TLapeTree_InternalMethod_IsScriptMethod;
   FInternalMethodMap['Break'] := TLapeTree_InternalMethod_Break;
