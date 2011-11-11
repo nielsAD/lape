@@ -293,7 +293,12 @@ type
   end;
 
   {$IFDEF FPC}generic{$ENDIF} TLapeStringMap<_T> = class(TLapeBaseClass)
-  protected
+  public type
+    TTArrays = record
+      Keys: string;
+      Items: array of _T;
+    end;
+  var protected
     FStringList: THashedStringList;
     FItems: array of _T;
     FLen: Integer;
@@ -308,16 +313,20 @@ type
 
     constructor Create(InvalidValue: _T; CaseSensitive: Boolean = {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF}; Duplicates: TDuplicates = dupError); reintroduce; virtual;
     destructor Destroy; override;
-
     procedure Clear; virtual;
+
     procedure add(Key: lpString; Item: _T); virtual;
     function Delete(Key: lpString): _T; overload; virtual;
     function Delete(Index: Integer): _T; overload; virtual;
     function DeleteItem(Item: _T): _T; overload; virtual;
+
     function IndexOf(Item: _T): lpString; overload; virtual;
     function IndexOf(Key: lpString): Integer; overload; virtual;
     function ExistsItem(Item: _T): Boolean; overload;
     function ExistsKey(Key: lpString): Boolean; overload;
+
+    procedure ImportFromArrays(Arr: TTArrays); virtual;
+    function ExportToArrays: TTArrays; virtual;
 
     property Items[Index: lpString]: _T read getItem write setItem; default;
     property ItemsI[Index: Integer]: _T read getItemI write setItemI;
@@ -384,6 +393,7 @@ type
 
     procedure setManagedDecls(ADecls: TLapeDeclarationList; DoManage: Boolean); overload; virtual;
     procedure setManagedDecls(ADecls: TLapeDeclarationList); overload; virtual;
+    procedure copyManagedDecls(ADecls: TLapeDeclarationList; ReferenceOnly: Boolean = False); virtual;
 
     function addSubDeclaration(ADecl: TLapeDeclaration): Integer; virtual;
     function HasSubDeclaration(AName: lpString): Boolean; overload; virtual;
@@ -1249,6 +1259,25 @@ begin
   Result := (FStringList.IndexOf(Key) > -1);
 end;
 
+procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ImportFromArrays(Arr: TTArrays);
+begin
+  FStringList.Text := Arr.Keys;
+  Assert(FStringList.Count = Length(Arr.Items));
+
+  FLen := Length(Arr.Items);
+  FItems := Arr.Items;
+end;
+
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ExportToArrays: TTArrays;
+var
+  i: Integer;
+begin
+  Result.Keys := FStringList.Text;
+  SetLength(Result.Items, FLen);
+  for i := 0 to FLen - 1 do
+    Result.Items[i] := FItems[i];
+end;
+
 constructor TLapeDeclarationList.Create(AList: TLapeDeclCollection; ManageDeclarations: Boolean = True);
 begin
   inherited Create();
@@ -1475,6 +1504,15 @@ end;
 procedure TLapeManagingDeclaration.setManagedDecls(ADecls: TLapeDeclarationList);
 begin
   setManagedDecls(ADecls, False);
+end;
+
+procedure TLapeManagingDeclaration.copyManagedDecls(ADecls: TLapeDeclarationList; ReferenceOnly: Boolean = False);
+begin
+  Assert(ADecls <> nil);
+  if ReferenceOnly then
+    setManagedDecls(ADecls)
+  else
+    FManagedDecls.Items.ImportFromArray(ADecls.Items.ExportToArray());
 end;
 
 function TLapeManagingDeclaration.addSubDeclaration(ADecl: TLapeDeclaration): Integer;

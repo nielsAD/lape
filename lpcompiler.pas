@@ -1227,7 +1227,8 @@ var
     if (AMethod = nil) or (FStackInfo = nil) or (AMethod.ParamSize <= 0) or (FStackInfo.TotalParamSize <> AMethod.ParamSize) then
       Exit;
 
-    NewMethod := AMethod.CreateCopy(False) as TLapeType_Method;
+    NewMethod := AMethod.CreateCopy(True) as TLapeType_Method;
+    NewMethod.Params.Clear();
     ii := 0;
 
     if (AMethod is TLapeType_MethodOfObject) then

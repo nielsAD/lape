@@ -190,7 +190,7 @@ type
     function getAsString: lpString; virtual;
   public
     constructor Create(ABaseType: ELapeBaseType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; virtual;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; virtual;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; reintroduce; virtual;
     function CompatibleWith(Other: TLapeType): Boolean; virtual;
 
@@ -239,7 +239,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(AType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
 
     property TType: TLapeType read FTType;
   end;
@@ -320,7 +320,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ARange: TLapeRange; ACompiler: TLapeCompilerBase; AVarType: TLapeType; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -344,7 +344,7 @@ type
   public
     FreeMemberMap: Boolean;
     constructor Create(ACompiler: TLapeCompilerBase; AMemberMap: TEnumMap; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
 
     function hasMember(AName: lpString): Boolean; virtual;
@@ -371,7 +371,7 @@ type
   TLapeType_Bool = class(TLapeType_SubRange)
   public
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
@@ -401,7 +401,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ARange: TLapeType_SubRange; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -419,7 +419,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; PointerType: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
@@ -441,7 +441,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -464,7 +464,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ARange: TLapeRange; ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
 
     function VarToString(AVar: Pointer): lpString; override;
     function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
@@ -526,7 +526,7 @@ type
     FreeFieldMap: Boolean;
 
     constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
@@ -569,8 +569,7 @@ type
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
-    function CreateCopy(CopyParams: Boolean): TLapeType; overload; virtual;
-    function CreateCopy: TLapeType; overload; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
@@ -618,7 +617,7 @@ type
     public
       constructor Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
       constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); reintroduce; overload; virtual;
-      function CreateCopy(CopyParams: Boolean): TLapeType; override;
+      function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
       function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
       property ObjectType: TLapeType read FObjectType;
@@ -633,7 +632,7 @@ type
     NeedFullMatch: Boolean;
 
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
 
     function addSubDeclaration(ADecl: TLapeDeclaration): Integer; override;
     procedure addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False); virtual;
@@ -1441,12 +1440,12 @@ begin
   Result := (EvalRes(op_Assign, Other) <> nil);
 end;
 
-function TLapeType.CreateCopy: TLapeType;
+function TLapeType.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FBaseType, FCompiler, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
 end;
 
 function TLapeType.NewGlobalVarP(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -1947,10 +1946,10 @@ begin
   FTType := AType;
 end;
 
-function TLapeType_Type.CreateCopy: TLapeType;
+function TLapeType_Type.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 begin
   Result := TLapeTTypeClass(Self.ClassType).Create(FTType, FCompiler, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
 end;
 
 function TLapeType_TypeEnum.HasChild(AName: lpString): Boolean;
@@ -2192,11 +2191,11 @@ begin
     Result := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Hi))) as TLapeGlobalVar;
 end;
 
-function TLapeType_SubRange.CreateCopy: TLapeType;
+function TLapeType_SubRange.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type TLapeClassType = class of TLapeType_SubRange;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, FVarType, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
   Result.FBaseType := FBaseType;
 end;
 
@@ -2361,12 +2360,19 @@ begin
   end;
 end;
 
-function TLapeType_Enum.CreateCopy: TLapeType;
+function TLapeType_Enum.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_Enum;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, FMemberMap, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  if DeepCopy then
+  begin
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name, @_DocPos);
+    TLapeType_Enum(Result).MemberMap.Assign(FMemberMap);
+  end
+  else
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FMemberMap, Name, @_DocPos);
+
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
   Result.FBaseType := FBaseType;
 end;
 
@@ -2510,13 +2516,14 @@ begin
   inherited;
 end;
 
-function TLapeType_Bool.CreateCopy: TLapeType;
+function TLapeType_Bool.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_Bool;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
   Result.FBaseType := FBaseType;
+
   TLapeType_Bool(Result).FRange := FRange;
   TLapeType_Bool(Result).FVarType.FSize := FVarType.FSize;
 end;
@@ -2634,12 +2641,12 @@ begin
   Result := Result + ']';
 end;
 
-function TLapeType_Set.CreateCopy: TLapeType;
+function TLapeType_Set.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_Set;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
 end;
 
 function TLapeType_Set.NewGlobalVar(Values: array of UInt8; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -2717,12 +2724,12 @@ begin
   end;
 end;
 
-function TLapeType_Pointer.CreateCopy: TLapeType;
+function TLapeType_Pointer.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_Pointer;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, FPType, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
 end;
 
 function TLapeType_Pointer.NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil; AsValue: Boolean = True): TLapeGlobalVar;
@@ -2880,12 +2887,12 @@ begin
   FBaseType := ltDynArray;
 end;
 
-function TLapeType_DynArray.CreateCopy: TLapeType;
+function TLapeType_DynArray.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_DynArray;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FPType, FCompiler, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
   Result.FBaseType := FBaseType;
 end;
 
@@ -3323,12 +3330,12 @@ begin
     Result := FCompiler.getConstant(FRange.Hi);
 end;
 
-function TLapeType_StaticArray.CreateCopy: TLapeType;
+function TLapeType_StaticArray.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_StaticArray;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FPType, FCompiler, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
   Result.FBaseTYpe := FBaseType;
 end;
 
@@ -3892,12 +3899,19 @@ begin
   Result := Result + '}';
 end;
 
-function TLapeType_Record.CreateCopy: TLapeType;
+function TLapeType_Record.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_Record;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, FFieldMap, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  if DeepCopy then
+  begin
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name, @_DocPos);
+    TLapeType_Record(Result).FieldMap.ImportFromArrays(FFieldMap.ExportToArrays());
+  end
+  else
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FFieldMap, Name, @_DocPos);
+
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
   Result.FInit := FInit;
   Result.FSize := FSize;
 end;
@@ -4243,21 +4257,20 @@ begin
   end;
 end;
 
-function TLapeType_Method.CreateCopy(CopyParams: Boolean): TLapeType;
+function TLapeType_Method.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_Method;
 begin
-  if CopyParams then
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FParams, Res, Name, @_DocPos)
-  else
+  if DeepCopy then
+  begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Res, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
-  Result.FBaseType := FBaseType;
-end;
+    TLapeType_Method(Result).Params.ImportFromArray(FParams.ExportToArray());
+  end
+  else
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FParams, Res, Name, @_DocPos);
 
-function TLapeType_Method.CreateCopy: TLapeType;
-begin
-  Result := CreateCopy(True);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.FBaseType := FBaseType;
 end;
 
 destructor TLapeType_Method.Destroy;
@@ -4549,15 +4562,19 @@ begin
   FObjectType := AObjType;
 end;
 
-function TLapeType_MethodOfType.CreateCopy(CopyParams: Boolean): TLapeType;
+function TLapeType_MethodOfType.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_MethodOfType;
 begin
-  if CopyParams then
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FObjectType, FParams, Res, Name, @_DocPos)
-  else
+  if DeepCopy then
+  begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, FObjectType, nil, Res, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+    TLapeType_MethodOfType(Result).Params.ImportFromArray(FParams.ExportToArray());
+  end
+  else
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FObjectType, FParams, Res, Name, @_DocPos);
+
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
   Result.FBaseType := FBaseType;
 end;
 
@@ -4576,12 +4593,12 @@ begin
   NeedFullMatch := False;
 end;
 
-function TLapeType_OverloadedMethod.CreateCopy: TLapeType;
+function TLapeType_OverloadedMethod.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_OverloadedMethod;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, Name, @_DocPos);
-  Result.setManagedDecls(FManagedDecls);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
 end;
 
 function TLapeType_OverloadedMethod.addSubDeclaration(ADecl: TLapeDeclaration): Integer;
