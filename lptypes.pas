@@ -294,13 +294,14 @@ type
 
   {$IFDEF FPC}generic{$ENDIF} TLapeStringMap<_T> = class(TLapeBaseClass)
   public type
+    TTArray = array of _T;
     TTArrays = record
       Keys: string;
-      Items: array of _T;
+      Items: TTArray;
     end;
   var protected
     FStringList: THashedStringList;
-    FItems: array of _T;
+    FItems: TTArray;
     FLen: Integer;
 
     function getItem(Key: lpString): _T; virtual;
