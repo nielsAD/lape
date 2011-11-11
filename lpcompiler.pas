@@ -1201,6 +1201,7 @@ end;
 function TLapeCompiler.ParseMethod(FuncForwards: TLapeFuncForwards; FuncHeader: TLapeType_Method; FuncName: lpString; isExternal: Boolean): TLapeTree_Method;
 var
   Pos: TDocPos;
+  SelfWith: TLapeWithDeclRec;
   OldDeclaration: TLapeDeclaration;
   LocalDecl: Boolean;
 
@@ -1278,8 +1279,8 @@ begin
 
   if (FuncHeader is TLapeType_MethodOfType) then
     SetStackOwner(TLapeDeclStack.Create(TLapeType_MethodOfType(FuncHeader).ObjectType));
-  try
 
+  try
     isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
     OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
     LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
@@ -1287,7 +1288,17 @@ begin
     if isExternal then
       Result := TLapeTree_Method.Create(TLapeGlobalVar(addLocalDecl(FuncHeader.NewGlobalVar(nil), FStackInfo.Owner)), FStackInfo, Self, @Pos)
     else
+    begin
       Result := TLapeTree_Method.Create(TLapeGlobalVar(addLocalDecl(FuncHeader.NewGlobalVar(EndJump), FStackInfo.Owner)), FStackInfo, Self, @Pos);
+
+      if (FuncHeader is TLapeType_MethodOfType) then
+      begin
+        Result.SelfVar := _ResVar.New(FStackInfo.Vars[0]);
+        SelfWith.WithType := TLapeType_MethodOfType(FuncHeader).ObjectType;
+        SelfWith.WithVar := @Result.SelfVar;
+        FStackInfo.addWith(SelfWith);
+      end;
+    end;
 
     try
       if (Tokenizer.Tok = tk_kw_Overload) then

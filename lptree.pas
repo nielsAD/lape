@@ -459,6 +459,7 @@ type
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
     Method: TLapeGlobalVar;
+    SelfVar: TResVar;
     FreeStackInfo: Boolean;
 
     constructor Create(AMethod: TLapeGlobalVar; AStackInfo: TLapeStackInfo; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; virtual;
@@ -3863,6 +3864,7 @@ begin
 
   FreeStackInfo := True;
   Method := AMethod;
+  SelfVar := NullResVar;
   FStackInfo := AStackInfo;
   FExitStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore);
 end;
@@ -3870,6 +3872,7 @@ end;
 destructor TLapeTree_Method.Destroy;
 begin
   setStatements(nil);
+  SelfVar.Spill();
   if FreeStackInfo then
     FStackInfo.Free();
   FExitStatements.Free();
