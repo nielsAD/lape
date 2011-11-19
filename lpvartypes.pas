@@ -3179,6 +3179,8 @@ begin
     FBaseType := ltPointer;
     if (not Left.VarPos.isPointer) then
     begin
+      if (Dest.VarPos.MemPos = mpStack) then
+        Dest.Spill();
       Result := inherited Eval(Op, Dest, Left, Right, Offset, Pos);
       Result.VarPos.isPointer := True;
       Result.VarType := FPType;
