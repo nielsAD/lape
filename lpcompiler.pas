@@ -2167,47 +2167,65 @@ var
   end;
 
   function ResolveMethods(Node: TLapeTree_Base): TLapeTree_Base;
-    function MethodType(Typ: TLapeType): Boolean;
+    function Resolve(Node: TLapeTree_Base; out DoContinue: Boolean): TLapeTree_Base;
+      function MethodType(Typ: TLapeType): Boolean;
+      begin
+        Result := (Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod);
+      end;
+    var
+      NewLeft, NewRight: TLapeTree_ExprBase;
+      ContinueL, ContinueR: Boolean;
     begin
-      Result := (Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod);
+      Result := Node;
+      DoContinue := True;
+
+      if TLapeTree_Base.isEmpty(Node) or (not (lcoAutoInvoke in Node.CompilerOptions)) or
+        (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke)
+      then
+        Exit;
+
+      if MethodType(TLapeTree_ExprBase(Node).resType()) and
+        ((not (Node is TLapeTree_Operator)) or (TLapeTree_Operator(Node).OperatorType <> op_Assign))
+      then
+      begin
+        Result := TLapeTree_Invoke.Create(Node as TLapeTree_ExprBase, Node);
+        DoContinue := (not MethodType(TLapeTree_ExprBase(Result).resType()));
+      end
+      else if (Node is TLapeTree_Operator) and (TLapeTree_Operator(Node).Left is TLapeTree_ExprBase) then
+        with TLapeTree_Operator(Node) do
+          if (OperatorType = op_Addr) and MethodType(Left.resType()) then
+          begin
+            Result := Left;
+            Left.Parent := nil;
+
+            DoContinue := False;
+            Free();
+          end
+          else
+          begin
+            if (OperatorType <> op_Assign) then
+              NewLeft := TLapeTree_ExprBase(Resolve(Left, ContinueL))
+            else
+            begin
+              NewLeft := Left;
+              ContinueL := True;
+            end;
+            NewRight := TLapeTree_ExprBase(Resolve(Right, ContinueR));
+
+            if (NewLeft <> Left) or (NewRight <> Right) then
+            begin
+              Left := NewLeft;
+              Right := NewRight;
+              DoContinue := ContinueL and ContinueR;
+              if DoContinue then
+                Result := Resolve(Result, DoContinue);
+            end;
+          end;
     end;
   var
-    NewLeft, NewRight: TLapeTree_ExprBase;
+    DoContinue: Boolean;
   begin
-    Result := Node;
-
-    if TLapeTree_Base.isEmpty(Node) or (not (lcoAutoInvoke in Node.CompilerOptions)) or
-      (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke)
-    then
-      Exit;
-
-    if MethodType(TLapeTree_ExprBase(Node).resType()) and
-      ((not (Node is TLapeTree_Operator)) or (TLapeTree_Operator(Node).OperatorType <> op_Assign))
-    then
-      Result := TLapeTree_Invoke.Create(Node as TLapeTree_ExprBase, Node)
-    else if (Node is TLapeTree_Operator) and (TLapeTree_Operator(Node).Left is TLapeTree_ExprBase) then
-      with TLapeTree_Operator(Node) do
-        if (OperatorType = op_Addr) and MethodType(Left.resType()) then
-        begin
-          Result := Left;
-          Left.Parent := nil;
-          Free();
-        end
-        else
-        begin
-          if (OperatorType <> op_Assign) then
-            NewLeft := TLapeTree_ExprBase(ResolveMethods(Left))
-          else
-            NewLeft := Left;
-          NewRight := TLapeTree_ExprBase(ResolveMethods(Right));
-
-          if (NewLeft <> Left) or (NewRight <> Right) then
-          begin
-            Left := NewLeft;
-            Right := NewRight;
-            Result := ResolveMethods(Result);
-          end;
-        end;
+    Result := Resolve(Node, DoContinue);
   end;
 
 begin
