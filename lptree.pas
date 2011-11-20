@@ -2511,20 +2511,24 @@ function TLapeTree_InternalMethod_Low.Evaluate: TLapeGlobalVar;
 var
   ParamType: TLapeType;
 begin
+  Result := nil;
   if (FParams.Count <> 1) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
-  if (FParams[0] is TLapeTree_ResVar) or (FParams[0] is TLapeTree_GlobalVar) then
-    ParamType := FParams[0].resType()
-  else
-    ParamType := nil;
+  if isConstant() then
+  begin
+    ParamType := FParams[0].resType();
 
-  if (ParamType <> nil) and (ParamType is TLapeType_Type) then
-    ParamType := TLapeType_Type(ParamType).TType;
-  if (ParamType = nil) or (not (ParamType.BaseType in LapeOrdinalTypes + LapeArrayTypes  - LapeStringTypes + [ltShortString])) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    if (ParamType <> nil) and (ParamType is TLapeType_Type) then
+      ParamType := TLapeType_Type(ParamType).TType;
+    if (ParamType = nil) or (not (ParamType.BaseType in LapeOrdinalTypes + LapeArrayTypes - LapeStringTypes + [ltShortString])) then
+      LapeException(lpeInvalidEvaluation, DocPos);
 
-  Result := ParamType.VarLo();
+    Result := ParamType.VarLo();
+  end;
+
+  if (Result = nil) then
+    LapeException(lpeCannotEvalConst, DocPos);
 end;
 
 function TLapeTree_InternalMethod_Low.Compile(var Offset: Integer): TResVar;
@@ -2567,20 +2571,22 @@ function TLapeTree_InternalMethod_High.Evaluate: TLapeGlobalVar;
 var
   ParamType: TLapeType;
 begin
+  Result := nil;
   if (FParams.Count <> 1) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
-  if (FParams[0] is TLapeTree_ResVar) or (FParams[0] is TLapeTree_GlobalVar) then
-    ParamType := FParams[0].resType()
-  else
-    ParamType := nil;
+  if isConstant() then
+  begin
+    ParamType := FParams[0].resType();
 
-  if (ParamType <> nil) and (ParamType is TLapeType_Type) then
-    ParamType := TLapeType_Type(ParamType).TType;
-  if (ParamType = nil) or (not (ParamType.BaseType in LapeOrdinalTypes + LapeArrayTypes - LapeStringTypes + [ltShortString])) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    if (ParamType <> nil) and (ParamType is TLapeType_Type) then
+      ParamType := TLapeType_Type(ParamType).TType;
+    if (ParamType = nil) or (not (ParamType.BaseType in LapeOrdinalTypes + LapeArrayTypes - LapeStringTypes + [ltShortString])) then
+      LapeException(lpeInvalidEvaluation, DocPos);
 
-  Result := ParamType.VarHi();
+    Result := ParamType.VarHi();
+  end;
+
   if (Result = nil) then
     LapeException(lpeCannotEvalConst, DocPos);
 end;
@@ -2650,11 +2656,7 @@ begin
   else if (FParams.Count <> 1) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
-  if (FParams[0] is TLapeTree_ResVar) or (FParams[0] is TLapeTree_GlobalVar) then
-    ParamType := FParams[0].resType()
-  else
-    ParamType := nil;
-
+  ParamType := FParams[0].resType();
   if (ParamType <> nil) and (ParamType is TLapeType_Type) then
     ParamType := TLapeType_Type(ParamType).TType;
   if (ParamType = nil) or (ParamType.BaseType <> ltStaticArray) then
