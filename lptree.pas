@@ -1672,11 +1672,15 @@ var
         begin
           FDest.Spill();
           DestVar := _ResVar.New(Compiler.getTempVar(VarType));
+          DestVar.isConstant := False;
         end;
 
         tmpRes := Result;
         Result := VarType.Eval(op_Assign, tmpVar, DestVar, Result, Offset, @Self._DocPos);
         tmpRes.Spill(1);
+
+        if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
+          Result.isConstant := True;
       end
       else
         LapeException(lpeInvalidCast);
@@ -1729,6 +1733,7 @@ var
         Par.VarPos.StackVar := Compiler.getTempVar(Par.VarType)
       else if (MemPos = mpStack) and Par.HasType() and Par.VarType.NeedInitialization then
         FCompiler.Emitter._InitStack(Par.VarType.Size, Offset, @DocPos);
+      Par.setConstant(False, False);
 
       tmpRes := ParamVar;
       ParamVar := Param.VarType.Eval(op_Assign, tmpVar, Par, ParamVar, Offset, @DocPos);

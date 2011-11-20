@@ -3316,7 +3316,7 @@ var
   OldState: Pointer;
 begin
   Result := nil;
-  OldState := getTempTokenizerState(AHeader + ';', '!addGlobalFunc');
+  OldState := getTempTokenizerState(AHeader + ';', '!addGlobalFuncHdr');
 
   try
     Expect([tk_kw_Function, tk_kw_Procedure]);
@@ -3343,7 +3343,7 @@ function TLapeCompiler.addGlobalFunc(AHeader: TLapeType_Method; AName, Body: lpS
 var
   OldState: Pointer;
 begin
-  OldState := getTempTokenizerState(Body, '!addGlobalFunc');
+  OldState := getTempTokenizerState(Body, '!addGlobalFuncBdy');
   try
     Result := ParseMethod(nil, AHeader, AName);
     CheckAfterCompile();
