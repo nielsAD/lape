@@ -132,7 +132,6 @@ type
     function ParseExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True): TLapeTree_ExprBase; virtual;
     function ParseTypeExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True): TLapeTree_Base; virtual;
     function ParseStatement(FirstNext: Boolean = True; ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_Base; virtual;
-    function ParseEndingStatement(FirstNext: Boolean = True; OptionalSemiCol: Boolean = False): TLapeTree_Base; virtual;
     function ParseStatementList: TLapeTree_StatementList; virtual;
 
     function ParseBeginEnd(ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_StatementList; virtual;
@@ -1108,7 +1107,7 @@ begin
           tk_kw_Type: ParseTypeBlock();
 
           else if (lcoLooseSyntax in FOptions) and (not StopAfterBeginEnd) then
-            Statement := ParseEndingStatement(False)
+            Statement := ParseStatement(False)
           else
             LapeException(lpeBlockExpected, Tokenizer.DocPos);
         end;
@@ -1353,7 +1352,7 @@ begin
     try
       if (Tokenizer.Tok = tk_kw_Overload) then
       begin
-        Expect(tk_sym_SemiColon, True, False);
+        ParseExpressionEnd(tk_sym_SemiColon, True, False);
 
         if (OldDeclaration = nil) or (not LocalDecl) or ((OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
           with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
@@ -1375,7 +1374,7 @@ begin
       end
       else if (Tokenizer.Tok = tk_kw_Override) then
       begin
-        Expect(tk_sym_SemiColon, True, False);
+        ParseExpressionEnd(tk_sym_SemiColon, True, False);
 
         if (OldDeclaration <> nil) and (OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod) then
         begin
@@ -1466,7 +1465,7 @@ begin
 
       if (Tokenizer.Tok = tk_kw_Forward) then
       begin
-        Expect(tk_sym_SemiColon, True, False);
+        ParseExpressionEnd(tk_sym_SemiColon, True, True);
         if (FuncForwards = nil) then
           LapeException(lpeBlockExpected, Tokenizer.DocPos)
         else if FuncForwards.ExistsItem(Result.Method) then
@@ -1537,7 +1536,7 @@ begin
 
   try
     FuncHeader := ParseMethodHeader(FuncName, not isExternal);
-    Expect(tk_sym_SemiColon, True, False);
+    ParseExpressionEnd(tk_sym_SemiColon, True, False);
     Result := ParseMethod(FuncForwards, FuncHeader, FuncName, isExternal);
   finally
     DecStackInfo(True, False, (Result = nil));
@@ -1825,7 +1824,7 @@ begin
       Typ.Name := Name;
       addLocalDecl(Typ);
 
-      Expect(tk_sym_SemiColon, True, False);
+      ParseExpressionEnd(tk_sym_SemiColon, True, False);
     until (Next() <> tk_Identifier);
 
     while (TypeForwards.Count > 0) do
@@ -1874,7 +1873,7 @@ begin
         if isConst then
           Expect([tk_op_Assign, tk_sym_Equals], True, False)
         else
-          Expect([tk_op_Assign, tk_sym_Equals] + ValidEnd, True, False);
+          ParseExpressionEnd([tk_op_Assign, tk_sym_Equals] + ValidEnd, True, False);
       end;
 
       if (Tokenizer.Tok = tk_sym_Equals) then
@@ -2403,18 +2402,6 @@ begin
   end;
 end;
 
-function TLapeCompiler.ParseEndingStatement(FirstNext: Boolean = True; OptionalSemiCol: Boolean = False): TLapeTree_Base;
-begin
-  OptionalSemiCol := (not OptionalSemiCol) and (lcoLooseSemicolon in FOptions);
-  if OptionalSemiCol then
-    FOptions := FOptions - [lcoLooseSemicolon];
-
-  Result := ParseStatement(FirstNext, ParserToken_ExpressionEnd - [tk_kw_Else]);
-
-  if OptionalSemiCol then
-    FOptions := FOptions + [lcoLooseSemicolon];
-end;
-
 function TLapeCompiler.ParseStatementList: TLapeTree_StatementList;
 var
   Statement: TLapeTree_Base;
@@ -2427,7 +2414,7 @@ begin
 
     Next();
     repeat
-      Statement := ParseEndingStatement(False, True);
+      Statement := ParseStatement(False);
       if (Statement <> nil) then
       begin
         Result.addStatement(Statement);
@@ -2491,7 +2478,7 @@ begin
           Expr := ParseTypeExpression();
       until False;
 
-      Field.Body := ParseEndingStatement();
+      Field.Body := ParseStatement();
       Result.addField(Field);
       Field := nil;
     end;
@@ -2499,7 +2486,7 @@ begin
     Expect([tk_kw_Else, tk_kw_End], False, True);
     if (Tokenizer.LastTok = tk_kw_Else) then
     begin
-      Result.ElseBody := ParseEndingStatement(False, True);
+      Result.ElseBody := ParseStatement(False);
       Expect(tk_kw_End, False, True);
     end;
 
@@ -2939,8 +2926,8 @@ begin
 
     if (Next() = tk_kw_Program) then
     begin
-      Expect(tk_Identifier, True, False);
-      Expect(tk_sym_SemiColon, True, True);
+      Expect(tk_Identifier, True, True);
+      ParseExpressionEnd(tk_sym_SemiColon);
       Result := ParseBlockList(False);
     end
     else
