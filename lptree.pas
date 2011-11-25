@@ -343,6 +343,8 @@ type
   public
     constructor Create(AGlobalVar: TLapeGlobalVar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(AGlobalVar: TLapeGlobalVar; ASource: TLapeTree_Base); overload; virtual;
+    constructor Create(Ident: lpString; BaseType: ELapeBaseType; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); overload; virtual;
+    constructor Create(Ident: lpString; BaseType: ELapeBaseType; ASource: TLapeTree_Base); overload; virtual;
 
     function isConstant: Boolean; override;
     function resType: TLapeType; override;
@@ -1172,7 +1174,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
     for i := 0 to FValues.Count - 1 do
       if (FValues[i] is TLapeTree_ExprBase) then
       try
-        tmpVar := FCompiler.getBaseType(ltString).NewGlobalVarStr(TLapeType_Record(ToType).FieldMap.Key[i]);
+        tmpVar := FCompiler.getConstant(TLapeType_Record(ToType).FieldMap.Key[i], ltString);
         try
           FieldVar := ToType.EvalConst(op_Dot, Result, tmpVar);
           FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate());
@@ -3316,7 +3318,7 @@ begin
         if (Self.FOperatorType = op_AND) then
           Right := Self.FRight
         else
-          Right := TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(ResVar.VarType.NewGlobalVarStr('1'))), Self);
+          Right := TLapeTree_GlobalVar.Create('True', ResVar.VarType.BaseType, Self);
       end;
 
       ElseBody := TLapeTree_Operator.Create(op_Assign, Self);
@@ -3326,7 +3328,7 @@ begin
         if (Self.FOperatorType = op_OR) then
           Right := Self.FRight
         else
-          Right := TLapeTree_GlobalVar.Create(TLapeGlobalVar(FCompiler.addManagedVar(ResVar.VarType.NewGlobalVarStr('0'))), Self);
+          Right := TLapeTree_GlobalVar.Create('False', ResVar.VarType.BaseType, Self);
       end;
     end;
     setRight(nil);
@@ -3552,6 +3554,17 @@ begin
   Create(AGlobalVar, ASource.Compiler, @ASource._DocPos);
   FCompilerOptions := ASource.CompilerOptions;
 end;
+constructor TLapeTree_GlobalVar.Create(Ident: lpString; BaseType: ELapeBaseType; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  Assert(ACompiler <> nil);
+  Create(ACompiler.getConstant(Ident, BaseType, False, True), ACompiler, ADocPos);
+end;
+
+constructor TLapeTree_GlobalVar.Create(Ident: lpString; BaseType: ELapeBaseType; ASource: TLapeTree_Base);
+begin
+  Assert((ASource <> nil) and (ASource.Compiler <> nil));
+  Create(ASource.Compiler.getConstant(Ident, BaseType, False, True), ASource);
+end;
 
 function TLapeTree_GlobalVar.isConstant: Boolean;
 begin
@@ -3675,37 +3688,31 @@ end;
 
 constructor TLapeTree_String.Create(AValue: AnsiString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getBaseType(ltAnsiString).NewGlobalVarStr(AValue), ACompiler, ADocPos);
+  inherited Create(AValue, ltAnsiString, ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_String.Create(AValue: UnicodeString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getBaseType(ltUnicodeString).NewGlobalVarStr(AValue), ACompiler, ADocPos);
+  inherited Create(AValue,ltUnicodeString, ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_String.Create(AValue: lpString; ASource: TLapeTree_Base);
 begin
-  Assert(ASource <> nil);
-  Create(AValue, ASource.Compiler, @ASource._DocPos);
-  FCompilerOptions := ASource.CompilerOptions;
+  inherited Create(AValue, ltString, ASource);
 end;
 
 constructor TLapeTree_Char.Create(AValue: WideChar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
   if (AValue > #255) then
-    inherited Create(ACompiler.getBaseType(ltWideChar).NewGlobalVarStr(UnicodeString(AValue)), ACompiler, ADocPos)
+    inherited Create(AValue, ltWideChar, ACompiler, ADocPos)
   else
-    inherited Create(ACompiler.getBaseType(ltChar).NewGlobalVarStr(UnicodeString(AValue)), ACompiler, ADocPos);
+    inherited Create(AValue, ltChar, ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Char.Create(AValue: WideChar; ASource: TLapeTree_Base);
 begin
-  Assert(ASource <> nil);
-  Create(AValue, ASource.Compiler, @ASource._DocPos);
-  FCompilerOptions := ASource.CompilerOptions;
+  inherited Create(AValue, ltWideChar, ASource);
 end;
 
 procedure TLapeTree_Range.setLo(Node: TLapeTree_ExprBase);
