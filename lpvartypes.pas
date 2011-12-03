@@ -177,7 +177,7 @@ type
     FBaseType: ELapeBaseType;
     FCompiler: TLapeCompilerBase;
     FSize: Integer;
-    FInit: (__Unknown, __Yes, __No);
+    FInit: TInitBool;
     FAsString: lpString;
 
     function getEvalRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType; virtual;
@@ -192,8 +192,10 @@ type
   public
     constructor Create(ABaseType: ELapeBaseType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; virtual;
+
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; reintroduce; virtual;
     function CompatibleWith(Other: TLapeType): Boolean; virtual;
+    procedure ClearCache; virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; virtual;
     function VarToString(AVar: Pointer): lpString; virtual;
@@ -531,6 +533,7 @@ type
     destructor Destroy; override;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
+    procedure ClearCache; override;
     procedure addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1); virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
@@ -1347,12 +1350,12 @@ end;
 
 function TLapeType.getInitialization: Boolean;
 begin
-  if (FInit = __Unknown) then
+  if (FInit = bUnknown) then
     if (FBaseType in LapeNoInitTypes) then
-      FInit := __No
+      FInit := bFalse
     else
-      FInit := __Yes;
-  Result := (FInit = __Yes) and (Size > 0);
+      FInit := bTrue;
+  Result := (FInit = bTrue) and (Size > 0);
 end;
 
 function TLapeType.getFinalization: Boolean;
@@ -1373,8 +1376,12 @@ begin
 
   FBaseType := ABaseType;
   FCompiler := ACompiler;
+  ClearCache();
+end;
+
+procedure TLapeType.ClearCache;
+begin
   FSize := 0;
-  FInit := __Unknown;
   FAsString := '';
 end;
 
@@ -2290,7 +2297,6 @@ begin
   else if (AName = '') or hasMember(AName) then
     LapeException(lpeDuplicateDeclaration);
 
-  FAsString := '';
   Result:= Value;
   FRange.Hi := Value;
   if (FMemberMap.Count = 0) then
@@ -2303,6 +2309,8 @@ begin
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
   if (not FSmall) then
     FBaseType := ltLargeEnum;
+
+  ClearCache();
 end;
 
 function TLapeType_Enum.addMember(AName: lpString): Int16;
@@ -3273,10 +3281,13 @@ end;
 
 function TLapeType_StaticArray.getSize: Integer;
 begin
-  if (not HasType()) then
-    Exit(-1);
-  FSize := (FRange.Hi - FRange.Lo + 1) * FPType.Size;
-  Result := FSize;
+  if (FSize = 0) then
+  begin
+    if (not HasType()) then
+      FSize := -1;
+    FSize := (FRange.Hi - FRange.Lo + 1) * FPType.Size;
+  end;
+  Result := inherited;
 end;
 
 function TLapeType_StaticArray.getAsString: lpString;
@@ -3295,9 +3306,9 @@ begin
   inherited Create(ArrayType, ACompiler, AName, ADocPos);
   FBaseType := ltStaticArray;
   if (ArrayType <> nil) and ArrayType.NeedInitialization then
-    FInit := __Yes
+    FInit := bTrue
   else
-    FInit := __No;
+    FInit := bFalse;
 
   FRange := ARange;
 end;
@@ -3827,6 +3838,7 @@ const
 begin
   inherited Create(ltRecord, ACompiler, AName, ADocPos);
 
+  FSize := 0;
   FreeFieldMap := (AFieldMap = nil);
   if (AFieldMap = nil) then
     AFieldMap := TRecordFieldMap.Create(InvalidRec);
@@ -3840,23 +3852,31 @@ begin
   inherited;
 end;
 
+procedure TLapeType_Record.ClearCache;
+begin
+  FAsString := '';
+end;
+
 procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1);
 var
   Field: TRecordField;
 begin
   if (FSize < 0) or (FFieldMap.Count < 1) then
     FSize := 0;
-  if (FInit = __Unknown) or (FFieldMap.Count < 1) then
-    FInit := __No;
-  FAsString := '';
+  if (FInit = bUnknown) or (FFieldMap.Count < 1) then
+    FInit := bFalse;
+
   Field.Offset := FSize;
   Field.FieldType := FieldType;
   if FFieldMap.ExistsKey(AName) then
     LapeExceptionFmt(lpeDuplicateDeclaration, [AName]);
+
   FSize := FSize + FieldType.Size + (FieldType.Size mod Alignment);
-  if (FInit <> __Yes) and FieldType.NeedInitialization then
-    FInit := __Yes;
+  if (FInit <> bTrue) and FieldType.NeedInitialization then
+    FInit := bTrue;
   FFieldMap[AName] := Field;
+
+  ClearCache();
 end;
 
 function TLapeType_Record.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
@@ -3942,7 +3962,7 @@ begin
         Result := inherited;
         Exit;
       end;
-    Result := Self
+    Result := Self;
   end
   else
     Result := inherited;
@@ -4143,19 +4163,22 @@ var
 begin
   if (FSize < 0) or (FFieldMap.Count < 1) then
     FSize := 0;
-  if (FInit = __Unknown) or (FFieldMap.Count < 1) then
-    FInit := __No;
-  FAsString := '';
+  if (FInit = bUnknown) or (FFieldMap.Count < 1) then
+    FInit := bFalse;
+
   Field.Offset := 0;
   Field.FieldType := FieldType;
   if FFieldMap.ExistsKey(AName) then
     LapeExceptionFmt(lpeDuplicateDeclaration, [AName]);
+
   FieldSize := FieldType.Size + (FieldType.Size mod Alignment);
   if (FieldSize > FSize) then
     FSize := FieldSize;
-  if (FInit <> __Yes) and FieldType.NeedInitialization then
-    FInit := __Yes;
+  if (FInit <> bTrue) and FieldType.NeedInitialization then
+    FInit := bTrue;
   FFieldMap[AName] := Field;
+
+  ClearCache();
 end;
 
 procedure TLapeType_Method.setBaseType(ABaseType: ELapeBaseType);

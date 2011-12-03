@@ -65,8 +65,6 @@ type
   PlpChar = ^lpChar;
   PlpCharInt = ^lpCharInt;
 
-  TStringArray = array of lpString;
-
   TVarRecArray = array of TVarRec;
   TVarRecContainer = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
     CVar: Variant;
@@ -86,7 +84,10 @@ type
     VarRecs: TVarRecArray;
   end;
 
+  TStringArray = array of lpString;
   TByteArray = array of Byte;
+  TInitBool = (bUnknown, bFalse, bTrue);
+
   TCodeArray = TByteArray;
   PCodeArray = ^TCodeArray;
 

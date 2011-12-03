@@ -86,13 +86,19 @@ type
   end;
 
   TLapeTree_ExprBase = class(TLapeTree_Base)
+  private
+    FConstant: TInitBool;
+    FResType: TLapeType;
+    FRes: TLapeGlobalVar;
   public
-    function isConstant: Boolean; virtual;
-    function FoldConstants(DoFree: Boolean = True): TLapeTree_Base; override;
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    procedure ClearCache; virtual;
 
+    function isConstant: Boolean; virtual;
     function resType: TLapeType; virtual;
     function Evaluate: TLapeGlobalVar; virtual;
 
+    function FoldConstants(DoFree: Boolean = True): TLapeTree_Base; override;
     function CompileToBoolVar(var Offset: Integer; out ConditionVar: TResVar): Boolean; virtual;
   end;
 
@@ -107,23 +113,27 @@ type
 
   TLapeTree_OpenArray = class(TLapeTree_DestExprBase)
   protected
+    FCanCast: TInitBool;
+    FType: TLapeType;
     FValues: TLapeStatementList;
+
+    procedure setType(AType: TLapeType); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
-    ToType: TLapeType;
-
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
-    function addValue(Val: TLapeTree_Base): Integer; virtual;
 
-    function canCast: Boolean; virtual;
+    procedure ClearCache; override;
+    function addValue(Val: TLapeTree_Base): Integer; virtual;
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; override;
 
+    function canCast: Boolean; virtual;
     function isConstant: Boolean; override;
     function resType: TLapeType; override;
     function Evaluate: TLapeGlobalVar; override;
     function Compile(var Offset: Integer): TResVar; override;
 
+    property ToType: TLapeType read FType write setType;
     property Values: TLapeStatementList read FValues;
   end;
 
@@ -302,10 +312,10 @@ type
     constructor Create(AOperatorType: EOperator; ASource: TLapeTree_Base); overload; virtual;
     destructor Destroy; override;
 
-    function isConstant: Boolean; override;
     function FoldConstants(DoFree: Boolean = True): TLapeTree_Base; override;
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; override;
 
+    function isConstant: Boolean; override;
     function resType: TLapeType; override;
     function Evaluate: TLapeGlobalVar; override;
     function Compile(var Offset: Integer): TResVar; override;
@@ -786,9 +796,34 @@ begin
   Result := Self;
 end;
 
+constructor TLapeTree_ExprBase.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  ClearCache();
+end;
+
+procedure TLapeTree_ExprBase.ClearCache;
+begin
+  FConstant := bUnknown;
+  FRes := nil;
+  FResType := nil;
+end;
+
 function TLapeTree_ExprBase.isConstant: Boolean;
 begin
-  Result := False;
+  Result := (FConstant = bTrue);
+end;
+
+function TLapeTree_ExprBase.resType: TLapeType;
+begin
+  Result := FResType;
+end;
+
+function TLapeTree_ExprBase.Evaluate: TLapeGlobalVar;
+begin
+  Result := FRes;
+  if (Result = nil) then
+    LapeException(lpeImpossible);
 end;
 
 function TLapeTree_ExprBase.FoldConstants(DoFree: Boolean = True): TLapeTree_Base;
@@ -824,17 +859,6 @@ begin
       Result := Replacement;
     end;
   end;
-end;
-
-function TLapeTree_ExprBase.resType: TLapeType;
-begin
-  Result := nil;
-end;
-
-function TLapeTree_ExprBase.Evaluate: TLapeGlobalVar;
-begin
-  Result := nil;
-  LapeException(lpeImpossible);
 end;
 
 function TLapeTree_ExprBase.CompileToBoolVar(var Offset: Integer; out ConditionVar: TResVar): Boolean;
@@ -876,6 +900,15 @@ begin
   Result := inherited;
 end;
 
+procedure TLapeTree_OpenArray.setType(AType: TLapeType);
+begin
+  if (FType <> AType) then
+  begin
+    FType := AType;
+    ClearCache();
+  end;
+end;
+
 procedure TLapeTree_OpenArray.DeleteChild(Node: TLapeTree_Base);
 begin
   inherited;
@@ -886,7 +919,7 @@ end;
 constructor TLapeTree_OpenArray.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited Create(ACompiler, ADocPos);
-  ToType := nil;
+  FType := nil;
   FValues := TLapeStatementList.Create(nil, dupAccept);
 end;
 
@@ -901,60 +934,22 @@ begin
   inherited;
 end;
 
+procedure TLapeTree_OpenArray.ClearCache;
+begin
+  inherited;
+  FCanCast := bUnknown;
+end;
+
 function TLapeTree_OpenArray.addValue(Val: TLapeTree_Base): Integer;
 begin
   if (Val <> nil) then
   begin
     Result := FValues.add(Val);
     Val.Parent := Self;
+    ClearCache();
   end
   else
     Result := -1;
-end;
-
-function TLapeTree_OpenArray.canCast: Boolean;
-var
-  i: Integer;
-  CastTo: TLapeType;
-begin
-  if (ToType = nil) and FDest.HasType() then
-    ToType := FDest.VarType;
-  if (ToType = nil) then
-    ToType := resType();
-  if (ToType = nil) then
-    Exit(False);
-
-  CastTo := nil;
-  if (ToType is TLapeType_Set) then
-    CastTo := TLapeType_Set(ToType).Range
-  else if (ToType is TLapeType_DynArray) then
-    CastTo := TLapeType_DynArray(ToType).PType;
-  if (CastTo = nil) xor (ToType is TLapeType_Record) then
-    Exit(False);
-
-  for i := 0 to FValues.Count - 1 do
-  begin
-    if isEmpty(FValues[i]) then
-      Continue
-    else if (ToType is TLapeType_Record) then
-      CastTo := TLapeType_Record(ToType).FieldMap.ItemsI[i].FieldType;
-
-    if (CastTo = nil) then
-      Exit(False)
-    else
-      FValues[i] := FValues[i].setExpectedType(CastTo);
-
-    if (FValues[i] is TLapeTree_ExprBase) and CastTo.CompatibleWith(TLapeTree_ExprBase(FValues[i]).resType()) then
-      {nothing}
-    else if (FValues[i] is TLapeTree_Range) and
-      CastTo.CompatibleWith(TLapeTree_Range(FValues[i]).Lo.resType()) and
-      CastTo.CompatibleWith(TLapeTree_Range(FValues[i]).Hi.resType())
-    then
-      {nothing}
-    else
-      Exit(False);
-  end;
-  Result := True;
 end;
 
 function TLapeTree_OpenArray.setExpectedType(ExpectType: TLapeType): TLapeTree_Base;
@@ -965,7 +960,7 @@ begin
   if isEmpty(Self) then
     Exit;
     
-  OldType := ToType;
+  OldType := FType;
   if (ExpectType <> nil) then
     ToType := ExpectType
   else
@@ -977,32 +972,94 @@ begin
     ToType := OldType;
 end;
 
+function TLapeTree_OpenArray.canCast: Boolean;
+var
+  i: Integer;
+  CastTo: TLapeType;
+begin
+  //if (FCanCast = bUnknown) then
+  begin
+    FCanCast := bTrue;
+    if (FType = nil) and FDest.HasType() then
+      FType := FDest.VarType;
+    if (FType = nil) then
+      FType := resType();
+    if (FType = nil) then
+      FCanCast := bFalse;
+
+    CastTo := nil;
+    if (FCanCast <> bFalse) then
+      if (FType is TLapeType_Set) then
+        CastTo := TLapeType_Set(FType).Range
+      else if (FType is TLapeType_DynArray) then
+        CastTo := TLapeType_DynArray(FType).PType;
+      if (CastTo = nil) xor (FType is TLapeType_Record) then
+        FCanCast := bFalse;
+
+    if (FCanCast <> bFalse) then
+      for i := 0 to FValues.Count - 1 do
+      begin
+        if isEmpty(FValues[i]) then
+          Continue
+        else if (FType is TLapeType_Record) then
+          CastTo := TLapeType_Record(FType).FieldMap.ItemsI[i].FieldType;
+
+        if (CastTo <> nil) then
+          FValues[i] := FValues[i].setExpectedType(CastTo)
+        else
+        begin
+          FCanCast := bFalse;
+          Break;
+        end;
+
+        if (FValues[i] is TLapeTree_ExprBase) and CastTo.CompatibleWith(TLapeTree_ExprBase(FValues[i]).resType()) then
+          {nothing}
+        else if (FValues[i] is TLapeTree_Range) and
+          CastTo.CompatibleWith(TLapeTree_Range(FValues[i]).Lo.resType()) and
+          CastTo.CompatibleWith(TLapeTree_Range(FValues[i]).Hi.resType())
+        then
+          {nothing}
+        else
+        begin
+          FCanCast := bFalse;
+          Break;
+        end;
+      end;
+  end;
+
+  Result := (FCanCast = bTrue);
+end;
+
 function TLapeTree_OpenArray.isConstant: Boolean;
 var
   i: Integer;
 begin
-  if (ToType = nil) or (not canCast()) then
-    Exit(False);
-  for i := 0 to FValues.Count - 1 do
-    if isEmpty(FValues[i]) then
-      {nothing}
-    else if (FValues[i] is TLapeTree_ExprBase) and TLapeTree_ExprBase(FValues[i]).isConstant() then
-      {nothing}
-    else if (FValues[i] is TLapeTree_Range) and
-      TLapeTree_Range(FValues[i]).Lo.isConstant() and
-      TLapeTree_Range(FValues[i]).Hi.isConstant()
-    then
-      {nothing}
+  if (FConstant = bUnknown) then
+    if (FType = nil) or (not canCast()) then
+      FConstant := bFalse
     else
-      Exit(False);
-  Result := True;
+    begin
+      FConstant := bTrue;
+      for i := 0 to FValues.Count - 1 do
+        if isEmpty(FValues[i]) then
+          {nothing}
+        else if (FValues[i] is TLapeTree_ExprBase) and TLapeTree_ExprBase(FValues[i]).isConstant() then
+          {nothing}
+        else if (FValues[i] is TLapeTree_Range) and
+          TLapeTree_Range(FValues[i]).Lo.isConstant() and
+          TLapeTree_Range(FValues[i]).Hi.isConstant()
+        then
+          {nothing}
+        else
+        begin
+          FConstant := bFalse;
+          Break;
+        end;
+    end;
+  Result := inherited;
 end;
 
 function TLapeTree_OpenArray.resType: TLapeType;
-var
-  i: Integer;
-  Res: TLapeType;
-  Range: TLapeRange;
 
   function determineArrType(Typ: TLapeType): TLapeType;
   begin
@@ -1014,9 +1071,13 @@ var
       Result := Typ;
   end;
 
-begin
-  Result := ToType;
-  if (Result = nil) then
+  function determineResType: TLapeType;
+  var
+    i: Integer;
+    Res: TLapeType;
+    Range: TLapeRange;
+  begin
+    Result := nil;
     if (FValues.Count > 0) then
     begin
       Range.Lo := 0;
@@ -1064,6 +1125,17 @@ begin
     end
     else
       Result := TLapeType_StaticArray.Create(NullRange, FCompiler.getBaseType(ltVariant), FCompiler, '', @_DocPos);
+  end;
+
+begin
+  if (FResType = nil) then
+  begin
+    if (FType <> nil) then
+      FResType := FType
+    else
+      FResType := determineResType();
+  end;
+  Result := inherited;
 end;
 
 function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
@@ -1082,7 +1154,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
       else if (FValues[i] is TLapeTree_ExprBase) then
       begin
         tmpVar := Result;
-        Result := ToType.EvalConst(op_Plus, tmpVar, TLapeTree_ExprBase(FValues[i]).Evaluate());
+        Result := FType.EvalConst(op_Plus, tmpVar, TLapeTree_ExprBase(FValues[i]).Evaluate());
         tmpVar.Free();
       end
       else if (FValues[i] is TLapeTree_Range) then
@@ -1091,7 +1163,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
         begin
           tmpVar := Result;
-          Result := ToType.EvalConst(op_Plus, Result, FieldVar);
+          Result := FType.EvalConst(op_Plus, Result, FieldVar);
           tmpVar.Free();
         end;
       finally
@@ -1110,7 +1182,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
     FieldVar := nil;
     tmpVar := nil;
     try
-      CounterInt := TLapeType_StaticArray(ToType).Range.Lo;
+      CounterInt := TLapeType_StaticArray(FType).Range.Lo;
       Counter := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@CounterInt);
 
       for i := 0 to FValues.Count - 1 do
@@ -1120,7 +1192,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         else if (FValues[i] is TLapeTree_ExprBase) then
         try
           try
-            FieldVar := ToType.EvalConst(op_Index, Result, Counter);
+            FieldVar := FType.EvalConst(op_Index, Result, Counter);
             FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate());
           except on E: lpException do
             LapeException(E.Message, FValues[i].DocPos);
@@ -1135,7 +1207,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
           for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
           try
             try
-              FieldVar := ToType.EvalConst(op_Index, Result, Counter);
+              FieldVar := FType.EvalConst(op_Index, Result, Counter);
               FieldVar.VarType.EvalConst(op_Assign, FieldVar, tmpVar);
             except on E: lpException do
               LapeException(E.Message, FValues[i].DocPos);
@@ -1154,7 +1226,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         Inc(CounterInt);
       end;
 
-      if (CounterInt <> TLapeType_StaticArray(ToType).Range.Hi + 1) then
+      if (CounterInt <> TLapeType_StaticArray(FType).Range.Hi + 1) then
         LapeException(lpeInvalidRange, DocPos);
     finally
       Counter.Free();
@@ -1169,14 +1241,14 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
     FieldVar := nil;
     tmpVar := nil;
 
-    if (FValues.Count > TLapeType_Record(ToType).FieldMap.Count) then
+    if (FValues.Count > TLapeType_Record(FType).FieldMap.Count) then
       LapeException(lpeInvalidRange, DocPos);
     for i := 0 to FValues.Count - 1 do
       if (FValues[i] is TLapeTree_ExprBase) then
       try
-        tmpVar := FCompiler.getConstant(TLapeType_Record(ToType).FieldMap.Key[i], ltString);
+        tmpVar := FCompiler.getConstant(TLapeType_Record(FType).FieldMap.Key[i], ltString);
         try
-          FieldVar := ToType.EvalConst(op_Dot, Result, tmpVar);
+          FieldVar := FType.EvalConst(op_Dot, Result, tmpVar);
           FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate());
         except on E: lpException do
           LapeException(E.Message, FValues[i].DocPos);
@@ -1184,33 +1256,36 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
       finally
         if (FieldVar <> nil) then
           FreeAndNil(FieldVar);
-        if (tmpVar <> nil) then
-          FreeAndNil(tmpVar);
       end
       else if (not isEmpty(FValues[i])) then
         LapeException(lpeInvalidCast, FValues[i].DocPos);
   end;
 
 begin
-  if (not canCast()) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+  if (FRes = nil) then
+  begin
+    if (not canCast()) then
+      LapeException(lpeInvalidEvaluation, DocPos);
 
-  Result := ToType.NewGlobalVarP();
-  try
-    if (ToType is TLapeType_StaticArray) then
-      doStaticArray()
-    else if (ToType is TLapeType_Set) or (ToType is TLapeType_DynArray) then
-      doSetOrDynArray()
-    else if (ToType is TLapeType_Record) then
-      doRecord()
-    else
-      LapeException(lpeInvalidCast, DocPos);
+    Result := FType.NewGlobalVarP();
+    try
+      if (FType is TLapeType_StaticArray) then
+        doStaticArray()
+      else if (FType is TLapeType_Set) or (FType is TLapeType_DynArray) then
+        doSetOrDynArray()
+      else if (FType is TLapeType_Record) then
+        doRecord()
+      else
+        LapeException(lpeInvalidCast, DocPos);
 
-    Result := FCompiler.addManagedVar(Result) as TLapeGlobalVar;
-  except
-    Result.Free();
-    raise;
+      Result := FCompiler.addManagedVar(Result) as TLapeGlobalVar;
+      FRes := Result;
+    except
+      Result.Free();
+      raise;
+    end;
   end;
+  Result := inherited;
 end;
 
 function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
@@ -1239,8 +1314,8 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         end
       else if (FValues[i] is TLapeTree_Range) then
       begin
-        if (ToType is TLapeType_Set) then
-          Counter := FCompiler.getTempVar(TLapeType_Set(ToType).Range, BigLock)
+        if (FType is TLapeType_Set) then
+          Counter := FCompiler.getTempVar(TLapeType_Set(FType).Range, BigLock)
         else
           Counter := FCompiler.getTempVar(ltInt32, BigLock);
         Counter.isConstant := False;
@@ -1271,7 +1346,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
   var
     i: Integer;
   begin
-    if (FValues.Count <> TLapeType_StaticArray(ToType).Range.Hi - TLapeType_StaticArray(ToType).Range.Lo + 1) then
+    if (FValues.Count <> TLapeType_StaticArray(FType).Range.Hi - TLapeType_StaticArray(FType).Range.Lo + 1) then
       LapeException(lpeInvalidRange, DocPos);
 
     for i := 0 to FValues.Count - 1 do
@@ -1284,7 +1359,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         with TLapeTree_Operator(Left) do
         begin
           Left := TLapeTree_ResVar.Create(Result, FValues[i]);
-          Right := TLapeTree_Integer.Create(i + TLapeType_StaticArray(ToType).Range.Lo, FValues[i]);
+          Right := TLapeTree_Integer.Create(i + TLapeType_StaticArray(FType).Range.Lo, FValues[i]);
         end;
         Right := TLapeTree_ResVar.Create(FValues[i].Compile(Offset), FValues[i]);
         Compile(Offset);
@@ -1297,7 +1372,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
   var
     i: Integer;
   begin
-    if (FValues.Count > TLapeType_Record(ToType).FieldMap.Count) then
+    if (FValues.Count > TLapeType_Record(FType).FieldMap.Count) then
       LapeException(lpeInvalidRange, DocPos);
 
     for i := 0 to FValues.Count - 1 do
@@ -1308,7 +1383,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           with TLapeTree_Operator(Left) do
           begin
             Left := TLapeTree_ResVar.Create(Result, FValues[i]);
-            Right := TLapeTree_Field.Create(TLapeType_Record(ToType).FieldMap.Key[i], FValues[i]);
+            Right := TLapeTree_Field.Create(TLapeType_Record(FType).FieldMap.Key[i], FValues[i]);
           end;
           Right := TLapeTree_ResVar.Create(FValues[i].Compile(Offset), FValues[i]);
           Compile(Offset);
@@ -1326,12 +1401,12 @@ begin
   if (not canCast()) then
     LapeException(lpeInvalidEvaluation, DocPos);
 
-  if FDest.HasType() and (FDest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and ToType.Equals(FDest.VarType) then
+  if FDest.HasType() and (FDest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and FType.Equals(FDest.VarType) then
     Result := FDest
   else
   begin
     FDest.Spill();
-    Result := _ResVar.New(FCompiler.getTempVar(ToType));
+    Result := _ResVar.New(FCompiler.getTempVar(FType));
   end;
 
   wasConstant := Result.isConstant;
@@ -1340,11 +1415,11 @@ begin
 
   FCompiler.FinalizeVar(Result, Offset, @_DocPos);
 
-  if (ToType is TLapeType_StaticArray) then
+  if (FType is TLapeType_StaticArray) then
     doStaticArray()
-  else if (ToType is TLapeType_Set) or (ToType is TLapeType_DynArray) then
+  else if (FType is TLapeType_Set) or (FType is TLapeType_DynArray) then
     doSetOrDynArray()
-  else if (ToType is TLapeType_Record) then
+  else if (FType is TLapeType_Record) then
     doRecord()
   else
     LapeException(lpeInvalidCast, DocPos);
@@ -3207,28 +3282,6 @@ begin
   inherited;
 end;
 
-function TLapeTree_Operator.isConstant: Boolean;
-begin
-  if isEmpty(Left) then
-    Result := False
-  else if (FLeft is TLapeTree_GlobalVar) and
-    TLapeTree_GlobalVar(FLeft).GlobalVar.HasType() and
-    ((FRight = nil) or (FRight is TLapeTree_GlobalVar))
-  then
-    if (FRight <> nil) then
-      Result := TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.CanEvalConst(
-        OperatorType,
-        TLapeTree_GlobalVar(FLeft).GlobalVar,
-        TLapeTree_GlobalVar(FRight).GlobalVar)
-    else
-      Result := TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.CanEvalConst(
-        OperatorType,
-        TLapeTree_GlobalVar(FLeft).GlobalVar,
-        nil)
-  else
-    Result := Left.isConstant() and ((FRight = nil) or FRight.isConstant());
-end;
-
 function TLapeTree_Operator.FoldConstants(DoFree: Boolean = True): TLapeTree_Base;
 begin
   if (not isEmpty(Self)) and (not isEmpty(Left)) then
@@ -3257,6 +3310,28 @@ begin
       FLeft := Cast;
     end;
   end
+end;
+
+function TLapeTree_Operator.isConstant: Boolean;
+begin
+  if isEmpty(Left) then
+    Result := False
+  else if (FLeft is TLapeTree_GlobalVar) and
+    TLapeTree_GlobalVar(FLeft).GlobalVar.HasType() and
+    ((FRight = nil) or (FRight is TLapeTree_GlobalVar))
+  then
+    if (FRight <> nil) then
+      Result := TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.CanEvalConst(
+        OperatorType,
+        TLapeTree_GlobalVar(FLeft).GlobalVar,
+        TLapeTree_GlobalVar(FRight).GlobalVar)
+    else
+      Result := TLapeTree_GlobalVar(FLeft).GlobalVar.VarType.CanEvalConst(
+        OperatorType,
+        TLapeTree_GlobalVar(FLeft).GlobalVar,
+        nil)
+  else
+    Result := Left.isConstant() and ((FRight = nil) or FRight.isConstant());
 end;
 
 function TLapeTree_Operator.resType: TLapeType;
