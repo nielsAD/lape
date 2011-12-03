@@ -302,11 +302,10 @@
         <Filename Value="lpvartypes.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpvartypes"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
         <TopLine Value="4142"/>
-        <CursorPos X="23" Y="4166"/>
+        <CursorPos X="30" Y="4152"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit9>
@@ -459,10 +458,11 @@
         <Filename Value="lptree.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lptree"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1236"/>
-        <CursorPos X="12" Y="1242"/>
+        <TopLine Value="1419"/>
+        <CursorPos X="1" Y="1136"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit28>

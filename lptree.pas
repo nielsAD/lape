@@ -977,7 +977,7 @@ var
   i: Integer;
   CastTo: TLapeType;
 begin
-  //if (FCanCast = bUnknown) then
+  if (FCanCast = bUnknown) then
   begin
     FCanCast := bTrue;
     if (FType = nil) and FDest.HasType() then
@@ -1129,12 +1129,10 @@ function TLapeTree_OpenArray.resType: TLapeType;
 
 begin
   if (FResType = nil) then
-  begin
     if (FType <> nil) then
       FResType := FType
     else
       FResType := determineResType();
-  end;
   Result := inherited;
 end;
 
