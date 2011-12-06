@@ -4260,7 +4260,7 @@ begin
 
   FreeParams := (AParams = nil);
   if (AParams = nil) then
-    AParams := TLapeParameterList.Create(NullParameter, dupAccept);
+    AParams := TLapeParameterList.Create(NullParameter, dupAccept, False);
   FParams := AParams;
   Res := ARes;
 end;
@@ -4975,8 +4975,8 @@ begin
   inherited Create(nil, False);
 
   Owner := AOwner;
-  FVarStack := TLapeVarStack.Create(nil, dupIgnore);
-  FWithStack := TLapeWithDeclarationList.Create(NullWithDecl, dupIgnore);
+  FVarStack := TLapeVarStack.Create(nil, dupIgnore, False);
+  FWithStack := TLapeWithDeclarationList.Create(NullWithDecl, dupIgnore, False);
   FreeVars := ManageVars;
   CodePos := -1;
 

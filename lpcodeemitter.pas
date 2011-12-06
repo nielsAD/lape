@@ -211,7 +211,7 @@ constructor TLapeCodeEmitterBase.Create;
 begin
   inherited;
 
-  FCodePointers := TLapeCodePointers.Create(nil, dupIgnore);
+  FCodePointers := TLapeCodePointers.Create(nil, dupIgnore, False);
   CodeGrowSize := 256;
   FullEmit := True;
   Reset();

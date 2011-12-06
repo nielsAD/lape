@@ -1067,7 +1067,7 @@ end;
 
 function TLapeCompiler.ParseIdentifierList(FirstNext: Boolean = False): TStringArray;
 begin
-  SetLength(Result, 0);
+  Result := nil;
   repeat
     Expect(tk_Identifier, FirstNext, False);
     FirstNext := True;
@@ -1086,7 +1086,7 @@ begin
 
   Result := TLapeTree_StatementList.Create(Self, getPDocPos());
   try
-    FuncForwards := TLapeFuncForwards.Create(nil, dupError);
+    FuncForwards := TLapeFuncForwards.Create(nil, dupError, True);
 
     try
       DoBreak := False;
@@ -3173,7 +3173,8 @@ begin
 
   try
     ParseVarBlock().Free();
-    Result := FGlobalDeclarations.Items[FGlobalDeclarations.Items.Count - 1] as TLapeGlobalVar;
+    Result := getGlobalVar(AName);
+    //Result := FGlobalDeclarations.Items[FGlobalDeclarations.Items.Count - 1] as TLapeGlobalVar;
     CheckAfterCompile();
   finally
     resetTokenizerState(OldState);
@@ -3303,7 +3304,8 @@ begin
 
   try
     ParseTypeBlock();
-    Result := FGlobalDeclarations.Items[FGlobalDeclarations.Items.Count - 1] as TLapeType;
+    Result := getGlobalType(AName);
+    //Result := FGlobalDeclarations.Items[FGlobalDeclarations.Items.Count - 1] as TLapeType;
     CheckAfterCompile();
   finally
     resetTokenizerState(OldState);

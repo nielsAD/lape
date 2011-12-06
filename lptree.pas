@@ -916,7 +916,7 @@ constructor TLapeTree_OpenArray.Create(ACompiler: TLapeCompilerBase; ADocPos: PD
 begin
   inherited Create(ACompiler, ADocPos);
   FType := nil;
-  FValues := TLapeStatementList.Create(nil, dupAccept);
+  FValues := TLapeStatementList.Create(nil, dupAccept, False);
 end;
 
 destructor TLapeTree_OpenArray.Destroy;
@@ -1487,7 +1487,7 @@ begin
   inherited Create(ACompiler, ADocPos);
 
   setIdent(Ident);
-  FParams := TLapeExpressionList.Create(nil, dupAccept);
+  FParams := TLapeExpressionList.Create(nil, dupAccept, False);
 end;
 
 constructor TLapeTree_Invoke.Create(Ident: TLapeTree_ExprBase; ASource: TLapeTree_Base);
@@ -2100,7 +2100,7 @@ begin
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
   TempParams := FParams;
-  FParams := TLapeExpressionList.Create(nil, dupAccept);
+  FParams := TLapeExpressionList.Create(nil, dupAccept, False);
   FParams.add(TempParams[0]);
   try
     for i := 0 to TempParams.Count - 1 do
@@ -3930,7 +3930,7 @@ end;
 constructor TLapeTree_StatementList.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FStatements := TLapeStatementList.Create(nil, dupAccept);
+  FStatements := TLapeStatementList.Create(nil, dupAccept, False);
 end;
 
 destructor TLapeTree_StatementList.Destroy;
@@ -4083,7 +4083,7 @@ begin
   Method := AMethod;
   SelfVar := NullResVar;
   FStackInfo := AStackInfo;
-  FExitStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore);
+  FExitStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
 end;
 
 destructor TLapeTree_Method.Destroy;
@@ -4142,7 +4142,7 @@ const
   NullVar: TLapeVarDecl = (VarDecl: nil; Default: nil);
 begin
   inherited;
-  FVars := TLapeVarDeclList.Create(NullVar, dupError);
+  FVars := TLapeVarDeclList.Create(NullVar, dupError, False);
 end;
 
 destructor TLapeTree_VarList.Destroy;
@@ -4225,7 +4225,7 @@ constructor TLapeTree_With.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos
 begin
   inherited;
   FBody := nil;
-  FWithList := TLapeExpressionList.Create(nil, dupAccept);
+  FWithList := TLapeExpressionList.Create(nil, dupAccept, True);
 end;
 
 destructor TLapeTree_With.Destroy;
@@ -4415,7 +4415,7 @@ constructor TLapeTree_MultiIf.Create(Ident: TLapeTree_ExprBase; ACompiler: TLape
 begin
   inherited Create(ACompiler, ADocPos);
   setCondition(Ident);
-  FValues := TLapeStatementList.Create(nil, dupAccept);
+  FValues := TLapeStatementList.Create(nil, dupAccept, False);
 end;
 
 constructor TLapeTree_MultiIf.Create(Ident: TLapeTree_ExprBase; OpenArray: TLapeTree_OpenArray; FreeArray: Boolean = True);
@@ -4561,7 +4561,7 @@ begin
   inherited;
   FCondition := nil;
   FElse := nil;
-  FFields := TLapeCaseFieldList.Create(nil, dupAccept);
+  FFields := TLapeCaseFieldList.Create(nil, dupAccept, False);
 end;
 
 destructor TLapeTree_Case.Destroy;
@@ -4641,8 +4641,8 @@ end;
 constructor TLapeTree_While.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore);
-  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore);
+  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
+  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
 end;
 
 destructor TLapeTree_While.Destroy;
@@ -4877,8 +4877,8 @@ begin
   FCondition := nil;
   FBody := nil;
 
-  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore);
-  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore);
+  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
+  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
 end;
 
 destructor TLapeTree_Repeat.Destroy;

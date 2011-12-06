@@ -612,7 +612,7 @@ begin
   {$IFDEF Lape_DoubleKeywordsCache}
   for i := Low(Lape_KeywordsCache) to High(Lape_KeywordsCache) do
     for ii := Low(Lape_KeywordsCache[i]) to High(Lape_KeywordsCache[i]) do
-      SetLength(Lape_KeywordsCache[i][ii], 0);
+      Lape_KeywordsCache[i][ii] := nil;
 
   for i := Low(Lape_Keywords) to High(Lape_Keywords) do
   begin
@@ -623,7 +623,7 @@ begin
   end;
   {$ELSE}
   for i := Low(Lape_KeywordsCache) to High(Lape_KeywordsCache) do
-    SetLength(Lape_KeywordsCache[i], 0);
+    Lape_KeywordsCache[i] := nil;
 
   for i := Low(Lape_Keywords) to High(Lape_Keywords) do
   begin
@@ -635,6 +635,8 @@ begin
 end;
 
 function TLapeTokenizerBase.Identify: EParserToken;
+var
+  Char: lpChar;
 
   procedure NextPos_CountLines;
   begin
@@ -652,10 +654,26 @@ function TLapeTokenizerBase.Identify: EParserToken;
     until (not (CurChar in [#9, #32, #10, #13]));
   end;
 
-var
-  Char: lpChar;
-  Str: lpString;
-  Token: EParserToken;
+  function Alpha: EParserToken;
+  var
+    Str: lpString;
+    Token: EParserToken;
+  begin
+    Str := Char;
+    Char := getChar(1);
+    while (Char in ['0'..'9', 'A'..'Z', '_', 'a'..'z']) do
+    begin
+      Inc(FPos);
+      Str := Str + Char;
+      Char := getChar(1);
+    end;
+
+    if Lape_IsKeyword(Str, Token) then
+      Result := setTok(Token)
+    else
+      Result := setTok(tk_Identifier);
+  end;
+
 begin
   FTokStart := FPos;
   Char := CurChar;
@@ -842,22 +860,7 @@ begin
         else
           Result := setTok(tk_Unkown);
       end;
-    'A'..'Z', '_', 'a'..'z':
-      begin
-        Str := Char;
-        Char := getChar(1);
-        while (Char in ['0'..'9', 'A'..'Z', '_', 'a'..'z']) do
-        begin
-          Inc(FPos);
-          Str := Str + Char;
-          Char := getChar(1);
-        end;
-
-        if Lape_IsKeyword(Str, Token) then
-          Result := setTok(Token)
-        else
-          Result := setTok(tk_Identifier);
-      end;
+    'A'..'Z', '_', 'a'..'z': Result := Alpha();
     #39:
       begin
         Inc(FPos);
@@ -1253,7 +1256,7 @@ begin
 end;
 
 initialization
-  Lape_InitKeywordsCache;
+  Lape_InitKeywordsCache();
 finalization
 end.
 

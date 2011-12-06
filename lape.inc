@@ -16,3 +16,7 @@
 {.$DEFINE Lape_SmallCode}                //Try to keep compiled code as small as possible (packed records, no aligning -- less memory, slower)
 {.$DEFINE Lape_TrackObjects}             //Track all created classes with a list to check for leaks
 {.$DEFINE Lape_Unicode}                  //Use unicodestrings
+
+{$IFNDEF FPC}
+  {$POINTERMATH ON}
+{$ENDIF}
