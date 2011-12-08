@@ -5773,12 +5773,15 @@ begin
 end;
 
 function TLapeCompilerBase.addManagedVar(AVar: TLapeVar; PtrCheckOnly: Boolean = False): TLapeVar;
+{$IFDEF Lape_SmallCode}
 var
   i: Integer;
   GlobalVars: TLapeDeclArray;
+{$ENDIF}
 begin
   if (AVar = nil) or (AVar.DeclarationList <> nil) then
     Exit(AVar);
+  {$IFDEF Lape_SmallCode}
   if (AVar is TLapeGlobalVar) and AVar.HasType() and AVar.isConstant and (AVar.Name = '') and
      (PtrCheckOnly or (AVar.VarType.EvalRes(op_cmp_Equal, AVar.VarType) <> nil))
   then
@@ -5797,6 +5800,7 @@ begin
             Exit(TLapeGlobalVar(GlobalVars[i]));
           end;
   end;
+  {$ENDIF}
 
   Result := addManagedDecl(AVar) as TLapeVar;
   {$IFNDEF Lape_SmallCode}
@@ -5807,13 +5811,16 @@ begin
 end;
 
 function TLapeCompilerBase.addManagedType(AType: TLapeType): TLapeType;
+{$IFDEF Lape_SmallCode}
 var
   i: Integer;
   Types: TLapeDeclArray;
+{$ENDIF}
 begin
   if (AType = nil) or (AType.DeclarationList <> nil) then
     Exit(AType);
 
+  {$IFDEF Lape_SmallCode}
   Types := FManagedDeclarations.getByClass(TLapeDeclarationClass(AType.ClassType), True);
   for i := 0 to High(Types) do
     if (AType = Types[i]) then
@@ -5823,6 +5830,7 @@ begin
       AType.Free();
       Exit(TLapeType(Types[i]));
     end;
+  {$ENDIF}
   Result := addManagedDecl(AType) as TLapeType;
 end;
 
