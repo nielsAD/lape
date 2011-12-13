@@ -67,15 +67,15 @@ type
     VarPos: TVarPos;
 
     class function New(AVar: TLapeVar): TResVar; {$IFNDEF FPC}static;{$ENDIF}
-    function HasType: Boolean;
+    function HasType: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
-    procedure Spill(Unlock: Integer = 0);
-    function IncLock(Count: Integer = 1): TResVar;
-    function DecLock(Count: Integer = 1): TResVar;
+    procedure Spill(Unlock: Integer = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
+    function IncLock(Count: Integer = 1): TResVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    function DecLock(Count: Integer = 1): TResVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
-    procedure IncOffset(Offset: Integer);
-    procedure DecOffset(Offset: Integer);
-    procedure setOffset(Offset: Integer);
+    procedure IncOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
+    procedure DecOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
+    procedure setOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
 
     procedure setConstant(IsConst: Boolean; ChangeStack: Boolean); overload;
     procedure setConstant(IsConst: Boolean); overload;
@@ -178,6 +178,9 @@ type
     FCompiler: TLapeCompilerBase;
     FSize: Integer;
     FInit: TInitBool;
+
+    FLo: TLapeGlobalVar;
+    FHi: TLapeGlobalVar;
     FAsString: lpString;
 
     function getEvalRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType; virtual;
@@ -1382,6 +1385,8 @@ end;
 procedure TLapeType.ClearCache;
 begin
   FSize := 0;
+  FLo := nil;
+  FHi := nil;
   FAsString := '';
 end;
 
@@ -1418,18 +1423,18 @@ end;
 
 function TLapeType.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
-  if (FCompiler = nil) or (BaseIntType = ltUnknown) then
-    Result := nil
-  else with FCompiler, getBaseType(BaseIntType) do
-    Result := addManagedVar(NewGlobalVarP(LapeTypeLow[BaseIntType])) as TLapeGlobalVar;
+  if (FLo = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
+    with FCompiler, getBaseType(BaseIntType) do
+      Self.FLo := addManagedVar(NewGlobalVarP(LapeTypeLow[BaseType])) as TLapeGlobalVar;
+  Result := FLo;
 end;
 
 function TLapeType.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
-  if (FCompiler = nil) or (BaseIntType = ltUnknown) then
-    Result := nil
-  else with FCompiler, getBaseType(BaseIntType) do
-    Result := addManagedVar(NewGlobalVarP(LapeTypeHigh[BaseIntType])) as TLapeGlobalVar;
+  if (FHi = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
+    with FCompiler, getBaseType(BaseIntType) do
+      Self.FHi := addManagedVar(NewGlobalVarP(LapeTypeHigh[BaseType])) as TLapeGlobalVar;
+  Result := FHi;
 end;
 
 function TLapeType.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
@@ -2185,18 +2190,16 @@ end;
 
 function TLapeType_SubRange.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
-  if (FCompiler = nil) or (BaseIntType = ltUnknown) then
-    Result := nil
-  else
-    Result := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Lo))) as TLapeGlobalVar;
+  if (FLo = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
+    FLo := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Lo))) as TLapeGlobalVar;
+  Result := FLo;
 end;
 
 function TLapeType_SubRange.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
-  if (FCompiler = nil) or (BaseIntType = ltUnknown) then
-    Result := nil
-  else
-    Result := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Hi))) as TLapeGlobalVar;
+  if (FHi = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
+    FHi := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Hi))) as TLapeGlobalVar;
+  Result := FHi;
 end;
 
 function TLapeType_SubRange.CreateCopy(DeepCopy: Boolean = False): TLapeType;
@@ -4699,10 +4702,11 @@ function TLapeType_OverloadedMethod.getMethod(AParams: TLapeTypeArray; AResult: 
       Result := Result * 4
     else if (a.BaseType in LapeIntegerTypes) and (b.BaseType in LapeIntegerTypes) and
        ((a.VarLo().AsInteger <= b.VarLo().AsInteger) and (UInt64(a.VarHi().AsInteger) >= UInt64(b.VarHi().AsInteger)))
-    then if ((a.VarLo().AsInteger < 0) xor (b.VarLo().AsInteger >= 0)) then
-      Result := Result - 2
-    else
-      Result := Result - 1;
+    then
+      if ((a.BaseIntType in LapeSignedIntegerTypes) = (b.BaseIntType in LapeSignedIntegerTypes)) then
+        Result := Result - 2
+      else
+        Result := Result - 1;
   end;
 
 var

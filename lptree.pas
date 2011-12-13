@@ -140,8 +140,12 @@ type
   TLapeTree_Invoke = class(TLapeTree_DestExprBase)
   protected
     FIdent: TLapeTree_ExprBase;
+    FRealIdent: TLapeTree_ExprBase;
     FParams: TLapeExpressionList;
+
     procedure setIdent(Node: TLapeTree_ExprBase); virtual;
+    function getRealIdent: TLapeTree_ExprBase; virtual;
+
     procedure DeleteChild(Node: TLapeTree_Base); override;
     function getParamTypes: TLapeTypeArray; virtual;
     function getParamTypesStr: lpString; virtual;
@@ -153,6 +157,7 @@ type
     constructor Create(Ident: lpString; ASource: TLapeTree_Base); overload; virtual;
     destructor Destroy; override;
 
+    procedure ClearCache; override;
     function addParam(p: TLapeTree_ExprBase): Integer; virtual;
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; override;
 
@@ -162,6 +167,7 @@ type
     function Compile(var Offset: Integer): TResVar; override;
 
     property Ident: TLapeTree_ExprBase read FIdent write setIdent;
+    property RealIdent: TLapeTree_ExprBase read getRealIdent;
     property Params: TLapeExpressionList read FParams;
   end;
 
@@ -1440,6 +1446,24 @@ begin
     Ident := TLapeTree_VarType.Create(TLapeType_Type(TLapeTree_GlobalVar(FIdent).GlobalVar.VarType).TType, Ident);
 end;
 
+function TLapeTree_Invoke.getRealIdent: TLapeTree_ExprBase;
+var
+  Typ: TLapeType;
+begin
+  Result := FIdent;
+  if (FRealIdent <> nil) then
+    Result := FRealIdent
+  else if (not isEmpty(FIdent)) and (not (FIdent is TLapeTree_VarType)) then
+  begin
+    Typ := FIdent.resType();
+    if (Typ is TLapeType_OverloadedMethod) then
+    begin
+      FRealIdent := TLapeTree_GlobalVar.Create(TLapeType_OverloadedMethod(Typ).getMethod(getParamTypes()), FIdent);
+      Result := FRealIdent;
+    end;
+  end;
+end;
+
 procedure TLapeTree_Invoke.DeleteChild(Node: TLapeTree_Base);
 begin
   if (FIdent = Node) then
@@ -1526,6 +1550,13 @@ begin
   inherited;
 end;
 
+procedure TLapeTree_Invoke.ClearCache;
+begin
+  if (FRealIdent <> nil) then
+    FreeAndNil(FRealIdent);
+  inherited;
+end;
+
 function TLapeTree_Invoke.addParam(p: TLapeTree_ExprBase): Integer;
 begin
   Result := FParams.add(p);
@@ -1539,7 +1570,7 @@ var
   Method: TLapeGlobalVar;
 begin
   Result := Self;
-  if (not isEmpty(Self)) and (FIdent is TLapeTree_GlobalVar) then
+  if (not isEmpty(Self)) and (RealIdent = nil) and (FIdent is TLapeTree_GlobalVar) then
     with TLapeTree_GlobalVar(FIdent), GlobalVar do
     begin
       if (GlobalVar <> nil) and (VarType <> nil) and (VarType is TLapeType_OverloadedMethod) then
@@ -1568,28 +1599,16 @@ end;
 function TLapeTree_Invoke.resType: TLapeType;
 var
   Typ: TLapeType;
-
-  function getVarType(AVar: TLapeGlobalVar): TLapeType;
-  begin
-    if (AVar = nil) then
-      Result := nil
-    else
-      Result := AVar.VarType;
-  end;
-
 begin
   if (FResType = nil) then
-    if (FIdent is TLapeTree_VarType) then
-      FResType := TLapeTree_VarType(FIdent).VarType
+    if (RealIdent is TLapeTree_VarType) then
+      FResType := TLapeTree_VarType(RealIdent).VarType
     else
     begin
-      if isEmpty(FIdent) then
+      if isEmpty(RealIdent) then
         Typ := nil
       else
-        Typ := FIdent.resType();
-
-      if (Typ <> nil) and (Typ is TLapeType_OverloadedMethod) then
-        Typ := getVarType(TLapeType_OverloadedMethod(Typ).getMethod(getParamTypes()));
+        Typ := RealIdent.resType();
       if (Typ is TLapeType_Method) then
         FResType := TLapeType_Method(Typ).Res;
     end;
@@ -1698,18 +1717,15 @@ begin
       FRes := DoCast()
     else
     begin
-      IdentVar := FIdent.Evaluate();
-      if (IdentVar = nil) or (not IdentVar.HasType()) then
-        LapeException(lpeCannotInvoke, DocPos);
-
-      if (IdentVar.VarType is TLapeType_OverloadedMethod) then
-      begin
-        IdentVar := TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes());
-        if (IdentVar = nil) then
-          LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], FIdent.DocPos);
-      end;
-      if (IdentVar.Ptr = nil) or (IdentVar.VarType.BaseType <> ltImportedMethod) then
-        LapeException(lpeCannotInvoke, FIdent.DocPos);
+      IdentVar := RealIdent.Evaluate();
+      if (IdentVar = nil) or (IdentVar.Ptr = nil) or
+         (not IdentVar.HasType()) or
+         (IdentVar.VarType.BaseType <> ltImportedMethod)
+      then
+        if (FIdent.resType() is TLapeType_OverloadedMethod) then
+          LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], FIdent.DocPos)
+        else
+          LapeException(lpeCannotInvoke, DocPos);
 
       FRes := DoImportedMethod(IdentVar);
     end;
@@ -2002,16 +2018,15 @@ begin
     Result := DoCast()
   else
   begin
-    IdentVar := FIdent.Compile(Offset);
+    IdentVar := RealIdent.Compile(Offset);
 
-    if IdentVar.HasType() and (IdentVar.VarType is TLapeType_OverloadedMethod) then
-    begin
-      IdentVar := _ResVar.New(TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes(), FDest.VarType));
-      if (not IdentVar.HasType()) then
-        LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], FIdent.DocPos);
-    end;
-    if (not IdentVar.HasType()) or (not (IdentVar.VarType is TLapeType_Method)) then
-      LapeException(lpeCannotInvoke, FIdent.DocPos);
+    if (not IdentVar.HasType()) or
+       (not (IdentVar.VarType is TLapeType_Method))
+    then
+      if (FIdent.resType() is TLapeType_OverloadedMethod) then
+        LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], FIdent.DocPos)
+      else
+        LapeException(lpeCannotInvoke, FIdent.DocPos);
 
     with TLapeType_Method(IdentVar.VarType) do
     begin
