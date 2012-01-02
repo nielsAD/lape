@@ -12,7 +12,7 @@ unit lpcompiler;
 interface
 
 uses
-  Classes, SysUtils, WINDOWS,
+  Classes, SysUtils,
   lptypes, lpvartypes, lpparser, lptree;
 
 const
@@ -2983,29 +2983,22 @@ begin
 end;
 
 function TLapeCompiler.Compile: Boolean;
-var
-  t: Cardinal;
 begin
   Result := False;
   try
 
     Reset();
     IncStackInfo(True);
-    t := GetTickCount;
     FTree := ParseFile();
-    WriteLn(GetTickCount - t, ' ms parsefile');
     if (FTree = nil) and (FDelayedTree.GlobalCount(False) <= 0) then
       LapeException(lpeExpressionExpected);
 
-    t := GetTickCount;
     FDelayedTree.Compile(False).Spill(1);
     FTree.Compile().Spill(1);
 
     FDelayedTree.Compile(True, ldfStatements).Spill(1);
-    WriteLn(GetTickCount - t, ' ms compile statements');
     DecStackInfo(False, True, True);
     FDelayedTree.Compile(True, ldfMethods).Spill(1);
-    WriteLn(GetTickCount - t, ' ms compile ', Format('%.2f', [(GetTickCount - t) / FDelayedTree.Statements.Count]));
 
     FEmitter._op(ocNone);
     Result := True;

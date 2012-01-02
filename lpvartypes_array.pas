@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpvartypes;
+  lptypes, lptree, lpvartypes;
 
 type
   TLapeType_DynArray = class(TLapeType_Pointer)
@@ -95,7 +95,7 @@ type
 implementation
 
 uses
-  lpparser, lpeval, lpexceptions, lptree;
+  lpparser, lpeval, lpexceptions;
 
 function TLapeType_DynArray.getAsString: lpString;
 begin
@@ -403,6 +403,7 @@ var
   tmpVar: TLapeStackTempVar;
   IndexVar, tmpResVar: TResVar;
   wasConstant: Boolean;
+  Node: TLapeTree_Base;
 begin
   Assert(FCompiler <> nil);
   Assert(ALeft.VarType is TLapeType_Pointer);
@@ -467,11 +468,15 @@ begin
       try
         Body := TLapeTree_StatementList.Create(Self.FCompiler, Pos);
         with TLapeTree_StatementList(Body) do
-          with TLapeTree_InternalMethod(Statements[addStatement(TLapeTree_InternalMethod_SetLength.Create(Body))]) do
+        begin
+          Node := TLapeTree_InternalMethod_SetLength.Create(Body);
+          with TLapeTree_InternalMethod_SetLength(Node) do
           begin
             addParam(TLapeTree_ResVar.Create(ALeft, Body));
             addParam(TLapeTree_Integer.Create(0, Body));
           end;
+          addStatement(Node);
+        end;
 
         ALeft.VarType := FCompiler.getPointerType(ltNativeInt);
         ARight.VarType := ALeft.VarType;
@@ -485,13 +490,16 @@ begin
 
         with TLapeTree_StatementList(Body) do
         begin
-          with TLapeTree_Operator(Statements[addStatement(TLapeTree_Operator.Create(op_Assign, Condition))]) do
+          Node := TLapeTree_Operator.Create(op_Assign, Condition);
+          with TLapeTree_Operator(Node) do
           begin
             Left := TLapeTree_ResVar.Create(ALeft, Condition);
             Right := TLapeTree_ResVar.Create(ARight, Condition);
           end;
+          addStatement(Node);
 
-          with TLapeTree_If(Statements[addStatement(TLapeTree_If.Create(Condition))]) do
+          Node := TLapeTree_If.Create(Condition);
+          with TLapeTree_If(Node) do
           begin
             Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler, Pos);
             with TLapeTree_Operator(Condition) do
@@ -502,7 +510,8 @@ begin
 
             Body := TLapeTree_InternalMethod_Inc.Create(Condition);
             with TLapeTree_InternalMethod(Body) do
-              with TLapeTree_Operator(Params[addParam(TLapeTree_Operator.Create(op_Deref, Condition))]) do
+            begin
+              with TLapeTree_Operator.Create(op_Deref, Condition) do
               begin
                 Left := TLapeTree_Operator.Create(op_Index, Condition);
                 with TLapeTree_Operator(Left) do
@@ -510,8 +519,11 @@ begin
                   Left := TLapeTree_ResVar.Create(ALeft, Condition);
                   Right := TLapeTree_Integer.Create(-2, Condition);
                 end;
+                addParam(Left.Parent as TLapeTree_ExprBase);
               end;
+            end;
            end;
+           addStatement(Node);
         end;
 
         Compile(Offset);
@@ -585,6 +597,7 @@ begin
       'System.SetLength(Result, System.Length(Result) + 1);' +
       'Result[System.High(Result)] := Right;'
     , ['Result', 'Right'], [], [Result, ARight], Offset, Pos);}
+
       IndexVar.isConstant := False;
       with TLapeTree_Operator.Create(op_Plus, FCompiler, Pos) do
       try

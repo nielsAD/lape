@@ -237,10 +237,11 @@
         <Filename Value="lpcompiler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpcompiler"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="3276"/>
-        <CursorPos X="3" Y="3290"/>
+        <TopLine Value="1"/>
+        <CursorPos X="21" Y="15"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit3>
@@ -736,11 +737,10 @@
         <Filename Value="lpvartypes_array.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpvartypes_array"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
         <TopLine Value="552"/>
-        <CursorPos X="51" Y="500"/>
+        <CursorPos X="33" Y="563"/>
         <UsageCount Value="27"/>
         <Loaded Value="True"/>
       </Unit64>
