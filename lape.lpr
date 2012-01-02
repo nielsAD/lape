@@ -10,7 +10,8 @@ uses
   Forms, Main,
 
   lpparser, lpcompiler, lptypes, lpeval, lpinterpreter, lpexceptions,
-  lpvartypes, lpcodeemitter, lptree, lpdisassembler;
+  lpvartypes, lpcodeemitter, lptree, lpdisassembler, lpvartypes_array, 
+lpvartypes_ord, lpvartypes_record;
 
 {$R *.res}
 
