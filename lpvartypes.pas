@@ -1778,7 +1778,10 @@ end;
 
 function TLapeType_Pointer.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
-  Result := NewGlobalVar(Pointer(StrToInt64(Str)), AName, ADocPos);
+  if (LapeCase(Str) = 'nil') then
+    Result := NewGlobalVar(nil, AName, ADocPos)
+  else
+    Result := NewGlobalVar(Pointer(StrToInt64(Str)), AName, ADocPos);
 end;
 
 function TLapeType_Pointer.HasType: Boolean;

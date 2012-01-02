@@ -31,9 +31,9 @@ type
     procedure VarSetLength(var AVar: Pointer; ALen: Integer); overload; virtual;
     procedure VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
-    function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function EvalRes(Op: EOperator; ARight: TLapeType = nil): TLapeType; override;
+    function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar): TLapeGlobalVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
   end;
 
   TLapeType_StaticArray = class(TLapeType_DynArray)
@@ -95,7 +95,7 @@ type
 implementation
 
 uses
-  lpparser, lpeval, lpexceptions;
+  lpparser, lpeval, lpexceptions, lptree;
 
 function TLapeType_DynArray.getAsString: lpString;
 begin
@@ -303,28 +303,37 @@ end;
 procedure TLapeType_DynArray.VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil);
 begin
   Assert(FCompiler <> nil);
-  FCompiler.EmitCode('System.SetLength(AVar, ALen);', ['AVar', 'ALen'], [TLapeVar(nil), TLapeVar(nil)], [AVar, ALen], Offset, Pos);
+  //FCompiler.EmitCode('System.SetLength(AVar, ALen);', ['AVar', 'ALen'], [], [AVar, ALen], Offset, Pos);
+
+  with TLapeTree_InternalMethod_SetLength.Create(FCompiler, Pos) do
+  try
+    addParam(TLapeTree_ResVar.Create(AVar, FCompiler, Pos));
+    addParam(TLapeTree_ResVar.Create(ALen, FCompiler, Pos));
+    Compile(Offset);
+  finally
+    Free();
+  end;
 end;
 
-function TLapeType_DynArray.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
+function TLapeType_DynArray.EvalRes(Op: EOperator; ARight: TLapeType = nil): TLapeType;
 begin
   if (op = op_Index) then
     Result := FPType
-  else if (op = op_Assign) and (BaseType = ltDynArray) and HasType() and (Right <> nil) and (Right is ClassType) and FPType.Equals(TLapeType_DynArray(Right).FPType) then
+  else if (op = op_Assign) and (BaseType = ltDynArray) and HasType() and (ARight <> nil) and (ARight is ClassType) and FPType.Equals(TLapeType_DynArray(ARight).FPType) then
     Result := Self
-  else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(Right) then
+  else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(ARight) then
     Result := Self
   else
     Result := inherited;
 end;
 
-function TLapeType_DynArray.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_DynArray.EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar): TLapeGlobalVar;
 var
   tmpType: ELapeBaseType;
   IndexVar: TLapeGlobalVar;
 begin
   Assert(FCompiler <> nil);
-  Assert((Left = nil) or (Left.VarType is TLapeType_Pointer));
+  Assert((ALeft = nil) or (ALeft.VarType is TLapeType_Pointer));
 
   if (op = op_Index) then
   begin
@@ -332,7 +341,7 @@ begin
     FBaseType := ltPointer;
     IndexVar := nil;
     try
-      IndexVar := inherited EvalConst(Op, Left, Right);
+      IndexVar := inherited EvalConst(Op, ALeft, ARight);
       Result := //Result := Pointer[Index]^
         EvalConst(
           op_Deref,
@@ -345,41 +354,41 @@ begin
       FBaseType := tmpType;
     end;
   end
-  else if (op = op_Assign) and (BaseType = ltDynArray) and (Left <> nil) and (Right <> nil) and CompatibleWith(Right.VarType) then
-    if (Right.BaseType = ltDynArray) then
+  else if (op = op_Assign) and (BaseType = ltDynArray) and (ALeft <> nil) and (ARight <> nil) and CompatibleWith(ARight.VarType) then
+    if (ARight.BaseType = ltDynArray) then
     begin
-      if (PPointer(Left.Ptr)^ = PPointer(Right.Ptr)^) then
-        Exit(Left);
+      if (PPointer(ALeft.Ptr)^ = PPointer(ARight.Ptr)^) then
+        Exit(ALeft);
 
-      VarSetLength(PPointer(Left.Ptr)^, 0);
+      VarSetLength(PPointer(ALeft.Ptr)^, 0);
       Result := inherited;
       if (Result <> nil) and (Result.Ptr <> nil) and (PPointer(Result.Ptr)^ <> nil) then
         Inc(PtrInt(Pointer(PtrInt(Result.Ptr^) - SizeOf(SizeInt) - SizeOf(PtrInt))^));
     end
-    else if (Right.VarType is TLapeType_StaticArray) then
+    else if (ARight.VarType is TLapeType_StaticArray) then
     begin
-      VarSetLength(PPointer(Left.Ptr)^, TLapeType_StaticArray(Right.VarType).Range.Hi - TLapeType_StaticArray(Right.VarType).Range.Lo + 1);
-      Result := Left;
+      VarSetLength(PPointer(ALeft.Ptr)^, TLapeType_StaticArray(ARight.VarType).Range.Hi - TLapeType_StaticArray(ARight.VarType).Range.Lo + 1);
+      Result := ALeft;
 
-      IndexVar := EvalConst(op_Index, Left, FCompiler.getConstant(0));
+      IndexVar := EvalConst(op_Index, ALeft, FCompiler.getConstant(0));
       try
-        IndexVar.VarType := Right.VarType;
-        IndexVar.VarType.EvalConst(op_Assign, IndexVar, Right);
+        IndexVar.VarType := ARight.VarType;
+        IndexVar.VarType.EvalConst(op_Assign, IndexVar, ARight);
       finally
         IndexVar.Free();
       end;
     end
     else
       LapeException(lpeImpossible)
-  else if (op = op_Plus) and (BaseType = ltDynArray) and (Left <> nil) and (Right <> nil) and HasType() and FPType.CompatibleWith(Right.VarType) then
+  else if (op = op_Plus) and (BaseType = ltDynArray) and (ALeft <> nil) and (ARight <> nil) and HasType() and FPType.CompatibleWith(ARight.VarType) then
   begin
-    Result := EvalConst(op_Assign, NewGlobalVarP(), Left);
+    Result := EvalConst(op_Assign, NewGlobalVarP(), ALeft);
     IndexVar := FCompiler.getConstant(Length(PCodeArray(Result.Ptr)^));
     VarSetLength(PPointer(Result.Ptr)^, IndexVar.AsInteger + 1);
 
     IndexVar := EvalConst(op_Index, Result, IndexVar);
     try
-      PType.EvalConst(op_Assign, IndexVar, Right);
+      PType.EvalConst(op_Assign, IndexVar, ARight);
     finally
       IndexVar.Free();
     end;
@@ -388,7 +397,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_DynArray.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_DynArray.Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   tmpType: ELapeBaseType;
   tmpVar: TLapeStackTempVar;
@@ -396,7 +405,7 @@ var
   wasConstant: Boolean;
 begin
   Assert(FCompiler <> nil);
-  Assert(Left.VarType is TLapeType_Pointer);
+  Assert(ALeft.VarType is TLapeType_Pointer);
 
   IndexVar := NullResVar;
   tmpResVar := NullResVar;
@@ -406,17 +415,17 @@ begin
   try
     tmpType := FBaseType;
     FBaseType := ltPointer;
-    if (not Left.VarPos.isPointer) then
+    if (not ALeft.VarPos.isPointer) then
     begin
       if (Dest.VarPos.MemPos = mpStack) then
         Dest.Spill();
-      Result := inherited Eval(Op, Dest, Left, Right, Offset, Pos);
+      Result := inherited Eval(Op, Dest, ALeft, ARight, Offset, Pos);
       Result.VarPos.isPointer := True;
       Result.VarType := FPType;
     end
     else
     begin
-      IndexVar := inherited Eval(Op, IndexVar, Left, Right, Offset, Pos);
+      IndexVar := inherited Eval(Op, IndexVar, ALeft, ARight, Offset, Pos);
       Result := //Result := Pointer[Index]^
         Eval(
           op_Deref,
@@ -431,18 +440,19 @@ begin
   finally
     FBaseType := tmpType;
   end
-  else if (op = op_Assign) and (BaseType = ltDynArray) and CompatibleWith(Right.VarType) then
+  else if (op = op_Assign) and (BaseType = ltDynArray) and CompatibleWith(ARight.VarType) then
   begin
-    Result := Left;
-    if (Left.VarPos.MemPos = mpStack) then
+    Result := ALeft;
+    if (ALeft.VarPos.MemPos = mpStack) then
     begin
       tmpVar := FCompiler.getTempVar(Self, BigLock);
       tmpVar.isConstant := False;
-      Left := _ResVar.New(tmpVar);
+      ALeft := _ResVar.New(tmpVar);
     end;
 
-    if (Right.VarType.BaseType = ltDynArray) then
-      FCompiler.EmitCode(
+    if (ARight.VarType.BaseType = ltDynArray) then
+    begin
+      {FCompiler.EmitCode(
         'if (System.Pointer(Left) <> System.Pointer(Right)) then begin'     +
         '  System.SetLength(Left, 0);'                                      +
         '  System.Pointer(Left) := System.Pointer(Right);'                  +
@@ -451,26 +461,107 @@ begin
                IntToStr(SizeOf(SizeInt)+SizeOf(PtrInt))                     +
              ']^));'                                                        +
         'end;'
-      , ['Left', 'Right'], [], [Left, Right], Offset, Pos)
-    else if (Right.VarType is TLapeType_StaticArray) then
-      FCompiler.EmitCode(
+      , ['Left', 'Right'], [], [ALeft, ARight], Offset, Pos)}
+
+      with TLapeTree_If.Create(FCompiler, Pos) do
+      try
+        Body := TLapeTree_StatementList.Create(Self.FCompiler, Pos);
+        with TLapeTree_StatementList(Body) do
+          with TLapeTree_InternalMethod(Statements[addStatement(TLapeTree_InternalMethod_SetLength.Create(Body))]) do
+          begin
+            addParam(TLapeTree_ResVar.Create(ALeft, Body));
+            addParam(TLapeTree_Integer.Create(0, Body));
+          end;
+
+        ALeft.VarType := FCompiler.getPointerType(ltNativeInt);
+        ARight.VarType := ALeft.VarType;
+
+        Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Body);
+        with TLapeTree_Operator(Condition) do
+        begin
+          Left := TLapeTree_ResVar.Create(ALeft, Condition);
+          Right := TLapeTree_ResVar.Create(ARight, Condition);
+        end;
+
+        with TLapeTree_StatementList(Body) do
+        begin
+          with TLapeTree_Operator(Statements[addStatement(TLapeTree_Operator.Create(op_Assign, Condition))]) do
+          begin
+            Left := TLapeTree_ResVar.Create(ALeft, Condition);
+            Right := TLapeTree_ResVar.Create(ARight, Condition);
+          end;
+
+          with TLapeTree_If(Statements[addStatement(TLapeTree_If.Create(Condition))]) do
+          begin
+            Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler, Pos);
+            with TLapeTree_Operator(Condition) do
+            begin
+              Left := TLapeTree_ResVar.Create(ALeft, Condition);
+              Right := TLapeTree_GlobalVar.Create('nil', ltPointer, Condition);
+            end;
+
+            Body := TLapeTree_InternalMethod_Inc.Create(Condition);
+            with TLapeTree_InternalMethod(Body) do
+              with TLapeTree_Operator(Params[addParam(TLapeTree_Operator.Create(op_Deref, Condition))]) do
+              begin
+                Left := TLapeTree_Operator.Create(op_Index, Condition);
+                with TLapeTree_Operator(Left) do
+                begin
+                  Left := TLapeTree_ResVar.Create(ALeft, Condition);
+                  Right := TLapeTree_Integer.Create(-2, Condition);
+                end;
+              end;
+           end;
+        end;
+
+        Compile(Offset);
+      finally
+        Free();
+      end;
+    end
+    else if (ARight.VarType is TLapeType_StaticArray) then
+    begin
+      {FCompiler.EmitCode(
         'System.SetLength(Left, '+IntToStr(
-          TLapeType_StaticArray(Right.VarType).Range.Hi -
-          TLapeType_StaticArray(Right.VarType).Range.Lo + 1)                +
+          TLapeType_StaticArray(ARight.VarType).Range.Hi -
+          TLapeType_StaticArray(ARight.VarType).Range.Lo + 1)               +
         ');'                                                                +
         'PType(@Left[0])^ := Right;',
-        ['PType', 'Left', 'Right'], [FCompiler.getTypeVar(FCompiler.getPointerType(Right.VarType))],
-        [Left, Right], Offset, Pos)
+        ['PType', 'Left', 'Right'], [FCompiler.getTypeVar(FCompiler.getPointerType(ARight.VarType))],
+        [ALeft, ARight], Offset, Pos)}
+
+      with TLapeType_StaticArray(ARight.VarType).Range do
+        VarSetLength(ALeft, _ResVar.New(FCompiler.getConstant(Hi - Lo + 1)), Offset, Pos);
+
+      with TLapeTree_Operator.Create(op_Index, FCompiler, Pos) do
+      try
+        Left := TLapeTree_ResVar.Create(ALeft, FCompiler, Pos);
+        Right := TLapeTree_Integer.Create(0, Left);
+        IndexVar := Compile(Offset);
+      finally
+        Free();
+      end;
+
+      IndexVar.VarType := ARight.VarType;
+      with TLapeTree_Operator.Create(op_Assign, FCompiler, Pos) do
+      try
+        Left := TLapeTree_ResVar.Create(IndexVar, FCompiler, Pos);
+        Right := TLapeTree_ResVar.Create(ARight, Left);
+        Compile(Offset);
+      finally
+        Free();
+      end;
+    end
     else
       LapeException(lpeImpossible);
 
     if (tmpVar <> nil) then
     begin
       FCompiler.Emitter._PopVarToStack(Size, tmpVar.Offset, Offset, Pos);
-      Left.Spill(BigLock);
+      ALeft.Spill(BigLock);
     end;
   end
-  else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(Right.VarType) then
+  else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(ARight.VarType) then
   begin
     Result := NullResVar;
     Result.VarType := Self;
@@ -486,11 +577,49 @@ begin
     if wasConstant then
       Result.isConstant := False;
 
-    Result := Eval(op_Assign, tmpResVar, Result, Left, Offset, Pos);
-    FCompiler.EmitCode(
+    Result := Eval(op_Assign, tmpResVar, Result, ALeft, Offset, Pos);
+
+    IndexVar := _ResVar.New(FCompiler.getTempVar(ltInt32, BigLock));
+    try
+    {FCompiler.EmitCode(
       'System.SetLength(Result, System.Length(Result) + 1);' +
       'Result[System.High(Result)] := Right;'
-    , ['Result', 'Right'], [], [Result, Right], Offset, Pos);
+    , ['Result', 'Right'], [], [Result, ARight], Offset, Pos);}
+      IndexVar.isConstant := False;
+      with TLapeTree_Operator.Create(op_Plus, FCompiler, Pos) do
+      try
+        Left := TLapeTree_Operator.Create(op_Assign, FCompiler, Pos);
+        Right := TLapeTree_Integer.Create(1, Left);
+        with TLapeTree_Operator(Left) do
+        begin
+          Left := TLapeTree_ResVar.Create(IndexVar, FCompiler, Pos);
+          Right := TLapeTree_InternalMethod_Length.Create(Left);
+          TLapeTree_InternalMethod_Length(Right).addParam(TLapeTree_ResVar.Create(Result, Left));
+        end;
+
+        Dest := VarResVar;
+        tmpResVar := Compile(Offset);
+      finally
+        Free();
+      end;
+
+      VarSetLength(Result, tmpResVar, Offset, Pos);
+      with TLapeTree_Operator.Create(op_Assign, FCompiler, Pos) do
+      try
+        Left := TLapeTree_Operator.Create(op_Index, FCompiler, Pos);
+        with TLapeTree_Operator(Left) do
+        begin
+          Left := TLapeTree_ResVar.Create(Result, FCompiler, Pos);
+          Right := TLapeTree_ResVar.Create(IndexVar, Left);
+        end;
+        Right := TLapeTree_ResVar.Create(ARight, Left);
+        Compile(Offset);
+      finally
+        Free();
+      end;
+    finally
+      IndexVar.DecLock(BigLock);
+    end;
 
     if wasConstant then
       Result.isConstant := True;
