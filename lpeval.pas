@@ -249,6 +249,9 @@ uses
 
 {$RangeChecks Off}
 
+type
+  PBoolean = ^Boolean; //Make sure it's not ^Byte
+
 procedure _LapeWrite(const Params: PParamArray);
 begin
   Write(PlpString(Params^[0])^);
