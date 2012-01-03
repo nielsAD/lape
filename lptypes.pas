@@ -317,6 +317,8 @@ type
     procedure setItemI(Index: Integer; Item: _T); virtual;
     function getIndex(Index: Integer): lpString; virtual;
   public
+    InvalidKey: lpString;
+
     constructor Create(InvalidValue: _T; Sort: Boolean; ACaseSensitive: Boolean = LapeCaseSensitive; Duplicates: TDuplicates = dupError); reintroduce; virtual;
     destructor Destroy; override;
     procedure Clear; virtual;
@@ -1248,7 +1250,7 @@ procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.setItem(Key: lpString; Item: _
 var
   Index: Integer;
 begin
-  if (Key <> '') then
+  if (Key <> InvalidKey) then
   begin
     Index := IndexOfKey(Key);
     if (Index > -1) and (Index < FCount) then
@@ -1275,13 +1277,14 @@ begin
   if (Index > -1) and (Index < FStringList.Count) then
     Result := FStringList[Index]
   else
-    Result := '';
+    Result := InvalidKey;
 end;
 
 constructor TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Create(InvalidValue: _T; Sort: Boolean; ACaseSensitive: Boolean = LapeCaseSensitive; Duplicates: TDuplicates = dupError);
 begin
   inherited Create();
   FCaseSensitive := ACaseSensitive;
+  InvalidKey := '';
 
   FStringList := THashedStringList.Create();
   FStringList.Duplicates := Duplicates;
@@ -1308,7 +1311,7 @@ procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.add(Key: lpString; Item: _T);
 var
   Index: Integer;
 begin
-  if (Key <> '') then
+  if (Key <> InvalidKey) then
   begin
     Index := FItems.add(Item);
     if (Index > -1) then
@@ -1344,7 +1347,7 @@ var
   Index: lpString;
 begin
   Index := IndexOfItem(Item);
-  if (Index <> '') then
+  if (Index <> InvalidKey) then
     Result := Delete(Index)
   else
     Result := FItems.InvalidVal;
@@ -1358,7 +1361,7 @@ begin
   if (Index > -1) then
     Result := FStringList[Index]
   else
-    Result := '';
+    Result := InvalidKey;
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndexOfKey(Key: lpString): Integer;
@@ -1368,7 +1371,7 @@ end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ExistsItem(Item: _T): Boolean;
 begin
-  Result := (IndexOfItem(Item) <> '');
+  Result := (IndexOfItem(Item) <> InvalidKey);
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ExistsKey(Key: lpString): Boolean;
