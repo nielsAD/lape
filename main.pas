@@ -167,8 +167,6 @@ begin
 end;
 
 procedure TForm1.btnEvalArrClick(Sender: TObject);
-var
-  x: array of Byte;
 begin
   m.Clear;
   //LapePrintEvalArr;

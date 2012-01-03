@@ -466,7 +466,7 @@ begin
   if (AMemberMap = nil) then
   begin
     AMemberMap := TEnumMap.Create();
-    AMemberMap.CaseSensitive := {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF};
+    AMemberMap.CaseSensitive := LapeCaseSensitive;
   end;
   FMemberMap := AMemberMap;
 

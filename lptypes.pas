@@ -14,6 +14,8 @@ interface
 uses
   Classes, SysUtils, IniFiles;
 
+const
+  LapeCaseSensitive = {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF};
 type
   UInt8 = Byte;
   Int8 = ShortInt;
@@ -261,7 +263,7 @@ type
 
   {$IFDEF FPC}generic{$ENDIF} TLapeList<_T> = class(TLapeBaseClass)
   public type
-    TTArray = array of _T;
+    TTArray = {$IFDEF Delphi}TArray<_T>{$ELSE}array of _T{$ENDIF};
   var protected
     FDuplicates: TDuplicates;
     FSorted: Boolean;
@@ -298,14 +300,15 @@ type
 
   {$IFDEF FPC}generic{$ENDIF} TLapeStringMap<_T> = class(TLapeBaseClass)
   public type
-    TTArray = array of _T;
+    TTItems = {$IFDEF FPC}specialize{$ENDIF} TLapeList<_T>;
     TTArrays = record
       Keys: string;
-      Items: TTArray;
+      Items: {$IFDEF Delphi}TTItems.TTArray{$ELSE}array of _T{$ENDIF};
     end;
   var protected
+    FCaseSensitive: Boolean;
     FStringList: THashedStringList;
-    FItems: TTArray;
+    FItems: TTItems;
     FCount: Integer;
 
     function getItem(Key: lpString): _T; virtual;
@@ -314,9 +317,7 @@ type
     procedure setItemI(Index: Integer; Item: _T); virtual;
     function getIndex(Index: Integer): lpString; virtual;
   public
-    InvalidVal: _T;
-
-    constructor Create(InvalidValue: _T; CaseSensitive: Boolean = {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF}; Duplicates: TDuplicates = dupError); reintroduce; virtual;
+    constructor Create(InvalidValue: _T; Sort: Boolean; ACaseSensitive: Boolean = LapeCaseSensitive; Duplicates: TDuplicates = dupError); reintroduce; virtual;
     destructor Destroy; override;
     procedure Clear; virtual;
 
@@ -325,17 +326,19 @@ type
     function Delete(Index: Integer): _T; overload; virtual;
     function DeleteItem(Item: _T): _T; overload; virtual;
 
-    function IndexOf(Item: _T): lpString; overload; virtual;
-    function IndexOf(Key: lpString): Integer; overload; virtual;
+    function IndexOfItem(Item: _T): lpString; overload; virtual;
+    function IndexOfKey(Key: lpString): Integer; overload; virtual;
     function ExistsItem(Item: _T): Boolean; overload;
     function ExistsKey(Key: lpString): Boolean; overload;
 
+    function KeyCase(const AKey: lpString): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
     procedure ImportFromArrays(Arr: TTArrays); virtual;
     function ExportToArrays: TTArrays; virtual;
 
     property Items[Index: lpString]: _T read getItem write setItem; default;
     property ItemsI[Index: Integer]: _T read getItemI write setItemI;
     property Key[Index: Integer]: lpString read getIndex;
+    property CaseSensitive: Boolean read FCaseSensitive;
     property Count: Integer read FCount;
   end;
 
@@ -1237,17 +1240,8 @@ begin
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.getItem(Key: lpString): _T;
-var
-  Index: Integer;
 begin
-  if (not FStringList.CaseSensitive) then
-    Key := UpperCase(Key);
-
-  Index := FStringList.IndexOf(Key);
-  if (Index > -1) and (Index < FCount) then
-    Result := FItems[Index]
-  else
-    Result := InvalidVal;
+  Result := FItems[IndexOfKey(Key)];
 end;
 
 procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.setItem(Key: lpString; Item: _T);
@@ -1256,10 +1250,7 @@ var
 begin
   if (Key <> '') then
   begin
-    if (not FStringList.CaseSensitive) then
-      Key := UpperCase(Key);
-
-    Index := FStringList.IndexOf(Key);
+    Index := IndexOfKey(Key);
     if (Index > -1) and (Index < FCount) then
       FItems[Index] := Item
     else
@@ -1271,18 +1262,12 @@ end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.getItemI(Index: Integer): _T;
 begin
-  if (Index > -1) and (Index < FCount) then
-    Result := FItems[Index]
-  else
-    Result := InvalidVal;
+  Result := FItems[Index];
 end;
 
 procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.setItemI(Index: Integer; Item: _T);
 begin
-  if (Index > -1) and (Index < FCount) then
-    FItems[Index] := Item
-  else
-    LapeExceptionFmt(lpeInvalidIndex, [IntToStr(Index)]);
+  FItems[Index] := Item;
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.getIndex(Index: Integer): lpString;
@@ -1293,54 +1278,49 @@ begin
     Result := '';
 end;
 
-constructor TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Create(InvalidValue: _T; CaseSensitive: Boolean = {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF}; Duplicates: TDuplicates = dupError);
+constructor TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Create(InvalidValue: _T; Sort: Boolean; ACaseSensitive: Boolean = LapeCaseSensitive; Duplicates: TDuplicates = dupError);
 begin
   inherited Create();
-  InvalidVal := InvalidValue;
+  FCaseSensitive := ACaseSensitive;
 
   FStringList := THashedStringList.Create();
-  FStringList.CaseSensitive := CaseSensitive;
   FStringList.Duplicates := Duplicates;
 
+  FItems := TTItems.Create(InvalidValue, dupAccept, Sort);
   Clear();
 end;
 
 destructor TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Destroy;
 begin
-  if (FStringList <> nil) then
-    FStringList.Free();
-
+  FStringList.Free();
+  FItems.Free;
   inherited;
 end;
 
 procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Clear;
 begin
   FStringList.Clear();
-  FItems := nil;
+  FItems.Clear;
   FCount := 0;
 end;
 
 procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.add(Key: lpString; Item: _T);
 var
-  Index, Len: Integer;
+  Index: Integer;
 begin
   if (Key <> '') then
   begin
-    if (not FStringList.CaseSensitive) then
-      Key := UpperCase(Key);
-
-    Index := FStringList.add(Key);
+    Index := FItems.add(Item);
     if (Index > -1) then
     begin
-      Len := Length(FItems);
-      if (FCount >= Len) then
-      begin
-        Len := Len + 2 + (Len div 2) + ((Len div 2) mod 2);
-        SetLength(FItems, Len);
-      end;
-
-      FItems[FCount] := Item;
       Inc(FCount);
+      FStringList.Insert(Index, KeyCase(Key));
+
+      if (FStringList.Count <> FCount) then
+      begin
+        Dec(FCount);
+        FItems.Delete(Index);
+      end;
     end;
   end
   else
@@ -1348,132 +1328,75 @@ begin
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Delete(Key: lpString): _T;
-var
-  Index: Integer;
 begin
-  if (not FStringList.CaseSensitive) then
-    Key := UpperCase(Key);
-
-  Index := FStringList.IndexOf(Key);
-  if (Index > -1) then
-    Result := Delete(Index)
-  else
-  begin
-    Result := InvalidVal;
-    LapeExceptionFmt(lpeInvalidIndex, [Key]);
-  end;
+  Result := Delete(IndexOfKey(Key));
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Delete(Index: Integer): _T;
-var
-  i: Integer;
-  tmp: _T;
 begin
-  if (Index > -1) and (Index < FCount) then
-  begin
-    Result := FItems[Index];
-    FStringList.Delete(Index);
-    Dec(FCount);
-    for i := Index to FCount - 1 do
-    begin
-      tmp := FItems[i];
-      FItems[i] := FItems[i + 1];
-      FItems[i + 1] := tmp;
-    end;
-  end
-  else
-  begin
-    Result := InvalidVal;
-    LapeExceptionFmt(lpeInvalidIndex, [IntToStr(Index)]);
-  end;
+  Result := FItems.Delete(Index);
+  FStringList.Delete(Index);
+  Dec(FCount);
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.DeleteItem(Item: _T): _T;
 var
   Index: lpString;
 begin
-  Index := IndexOf(Item);
+  Index := IndexOfItem(Item);
   if (Index <> '') then
     Result := Delete(Index)
   else
-    Result := InvalidVal;
+    Result := FItems.InvalidVal;
 end;
 
-function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndexOf(Item: _T): lpString;
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndexOfItem(Item: _T): lpString;
 var
-  i, ii, Index: Integer;
-  ItemA, ItemB: PByteArray;
-  Match: Boolean;
+  Index: Integer;
 begin
-  if (FCount < 1) then
-    Exit('');
-
-  case SizeOf(_T) of
-    SizeOf(UInt8) : Index := _Compare8 (@FItems[0], PUInt8 (@Item)^, FCount - 1);
-    SizeOf(UInt16): Index := _Compare16(@FItems[0], PUInt16(@Item)^, FCount - 1);
-    SizeOf(UInt32): Index := _Compare32(@FItems[0], PUInt32(@Item)^, FCount - 1);
-    SizeOf(UInt64): Index := _Compare64(@FItems[0], PUInt64(@Item)^, FCount - 1);
-    else
-    begin
-      ItemB := PByteArray(@Item);
-      for i := High(FItems) downto 0 do
-      begin
-        ItemA := PByteArray(@FItems[i]);
-        Match := True;
-        for ii := 0 to SizeOf(_T) - 1 do
-          if (ItemA^[ii] <> ItemB^[ii]) then
-          begin
-            Match := False;
-            Break;
-          end;
-        if Match then
-          Exit(FStringList[i]);
-      end;
-      Index := -1;;
-    end;
-  end;
+  Index := FItems.IndexOf(Item);
   if (Index > -1) then
-    Result := FStringList[i]
+    Result := FStringList[Index]
   else
     Result := '';
 end;
 
-function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndexOf(Key: lpString): Integer;
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndexOfKey(Key: lpString): Integer;
 begin
-  if (not FStringList.CaseSensitive) then
-    Key := UpperCase(Key);
-  Result := FStringList.IndexOf(Key);
+  Result := FStringList.IndexOf(KeyCase(Key));
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ExistsItem(Item: _T): Boolean;
 begin
-  Result := (IndexOf(Item) <> '');
+  Result := (IndexOfItem(Item) <> '');
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ExistsKey(Key: lpString): Boolean;
 begin
-  if (not FStringList.CaseSensitive) then
-    Key := UpperCase(Key);
-  Result := (FStringList.IndexOf(Key) > -1);
+  Result := (IndexOfKey(Key) > -1);
+end;
+
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.KeyCase(const AKey: lpString): lpString;
+begin
+  if FCaseSensitive then
+    Result := AKey
+  else
+    Result := UpperCase(AKey);
 end;
 
 procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ImportFromArrays(Arr: TTArrays);
 begin
   FStringList.Text := Arr.Keys;
-  Assert(FStringList.Count = Length(Arr.Items));
+  FItems.ImportFromArray(Arr.Items);
 
-  FCount := Length(Arr.Items);
-  FItems := Arr.Items;
+  FCount := FItems.Count;
+  Assert(FStringList.Count = FCount);
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ExportToArrays: TTArrays;
-var
-  i: Integer;
 begin
   Result.Keys := FStringList.Text;
-  SetLength(Result.Items, FCount);
-  for i := 0 to FCount - 1 do
-    Result.Items[i] := FItems[i];
+  Result.Items := FItems.ExportToArray;
 end;
 
 constructor TLapeDeclarationList.Create(AList: TLapeDeclCollection; ManageDeclarations: Boolean = True);

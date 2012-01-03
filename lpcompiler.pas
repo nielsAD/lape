@@ -1808,7 +1808,7 @@ var
   Typ: TLapeType;
   Name: lpString;
 begin
-  TypeForwards := TLapeTypeForwards.Create(nil, {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF}, dupIgnore);
+  TypeForwards := TLapeTypeForwards.Create(nil, False, LapeCaseSensitive, dupIgnore);
   try
 
     Next();
@@ -2693,20 +2693,20 @@ begin
 
   FIncludes := TStringList.Create();
   FIncludes.Duplicates := dupIgnore;
-  FIncludes.CaseSensitive := {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF};
+  FIncludes.CaseSensitive := LapeCaseSensitive;
   FDefines := TStringList.Create();
   FDefines.Duplicates := dupIgnore;
-  FDefines.CaseSensitive := {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF};
+  FDefines.CaseSensitive := LapeCaseSensitive;
   FConditionalStack := TLapeConditionalStack.Create(0);
 
   FOnHandleDirective := nil;
   FOnFindFile := nil;
 
   FBaseDefines := TStringList.Create();
-  FBaseDefines.CaseSensitive := {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF};
+  FBaseDefines.CaseSensitive := LapeCaseSensitive;
 
-  FTreeMethodMap := TLapeTreeMethodMap.Create(nil);
-  FInternalMethodMap := TLapeInternalMethodMap.Create(nil);
+  FTreeMethodMap := TLapeTreeMethodMap.Create(nil, True);
+  FInternalMethodMap := TLapeInternalMethodMap.Create(nil, True);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
   FInternalMethodMap['WriteLn'] := TLapeTree_InternalMethod_WriteLn;
   FInternalMethodMap['ToStr'] := TLapeTree_InternalMethod_ToStr;

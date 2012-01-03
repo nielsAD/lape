@@ -18,5 +18,6 @@
 {.$DEFINE Lape_Unicode}                  //Use unicodestrings
 
 {$IFNDEF FPC}
+  {$DEFINE Delphi}
   {$POINTERMATH ON}
 {$ENDIF}
