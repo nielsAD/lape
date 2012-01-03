@@ -1875,15 +1875,18 @@ begin
 
     IndexVar := Right;
     if HasType() and (FPType.Size <> 1) then
-      IndexVar :=
-        Right.VarType.Eval(
-          op_Multiply,
-          tmpVar,
-          Right,
-          _ResVar.New(FCompiler.getConstant(FPType.Size)),
-          Offset,
-          Pos
-        );
+      if (Right.VarPos.MemPos = mpMem) and Right.isConstant then
+        IndexVar := _ResVar.New(FCompiler.getConstant(Right.VarPos.GlobalVar.AsInteger * FPType.Size))
+      else
+        IndexVar :=
+          Right.VarType.Eval(
+            op_Multiply,
+            tmpVar,
+            Right,
+            _ResVar.New(FCompiler.getConstant(FPType.Size)),
+            Offset,
+            Pos
+          );
 
     Result := //Result := (Pointer + Index * PSize)
       Eval(

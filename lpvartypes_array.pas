@@ -472,7 +472,7 @@ begin
           Node := TLapeTree_InternalMethod_SetLength.Create(Body);
           with TLapeTree_InternalMethod_SetLength(Node) do
           begin
-            addParam(TLapeTree_ResVar.Create(ALeft, Body));
+            addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), Body));
             addParam(TLapeTree_Integer.Create(0, Body));
           end;
           addStatement(Node);
@@ -484,8 +484,8 @@ begin
         Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Body);
         with TLapeTree_Operator(Condition) do
         begin
-          Left := TLapeTree_ResVar.Create(ALeft, Condition);
-          Right := TLapeTree_ResVar.Create(ARight, Condition);
+          Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
+          Right := TLapeTree_ResVar.Create(ARight.IncLock(), Condition);
         end;
 
         with TLapeTree_StatementList(Body) do
@@ -493,18 +493,18 @@ begin
           Node := TLapeTree_Operator.Create(op_Assign, Condition);
           with TLapeTree_Operator(Node) do
           begin
-            Left := TLapeTree_ResVar.Create(ALeft, Condition);
-            Right := TLapeTree_ResVar.Create(ARight, Condition);
+            Left := TLapeTree_ResVar.Create(ALeft.IncLock(2), Condition);
+            Right := TLapeTree_ResVar.Create(ARight.IncLock(), Condition);
           end;
           addStatement(Node);
 
           Node := TLapeTree_If.Create(Condition);
           with TLapeTree_If(Node) do
           begin
-            Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler, Pos);
+            Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Node);
             with TLapeTree_Operator(Condition) do
             begin
-              Left := TLapeTree_ResVar.Create(ALeft, Condition);
+              Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
               Right := TLapeTree_GlobalVar.Create('nil', ltPointer, Condition);
             end;
 
@@ -516,7 +516,7 @@ begin
                 Left := TLapeTree_Operator.Create(op_Index, Condition);
                 with TLapeTree_Operator(Left) do
                 begin
-                  Left := TLapeTree_ResVar.Create(ALeft, Condition);
+                  Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
                   Right := TLapeTree_Integer.Create(-2, Condition);
                 end;
                 addParam(Left.Parent as TLapeTree_ExprBase);
@@ -543,11 +543,11 @@ begin
         [ALeft, ARight], Offset, Pos)}
 
       with TLapeType_StaticArray(ARight.VarType).Range do
-        VarSetLength(ALeft, _ResVar.New(FCompiler.getConstant(Hi - Lo + 1)), Offset, Pos);
+        VarSetLength(ALeft.IncLock(), _ResVar.New(FCompiler.getConstant(Hi - Lo + 1)), Offset, Pos);
 
       with TLapeTree_Operator.Create(op_Index, FCompiler, Pos) do
       try
-        Left := TLapeTree_ResVar.Create(ALeft, FCompiler, Pos);
+        Left := TLapeTree_ResVar.Create(ALeft.IncLock(), FCompiler, Pos);
         Right := TLapeTree_Integer.Create(0, Left);
         IndexVar := Compile(Offset);
       finally
@@ -557,8 +557,8 @@ begin
       IndexVar.VarType := ARight.VarType;
       with TLapeTree_Operator.Create(op_Assign, FCompiler, Pos) do
       try
-        Left := TLapeTree_ResVar.Create(IndexVar, FCompiler, Pos);
-        Right := TLapeTree_ResVar.Create(ARight, Left);
+        Left := TLapeTree_ResVar.Create(IndexVar.IncLock(), FCompiler, Pos);
+        Right := TLapeTree_ResVar.Create(ARight.IncLock(), Left);
         Compile(Offset);
       finally
         Free();
@@ -607,7 +607,7 @@ begin
         begin
           Left := TLapeTree_ResVar.Create(IndexVar, FCompiler, Pos);
           Right := TLapeTree_InternalMethod_Length.Create(Left);
-          TLapeTree_InternalMethod_Length(Right).addParam(TLapeTree_ResVar.Create(Result, Left));
+          TLapeTree_InternalMethod_Length(Right).addParam(TLapeTree_ResVar.Create(Result.IncLock(), Left));
         end;
 
         Dest := VarResVar;
@@ -616,22 +616,22 @@ begin
         Free();
       end;
 
-      VarSetLength(Result, tmpResVar, Offset, Pos);
+      VarSetLength(Result.IncLock(), tmpResVar, Offset, Pos);
       with TLapeTree_Operator.Create(op_Assign, FCompiler, Pos) do
       try
         Left := TLapeTree_Operator.Create(op_Index, FCompiler, Pos);
         with TLapeTree_Operator(Left) do
         begin
-          Left := TLapeTree_ResVar.Create(Result, FCompiler, Pos);
+          Left := TLapeTree_ResVar.Create(Result.IncLock(), FCompiler, Pos);
           Right := TLapeTree_ResVar.Create(IndexVar, Left);
         end;
-        Right := TLapeTree_ResVar.Create(ARight, Left);
+        Right := TLapeTree_ResVar.Create(ARight.IncLock(), Left);
         Compile(Offset);
       finally
         Free();
       end;
     finally
-      IndexVar.DecLock(BigLock);
+      IndexVar.Spill(BigLock);
     end;
 
     if wasConstant then
