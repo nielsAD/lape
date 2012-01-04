@@ -88,7 +88,7 @@ begin
   FSize := 0;
   FreeFieldMap := (AFieldMap = nil);
   if (AFieldMap = nil) then
-    AFieldMap := TRecordFieldMap.Create(InvalidRec, False);
+    AFieldMap := TRecordFieldMap.Create(InvalidRec, dupError, False);
   FFieldMap := AFieldMap;
 end;
 

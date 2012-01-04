@@ -206,7 +206,7 @@ begin
   p.Col := 0;
   {$ENDIF}
 
-  pMap := TPMap.Create('', True);
+  pMap := TPMap.Create('', dupIgnore, True);
   try
     for op := Low(EOperator) to High(EOperator) do
     begin

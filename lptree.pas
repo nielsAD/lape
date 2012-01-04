@@ -3728,7 +3728,7 @@ begin
   inherited Create(ACompiler, ADocPos);
 
   FGlobalVar := AGlobalVar;
-  if (ACompiler <> nil) and (FGlobalVar.DeclarationList = nil) then
+  if (ACompiler <> nil) and (FGlobalVar <> nil) and (FGlobalVar.DeclarationList = nil) then
     FGlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(FGlobalVar));
 
   if (FGlobalVar = nil) then

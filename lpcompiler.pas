@@ -1282,23 +1282,23 @@ var
 
     if (AMethod is TLapeType_MethodOfObject) then
     begin
-      TLapeType_MethodOfObject(NewMethod).SelfVar := FStackInfo.Items[ii] as TLapeVar;
+      TLapeType_MethodOfObject(NewMethod).SelfVar := FStackInfo.Vars[ii];
       Inc(ii);
     end;
 
     Params := AMethod.Params.ExportToArray();
     for i := 0 to High(Params) do
     begin
-      while (ii < FStackInfo.Items.Count) do
+      {while (ii < FStackInfo.Items.Count) do
       begin
         if (FStackInfo.Items[ii] is TLapeParameterVar) then
           Break;
         Inc(ii);
       end;
       if (ii >= FStackInfo.Items.Count) then
-        LapeException(lpeImpossible);
+        LapeException(lpeImpossible);}
 
-      Params[i].Default := FStackInfo.Items[ii] as TLapeVar;
+      Params[i].Default := FStackInfo.Vars[ii];
       NewMethod.addParam(Params[i]);
       Inc(ii);
     end;
@@ -1407,8 +1407,8 @@ begin
           if (not isExternal) then
           begin
             FStackInfo.addVar(Lape_SelfParam, getBaseType(ltPointer), 'Self');
-            FStackInfo.Items.Move(FStackInfo.Items.Count - 1, 0);
-            FStackInfo.VarStack.Move(FStackInfo.VarStack.Count - 1, 0);
+            //FStackInfo.Items.MoveItem(FStackInfo.Items.Count - 1, 0);
+            FStackInfo.VarStack.MoveItem(FStackInfo.VarStack.Count - 1, 0);
           end;
         end;
 
@@ -1808,7 +1808,7 @@ var
   Typ: TLapeType;
   Name: lpString;
 begin
-  TypeForwards := TLapeTypeForwards.Create(nil, False, LapeCaseSensitive, dupIgnore);
+  TypeForwards := TLapeTypeForwards.Create(nil, dupIgnore, False);
   try
 
     Next();
@@ -2705,8 +2705,8 @@ begin
   FBaseDefines := TStringList.Create();
   FBaseDefines.CaseSensitive := LapeCaseSensitive;
 
-  FTreeMethodMap := TLapeTreeMethodMap.Create(nil, True);
-  FInternalMethodMap := TLapeInternalMethodMap.Create(nil, True);
+  FTreeMethodMap := TLapeTreeMethodMap.Create(nil, dupError, True);
+  FInternalMethodMap := TLapeInternalMethodMap.Create(nil, dupError, True);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
   FInternalMethodMap['WriteLn'] := TLapeTree_InternalMethod_WriteLn;
   FInternalMethodMap['ToStr'] := TLapeTree_InternalMethod_ToStr;

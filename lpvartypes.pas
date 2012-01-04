@@ -2526,7 +2526,7 @@ end;
 constructor TLapeType_VarRefMap.Create(ACompiler: TLapeCompilerBase);
 begin
   inherited Create(ltUnknown, ACompiler);
-  FVarMap := TLapeVarRefMap.Create(NullVarRef, True);
+  FVarMap := TLapeVarRefMap.Create(NullVarRef, dupError, True);
 end;
 
 destructor TLapeType_VarRefMap.Destroy;
@@ -3204,7 +3204,7 @@ begin
 
   FGlobalDeclarations := TLapeDeclarationList.Create(nil);
   FManagedDeclarations := TLapeDeclarationList.Create(nil);
-  FCachedDeclarations := TLapeVarMap.Create(nil, True);
+  FCachedDeclarations := TLapeVarMap.Create(nil, dupIgnore, True);
 end;
 
 destructor TLapeCompilerBase.Destroy;
