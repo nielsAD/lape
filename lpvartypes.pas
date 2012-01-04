@@ -335,18 +335,18 @@ type
     property SelfVar: TLapeVar read FSelf write FSelf;
   end;
 
-    TLapeType_MethodOfType = class(TLapeType_MethodOfObject)
-    protected
-      FObjectType: TLapeType;
-      function getAsString: lpString; override;
-    public
-      constructor Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
-      constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); reintroduce; overload; virtual;
-      function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
-      function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
+  TLapeType_MethodOfType = class(TLapeType_MethodOfObject)
+  protected
+    FObjectType: TLapeType;
+    function getAsString: lpString; override;
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
+    constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); reintroduce; overload; virtual;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
-      property ObjectType: TLapeType read FObjectType;
-    end;
+    property ObjectType: TLapeType read FObjectType;
+  end;
 
   TLapeGetOverloadedMethod = function(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method;
     AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar of object;
@@ -2339,8 +2339,10 @@ end;
 constructor TLapeType_OverloadedMethod.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited Create(ltUnknown, ACompiler, AName, ADocPos);
+
   OnFunctionNotFound := nil;
   NeedFullMatch := False;
+  FManagedDecls.Items.Sorted := False;
 end;
 
 function TLapeType_OverloadedMethod.CreateCopy(DeepCopy: Boolean = False): TLapeType;
