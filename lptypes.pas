@@ -334,7 +334,7 @@ type
   public type
     TTItems = {$IFDEF FPC}specialize{$ENDIF} TLapeList<_T>;
     TTArrays = record
-      Keys: TLapeStringList.TTArray;
+      Keys: {$IFDEF Delphi}TArray<lpString>{$ELSE}TLapeStringList.TTArray{$ENDIF};
       Items: {$IFDEF Delphi}TTItems.TTArray{$ELSE}array of _T{$ENDIF};
     end;
   var protected
@@ -1202,19 +1202,20 @@ end;
 
 function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.Delete(Index: Integer): _T;
 var
-  i: Integer;
-  tmp: _T;
+  Sort: Boolean;
 begin
   Result := InvalidVal;
   if (Index > -1) and (Index < FCount) then
   begin
     Result := FItems[Index];
-    Dec(FCount);
-    for i := Index to FCount - 1 do
-    begin
-      tmp := FItems[i];
-      FItems[i] := FItems[i + 1];
-      FItems[i + 1] := tmp;
+
+    Sort := FSorted;
+    try
+      FSorted := False;
+      MoveItem(Index, FCount - 1);
+    finally
+      FSorted:= False;
+      Dec(FCount);
     end;
   end
   else
