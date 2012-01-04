@@ -1214,7 +1214,7 @@ begin
       FSorted := False;
       MoveItem(Index, FCount - 1);
     finally
-      FSorted:= False;
+      FSorted:= Sort;
       Dec(FCount);
     end;
   end
