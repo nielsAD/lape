@@ -2033,7 +2033,10 @@ begin
     begin
       if (FParams.Count > Params.Count) then
         if (FParams.Count > 0) then
+        begin
+          WriteLn(Name, ' ', ClassName, ' ', DeclarationList.Items.Sorted);
           LapeException(lpeTooMuchParameters, FParams[Params.Count].DocPos)
+        end
         else
           LapeException(lpeTooMuchParameters, Self.DocPos);
 

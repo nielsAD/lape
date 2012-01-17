@@ -88,6 +88,7 @@ type
 
   TStringArray = array of lpString;
   TByteArray = array of Byte;
+  TIntegerArray = array of Integer;
   TInitBool = (bUnknown, bFalse, bTrue);
 
   TCodeArray = TByteArray;
@@ -270,7 +271,9 @@ type
     FItems: TTArray;
     FCount: Integer;
 
-    procedure setSorted(Sort: Boolean); virtual;
+    function getSorted: Boolean; virtual;
+    procedure setSorted(Sort: Boolean; DoUpdate: Boolean); overload; virtual;
+    procedure setSorted(Sort: Boolean); overload; virtual;
     function getItem(Index: Integer): _T; virtual;
     procedure setItem(Index: Integer; Item: _T); virtual;
   public
@@ -280,17 +283,18 @@ type
     procedure Clear; virtual;
 
     function add(Item: _T): Integer; virtual;
-    procedure Insert(Item: _T; Index: Integer); virtual;
+    function Insert(Item: _T; Index: Integer): Boolean; virtual;
 
-    function Delete(Index: Integer): _T; overload; virtual;
-    function DeleteItem(Item: _T): _T; overload; virtual;
+    function Delete(Index: Integer): _T; virtual;
+    function DeleteItem(Item: _T): _T; virtual;
 
     procedure MoveItem(AFrom, ATo: Integer); virtual;
     procedure SwapItem(AFrom, ATo: Integer); virtual;
 
+    function IndicesOf(Item: _T): TIntegerArray; virtual;
     function IndexOf(Item: _T; Lo, Hi: Integer): Integer; overload; virtual;
     function IndexOf(Item: _T): Integer; overload; virtual;
-    function ExistsItem(Item: _T): Boolean; overload;
+    function ExistsItem(Item: _T): Boolean;
 
     procedure ImportFromArray(Arr: TTArray); virtual;
     function ExportToArray: TTArray; virtual;
@@ -298,7 +302,7 @@ type
     property Items[Index: Integer]: _T read getItem write setItem; default;
     property Count: Integer read FCount;
     property Duplicates: TDuplicates read FDuplicates write FDuplicates;
-    property Sorted: Boolean read FSorted write setSorted;
+    property Sorted: Boolean read getSorted write setSorted;
   end;
 
   TLapeList_String = {$IFDEF FPC}specialize{$ENDIF} TLapeList<lpString>;
@@ -309,8 +313,8 @@ type
     FHashList: TLapeList_UInt32;
     FCaseSensitive: Boolean;
 
-    function getSorted: Boolean; virtual;
-    procedure setSorted(Sort: Boolean); override;
+    function getSorted: Boolean; override;
+    procedure setSorted(Sort: Boolean; DoUpdate: Boolean = True); override;
   public
     constructor Create(InvalidValue: lpString; ADuplicates: TDuplicates; ACaseSensitive, ASort: Boolean); reintroduce; virtual;
     destructor Destroy; override;
@@ -346,29 +350,39 @@ type
     procedure setItem(Key: lpString; Item: _T); virtual;
     function getItemI(Index: Integer): _T; virtual;
     procedure setItemI(Index: Integer; Item: _T); virtual;
-    function getIndex(Index: Integer): lpString; virtual;
+    function getKey(Index: Integer): lpString; virtual;
+
+    function getSorted: Boolean; virtual;
+    procedure setSorted(Sort: Boolean); virtual;
   public
     constructor Create(InvalidValue: _T; Duplicates: TDuplicates; Sort: Boolean; InvalidKey: lpString = ''; ACaseSensitive: Boolean = LapeCaseSensitive); reintroduce; virtual;
     destructor Destroy; override;
     procedure Clear; virtual;
 
-    procedure add(Key: lpString; Item: _T); virtual;
+    function add(Key: lpString; Item: _T): Integer; virtual;
     function Delete(Key: lpString): _T; overload; virtual;
     function Delete(Index: Integer): _T; overload; virtual;
-    function DeleteItem(Item: _T): _T; overload; virtual;
+    function DeleteItem(Item: _T): _T; virtual;
 
-    function IndexOfItem(Item: _T): lpString; overload; virtual;
-    function IndexOfKey(Key: lpString): Integer; overload; virtual;
-    function ExistsItem(Item: _T): Boolean; overload;
-    function ExistsKey(Key: lpString): Boolean; overload;
+    function IndicesOfItemI(Item: _T): TIntegerArray; virtual;
+    function IndicesOfItem(Item: _T): TStringArray; virtual;
+    function IndicesOfKey(Key: lpString): TIntegerArray; virtual;
 
+    function IndexOfItemI(Item: _T): Integer; virtual;
+    function IndexOfItem(Item: _T): lpString; virtual;
+    function IndexOfKey(Key: lpString): Integer; virtual;
+    function ExistsItem(Item: _T): Boolean;
+    function ExistsKey(Key: lpString): Boolean;
+
+    procedure setKey(Index: Integer; NewKey: lpString); virtual;
     procedure ImportFromArrays(Arr: TTArrays); virtual;
     function ExportToArrays: TTArrays; virtual;
 
     property Items[Index: lpString]: _T read getItem write setItem; default;
     property ItemsI[Index: Integer]: _T read getItemI write setItemI;
-    property Key[Index: Integer]: lpString read getIndex;
+    property Key[Index: Integer]: lpString read getKey write setKey;
     property Count: Integer read FCount;
+    property Sorted: Boolean read getSorted write setSorted;
   end;
 
   TLapeDeclaration = class;
@@ -387,8 +401,12 @@ type
 
     procedure Clear; virtual;
     procedure ClearSubDeclarations; virtual;
+    procedure Assign(Other: TLapeDeclarationList); virtual;
 
     function addDeclaration(d: TLapeDeclaration): Integer; virtual;
+    function HasSubDeclaration(AName: lpString): Boolean; overload; virtual;
+    function HasSubDeclaration(ADecl: TLapeDeclaration): Boolean; overload; virtual;
+
     procedure Delete(i: Integer; DoFree: Boolean = False); overload; virtual;
     procedure Delete(d: TLapeDeclaration; DoFree: Boolean = False); overload; virtual;
     procedure Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False); overload; virtual;
@@ -562,10 +580,10 @@ function VariantArrToConstArr(v: array of Variant): TVarRecList;
 procedure Swap(var A, B: Pointer); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 procedure Swap(var A, B: Boolean); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
-function _Compare8(Arr: PUInt8; Item: UInt8; Hi: Integer): Integer;
-function _Compare16(Arr: PUInt16; Item: UInt16; Hi: Integer): Integer;
-function _Compare32(Arr: PUInt32; Item: UInt32; Hi: Integer): Integer;
-function _Compare64(Arr: PUInt64; Item: UInt64; Hi: Integer): Integer;
+function _Compare8(Arr: PUInt8; Item: UInt8; Lo, Hi: Integer): Integer;
+function _Compare16(Arr: PUInt16; Item: UInt16; Lo, Hi: Integer): Integer;
+function _Compare32(Arr: PUInt32; Item: UInt32; Lo, Hi: Integer): Integer;
+function _Compare64(Arr: PUInt64; Item: UInt64; Lo, Hi: Integer): Integer;
 function _BSearch8(Arr: PUInt8; Item: UInt8; Lo, Hi: Integer): Integer;
 function _BSearch16(Arr: PUInt16; Item: UInt16; Lo, Hi: Integer): Integer;
 function _BSearch32(Arr: PUInt32; Item: UInt32; Lo, Hi: Integer): Integer;
@@ -580,6 +598,9 @@ var
   lpgCounter: Integer;
   lpgList: TList;
 {$ENDIF}
+
+var
+  ByName, ByClass, ByClassName: Integer;
 
 implementation
 
@@ -626,7 +647,7 @@ begin
     begin
       k := PUInt16(Data)^;
       if (Len > SizeOf(UInt16)) then
-        k := k + (UInt32(PUInt8(UInt32(Data) + SizeOf(Word))^) shl 16);
+        k := k + (UInt32(PUInt8(PtrUInt(Data) + SizeOf(UInt16))^) shl 16);
     end
     else
       k := PUInt8(Data)^;
@@ -766,11 +787,11 @@ begin
   B := C;
 end;
 
-function _Compare8(Arr: PUInt8; Item: UInt8; Hi: Integer): Integer;
+function _Compare8(Arr: PUInt8; Item: UInt8; Lo, Hi: Integer): Integer;
 var
   i: Integer;
 begin
-  for i := 0 to Hi do
+  for i := Lo to Hi do
     if (Arr^ = Item) then
       Exit(i)
     else
@@ -778,11 +799,11 @@ begin
   Result := -1;
 end;
 
-function _Compare16(Arr: PUInt16; Item: UInt16; Hi: Integer): Integer;
+function _Compare16(Arr: PUInt16; Item: UInt16; Lo, Hi: Integer): Integer;
 var
   i: Integer;
 begin
-  for i := 0 to Hi do
+  for i := Lo to Hi do
     if (Arr^ = Item) then
       Exit(i)
     else
@@ -790,11 +811,11 @@ begin
   Result := -1;
 end;
 
-function _Compare32(Arr: PUInt32; Item: UInt32; Hi: Integer): Integer;
+function _Compare32(Arr: PUInt32; Item: UInt32; Lo, Hi: Integer): Integer;
 var
   i: Integer;
 begin
-  for i := 0 to Hi do
+  for i := Lo to Hi do
     if (Arr^ = Item) then
       Exit(i)
     else
@@ -802,11 +823,11 @@ begin
   Result := -1;
 end;
 
-function _Compare64(Arr: PUInt64; Item: UInt64; Hi: Integer): Integer;
+function _Compare64(Arr: PUInt64; Item: UInt64; Lo, Hi: Integer): Integer;
 var
   i: Integer;
 begin
-  for i := 0 to Hi do
+  for i := Lo to Hi do
     if (Arr^ = Item) then
       Exit(i)
     else
@@ -824,7 +845,11 @@ begin
     mIndex := (Lo + Hi) div 2;
     mVal := Arr[mIndex];
     if (Item = mVal) then
-      Exit(mIndex)
+    begin
+      while (mIndex > Lo) and (Arr[mIndex - 1] = Item) do
+        Dec(mIndex);
+      Exit(mIndex);
+    end
     else if (Item < mVal) then
       Hi := mIndex - 1
     else
@@ -843,7 +868,11 @@ begin
     mIndex := (Lo + Hi) div 2;
     mVal := Arr[mIndex];
     if (Item = mVal) then
-      Exit(mIndex)
+    begin
+      while (mIndex > Lo) and (Arr[mIndex - 1] = Item) do
+        Dec(mIndex);
+      Exit(mIndex);
+    end
     else if (Item < mVal) then
       Hi := mIndex - 1
     else
@@ -862,7 +891,11 @@ begin
     mIndex := (Lo + Hi) div 2;
     mVal := Arr[mIndex];
     if (Item = mVal) then
-      Exit(mIndex)
+    begin
+      while (mIndex > Lo) and (Arr[mIndex - 1] = Item) do
+        Dec(mIndex);
+      Exit(mIndex);
+    end
     else if (Item < mVal) then
       Hi := mIndex - 1
     else
@@ -881,7 +914,11 @@ begin
     mIndex := (Lo + Hi) div 2;
     mVal := Arr[mIndex];
     if (Item = mVal) then
-      Exit(mIndex)
+    begin
+      while (mIndex > Lo) and (Arr[mIndex - 1] = Item) do
+        Dec(mIndex);
+      Exit(mIndex);
+    end
     else if (Item < mVal) then
       Hi := mIndex - 1
     else
@@ -1108,7 +1145,12 @@ begin
     Result[i] := FArr[i];
 end;
 
-procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.setSorted(Sort: Boolean);
+function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.getSorted: Boolean;
+begin
+  Result := FSorted;
+end;
+
+procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.setSorted(Sort: Boolean; DoUpdate: Boolean = True);
 var
   a: TTArray;
   i: Integer;
@@ -1118,7 +1160,7 @@ begin
   begin
     FSorted := Sort;
 
-    if Sort and (FCount > 0) then
+    if DoUpdate and Sort and (FCount > 0) then
     begin
       a := ExportToArray();
       Clear();
@@ -1126,6 +1168,11 @@ begin
         add(a[i]);
     end;
   end;
+end;
+
+procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.setSorted(Sort: Boolean);
+begin
+  setSorted(Sort, True);
 end;
 
 function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.getItem(Index: Integer): _T;
@@ -1140,8 +1187,13 @@ procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.setItem(Index: Integer; Item: _T);
 begin
   if (Index > -1) and (Index < FCount) then
   begin
-    FItems[Index] := Item;
-    FSorted := False;
+    if (not FSorted) then
+      FItems[Index] := Item
+    else
+    begin
+      Delete(Index);
+      Insert(Item, Index);
+    end;
   end
   else
     LapeExceptionFmt(lpeInvalidIndex, [IntToStr(Index)]);
@@ -1195,9 +1247,15 @@ begin
     end;
 end;
 
-procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.Insert(Item: _T; Index: Integer);
+function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.Insert(Item: _T; Index: Integer): Boolean;
+var
+  OldIndex: Integer;
 begin
-  MoveItem(add(Item), Index);
+  OldIndex := add(Item);
+  Result := OldIndex > -1;
+
+  if Result then
+    MoveItem(OldIndex, Index);
 end;
 
 function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.Delete(Index: Integer): _T;
@@ -1209,12 +1267,12 @@ begin
   begin
     Result := FItems[Index];
 
-    Sort := FSorted;
+    Sort := Sorted;
     try
-      FSorted := False;
+      Sorted := False;
       MoveItem(Index, FCount - 1);
     finally
-      FSorted:= Sort;
+      setSorted(Sort, False);
       Dec(FCount);
     end;
   end
@@ -1272,6 +1330,25 @@ begin
   FItems[ATo] := c;
 end;
 
+function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.IndicesOf(Item: _T): TIntegerArray;
+var
+  Index, Lo, Hi: Integer;
+begin
+  Result := nil;
+  Lo := 0;
+  Hi := FCount - 1;
+
+  Index := IndexOf(Item, Lo, Hi);
+  while (Index > -1) do
+  begin
+    SetLength(Result, Length(Result) + 1);
+    Result[High(Result)] := Index;
+
+    Lo := Index + 1;
+    Index := IndexOf(Item, Lo, Hi);
+  end;
+end;
+
 function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.IndexOf(Item: _T; Lo, Hi: Integer): Integer;
 var
   i, ii: Integer;
@@ -1290,14 +1367,14 @@ begin
     end
   else
     case SizeOf(_T) of
-      SizeOf(UInt8) : Result := _Compare8 (@FItems[Lo], PUInt8 (@Item)^, Hi - Lo);
-      SizeOf(UInt16): Result := _Compare16(@FItems[Lo], PUInt16(@Item)^, Hi - Lo);
-      SizeOf(UInt32): Result := _Compare32(@FItems[Lo], PUInt32(@Item)^, Hi - Lo);
-      SizeOf(UInt64): Result := _Compare64(@FItems[Lo], PUInt64(@Item)^, Hi - Lo);
+      SizeOf(UInt8) : Result := _Compare8 (@FItems[Lo], PUInt8 (@Item)^, Lo, Hi);
+      SizeOf(UInt16): Result := _Compare16(@FItems[Lo], PUInt16(@Item)^, Lo, Hi);
+      SizeOf(UInt32): Result := _Compare32(@FItems[Lo], PUInt32(@Item)^, Lo, Hi);
+      SizeOf(UInt64): Result := _Compare64(@FItems[Lo], PUInt64(@Item)^, Lo, Hi);
       else
       begin
         ItemB := PByteArray(@Item);
-        for i := FCount - 1 downto 0 do
+        for i := Lo to Hi do
         begin
           ItemA := PByteArray(@FItems[i]);
           Match := True;
@@ -1329,6 +1406,12 @@ procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.ImportFromArray(Arr: TTArray);
 begin
   FItems := Arr;
   FCount := Length(Arr);
+
+  if Sorted then
+  begin
+    Sorted := False;
+    Sorted := True;
+  end;
 end;
 
 function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.ExportToArray: TTArray;
@@ -1345,9 +1428,9 @@ begin
   Result := FHashList.Sorted;
 end;
 
-procedure TLapeStringList.setSorted(Sort: Boolean);
+procedure TLapeStringList.setSorted(Sort: Boolean; DoUpdate: Boolean = True);
 begin
-  FHashList.Sorted := Sort;
+  FHashList.setSorted(Sort, DoUpdate);
   inherited;
   FSorted := False;
 end;
@@ -1408,7 +1491,7 @@ function TLapeStringList.Delete(Index: Integer): lpString;
 begin
   Result := inherited;
   if (Result <> InvalidVal) then
-    FHashList.Delete(Index);
+    FHashList.Delete(FCount);
 end;
 
 procedure TLapeStringList.MoveItem(AFrom, ATo: Integer);
@@ -1430,29 +1513,28 @@ begin
 end;
 
 function TLapeStringList.IndexOf(Item: lpString; Lo, Hi: Integer): Integer;
-var
-  Hash: UInt32;
 begin
   if (Lo < 0) or (Lo > Hi) or (Hi >= FCount) then
     Exit(-1);
 
   Item := CaseSens(Item);
-  Hash := LapeHash(Item);
+  Result := FHashList.IndexOf(LapeHash(Item), Lo, Hi);
 
-  Result := FHashList.IndexOf(Hash, Lo, Hi);
   if (Result > -1) and (FItems[Result] <> Item) then
-  begin
-    Result := IndexOf(Item, Lo, Result - 1);
-    if (Result < 0) then
-      Result := IndexOf(Item, Result + 1, Hi);
-  end;
+    Result := IndexOf(Item, Result + 1, Hi);
 end;
 
 procedure TLapeStringList.ImportFromArray(Arr: TLapeList_String.TTArray);
+var
+  Sort: Boolean;
 begin
-  Sorted := False;
-  inherited;
-  Sorted := True;
+  Sort := Sorted;
+  try
+    Sorted := False;
+    inherited;
+  finally
+    Sorted := Sort;
+  end;
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.getItem(Key: lpString): _T;
@@ -1481,9 +1563,19 @@ begin
   FItems[Index] := Item;
 end;
 
-function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.getIndex(Index: Integer): lpString;
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.getKey(Index: Integer): lpString;
 begin
   Result := FStringList[Index];
+end;
+
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.getSorted: Boolean;
+begin
+  Result := FStringList.Sorted;
+end;
+
+procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.setSorted(Sort: Boolean);
+begin
+  FStringList.Sorted := Sort;
 end;
 
 constructor TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Create(InvalidValue: _T; Duplicates: TDuplicates; Sort: Boolean; InvalidKey: lpString = ''; ACaseSensitive: Boolean = LapeCaseSensitive);
@@ -1510,21 +1602,25 @@ begin
   FCount := 0;
 end;
 
-procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.add(Key: lpString; Item: _T);
-var
-  Index: Integer;
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.add(Key: lpString; Item: _T): Integer;
 begin
-  Index := FStringList.add(Key);
-  if (Index > -1) then
-  begin
-    Inc(FCount);
-    FItems.Insert(Item, Index);
-  end;
+  Result := FStringList.add(Key);
+  if (Result > -1) then
+    if FItems.Insert(Item, Result) then
+      Inc(FCount)
+    else
+      FStringList.Delete(Result);
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Delete(Key: lpString): _T;
+var
+  Index: Integer;
 begin
-  Result := Delete(IndexOfKey(Key));
+  Index := IndexOfKey(Key);
+  if (Index > -1) then
+    Result := Delete(Index)
+  else
+    Result := FItems.InvalidVal;
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Delete(Index: Integer): _T;
@@ -1535,13 +1631,46 @@ begin
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.DeleteItem(Item: _T): _T;
+var
+  Index: Integer;
 begin
-  Result := Delete(IndexOfItem(Item));
+  Index := IndexOfItemI(Item);
+  if (Index > -1) then
+    Result := Delete(Index)
+  else
+    Result := FItems.InvalidVal;
+end;
+
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndicesOfItemI(Item: _T): TIntegerArray;
+begin
+  Result := FItems.IndicesOf(Item);
+end;
+
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndicesOfItem(Item: _T): TStringArray;
+var
+  Indices: TIntegerArray;
+  i: Integer;
+begin
+  Indices := IndicesOfItemI(Item);
+
+  SetLength(Result, Length(Indices));
+  for i := 0 to High(Indices) do
+    Result[i] := FStringList[Indices[i]];
+end;
+
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndicesOfKey(Key: lpString): TIntegerArray;
+begin
+  Result := FStringList.IndicesOf(Key);
+end;
+
+function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndexOfItemI(Item: _T): Integer;
+begin
+  Result := FItems.IndexOf(Item);
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndexOfItem(Item: _T): lpString;
 begin
-  Result := FStringList[FItems.IndexOf(Item)];
+  Result := FStringList[IndexOfItemI(Item)];
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.IndexOfKey(Key: lpString): Integer;
@@ -1557,6 +1686,12 @@ end;
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ExistsKey(Key: lpString): Boolean;
 begin
   Result := FStringList.ExistsItem(Key);
+end;
+
+procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.setKey(Index: Integer; NewKey: lpString);
+begin
+  if (Index > -1) and (Index < FCount) then
+    FStringList[Index] := NewKey;
 end;
 
 procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ImportFromArrays(Arr: TTArrays);
@@ -1577,8 +1712,10 @@ end;
 constructor TLapeDeclarationList.Create(AList: TLapeDeclCollection; ManageDeclarations: Boolean = True);
 begin
   inherited Create();
+
   if (AList = nil) then
     AList := TLapeDeclCollection.Create(nil, dupAccept, True);
+
   FList := AList;
   FreeDecls := ManageDeclarations;
 end;
@@ -1616,34 +1753,47 @@ begin
     TLapeManagingDeclaration(ClassItems[i]).ClearSubDeclarations();
 end;
 
+procedure TLapeDeclarationList.Assign(Other: TLapeDeclarationList);
+begin
+  if (Other = nil) then
+    Clear()
+  else
+    FList.ImportFromArray(Other.FList.ExportToArray());
+end;
+
 function TLapeDeclarationList.addDeclaration(d: TLapeDeclaration): Integer;
 begin
-  if (FList <> nil) and (((d <> nil) and
-     ((d.DeclarationList = nil) or (d.DeclarationList <> Self))) or
-     (not FList.ExistsItem(d)))
-  then
+  if (FList <> nil) and (d <> nil) and (not HasSubDeclaration(d)) then
   begin
     Result := FList.add(d);
-    if (d <> nil) then
-      if (d.DeclarationList <> nil) then
-        d.DeclarationList := Self
-      else
-        d.FList := Self;
+
+    if (d.DeclarationList <> nil) then
+      d.DeclarationList := Self
+    else
+      d.FList := Self;
   end
   else
     Result := -1;
 end;
 
+function TLapeDeclarationList.HasSubDeclaration(AName: lpString): Boolean;
+begin
+  Result := Length(getByName(AName)) > 0;
+end;
+
+function TLapeDeclarationList.HasSubDeclaration(ADecl: TLapeDeclaration): Boolean;
+begin
+  Result := FList.ExistsItem(ADecl);
+end;
+
 procedure TLapeDeclarationList.Delete(i: Integer; DoFree: Boolean = False);
 begin
   if (FList <> nil) and (FList[i] <> nil) then
-  begin
     with FList.Delete(i) do
       if DoFree then
         Free()
       else
         FList := nil;
-  end;
 end;
 
 procedure TLapeDeclarationList.Delete(d: TLapeDeclaration; DoFree: Boolean = False);
@@ -1687,6 +1837,7 @@ function TLapeDeclarationList.getByClass(AClass: TLapeDeclarationClass; FullClas
 var
   i, Current, GrowSize, Len: Integer;
 begin
+  Inc(ByClass);
   Result := nil;
   if (FList <> nil) and (FList.Count > 0) then
   begin
@@ -1810,7 +1961,7 @@ begin
   if ReferenceOnly then
     setManagedDecls(ADecls)
   else
-    FManagedDecls.Items.ImportFromArray(ADecls.Items.ExportToArray());
+    FManagedDecls.Assign(ADecls);
 end;
 
 function TLapeManagingDeclaration.addSubDeclaration(ADecl: TLapeDeclaration): Integer;
@@ -1820,12 +1971,12 @@ end;
 
 function TLapeManagingDeclaration.HasSubDeclaration(AName: lpString): Boolean;
 begin
-  Result := (Length(FManagedDecls.getByName(AName)) > 0);
+  Result := FManagedDecls.HasSubDeclaration(AName);
 end;
 
 function TLapeManagingDeclaration.HasSubDeclaration(ADecl: TLapeDeclaration): Boolean;
 begin
-  Result := FManagedDecls.Items.ExistsItem(ADecl);
+  Result := FManagedDecls.HasSubDeclaration(ADecl);
 end;
 
 procedure TLapeManagingDeclaration.ClearSubDeclarations;

@@ -133,7 +133,7 @@ begin
   if (ToStr = nil) or (FCompiler = nil) or (not HasType()) then
     Exit;
 
-  Index := ToStr.ManagedDecls.Items.IndexOf(ToStr.getMethod(getTypeArray([PType]), FCompiler.getBaseType(ltString)));
+  Index := ToStr.getMethodIndex(getTypeArray([PType]), FCompiler.getBaseType(ltString));
   if (Index < 0) then
     Exit;
 

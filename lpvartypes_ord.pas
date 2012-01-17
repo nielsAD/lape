@@ -368,7 +368,7 @@ begin
   if (ToStr = nil) or (FCompiler = nil) or (FVarType = nil) then
     Exit;
 
-  Index := ToStr.ManagedDecls.Items.IndexOf(ToStr.getMethod(getTypeArray([FVarType]), FCompiler.getBaseType(ltString)));
+  Index := ToStr.getMethodIndex(getTypeArray([FVarType]), FCompiler.getBaseType(ltString));
   if (Index < 0) then
     Exit;
 
@@ -831,7 +831,7 @@ begin
   if (ToStr = nil) or (FCompiler = nil) or (FRange = nil) then
     Exit;
 
-  Index := ToStr.ManagedDecls.Items.IndexOf(ToStr.getMethod(getTypeArray([FRange]), FCompiler.getBaseType(ltString)));
+  Index := ToStr.getMethodIndex(getTypeArray([FRange]), FCompiler.getBaseType(ltString));
   if (Index < 0) then
     Exit;
 

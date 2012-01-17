@@ -6,13 +6,13 @@
 	Defines for the Lape project.
 }
 {$IFDEF FPC}
-  {$mode objfpc}{$H+}
+  {$MODE objfpc}{$H+}
 {$ENDIF}
 
 {.$DEFINE Lape_CaseSensitive}            //Case sentive in script
 {$DEFINE Lape_DoubleKeywordsCache}      //Create a double cache for keywords to speed up parsing (more memory, faster)
 {$DEFINE Lape_EmitPos}                  //Emit source position when compiling (more memory)
-{.$DEFINE Lape_Inline}                   //Compile with function inlining where it could be benefitial (faster, harder debugging)
+{$DEFINE Lape_Inline}                   //Compile with function inlining where it could be benefitial (faster, harder debugging)
 {.$DEFINE Lape_SmallCode}                //Try to keep compiled code as small as possible (packed records, no aligning -- less memory, slower)
 {.$DEFINE Lape_TrackObjects}             //Track all created classes with a list to check for leaks
 {.$DEFINE Lape_Unicode}                  //Use unicodestrings

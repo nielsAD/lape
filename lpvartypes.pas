@@ -363,8 +363,11 @@ type
     procedure addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False); virtual;
     function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; virtual;
 
+    function getMethodIndex(AType: TLapeType_Method): Integer; overload; virtual;
+    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType = nil): Integer; overload; virtual;
     function getMethod(AType: TLapeType_Method): TLapeGlobalVar; overload; virtual;
     function getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar; overload; virtual;
+
     function NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
@@ -2403,20 +2406,24 @@ begin
   FManagedDecls.addDeclaration(AMethod);
 end;
 
-function TLapeType_OverloadedMethod.getMethod(AType: TLapeType_Method): TLapeGlobalVar;
+function TLapeType_OverloadedMethod.getMethodIndex(AType: TLapeType_Method): Integer;
 var
   i: Integer;
 begin
+  if (AType = nil) then
+    Exit(-1);
+
   for i := 0 to FManagedDecls.Items.Count - 1 do
     if TLapeType_Method(TLapeGlobalVar(FManagedDecls.Items[i]).VarType).EqualParams(AType, False) then
-      Exit(TLapeGlobalVar(FManagedDecls.Items[i]));
+      Exit(i);
+
   if ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
-    Result := OnFunctionNotFound(Self, AType, nil, nil)
+    Result := FManagedDecls.Items.IndexOf(OnFunctionNotFound(Self, AType, nil, nil))
   else
-    Result := nil;
+    Result := -1;
 end;
 
-function TLapeType_OverloadedMethod.getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar;
+function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType = nil): Integer;
 
   function SizeWeight(a, b: TLapeType): Integer; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
@@ -2436,7 +2443,7 @@ var
   MethodIndex, i, Weight, MinWeight: Integer;
   Match: Boolean;
 begin
-  Result := nil;
+  Result := -1;
   MinWeight := High(Integer);
 
   for MethodIndex := 0 to FManagedDecls.Items.Count - 1 do
@@ -2479,16 +2486,27 @@ begin
 
       if Match then
         if (Weight = MinWeight) then
-          Result := nil
+          Result := -1
         else if (Weight < MinWeight) then
         begin
-          Result := TLapeGlobalVar(Self.ManagedDecls.Items[MethodIndex]);
+          Result := MethodIndex;
           MinWeight := Weight;
         end;
     end;
 
-  if (Result = nil) and ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
-    Result := OnFunctionNotFound(Self, nil, AParams, AResult);
+  if (Result < 0) and ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
+    Result := FManagedDecls.Items.IndexOf(OnFunctionNotFound(Self, nil, AParams, AResult));
+end;
+
+
+function TLapeType_OverloadedMethod.getMethod(AType: TLapeType_Method): TLapeGlobalVar;
+begin
+  Result := FManagedDecls.Items[getMethodIndex(AType)] as TLapeGlobalVar;
+end;
+
+function TLapeType_OverloadedMethod.getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar;
+begin
+  Result := FManagedDecls.Items[getMethodIndex(AParams, AResult)] as TLapeGlobalVar;
 end;
 
 function TLapeType_OverloadedMethod.NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
