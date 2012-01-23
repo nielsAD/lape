@@ -1980,7 +1980,7 @@ var
           LapeException(lpeVariableExpected, [FParams[i], Self]);
 
         if (Params[i].VarType <> nil) and (not Params[i].VarType.Equals(ParamVars[i].VarType)) then
-          AssignToTempVar(ParamVars[i], Params[i], mpVar, _DocPos);
+          AssignToTempVar(ParamVars[i], Params[i], mpVar, Self._DocPos);
 
         AssignToStack(ParamVars[i], Self._DocPos);
       end;

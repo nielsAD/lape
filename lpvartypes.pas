@@ -1396,8 +1396,8 @@ begin
   begin
     if (Right = nil) then
       LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
-    Left := Right;
-    Right := nil;
+    //Left := Right;
+    //Right := nil;
   end;
   if (Op = op_UnaryPlus) then
     Exit(Left);
@@ -1417,7 +1417,7 @@ begin
 
       EvalProc := getEvalProc(Op, FBaseType, ltUnknown);
     end
-    else if (op <> op_Assign) or Left.VarType.CompatibleWith(Right.VarType) then
+    else if (op <> op_Assign) or CompatibleWith(Right.VarType) then
     begin
       EvalProc := getEvalProc(Op, FBaseType, Right.BaseType);
       ResType := EvalRes(Op, Right);
@@ -1435,7 +1435,10 @@ begin
           (((not Left.HasType()) or (not Right.HasType()) or  (Left.VarType.Size >= Right.VarType.Size)) and (not TryCast(True, Result)) and (not TryCast(False, Result))) or
           ((Left.HasType()       and     Right.HasType()) and (Left.VarType.Size <  Right.VarType.Size)  and (not TryCast(False, Result)) and (not TryCast(True, Result)))
         then
-          LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString])
+          if Right.HasType() then
+            LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString ])
+          else
+            LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, LapeTypeToString(ltUnknown)])
         else
           Exit
       else if (op in UnaryOperators) then
@@ -1479,6 +1482,11 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
 
     if ((not Left.HasType()) or (not Right.HasType())) then
     try
+      if (     DoRight  and (Right.VarPos.MemPos = NullResVar.VarPos.MemPos)) or
+         ((not DoRight) and (Left.VarPos.MemPos  = NullResVar.VarPos.MemPos))
+      then
+        Exit(False);
+
       if DoRight then
         Right.VarType := Left.VarType
       else
@@ -1546,8 +1554,8 @@ begin
   begin
     if (Right.VarPos.MemPos = NullResVar.VarPos.MemPos) then
       LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
-    Left := Right;
-    Right := NullResVar;
+    //Left := Right;
+    //Right := NullResVar;
   end;
   if (op = op_UnaryPlus) then
   begin
@@ -1564,7 +1572,7 @@ begin
 
     if (not Right.HasType()) then
       EvalProc := getEvalProc(Op, FBaseType, ltUnknown)
-    else if (op <> op_Assign) or Left.VarType.CompatibleWith(Right.VarType) then
+    else if (op <> op_Assign) or CompatibleWith(Right.VarType) then
       EvalProc := getEvalProc(Op, FBaseType, Right.VarType.BaseType)
     else
       EvalProc := nil;
@@ -1579,7 +1587,10 @@ begin
           (((not Left.HasType()) or (not Right.HasType()) or  (Left.VarType.Size >= Right.VarType.Size)) and (not TryCast(True, Result))  and (not TryCast(False, Result))) or
           ((     Left.HasType() and      Right.HasType()) and (Left.VarType.Size  < Right.VarType.Size)  and (not TryCast(False, Result)) and (not TryCast(True, Result)))
         then
-          LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString])
+          if Right.HasType() then
+            LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString ])
+          else
+            LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, LapeTypeToString(ltUnknown)])
         else
           Exit
       else if (op in UnaryOperators) then
