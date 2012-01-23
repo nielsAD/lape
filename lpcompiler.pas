@@ -663,6 +663,7 @@ begin
 
   addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System').isConstant := True;
 
+  addGlobalType(TLapeType_Label.Create(Self), '!label');
   addGlobalType(getBaseType(ltString).createCopy(), 'String');
   addGlobalType(getBaseType(ltChar).createCopy(), 'Char');
   addGlobalType(getBaseType(ltEvalBool).createCopy(), 'EvalBool');
@@ -1760,6 +1761,8 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
           else
             LapeException(lpeOutOfTypeRange, Tokenizer.DocPos);
         end
+      else if (TypeExpr <> nil) and (TypeExpr is TLapeTree_InternalMethod_Label) then
+        Result := getGlobalType('!label')
       else if (TypeExpr <> nil) and (TypeExpr is TLapeTree_VarType) and (TLapeTree_VarType(TypeExpr).VarType <> nil) then
         Result := TLapeTree_VarType(TypeExpr).VarType
       else
@@ -2710,23 +2713,31 @@ begin
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
   FInternalMethodMap['WriteLn'] := TLapeTree_InternalMethod_WriteLn;
   FInternalMethodMap['ToStr'] := TLapeTree_InternalMethod_ToStr;
+
   FInternalMethodMap['Assert'] := TLapeTree_InternalMethod_Assert;
   FInternalMethodMap['IsScriptMethod'] := TLapeTree_InternalMethod_IsScriptMethod;
+
   FInternalMethodMap['Break'] := TLapeTree_InternalMethod_Break;
   FInternalMethodMap['Continue'] := TLapeTree_InternalMethod_Continue;
   FInternalMethodMap['Exit'] := TLapeTree_InternalMethod_Exit;
   FInternalMethodMap['New'] := TLapeTree_InternalMethod_New;
+
   FInternalMethodMap['Dispose'] := TLapeTree_InternalMethod_Dispose;
   FInternalMethodMap['SizeOf'] := TLapeTree_InternalMethod_SizeOf;
-  FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
+
   FInternalMethodMap['Low'] := TLapeTree_InternalMethod_Low;
   FInternalMethodMap['High'] := TLapeTree_InternalMethod_High;
   FInternalMethodMap['Length'] := TLapeTree_InternalMethod_Length;
   FInternalMethodMap['SetLength'] := TLapeTree_InternalMethod_SetLength;
+
+  FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
   FInternalMethodMap['Succ'] := TLapeTree_InternalMethod_Succ;
   FInternalMethodMap['Pred'] := TLapeTree_InternalMethod_Pred;
   FInternalMethodMap['Inc'] := TLapeTree_InternalMethod_Inc;
   FInternalMethodMap['Dec'] := TLapeTree_InternalMethod_Dec;
+
+  FInternalMethodMap['Label'] := TLapeTree_InternalMethod_Label;
+  FInternalMethodMap['GoTo'] := TLapeTree_InternalMethod_GoTo;
 
   addGlobalFunc([getBaseType(ltString)], [lptNormal], [TLapeGlobalVar(nil)], @_LapeWrite, '_write');
   addGlobalFunc([], [], [], @_LapeWriteLn, '_writeln');

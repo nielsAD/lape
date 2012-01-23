@@ -52,6 +52,7 @@ resourcestring
   lpeInvalidCondition = 'Invalid condition';
   lpeInvalidEvaluation = 'Invalid evaluation';
   lpeInvalidForward = 'Forwarded declaration "%s" not resolved';
+  lpeInvalidLabel = 'Invalid label';
   lpeInvalidIndex = 'Invalid index "%s"';
   lpeInvalidIterator = 'Variable cannot be used for iteration';
   lpeInvalidJump = 'Invalid jump';

@@ -305,6 +305,16 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_Label = class(TLapeTree_InternalMethod)
+  public
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_Goto = class(TLapeTree_InternalMethod)
+  public
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_Operator = class(TLapeTree_DestExprBase)
   protected
     FOperatorType: EOperator;
@@ -383,7 +393,7 @@ type
     property WithDeclRec: TLapeWithDeclRec read FWithDeclRec;
   end;
 
-  TLapeTree_VarType  = class(TLapeTree_GlobalVar)
+  TLapeTree_VarType = class(TLapeTree_GlobalVar)
   protected
     FVarType: TLapeType;
   public
@@ -2985,7 +2995,7 @@ end;
 function TLapeTree_InternalMethod_Succ.isConstant: Boolean;
 begin
   if (FConstant = bUnknown) then
-    if  (FParams.Count = 1) and (not isEmpty(FParams[0])) and FParams[0].isConstant() then
+    if (FParams.Count = 1) and (not isEmpty(FParams[0])) and FParams[0].isConstant() then
       FConstant := bTrue
     else
       FConstant := bFalse;
@@ -3313,6 +3323,48 @@ begin
     if (Pred <> nil) then
       Pred.Free();
   end;
+end;
+
+function TLapeTree_InternalMethod_Label.Compile(var Offset: Integer): TResVar;
+var
+  ResVar: TResVar;
+  Lbl: TLapeGlobalVar;
+begin
+  Result := NullResVar;
+  if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  ResVar := FParams[0].Compile(Offset);
+  FCompiler.Emitter.CheckOffset(Offset);
+
+  if (not ResVar.HasType()) or (ResVar.VarType.BaseType <> ltPointer) then
+    LapeException(lpeInvalidLabel, [FParams[0]]);
+
+  if (ResVar.VarType is TLapeType_Label) then
+  begin
+    if ResVar.isConstant or (ResVar.VarPos.MemPos <> mpMem) or (not ResVar.VarPos.GlobalVar.isNull()) then
+      LapeException(lpeInvalidLabel, [FParams[0]]);
+
+    PCodeOffset(ResVar.VarPos.GlobalVar.Ptr)^ := Offset;
+    FCompiler.Emitter.addCodePointer(ResVar.VarPos.GlobalVar.Ptr);
+    ResVar.isConstant := True;
+  end
+  else with TLapeTree_Operator.Create(op_Assign, Self) do
+  try
+    Lbl := FCompiler.getLabel(Offset);
+    Left := TLapeTree_ResVar.Create(ResVar, Self);
+    Right := TLapeTree_GlobalVar.Create(Lbl, Self);
+
+    Compile(Offset);
+    PCodePos(Lbl.Ptr)^ := Offset;
+  finally
+    Free();
+  end;
+end;
+
+function TLapeTree_InternalMethod_Goto.Compile(var Offset: Integer): TResVar;
+begin
+
 end;
 
 function TLapeTree_Operator.getLeft: TLapeTree_ExprBase;

@@ -164,8 +164,10 @@ type
     destructor Destroy; override;
 
     function CreateCopy(CopyContent: Boolean = True): TLapeGlobalVar; virtual;
-    function Equals(Other: TLapeGlobalVar): Boolean; reintroduce; virtual;
     function CompatibleWith(Other: TLapeGlobalVar): Boolean; virtual;
+
+    function isNull: Boolean; virtual;
+    function Equals(Other: TLapeGlobalVar): Boolean; reintroduce; virtual;
 
     property Ptr: Pointer read FPtr;
     property AsString: lpString read getAsString;
@@ -278,6 +280,14 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     property PType: TLapeType read FPType;
+  end;
+
+  TLapeType_Label = class(TLapeType_Pointer)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
+    function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
   end;
 
   TLapeType_Method = class(TLapeType)
@@ -554,6 +564,7 @@ type
     function getCachedConstant(Str: lpString; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar; virtual;
     function getConstant(Str: lpString; BaseType: ELapeBaseType = ltString; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar; overload; virtual;
     function getConstant(i: Int64; IntType: ELapeBaseType = ltNativeInt; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar; overload; virtual;
+    function getLabel(CodePos: Integer): TLapeGlobalVar; virtual;
 
     procedure getDestVar(var Dest, Res: TResVar; Op: EOperator); virtual;
     function getTempVar(VarType: ELapeBaseType; Lock: Integer = 1): TLapeStackTempVar; overload; virtual;
@@ -1027,6 +1038,26 @@ begin
     Result := (Res.BaseType in LapeBoolTypes) and (Res.AsInteger <> 0);
   finally
     Res.Free();
+  end;
+end;
+
+function TLapeGlobalVar.isNull: Boolean;
+var
+  i: Integer;
+  Int: Int64;
+  Item: PByteArray;
+begin
+  Int := AsInteger;
+  Result := (Int = 0);
+
+  if (not Result) and (Int = -1) and HasType() then
+  begin
+    Item := Ptr;
+    for i := 0 to Size do
+      if (Item^[i] <> 0) then
+        Exit(False);
+
+    Result := True;
   end;
 end;
 
@@ -1906,6 +1937,35 @@ begin
   end
   else
     Result := inherited;
+end;
+
+constructor TLapeType_Label.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
+begin
+  inherited Create(ACompiler, nil, AName, ADocPos);
+end;
+
+function TLapeType_Label.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
+begin
+  if (op in LabelOperators) then
+    Result := inherited
+  else
+    LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), 'label']);
+end;
+
+function TLapeType_Label.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+begin
+  if (op in LabelOperators) then
+    Result := inherited
+  else
+    LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), 'label']);
+end;
+
+function TLapeType_Label.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+begin
+  if (op in LabelOperators) then
+    Result := inherited
+  else
+    LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), 'label']);
 end;
 
 procedure TLapeType_Method.setBaseType(ABaseType: ELapeBaseType);
@@ -3619,6 +3679,16 @@ end;
 function TLapeCompilerBase.getConstant(i: Int64; IntType: ELapeBaseType = ltNativeInt; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar;
 begin
   Result := getConstant(IntToStr(i), IntType, DoGrow, ForceType);
+end;
+
+function TLapeCompilerBase.getLabel(CodePos: Integer): TLapeGlobalVar;
+begin
+  Emitter.CheckOffset(CodePos);
+  Result := addManagedVar(getGlobalType('!label').NewGlobalVarP(), True) as TLapeGlobalVar;
+
+  Result.isConstant := False;
+  PCodePos(Result.Ptr)^ := CodePos;
+  Emitter.addCodePointer(Result.Ptr);
 end;
 
 procedure TLapeCompilerBase.getDestVar(var Dest, Res: TResVar; Op: EOperator);
