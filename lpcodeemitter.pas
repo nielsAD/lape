@@ -131,6 +131,8 @@ type
     function _PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset; Pos: PDocPos = nil): Integer; overload;
     function _PopVar(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _PopVar(Pos: PDocPos = nil): Integer; overload;
+    function _JmpVar(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _JmpVar(Pos: PDocPos = nil): Integer; overload;
     function _JmpSafe(Target: TCodePos; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _JmpSafe(Target: TCodePos; Pos: PDocPos = nil): Integer; overload;
     function _JmpSafeR(Jmp: TCodeOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
@@ -561,6 +563,11 @@ begin
   Result := _op(ocPopVar, Offset, Pos);
 end;
 
+function TLapeCodeEmitterBase._JmpVar(var Offset: Integer; Pos: PDocPos = nil): Integer;
+begin
+  Result := _op(ocJmpVar, Offset, Pos);
+end;
+
 function TLapeCodeEmitterBase._JmpSafe(Target: TCodePos; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocJmpSafe, Offset, Pos);
@@ -644,6 +651,8 @@ function TLapeCodeEmitterBase._PopVarToStack(ASize: TStackOffset; VarStackOffset
   var o: Integer; begin o := -1; Result := _PopVarToStack(ASize, VarStackOffset, o, Pos); end;
 function TLapeCodeEmitterBase._PopVar(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _PopVar(o, Pos); end;
+function TLapeCodeEmitterBase._JmpVar(Pos: PDocPos = nil): Integer;
+  var o: Integer; begin o := -1; Result := _JmpVar(o, Pos); end;
 function TLapeCodeEmitterBase._JmpSafe(Target: TCodePos; Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _JmpSafe(Target, o, Pos); end;
 function TLapeCodeEmitterBase._JmpSafeR(Jmp: TCodeOffset; Pos: PDocPos = nil): Integer;

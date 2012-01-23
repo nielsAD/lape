@@ -33,6 +33,7 @@ type
     ocPopStackToVar,                                           //PopStackToVar TStackOffset TVarStackOffset
     ocPopVarToStack,                                           //PopVarToStack TStackOffset TVarStackOffset
     ocPopVar,                                                  //PopVar
+    ocJmpVar,                                                  //JmpVar
     ocJmpSafe,                                                 //JmpSafe TCodePos
     ocJmpSafeR,                                                //JmpSafeR TCodeOffset
 
@@ -342,6 +343,18 @@ var
       Inc(StackPos, Size);
     end;
     Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
+  end;
+
+  procedure DoJmpVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    Dec(StackPos, SizeOf(TCodePos));
+    //JumpTo(PCodePos(@Stack[StackPos])^);
+    InSafeJump := @Stack[StackPos];
+    if (PCodePos(InSafeJump)^ = 0) then
+      LapeException(lpeInvalidJump);
+
+    InSafeJump := PByte(PtrUInt(CodeBase) + PCodePos(InSafeJump)^);
+    HandleSafeJump();
   end;
 
   procedure DoJmpSafe; {$IFDEF Lape_Inline}inline;{$ENDIF}

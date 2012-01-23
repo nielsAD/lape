@@ -21,6 +21,7 @@ case opCode(opCodeTypeP(Code)^) of
   ocPopVar: DoPopVar();
   ocPopStackToVar: DoPopStackToVar();
   ocPopVarToStack: DoPopVarToStack();
+  ocJmpVar: DoJmpVar();
   ocJmpSafe: DoJmpSafe();
   ocJmpSafeR: DoJmpSafeR();
 

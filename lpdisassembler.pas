@@ -147,6 +147,12 @@ var
     Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
   end;
 
+  procedure DoJmpVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    _WriteLn('JmpVar');
+    Inc(Code, ocSize);
+  end;
+
   procedure DoJmpSafe; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('JmpSafe %d', [PCodePos(PtrUInt(Code) + ocSize)^]);

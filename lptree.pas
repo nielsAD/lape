@@ -3337,7 +3337,7 @@ begin
   ResVar := FParams[0].Compile(Offset);
   FCompiler.Emitter.CheckOffset(Offset);
 
-  if (not ResVar.HasType()) or (ResVar.VarType.BaseType <> ltPointer) then
+  if (not ResVar.HasType()) or (ResVar.VarType.BaseType <> ltPointer) or (not (ResVar.VarType is TLapeType_Pointer)) then
     LapeException(lpeInvalidLabel, [FParams[0]]);
 
   if (ResVar.VarType is TLapeType_Label) then
@@ -3363,8 +3363,21 @@ begin
 end;
 
 function TLapeTree_InternalMethod_Goto.Compile(var Offset: Integer): TResVar;
+var
+  tmpVar, ResVar, Param: TResVar;
 begin
+  Result := NullResVar;
+  tmpVar := NullResVar;
+  if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
+  Param := FParams[0].Compile(Offset);
+  if (not Param.HasType()) or (not (Param.VarType.BaseType in [ltPointer] + LapeProcTypes)) then
+    LapeException(lpeInvalidLabel, [FParams[0]]);
+
+  ResVar := FCompiler.getTempStackVar(ltPointer);
+  ResVar := ResVar.VarType.Eval(op_Assign, tmpVar, ResVar, Param, Offset, @_DocPos);
+  FCompiler.Emitter._JmpVar(Offset, @_DocPos);
 end;
 
 function TLapeTree_Operator.getLeft: TLapeTree_ExprBase;
