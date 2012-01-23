@@ -330,7 +330,6 @@ type
     function IndexOf(Item: lpString; Lo, Hi: Integer): Integer; override;
     procedure ImportFromArray(Arr: TLapeList_String.TTArray); override;
 
-    property Sorted: Boolean read getSorted write setSorted;
     property CaseSensitive: Boolean read FCaseSensitive;
   end;
 
@@ -570,7 +569,7 @@ var
   );
 
 function LapeCase(const Str: lpString): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function LapeHash(const Value: lpString): UInt32; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function LapeHash(const Value: lpString): UInt32;
 function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
@@ -1152,7 +1151,7 @@ begin
   Result := FSorted;
 end;
 
-procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.setSorted(Sort: Boolean; DoUpdate: Boolean = True);
+procedure TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.setSorted(Sort: Boolean; DoUpdate: Boolean);
 var
   a: TTArray;
   i: Integer;
