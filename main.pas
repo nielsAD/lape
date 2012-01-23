@@ -109,7 +109,6 @@ begin
           m.Lines.add('Compiling Time: ' + IntToStr(getTickCount - t) + 'ms.')
         else
           m.Lines.add('Error!');
-        WriteLn(ByName, ' : ', ByClass, ' : ', ByClassName);
       except
         on E: Exception do
         begin

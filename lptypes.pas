@@ -600,9 +600,6 @@ var
   lpgList: TList;
 {$ENDIF}
 
-var
-  ByName, ByClass, ByClassName: Integer;
-
 implementation
 
 uses
@@ -1838,7 +1835,6 @@ function TLapeDeclarationList.getByClass(AClass: TLapeDeclarationClass; FullClas
 var
   i, Current, GrowSize, Len: Integer;
 begin
-  Inc(ByClass);
   Result := nil;
   if (FList <> nil) and (FList.Count > 0) then
   begin
