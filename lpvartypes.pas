@@ -180,6 +180,7 @@ type
     FCompiler: TLapeCompilerBase;
     FSize: Integer;
     FInit: TInitBool;
+    FStatic: Boolean;
 
     FLo: TLapeGlobalVar;
     FHi: TLapeGlobalVar;
@@ -235,6 +236,7 @@ type
     property BaseType: ELapeBaseType read FBaseType write setBaseType;
     property BaseIntType: ELapeBaseType read getBaseIntType;
     property Size: Integer read getSize;
+    property IsStatic: Boolean read FStatic;
     property NeedInitialization: Boolean read getInitialization;
     property NeedFinalization: Boolean read getFinalization;
     property AsString: lpString read getAsString;
@@ -1131,6 +1133,7 @@ begin
 
   FBaseType := ABaseType;
   FCompiler := ACompiler;
+  FStatic := False;
   ClearCache();
 end;
 
@@ -1942,6 +1945,7 @@ end;
 constructor TLapeType_Label.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited Create(ACompiler, nil, AName, ADocPos);
+  FStatic := True;
 end;
 
 function TLapeType_Label.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
@@ -3686,7 +3690,7 @@ begin
   Emitter.CheckOffset(CodePos);
   Result := addManagedVar(getGlobalType('!label').NewGlobalVarP(), True) as TLapeGlobalVar;
 
-  Result.isConstant := False;
+  //Result.isConstant := False;
   PCodePos(Result.Ptr)^ := CodePos;
   Emitter.addCodePointer(Result.Ptr);
 end;

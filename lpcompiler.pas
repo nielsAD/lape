@@ -1921,7 +1921,7 @@ begin
         if hasDeclaration(Identifiers[i], True) then
           LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], Tokenizer.DocPos);
 
-        if isConst then
+        if isConst or VarType.IsStatic then
           DefVal := TLapeVar(addLocalDecl(VarType.NewGlobalVarP(nil, Identifiers[i])))
         else
           DefVal := addLocalVar(VarType, Identifiers[i]);

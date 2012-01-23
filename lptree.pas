@@ -3383,9 +3383,9 @@ begin
   if (not ResVar.HasType()) or (ResVar.VarType.BaseType <> ltPointer) or (not (ResVar.VarType is TLapeType_Pointer)) then
     LapeException(lpeInvalidLabel, [FParams[0]]);
 
-  if (ResVar.VarType is TLapeType_Label) then
+  if (ResVar.VarType is TLapeType_Label) and (ResVar.VarPos.MemPos = mpMem) then
   begin
-    if ResVar.isConstant or (ResVar.VarPos.MemPos <> mpMem) or (not ResVar.VarPos.GlobalVar.isNull()) then
+    if ResVar.isConstant or (not ResVar.VarPos.GlobalVar.isNull()) then
       LapeException(lpeInvalidLabel, [FParams[0]]);
 
     PCodeOffset(ResVar.VarPos.GlobalVar.Ptr)^ := Offset;
