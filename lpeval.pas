@@ -155,6 +155,21 @@ var
     '  Result := '#39'['#39'+Result+'#39']'#39';'                                        + LineEnding +
     'end;';
 
+  _LapeSwap: lpString =
+    'procedure _Swap(var a, b; Size: Int32);'                                            + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  c: Pointer;'                                                                      + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  c := GetMem(Size);'                                                               + LineEnding +
+    '  try'                                                                              + LineEnding +
+    '    Move(a, c^, Size);'                                                             + LineEnding +
+    '    Move(b, a,  Size);'                                                             + LineEnding +
+    '    Move(c^, b, Size);'                                                             + LineEnding +
+    '  finally'                                                                          + LineEnding +
+    '    FreeMem(c);'                                                                    + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    'end;';
+
   _LapeSetLength: lpString =
     'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: Int32;'                   + LineEnding +
     '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +

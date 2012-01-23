@@ -154,6 +154,7 @@ type
     constructor Create(Ident: TLapeTree_ExprBase; ASource: TLapeTree_Base); overload; virtual;
     constructor Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base); overload; virtual;
     constructor Create(Ident: TLapeType; ASource: TLapeTree_Base); overload; virtual;
+    constructor Create(Ident: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); overload; virtual;
     constructor Create(Ident: lpString; ASource: TLapeTree_Base); overload; virtual;
     destructor Destroy; override;
 
@@ -228,6 +229,12 @@ type
   TLapeTree_InternalMethod_Dispose = class(TLapeTree_InternalMethod)
   public
     FunctionOnly: Boolean;
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_Swap = class(TLapeTree_InternalMethod)
+  public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
@@ -1542,6 +1549,12 @@ begin
   Create(TLapeTree_VarType.Create(Ident, ASource), ASource);
 end;
 
+constructor TLapeTree_Invoke.Create(Ident: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  Assert(ACompiler <> nil);
+  Create(TLapeTree_GlobalVar.Create(ACompiler[Ident], ACompiler, ADocPos), ACompiler, ADocPos);
+end;
+
 constructor TLapeTree_Invoke.Create(Ident: lpString; ASource: TLapeTree_Base);
 begin
   Assert((ASource <> nil) and (ASource.Compiler <> nil));
@@ -2224,7 +2237,7 @@ end;
 
 constructor TLapeTree_InternalMethod_Assert.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  inherited Create(ACompiler['_assert'], Self);
+  inherited Create('_assert', ACompiler, ADocPos);
 end;
 
 function TLapeTree_InternalMethod_Assert.Compile(var Offset: Integer): TResVar;
@@ -2531,6 +2544,36 @@ begin
       end;
 
   Param.Spill(1);
+end;
+
+constructor TLapeTree_InternalMethod_Swap.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited Create('_swap', ACompiler, ADocPos);
+end;
+
+function TLapeTree_InternalMethod_Swap.Compile(var Offset: Integer): TResVar;
+var
+  Type1, Type2: TLapeType;
+begin
+  Result := NullResVar;
+  if (FParams.Count <> 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
+
+  Type1 := FParams[0].resType();
+  Type2 := FParams[1].resType();
+
+  if ((Type1 <> nil) <> (Type2 <> nil)) or
+     (Type1.Size <> Type2.Size) or
+     ((Type1 <> nil) and (not Type1.Equals(Type2)))
+  then
+    LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], [Self]);
+
+  addParam(TLapeTree_Integer.Create(Type1.Size, Self));
+  try
+    inherited;
+  finally
+    FParams.Delete(2).Free();
+  end;
 end;
 
 constructor TLapeTree_InternalMethod_SizeOf.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

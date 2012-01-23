@@ -697,6 +697,7 @@ begin
     Format(_LapeToString_Set, ['Small', Ord(High(ELapeSmallEnum))]) +
     Format(_LapeToString_Set, ['Large', Ord(High(ELapeLargeEnum))]) +
     _LapeToString_Array +
+    _LapeSwap +
     _LapeSetLength
   );
 end;
@@ -2720,9 +2721,11 @@ begin
   FInternalMethodMap['Break'] := TLapeTree_InternalMethod_Break;
   FInternalMethodMap['Continue'] := TLapeTree_InternalMethod_Continue;
   FInternalMethodMap['Exit'] := TLapeTree_InternalMethod_Exit;
-  FInternalMethodMap['New'] := TLapeTree_InternalMethod_New;
 
+  FInternalMethodMap['New'] := TLapeTree_InternalMethod_New;
   FInternalMethodMap['Dispose'] := TLapeTree_InternalMethod_Dispose;
+
+  FInternalMethodMap['Swap'] := TLapeTree_InternalMethod_Swap;
   FInternalMethodMap['SizeOf'] := TLapeTree_InternalMethod_SizeOf;
 
   FInternalMethodMap['Low'] := TLapeTree_InternalMethod_Low;
