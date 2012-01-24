@@ -459,6 +459,7 @@ type
 
 const
   op_Invoke = op_Index;
+  op_Label = op_Addr;
 
   {$IFNDEF FPC}
   LineEnding = #13#10;

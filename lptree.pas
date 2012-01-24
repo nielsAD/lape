@@ -152,10 +152,10 @@ type
   public
     constructor Create(Ident: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(Ident: TLapeTree_ExprBase; ASource: TLapeTree_Base); overload; virtual;
-    constructor Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base); overload; virtual;
-    constructor Create(Ident: TLapeType; ASource: TLapeTree_Base); overload; virtual;
     constructor Create(Ident: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); overload; virtual;
     constructor Create(Ident: lpString; ASource: TLapeTree_Base); overload; virtual;
+    constructor Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base); overload; virtual;
+    constructor Create(Ident: TLapeType; ASource: TLapeTree_Base); overload; virtual;
     destructor Destroy; override;
 
     procedure ClearCache; override;
@@ -174,9 +174,12 @@ type
 
   TLapeTree_InternalMethodClass = class of TLapeTree_InternalMethod;
   TLapeTree_InternalMethod = class(TLapeTree_Invoke)
+  private
+    FForceParam: Boolean;
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     procedure ClearCache; override;
+    property ForceParam: Boolean read FForceParam;
   end;
 
   TLapeTree_InternalMethod_Write = class(TLapeTree_InternalMethod)
@@ -314,11 +317,13 @@ type
 
   TLapeTree_InternalMethod_Label = class(TLapeTree_InternalMethod)
   public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
   TLapeTree_InternalMethod_Goto = class(TLapeTree_InternalMethod)
   public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
@@ -1539,16 +1544,6 @@ begin
   FCompilerOptions := ASource.CompilerOptions;
 end;
 
-constructor TLapeTree_Invoke.Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base);
-begin
-  Create(TLapeTree_GlobalVar.Create(Ident, ASource), ASource);
-end;
-
-constructor TLapeTree_Invoke.Create(Ident: TLapeType; ASource: TLapeTree_Base);
-begin
-  Create(TLapeTree_VarType.Create(Ident, ASource), ASource);
-end;
-
 constructor TLapeTree_Invoke.Create(Ident: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
@@ -1559,6 +1554,16 @@ constructor TLapeTree_Invoke.Create(Ident: lpString; ASource: TLapeTree_Base);
 begin
   Assert((ASource <> nil) and (ASource.Compiler <> nil));
   Create(TLapeTree_GlobalVar.Create(ASource.Compiler[Ident], ASource), ASource);
+end;
+
+constructor TLapeTree_Invoke.Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base);
+begin
+  Create(TLapeTree_GlobalVar.Create(Ident, ASource), ASource);
+end;
+
+constructor TLapeTree_Invoke.Create(Ident: TLapeType; ASource: TLapeTree_Base);
+begin
+  Create(TLapeTree_VarType.Create(Ident, ASource), ASource);
 end;
 
 destructor TLapeTree_Invoke.Destroy;
@@ -2111,6 +2116,7 @@ constructor TLapeTree_InternalMethod.Create(ACompiler: TLapeCompilerBase; ADocPo
 begin
   inherited Create(TLapeTree_ExprBase(nil), ACompiler, ADocPos);
   FConstant := bFalse;
+  FForceParam := False;
 end;
 
 procedure TLapeTree_InternalMethod.ClearCache;
@@ -2123,6 +2129,7 @@ var
   _Write: TLapeGlobalVar;
 begin
   inherited;
+  FForceParam := True;
 
   _Write := ACompiler['_write'];
   if (_Write <> nil) and (_Write.VarType is TLapeType_OverloadedMethod) then
@@ -3368,6 +3375,12 @@ begin
   end;
 end;
 
+constructor TLapeTree_InternalMethod_Label.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FForceParam := True;;
+end;
+
 function TLapeTree_InternalMethod_Label.Compile(var Offset: Integer): TResVar;
 var
   ResVar: TResVar;
@@ -3403,6 +3416,12 @@ begin
   finally
     Free();
   end;
+end;
+
+constructor TLapeTree_InternalMethod_Goto.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FForceParam := True;
 end;
 
 function TLapeTree_InternalMethod_Goto.Compile(var Offset: Integer): TResVar;

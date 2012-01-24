@@ -127,6 +127,7 @@ type
     function ParseMethod(FuncForwards: TLapeFuncForwards; isExternal: Boolean = False): TLapeTree_Method; overload; virtual;
     function ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False; ScopedEnums: Boolean = False): TLapeType; virtual;
     procedure ParseTypeBlock; virtual;
+    procedure ParseLabelBlock; virtual;
     function ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList; virtual;
 
     function ParseExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True): TLapeTree_ExprBase; virtual;
@@ -1111,6 +1112,10 @@ begin
           tk_kw_Function, tk_kw_Procedure: addDelayedExpression(ParseMethod(FuncForwards));
           tk_kw_Type: ParseTypeBlock();
 
+          {$IFDEF Lape_PascalLabels}
+          tk_kw_Label: ParseLabelBlock();
+          {$ENDIF}
+
           else if (lcoLooseSyntax in FOptions) and (not StopAfterBeginEnd) then
             Statement := ParseStatement(False)
           else
@@ -1734,7 +1739,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     Range: TLapeRange;
     RangeType: TLapeType;
   begin
-    TypeExpr := ParseTypeExpression([tk_sym_Equals, tk_op_Assign, tk_sym_ParenthesisClose], False);
+    TypeExpr := ParseTypeExpression([tk_sym_Equals, tk_op_Assign, tk_sym_ParenthesisClose, tk_sym_SemiColon], False);
     try
       if (TypeExpr <> nil) and (TypeExpr is TLapeTree_Range) then
       begin
@@ -1847,6 +1852,23 @@ begin
       TypeForwards.Delete(0).Free();
     TypeForwards.Free();
   end;
+end;
+
+procedure TLapeCompiler.ParseLabelBlock;
+var
+  i: Integer;
+  Identifiers: TStringArray;
+  VarType: TLapeType;
+begin
+  Identifiers := ParseIdentifierList(True);
+  ParseExpressionEnd(tk_sym_SemiColon, False, True);
+
+  VarType := getGlobalType('!label');
+  for i := 0 to High(Identifiers) do
+    if hasDeclaration(Identifiers[i], True) then
+      LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], Tokenizer.DocPos)
+    else
+      addLocalDecl(VarType.NewGlobalVarP(nil, Identifiers[i]));
 end;
 
 function TLapeCompiler.ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList;
@@ -2272,6 +2294,12 @@ begin
                 _LastNode := _Var
               else
               begin
+                if (Method is TLapeTree_InternalMethod) and
+                   TLapeTree_InternalMethod(Method).ForceParam and
+                   (not (Tokenizer.Tok in ReturnOn))
+                then
+                  Method.addParam(EnsureExpression(ParseExpression(ReturnOn, False)));
+
                 VarStack.Push(Method);
                 Method := nil;
               end;
@@ -2321,6 +2349,23 @@ begin
               LapeException(lpeLostClosingParenthesis, Tokenizer.DocPos);
             Dec(InExpr);
           end;
+
+        {$IFDEF Lape_PascalLabels}
+        tk_sym_Colon:
+          begin
+            PopOpStack(op_Label);
+            if (Method <> nil) then
+              LapeException(lpeCannotEvalConstProc, Tokenizer.DocPos);
+
+            Method := TLapeTree_InternalMethod_Label.Create(Self, getPDocPos());
+            Method.addParam(VarStack.Pop());
+            VarStack.Push(Method);
+
+            Method := nil;
+            Next();
+            Break;
+          end;
+        {$ENDIF}
 
         ParserToken_FirstOperator..ParserToken_LastOperator: ParseOperator();
         else
