@@ -2536,7 +2536,7 @@ begin
 
     while (not (Tokenizer.Tok in [tk_Null, tk_kw_Else, tk_kw_End])) do
     begin
-      Expr := ParseTypeExpression([], False);
+      Expr := ParseTypeExpression([tk_sym_Comma, tk_sym_Colon], False);
       Field := TLapeTree_MultiIf.Create(nil, Self, @Expr._DocPos);
       repeat
         Field.addValue(Expr);
@@ -2545,7 +2545,7 @@ begin
         if (Tokenizer.Tok = tk_sym_Colon) then
           Break
         else
-          Expr := ParseTypeExpression();
+          Expr := ParseTypeExpression([tk_sym_Comma, tk_sym_Colon]);
       until False;
 
       Field.Body := ParseStatement();
