@@ -80,8 +80,8 @@ resourcestring
   lpeVariableOfTypeExpected = 'Expected variable of type "%s", got "%s"';
   lpeWrongNumberParams = 'Wrong number of parameters found, expected %d';
 
-procedure LapeException(Msg: lpString); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
-procedure LapeException(Msg: lpString; DocPos: TDocPos); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
+procedure LapeException(Msg: lpString); overload;
+procedure LapeException(Msg: lpString; DocPos: TDocPos); overload;
 procedure LapeException(Msg: lpString; DocPos: array of TLapeBaseDeclClass); overload;
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const); overload;
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: TDocPos); overload;
@@ -89,18 +89,41 @@ procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of
 
 implementation
 
+{$IFDEF Delphi}
+function ReturnAddr: Pointer;
+asm
+  MOV  EAX, [EBP+4]
+end;
+{$ENDIF}
+
+procedure _LapeException(Msg: lpString); inline;
+{$IFDEF FPC}
+begin
+  raise lpException.Create(Msg) at get_caller_addr(get_frame);
+end;
+{$ELSE}
+begin
+  raise lpException.Create(Msg) at ReturnAddr;
+end;
+{$ENDIF}
+
+function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString; inline;
+begin
+  Result := Msg;
+  if (DocPos.Line > 0) and (DocPos.Col > 0) then
+    Result := Format(lpeExceptionAt, [Result, DocPos.Line, DocPos.Col]);
+  if (DocPos.FileName <> '') then
+    Result := Format(lpeExceptionIn, [Result, DocPos.FileName]);
+end;
+
 procedure LapeException(Msg: lpString);
 begin
-  raise lpException.Create(Msg);
+  _LapeException(Msg);
 end;
 
 procedure LapeException(Msg: lpString; DocPos: TDocPos);
 begin
-  if (DocPos.Line > 0) and (DocPos.Col > 0) then
-    Msg := Format(lpeExceptionAt, [Msg, DocPos.Line, DocPos.Col]);
-  if (DocPos.FileName <> '') then
-    Msg := Format(lpeExceptionIn, [Msg, DocPos.FileName]);
-  LapeException(Msg);
+  _LapeException(FormatLocation(Msg, DocPos));
 end;
 
 procedure LapeException(Msg: lpString; DocPos: array of TLapeBaseDeclClass);
@@ -113,41 +136,37 @@ begin
        (DocPos[i].DocPos.Line <> NullDocPos.Line)
     then
     begin
-      LapeException(Msg, DocPos[i].DocPos);
+      _LapeException(FormatLocation(Msg, DocPos[i].DocPos));
       Exit;
     end;
-  LapeException(Msg);
+  _LapeException(Msg);
 end;
 
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const);
 begin
-  LapeException(Format(Msg, Args));
+  _LapeException(Format(Msg, Args));
 end;
 
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: TDocPos);
 begin
-  Msg := Format(Msg, Args);
-  if (DocPos.Line > 0) and (DocPos.Col > 0) then
-    Msg := Format(lpeExceptionAt, [Msg, DocPos.Line, DocPos.Col]);
-  if (DocPos.FileName <> '') then
-    Msg := Format(lpeExceptionIn, [Msg, DocPos.FileName]);
-  LapeException(Msg);
+  _LapeException(FormatLocation(Format(Msg, Args), DocPos));
 end;
 
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of TLapeBaseDeclClass);
 var
   i: Integer;
 begin
+  Msg := Format(Msg, Args);
   for i := 0 to High(DocPos) do
     if (DocPos[i] <> nil) and
        (DocPos[i].DocPos.Col <> NullDocPos.Col) and
        (DocPos[i].DocPos.Line <> NullDocPos.Line)
     then
     begin
-      LapeExceptionFmt(Msg, Args, DocPos[i].DocPos);
+      _LapeException(FormatLocation(Msg, DocPos[i].DocPos));
       Exit;
     end;
-  LapeExceptionFmt(Msg, Args);
+  _LapeException(Msg);
 end;
 
 end.
