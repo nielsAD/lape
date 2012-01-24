@@ -268,6 +268,7 @@ type
 
   TLapeTree_InternalMethod_High = class(TLapeTree_InternalMethod)
   public
+    procedure ClearCache; override;
     function isConstant: Boolean; override;
     function resType: TLapeType; override;
     function Evaluate: TLapeGlobalVar; override;
@@ -2721,6 +2722,12 @@ begin
   LapeException(lpeCannotEvalRunTime, DocPos);
 end;
 
+procedure TLapeTree_InternalMethod_High.ClearCache;
+begin
+  FConstant := bUnknown;
+  inherited;
+end;
+
 function TLapeTree_InternalMethod_High.isConstant: Boolean;
 var
   ParamType: TLapeType;
@@ -3604,7 +3611,7 @@ begin
           (LeftType.BaseType in LapeBoolTypes) and (RightType <> nil) and (RightType.BaseType in LapeBoolTypes)))
       then
       begin
-        tmpLeft := FLeft as TLapeTree_ExprBase;
+        tmpLeft := FLeft.FoldConstants(True) as TLapeTree_ExprBase;
         if (FOperatorType = op_IN) then
           FLeft := TLapeTree_MultiIf.Create(tmpLeft, FRight as TLapeTree_OpenArray)
         else
@@ -3625,7 +3632,7 @@ begin
           begin
             Left := TLapeTree_ResVar.Create(ResVar, Self);
             if (Self.FOperatorType = op_AND) then
-              Right := Self.FRight
+              Right := Self.FRight.FoldConstants() as TLapeTree_ExprBase
             else
               Right := TLapeTree_GlobalVar.Create('True', ResVar.VarType.BaseType, Self);
           end;
@@ -3635,7 +3642,7 @@ begin
           begin
             Left := TLapeTree_ResVar.Create(ResVar, Self);
             if (Self.FOperatorType = op_OR) then
-              Right := Self.FRight
+              Right := Self.FRight.FoldConstants() as TLapeTree_ExprBase
             else
               Right := TLapeTree_GlobalVar.Create('False', ResVar.VarType.BaseType, Self);
           end;
