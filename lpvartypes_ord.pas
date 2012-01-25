@@ -191,14 +191,26 @@ begin
 end;
 
 function TLapeType_Integer{$IFNDEF FPC}<_Type>{$ENDIF}.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
-{$IFNDEF FPC}var a: Int64; b: PType;{$ENDIF}
+{$IFNDEF FPC}var i64: Int64; ui64: UInt64; t: PType;{$ENDIF}
 begin
-  {$IFDEF FPC}
-  Result := NewGlobalVar(StrToInt64(Str), AName, ADocPos);
-  {$ELSE}
-  a := StrToInt64(Str); b := @a;
-  Result := NewGlobalVar(b^ , AName, ADocPos);
-  {$ENDIF}
+  if {(Length(Str) > 1) and (Str[1] <> '-')} (BaseType in LapeUnsignedIntegerTypes) then
+  begin
+    {$IFDEF FPC}
+    Result := NewGlobalVar(StrToQWord(Str), AName, ADocPos);
+    {$ELSE}
+    ui64 := StrToUInt64(Str); t := @ui64;
+    Result := NewGlobalVar(t^ , AName, ADocPos);
+    {$ENDIF}
+  end
+  else
+  begin
+    {$IFDEF FPC}
+    Result := NewGlobalVar(StrToInt64(Str), AName, ADocPos);
+    {$ELSE}
+    i64 := StrToInt64(Str); t := @i64;
+    Result := NewGlobalVar(t^ , AName, ADocPos);
+    {$ENDIF}
+  end;
 end;
 
 function TLapeType_Float{$IFNDEF FPC}<_Type>{$ENDIF}.NewGlobalVar(Val: _Type; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
