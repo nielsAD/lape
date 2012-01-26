@@ -191,7 +191,12 @@ begin
 end;
 
 function TLapeType_Integer{$IFNDEF FPC}<_Type>{$ENDIF}.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
-{$IFNDEF FPC}var i64: Int64; ui64: UInt64; t: PType;{$ENDIF}
+{$IFNDEF FPC}
+var
+  i64: Int64;
+  ui64: UInt64;
+  t: PType;
+{$ENDIF}
 begin
   if {(Length(Str) > 1) and (Str[1] <> '-')} (BaseType in LapeUnsignedIntegerTypes) then
   begin

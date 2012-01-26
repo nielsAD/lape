@@ -2266,7 +2266,6 @@ var
   tmpVar, DestVar, Param: TResVar;
 begin
   Result := NullResVar;
-  FDest := NullResVar;
   if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
@@ -2287,6 +2286,16 @@ begin
   FCompiler.Emitter._IsInternal(Offset, @_DocPos);
   Result.VarPos.MemPos := mpStack;
   Result.VarType := resType();
+
+  if (FDest.VarPos.MemPos = mpVar) and ((not FDest.HasType()) or FDest.VarType.Equals(Result.VarType)) then
+  begin
+    if (not FDest.HasType()) then
+      FDest := _ResVar.New(Compiler.getTempVar(Result.VarType));
+    FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
+    Result := FDest;
+  end
+  else
+    FDest.Spill();
 end;
 
 function TLapeTree_InternalMethod_Break.Compile(var Offset: Integer): TResVar;
