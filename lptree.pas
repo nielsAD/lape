@@ -1575,7 +1575,10 @@ begin
     if (FParams[i] <> nil) and (FParams[i].Parent = Self) then
       FParams[i].Free();
   FreeAndNil(FParams);
+
   setIdent(nil);
+  if (FRealIdent <> nil) then
+    FRealIdent.Free();
 
   inherited;
 end;
@@ -2580,8 +2583,10 @@ begin
   Type2 := FParams[1].resType();
 
   if ((Type1 <> nil) <> (Type2 <> nil)) or
-     (Type1.Size <> Type2.Size) or
-     ((Type1 <> nil) and (not Type1.Equals(Type2)))
+      (Type1 <> nil) and (
+       (Type1.Size = 0) or
+       (Type1.Size <> Type2.Size) or
+       (not Type1.Equals(Type2)))
   then
     LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], [Self]);
 

@@ -1874,7 +1874,7 @@ end;
 function TLapeCompiler.ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList;
 var
   i: Integer;
-  isConst: Boolean;
+  isConst, wasShortCircuit: Boolean;
   Identifiers: TStringArray;
   VarType: TLapeType;
   Default: TLapeTree_ExprBase;
@@ -1886,8 +1886,11 @@ begin
   try
 
     isConst := (Tokenizer.Tok = tk_kw_Const);
-    Next();
+    wasShortCircuit := isConst and (lcoShortCircuit in FOptions);
+    if wasShortCircuit then
+      FOptions := FOptions - [lcoShortCircuit];
 
+    Next();
     repeat
       VarType := nil;
       Default := nil;
@@ -1970,6 +1973,8 @@ begin
       end;
     until OneOnly or (Next() <> tk_Identifier);
 
+    if wasShortCircuit then
+      FOptions := FOptions + [lcoShortCircuit];
   except
     Result.Free();
     if (Default <> nil) then
