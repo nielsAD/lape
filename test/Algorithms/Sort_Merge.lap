@@ -1,0 +1,72 @@
+{
+  Author: Frédéric Hannes (http://forums.scar-divi.com/showthread.php?730-Sorting-Algorithms)
+  Adjusted to compile with Lape.
+  
+  MergeSort:
+    Divides up the array into 2 parts recursively until it can no longer be divided because there's only a single item
+	left in the sub-array. After doing this it recurses back up, merging the 2 sorted sub-arrays by looping through the 2
+	parts, placing the smallest item currently in either one first in the resulting array. The 2 sub-arrays in the
+	lowest recursion level is always sorted as it contains a single item.
+}
+
+procedure Merge(var Arr, Aux: array of Int32; const Lo, Mid, Hi: Int32);
+var
+  LHalf, RHalf, Index: Int32;
+begin
+  LHalf := Lo;
+  RHalf := Mid + 1;
+
+  for Index := Lo to Hi do
+    Aux[Index] := Arr[Index];
+
+  for Index := Lo to Hi do
+    if LHalf > Mid then
+    begin
+      Arr[Index] := Aux[RHalf];
+      Inc(RHalf);
+    end else if RHalf > Hi then
+    begin
+      Arr[Index] := Aux[LHalf];
+      Inc(LHalf);
+    end else if Aux[RHalf] < Aux[LHalf] then
+    begin
+      Arr[Index] := Aux[RHalf];
+      Inc(RHalf);
+    end else
+    begin
+      Arr[Index] := Aux[LHalf];
+      Inc(LHalf);
+    end;
+end;
+
+procedure Sort(var Arr, Aux: array of Int32; const Lo, Hi: Int32);
+var
+  Mid: Int32;
+begin
+  if Lo >= Hi then Exit;
+
+  Mid := Lo + (Hi - Lo) div 2;
+
+  Sort(Arr, Aux, Lo, Mid);
+  Sort(Arr, Aux, Mid + 1, Hi);
+  Merge(Arr, Aux, Lo, Mid, Hi);
+end;
+
+procedure MergeSort(var Arr: array of Int32);
+var
+  Len: Int32;
+  Aux: array of Int32;
+begin
+  Len := Length(Arr);
+  if Len <= 1 then Exit;
+  SetLength(Aux, Len);
+  Sort(Arr, Aux, 0, Len - 1);
+end;
+
+var
+  TIA: array of Int32;
+begin
+  TIA := [1, 6, 2, 4, 3, 5, 1, 2, 7, 1];
+  MergeSort(TIA);
+  WriteLn(TIA);
+end.

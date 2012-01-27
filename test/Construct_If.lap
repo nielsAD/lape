@@ -1,0 +1,30 @@
+procedure TestIf(Param: Integer);
+begin
+  if (Param > 0) then
+    if Param then
+      {nothing}
+    else
+      {nothing}
+  else
+    WriteLn('Nothing eh');
+
+  if Param then
+    WriteLn('Si')
+  else
+    WriteLn('No');
+end;
+
+const
+  DoIt = True;
+begin
+  if DoIt then
+    if (not DoIt) then
+      WriteLn('Impossible')
+    else
+      TestIf(Ord(DoIt))
+  else
+    if (not DoIt) then
+      TestIf(Ord(DoIt))
+    else
+      WriteLn('Impossible');
+end;

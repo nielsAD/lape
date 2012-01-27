@@ -1,0 +1,25 @@
+var
+  a, b: Integer;
+begin
+  a := 100;
+  b := 0;
+  try
+    WriteLn(a div b);
+  except
+    WriteLn('Exception!');
+  end;
+
+  try
+    WriteLn(a div b);
+  except
+    WriteLn('Exception!');
+  finally
+    WriteLn('Finally here!');
+  end;
+
+  try
+    Write('Start - ');
+  finally
+    WriteLn('Finish');
+  end;
+end;

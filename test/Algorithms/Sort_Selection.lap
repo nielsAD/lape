@@ -1,0 +1,31 @@
+{
+  Author: Frédéric Hannes (http://forums.scar-divi.com/showthread.php?730-Sorting-Algorithms)
+  Adjusted to compile with Lape.
+  
+  SelectionSort:
+    Loops through the array, it finds the smallest item in the array and swaps it
+	with the item at it's current index.
+}
+
+procedure SelectionSort(var Arr: array of Int32);
+var
+  CurIndex, TmpIndex, Hi, Min: Int32;
+begin
+  Hi := High(Arr);
+  for CurIndex := 0 to Hi do
+  begin
+    Min := CurIndex;
+    for TmpIndex := CurIndex + 1 to Hi do
+      if Arr[Min] > Arr[TmpIndex] then
+        Min := TmpIndex;
+    Swap(Arr[Min], Arr[CurIndex]);
+  end;
+end;
+
+var
+  TIA: array of Int32;
+begin
+  TIA := [1, 6, 2, 4, 3, 5, 1, 2, 7, 1];
+  SelectionSort(TIA);
+  WriteLn(TIA);
+end.

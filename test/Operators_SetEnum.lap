@@ -1,0 +1,38 @@
+{$assertions on}
+
+type
+  TMyEnum = (enum1, enum2, enum3, enum4);
+  TMySet = set of TMyEnum;
+
+var
+  a: TMyEnum;
+  b: TMySet;
+begin
+  a := enum3;
+  Assert(a =  enum3, 'a <> enum3');
+  Assert(a <> enum1, 'a = enum1');
+
+  b := [enum1, enum4];
+  Assert(b = [enum1, enum4],  'b <> [enum1, enum4]');
+  Assert(b <> [enum1, enum3], 'b = [enum1, enum3]');
+  Assert(not (a in b),        'a in b');
+
+  b := b + a;
+  Assert(b = [enum1, enum3..enum4], 'b <> [enum1, enum3..enum4]');
+
+  Assert(a in b,              'a not in b');
+  Assert([enum3..enum4] <= b, 'not ([enum3..enum4] <= b)');
+
+  b := b - [enum1];
+  Assert(b = [enum3..enum4], 'b <> [enum3..enum4]');
+
+  b := b * [enum2..enum3];
+  Assert(b = [enum3], 'b <> [enum3]');
+
+  Inc(a);
+  Assert(a = enum4, 'a <> enum4');
+
+  WriteLn('Passed');
+end;
+
+

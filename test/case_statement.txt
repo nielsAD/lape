@@ -1,2 +1,0 @@
-Hello!
-Default value of boolean is FALSE

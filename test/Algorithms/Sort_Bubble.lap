@@ -1,0 +1,28 @@
+{
+  Author: Frédéric Hannes (http://forums.scar-divi.com/showthread.php?730-Sorting-Algorithms)
+  Adjusted to compile with Lape.
+  
+  BubbleSort:
+    Every time it loops through the array, it moves the largest item it can find to the back of unsorted area of the array,
+    it repeats this until all items have been sorted. It moves the largest item to the back until it finds a larger item on
+    the way with which it continues until it's moving the largest item in the array.
+}
+
+procedure BubbleSort(var Arr: array of Int32);
+var
+  CurIndex, TmpIndex, Hi: Int32;
+begin
+  Hi := High(Arr);
+  for CurIndex := 0 to Hi do
+    for TmpIndex := 1 to Hi - CurIndex do
+      if Arr[TmpIndex - 1] > Arr[TmpIndex] then
+        Swap(Arr[TmpIndex - 1], Arr[TmpIndex]);
+end;
+
+var
+  TIA: array of Int32;
+begin
+  TIA := [1, 6, 2, 4, 3, 5, 1, 2, 7, 1];
+  BubbleSort(TIA);
+  WriteLn(TIA);
+end.

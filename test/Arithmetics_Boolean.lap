@@ -1,0 +1,105 @@
+{$assertions on}
+
+procedure Test_Boolean;
+const
+  _a: Boolean = True;
+  _b: Boolean = False;
+  res: Boolean = ((_a and _b) xor (_a and not _b)) or (not _a and not _b);
+var
+  a, b: Boolean;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(not Low(a), 'Low');
+  Assert(   High(a), 'High');
+
+  Assert(a = True,  'a <> True');
+  Assert(b = False, 'b <> False');
+  Assert(not b, 'b <> False');
+
+  Assert(a = not b, 'a <> not b');
+  Assert(b = not a, 'b <> not a');
+
+  Assert(((a and b) xor (a and not b)) or (not a and not b) = res, 'res');
+end;
+
+procedure Test_ByteBool;
+const
+  _a: ByteBool = True;
+  _b: ByteBool = False;
+  res: ByteBool = ((_a and _b) xor (_a and not _b)) or (not _a and not _b);
+var
+  a, b: ByteBool;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(not Low(a), 'Low');
+  Assert(   High(a), 'High');
+
+  Assert(a = True,  'a <> True');
+  Assert(b = False, 'b <> False');
+  Assert(not b, 'b <> False');
+
+  Assert(a = not b, 'a <> not b');
+  Assert(b = not a, 'b <> not a');
+
+  Assert(((a and b) xor (a and not b)) or (not a and not b) = res, 'res');
+end;
+
+procedure Test_WordBool;
+const
+  _a: WordBool = True;
+  _b: WordBool = False;
+  res: WordBool = ((_a and _b) xor (_a and not _b)) or (not _a and not _b);
+var
+  a, b: WordBool;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(not Low(a), 'Low');
+  Assert(   High(a), 'High');
+
+  Assert(a = True,  'a <> True');
+  Assert(b = False, 'b <> False');
+  Assert(not b, 'b <> False');
+
+  Assert(a = not b, 'a <> not b');
+  Assert(b = not a, 'b <> not a');
+
+  Assert(((a and b) xor (a and not b)) or (not a and not b) = res, 'res');
+end;
+
+procedure Test_LongBool;
+const
+  _a: LongBool = True;
+  _b: LongBool = False;
+  res: LongBool = ((_a and _b) xor (_a and not _b)) or (not _a and not _b);
+var
+  a, b: LongBool;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(not Low(a), 'Low');
+  Assert(   High(a), 'High');
+
+  Assert(a = True,  'a <> True');
+  Assert(b = False, 'b <> False');
+  Assert(not b, 'b <> False');
+
+  Assert(a = not b, 'a <> not b');
+  Assert(b = not a, 'b <> not a');
+
+  Assert(((a and b) xor (a and not b)) or (not a and not b) = res, 'res');
+end;
+
+begin
+  Test_Boolean();  WriteLn('Boolean  :: Passed');
+  Test_ByteBool(); WriteLn('ByteBool :: Passed');
+  Test_WordBool(); WriteLn('WordBool :: Passed');
+  Test_LongBool(); WriteLn('LongBool :: Passed');
+end;
+

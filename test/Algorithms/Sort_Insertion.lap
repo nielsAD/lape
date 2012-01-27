@@ -1,0 +1,30 @@
+{
+  Author: Frédéric Hannes (http://forums.scar-divi.com/showthread.php?730-Sorting-Algorithms)
+  Adjusted to compile with Lape.
+  
+  InsertionSort:
+    Loops through the array, moves every item it encounters up in the array towards the start until
+	it's placed before every larger item that has been encountered so far.
+}
+
+procedure InsertionSort(var Arr: array of Int32);
+var
+  CurIndex, TmpIndex, Hi, Min: Int32;
+begin
+  Hi := High(Arr);
+  for CurIndex := 1 to Hi do
+    for TmpIndex := CurIndex downto 1 do
+    begin
+      if not (Arr[TmpIndex] < Arr[TmpIndex - 1]) then
+        Break;
+      Swap(Arr[TmpIndex - 1], Arr[TmpIndex]);
+    end;
+end;
+
+var
+  TIA: array of Int32;
+begin
+  TIA := [1, 6, 2, 4, 3, 5, 1, 2, 7, 1];
+  InsertionSort(TIA);
+  WriteLn(TIA);
+end.

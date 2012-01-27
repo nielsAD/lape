@@ -1,0 +1,164 @@
+{$assertions on}
+
+procedure Test_Single;
+const
+  _a: Single = 2.5;
+  _b: Single = 4.0E+1;
+  res: Single = (_a * _b * (((_a + _b) - (_b + _a) + (_b / _a))) / _a) / _b;
+var
+  a, b: Single;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(a = 2.5, 'a <> 2.5');
+  Assert(b = 40,  'b <> 40');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 42.5, 'a + b');
+  Assert(b + a = 42.5, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -37.5, 'a - b');
+  Assert(b - a =  37.5, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 100, 'a * b');
+  Assert(b * a = 100, 'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.0625, 'a / b');
+  Assert(b / a = 16,     'b / a');
+
+  Assert((a * b * (((a + b) - (b + a) + (b / a))) / a) / b = res, 'res');
+end;
+
+procedure Test_Double;
+const
+  _a: Double = 2.5;
+  _b: Double = 4.0E+1;
+  res: Double = (_a * _b * (((_a + _b) - (_b + _a) + (_b / _a))) / _a) / _b;
+var
+  a, b: Double;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(a = 2.5, 'a <> 2.5');
+  Assert(b = 40,  'b <> 40');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 42.5, 'a + b');
+  Assert(b + a = 42.5, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -37.5, 'a - b');
+  Assert(b - a =  37.5, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 100, 'a * b');
+  Assert(b * a = 100, 'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.0625, 'a / b');
+  Assert(b / a = 16,     'b / a');
+
+  Assert((a * b * (((a + b) - (b + a) + (b / a))) / a) / b = res, 'res');
+end;
+
+procedure Test_Extended;
+const
+  _a: Extended = 2.5;
+  _b: Extended = 4.0E+1;
+  res: Extended = (_a * _b * (((_a + _b) - (_b + _a) + (_b / _a))) / _a) / _b;
+var
+  a, b: Extended;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(a = 2.5, 'a <> 2.5');
+  Assert(b = 40,  'b <> 40');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 42.5, 'a + b');
+  Assert(b + a = 42.5, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -37.5, 'a - b');
+  Assert(b - a =  37.5, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 100, 'a * b');
+  Assert(b * a = 100, 'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.0625, 'a / b');
+  Assert(b / a = 16,     'b / a');
+
+  Assert((a * b * (((a + b) - (b + a) + (b / a))) / a) / b = res, 'res');
+end;
+
+procedure Test_Currency;
+const
+  _a: Currency = 2.5;
+  _b: Currency = 4.0E+1;
+  res: Currency = (_a * _b * (((_a + _b) - (_b + _a) + (_b / _a))) / _a) / _b;
+var
+  a, b: Currency;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(a = 2.5, 'a <> 2.5');
+  Assert(b = 40,  'b <> 40');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 42.5, 'a + b');
+  Assert(b + a = 42.5, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -37.5, 'a - b');
+  Assert(b - a =  37.5, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 100, 'a * b');
+  Assert(b * a = 100, 'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.0625, 'a / b');
+  Assert(b / a = 16,     'b / a');
+
+  Assert((a * b * (((a + b) - (b + a) + (b / a))) / a) / b = res, 'res');
+end;
+
+begin
+  Test_Single();   WriteLn('Single   :: Passed');
+  Test_Double();   WriteLn('Double   :: Passed');
+  Test_Extended(); WriteLn('Extended :: Passed');
+  Test_Currency(); WriteLn('Currency :: Passed');
+end;

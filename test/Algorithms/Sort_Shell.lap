@@ -1,0 +1,44 @@
+{
+  Author: Frédéric Hannes (http://forums.scar-divi.com/showthread.php?730-Sorting-Algorithms)
+  Adjusted to compile with Lape.
+  
+  ShellSort:
+    A special form of InsertionSort where the based on the size of the input data, the items are swapped to the top
+	of the array the same way as with InsertionSort, but in large jumps which shrinks by dividing it by 3 until it
+	reaches 1 which sorts the remaining array the same way InsertionSort does, however, at this point the array is
+	already sorted to a certain degree, making the work required to finish sorting a lot easier than by running
+	InsertionSort on the entire array.
+}
+
+procedure ShellSort(var Arr: array of Int32);
+var
+  X, CurIndex, TmpIndex, Len: Int32;
+begin
+  Len := Length(Arr);
+
+  X := 0;
+  while X < Len div 3 do
+    X := X * 3 + 1;
+
+  while X >= 1 do
+  begin
+    for CurIndex := X to Len - 1 do
+    begin
+      TmpIndex := CurIndex;
+      while (TmpIndex >= X) and (Arr[TmpIndex] < Arr[TmpIndex - X]) do
+      begin
+        Swap(Arr[TmpIndex], Arr[TmpIndex - X]);
+        DecEx(TmpIndex, X);
+      end;
+    end;
+    X := X div 3;
+  end;
+end;
+
+var
+  TIA: array of Int32;
+begin
+  TIA := [1, 6, 2, 4, 3, 5, 1, 2, 7, 1];
+  ShellSort(TIA);
+  WriteLn(TIA);
+end.

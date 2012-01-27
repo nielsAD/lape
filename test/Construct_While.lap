@@ -1,0 +1,24 @@
+procedure TestWhile(Times: Integer);
+begin
+  while (Times < -1) or (Times > 1) do
+  begin
+    Times := Times div 2;
+    WriteLn('Loop');
+  end
+  else
+    WriteLn('No loop eh');
+end;
+
+var
+  i: Integer;
+begin
+  i := -5;
+  while (i <= 5) do
+  begin
+    WriteLn('TestWhile ', i, ': ');
+    TestWhile(i);
+    WriteLn('');
+
+    i := i + 2;
+  end;
+end;

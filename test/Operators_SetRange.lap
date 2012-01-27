@@ -1,0 +1,38 @@
+{$assertions on}
+
+type
+  TMyRange = 1..4;
+  TMySet = set of TMyRange;
+
+var
+  a: TMyRange;
+  b: TMySet;
+begin
+  a := 3;
+  Assert(a =  3, 'a <> 3');
+  Assert(a <> 1, 'a = 1');
+
+  b := [1, 4];
+  Assert(b = [1, 4],   'b <> [1, 4]');
+  Assert(b <> [1, 3],  'b = [1, 3]');
+  Assert(not (a in b), 'a in b');
+
+  b := b + a;
+  Assert(b = [1, 3..4], 'b <> [1, 3..4]');
+
+  Assert(a in b,              'a not in b');
+  Assert(TMySet([3..4]) <= b, 'not ([3..4] <= b)');
+
+  b := b - [1];
+  Assert(b = [3..4], 'b <> [3..4]');
+
+  b := b * [2..3];
+  Assert(b = [3], 'b <> [3]');
+
+  Inc(a);
+  Assert(a = 4, 'a <> 4');
+
+  WriteLn('Passed');
+end;
+
+

@@ -1,9 +1,0 @@
-False
-True
-True
-False
-False
-True
-
-True = 1 = 1
-False = 0 = 0

@@ -1,0 +1,95 @@
+{$assertions on}
+
+procedure Test_ShortString;
+const
+  _a: shortstring = 'hai';
+  _b: shortstring = 'bai';
+  res: shortstring = _a + ' ' + _b;
+var
+  a, b: shortstring;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(Length(a) = 3, 'Length(a)');
+  Assert(Length(b) = 3, 'Length(b)');
+
+  Assert(a[1] = 'h', 'a[1]');
+  Assert(a[1] + b[2] + a[3] = a, 'a[1] + b[2] + a[3]');
+
+  Assert(a = 'hai', 'a <> hai');
+  Assert(b = 'bai', 'b <> bai');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 'haibai', 'a + b');
+  Assert(b + a = 'baihai', 'b + a');
+
+  Assert(a + ' ' + b = res, 'res');
+end;
+
+procedure Test_AnsiString;
+const
+  _a: ansistring = 'hai';
+  _b: ansistring = 'bai';
+  res: ansistring = _a + ' ' + _b;
+var
+  a, b: ansistring;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(Length(a) = 3, 'Length(a)');
+  Assert(Length(b) = 3, 'Length(b)');
+
+  Assert(a[1] = 'h', 'a[1]');
+  Assert(a[1] + b[2] + a[3] = a, 'a[1] + b[2] + a[3]');
+
+  Assert(a = 'hai', 'a <> hai');
+  Assert(b = 'bai', 'b <> bai');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 'haibai', 'a + b');
+  Assert(b + a = 'baihai', 'b + a');
+
+  Assert(a + ' ' + b = res, 'res');
+end;
+
+procedure Test_UnicodeString;
+const
+  _a: unicodestring = 'hai';
+  _b: unicodestring = 'bai';
+  res: unicodestring = _a + ' ' + _b;
+var
+  a, b: unicodestring;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(Length(a) = 3, 'Length(a)');
+  Assert(Length(b) = 3, 'Length(b)');
+
+  Assert(a[1] = 'h', 'a[1]');
+  Assert(a[1] + b[2] + a[3] = a, 'a[1] + b[2] + a[3]');
+
+  Assert(a = 'hai', 'a <> hai');
+  Assert(b = 'bai', 'b <> bai');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 'haibai', 'a + b');
+  Assert(b + a = 'baihai', 'b + a');
+
+  Assert(a + ' ' + b = res, 'res');
+end;
+
+begin
+  Test_ShortString();   WriteLn('ShortString   :: Passed');
+  Test_AnsiString();    WriteLn('AnsiString    :: Passed');
+  Test_UnicodeString(); WriteLn('UnicodeString :: Passed');
+end;
+

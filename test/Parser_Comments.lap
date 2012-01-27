@@ -1,0 +1,16 @@
+{Multi
+ line
+ comment
+// }
+
+//Single line comment
+
+begin
+  WriteLn((*Multi
+    line
+    comment {
+    *)
+
+    'Passed'
+  );
+end;

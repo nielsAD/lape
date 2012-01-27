@@ -1,0 +1,53 @@
+{$assertions on}
+
+begin
+  Assert(1 <  2, '1 >= 2');
+  Assert(1 <= 2, '1 > 2');
+  Assert(1 <> 2, '1 = 2');
+
+  Assert(1 <  2.0, '1 >= 2.0');
+  Assert(1 <= 2.0, '1 > 2.0');
+  Assert(1 <> 2.0, '1 = 2.0');
+
+  Assert(2 >  1, '2 <= 1');
+  Assert(2 >= 1, '2 < 1');
+  Assert(2 <> 1, '2 = 1');
+
+  Assert(2 >  1.0, '2 <= 1.0');
+  Assert(2 >= 1.0, '2 < 1.0');
+  Assert(2 <> 1.0, '2 = 1.0');
+
+  WriteLn('Numbers :: Passed');
+
+  Assert('a' <  'b', 'a >= b');
+  Assert('a' <= 'b', 'a > b');
+  Assert('a' <> 'b', 'a = b');
+
+  Assert('b' >  'a', 'b <= a');
+  Assert('b' >= 'a', 'b < a');
+  Assert('b' <> 'a', 'b = a');
+
+  WriteLn('Char    :: Passed');
+
+  Assert('ab' <  'ba', 'ab >= ba');
+  Assert('ab' <= 'ba', 'ab > ba');
+  Assert('ab' <> 'ba', 'ab = ba');
+
+  Assert('ba' >  'ab', 'ba <= ab');
+  Assert('ba' >= 'ab', 'ba < ab');
+  Assert('ba' <> 'ab', 'ba = ab');
+
+  WriteLn('String  :: Passed');
+
+  Assert(False <  True, 'False >= True');
+  Assert(False <= True, 'False > True');
+  Assert(False <> True, 'False = True');
+
+  Assert(True >  False, 'True <= False');
+  Assert(True >= False, 'True < False');
+  Assert(True <> False, 'True = False');
+
+  WriteLn('Boolean :: Passed');
+end;
+
+

@@ -1,0 +1,51 @@
+{
+  Author: Frédéric Hannes (http://forums.scar-divi.com/showthread.php?730-Sorting-Algorithms)
+  Adjusted to compile with Lape.
+  
+  HeapSort:
+    The HeapSort algorithm first transforms your array into a binary heap by sinking down smaller elements for all nodes
+	that have child nodes in the tree. Next it switches the first element with the last element in the array and decreases
+	the size of the unsorted area by 1. The element now at the top is sunk down the remaining tree which moves the largest
+	element currently present to the top of the tree. Now the process repeats.
+}
+
+procedure HeapSort(var Arr: array of Int32);
+var
+  Len, Index, Pos, Tmp: Int32;
+begin
+  Len := Length(Arr);
+  for Index := Len div 2 downto 1 do
+  begin
+    Pos := Index;
+    while Pos * 2 <= Len do
+    begin
+      Tmp := Pos * 2;
+      if (Tmp < Len) and (Arr[Tmp - 1] < Arr[Tmp]) then Inc(Tmp);
+      if not (Arr[Pos - 1] < Arr[Tmp - 1]) then Break;
+      Swap(Arr[Pos - 1], Arr[Tmp - 1]);
+      Pos := Tmp;
+    end;
+  end;
+  while Len > 0 do
+  begin
+    Swap(Arr[0], Arr[Len - 1]);
+    Pos := 1;
+    while Pos * 2 <= Len do
+    begin
+      Tmp := Pos * 2;
+      if (Tmp < Len) and (Arr[Tmp - 1] < Arr[Tmp]) then Inc(Tmp);
+      if not (Arr[Pos - 1] < Arr[Tmp - 1]) then Break;
+      Swap(Arr[Pos - 1], Arr[Tmp - 1]);
+      Pos := Tmp;
+    end;
+    Dec(Len);
+  end;
+end;
+
+var
+  TIA: array of Int32;
+begin
+  TIA := [1, 6, 2, 4, 3, 5, 1, 2, 7, 1];
+  HeapSort(TIA);
+  WriteLn(TIA);
+end.

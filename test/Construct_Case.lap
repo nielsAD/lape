@@ -1,0 +1,22 @@
+procedure TestCase(Numb: Integer);
+begin
+  Write(Numb);
+  case Numb of
+    0, 1, 2: WriteLn(' < 3');
+    3..9:    WriteLn(' < 10');
+    10, 11..18, 19: WriteLn(' < 20');
+    21: {nothing};
+    else WriteLn(' >= 20');
+  end;
+end;
+
+var
+  i: Integer;
+begin
+  I := 2;
+  while (i < 30) do
+  begin
+    TestCase(i);
+    i := i * 2;
+  end;
+end;

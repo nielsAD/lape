@@ -1,0 +1,415 @@
+{$assertions on}
+
+//Int8 (ShortInt)
+procedure Test_Int8;
+const
+  _a: Int8 = 2;
+  _b: Int8 = 10;
+  res: Int8 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
+var
+  a, b: Int8;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(SizeOf(a) = 1,  'SizeOf');
+  Assert(Low(a)  = -128, 'Low');
+  Assert(High(a) =  127, 'High');
+
+  Assert(a = 2,  'a <> 2');
+  Assert(b = 10, 'b <> 10');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 12, 'a + b');
+  Assert(b + a = 12, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -8, 'a - b');
+  Assert(b - a =  8, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 20,    'a * b');
+  Assert(b * a = 20,    'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.2,    'a / b');
+
+  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = b div a, 'b div a');
+  Assert(a div b = 0,     'a div b');
+  
+  Assert(b mod a = 0, 'b mod a');
+  Assert(a mod b = a, 'a mod b');  
+
+  Assert((a * b * (((a + b) - (b + a) + (b div a))) div a) div b = res, 'res');
+end;
+
+//UInt8 (Byte)
+procedure Test_UInt8;
+const
+  _a: UInt8 = 2;
+  _b: UInt8 = 10;
+  res: UInt8 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
+var
+  a, b: UInt8;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(SizeOf(a) = 1, 'SizeOf');
+  Assert(Low(a)  = 0,   'Low');
+  Assert(High(a) = 255, 'High');
+
+  Assert(a = 2,  'a <> 2');
+  Assert(b = 10, 'b <> 10');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 12, 'a + b');
+  Assert(b + a = 12, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -8, 'a - b');
+  Assert(b - a =  8, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 20,    'a * b');
+  Assert(b * a = 20,    'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.2,    'a / b');
+
+  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = b div a, 'b div a');
+  Assert(a div b = 0,     'a div b');
+  
+  Assert(b mod a = 0, 'b mod a');
+  Assert(a mod b = a, 'a mod b');  
+
+  Assert((a * b * (((a + b) - (b + a) + (b div a))) div a) div b = res, 'res');
+end;
+
+//Int16 (SmallInt)
+procedure Test_Int16;
+const
+  _a: Int16 = 2;
+  _b: Int16 = 10;
+  res: Int16 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
+var
+  a, b: Int16;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(SizeOf(a) = 2,    'SizeOf');
+  Assert(Low(a)  = -32768, 'Low');
+  Assert(High(a) =  32767, 'High');
+
+  Assert(a = 2,  'a <> 2');
+  Assert(b = 10, 'b <> 10');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 12, 'a + b');
+  Assert(b + a = 12, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -8, 'a - b');
+  Assert(b - a =  8, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 20,    'a * b');
+  Assert(b * a = 20,    'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.2,    'a / b');
+
+  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = b div a, 'b div a');
+  Assert(a div b = 0,     'a div b');
+  
+  Assert(b mod a = 0, 'b mod a');
+  Assert(a mod b = a, 'a mod b');  
+
+  Assert((a * b * (((a + b) - (b + a) + (b div a))) div a) div b = res, 'res');
+end;
+
+//UInt16 (Word)
+procedure Test_UInt16;
+const
+  _a: UInt16 = 2;
+  _b: UInt16 = 10;
+  res: UInt16 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
+var
+  a, b: UInt16;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(SizeOf(a) = 2,   'SizeOf');
+  Assert(Low(a)  = 0,     'Low');
+  Assert(High(a) = 65535, 'High');
+
+  Assert(a = 2,  'a <> 2');
+  Assert(b = 10, 'b <> 10');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 12, 'a + b');
+  Assert(b + a = 12, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -8, 'a - b');
+  Assert(b - a =  8, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 20,    'a * b');
+  Assert(b * a = 20,    'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.2,    'a / b');
+
+  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = b div a, 'b div a');
+  Assert(a div b = 0,     'a div b');
+  
+  Assert(b mod a = 0, 'b mod a');
+  Assert(a mod b = a, 'a mod b');  
+
+  Assert((a * b * (((a + b) - (b + a) + (b div a))) div a) div b = res, 'res');
+end;
+
+//Int32 (LongInt)
+procedure Test_Int32;
+const
+  _a: Int32 = 2;
+  _b: Int32 = 10;
+  res: Int32 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
+var
+  a, b: Int32;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(SizeOf(a) = 4,         'SizeOf');
+  Assert(Low(a)  = -2147483648, 'Low');
+  Assert(High(a) =  2147483647, 'High');
+
+  Assert(a = 2,  'a <> 2');
+  Assert(b = 10, 'b <> 10');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 12, 'a + b');
+  Assert(b + a = 12, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -8, 'a - b');
+  Assert(b - a =  8, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 20,    'a * b');
+  Assert(b * a = 20,    'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.2,    'a / b');
+
+  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = b div a, 'b div a');
+  Assert(a div b = 0,     'a div b');
+  
+  Assert(b mod a = 0, 'b mod a');
+  Assert(a mod b = a, 'a mod b');  
+
+  Assert((a * b * (((a + b) - (b + a) + (b div a))) div a) div b = res, 'res');
+end;
+
+//UInt32 (LongWord)
+procedure Test_UInt32;
+const
+  _a: UInt32 = 2;
+  _b: UInt32 = 10;
+  res: UInt32 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
+var
+  a, b: UInt32;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(SizeOf(a) = 4,        'SizeOf');
+  Assert(Low(a)  = 0,          'Low');
+  Assert(High(a) = 4294967295, 'High');
+
+  Assert(a = 2,  'a <> 2');
+  Assert(b = 10, 'b <> 10');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 12, 'a + b');
+  Assert(b + a = 12, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -8, 'a - b');
+  Assert(b - a =  8, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 20,    'a * b');
+  Assert(b * a = 20,    'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.2,    'a / b');
+
+  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = b div a, 'b div a');
+  Assert(a div b = 0,     'a div b');
+  
+  Assert(b mod a = 0, 'b mod a');
+  Assert(a mod b = a, 'a mod b');  
+
+  Assert((a * b * (((a + b) - (b + a) + (b div a))) div a) div b = res, 'res');
+end;
+
+//Int64
+procedure Test_Int64;
+const
+  _a: Int64 = 2;
+  _b: Int64 = 10;
+  res: Int64 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
+var
+  a, b: Int64;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(SizeOf(a) = 8,                  'SizeOf');
+  Assert(Low(a)  = -9223372036854775808, 'Low');
+  Assert(High(a) =  9223372036854775807, 'High');
+
+  Assert(a = 2,  'a <> 2');
+  Assert(b = 10, 'b <> 10');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 12, 'a + b');
+  Assert(b + a = 12, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -8, 'a - b');
+  Assert(b - a =  8, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 20,    'a * b');
+  Assert(b * a = 20,    'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.2,    'a / b');
+
+  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = b div a, 'b div a');
+  Assert(a div b = 0,     'a div b');
+  
+  Assert(b mod a = 0, 'b mod a');
+  Assert(a mod b = a, 'a mod b');  
+
+  Assert((a * b * (((a + b) - (b + a) + (b div a))) div a) div b = res, 'res');
+end;
+
+//UInt64
+procedure Test_UInt64;
+const
+  _a: UInt64 = 2;
+  _b: UInt64 = 10;
+  res: UInt64 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
+var
+  a, b: UInt64;
+begin
+  a := _a;
+  b := _b;
+
+  Assert(SizeOf(a) = 8,                  'SizeOf');
+  Assert(Low(a)  = 0,                    'Low');
+  Assert(High(a) = 18446744073709551615, 'High');
+
+  Assert(a = 2,  'a <> 2');
+  Assert(b = 10, 'b <> 10');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 12, 'a + b');
+  Assert(b + a = 12, 'b + a');
+
+  Assert(b - a = -(a - b), 'b - a <> -(a - b)');
+  Assert(b - a =  -a + b,  'b - a <>  -a + b');
+
+  Assert(a - b = -8, 'a - b');
+  Assert(b - a =  8, 'b - a');
+
+  Assert(a * b = b * a, 'a * b <> b * a');
+  Assert(a + a = 2 * a, 'a + a <> 2 * a');
+
+  Assert(a * b = 20,    'a * b');
+  Assert(b * a = 20,    'b * a');
+
+  Assert(a / b <> b / a, 'a / b = b / a');
+  Assert(a / b = 0.2,    'a / b');
+
+  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = b div a, 'b div a');
+  Assert(a div b = 0,     'a div b');
+  
+  Assert(b mod a = 0, 'b mod a');
+  Assert(a mod b = a, 'a mod b');  
+
+  Assert((a * b * (((a + b) - (b + a) + (b div a))) div a) div b = res, 'res');
+end;
+
+begin
+  Test_Int8();   WriteLn('Int8   :: Passed');
+  Test_UInt8();  WriteLn('UInt8  :: Passed');
+  
+  Test_Int16();  WriteLn('Int16  :: Passed');
+  Test_UInt16(); WriteLn('UInt16 :: Passed');
+  
+  Test_Int32();  WriteLn('Int32  :: Passed');
+  Test_UInt32(); WriteLn('UInt32 :: Passed');
+  
+  Test_Int64();  WriteLn('Int64  :: Passed');
+  Test_UInt64(); WriteLn('UInt64 :: Passed');
+end;

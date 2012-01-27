@@ -1,0 +1,20 @@
+procedure TestRepeat(Times: Integer);
+begin
+  repeat
+    Times := Times div 2;
+    WriteLn('Loop');
+  until (Times > -1) and (Times < 1);
+end;
+
+var
+  i: Integer;
+begin
+  i := -5;
+  repeat
+    WriteLn('TestRepeat ', i, ': ');
+    TestRepeat(i);
+    WriteLn('');
+
+    i := i + 2;
+  until (i > 5);
+end;

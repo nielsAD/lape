@@ -1,0 +1,29 @@
+{$assertions on}
+
+var
+  a: Int32;
+  b: ^Int32;
+  c: Int64;
+begin
+  a := 100;
+  b := @a;
+  Assert(b^ = a, 'b^ <> a');
+
+  b^ := b^ + 1;
+  Assert(a = 101, 'b^ <> 101');
+
+  WriteLn('Basics   :: Passed');
+
+  c := High(c);
+  b := @c;
+  b^ := 0;
+  b := b + SizeOf(Int32);
+  b^ := 0;
+  Assert(c = 0, 'c <> 0');
+
+  b[-1]^ := 1;
+  Assert(c <> 0, 'c = 0');
+
+  WriteLn('Indexing :: Passed');
+end;
+
