@@ -618,7 +618,7 @@ end;
 function TLapeType_Enum.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
   if (Str <> '') and (Str[1] in ['-', '0'..'9']) then
-    Result := NewGlobalVar(StrToInt(Str), AName, ADocPos)
+    Result := NewGlobalVar(StrToInt64(Str), AName, ADocPos)
   else
     Result := NewGlobalVar(FMemberMap.IndexOf(Str), AName, ADocPos);
 end;

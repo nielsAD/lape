@@ -5196,7 +5196,7 @@ begin
   if (FFinally <> nil) then
   begin
     if (o_except <> 0) then
-      FCompiler.Emitter._IncTry(Offset - o_try, Offset - o_except, o_try, @_DocPos)
+      FCompiler.Emitter._IncTry(o_except - o_try, Offset - o_except, o_try, @_DocPos)
     else
       FCompiler.Emitter._IncTry(Offset - o_try, Try_NoExcept, o_try, @_DocPos);
     FFinally.Compile(Offset);
