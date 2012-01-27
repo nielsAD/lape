@@ -472,7 +472,14 @@ var
   {$I lpinterpreter_doeval.inc}
 
   procedure DaLoop; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  var
+    GoBack: Boolean;
+  label
+    Start;
   begin
+    Start:
+    GoBack := False;
+
     try
       while True do {$I lpinterpreter_opcodecase.inc}
     except
@@ -483,8 +490,11 @@ var
 
       InException.Obj := Exception(AcquireExceptionObject());
       HandleException();
-      DaLoop();
+      GoBack := True;
     end;
+
+    if GoBack then
+      goto Start;
   end;
 
 begin
