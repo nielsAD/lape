@@ -256,7 +256,10 @@ type
 
   TLapeType_TypeEnum = class(TLapeType_Type)
   public
+    function CanHaveChild: Boolean; override;
     function HasChild(AName: lpString): Boolean; override;
+    function HasConstantChild(AName: lpString): Boolean; override;
+
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
   end;
@@ -1731,9 +1734,19 @@ begin
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
 end;
 
+function TLapeType_TypeEnum.CanHaveChild: Boolean;
+begin
+  Result := (FTType is TLapeType_Enum) or inherited;
+end;
+
 function TLapeType_TypeEnum.HasChild(AName: lpString): Boolean;
 begin
-  Result := ((FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(AName)) or HasSubDeclaration(AName);
+  Result := HasConstantChild(AName) or inherited;
+end;
+
+function TLapeType_TypeEnum.HasConstantChild(AName: lpString): Boolean;
+begin
+  Result := ((FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(AName)) or inherited;
 end;
 
 function TLapeType_TypeEnum.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
