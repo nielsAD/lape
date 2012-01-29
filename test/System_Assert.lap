@@ -1,0 +1,10 @@
+begin
+  {$assertions on}
+  Assert(True, 'You will not see this.');
+  Assert(True);
+
+  {$assertions off}
+  Assert(False, 'You will not see this');
+
+  WriteLn('Assertions :: Passed');
+end;

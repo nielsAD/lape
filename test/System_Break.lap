@@ -1,0 +1,31 @@
+{$assertions on}
+
+begin
+  for 1 to 20 do
+  begin
+    Break;
+    Assert(False, 'Breaking for');
+  end;
+
+  while True do
+  begin
+    Break;
+    Assert(False, 'Breaking while');
+  end;
+
+  repeat
+    Break;
+    Assert(False, 'Breaking repeat');
+  until False;
+
+  WriteLn('Loops  :: Passed');
+
+  repeat
+    repeat
+      Break(2);
+    until False;
+    Assert(False, 'Breaking double');
+  until False;
+
+  WriteLn('Double :: Passed');
+end;

@@ -1,0 +1,41 @@
+{$assertions on}
+
+var
+  i: Int32 = 1;
+begin
+  for i to 20 do
+  begin
+    Continue;
+    Assert(False, 'Beaking for');
+  end;
+  Assert(i >= 20, 'i < 20');
+
+  i := 1
+  while (i < 10) do
+  begin
+    Inc(i);
+    Continue;
+    Assert(False, 'Breaking while');
+  end;
+  Assert(i >= 10, 'i < 10');
+
+  repeat
+    i := 2;
+    Continue;
+    Assert(False, 'Breaking repeat');
+  until True;
+
+  Assert(i = 2, 'i <> 2');
+  WriteLn('Loops  :: Passed');
+
+  repeat
+    repeat
+      i := 3;
+      Continue(2);
+    until True;
+    Assert(False, 'Breaking double');
+  until True;
+
+  Assert(i = 3, 'i <> 3');
+  WriteLn('Double :: Passed');
+end;

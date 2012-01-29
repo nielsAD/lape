@@ -1,0 +1,28 @@
+{$assertions on}
+{$autoinvoke off}
+
+type
+  TIntToStr = function(i: Int64): string;
+
+function MyIntToStr(i: Int64): string;
+begin
+  Result := IntToStr(i);
+end;
+
+var
+  w: TIntToStr;
+begin
+  w := MyIntToStr;
+  Assert(IsScriptMethod(w), 'w not in script');
+  Assert(w(123) = '123',    '123 <> 123');
+
+  w := IntToStr;
+  Assert(not IsScriptMethod(w), 'w in script');
+  Assert(w(456) = '456',        '456 <> 456');
+
+  WriteLn('Invoke   :: Passed');
+
+  w := IntToStr[0];
+  Assert(w(-1) = '-1', '-1 <> -1');
+  WriteLn('Indexing :: Passed');
+end;       

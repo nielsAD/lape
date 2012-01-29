@@ -1,0 +1,33 @@
+{$assertions on}
+
+function TestFunc(DoTry: Boolean): Boolean;
+begin
+  Result := False;
+
+  if (not DoTry) then
+    Exit(True)
+  else
+    try
+      try
+        Exit;
+      except
+      end;
+
+      Assert(False, 'You should not see this');
+    finally
+      Result := True;
+    end;
+  Assert(False, 'You should not see this');
+end;
+
+begin
+  Assert(TestFunc(False), 'TestFunc False');
+  WriteLn('Exit :: Passed');
+
+  Assert(TestFunc(True),  'TestFunc False');
+  WriteLn('Try  :: Passed');
+
+  Exit;
+
+  Assert(False, 'You should not see this');
+end;

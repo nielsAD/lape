@@ -1,0 +1,34 @@
+{$assertions on}
+
+var
+  i1, i2: Int32;
+  a1, a2: array of (Enum1, Enum2);
+  b1, b2: array[0..9] of array of Pointer;
+begin
+  i1 :=  1;
+  i2 :=  2;
+
+  Swap(i1, i1);
+  Assert(i1 = 1, 'i1 <> 1');
+
+  Swap(i1, i2);
+  Assert((i1 = 2) and (i2 = 1), 'i1,i2');
+
+  WriteLn('Integer :: Passed');
+
+  a1 := [Enum1, Enum2];
+  a2 := [];
+
+  Swap(a1, a2);
+  Assert(a1 = [], 'a1,a2');
+
+  WriteLn('Arrays  :: Passed');
+
+  b1[0] := [nil];
+  b2[1] := [@i1, @i2];
+
+  Swap(b1, b2);
+  Assert(Length(b2[0]) = 1, 'b1,b2');
+
+  WriteLn('Static  :: Passed');
+end;

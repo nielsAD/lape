@@ -1,0 +1,35 @@
+{$assertions on}
+
+type
+  TMyRecord = record
+    a: Int32;
+    b: Int8;
+    c: string;
+  end;
+
+procedure TestRec(r: TMyRecord; var vr: TMyRecord);
+begin
+  Assert(r.a = vr.a, 'r.a <> vr.a');
+  Assert(r.b = vr.b, 'r.b <> vr.b');
+  Assert(r.c = vr.c, 'r.c <> vr.c');
+
+  Assert(r.a = 1,   'r.a <> 1');
+  Assert(r.b = 2,   'r.b <> 2');
+  Assert(r.c = '3', 'r.c <> 3');
+
+  vr := [,, '4'];
+end;
+
+var
+  r: TMyRecord;
+begin
+  r := [1, 2, '3'];
+
+  TestRec(r, r);
+  Assert(r.c = '4', 'r.c <> 4');
+  WriteLn('Initialization :: Passed');
+
+  r.c := '5';
+  Assert(r.c = '5', 'r.c <> 5');
+  WriteLn('Accessing      :: Passed');
+end;       

@@ -1,0 +1,12 @@
+begin
+  Write('Start ', 'the ', 'line');
+  WriteLn(', ', 'and ', 'end ', 'it.');
+
+  WriteLn(1);
+  WriteLn(2.0);
+  WriteLn(True);
+  WriteLn('hoi'[1], 'hoi'[2], 'hoi'[3]);
+  WriteLn([Boolean.False..Boolean.True]);
+  WriteLn([1, 3..5, 7]);
+  WriteLn([1, 2.0, True, 'hoi']);
+end;
