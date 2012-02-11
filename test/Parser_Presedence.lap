@@ -1,0 +1,25 @@
+{$assertions on}
+
+begin
+  Assert(2 + 3*3 + 1    = 12, '2 + 3*3 + 1 <> 12');
+  Assert(4*2 + 8 div 2  = 12, '4*2 + 8 / 2 <> 12');
+  WriteLn('Multiplication :: Passed');
+
+  Assert(+1   = 1, '+1');
+  Assert(++1  = 1, '++1');
+  Assert(+++1 = 1, '+++1');
+
+  Assert(-1   = -1, '-1');
+  Assert(--1  = 1,  '--1');
+  Assert(---1 = -1, '---1');
+
+  Assert(-(+1)    = -1, '-+1');
+  Assert(+(-(+1)) = -1, '+-+1');
+  Assert(-(+(-1)) = 1,  '-+-1');
+  WriteLn('Unary          :: Passed');
+
+  Assert(not not True, 'not not');
+  Assert(True and not False, 'and not');
+  Assert(not True or not False, 'not or not');
+  WriteLn('Boolean        :: Passed');
+end;

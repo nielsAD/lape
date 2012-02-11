@@ -3646,7 +3646,7 @@ begin
           begin
             Left := TLapeTree_ResVar.Create(ResVar, Self);
             if (Self.FOperatorType = op_AND) then
-              Right := Self.FRight.FoldConstants() as TLapeTree_ExprBase
+              Right := Self.FRight.FoldConstants(False) as TLapeTree_ExprBase
             else
               Right := TLapeTree_GlobalVar.Create('True', ResVar.VarType.BaseType, Self);
           end;
@@ -3656,7 +3656,7 @@ begin
           begin
             Left := TLapeTree_ResVar.Create(ResVar, Self);
             if (Self.FOperatorType = op_OR) then
-              Right := Self.FRight.FoldConstants() as TLapeTree_ExprBase
+              Right := Self.FRight.FoldConstants(False) as TLapeTree_ExprBase
             else
               Right := TLapeTree_GlobalVar.Create('False', ResVar.VarType.BaseType, Self);
           end;
