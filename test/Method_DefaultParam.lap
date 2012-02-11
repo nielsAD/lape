@@ -1,0 +1,14 @@
+{$assertions on}
+
+function MyMethod(Output: Int32 = 5): Int32;
+begin
+  Result := Output;
+end;
+
+begin
+  Assert(MyMethod() = 5);
+  WriteLn('Default  :: Passed');
+
+  Assert(MyMethod(6) = 6);
+  WriteLn('Override :: Passed');
+end;
