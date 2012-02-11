@@ -1,0 +1,31 @@
+{$assertions on}
+
+type
+  TTest = Int32;
+
+var
+  a: TTest = 1;
+
+procedure LocalParam(a: TTest);
+type
+  TTest = string;
+begin
+  a := 2;
+end;
+
+procedure LocalDecl;
+type
+  TTest = Int32;
+var
+  a: TTest;
+begin
+  a := 2;
+end;
+
+begin
+  LocalParam(a);
+  LocalDecl();
+
+  Assert(a = 1, 'a <> 1');
+  WriteLn('Scope :: Passed');
+end;

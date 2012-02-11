@@ -1,0 +1,102 @@
+{$assertions on}
+
+procedure TestDef(a, b, c, d, e, f, g, h, i, j, k, l, m, n: Int64);
+begin
+  Assert(a = 1,  'a <> 1');
+  Assert(b = 2,  'b <> 2');
+  Assert(c = 3,  'c <> 3');
+  Assert(d = 4,  'd <> 4');
+  Assert(e = 5,  'e <> 5');
+  Assert(f = 6,  'f <> 6');
+  Assert(g = 7,  'g <> 7');
+  Assert(h = 8,  'h <> 8');
+  Assert(i = 9,  'i <> 9');
+  Assert(j = 10, 'j <> 10');
+  Assert(k = 11, 'k <> 11');
+  Assert(l = 12, 'l <> 12');
+  Assert(m = 13, 'm <> 13');
+  Assert(n = 14, 'n <> 14');
+end;
+
+procedure TestConst(const a, b, c, d, e, f, g, h, i, j, k, l, m, n: Int64);
+begin
+  Assert(a = 1,  'a <> 1');
+  Assert(b = 2,  'b <> 2');
+  Assert(c = 3,  'c <> 3');
+  Assert(d = 4,  'd <> 4');
+  Assert(e = 5,  'e <> 5');
+  Assert(f = 6,  'f <> 6');
+  Assert(g = 7,  'g <> 7');
+  Assert(h = 8,  'h <> 8');
+  Assert(i = 9,  'i <> 9');
+  Assert(j = 10, 'j <> 10');
+  Assert(k = 11, 'k <> 11');
+  Assert(l = 12, 'l <> 12');
+  Assert(m = 13, 'm <> 13');
+  Assert(n = 14, 'n <> 14');
+end;
+
+procedure TestVar(var a, b, c, d, e, f, g, h, i, j, k, l, m, n: Int64);
+begin
+  Assert(a = 1,  'a <> 1');
+  Assert(b = 2,  'b <> 2');
+  Assert(c = 3,  'c <> 3');
+  Assert(d = 4,  'd <> 4');
+  Assert(e = 5,  'e <> 5');
+  Assert(f = 6,  'f <> 6');
+  Assert(g = 7,  'g <> 7');
+  Assert(h = 8,  'h <> 8');
+  Assert(i = 9,  'i <> 9');
+  Assert(j = 10, 'j <> 10');
+  Assert(k = 11, 'k <> 11');
+  Assert(l = 12, 'l <> 12');
+  Assert(m = 13, 'm <> 13');
+  Assert(n = 14, 'n <> 14');
+end;
+
+procedure TestBig(x: record a, b, c, d, e, f, g, h, i, j, k, l, m, n: Int64; end);
+begin
+  with x do
+  begin
+    Assert(a = 1,  'a <> 1');
+    Assert(b = 2,  'b <> 2');
+    Assert(c = 3,  'c <> 3');
+    Assert(d = 4,  'd <> 4');
+    Assert(e = 5,  'e <> 5');
+    Assert(f = 6,  'f <> 6');
+    Assert(g = 7,  'g <> 7');
+    Assert(h = 8,  'h <> 8');
+    Assert(i = 9,  'i <> 9');
+    Assert(j = 10, 'j <> 10');
+    Assert(k = 11, 'k <> 11');
+    Assert(l = 12, 'l <> 12');
+    Assert(m = 13, 'm <> 13');
+    Assert(n = 14, 'n <> 14');
+  end;
+end;
+
+var
+  a: Int64 = 1;
+  b: Int64 = 2;
+  c: Int64 = 3;
+  d: Int64 = 4;
+  e: Int64 = 5;
+  f: Int64 = 6;
+  g: Int64 = 7;
+  h: Int64 = 8;
+  i: Int64 = 9;
+  j: Int64 = 10;
+  k: Int64 = 11;
+  l: Int64 = 12;
+  m: Int64 = 13;
+  n: Int64 = 14;
+
+begin
+  TestDef  (a, 2, c, 4, e, 6, g, 8, i, 10, k, 12, m, 14);
+  TestConst(a, 2, c, 4, e, 6, g, 8, i, 10, k, 12, m, 14);
+  TestVar  (a, b, c, d, e, f, g, h, i,  j, k,  l, m,  n);
+  WriteLn('Def/Const/Var Params :: Passed');
+  
+  TestBig ([a, 2, c, 4, e, 6, g, 8, i, 10, k, 12, m, 14]);
+  WriteLn('Big Params           :: Passed');
+end;

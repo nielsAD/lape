@@ -1,0 +1,19 @@
+{$assertions on}
+
+function NextMethod: string; forward;
+
+function Method: string;
+begin
+  Result := 'met' + NextMethod();
+end;
+
+function NextMethod: string;
+begin
+  Result := 'hod';
+end;
+
+begin
+  Assert(Method() = 'method');
+  WriteLn('Forward :: Passed');
+end;
+

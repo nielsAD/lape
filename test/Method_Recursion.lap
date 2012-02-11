@@ -1,0 +1,16 @@
+{$assertions on}
+
+function Recursion(Counter: Int32): Int32;
+begin
+  if (Counter > 0) then
+    Result := Recursion(Counter - 1) + 1
+  else
+    Result := 0;
+end;
+
+const
+  Count = 50 * 1000;
+begin
+  Assert(Recursion(Count) = Count, 'Count <> Count');
+  WriteLn('Recursion :: Passed');
+end;

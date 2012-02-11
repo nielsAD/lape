@@ -1,0 +1,22 @@
+procedure MyMethod(i: Int32);
+begin
+  WriteLn(i);
+end;
+
+procedure MyMethod(i: Int32); override;
+begin
+  Write('Integer -> ');
+  inherited();
+end;
+
+function IntToStr(i: Int64): string; override;
+begin
+  Result := 'IntToStr -> ' + inherited();
+end;
+
+begin
+  MyMethod(1);
+  WriteLn(IntToStr(2));
+end;
+
+
