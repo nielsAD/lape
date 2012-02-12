@@ -1,0 +1,27 @@
+{$assertions on}
+
+function Test: string;
+begin
+  Result := 'Test';
+end;
+
+function MultiTest: record a: Int8; b: string[3]; end;
+begin
+  with Result do
+  begin
+    a := 123;
+    b := 'nomnom';
+  end;
+end;
+
+begin
+  Assert(Test() = 'Test', 'Test <> Test');
+  WriteLn('Simple :: Passed');
+
+  with MultiTest() do
+  begin
+    Assert(a = 123,   'a <> 123');
+    Assert(b = 'nom', 'b <> nom');
+  end;
+  WriteLn('Multi  :: Passed');
+end;

@@ -1,0 +1,16 @@
+{$assertions on}
+
+procedure test(v: Variant);
+begin
+  Write(v);
+
+  if v then
+    Assert(v, 'v <> True');
+
+  WriteLn(' = ', v);
+end;
+
+begin
+  test(True);
+  test(False);
+end.
