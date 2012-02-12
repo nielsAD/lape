@@ -764,28 +764,51 @@ end;
 
 function TLapeType_Bool.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
 begin
-  Result := FVarType.EvalRes(Op, Right);
+  Result := inherited;
+  if (Result = nil) then
+    Result := FVarType.EvalRes(Op, Right);
 end;
 
 function TLapeType_Bool.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+var
+  Res: TLapeType;
 begin
   Assert(Left.VarType = Self);
-  Left.VarType := FVarType;
-  try
-    Result := FVarType.EvalConst(Op, Left, Right);
-  finally
-    Left.VarType := Self;
+  if (Right = nil) or (not Right.HasType()) then
+    Res := inherited EvalRes(Op)
+  else
+    Res := inherited EvalRes(Op, Right.VarType);
+
+  if (Res <> nil) then
+    Result := inherited
+  else
+  begin
+    Left.VarType := FVarType;
+    try
+      Result := FVarType.EvalConst(Op, Left, Right);
+    finally
+      Left.VarType := Self;
+    end;
   end;
 end;
 
 function TLapeType_Bool.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+var
+  Res: TLapeType;
 begin
   Assert(Left.VarType = Self);
-  Left.VarType := FVarType;
-  try
-    Result := FVarType.Eval(Op, Dest, Left, Right, Offset, Pos);
-  finally
-    Left.VarType := Self;
+  Res := inherited EvalRes(Op, Right.VarType);
+
+  if (Res <> nil) then
+    Result := inherited
+  else
+  begin
+    Left.VarType := FVarType;
+    try
+      Result := FVarType.Eval(Op, Dest, Left, Right, Offset, Pos);
+    finally
+      Left.VarType := Self;
+    end;
   end;
 end;
 
