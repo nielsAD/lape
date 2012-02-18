@@ -1299,6 +1299,22 @@ begin
     Result := FCompiler.getBaseType(getEvalRes(Op, FBaseType, ltUnknown))
   else
     Result := FCompiler.getBaseType(getEvalRes(Op, FBaseType, Right.BaseType));
+
+  if (not (op in UnaryOperators + [op_Dot, op_Assign])) and
+     (Result = nil) and
+     (Right <> nil) and
+     (not Equals(Right, False))
+  then
+  begin
+    if Right.CompatibleWith(Self) then
+      Result := Right.EvalRes(Op, Right);
+
+    if ((Result = nil) or (Size >= Right.Size)) and
+        CompatibleWith(Right) and
+        (EvalRes(Op, Self) <> nil)
+    then
+      Result := EvalRes(Op, Self);
+  end;
 end;
 
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
@@ -1317,6 +1333,13 @@ begin
         Result := TLapeVar(d[0]).VarType;
     end;
   end;
+
+  if (not (op in UnaryOperators + [op_Dot, op_Assign])) and
+     (Result = nil) and
+     (Right <> nil) and
+     Right.HasType()
+  then
+    Result := EvalRes(Op, Right.VarType);
 end;
 
 function TLapeType.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
@@ -1571,8 +1594,6 @@ begin
     Result.VarType := TLapeType.Create(ltUnknown, FCompiler);
 
   try
-    FCompiler.getDestVar(Dest, Result, op);
-
     if (not Right.HasType()) then
       EvalProc := getEvalProc(Op, FBaseType, ltUnknown)
     else if (op <> op_Assign) or CompatibleWith(Right.VarType) then
@@ -1600,6 +1621,8 @@ begin
         LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
       else
         LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
+
+    FCompiler.getDestVar(Dest, Result, op);
 
     if (op = op_Assign) then
     begin
