@@ -1,0 +1,47 @@
+package lape;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS OFF}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'Scripting engine for Lazarus/Delphi with a Pascal derived syntax.'}
+{$RUNONLY}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl;
+
+contains
+  lpcodeemitter in '..\lpcodeemitter.pas',
+  lpcompiler in '..\lpcompiler.pas',
+  lpdisassembler in '..\lpdisassembler.pas',
+  lpeval in '..\lpeval.pas',
+  lpexceptions in '..\lpexceptions.pas',
+  lpinterpreter in '..\lpinterpreter.pas',
+  lpparser in '..\lpparser.pas',
+  lptree in '..\lptree.pas',
+  lptypes in '..\lptypes.pas',
+  lpvartypes in '..\lpvartypes.pas',
+  lpvartypes_array in '..\lpvartypes_array.pas',
+  lpvartypes_ord in '..\lpvartypes_ord.pas',
+  lpvartypes_record in '..\lpvartypes_record.pas';
+
+end.

@@ -203,7 +203,7 @@ begin
     {$IFDEF FPC}
     Result := NewGlobalVar(StrToQWord(Str), AName, ADocPos);
     {$ELSE}
-    ui64 := StrToUInt64(Str); t := @ui64;
+    ui64 := StrToInt64(Str); t := @ui64;
     Result := NewGlobalVar(t^ , AName, ADocPos);
     {$ENDIF}
   end
