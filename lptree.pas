@@ -1787,7 +1787,10 @@ var
       if (FParams.Count <> 1) or (VarType = nil) or isEmpty(FParams[0]) then
         LapeException(lpeInvalidCast);
 
+      if (FParams[0] is TLapeTree_DestExprBase) then
+        TLapeTree_DestExprBase(FParams[0]).Dest := Dest;
       FParams[0] := FParams[0].setExpectedType(VarType) as TLapeTree_ExprBase;
+
       Result := FParams[0].Compile(Offset);
       if VarType.Equals(Result.VarType) or (not Result.HasType()) or (VarType.Size = Result.VarType.Size) then
       begin

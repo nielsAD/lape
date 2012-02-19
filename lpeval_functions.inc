@@ -2437,8 +2437,8 @@ procedure lpeVariant_ASGN_UString(const Dest, Left, Right: Pointer); begin PVari
 
 //Boolean
 procedure lpeBoolean_NOT(const Dest, Left, Right: Pointer); begin PBoolean(Dest)^ := not PBoolean(Left)^; end;
-procedure lpeWBool_NOT(const Dest, Left, Right: Pointer); begin PWordBool(Dest)^ := not PWordBool(Left)^; end;
-procedure lpeLBool_NOT(const Dest, Left, Right: Pointer); begin PLongBool(Dest)^ := not PLongBool(Left)^; end;
+procedure lpeWBool_NOT(const Dest, Left, Right: Pointer); begin if PWordBool(Left)^ then PUInt16(Dest)^ := Ord(False) else PUInt16(Dest)^ := Ord(True); end;
+procedure lpeLBool_NOT(const Dest, Left, Right: Pointer); begin if PLongBool(Left)^ then PUInt32(Dest)^ := Ord(False) else PUInt32(Dest)^ := Ord(True); end;
 
 procedure lpeBoolean_ASGN_Variant(const Dest, Left, Right: Pointer); begin PBoolean(Dest)^ := PVariant(Left)^; end;
 procedure lpeWBool_ASGN_Variant(const Dest, Left, Right: Pointer); begin PWordBool(Dest)^ := PVariant(Left)^; end;
