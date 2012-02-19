@@ -2537,8 +2537,13 @@ begin
           else
             s := s + 'P'+LapeTypeToString(t2)+'(Left)^; end;';
         end
-        else
+        else if (t1 in LapeIntegerTypes) and (t3 in LapeIntegerTypes) and (t3 > t1) then
         begin
+          s := s + LapeTypeToString(t3)+'(P'+LapeTypeToString(t1)+'(Left)^) '+op_str[op]+' ';
+          s := s + LapeTypeToString(t3)+'(P'+LapeTypeToString(t2)+'(Right)^); end;';
+        end
+        else
+         begin
           s := s + 'P'+LapeTypeToString(t1)+'(Left)^ '+op_str[op]+' ';
           s := s + 'P'+LapeTypeToString(t2)+'(Right)^; end;';
         end;

@@ -3,7 +3,7 @@
 			<ProjectGuid>{4AFF689A-14B8-4F54-9BA8-E98CB85BF94F}</ProjectGuid>
 			<ProjectVersion>12.0</ProjectVersion>
 			<MainSource>LapeTest.dpr</MainSource>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">

@@ -85,7 +85,8 @@ const
   TryStackSize = 256;
   CallStackSize = 512;
 
-procedure RunCode(Code: PByte); {$IFDEF Lape_Inline}inline;{$ENDIF}
+procedure RunCode(Code: PByte; var DoContinue: TInitBool); overload;
+procedure RunCode(Code: PByte); overload;
 
 implementation
 
@@ -94,7 +95,7 @@ uses
 
 {$OverFlowChecks Off}
 
-procedure RunCode(Code: PByte);
+procedure RunCode(Code: PByte; var DoContinue: TInitBool);
 const
   opNone: opCodeType = opCodeType(ocNone);
 var
@@ -481,7 +482,7 @@ var
     GoBack := False;
 
     try
-      while True do {$I lpinterpreter_opcodecase.inc}
+      while (DoContinue = bTrue) do {$I lpinterpreter_opcodecase.inc}
     except
       {$IFDEF Lape_EmitPos}
       if (ExceptObject <> InException.Obj) then
@@ -491,6 +492,12 @@ var
       InException.Obj := Exception(AcquireExceptionObject());
       HandleException();
       GoBack := True;
+    end;
+
+    if (DoContinue = bUnknown) then
+    begin
+      Sleep(1);
+      goto Start;
     end;
 
     if GoBack then
@@ -527,6 +534,14 @@ begin
       else
         LapeExceptionFmt(lpeRuntime, [E.Message]);
   end;
+end;
+
+procedure RunCode(Code: PByte);
+var
+  DoContinue: TInitBool;
+begin
+  DoContinue := bTrue;
+  RunCode(Code, DoContinue);
 end;
 
 end.
