@@ -1,0 +1,180 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="9"/>
+    <BuildModes Active="Default"/>
+    <Units Count="11">
+      <Unit0>
+        <Filename Value="LapeTest.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="LapeTest"/>
+        <EditorIndex Value="0"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="46"/>
+        <CursorPos X="9" Y="55"/>
+        <UsageCount Value="37"/>
+        <Loaded Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="lptest.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="lptest"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="155"/>
+        <CursorPos X="21" Y="160"/>
+        <UsageCount Value="37"/>
+        <Loaded Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="..\..\package\lape.pas"/>
+        <UnitName Value="lape"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="9"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="..\..\..\FPC\Source\packages\fcl-base\src\custapp.pp"/>
+        <UnitName Value="CustApp"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="550"/>
+        <CursorPos X="3" Y="557"/>
+        <UsageCount Value="9"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="..\..\..\FPC\Source\rtl\objpas\sysutils\sysutilh.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="207"/>
+        <CursorPos X="14" Y="221"/>
+        <UsageCount Value="9"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="..\..\..\FPC\Source\rtl\objpas\sysutils\sysutils.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="537"/>
+        <CursorPos X="3" Y="545"/>
+        <UsageCount Value="9"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="..\..\..\FPC\Source\rtl\objpas\strutils.pp"/>
+        <UnitName Value="strutils"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1047"/>
+        <CursorPos X="3" Y="1049"/>
+        <UsageCount Value="10"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="..\..\lpexceptions.pas"/>
+        <UnitName Value="lpexceptions"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="69"/>
+        <CursorPos X="11" Y="83"/>
+        <UsageCount Value="10"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="..\..\lpcompiler.pas"/>
+        <UnitName Value="lpcompiler"/>
+        <EditorIndex Value="2"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="50"/>
+        <CursorPos X="34" Y="59"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="..\..\lpvartypes.pas"/>
+        <UnitName Value="lpvartypes"/>
+        <EditorIndex Value="3"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="508"/>
+        <CursorPos X="3" Y="522"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="..\..\lptypes.pas"/>
+        <UnitName Value="lptypes"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="589"/>
+        <CursorPos X="22" Y="602"/>
+        <UsageCount Value="10"/>
+      </Unit10>
+    </Units>
+    <General>
+      <ActiveWindowIndexAtStart Value="0"/>
+    </General>
+    <JumpHistory Count="17" HistoryIndex="16">
+      <Position1>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="129" Column="12" TopLine="106"/>
+      </Position1>
+      <Position2>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="113" Column="34" TopLine="100"/>
+      </Position2>
+      <Position3>
+        <Filename Value="LapeTest.lpr"/>
+        <Caret Line="45" Column="19" TopLine="24"/>
+      </Position3>
+      <Position4>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="79" Column="69" TopLine="43"/>
+      </Position4>
+      <Position5>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="43" Column="40" TopLine="34"/>
+      </Position5>
+      <Position6>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="103" Column="22" TopLine="94"/>
+      </Position6>
+      <Position7>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="57" Column="61" TopLine="38"/>
+      </Position7>
+      <Position8>
+        <Filename Value="LapeTest.lpr"/>
+        <Caret Line="44" Column="3" TopLine="49"/>
+      </Position8>
+      <Position9>
+        <Filename Value="LapeTest.lpr"/>
+        <Caret Line="71" Column="13" TopLine="49"/>
+      </Position9>
+      <Position10>
+        <Filename Value="LapeTest.lpr"/>
+        <Caret Line="43" Column="62" TopLine="1"/>
+      </Position10>
+      <Position11>
+        <Filename Value="LapeTest.lpr"/>
+        <Caret Line="69" Column="35" TopLine="8"/>
+      </Position11>
+      <Position12>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="83" Column="63" TopLine="73"/>
+      </Position12>
+      <Position13>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="97" Column="17" TopLine="86"/>
+      </Position13>
+      <Position14>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="80" Column="38" TopLine="64"/>
+      </Position14>
+      <Position15>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="79" Column="39" TopLine="64"/>
+      </Position15>
+      <Position16>
+        <Filename Value="..\..\lpcompiler.pas"/>
+        <Caret Line="59" Column="34" TopLine="50"/>
+      </Position16>
+      <Position17>
+        <Filename Value="..\..\lpvartypes.pas"/>
+        <Caret Line="522" Column="3" TopLine="508"/>
+      </Position17>
+    </JumpHistory>
+  </ProjectSession>
+</CONFIG>
