@@ -39,7 +39,7 @@ begin
   end;
 
   Swap(Arr[RSide], Arr[Lo]);
-  Result := LSide;
+  Result := RSide;
 end;
 
 procedure Sort(var Arr: array of Int32; const Lo, Hi: Int32);

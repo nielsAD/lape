@@ -11,9 +11,9 @@
         <UnitName Value="LapeTest"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="46"/>
+        <TopLine Value="25"/>
         <CursorPos X="9" Y="55"/>
-        <UsageCount Value="37"/>
+        <UsageCount Value="38"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
@@ -23,9 +23,9 @@
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="155"/>
-        <CursorPos X="21" Y="160"/>
-        <UsageCount Value="37"/>
+        <TopLine Value="122"/>
+        <CursorPos X="24" Y="130"/>
+        <UsageCount Value="38"/>
         <Loaded Value="True"/>
       </Unit1>
       <Unit2>
@@ -34,7 +34,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="8"/>
       </Unit2>
       <Unit3>
         <Filename Value="..\..\..\FPC\Source\packages\fcl-base\src\custapp.pp"/>
@@ -42,21 +42,21 @@
         <WindowIndex Value="0"/>
         <TopLine Value="550"/>
         <CursorPos X="3" Y="557"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="8"/>
       </Unit3>
       <Unit4>
         <Filename Value="..\..\..\FPC\Source\rtl\objpas\sysutils\sysutilh.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="207"/>
         <CursorPos X="14" Y="221"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="8"/>
       </Unit4>
       <Unit5>
         <Filename Value="..\..\..\FPC\Source\rtl\objpas\sysutils\sysutils.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="537"/>
         <CursorPos X="3" Y="545"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="8"/>
       </Unit5>
       <Unit6>
         <Filename Value="..\..\..\FPC\Source\rtl\objpas\strutils.pp"/>
@@ -77,36 +77,32 @@
       <Unit8>
         <Filename Value="..\..\lpcompiler.pas"/>
         <UnitName Value="lpcompiler"/>
-        <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
         <TopLine Value="50"/>
         <CursorPos X="34" Y="59"/>
-        <UsageCount Value="10"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="11"/>
       </Unit8>
       <Unit9>
         <Filename Value="..\..\lpvartypes.pas"/>
         <UnitName Value="lpvartypes"/>
-        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
         <TopLine Value="508"/>
         <CursorPos X="3" Y="522"/>
-        <UsageCount Value="10"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="11"/>
       </Unit9>
       <Unit10>
         <Filename Value="..\..\lptypes.pas"/>
         <UnitName Value="lptypes"/>
         <WindowIndex Value="0"/>
         <TopLine Value="589"/>
-        <CursorPos X="22" Y="602"/>
+        <CursorPos X="4" Y="603"/>
         <UsageCount Value="10"/>
       </Unit10>
     </Units>
     <General>
       <ActiveWindowIndexAtStart Value="0"/>
     </General>
-    <JumpHistory Count="17" HistoryIndex="16">
+    <JumpHistory Count="15" HistoryIndex="14">
       <Position1>
         <Filename Value="lptest.pas"/>
         <Caret Line="129" Column="12" TopLine="106"/>
@@ -167,14 +163,6 @@
         <Filename Value="lptest.pas"/>
         <Caret Line="79" Column="39" TopLine="64"/>
       </Position15>
-      <Position16>
-        <Filename Value="..\..\lpcompiler.pas"/>
-        <Caret Line="59" Column="34" TopLine="50"/>
-      </Position16>
-      <Position17>
-        <Filename Value="..\..\lpvartypes.pas"/>
-        <Caret Line="522" Column="3" TopLine="508"/>
-      </Position17>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>

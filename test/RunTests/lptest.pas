@@ -143,7 +143,7 @@ var
           on E: Exception do
           begin
             Inc(Fail);
-            WriteLn('Failed', GetTickCount64() - StartTime, 'ms');
+            WriteLn('Failed :: ', GetTickCount64() - StartTime, 'ms');
             Writeln(E.Message);
             WriteLn('');
           end;
@@ -177,9 +177,9 @@ begin
 
   if (TestFolder(FFolder) = 0) then
     WriteLn('');
-  WriteLn(Format('%d tests in %.2f seconds', [Pass + Fail, ((GetTickCount64() - StartTime) / 1000)]));
-  WriteLn(Format('%d/%d tests failed', [Fail, Pass + Fail]));
-  WriteLn(Format('%d/%d tests passed', [Pass, Pass + Fail]));
+  WriteLn(Format('Ran %d tests in %.2f seconds', [Pass + Fail, ((GetTickCount64() - StartTime) / 1000)]));
+  WriteLn(Format('%3d / %d tests failed', [Fail, Pass + Fail]));
+  WriteLn(Format('%3d / %d tests passed', [Pass, Pass + Fail]));
 end;
 
 end.
