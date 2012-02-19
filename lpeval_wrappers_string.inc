@@ -163,12 +163,12 @@ end;
 
 procedure _LapeStrToUInt64(const Params: PParamArray; const Result: Pointer);
 begin
-  PUInt64(Result)^ := {$IFDEF FPC}StrToQWord{$ELSE}StrToInt64{$ENDIF}(PlpString(Params^[0])^);
+  PUInt64(Result)^ := StrToUInt64(PlpString(Params^[0])^);
 end;
 
 procedure _LapeStrToUInt64Def(const Params: PParamArray; const Result: Pointer);
 begin
-  PUInt64(Result)^ := {$IFDEF FPC}StrToQWordDef{$ELSE}StrToInt64Def{$ENDIF}(PlpString(Params^[0])^, PUInt64(Params^[1])^);
+  PUInt64(Result)^ := StrToUInt64Def(PlpString(Params^[0])^, PUInt64(Params^[1])^);
 end;
 
 procedure _LapeStrToFloat(const Params: PParamArray; const Result: Pointer);

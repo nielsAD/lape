@@ -260,7 +260,7 @@ implementation
 uses
   Variants, Math,
   {$IFDEF LCL}LCLIntf{$ELSE}Windows{$ENDIF},
-  lpexceptions;
+  lpexceptions, lpparser;
 
 {$RangeChecks Off}
 

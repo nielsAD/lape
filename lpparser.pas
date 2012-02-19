@@ -367,6 +367,8 @@ function LapeTokenToString(Token: EParserToken): lpString; {$IFDEF Lape_Inline}i
 function ParserTokenToOperator(Token: EParserToken): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function StrToFloatDot(Str: lpString): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function StrToFloatDotDef(Str: lpString; Default: Extended): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function StrToUInt64(Str: lpString): UInt64;
+function StrToUInt64Def(Str: lpString; const Default: UInt64): UInt64;
 function DetermineIntType(IntType: ELapeBaseType; MinSize: UInt8): ELapeBaseType; overload;
 function DetermineIntType(Left, Right: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
 function DetermineIntType(Str: lpString; MinSize: UInt8): ELapeBaseType; overload;
@@ -414,6 +416,32 @@ function StrToFloatDotDef(Str: lpString; Default: Extended): Extended;
 begin
   Result := StrToFloatDef(StringReplace(Str, '.', DecimalSeparator, []), Default);
 end;
+
+function StrToUInt64(Str: lpString): UInt64;
+{$IFDEF FPC}
+begin Result := StrToQWord(Str); end;
+{$ELSE}
+var
+  Code: Integer;
+begin
+  Val(Str, Result, Code);
+  if (Code <> 0) then
+    EConvertError.CreateFmt('"%s" is not a valid UInt64', [Str]);
+end;
+{$ENDIF}
+
+function StrToUInt64Def(Str: lpString; const Default: UInt64): UInt64;
+{$IFDEF FPC}
+begin Result := StrToQWordDef(Str, Default); end;
+{$ELSE}
+var
+  Code: Integer;
+begin
+  Val(Str, Result, Code);
+  if (Code <> 0) then
+    Result := Default;
+end;
+{$ENDIF}
 
 function DetermineIntType(IntType: ELapeBaseType; MinSize: UInt8): ELapeBaseType; overload;
 begin

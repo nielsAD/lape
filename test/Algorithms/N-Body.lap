@@ -138,8 +138,8 @@ var i : integer;
     n : Integer;
 begin
   offsetMomentum;
-  writeln(energy);
+  writeln(Format('%.15f', [energy]));
   n := 200000;
   for i := 1 to n do advance(0.01);
-  writeln(energy);
+  writeln(Format('%.15f', [energy]));
 end.

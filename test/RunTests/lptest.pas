@@ -16,7 +16,7 @@ type
   public
     constructor Create(AFolder: lpString = '..'; ADebug: Boolean = False); reintroduce;
 
-    class function TestFile(FileName: lpString; ExpectFile: lpString = ''): lpString;
+    class procedure TestFile(FileName: lpString; out Output: lpString; ExpectFile: lpString = '');
     procedure TestFiles;
 
     property Folder: lpString read FFolder;
@@ -26,7 +26,7 @@ type
 implementation
 
 uses
-  LCLIntf, strutils,
+  {$IFDEF FPC}LCLIntf{$ELSE}Windows{$ENDIF}, strutils,
   lpcompiler, lpparser, lpexceptions, lpinterpreter;
 
 constructor TLapeTester.Create(AFolder: lpString = '..'; ADebug: Boolean = False);
@@ -60,9 +60,9 @@ begin
   _WriteLn(PlpString(Params^[0])^);
 end;
 
-class function TLapeTester.TestFile(FileName: lpString; ExpectFile: lpString = ''): lpString;
+class procedure TLapeTester.TestFile(FileName: lpString; out Output: lpString; ExpectFile: lpString = '');
 var
-  Expect, Output: lpString;
+  Expect: lpString;
 begin
   if (ExpectFile = '') then
     Expect := ''
@@ -105,7 +105,6 @@ begin
       LapeExceptionFmt('Expected output "%s", but got "%s"', [Expect, Output]);
   finally
     Free();
-    Result := Output;
   end;
 end;
 
@@ -125,32 +124,36 @@ var
     if (FindFirst(Folder + '*.lap', faAnyFile - faDirectory, Res) = 0) then
     try
       repeat
+        Write(Format('Testing %25s :: ', [ExtractFileName(Res.Name)]));
         Inc(Result);
-        Write('Testing ' + PadRight(ExtractFileName(Res.Name), 25), ' :: ');
 
-        StartTime := GetTickCount64();
+        Output := '';
+        StartTime := GetTickCount();
         try
+
           if FileExists(Folder + ChangeFileExt(Res.Name, '.txt')) then
-            Output := TestFile(Folder + Res.Name, Folder + ChangeFileExt(Res.Name, '.txt'))
+            TestFile(Folder + Res.Name, Output, Folder + ChangeFileExt(Res.Name, '.txt'))
           else
-            Output := TestFile(Folder + Res.Name);
+            TestFile(Folder + Res.Name, Output);
 
           Inc(Pass);
-          WriteLn('Passed :: ', GetTickCount64() - StartTime, 'ms');
+          WriteLn('Passed :: ', GetTickCount() - StartTime, 'ms');
           if FDebug then
             WriteLn(Output);
         except
           on E: Exception do
           begin
             Inc(Fail);
-            WriteLn('Failed :: ', GetTickCount64() - StartTime, 'ms');
+            WriteLn('Failed :: ', GetTickCount() - StartTime, 'ms');
+            if (not FDebug) then
+              WriteLn(Output);
             Writeln(E.Message);
             WriteLn('');
           end;
         end;
       until (FindNext(Res) <> 0);
     finally
-      FindClose(Res);
+      SysUtils.FindClose(Res);
     end;
 
     if (Result > 0) then
@@ -162,22 +165,22 @@ var
         if ((Res.Attr and faDirectory) <> 0) and (Res.Name <> '.') and (Res.Name <> '..') then
         begin
           WriteLn('Entering ', Res.Name, '..');
-          Result := TestFolder(Folder + Res.Name + DirectorySeparator);
+          Result := TestFolder(Folder + Res.Name + PathDelim);
         end;
       until (FindNext(Res) <> 0);
     finally
-      FindClose(Res);
+      SysUtils.FindClose(Res);
     end;
   end;
 
 begin
   Fail := 0;
   Pass := 0;
-  StartTime := GetTickCount64();
+  StartTime := GetTickCount();
 
   if (TestFolder(FFolder) = 0) then
     WriteLn('');
-  WriteLn(Format('Ran %d tests in %.2f seconds', [Pass + Fail, ((GetTickCount64() - StartTime) / 1000)]));
+  WriteLn(Format('Ran %d tests in %.2f seconds', [Pass + Fail, ((GetTickCount() - StartTime) / 1000)]));
   WriteLn(Format('%3d / %d tests failed', [Fail, Pass + Fail]));
   WriteLn(Format('%3d / %d tests passed', [Pass, Pass + Fail]));
 end;

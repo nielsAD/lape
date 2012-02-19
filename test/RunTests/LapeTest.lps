@@ -11,9 +11,9 @@
         <UnitName Value="LapeTest"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="25"/>
-        <CursorPos X="9" Y="55"/>
-        <UsageCount Value="38"/>
+        <TopLine Value="28"/>
+        <CursorPos X="1" Y="43"/>
+        <UsageCount Value="41"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
@@ -23,9 +23,9 @@
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="122"/>
-        <CursorPos X="24" Y="130"/>
-        <UsageCount Value="38"/>
+        <TopLine Value="132"/>
+        <CursorPos X="28" Y="132"/>
+        <UsageCount Value="41"/>
         <Loaded Value="True"/>
       </Unit1>
       <Unit2>
@@ -62,8 +62,8 @@
         <Filename Value="..\..\..\FPC\Source\rtl\objpas\strutils.pp"/>
         <UnitName Value="strutils"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1047"/>
-        <CursorPos X="3" Y="1049"/>
+        <TopLine Value="1027"/>
+        <CursorPos X="49" Y="1041"/>
         <UsageCount Value="10"/>
       </Unit6>
       <Unit7>
@@ -133,35 +133,35 @@
       </Position7>
       <Position8>
         <Filename Value="LapeTest.lpr"/>
-        <Caret Line="44" Column="3" TopLine="49"/>
+        <Caret Line="71" Column="13" TopLine="49"/>
       </Position8>
       <Position9>
         <Filename Value="LapeTest.lpr"/>
-        <Caret Line="71" Column="13" TopLine="49"/>
+        <Caret Line="43" Column="62" TopLine="1"/>
       </Position9>
       <Position10>
         <Filename Value="LapeTest.lpr"/>
-        <Caret Line="43" Column="62" TopLine="1"/>
+        <Caret Line="69" Column="35" TopLine="8"/>
       </Position10>
       <Position11>
-        <Filename Value="LapeTest.lpr"/>
-        <Caret Line="69" Column="35" TopLine="8"/>
+        <Filename Value="lptest.pas"/>
+        <Caret Line="83" Column="63" TopLine="73"/>
       </Position11>
       <Position12>
         <Filename Value="lptest.pas"/>
-        <Caret Line="83" Column="63" TopLine="73"/>
+        <Caret Line="97" Column="17" TopLine="86"/>
       </Position12>
       <Position13>
         <Filename Value="lptest.pas"/>
-        <Caret Line="97" Column="17" TopLine="86"/>
+        <Caret Line="80" Column="38" TopLine="64"/>
       </Position13>
       <Position14>
         <Filename Value="lptest.pas"/>
-        <Caret Line="80" Column="38" TopLine="64"/>
+        <Caret Line="79" Column="39" TopLine="64"/>
       </Position14>
       <Position15>
         <Filename Value="lptest.pas"/>
-        <Caret Line="79" Column="39" TopLine="64"/>
+        <Caret Line="132" Column="28" TopLine="123"/>
       </Position15>
     </JumpHistory>
   </ProjectSession>
