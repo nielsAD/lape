@@ -7,7 +7,7 @@ begin
 end;   
 
 const
-  NumDigits = 50;
+  NumDigits = 500;
 var
   ar: array [0..10*NumDigits div 3] of Int32;
   I, J, K, P, X, Y, Nines, Predigit: Int32;

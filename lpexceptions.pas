@@ -107,7 +107,7 @@ begin
 end;
 {$ENDIF}
 
-function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString; inline;
+function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString; {inline;}
 begin
   Result := Msg;
   if (DocPos.Line > 0) and (DocPos.Col > 0) then

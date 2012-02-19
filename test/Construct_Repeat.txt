@@ -1,0 +1,23 @@
+TestRepeat -5: 
+Loop
+Loop
+Loop
+
+TestRepeat -3: 
+Loop
+Loop
+
+TestRepeat -1: 
+Loop
+
+TestRepeat 1: 
+Loop
+
+TestRepeat 3: 
+Loop
+Loop
+
+TestRepeat 5: 
+Loop
+Loop
+Loop

@@ -1,0 +1,19 @@
+TestWhile -5: 
+Loop
+Loop
+
+TestWhile -3: 
+Loop
+
+TestWhile -1: 
+No loop eh
+
+TestWhile 1: 
+No loop eh
+
+TestWhile 3: 
+Loop
+
+TestWhile 5: 
+Loop
+Loop

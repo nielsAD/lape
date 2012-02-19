@@ -220,6 +220,7 @@ type
     destructor Destroy; override;
     {$ENDIF}
     function QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; stdcall;
+    function GetSelf: TLapeBaseClass; inline;
   end;
 
   TLapeBaseDeclClass = class(TLapeBaseClass)
@@ -1044,6 +1045,11 @@ begin
     Result := 0
   else
     Result := E_NOINTERFACE;
+end;
+
+function TLapeBaseClass.GetSelf: TLapeBaseClass;
+begin
+  Result := Self;
 end;
 
 procedure TLapeStack{$IFNDEF FPC}<_T>{$ENDIF}.Grow(AGrowSize: Integer);

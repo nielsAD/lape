@@ -51,7 +51,7 @@ begin
 end;
 
 begin
-  n := 1000;
+  n := 400;
   SetLength(u, n);
   SetLength(v, n);
   SetLength(tmp, n);

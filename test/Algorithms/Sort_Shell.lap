@@ -28,7 +28,7 @@ begin
       while (TmpIndex >= X) and (Arr[TmpIndex] < Arr[TmpIndex - X]) do
       begin
         Swap(Arr[TmpIndex], Arr[TmpIndex - X]);
-        DecEx(TmpIndex, X);
+        Dec(TmpIndex, X);
       end;
     end;
     X := X div 3;

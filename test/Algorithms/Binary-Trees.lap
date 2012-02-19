@@ -102,15 +102,13 @@ const
   mind = 4;
 
 var
-  maxd : Longint = 10;
+  maxd : Longint = 11;
   strd,
   iter,
   c, d, i : Longint;
   tree, llt : PNode;
 
 begin
-  maxd := 16;
-
   if maxd < mind+2 then
      maxd := mind + 2;
 

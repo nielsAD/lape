@@ -1,4 +1,4 @@
-procedure TestRepeat(Times: Integer);
+procedure TestRepeat(Times: Int32);
 begin
   repeat
     Times := Times div 2;
@@ -7,7 +7,7 @@ begin
 end;
 
 var
-  i: Integer;
+  i: Int32;
 begin
   i := -5;
   repeat

@@ -15,7 +15,7 @@ end;
 
 function IntToStr(a: Int32; b: Int32): string; overload;
 begin
-  Result := IntToStr(a) + '.' + IntToStr(b)
+  Result := IntToStr(a) + '.' + IntToStr(b);
 end;   
 
 begin

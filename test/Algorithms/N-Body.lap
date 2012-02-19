@@ -139,7 +139,7 @@ var i : integer;
 begin
   offsetMomentum;
   writeln(energy);
-  n := 5000000;
+  n := 200000;
   for i := 1 to n do advance(0.01);
   writeln(energy);
 end.

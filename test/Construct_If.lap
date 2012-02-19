@@ -1,4 +1,4 @@
-procedure TestIf(Param: Integer);
+procedure TestIf(Param: Int32);
 begin
   if (Param > 0) then
     if Param then

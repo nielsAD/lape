@@ -1,4 +1,4 @@
-procedure TestWhile(Times: Integer);
+procedure TestWhile(Times: Int32);
 begin
   while (Times < -1) or (Times > 1) do
   begin
@@ -10,7 +10,7 @@ begin
 end;
 
 var
-  i: Integer;
+  i: Int32;
 begin
   i := -5;
   while (i <= 5) do

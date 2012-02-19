@@ -1,4 +1,4 @@
-procedure TestCase(Numb: Integer);
+procedure TestCase(Numb: Int32);
 begin
   Write(Numb);
   case Numb of
@@ -11,7 +11,7 @@ begin
 end;
 
 var
-  i: Integer;
+  i: Int32;
 begin
   I := 2;
   while (i < 30) do

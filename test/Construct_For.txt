@@ -1,0 +1,25 @@
+TestFor -2: 
+No loop eh
+hoi-
+hoi-
+hoi--
+
+TestFor -1: 
+No loop eh
+hoi-
+hoi--
+
+TestFor 0: 
+No loop eh
+No loop eh
+
+TestFor 1: 
+hoi+
+No loop eh
+hoi++
+
+TestFor 2: 
+hoi+
+hoi+
+No loop eh
+hoi++

@@ -1,8 +1,8 @@
 {$assertions on}
 
-function ArraySum(Ar: array of Int32): Integer;
+function ArraySum(Ar: array of Int32): Int32;
 var
-  i: Integer;
+  i: Int32;
 begin
   Result := 0;
   for i := Low(Ar) to High(Ar) do

@@ -1,5 +1,5 @@
 var
-  a, b: Integer;
+  a, b: Int32;
 begin
   a := 100;
   b := 0;
