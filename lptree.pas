@@ -3792,29 +3792,30 @@ begin
     end;
 
     RightVar := FRight.Compile(Offset);
-    if DoneAssignment then
-      if (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
-        DoneAssignment := False
-      else
-        Result := LeftVar
+    DoneAssignment := DoneAssignment and (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos);
   end
   else
     RightVar := NullResVar;
 
   try
-    if (not DoneAssignment) then
+    if DoneAssignment then
+    begin
+      Result := LeftVar;
+      FDest.Spill();
+    end
+    else
+    try
+      if LeftVar.HasType() then
+        Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, Offset, @_DocPos)
+      else with TLapeType.Create(ltUnknown, FCompiler) do
       try
-        if LeftVar.HasType() then
-          Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, Offset, @_DocPos)
-        else with TLapeType.Create(ltUnknown, FCompiler) do
-        try
-          Result := Eval(OperatorType, FDest, LeftVar, RightVar, Offset, @_DocPos);
-        finally
-          Free();
-        end;
-      except on E: lpException do
-        LapeException(E.Message, DocPos);
+        Result := Eval(OperatorType, FDest, LeftVar, RightVar, Offset, @_DocPos);
+      finally
+        Free();
       end;
+    except on E: lpException do
+      LapeException(E.Message, DocPos);
+    end;
   finally
     if ((FLeft <> nil) or (FRight <> nil)) then
       LeftVar.Spill(1);
