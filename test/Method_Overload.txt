@@ -1,4 +1,4 @@
 Integer -> 1
-String -> 2
+String -> 234
 True
-2.5
+5.6

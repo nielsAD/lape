@@ -2770,10 +2770,10 @@ procedure lpeWChar_ASGN_Variant(const Dest, Left, Right: Pointer); begin PWideCh
 
 //Pointer
 procedure lpePointer_EQ_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PPointer(Left)^ = PPointer(Right)^; end;
-procedure lpePointer_GT_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PtrInt(PPointer(Left)^) > PtrInt(PPointer(Right)^); end;
-procedure lpePointer_GTEQ_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PtrInt(PPointer(Left)^) >= PtrInt(PPointer(Right)^); end;
-procedure lpePointer_LT_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PtrInt(PPointer(Left)^) < PtrInt(PPointer(Right)^); end;
-procedure lpePointer_LTEQ_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PtrInt(PPointer(Left)^) <= PtrInt(PPointer(Right)^); end;
+procedure lpePointer_GT_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PtrUInt(PPointer(Left)^) > PtrUInt(PPointer(Right)^); end;
+procedure lpePointer_GTEQ_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PtrUInt(PPointer(Left)^) >= PtrUInt(PPointer(Right)^); end;
+procedure lpePointer_LT_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PtrUInt(PPointer(Left)^) < PtrUInt(PPointer(Right)^); end;
+procedure lpePointer_LTEQ_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PtrUInt(PPointer(Left)^) <= PtrUInt(PPointer(Right)^); end;
 procedure lpePointer_NEQ_Pointer(const Dest, Left, Right: Pointer); begin PEvalBool(Dest)^ := PPointer(Left)^ <> PPointer(Right)^; end;
 procedure lpePointer_ASGN_Pointer(const Dest, Left, Right: Pointer); begin PPointer(Dest)^ := PPointer(Left)^; end;
 procedure lpePointer_ASGN_SMethod(const Dest, Left, Right: Pointer); begin PCodePos(Dest)^ := PtrUInt(PPointer(Left)^); end;

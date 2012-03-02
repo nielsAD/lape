@@ -12,8 +12,25 @@ begin
   Result := 'hod';
 end;
 
+function Int8.NextMethod: string; forward;
+
+function Int8.Method: string;
+begin
+  Result := 'met' + NextMethod();
+end;
+
+function Int8.NextMethod: string;
+begin
+  Result := 'hod';
+end;
+
+var
+  i: Int8 = 123;
 begin
   Assert(Method() = 'method');
-  WriteLn('Forward :: Passed');
+  WriteLn('Method Forwarding      :: Passed');
+  
+  Assert(i.Method() = 'method');
+  WriteLn('Type Method Forwarding :: Passed');
 end;
 

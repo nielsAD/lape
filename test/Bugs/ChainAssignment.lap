@@ -1,0 +1,24 @@
+{$assertions on}
+
+var
+  a, b: Int32;
+  s = '5';
+
+procedure test(var b: Int32);
+var
+  c: Int32;
+begin
+  c := b := a := 10 - StrToInt(s);
+
+  Assert(c = 5, 'c <> 5');
+  Assert(c = b, 'c <> b');
+  Assert(b = a, 'b <> a');
+end;
+
+begin
+  test(b);
+
+  a := b := a + 3 - b;
+  Assert(a = 3, 'a <> 3');
+  Assert(a = b, 'a <> b');
+end.

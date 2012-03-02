@@ -1,0 +1,68 @@
+{
+  Based on: http://nothingsimple.com/FastBitSort.pdf
+  
+  Fast Bit Sort:
+    We are given an unsorted integer array A[0...n1] containing n integers where each integer is of width B	bits.
+    We prepare by having a low pointer L pointing to the lowest element 0 and a high pointer H pointing to the
+    highest element n1.	We also initialize a mask M with the highest bit set as in M = 2(B1). We sort by looking at
+    the highest bit only and as such, testing and ensuring when the highest bit set, the datum is in the lower part
+    of A and when the highest bit is reset, the datum is in the upper part of A. Then, we proceed through the lower
+    bits for each sub part created by the previous. For signed integers, when the highest bit is set, the data belongs
+    in the lower part but for the lower bits, when set, the datum belongs in the upper part.
+}
+
+procedure Partition(var Arr: array of Int32; Lo, Hi, Mask: Int32);
+var
+  l, h: Int32;
+begin
+  if (Lo >= Hi) or (Mask = 0) then
+    Exit;
+
+  l := Lo;
+  h := Hi;
+
+  repeat
+    while ((Arr[l] and Mask)  = 0) and (l < Hi) do Inc(l);
+    while ((Arr[h] and Mask) <> 0) and (h > Lo) do Dec(h);
+
+    if (l < h) then
+      Swap(Arr[l], Arr[h])
+    else
+      Break;
+  until False;
+
+  Mask := Mask shr 1;
+  Partition(Arr, Lo, h, Mask);
+  Partition(Arr, l, Hi, Mask);
+end;
+
+procedure FastBitSort(var Arr: array of Int32);
+var
+  Lo, Hi, Mask,
+  l, h: Int32;
+begin
+  l := Lo:= Low(Arr);
+  h := Hi := High(Arr);
+  Mask := 1 shl 31;
+
+  repeat
+    while ((Arr[l] and Mask) <> 0) and (l < Hi) do Inc(l);
+    while ((Arr[h] and Mask)  = 0) and (h > Lo) do Dec(h);
+
+    if (l < h) then
+      Swap(Arr[l], Arr[h])
+    else
+      Break;
+  until False;
+
+  Mask := Mask shr 1;
+  Partition(Arr, Lo, h, Mask);
+  Partition(Arr, l, Hi, Mask);
+end;
+
+var
+  a: array of Int32 = [3, -4, 2, 1, 10, High(Int32), Low(Int32)];
+begin
+  FastBitSort(a);
+  WriteLn(a);
+end;

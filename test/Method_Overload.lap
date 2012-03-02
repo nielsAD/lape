@@ -13,6 +13,16 @@ begin
   Result := True;
 end;
 
+function string.DoAppend(i: Int32): string; overload;
+begin
+  Result := Self + IntToStr(i);
+end;
+
+function string.DoAppend(s: string): string; overload;
+begin
+  Result := Self + s;
+end;
+
 function IntToStr(a: Int32; b: Int32): string; overload;
 begin
   Result := IntToStr(a) + '.' + IntToStr(b);
@@ -20,9 +30,9 @@ end;
 
 begin
   MyMethod(1);
-  MyMethod('2');
+  MyMethod('2'.DoAppend(3).DoAppend('4'));
   WriteLn(MyMethod());
   
-  WriteLn(IntToStr(2, 5)); 
+  WriteLn(IntToStr(5, 6)); 
 end;
 

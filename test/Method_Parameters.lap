@@ -75,6 +75,11 @@ begin
   end;
 end;
 
+procedure Int64.TestSelf();
+begin
+  Assert(Self = 3);
+end;
+
 var
   a: Int64 = 1;
   b: Int64 = 2;
@@ -99,4 +104,7 @@ begin
   
   TestBig ([a, 2, c, 4, e, 6, g, 8, i, 10, k, 12, m, 14]);
   WriteLn('Big Params           :: Passed');
+  
+  c.TestSelf();
+  WriteLn('Self Param           :: Passed');
 end;
