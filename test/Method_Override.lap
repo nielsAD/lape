@@ -31,5 +31,3 @@ begin
   WriteLn(IntToStr(i));
   WriteLn(i.ToS());
 end;
-
-

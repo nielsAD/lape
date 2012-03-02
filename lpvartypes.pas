@@ -604,7 +604,7 @@ type
   end;
 
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
-procedure ClearBaseTypes(var Arr: TLapeBaseTypes);
+procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
 
 function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -645,13 +645,16 @@ begin
     Result[i] := Arr[i];
 end;
 
-procedure ClearBaseTypes(var Arr: TLapeBaseTypes);
+procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 var
   BaseType: ELapeBaseType;
 begin
   for BaseType := Low(ELapeBaseType) to High(ELapeBaseType) do
     if (Arr[BaseType] <> nil) then
-      FreeAndNil(Arr[BaseType]);
+      if DoFree then
+        FreeAndNil(Arr[BaseType])
+      else
+        Arr[BaseType].ClearSubDeclarations();
 end;
 
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
@@ -1240,10 +1243,11 @@ end;
 
 function TLapeType.addSubDeclaration(ADecl: TLapeDeclaration): Integer;
 begin
-  if (not (ADecl is TLapeGlobalVar)) then
-    LapeException(lpeImpossible);
-  if (ADecl.Name <> '') and HasChild(ADecl.Name) then
-    LapeExceptionFmt(lpeDuplicateDeclaration, [ADecl.Name]);
+  if (ADecl.Name <> '') then
+    if (not (ADecl is TLapeGlobalVar))  then
+      LapeException(lpeImpossible)
+    else if HasChild(ADecl.Name) then
+      LapeExceptionFmt(lpeDuplicateDeclaration, [ADecl.Name]);
   Result := inherited;
 end;
 
@@ -3346,13 +3350,14 @@ begin
   FreeAndNil(FGlobalDeclarations);
   FreeAndNil(FManagedDeclarations);
   FreeAndNil(FCachedDeclarations);
-  ClearBaseTypes(FBaseTypes);
+  ClearBaseTypes(FBaseTypes, True);
 
   inherited;
 end;
 
 procedure TLapeCompilerBase.Clear;
 begin
+  ClearBaseTypes(FBaseTypes, False);
   FGlobalDeclarations.Delete(TLapeVar, True);
   FManagedDeclarations.Delete(TLapeVar, True);
   FGlobalDeclarations.Clear();

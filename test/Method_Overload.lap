@@ -30,9 +30,8 @@ end;
 
 begin
   MyMethod(1);
-  MyMethod('2'.DoAppend(3).DoAppend('4'));
+  MyMethod('23'.DoAppend(4).DoAppend('5'));
   WriteLn(MyMethod());
   
-  WriteLn(IntToStr(5, 6)); 
+  WriteLn(IntToStr(6, 7)); 
 end;
-
