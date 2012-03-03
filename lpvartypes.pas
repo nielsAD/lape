@@ -367,6 +367,8 @@ type
     AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar of object;
 
   TLapeType_OverloadedMethod = class(TLapeType)
+  protected
+    FOfObject: TInitBool;
   public
     OnFunctionNotFound: TLapeGetOverloadedMethod;
     NeedFullMatch: Boolean;
@@ -387,6 +389,8 @@ type
 
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
+
+    property MethodOfObject: TInitBool read FOfObject;
   end;
 
   TLapeWithDeclRec = record
@@ -607,6 +611,7 @@ function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
 
+function MethodOfObject(VarType: TLapeType): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function ValidFieldName(Field: TResVar): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
@@ -683,6 +688,13 @@ begin
   Arr[ltUnicodeString] := TLapeType_UnicodeString.Create(Compiler, LapeTypeToString(ltUnicodeString));
   Arr[ltVariant] := TLapeType_Variant.Create(Compiler, LapeTypeToString(ltVariant));
   Arr[ltPointer] := TLapeType_Pointer.Create(Compiler, nil, LapeTypeToString(ltPointer));
+end;
+
+function MethodOfObject(VarType: TLapeType): Boolean;
+begin
+  Result := (VarType is TLapeType_MethodOfObject) or
+           ((VarType is TLapeType_OverloadedMethod) and
+            (TLapeType_OverloadedMethod(VarType).MethodOfObject = bTrue));
 end;
 
 function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload;
@@ -1288,7 +1300,7 @@ begin
   if (Length(Decls) <= 0) then
     Result := HasChild(AName)
   else with TLapeGlobalVar(Decls[0]) do
-    Result := (not (VarType is TLapeType_MethodOfObject)) or (isConstant and (BaseType = ltImportedMethod));
+    Result := (not MethodOfObject(VarType)) and isConstant and (BaseType = ltImportedMethod);
 end;
 
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
@@ -1408,8 +1420,13 @@ function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeG
     Assert(Length(d) = 1);
     Result := d[0] as TLapeGlobalVar;
 
-    if (Result <> nil) and Result.isConstant and Result.HasType() and (Result.VarType is TLapeType_MethodOfObject) then
+    if (Result <> nil) and
+        Result.isConstant and
+        Result.HasType() and
+        (Result.VarType is TLapeType_MethodOfObject)
+    then
     begin
+      Assert(Result.Size >= SizeOf(TMethod));
       Result := Result.CreateCopy();
       TMethod(Result.Ptr^).Data := Left.Ptr;
     end;
@@ -1565,11 +1582,14 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
     Assert(Length(d) = 1);
     Result := _ResVar.New(d[0] as TLapeGlobalVar);
 
-    if Result.isConstant and Result.HasType() and (Result.VarType is TLapeType_MethodOfObject) then
+    if Result.isConstant and
+       Result.HasType() and
+       MethodOfObject(Result.VarType)
+    then
     begin
       Res.VarType := Result.VarType;
       FCompiler.getDestVar(Dest, Res, op_Dot);
-      FCompiler.Emitter._Eval(getEvalProc(op_Dot, ltUnknown, ltPointer), Res, Left, Result, Offset, Pos);
+      FCompiler.Emitter._Eval(getEvalProc(op_Dot, ltUnknown, ltPointer), Res, Left.IncLock(), Result, Offset, Pos);
       Result := Res;
     end;
   end;
@@ -2458,6 +2478,7 @@ constructor TLapeType_OverloadedMethod.Create(ACompiler: TLapeCompilerBase; ANam
 begin
   inherited Create(ltUnknown, ACompiler, AName, ADocPos);
 
+  FOfObject := bUnknown;
   OnFunctionNotFound := nil;
   NeedFullMatch := False;
   FManagedDecls.Items.Sorted := False;
@@ -2469,6 +2490,8 @@ type
 begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, Name, @_DocPos);
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+
+  TLapeType_OverloadedMethod(Result).FOfObject := FOfObject;
 end;
 
 function TLapeType_OverloadedMethod.addSubDeclaration(ADecl: TLapeDeclaration): Integer;
@@ -2485,6 +2508,17 @@ begin
      (not ((AMethod.VarType is TLapeType_Method) or (AMethod.VarType is TLapeType_OverloadedMethod)))
   then
     LapeException(lpeImpossible);
+
+  if (AMethod.VarType is TLapeType_MethodOfObject) then
+    case FOfObject of
+      bUnknown: FOfObject := bTrue;
+      bFalse: LapeException(lpeImpossible);
+    end
+  else
+    case FOfObject of
+      bUnknown: FOfObject := bFalse;
+      bTrue: LapeException(lpeImpossible);
+    end;
 
   if (AMethod.VarType is TLapeType_OverloadedMethod) then
     for i := 0 to AMethod.VarType.ManagedDecls.Items.Count - 1 do
@@ -2627,6 +2661,7 @@ end;
 function TLapeType_OverloadedMethod.NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
   Result := NewGlobalVarP(nil, AName, ADocPos);
+  Result.isConstant := True;
 end;
 
 function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
@@ -3484,8 +3519,8 @@ begin
               FinalizeVar(_ResVar.New(Items[i]), Offset, Pos);
               if (Items[i] is TLapeStackTempVar) then
               begin
-                if TLapeStackTempVar(Items[i]).Locked then
-                  WriteLn(Items[i].Name, ' ', Items[i].VarType.AsString, ' still locked! ', TLapeStackTempVar(Items[i]).FLock);
+                //if TLapeStackTempVar(Items[i]).Locked then
+                //  WriteLn(Items[i].Name, ' ', Items[i].VarType.AsString, ' still locked! ', TLapeStackTempVar(Items[i]).FLock);
                 TLapeStackTempVar(Items[i]).Locked := True;
               end;
             end;

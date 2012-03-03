@@ -1751,6 +1751,20 @@ begin
     else
     begin
       IdentVar := RealIdent.Evaluate();
+      if MethodOfObject(IdentVar.VarType) and (not (FIdent is TLapeTree_GlobalVar)) then
+      begin
+        if (RealIdent <> FIdent) then
+          IdentVar := FIdent.Evaluate();
+        if (IdentVar.VarType is TLapeType_OverloadedMethod) then
+          with TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes()) do
+          begin
+            FRes := IdentVar;
+            IdentVar := VarType.NewGlobalVarP(IdentVar.Ptr);
+            TMethod(IdentVar.Ptr^).Code := TMethod(Ptr^).Code;
+            FreeAndNil(FRes);
+          end;
+      end;
+
       if (IdentVar = nil) or (IdentVar.Ptr = nil) or
          (not IdentVar.HasType()) or
          (IdentVar.VarType.BaseType <> ltImportedMethod)
@@ -2055,6 +2069,24 @@ begin
   else
   begin
     IdentVar := RealIdent.Compile(Offset);
+    if MethodOfObject(IdentVar.VarType) and
+       (not (FIdent is TLapeTree_GlobalVar))
+    then
+    begin
+      if (RealIdent <> FIdent) then
+        IdentVar := FIdent.Compile(Offset);
+      if (IdentVar.VarType is TLapeType_OverloadedMethod) then
+        with TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes()) do
+        begin
+          IdentVar.VarType := VarType;
+          if (IdentVar.VarPos.MemPos = mpVar) then
+            IdentVar.VarPos.StackVar.VarType := VarType;
+
+          Dec(Offset, SizeOf(Pointer));
+          FCompiler.Emitter.Delete(Offset, SizeOf(Pointer));
+          FCompiler.Emitter._Pointer(Ptr, Offset);
+        end;
+    end;
 
     if (not IdentVar.HasType()) or
        (not (IdentVar.VarType is TLapeType_Method))
@@ -2069,7 +2101,7 @@ begin
       if (FParams.Count > Params.Count) then
         if (FParams.Count > 0) then
         begin
-          WriteLn(Name, ' ', ClassName, ' ', DeclarationList.Items.Sorted);
+          //WriteLn(Name, ' ', ClassName, ' ', DeclarationList.Items.Sorted);
           LapeException(lpeTooMuchParameters, FParams[Params.Count].DocPos)
         end
         else

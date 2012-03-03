@@ -11,37 +11,38 @@
     in the lower part but for the lower bits, when set, the datum belongs in the upper part.
 }
 
-procedure Partition(var Arr: array of Int32; Lo, Hi, Mask: Int32);
-var
-  l, h: Int32;
-begin
-  if (Lo >= Hi) or (Mask = 0) then
-    Exit;
-
-  l := Lo;
-  h := Hi;
-
-  repeat
-    while ((Arr[l] and Mask)  = 0) and (l < Hi) do Inc(l);
-    while ((Arr[h] and Mask) <> 0) and (h > Lo) do Dec(h);
-
-    if (l < h) then
-      Swap(Arr[l], Arr[h])
-    else
-      Break;
-  until False;
-
-  Mask := Mask shr 1;
-  Partition(Arr, Lo, h, Mask);
-  Partition(Arr, l, Hi, Mask);
-end;
-
 procedure FastBitSort(var Arr: array of Int32);
+
+  procedure Partition(var Arr: array of Int32; Lo, Hi, Mask: Int32);
+  var
+    l, h: Int32;
+  begin
+    if (Lo >= Hi) or (Mask = 0) then
+      Exit;
+
+    l := Lo;
+    h := Hi;
+
+    repeat
+      while ((Arr[l] and Mask)  = 0) and (l < Hi) do Inc(l);
+      while ((Arr[h] and Mask) <> 0) and (h > Lo) do Dec(h);
+
+      if (l < h) then
+        Swap(Arr[l], Arr[h])
+      else
+        Break;
+    until False;
+
+    Mask := Mask shr 1;
+    Partition(Arr, Lo, h, Mask);
+    Partition(Arr, l, Hi, Mask);
+  end;
+
 var
   Lo, Hi, Mask,
   l, h: Int32;
 begin
-  l := Lo:= Low(Arr);
+  l := Lo := Low(Arr);
   h := Hi := High(Arr);
   Mask := 1 shl 31;
 
