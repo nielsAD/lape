@@ -34,6 +34,7 @@ resourcestring
   lpeClosingParenthesisExpected = 'Closing parenthesis expected';
   lpeConditionalNotClosed = 'Conditional statement not properly closed';
   lpeConstantExpected = 'Constant expression expected';
+  lpeDeclarationOutOfScope = 'Declaration "%s" out of scope';
   lpeDefaultToMoreThanOne = 'Runtime default value can only be assigned to one variable';
   lpeDuplicateDeclaration = 'Duplicate declaration "%s"';
   lpeExceptionAt = '%s at line %d, column %d';

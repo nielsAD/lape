@@ -3888,12 +3888,17 @@ end;
 function TLapeCompilerBase.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration;
 var
   Declarations: TLapeDeclArray;
+  Stack: TLapeStackInfo;
 begin
-  if (AStackInfo <> nil) then
+  Stack := AStackInfo;
+  while (Stack <> nil) do
   begin
-    Result := AStackInfo.getDeclaration(AName, CheckWith);
+    Result := Stack.getDeclaration(AName, CheckWith);
+    if (Result is TLapeStackVar) and (TLapeStackVar(Result).Stack <> AStackInfo.VarStack) then
+      LapeExceptionFmt(lpeDeclarationOutOfScope, [AName]);
     if (Result <> nil) or LocalOnly then
       Exit;
+    Stack := Stack.Owner;
   end;
 
   Declarations := GlobalDeclarations.getByName(AName);
