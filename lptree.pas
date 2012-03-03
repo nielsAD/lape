@@ -1118,8 +1118,10 @@ function TLapeTree_OpenArray.resType: TLapeType;
           Res := TLapeTree_Range(FValues[i]).Hi.resType();
           if (Res <> nil) and (Res is TLapeType_SubRange) and ((Result = nil) or Res.CompatibleWith(Result)) then
             Exit(FCompiler.addManagedType(TLapeType_Set.Create(Res as TLapeType_SubRange, FCompiler, '', @_DocPos)))
+          else if (TLapeTree_Range(FValues[i]).Diff > 0) then
+            Inc(Range.Hi, TLapeTree_Range(FValues[i]).Diff)
           else
-            Inc(Range.Hi, TLapeTree_Range(FValues[i]).Diff);
+            Range.Hi := Low(Range.Hi);
         end
         else if (not (FValues[i] is TLapeTree_ExprBase)) then
           Exit(nil)
@@ -1146,8 +1148,10 @@ function TLapeTree_OpenArray.resType: TLapeType;
       if (Result <> nil) then
         if (Result is TLapeType_Enum) then
           Result := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_Enum(Result), FCompiler, '', @_DocPos))
+        else if (Range.Hi >= Range.Lo) then
+          Result := FCompiler.addManagedType(TLapeType_StaticArray.Create(Range, Result, FCompiler, '', @_DocPos))
         else
-          Result := FCompiler.addManagedType(TLapeType_StaticArray.Create(Range, Result, FCompiler, '', @_DocPos));
+          Result := FCompiler.addManagedType(TLapeType_DynArray.Create(Result, FCompiler, '', @_DocPos));
     end
     else
       Result := TLapeType_StaticArray.Create(NullRange, FCompiler.getBaseType(ltVariant), FCompiler, '', @_DocPos);
@@ -4095,12 +4099,12 @@ begin
      (not (FHi is TLapeTree_GlobalVar)) or
      (not FLo.isConstant()) or (not FHi.isConstant())
   then
-    Result := 0
+    Result := -1
   else
-    Result := TLapeTree_GlobalVar(FHi).getVarAsInt - TLapeTree_GlobalVar(FLo).getVarAsInt;
+    Result := TLapeTree_GlobalVar(FHi).getVarAsInt() - TLapeTree_GlobalVar(FLo).getVarAsInt();
 
   if (Result < 0) then
-    Result := 0;
+    Result := -1;
 end;
 
 procedure TLapeTree_Range.DeleteChild(Node: TLapeTree_Base);
