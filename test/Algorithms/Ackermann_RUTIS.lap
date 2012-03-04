@@ -1,0 +1,23 @@
+//Taken from the RUTIS project (http://www.delphipraxis.net/160542-rutis-engine-v2.html)
+//Adjusted to compile with Lape
+program  Ackermann;
+
+var
+  Count: Int64 = 0;
+
+function ackerman(n, m: UInt32): UInt32;
+begin
+  if (n = 0) then
+    Result := m + 1
+  else
+    if (m = 0) then
+      Result := ackerman(n - 1, 1)
+    else
+      Result := ackerman(n - 1, ackerman(n, m - 1));
+  Inc(Count);
+end;
+
+begin
+  writeln('ackerman(3, 7) = ' + IntToStr(ackerman(3, 7)));
+  writeln('Count = ' + IntToStr(Count));
+end.

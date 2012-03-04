@@ -1,0 +1,9 @@
+{$assertions on}
+
+const
+  s = 'hai';
+  l := Length(s);
+
+begin
+  Assert(l - 3 = 0, 'l - 3 <> 0');
+end;
