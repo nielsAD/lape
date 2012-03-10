@@ -498,6 +498,13 @@ var
     begin
       Sleep(1);
       goto Start;
+    end
+    else if (DoContinue = bFalse) then
+    begin
+      DoContinue := bTrue;
+      InSafeJump := PByte(PtrUInt(CodeBase) + EndJump);
+      HandleSafeJump();
+      goto Start;
     end;
 
     if GoBack then
