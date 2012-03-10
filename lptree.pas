@@ -232,6 +232,7 @@ type
   TLapeTree_InternalMethod_Dispose = class(TLapeTree_InternalMethod)
   public
     FunctionOnly: Boolean;
+    ForceDefault: Boolean;
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
@@ -1441,7 +1442,7 @@ begin
   if wasConstant then
     Result.isConstant := False;
 
-  FCompiler.FinalizeVar(Result, Offset, @_DocPos);
+  FCompiler.VarToDefault(Result, Offset, @_DocPos);
 
   if (FType is TLapeType_StaticArray) then
     doStaticArray()
@@ -1974,7 +1975,7 @@ var
         Result.isConstant := False;
 
         if (lcoAlwaysInitialize in FCompilerOptions) then
-          FCompiler.FinalizeVar(Result, Offset, @Self._DocPos);
+          FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
 
         AssignToStack(Result, Self._DocPos);
       end;
@@ -2537,6 +2538,7 @@ constructor TLapeTree_InternalMethod_Dispose.Create(ACompiler: TLapeCompilerBase
 begin
   inherited;
   FunctionOnly := False;
+  ForceDefault := False;
 end;
 
 function TLapeTree_InternalMethod_Dispose.Compile(var Offset: Integer): TResVar;
@@ -2593,14 +2595,10 @@ begin
         Free();
       end
     else if (_Dispose = nil) then
-      with TLapeTree_Operator.Create(op_Assign, Self) do
-      try
-        Left := TLapeTree_ResVar.Create(Param.IncLock(), Self.FParams[0]);
-        Right := TLapeTree_GlobalVar.Create(VarType.NewGlobalVarP(), Self.FParams[0]);
-        Compile(Offset);
-      finally
-        Free();
-      end;
+      ForceDefault := True;
+
+  if ForceDefault then
+    FCompiler.VarToDefault(Param, Offset, @_DocPos);
 
   Param.Spill(1);
 end;

@@ -171,6 +171,7 @@ type
     function Compile: Boolean; virtual;
     procedure CheckAfterCompile; virtual;
 
+    procedure VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); override;
     procedure FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); override;
 
     function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration; override;
@@ -3083,12 +3084,25 @@ begin
     LapeException(lpeConditionalNotClosed, popConditional());
 end;
 
+procedure TLapeCompiler.VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
+begin
+  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() and AVar.isVariable then
+    with TLapeTree_Operator.Create(op_Assign, Self, Pos) do
+    try
+      Left := TLapeTree_ResVar.Create(AVar.IncLock(), Self, Pos);
+      Right := TLapeTree_GlobalVar.Create(AVar.VarType.NewGlobalVarP(), Self, Pos);
+      Compile(Offset);
+    finally
+      Free();
+    end;
+end;
+
 procedure TLapeCompiler.FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
 var
   wasConstant: Boolean;
 begin
   wasConstant := False;
-  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and (AVar.VarType <> nil) then
+  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType()  then
     with TLapeTree_InternalMethod_Dispose.Create(Self, Pos) do
     try
       wasConstant := AVar.isConstant;
@@ -3096,7 +3110,7 @@ begin
         AVar.isConstant := False;
 
       FunctionOnly := True;
-      addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Self));
+      addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Self, Pos));
       Compile(Offset);
     finally
       if wasConstant then

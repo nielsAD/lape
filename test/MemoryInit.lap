@@ -1,0 +1,21 @@
+{$memoryinit on}
+{$autoinvoke off}
+
+function Doo: Boolean;
+begin
+  WriteLn('Incoming: ', Ord(Result));
+  Ord(Result) := 5;
+end;
+
+var
+  f: function: Boolean;
+begin
+  Write('1: '); Doo();
+  Write('2: '); Doo();
+
+  f := Doo;
+
+  Write('3: ');
+  if f() then
+    WriteLn('hoi!');
+end;

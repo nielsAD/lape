@@ -547,6 +547,8 @@ type
     destructor Destroy; override;
     procedure Clear; virtual;
 
+    procedure VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
+    procedure VarToDefault(AVar: TResVar; Pos: PDocPos = nil); overload; virtual;
     procedure FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
     procedure FinalizeVar(AVar: TResVar; Pos: PDocPos = nil); overload; virtual;
     function PopVarToStack(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; virtual;
@@ -3399,6 +3401,19 @@ begin
   FManagedDeclarations.Clear();
   FCachedDeclarations.Clear();
   Reset();
+end;
+
+procedure TLapeCompilerBase.VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
+begin
+  FinalizeVar(AVar, Offset, Pos);
+end;
+
+procedure TLapeCompilerBase.VarToDefault(AVar: TResVar; Pos: PDocPos = nil);
+var
+  Offset: Integer;
+begin
+  Offset := -1;
+  VarToDefault(AVar, Offset, Pos);
 end;
 
 procedure TLapeCompilerBase.FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
