@@ -215,6 +215,7 @@ type
 
     function addSubDeclaration(ADecl: TLapeDeclaration): Integer; override;
     function CanHaveChild: Boolean; virtual;
+    function IsOrdinal(OrPointer: Boolean = False): Boolean; virtual;
 
     function HasChild(AName: lpString): Boolean; overload; virtual;
     function HasChild(ADecl: TLapeDeclaration): Boolean; overload; virtual;
@@ -1117,7 +1118,7 @@ end;
 
 function TLapeType.getBaseIntType: ELapeBaseType;
 begin
-  if (not (FBaseType in LapeOrdinalTypes + [ltPointer])) then
+  if (not (FBaseType in LapeOrdinalTypes{ + [ltPointer]})) then
     Result := ltUnknown
   else if (FBaseType in LapeIntegerTypes) then
     Result := FBaseType
@@ -1270,6 +1271,11 @@ begin
   Result := (FBaseType in LapeStructTypes) or (FManagedDecls.Items.Count > 0);
 end;
 
+function TLapeType.IsOrdinal(OrPointer: Boolean = False): Boolean;
+begin
+  Result := (BaseIntType <> ltUnknown) or (OrPointer and (BaseType = ltPointer));
+end;
+
 function TLapeType.HasChild(AName: lpString): Boolean;
 var
   DotName: TLapeGlobalVar;
@@ -1369,7 +1375,7 @@ begin
     if (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
       Result := HasConstantChild(PlpString(Right.Ptr)^)
     else if (op = op_Index) and (BaseType in [ltUnknown{overloaded method}, ltShortString, ltStaticArray]) then
-      Result := Right.HasType() and (Right.VarType.BaseIntType <> ltUnknown);
+      Result := Right.HasType() and Right.VarType.IsOrdinal();
 end;
 
 function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
@@ -1924,7 +1930,7 @@ begin
   if (op = op_Index) and (Right <> nil) then
   begin
     tmpType := Right.VarType;
-    if (not Right.HasType()) or (Right.VarType.BaseIntType = ltUnknown) then
+    if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
       if (Right <> nil) and Right.HasType() then
         LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
       else
@@ -1975,7 +1981,7 @@ begin
     wasConstant := Left.isConstant;
     tmpType := Right.VarType;
 
-    if (not Right.HasType()) or (Right.VarType.BaseIntType = ltUnknown) then
+    if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
       if Right.HasType() then
         LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
       else

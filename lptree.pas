@@ -3150,7 +3150,7 @@ begin
         CountParam := FCompiler.getConstant(1);
 
       VarParam := FParams[0].Evaluate();
-      if (VarParam = nil) or (not VarParam.HasType()) or (VarParam.VarType.BaseIntType = ltUnknown) then
+      if (VarParam = nil) or (not VarParam.HasType()) or (not VarParam.VarType.IsOrdinal(True)) then
         LapeException(lpeInvalidEvaluation, DocPos);
 
       if (VarParam.VarType.BaseType = ltPointer) then
@@ -3223,7 +3223,7 @@ begin
       CountParam := _ResVar.New(FCompiler.getConstant(1));
 
     VarParam := FParams[0].Compile(Offset);
-    if (not VarParam.HasType()) or (VarParam.VarType.BaseIntType = ltUnknown) then
+    if (not VarParam.HasType()) or (not VarParam.VarType.IsOrdinal(True)) then
       LapeException(lpeInvalidEvaluation, DocPos);
 
     if (VarParam.VarType.BaseType = ltPointer) then
@@ -5023,7 +5023,7 @@ begin
   CounterVar := nil;
   Count := FCounter.Compile(Offset);
   try
-    if (not FLimit.CompileToTempVar(Offset, Lim, BigLock)) or (not Lim.HasType()) or (Lim.VarType.BaseIntType = ltUnknown) then
+    if (not FLimit.CompileToTempVar(Offset, Lim, BigLock)) or (not Lim.HasType()) or (not Lim.VarType.IsOrdinal(True)) then
       LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
     if Count.HasType() and (not Count.isVariable) then
@@ -5032,7 +5032,7 @@ begin
       CounterVar.isConstant := False;
       Count := CounterVar.VarType.Eval(op_Assign, Result, _ResVar.New(CounterVar), Count, Offset, @FCounter._DocPos);
     end;
-    if (not Count.HasType()) or (not Count.isVariable) or (Count.VarType.BaseIntType = ltUnknown) then
+    if (not Count.HasType()) or (not Count.isVariable) or (not Count.VarType.IsOrdinal(True)) then
       LapeException(lpeInvalidIterator, FCounter.DocPos);
 
     if WalkDown then

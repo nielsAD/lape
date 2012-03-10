@@ -747,7 +747,7 @@ begin
     Assert(HasType());
 
     i := Right.AsInteger;
-    if (not Right.HasType()) or (Right.VarType.BaseIntType = ltUnknown) then
+    if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
       if Right.HasType() then
         LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
       else
@@ -813,7 +813,7 @@ begin
     else
     try
       tmpType := Right.VarType;
-      if (not Right.HasType()) or (Right.VarType.BaseIntType = ltUnknown) then
+      if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
         if Right.HasType() then
           LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
         else
@@ -1004,7 +1004,7 @@ begin
   if (op = op_Index) and (Right <> nil) then
   begin
     tmpType := Right.VarType;
-    if (not Right.HasType()) or (Right.VarType.BaseIntType = ltUnknown) then
+    if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
       if Right.HasType() then
         LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
       else

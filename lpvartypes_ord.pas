@@ -402,14 +402,14 @@ end;
 
 function TLapeType_SubRange.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
-  if (FLo = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
+  if (FLo = nil) and (FCompiler <> nil) and IsOrdinal() then
     FLo := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Lo))) as TLapeGlobalVar;
   Result := FLo;
 end;
 
 function TLapeType_SubRange.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
-  if (FHi = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
+  if (FHi = nil) and (FCompiler <> nil) and IsOrdinal() then
     FHi := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Hi))) as TLapeGlobalVar;
   Result := FHi;
 end;
@@ -627,13 +627,13 @@ function TLapeType_Enum.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeTyp
 begin
   Assert(FCompiler <> nil);
 
-  if (Right <> nil) and (Right.BaseIntType <> ltUnknown) and
+  if (Right <> nil) and Right.IsOrdinal() and
      (((BaseType in LapeBoolTypes) and (op in BinaryOperators + EnumOperators) and (Right.BaseType in LapeBoolTypes)) or
      ((op in EnumOperators) and ((not (Right.BaseType in LapeEnumTypes)) or Equals(Right))))
   then
   begin
     Result := FCompiler.getBaseType(BaseIntType).EvalRes(Op, FCompiler.getBaseType(Right.BaseIntType));
-    if (not (op in CompareOperators)) then
+    if (Result <> nil) and (not (op in CompareOperators)) then
       Result := Self;
   end
   else
@@ -648,20 +648,20 @@ begin
   Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType = Self));
 
-  if (Right <> nil) and Right.HasType() and (Right.VarType.BaseIntType <> ltUnknown) and
+  if (Right <> nil) and Right.HasType() and Right.VarType.IsOrdinal() and
      (((BaseType in LapeBoolTypes) and (op in BinaryOperators + EnumOperators) and (Right.BaseType in LapeBoolTypes)) or
      ((op in EnumOperators) and ((not (Right.BaseType in LapeEnumTypes)) or Equals(Right.VarType))))
   then
   try
     tmpType := Right.VarType;
-    if (BaseIntType = ltUnknown) or (not Right.HasType()) or (Right.VarType.BaseIntType = ltUnknown) then
+    if (not IsOrdinal()) or (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
       LapeException(lpeInvalidEvaluation);
 
     Left.VarType := FCompiler.getBaseType(BaseIntType);
     Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
 
     Result := Left.VarType.EvalConst(Op, Left, Right);
-    if (not (op in CompareOperators)) then
+    if Result.HasType() and (not (op in CompareOperators)) then
       if (Result.VarType.BaseIntType = BaseIntType) then
         Result.VarType := Self
       else
@@ -688,7 +688,7 @@ begin
   Assert(FCompiler <> nil);
   Assert(Left.VarType = Self);
 
-  if Right.HasType() and (Right.VarType.BaseIntType <> ltUnknown) and
+  if Right.HasType() and Right.VarType.IsOrdinal() and
      (((BaseType in LapeBoolTypes) and (op in BinaryOperators + EnumOperators) and (Right.VarType.BaseType in LapeBoolTypes)) or
      ((op in EnumOperators) and ((not (Right.VarType.BaseType in LapeEnumTypes)) or Equals(Right.VarType))))
   then
@@ -696,7 +696,7 @@ begin
     tmpVar := NullResVar;
     tmpDest := NullResVar;
     tmpType := Right.VarType;
-    if (BaseIntType = ltUnknown) or (not Right.HasType()) or (Right.VarType.BaseIntType = ltUnknown) then
+    if (not IsOrdinal()) or (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
       LapeException(lpeInvalidEvaluation);
 
     Left.VarType := FCompiler.getBaseType(BaseIntType);
@@ -705,7 +705,7 @@ begin
     if Dest.HasType() and Equals(Dest.VarType) then
       tmpDest := Dest;
     Result := Left.VarType.Eval(Op, Dest, Left, Right, Offset, Pos);
-    if (not (op in CompareOperators)) then
+    if Result.HasType() and (not (op in CompareOperators)) then
       if (Result.VarType.BaseIntType = BaseIntType) then
         Result.VarType := Self
       else

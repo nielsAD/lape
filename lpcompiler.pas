@@ -781,8 +781,8 @@ begin
 
     Lo := Range.Lo.Evaluate();
     Hi := Range.Hi.Evaluate();
-    if (Lo = nil) or (not Lo.HasType()) or (Lo.VarType.BaseIntType = ltUnknown) or
-       (Hi = nil) or (not Hi.HasType()) or (Hi.VarType.BaseIntType = ltUnknown)
+    if (Lo = nil) or (not Lo.HasType()) or (not Lo.VarType.IsOrdinal()) or
+       (Hi = nil) or (not Hi.HasType()) or (not Hi.VarType.IsOrdinal())
     then
       LapeException(lpeInvalidRange, Node.DocPos)
     else if (not Lo.isConstant) or (not Hi.isConstant) then
@@ -1680,7 +1680,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
           else
             Default := nil;
 
-          if (Default = nil) or (not Default.HasType()) or (Default.VarType.BaseIntType = ltUnknown) or (not Default.isConstant) then
+          if (Default = nil) or (not Default.HasType()) or (not Default.VarType.IsOrdinal()) or (not Default.isConstant) then
             LapeException(lpeExpressionExpected, Tokenizer.DocPos);
           Val := Enum.addMember(Default.AsInteger, Name);
         finally
