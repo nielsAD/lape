@@ -1,0 +1,11 @@
+procedure StringTest(s: string);
+begin
+  s[2] := 'q';
+end;
+
+var
+  s = 'abc';
+begin
+  StringTest(s);
+  WriteLn(s);
+end;

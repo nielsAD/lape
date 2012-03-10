@@ -3374,7 +3374,7 @@ begin
 
   FGlobalDeclarations := TLapeDeclarationList.Create(nil);
   FManagedDeclarations := TLapeDeclarationList.Create(nil);
-  FCachedDeclarations := TLapeVarMap.Create(nil, dupIgnore, True);
+  FCachedDeclarations := TLapeVarMap.Create(nil, dupIgnore, True, '', True);
 end;
 
 destructor TLapeCompilerBase.Destroy;

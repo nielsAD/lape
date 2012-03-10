@@ -1107,7 +1107,7 @@ function TLapeTree_OpenArray.resType: TLapeType;
     if (FValues.Count > 0) then
     begin
       Range.Lo := 0;
-      Range.Hi := FValues.Count - 1;
+      Range.Hi := Int64(FValues.Count) - 1;
 
       for i := 0 to Range.Hi do
       begin
@@ -3941,6 +3941,7 @@ begin
   Create(AGlobalVar, ASource.Compiler, @ASource._DocPos);
   FCompilerOptions := ASource.CompilerOptions;
 end;
+
 constructor TLapeTree_GlobalVar.Create(Ident: lpString; BaseType: ELapeBaseType; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);

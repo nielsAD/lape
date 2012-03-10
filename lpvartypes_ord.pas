@@ -488,7 +488,7 @@ begin
   FMemberMap := AMemberMap;
 
   while (FRange.Lo < FMemberMap.Count) and (FMemberMap[FRange.Lo] = '') do Inc(FRange.Lo);
-  FRange.Hi := FMemberMap.Count - 1;
+  FRange.Hi := Int64(FMemberMap.Count) - 1;
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
   if FSmall then
     FBaseType := ltSmallEnum;

@@ -129,7 +129,7 @@ var
 
   procedure ExpandVarStack(Size: UInt32); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (VarStackLen + Size > Length(VarStack)) then
+    if (VarStackLen + Size > UInt32(Length(VarStack))) then
     begin
       VarStackStack[VarStackIndex].Pos := VarStackLen;
 
@@ -159,7 +159,7 @@ var
   var
     OldLen: UInt32;
   begin
-    if (VarStackLen + Size > Length(VarStack)) then
+    if (VarStackLen + Size > UInt32(Length(VarStack))) then
     begin
       OldLen := VarStackLen - VarStackPos;
       ExpandVarStack(Size + OldLen);
@@ -243,7 +243,7 @@ var
     InitStackSize: TStackOffset;
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    if (StackPos + InitStackSize > Length(Stack)) then
+    if (StackPos + InitStackSize > UInt32(Length(Stack))) then
       SetLength(Stack, StackPos + InitStackSize + (StackSize div 2));
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
@@ -260,7 +260,7 @@ var
     InitStackSize: TStackOffset;
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    if (StackPos + InitStackSize > Length(Stack)) then
+    if (StackPos + InitStackSize > UInt32(Length(Stack))) then
       SetLength(Stack, StackPos + InitStackSize + (StackSize div 2));
     FillChar(Stack[StackPos], InitStackSize, 0);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
@@ -271,7 +271,7 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    if (StackPos + GrowSize > Length(Stack)) then
+    if (StackPos + GrowSize > UInt32(Length(Stack))) then
       SetLength(Stack, StackPos + GrowSize + (StackSize div 2));
     Inc(StackPos, GrowSize);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
@@ -383,7 +383,7 @@ var
       else if (JmpFinally = Try_NoExcept) then
         TryStack[TryStackPos].JmpFinally := TryStack[TryStackPos].Jmp
       else
-        TryStack[TryStackPos].JmpFinally := PByte(PtrUInt(Code) + JmpFinally + Jmp);
+        TryStack[TryStackPos].JmpFinally := PByte(PtrInt(Code) + Int32(JmpFinally) + Jmp);
     end;
 
     Inc(TryStackPos);
@@ -419,7 +419,7 @@ var
 
     with CallStack[CallStackPos] do
     begin
-      CalledFrom := PByte(PtrUInt(Code) + ocSize + RecSize);
+      CalledFrom := PByte(PtrInt(Code) + ocSize + RecSize);
       VarStackP := VarStackPos;
       PushToVar(ParamSize);
       StackP := StackPos + StackPosOffset;

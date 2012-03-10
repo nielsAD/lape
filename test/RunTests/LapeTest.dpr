@@ -7,7 +7,6 @@ uses
   lptest, lpparser;
 
 begin
-  WriteLn(StrToUint64('18446744073709551615'));
   try
     with TLapeTester.Create() do
     try
