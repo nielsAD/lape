@@ -1,0 +1,13 @@
+type
+  PMyType = ^MyType;
+  MyType = record
+    toast: PMyType;
+  end;
+
+var
+  myVar: PMyType;
+begin
+  New(myVar);
+  //Writeln(myVar^); // Doesn't throw error if uncommented
+  Writeln(myVar); // Throws error
+end.

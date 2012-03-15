@@ -1,0 +1,9 @@
+{$autoinvoke on}
+{$booleval on}
+
+var
+  f: function: Boolean;
+begin
+  if (f <> nil) and f() then
+    WriteLn('f');
+end;
