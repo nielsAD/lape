@@ -1,3 +1,5 @@
+//Issue 11
+
 type
   PMyType = ^MyType;
   MyType = record
