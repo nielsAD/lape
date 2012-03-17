@@ -1972,7 +1972,7 @@ begin
         end;
 
         if (DefVal is TLapeVar) then
-          TLapeVar(DefVal).isConstant := isConst;
+          TLapeVar(DefVal).setReadWrite(isConst and (DefConstVal <> nil), not isConst);
       end;
     until OneOnly or (Next() <> tk_Identifier);
 

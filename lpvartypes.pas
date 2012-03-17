@@ -864,8 +864,8 @@ end;
 
 procedure TResVar.setConstant(AConst: Boolean; ChangeStack: Boolean);
 begin
-  Readable := AConst;
-  Writeable := not AConst;
+  setReadable(AConst, ChangeStack);
+  setWriteable(not AConst, ChangeStack);
 end;
 
 procedure TResVar.setConstant(AConst: Boolean);
