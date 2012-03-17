@@ -143,14 +143,15 @@ end;
 
 function TLapeType_Record.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
-  i: Integer;
+  i, Ind: Integer;
 begin
   Result := 'begin Result := '#39'{'#39;
   for i := 0 to FFieldMap.Count - 1 do
   begin
     if (i > 0) then
       Result := Result + ' + ' + #39', '#39;
-    Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(Param0.' + FFieldMap.Key[i] + ')';
+    if (ToStr <> nil) and (ToStr.getMethod(getTypeArray(FFieldMap.ItemsI[i].FieldType)) <> nil) then
+      Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(Param0.' + FFieldMap.Key[i] + ')';
   end;
   Result := Result + ' + '#39'}'#39'; end;';
 end;

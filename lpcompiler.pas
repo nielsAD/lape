@@ -611,17 +611,19 @@ begin
   if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or ((AResult <> nil) and (AResult.BaseType <> ltString)) then
     Exit;
 
+  if (AResult = nil) and (AType = nil) then
+    AResult := getBaseType(ltString);
+  if (AType = nil) then
+    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConst], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+
+  Result := AType.NewGlobalVar(@_LapeToString_Unknown);
+  Sender.addMethod(Result);
+
   Body := AParams[0].VarToStringBody(Sender);
   if (Body <> '') then
-  begin
-    if (AResult = nil) and (AType = nil) then
-      AResult := getBaseType(ltString);
-    if (AType = nil) then
-      AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConst], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
-
-    Sender.addMethod(AType.NewGlobalVarP());
-    Result := addGlobalFunc(AType, 'ToString', 'override;' + Body + LineEnding).Method;
-  end;
+    Result := addGlobalFunc(AType, 'ToString', 'override;' + Body + LineEnding).Method
+  else
+    Result.Free();
 end;
 
 procedure TLapeCompiler.InitBaseDefinitions;

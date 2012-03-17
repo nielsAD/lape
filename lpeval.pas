@@ -48,6 +48,7 @@ procedure _LapeAStr_SetLen(const Params: PParamArray);
 procedure _LapeWStr_SetLen(const Params: PParamArray);
 procedure _LapeUStr_SetLen(const Params: PParamArray);
 
+procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer);
 procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer);
 procedure _LapeToString_Int8(const Params: PParamArray; const Result: Pointer);
 procedure _LapeToString_UInt16(const Params: PParamArray; const Result: Pointer);
@@ -377,6 +378,11 @@ end;
 procedure _LapeUStr_SetLen(const Params: PParamArray);
 begin
   SetLength(PUnicodeString(Params^[0])^, PInt32(Params^[1])^);
+end;
+
+procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer);
+begin
+  PlpString(Result)^ := '*UNKNOWN*';
 end;
 
 procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer);
