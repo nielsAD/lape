@@ -1438,9 +1438,9 @@ begin
     Result := _ResVar.New(FCompiler.getTempVar(FType));
   end;
 
-  wasConstant := Result.isConstant;
+  wasConstant := not Result.Writeable;
   if wasConstant then
-    Result.isConstant := False;
+    Result.Writeable := True;
 
   FCompiler.VarToDefault(Result, Offset, @_DocPos);
 
@@ -1453,7 +1453,7 @@ begin
   else
     LapeException(lpeInvalidCast, DocPos);
 
-  Result.isConstant := wasConstant;
+  Result.Writeable := not wasConstant;
 end;
 
 procedure TLapeTree_Invoke.setIdent(Node: TLapeTree_ExprBase);
@@ -1951,7 +1951,7 @@ var
 
         if (Params[i].ParType in Lape_RefParams) then
         begin
-          if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].isVariable) then
+          if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].Writeable) then
             LapeException(lpeVariableExpected)
           else if (Params[i].VarType <> nil) and (not Params[i].VarType.Equals(ParamVars[i].VarType)) then
             AssignToTempVar(ParamVars[i], Params[i], mpVar, Self._DocPos);
@@ -2007,7 +2007,7 @@ var
            ((Params[i].VarType <> ParamVars[i].VarType) and (not ParamVars[i].HasType()))
         then
           LapeException(lpeCannotInvoke, [FParams[i], Self])
-        else if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].isVariable) then
+        else if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].Writeable) then
           LapeException(lpeVariableExpected, [FParams[i], Self]);
 
         if (Params[i].VarType <> nil) and (not Params[i].VarType.Equals(ParamVars[i].VarType)) then
@@ -2131,7 +2131,7 @@ begin
           if (Params[i].Default <> nil) then
           begin
             ParamVars[i] := _ResVar.New(Params[i].Default);
-            if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].isVariable) then
+            if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].Writeable) then
               LapeException(lpeVariableExpected, [FParams[i], Self]);
           end
           else
@@ -2509,7 +2509,7 @@ begin
     else
       LapeException(lpeImpossible, _DocPos);
 
-  if (VarType = nil) or (not Param.isVariable) then
+  if (VarType = nil) or (not Param.Writeable) then
     LapeException(lpeVariableExpected, [FParams[0], Self]);
 
   if isPointer then
@@ -2563,7 +2563,7 @@ begin
     else
       LapeException(lpeImpossible, _DocPos);
 
-  if ((VarType = nil) and (not IsPointer)) or (not Param.isVariable) then
+  if ((VarType = nil) and (not IsPointer)) or (not Param.Writeable) then
     LapeException(lpeVariableExpected, [FParams[0], Self]);
 
   _Dispose := FCompiler['_Dispose'];
@@ -3456,7 +3456,7 @@ begin
 
   if (ResVar.VarType is TLapeType_Label) then
   begin
-    if ResVar.isConstant or (ResVar.VarPos.MemPos <> mpMem) or (not ResVar.VarPos.GlobalVar.isNull()) then
+    if ResVar.Readable or (ResVar.VarPos.MemPos <> mpMem) or (not ResVar.VarPos.GlobalVar.isNull()) then
       LapeException(lpeInvalidLabel, [FParams[0]]);
 
     PCodeOffset(ResVar.VarPos.GlobalVar.Ptr)^ := Offset;
@@ -3727,7 +3727,7 @@ begin
       else
         LeftVar := nil;
 
-      if (FOperatorType = op_Assign) and ((LeftVar = nil) or LeftVar.isConstant) then
+      if (FOperatorType = op_Assign) and ((LeftVar = nil) or (not LeftVar.Writeable)) then
         LapeException(lpeCannotAssign, [FLeft, Self]);
 
       if (not isEmpty(FRight)) then
@@ -3780,9 +3780,9 @@ var
       Result.VarType := TLapeTree_Operator(Body).resType();
       FCompiler.getDestVar(FDest, Result, op_Unknown);
 
-      wasConstant := Result.isConstant;
+      wasConstant := not Result.Writeable;
       if wasConstant then
-        Result.isConstant := False;
+        Result.Writeable := True;
 
       if (Result.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
       begin
@@ -3792,7 +3792,7 @@ var
 
       Result := Compile(Offset);
       if wasConstant then
-        Result.isConstant := True;
+        Result.Writeable := False;
     end;
   end;
 
@@ -3808,7 +3808,7 @@ begin
   else
     LeftVar := NullResVar;
 
-  if (FOperatorType = op_Assign) and (not LeftVar.isVariable) then
+  if (FOperatorType = op_Assign) and (not LeftVar.Writeable) then
     LapeException(lpeCannotAssign, [FLeft, Self]);
 
   if (FRight <> nil) then
@@ -3816,7 +3816,7 @@ begin
     FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
 
     if (FOperatorType = op_Assign) and
-      (FLeft <> nil) and LeftVar.isVariable and
+      (FLeft <> nil) and LeftVar.Writeable and
       (FRight is TLapeTree_DestExprBase) and
       (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos = NullResVar.VarPos.MemPos)
     then
@@ -3870,7 +3870,7 @@ begin
 
   FResType := FResVar.VarType;
   FRes := FResVar.VarPos.GlobalVar;
-  if (FResVar.VarPos.MemPos = mpMem) and (FResVar.VarPos.GlobalVar <> nil) and FResVar.VarPos.GlobalVar.isConstant then
+  if (FResVar.VarPos.MemPos = mpMem) and (FResVar.VarPos.GlobalVar <> nil) and FResVar.VarPos.GlobalVar.Readable then
     FConstant := bTrue
   else
     FConstant := bFalse;
@@ -3926,7 +3926,7 @@ begin
   begin
     FResType := FGlobalVar.VarType;
     FRes := FGlobalVar;
-    if FGlobalVar.isConstant then
+    if FGlobalVar.Readable then
       FConstant := bTrue
     else
       FConstant := bFalse;
@@ -3976,7 +3976,7 @@ begin
   Result := (FWithDeclRec.WithVar <> nil) and
     (FWithDeclRec.WithVar^.VarPos.MemPos = mpMem) and
     (FWithDeclRec.WithVar^.VarPos.GlobalVar <> nil) and
-    FWithDeclRec.WithVar^.VarPos.GlobalVar.isConstant;
+    FWithDeclRec.WithVar^.VarPos.GlobalVar.Readable;
 end;
 
 function TLapeTree_WithVar.Evaluate: TLapeGlobalVar;
@@ -4381,16 +4381,16 @@ begin
     if (FVars[i].VarDecl <> nil) and (FVars[i].Default <> nil) then
       with FVars[i], TLapeTree_Operator.Create(op_Assign, Self) do
       try
-        wasConstant := (VarDecl is TLapeVar) and TLapeVar(VarDecl).isConstant;
+        wasConstant := (VarDecl is TLapeVar) and (not TLapeVar(VarDecl).Writeable);
         if wasConstant then
-          TLapeVar(VarDecl).isConstant := False;
+          TLapeVar(VarDecl).Writeable := True;
 
         Left := TLapeTree_ResVar.Create(_ResVar.New(VarDecl), Self);
         Right := Default;
         Result := Compile(Offset);
 
         if wasConstant then
-          TLapeVar(VarDecl).isConstant := True;
+          TLapeVar(VarDecl).Writeable := False;
       finally
         Free();
       end
@@ -5026,13 +5026,13 @@ begin
     if (not FLimit.CompileToTempVar(Offset, Lim, BigLock)) or (not Lim.HasType()) or (not Lim.VarType.IsOrdinal(True)) then
       LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
-    if Count.HasType() and (not Count.isVariable) then
+    if Count.HasType() and (not Count.Writeable) then
     begin
       CounterVar := FCompiler.getTempVar(Count.VarType, BigLock);
       CounterVar.isConstant := False;
       Count := CounterVar.VarType.Eval(op_Assign, Result, _ResVar.New(CounterVar), Count, Offset, @FCounter._DocPos);
     end;
-    if (not Count.HasType()) or (not Count.isVariable) or (not Count.VarType.IsOrdinal(True)) then
+    if (not Count.HasType()) or (not Count.Writeable) or (not Count.VarType.IsOrdinal(True)) then
       LapeException(lpeInvalidIterator, FCounter.DocPos);
 
     if WalkDown then

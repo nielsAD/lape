@@ -787,7 +787,7 @@ begin
        (Hi = nil) or (not Hi.HasType()) or (not Hi.VarType.IsOrdinal())
     then
       LapeException(lpeInvalidRange, Node.DocPos)
-    else if (not Lo.isConstant) or (not Hi.isConstant) then
+    else if (not Lo.Readable) or (not Hi.Readable) then
       LapeException(lpeConstantExpected, Node.DocPos);
 
     Result.Lo := Lo.AsInteger;
@@ -1223,7 +1223,7 @@ begin
             Default := ParseExpression([tk_sym_ParenthesisClose], True, False).setExpectedType(Param.VarType) as TLapeTree_ExprBase;
             try
               Param.Default := Default.Evaluate();
-              if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or Param.Default.isConstant) then
+              if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or (not Param.Default.Writeable)) then
                 LapeException(lpeVariableExpected, Default.DocPos);
             finally
               Default.Free();
@@ -1682,7 +1682,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
           else
             Default := nil;
 
-          if (Default = nil) or (not Default.HasType()) or (not Default.VarType.IsOrdinal()) or (not Default.isConstant) then
+          if (Default = nil) or (not Default.HasType()) or (not Default.VarType.IsOrdinal()) or (not Default.Readable) then
             LapeException(lpeExpressionExpected, Tokenizer.DocPos);
           Val := Enum.addMember(Default.AsInteger, Name);
         finally
@@ -3088,7 +3088,7 @@ end;
 
 procedure TLapeCompiler.VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
 begin
-  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() and AVar.isVariable then
+  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() and AVar.Writeable then
     with TLapeTree_Operator.Create(op_Assign, Self, Pos) do
     try
       Left := TLapeTree_ResVar.Create(AVar.IncLock(), Self, Pos);
@@ -3107,16 +3107,16 @@ begin
   if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType()  then
     with TLapeTree_InternalMethod_Dispose.Create(Self, Pos) do
     try
-      wasConstant := AVar.isConstant;
+      wasConstant := not AVar.Writeable;
       if wasConstant then
-        AVar.isConstant := False;
+        AVar.Writeable := True;
 
       FunctionOnly := True;
       addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Self, Pos));
       Compile(Offset);
     finally
       if wasConstant then
-        AVar.isConstant := True;
+        AVar.Writeable := False;
       Free();
     end;
 end;

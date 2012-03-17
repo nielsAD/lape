@@ -60,7 +60,8 @@ type
   PResVar = ^TResVar;
   TResVar = {$IFDEF FPC}object{$ELSE}record{$ENDIF}
   private
-    function getVariable: Boolean;
+    function getReadable: Boolean;
+    function getWriteable: Boolean;
     function getConstant: Boolean;
   public
     VarType: TLapeType;
@@ -77,11 +78,19 @@ type
     procedure DecOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
     procedure setOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
 
-    procedure setConstant(IsConst: Boolean; ChangeStack: Boolean); overload;
-    procedure setConstant(IsConst: Boolean); overload;
+    procedure setReadable(AReadable: Boolean; ChangeStack: Boolean); overload;
+    procedure setReadable(AReadable: Boolean); overload;
+    procedure setWriteable(AWriteable: Boolean; ChangeStack: Boolean); overload;
+    procedure setWriteable(AWriteable: Boolean); overload;
+    procedure setConstant(AConst: Boolean; ChangeStack: Boolean); overload;
+    procedure setConstant(AConst: Boolean); overload;
 
+    procedure setReadWrite(AReadable, AWriteable: Boolean);
+    procedure CopyFlags(Other: TResVar);
+
+    property Readable: Boolean read getReadable write setReadable;
+    property Writeable: Boolean read getWriteable write setWriteable;
     property isConstant: Boolean read getConstant write setConstant;
-    property isVariable: Boolean read getVariable;
   end;
 
   ELapeParameterType = (lptNormal, lptConst, lptVar, lptOut);
@@ -92,20 +101,34 @@ type
   end;
   TLapeParameterList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeParameter>;
 
+  ELapeVarFlag = (lvfReadable, lvfWriteable);
+  ELapeVarFlags = set of ELapeVarFlag;
+
   TLapeVar = class(TLapeDeclaration)
   protected
+    FVarFlags: ELapeVarFlags;
+
     function getBaseType: ELapeBaseType; virtual;
     function getSize: Integer; virtual;
     function getLo: TLapeGlobalVar; virtual;
     function getHi: TLapeGlobalVar; virtual;
     function getInitialization: Boolean; virtual;
     function getFinalization: Boolean; virtual;
+
+    function getReadable: Boolean; virtual;
+    procedure setReadable(AReadable: Boolean); virtual;
+    function getWriteable: Boolean; virtual;
+    procedure setWriteable(AWriteable: Boolean); virtual;
+    function getConstant: Boolean;
+    procedure setConstant(AConst: Boolean);
   public
     VarType: TLapeType;
-    isConstant: Boolean;
 
     constructor Create(AVarType: TLapeType; AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil); reintroduce; virtual;
     function HasType: Boolean;
+
+    procedure setReadWrite(AReadable, AWriteable: Boolean);
+    procedure CopyFlags(Other: TLapeVar);
 
     property BaseType: ELapeBaseType read getBaseType;
     property Size: Integer read getSize;
@@ -113,6 +136,10 @@ type
     property Hi: TLapeGlobalVar read getHi;
     property NeedInitialization: Boolean read getInitialization;
     property NeedFinalization: Boolean read getFinalization;
+
+    property Readable: Boolean read getReadable write setReadable;
+    property Writeable: Boolean read getWriteable write setWriteable;
+    property isConstant: Boolean read getConstant write setConstant;
   end;
 
   TLapeStackVar = class(TLapeVar)
@@ -710,23 +737,28 @@ begin
   Result := (Field.VarPos.MemPos = mpMem) and Field.isConstant and Field.HasType() and (Field.VarType.BaseType = ltString) and (Field.VarPos.GlobalVar.Ptr <> nil);
 end;
 
-function TResVar.getVariable: Boolean;
-begin
-  Result := ((VarPos.MemPos = mpStack) and (VarPos.isPointer or VarPos.ForceVariable)) or
-    ((VarPos.MemPos = mpMem) and (VarPos.GlobalVar <> nil) and (not VarPos.GlobalVar.isConstant)) or
-    ((VarPos.MemPos = mpVar) and (VarPos.StackVar <> nil) and (not VarPos.StackVar.isConstant));
-end;
-
-function TResVar.getConstant: Boolean;
+function TResVar.getReadable: Boolean;
 begin
   if (VarPos.MemPos = mpMem) and (VarPos.GlobalVar <> nil) then
-    Result := VarPos.GlobalVar.isConstant
+    Result := VarPos.GlobalVar.Readable
   else if (VarPos.MemPos = mpVar) and (VarPos.StackVar <> nil) then
-    Result := VarPos.StackVar.isConstant
+    Result := VarPos.StackVar.Readable
   else if (VarPos.MemPos = mpStack) then
     Result := not VarPos.ForceVariable
   else
     Result := True;
+end;
+
+function TResVar.getWriteable: Boolean;
+begin
+  Result := ((VarPos.MemPos = mpStack) and (VarPos.isPointer or VarPos.ForceVariable)) or
+    ((VarPos.MemPos = mpMem) and (VarPos.GlobalVar <> nil) and VarPos.GlobalVar.Writeable) or
+    ((VarPos.MemPos = mpVar) and (VarPos.StackVar <> nil) and VarPos.StackVar.Writeable);
+end;
+
+function TResVar.getConstant: Boolean;
+begin
+  Result := Readable and (not Writeable);
 end;
 
 class function TResVar.New(AVar: TLapeVar): TResVar;
@@ -800,19 +832,57 @@ begin
   IncOffset(Offset);
 end;
 
-procedure TResVar.setConstant(IsConst: Boolean; ChangeStack: Boolean);
+procedure TResVar.setReadable(AReadable: Boolean; ChangeStack: Boolean);
 begin
   if (VarPos.MemPos = mpMem) and (VarPos.GlobalVar <> nil) then
-    VarPos.GlobalVar.isConstant := isConst
+    VarPos.GlobalVar.Readable := AReadable
   else if (VarPos.MemPos = mpVar) and (VarPos.StackVar <> nil) then
-    VarPos.StackVar.isConstant := isConst
+    VarPos.StackVar.Readable := AReadable
   else if ChangeStack and (VarPos.MemPos = mpStack) then
-    VarPos.ForceVariable := not isConst;
+    VarPos.ForceVariable := not AReadable;
 end;
 
-procedure TResVar.setConstant(IsConst: Boolean);
+procedure TResVar.setReadable(AReadable: Boolean);
 begin
-  setConstant(IsConst, True);
+  setReadable(AReadable, True);
+end;
+
+procedure TResVar.setWriteable(AWriteable: Boolean; ChangeStack: Boolean);
+begin
+  if (VarPos.MemPos = mpMem) and (VarPos.GlobalVar <> nil) then
+    VarPos.GlobalVar.Writeable := AWriteable
+  else if (VarPos.MemPos = mpVar) and (VarPos.StackVar <> nil) then
+    VarPos.StackVar.Writeable := AWriteable
+  else if ChangeStack and (VarPos.MemPos = mpStack) then
+    VarPos.ForceVariable := AWriteable;
+end;
+
+procedure TResVar.setWriteable(AWriteable: Boolean);
+begin
+  setWriteable(AWriteable, True);
+end;
+
+procedure TResVar.setConstant(AConst: Boolean; ChangeStack: Boolean);
+begin
+  Readable := AConst;
+  Writeable := not AConst;
+end;
+
+procedure TResVar.setConstant(AConst: Boolean);
+begin
+  setConstant(AConst, True);
+end;
+
+procedure TResVar.setReadWrite(AReadable, AWriteable: Boolean);
+begin
+  Readable := AReadable;
+  Writeable := AWriteable;
+end;
+
+procedure TResVar.CopyFlags(Other: TResVar);
+begin
+  Readable := Other.Readable;
+  Writeable := Other.Writeable;
 end;
 
 function TLapeVar.getBaseType: ELapeBaseType;
@@ -863,6 +933,43 @@ begin
     Result := False;
 end;
 
+function TLapeVar.getReadable: Boolean;
+begin
+  Result := lvfReadable in FVarFlags;
+end;
+
+procedure TLapeVar.setReadable(AReadable: Boolean);
+begin
+  if AReadable then
+    Include(FVarFlags, lvfReadable)
+  else
+    Exclude(FVarFlags, lvfReadable);
+end;
+
+function TLapeVar.getWriteable: Boolean;
+begin
+  Result := lvfWriteable in FVarFlags;
+end;
+
+procedure TLapeVar.setWriteable(AWriteable: Boolean);
+begin
+  if AWriteable then
+    Include(FVarFlags, lvfWriteable)
+  else
+    Exclude(FVarFlags, lvfWriteable);
+end;
+
+function TLapeVar.getConstant: Boolean;
+begin
+  Result := Readable and not Writeable;
+end;
+
+procedure TLapeVar.setConstant(AConst: Boolean);
+begin
+  Readable := AConst;
+  Writeable := not AConst;
+end;
+
 constructor TLapeVar.Create(AVarType: TLapeType; AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil);
 begin
   inherited Create(AName, ADocPos, AList);
@@ -874,6 +981,21 @@ end;
 function TLapeVar.HasType: Boolean;
 begin
   Result := VarType <> nil;
+end;
+
+procedure TLapeVar.setReadWrite(AReadable, AWriteable: Boolean);
+begin
+  Readable := AReadable;
+  Writeable := AWriteable;
+end;
+
+procedure TLapeVar.CopyFlags(Other: TLapeVar);
+begin
+  if (Other = nil) then
+    Exit;
+
+  Readable  := Other.Readable;
+  Writeable := Other.Writeable;
 end;
 
 procedure TLapeStackVar.setStack(Stack: TLapeVarStack);
@@ -920,6 +1042,7 @@ begin
   inherited;
   FLock := 0;
   isConstant := True;
+  //setReadWrite(False, False);
 end;
 
 function TLapeStackTempVar.getLocked: Boolean;
@@ -1308,7 +1431,7 @@ begin
   if (Length(Decls) <= 0) then
     Result := HasChild(AName)
   else with TLapeGlobalVar(Decls[0]) do
-    Result := (not MethodOfObject(VarType)) and isConstant and (BaseType = ltImportedMethod);
+    Result := (not MethodOfObject(VarType)) and Readable and (BaseType = ltImportedMethod);
 end;
 
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
@@ -1370,8 +1493,8 @@ function TLapeType.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boo
 begin
   Assert((Left = nil) or (Left.VarType = Self));
 
-  Result := (op <> op_dot) and ((Left = nil) or Left.isConstant) and ((Right = nil) or Right.isConstant);
-  if (not Result) and (Right <> nil) and Right.isConstant then
+  Result := (op <> op_dot) and ((Left = nil) or Left.Readable) and ((Right = nil) or Right.Readable);
+  if (not Result) and (Right <> nil) and Right.Readable then
     if (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
       Result := HasConstantChild(PlpString(Right.Ptr)^)
     else if (op = op_Index) and (BaseType in [ltUnknown{overloaded method}, ltShortString, ltStaticArray]) then
@@ -1429,7 +1552,7 @@ function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeG
     Result := d[0] as TLapeGlobalVar;
 
     if (Result <> nil) and
-        Result.isConstant and
+        Result.Readable and
         Result.HasType() and
         (Result.VarType is TLapeType_MethodOfObject)
     then
@@ -1463,7 +1586,7 @@ begin
       ResType := EvalRes(Op);
       if (ResType <> nil) or ((op = op_Deref) and ((not Left.HasType()) or (Left.BaseType = ltPointer))) then
         if (op = op_Addr) then
-          if Left.isConstant then
+          if (not Left.Writeable) then
             LapeException(lpeVariableExpected)
           else
             Exit(TLapeGlobalVar.Create(ResType, @Left.Ptr))
@@ -1518,7 +1641,10 @@ begin
     end;
   finally
     if (not (op in [op_Assign, op_Dot])) and (Result <> nil) and (Left <> nil) then
-      Result.isConstant := (op <> op_Deref) and Left.isConstant and ((Right = nil) or Right.isConstant);
+    begin
+      Result.Readable := (op <> op_Deref) and Left.Readable and ((Right = nil) or Right.Readable);
+      Result.Writeable := (op = op_Deref);
+    end;
   end;
 end;
 
@@ -1590,7 +1716,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
     Assert(Length(d) = 1);
     Result := _ResVar.New(d[0] as TLapeGlobalVar);
 
-    if Result.isConstant and
+    if Result.Readable and
        Result.HasType() and
        MethodOfObject(Result.VarType)
     then
@@ -1666,7 +1792,7 @@ begin
     end
     else
     begin
-      if (op = op_Addr) and (not Left.isVariable) then
+      if (op = op_Addr) and (not Left.Writeable) then
         LapeException(lpeVariableExpected);
       FCompiler.Emitter._Eval(EvalProc, Result, Left, Right, Offset, Pos);
     end;
@@ -1674,7 +1800,10 @@ begin
     if (op = op_Deref) then
       Result.VarPos.isPointer := (Result.VarPos.MemPos = mpVar);
     if (op <> op_Assign) then
-      Result.setConstant((op <> op_Deref) and Result.isConstant, False);
+    begin
+      Result.Readable := (op <> op_Deref) and Result.Readable;
+      Result.Writeable := (op = op_Deref) or Result.Writeable;
+    end;
   finally
     if Result.HasType() and (Result.VarType.ClassType = TLapeType) and (Result.VarType.BaseType = ltUnknown) then
       FreeAndNil(Result.VarType);
@@ -1722,9 +1851,9 @@ begin
   if (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) and FullNil(AVar.VarPos.GlobalVar.Ptr, Size) then
     Exit;
 
-  wasConstant := AVar.isConstant;
+  wasConstant := not AVar.Writeable;
   if wasConstant then
-    AVar.isConstant := False;
+    AVar.Writeable := True;
 
   tmpVar := NullResVar;
   EmptyVar := NullResVar;
@@ -1744,7 +1873,7 @@ begin
     if (not UseCompiler) or (FCompiler = nil) then
       FreeAndNil(EmptyVar.VarPos.GlobalVar);
     if wasConstant then
-      AVar.isConstant := True;
+      AVar.Writeable := False;
   end;
 end;
 
@@ -1955,7 +2084,7 @@ begin
           Left,
           IndexVar
         );
-      Result.isConstant := Left.isConstant;
+      Result.CopyFlags(Left);
     finally
       if (IndexVar <> nil) and (IndexVar <> Right) then
         IndexVar.Free();
@@ -1991,7 +2120,7 @@ begin
 
     IndexVar := Right;
     if HasType() and (FPType.Size <> 1) then
-      if (Right.VarPos.MemPos = mpMem) and Right.isConstant then
+      if (Right.VarPos.MemPos = mpMem) and Right.Readable then
         IndexVar := _ResVar.New(FCompiler.getConstant(Right.VarPos.GlobalVar.AsInteger * FPType.Size))
       else
         IndexVar :=
@@ -2670,6 +2799,7 @@ function TLapeType_OverloadedMethod.NewGlobalVar(AName: lpString = ''; ADocPos: 
 begin
   Result := NewGlobalVarP(nil, AName, ADocPos);
   Result.isConstant := True;
+  //Result.setReadWrite(False, False);
 end;
 
 function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
@@ -2967,6 +3097,7 @@ begin
         Result := FVarStack[i] as TLapeStackTempVar;
         Result.VarType := VarType;
         Result.isConstant := True;
+        //Result.setReadWrite(False, False);
         Exit;
       end;
     Result := addVar(VarType) as TLapeStackTempVar;
@@ -3721,7 +3852,7 @@ begin
 
   Result := addManagedDecl(AVar) as TLapeVar;
   {$IFNDEF Lape_SmallCode}
-  if (AVar is TLapeGlobalVar) and AVar.HasType() and AVar.isConstant and (AVar.Name = '') then
+  if (AVar is TLapeGlobalVar) and AVar.HasType() and AVar.Readable and (AVar.Name = '') then
     with AVar as TLapeGlobalVar do
       FCachedDeclarations.add(AsString + ':' + LapeTypeToString(BaseType), TLapeGlobalVar(AVar));
   {$ENDIF}

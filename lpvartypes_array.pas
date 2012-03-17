@@ -585,9 +585,9 @@ begin
       Result := _ResVar.New(tmpVar);
     end;
 
-    wasConstant := Result.isConstant;
+    wasConstant := not Result.Writeable;
     if wasConstant then
-      Result.isConstant := False;
+      Result.Writeable := True;
 
     Result := Eval(op_Assign, tmpResVar, Result, ALeft, Offset, Pos);
 
@@ -635,7 +635,7 @@ begin
     end;
 
     if wasConstant then
-      Result.isConstant := True;
+      Result.Writeable := False;
   end
   else
     Result := inherited;
@@ -756,7 +756,7 @@ begin
       LapeException(lpeOutOfTypeRange);
 
     Result := FPType.NewGlobalVarP(Pointer(PtrInt(Left.Ptr) + (FPType.Size * (i - FRange.Lo))));
-    Result.isConstant := Left.isConstant;
+    Result.CopyFlags(Left);
   end
   else if (op = op_Assign) and (BaseType = ltStaticArray) and (Left <> nil) and (Right <> nil) and CompatibleWith(Right.VarType) then
   begin
@@ -795,9 +795,9 @@ begin
 
   if (op = op_Index) then
   try
-    wasConstant := Left.isConstant;
+    wasConstant := not Left.Writeable;
     if wasConstant then
-      Left.setConstant(False);
+      Left.Writeable := True;
 
     if (not Left.VarPos.isPointer) or (Left.VarPos.Offset > 0) then
       LeftVar := Eval(op_Addr, tmpVar, Left, NullResVar, Offset, Pos)
@@ -839,8 +839,8 @@ begin
     if (not Left.VarPos.isPointer) or (Left.VarPos.Offset > 0) then
       LeftVar.Spill(1);
 
-    Left.setConstant(wasConstant);
-    Result.setConstant(wasConstant);
+    Left.Writeable := not wasConstant;
+    Result.CopyFlags(Left);
   end
   else if (op = op_Assign) and (BaseType = ltStaticArray) and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) then

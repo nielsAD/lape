@@ -143,7 +143,7 @@ end;
 
 function TLapeType_Record.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
-  i, Ind: Integer;
+  i: Integer;
 begin
   Result := 'begin Result := '#39'{'#39;
   for i := 0 to FFieldMap.Count - 1 do
@@ -239,7 +239,7 @@ begin
     with FFieldMap[PlpString(Right.Ptr)^] do
     begin
       Result := FieldType.NewGlobalVarP(Pointer(PtrUInt(Left.Ptr) + Offset));
-      Result.isConstant := Left.isConstant;
+      Result.CopyFlags(Left);
     end
   else if (op = op_Assign) and (Right <> nil) and Right.HasType() and CompatibleWith(Right.VarType) then
   begin
@@ -287,14 +287,14 @@ begin
     begin
       Dest.Spill();
       Result := Left.IncLock();
-       Result.VarType :=FieldType;
+      Result.VarType :=FieldType;
       case Left.VarPos.MemPos of
         mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + Offset)), True));
         mpVar,
         mpStack: Result.IncOffset(Offset);
         else LapeException(lpeImpossible);
       end;
-      Result.isConstant := Left.isConstant;
+      Result.CopyFlags(Left);
     end
   else if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
