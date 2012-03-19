@@ -95,7 +95,7 @@ begin
         begin
           if (Output <> '') and (not AnsiEndsStr(LineEnding, Output)) then
             _WriteLn(Output);
-          _WriteLn(Output, E.Message);
+          _WriteLn(Output, StringReplace(E.Message, '"' + ExtractFilePath(FileName), '"', [rfReplaceAll]));
         end;
       end;
     end;

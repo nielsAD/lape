@@ -331,6 +331,7 @@ type
 
   TLapeTree_Operator = class(TLapeTree_DestExprBase)
   protected
+    FRestructure: TInitBool;
     FOperatorType: EOperator;
     FLeft: TLapeTree_Base;
     FRight: TLapeTree_ExprBase;
@@ -344,11 +345,13 @@ type
     constructor Create(AOperatorType: EOperator; ASource: TLapeTree_Base); overload; virtual;
     destructor Destroy; override;
 
+    procedure ClearCache; override;
     function FoldConstants(DoFree: Boolean = True): TLapeTree_Base; override;
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; override;
 
     function isConstant: Boolean; override;
-    function resType: TLapeType; override;
+    function resType(Restructure: Boolean): TLapeType; overload;
+    function resType: TLapeType; overload; override;
     function Evaluate: TLapeGlobalVar; override;
     function Compile(var Offset: Integer): TResVar; override;
 
@@ -3517,7 +3520,11 @@ begin
   end;
   FLeft := Node;
   if (Node <> nil) then
+  begin
     Node.Parent := Self;
+    if (FRestructure = bUnknown) and (not (Node is TLapeTree_ExprBase)) then
+      FRestructure := bFalse;
+  end;
 end;
 
 procedure TLapeTree_Operator.setRight(Node: TLapeTree_ExprBase);
@@ -3561,6 +3568,12 @@ destructor TLapeTree_Operator.Destroy;
 begin
   setLeft(nil);
   setRight(nil);
+  inherited;
+end;
+
+procedure TLapeTree_Operator.ClearCache;
+begin
+  FRestructure := bUnknown;
   inherited;
 end;
 
@@ -3625,7 +3638,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeTree_Operator.resType: TLapeType;
+function TLapeTree_Operator.resType(Restructure: Boolean): TLapeType;
 var
   LeftType, RightType: TLapeType;
   tmpLeft: TLapeTree_ExprBase;
@@ -3661,49 +3674,62 @@ begin
          ((lcoShortCircuit in FCompilerOptions) and (Result <> nil) and (Result.BaseType in LapeBoolTypes) and (FOperatorType in [op_AND, op_OR]) and
           (LeftType.BaseType in LapeBoolTypes) and (RightType <> nil) and (RightType.BaseType in LapeBoolTypes)))
       then
-      begin
-        tmpLeft := FLeft.FoldConstants(True) as TLapeTree_ExprBase;
-        if (FOperatorType = op_IN) then
-          FLeft := TLapeTree_MultiIf.Create(tmpLeft, FRight as TLapeTree_OpenArray)
-        else
-          FLeft := TLapeTree_If.Create(Self);
-
-        with TLapeTree_If(FLeft) do
-        begin
-          if (FOperatorType <> op_IN) then
-            Condition := tmpLeft;
-
-          if (Result = nil) then
-            Result := FCompiler.getBaseType(ltEvalBool);
-          ResVar := FCompiler.getTempStackVar(Result);
-          ResVar.VarPos.ForceVariable := True;
-
-          Body := TLapeTree_Operator.Create(op_Assign, Self);
-          with TLapeTree_Operator(Body) do
-          begin
-            Left := TLapeTree_ResVar.Create(ResVar, Self);
-            if (Self.FOperatorType = op_AND) then
-              Right := Self.FRight.FoldConstants(False) as TLapeTree_ExprBase
-            else
-              Right := TLapeTree_GlobalVar.Create('True', ResVar.VarType.BaseType, Self);
-          end;
-
-          ElseBody := TLapeTree_Operator.Create(op_Assign, Self);
-          with TLapeTree_Operator(ElseBody) do
-          begin
-            Left := TLapeTree_ResVar.Create(ResVar, Self);
-            if (Self.FOperatorType = op_OR) then
-              Right := Self.FRight.FoldConstants(False) as TLapeTree_ExprBase
-            else
-              Right := TLapeTree_GlobalVar.Create('False', ResVar.VarType.BaseType, Self);
-          end;
-        end;
-        setRight(nil);
-      end;
+        FRestructure := bTrue
+      else
+        FRestructure := bFalse;
     finally
       FResType := Result;
     end;
-  Result := inherited;
+
+  Result := inherited resType();
+
+  if Restructure and (FRestructure = bTrue) then
+  begin
+    FRestructure := bFalse;
+
+    tmpLeft := FLeft.FoldConstants(True) as TLapeTree_ExprBase;
+    if (FOperatorType = op_IN) then
+      FLeft := TLapeTree_MultiIf.Create(tmpLeft, FRight as TLapeTree_OpenArray)
+    else
+      FLeft := TLapeTree_If.Create(Self);
+
+    with TLapeTree_If(FLeft) do
+    begin
+      if (FOperatorType <> op_IN) then
+        Condition := tmpLeft;
+
+      if (Result = nil) then
+        Result := FCompiler.getBaseType(ltEvalBool);
+      ResVar := FCompiler.getTempStackVar(Result);
+      ResVar.VarPos.ForceVariable := True;
+
+      Body := TLapeTree_Operator.Create(op_Assign, Self);
+      with TLapeTree_Operator(Body) do
+      begin
+        Left := TLapeTree_ResVar.Create(ResVar, Self);
+        if (Self.FOperatorType = op_AND) then
+          Right := Self.FRight.FoldConstants(False) as TLapeTree_ExprBase
+        else
+          Right := TLapeTree_GlobalVar.Create('True', ResVar.VarType.BaseType, Self);
+      end;
+
+      ElseBody := TLapeTree_Operator.Create(op_Assign, Self);
+      with TLapeTree_Operator(ElseBody) do
+      begin
+        Left := TLapeTree_ResVar.Create(ResVar, Self);
+        if (Self.FOperatorType = op_OR) then
+          Right := Self.FRight.FoldConstants(False) as TLapeTree_ExprBase
+        else
+          Right := TLapeTree_GlobalVar.Create('False', ResVar.VarType.BaseType, Self);
+      end;
+    end;
+    setRight(nil);
+  end;
+end;
+
+function TLapeTree_Operator.resType: TLapeType;
+begin
+  Result := resType(False);
 end;
 
 function TLapeTree_Operator.Evaluate: TLapeGlobalVar;
@@ -3801,7 +3827,7 @@ begin
   DoneAssignment := False;
 
   if (FLeft <> nil) then
-    if (resType() <> nil) and (FLeft is TLapeTree_If) then
+    if (resType(True) <> nil) and (FLeft is TLapeTree_If) then
       Exit(doIf())
     else
       LeftVar := TLapeTree_ExprBase(FLeft).Compile(Offset)
