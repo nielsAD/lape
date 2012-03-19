@@ -1,0 +1,1 @@
+Operator "cmp_NotEqual" not compatible with types "(False=0, True=1)" and "Pointer" at line 7, column 9 in file "AutoInvoke_ShortCircuit.lap"
