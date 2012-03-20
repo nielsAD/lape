@@ -185,5 +185,7 @@ begin
   WriteLn(Format('%3d / %d tests passed', [Pass, Pass + Fail]));
 end;
 
+initialization
+  DecimalSeparator := ',';
 end.
 

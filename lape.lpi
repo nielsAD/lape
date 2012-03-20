@@ -14,7 +14,7 @@
     <VersionInfo>
       <StringTable ProductVersion=""/>
     </VersionInfo>
-    <BuildModes Count="5" Active="x86_Debug">
+    <BuildModes Count="5" Active="x64_Debug">
       <Item1 Name="x86_Debug" Default="True"/>
       <Item2 Name="x86_Deploy">
         <CompilerOptions>
@@ -29,6 +29,7 @@
           </SearchPaths>
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
+            <TargetCPU Value="i386"/>
             <Optimizations>
               <OptimizationLevel Value="3"/>
             </Optimizations>
@@ -73,7 +74,6 @@
               <OverflowChecks Value="True"/>
             </Checks>
             <TargetCPU Value="x86_64"/>
-            <TargetOS Value="win64"/>
           </CodeGeneration>
           <Linking>
             <Debugging>
@@ -109,7 +109,6 @@
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
             <TargetCPU Value="x86_64"/>
-            <TargetOS Value="win64"/>
             <Optimizations>
               <OptimizationLevel Value="3"/>
             </Optimizations>
@@ -185,6 +184,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
+        <LaunchingApplication PathPlusParams="\usr\bin\xterm -T 'Lazarus Run Output' -e $(LazarusDir)\tools\runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
     <RequiredPackages Count="3">
@@ -216,9 +216,9 @@
         <ComponentName Value="Form1"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Main"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="153"/>
+        <TopLine Value="145"/>
         <CursorPos X="52" Y="171"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
@@ -228,9 +228,9 @@
         <Filename Value="lpparser.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpparser"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
+        <TopLine Value="1185"/>
         <CursorPos X="1" Y="1215"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
@@ -239,7 +239,7 @@
         <Filename Value="lpcompiler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpcompiler"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
         <TopLine Value="2207"/>
         <CursorPos X="20" Y="2218"/>
@@ -259,18 +259,16 @@
         <Filename Value="lpeval.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpeval"/>
-        <EditorIndex Value="10"/>
         <WindowIndex Value="0"/>
         <TopLine Value="613"/>
         <CursorPos X="1" Y="562"/>
         <UsageCount Value="201"/>
-        <Loaded Value="True"/>
       </Unit5>
       <Unit6>
         <Filename Value="lpinterpreter.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpinterpreter"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
         <TopLine Value="472"/>
         <CursorPos X="30" Y="487"/>
@@ -281,7 +279,7 @@
         <Filename Value="lpexceptions.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpexceptions"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
         <TopLine Value="94"/>
         <CursorPos X="42" Y="99"/>
@@ -300,10 +298,11 @@
         <Filename Value="lpvartypes.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpvartypes"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
         <TopLine Value="844"/>
-        <CursorPos X="1" Y="858"/>
+        <CursorPos X="63" Y="852"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit9>
@@ -319,12 +318,10 @@
       <Unit11>
         <Filename Value="_lpgenerateevalfunctions.pas"/>
         <UnitName Value="_lpgenerateevalfunctions"/>
-        <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="2528"/>
+        <TopLine Value="2525"/>
         <CursorPos X="49" Y="2540"/>
         <UsageCount Value="80"/>
-        <Loaded Value="True"/>
       </Unit11>
       <Unit12>
         <Filename Value="lpeval_arr.inc"/>
@@ -345,13 +342,10 @@
       <Unit14>
         <Filename Value="lpeval_functions.inc"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="8"/>
         <WindowIndex Value="0"/>
         <TopLine Value="2404"/>
         <CursorPos X="27" Y="2416"/>
         <UsageCount Value="201"/>
-        <Loaded Value="True"/>
       </Unit14>
       <Unit15>
         <Filename Value="lpcodeemitter_evalheader.inc"/>
@@ -461,7 +455,7 @@
         <Filename Value="lptree.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lptree"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1971"/>
         <CursorPos X="1" Y="1985"/>
@@ -718,12 +712,10 @@
         <Filename Value="lpvartypes_ord.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="lpvartypes_ord"/>
-        <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
         <TopLine Value="810"/>
         <CursorPos X="52" Y="810"/>
         <UsageCount Value="202"/>
-        <Loaded Value="True"/>
       </Unit60>
       <Unit61>
         <Filename Value="lpvartypes_record.pas"/>
@@ -771,7 +763,7 @@
         <UsageCount Value="3"/>
       </Unit66>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="16" HistoryIndex="15">
       <Position1>
         <Filename Value="lpvartypes.pas"/>
         <Caret Line="3758" Column="1" TopLine="3742"/>
@@ -821,77 +813,21 @@
         <Caret Line="741" Column="33" TopLine="729"/>
       </Position12>
       <Position13>
-        <Filename Value="lpvartypes_ord.pas"/>
-        <Caret Line="810" Column="52" TopLine="785"/>
+        <Filename Value="lpinterpreter.pas"/>
+        <Caret Line="537" Column="17" TopLine="513"/>
       </Position13>
       <Position14>
         <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="537" Column="17" TopLine="513"/>
+        <Caret Line="537" Column="18" TopLine="513"/>
       </Position14>
       <Position15>
-        <Filename Value="lpinterpreter.pas"/>
-        <Caret Line="537" Column="18" TopLine="513"/>
+        <Filename Value="main.pas"/>
+        <Caret Line="176" Column="5" TopLine="152"/>
       </Position15>
       <Position16>
         <Filename Value="main.pas"/>
-        <Caret Line="176" Column="5" TopLine="152"/>
-      </Position16>
-      <Position17>
-        <Filename Value="main.pas"/>
-        <Caret Line="46" Column="45" TopLine="152"/>
-      </Position17>
-      <Position18>
-        <Filename Value="main.pas"/>
         <Caret Line="175" Column="9" TopLine="152"/>
-      </Position18>
-      <Position19>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2436" Column="86" TopLine="2423"/>
-      </Position19>
-      <Position20>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="1025" Column="79" TopLine="1013"/>
-      </Position20>
-      <Position21>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2491" Column="80" TopLine="2479"/>
-      </Position21>
-      <Position22>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2554" Column="79" TopLine="2542"/>
-      </Position22>
-      <Position23>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2618" Column="80" TopLine="2607"/>
-      </Position23>
-      <Position24>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2669" Column="80" TopLine="2658"/>
-      </Position24>
-      <Position25>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2727" Column="80" TopLine="2716"/>
-      </Position25>
-      <Position26>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2760" Column="80" TopLine="2749"/>
-      </Position26>
-      <Position27>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2778" Column="80" TopLine="2767"/>
-      </Position27>
-      <Position28>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2827" Column="78" TopLine="2815"/>
-      </Position28>
-      <Position29>
-        <Filename Value="_lpgenerateevalfunctions.pas"/>
-        <Caret Line="2544" Column="32" TopLine="2527"/>
-      </Position29>
-      <Position30>
-        <Filename Value="lpeval_functions.inc"/>
-        <Caret Line="2852" Column="45" TopLine="2837"/>
-      </Position30>
+      </Position16>
     </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
@@ -915,6 +851,7 @@
         <RangeChecks Value="True"/>
         <OverflowChecks Value="True"/>
       </Checks>
+      <TargetCPU Value="i386"/>
     </CodeGeneration>
     <Linking>
       <Debugging>
@@ -938,4 +875,4 @@
       </Item1>
     </Watches>
   </Debugging>
-</CONFIG>
+</CONFIG>
