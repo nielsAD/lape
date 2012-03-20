@@ -16,6 +16,7 @@ uses
 
 const
   LapeCaseSensitive = {$IFDEF Lape_CaseSensitive}True{$ELSE}False{$ENDIF};
+  LapeSystemCaseSensitive = {$IFDEF Unix}True{$ELSE}False{$ENDIF};
 type
   UInt8 = Byte;
   Int8 = ShortInt;

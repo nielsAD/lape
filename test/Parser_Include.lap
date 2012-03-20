@@ -1,0 +1,7 @@
+{$Include include.inc}
+{$Include_once include.inc}
+
+begin
+  Included();
+  Included_Include();
+end;

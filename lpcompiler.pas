@@ -881,6 +881,29 @@ var
     end;
   end;
 
+  function FindFile(AFileName: lpString): lpString;
+  var
+    i: Integer;
+    Dir: lpString;
+  begin
+    Argument := StringReplace(Argument, '\', '/', [rfReplaceAll]);
+    if (ExpandFileName(AFileName) = AFileName) then
+      Exit(AFileName);
+
+    for i := FTokenizer downto 0 do
+      if (FTokenizers[i] <> nil) then
+      begin
+        Dir := ExtractFilePath(FTokenizers[i].FileName);
+        if FileExists(Dir + AFileName) then
+          Exit(Dir + AFileName);
+      end;
+
+    if FileExists(AFileName) then
+      Result := AFileName
+    else
+      Result := '';
+  end;
+
 begin
   Assert(Sender = Tokenizer);
   Result := True;
@@ -907,13 +930,19 @@ begin
   begin
     if ({$IFNDEF FPC}@{$ENDIF}FOnFindFile <> nil) then
       NewTokenizer := FOnFindFile(Self, Argument);
-    Argument := StringReplace(ExpandFileName(Argument), '\', '/', [rfReplaceAll]);
 
-    if (not Sender.InPeek) then
-      if (Directive = 'include_once') and (FIncludes.IndexOf(Argument) > -1) then
-        LapeExceptionFmt(lpeDuplicateDeclaration, [Argument], Sender.DocPos)
-      else
-        FIncludes.add(Argument);
+    if (Argument = '') or (not FileExists(Argument)) then
+    begin
+      Argument := FindFile(Argument);
+      if (Argument = '') then
+        LapeExceptionFmt(lpeFileNotFound, [Argument], Sender.DocPos);
+    end;
+    Argument := ExpandFileName(Argument);
+
+    if (Directive = 'include_once') and (FIncludes.IndexOf(Argument) > -1) then
+      Exit(True)
+    else if (not Sender.InPeek) then
+      FIncludes.add(Argument);
 
     if (NewTokenizer = nil) then
       if (FTokenizer + 1 < Length(FTokenizers)) and (FTokenizers[FTokenizer + 1] <> nil) and (FTokenizers[FTokenizer + 1].FileName = Argument) then
@@ -921,8 +950,6 @@ begin
         NewTokenizer := FTokenizers[FTokenizer + 1];
         NewTokenizer.Reset();
       end
-      else if (Argument = '') or (not FileExists(Argument)) then
-        LapeExceptionFmt(lpeFileNotFound, [Argument], Sender.DocPos)
       else
         NewTokenizer := TLapeTokenizerFile.Create(Argument);
 
@@ -2752,7 +2779,7 @@ begin
 
   FIncludes := TStringList.Create();
   FIncludes.Duplicates := dupIgnore;
-  FIncludes.CaseSensitive := LapeCaseSensitive;
+  FIncludes.CaseSensitive := LapeSystemCaseSensitive;
   FDefines := TStringList.Create();
   FDefines.Duplicates := dupIgnore;
   FDefines.CaseSensitive := LapeCaseSensitive;
