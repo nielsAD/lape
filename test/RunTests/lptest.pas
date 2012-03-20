@@ -159,7 +159,7 @@ var
     if (Result > 0) then
       WriteLn('');
 
-    if (FindFirst(Folder + '*.*', faAnyFile, Res) = 0) then
+    if (FindFirst(Folder + '*', faAnyFile, Res) = 0) then
     try
       repeat
         if ((Res.Attr and faDirectory) <> 0) and (Res.Name <> '.') and (Res.Name <> '..') then
