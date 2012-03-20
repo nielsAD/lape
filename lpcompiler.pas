@@ -811,6 +811,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
 var
   NewTokenizer: TLapeTokenizerBase;
   Pos: TDocPos;
+  IncludeFile: lpString;
 
   procedure setOption(Option: ECompilerOption);
   begin
@@ -886,6 +887,9 @@ var
     i: Integer;
     Dir: lpString;
   begin
+    if (AFileName = '') then
+      Exit('');
+
     Argument := StringReplace(Argument, '\', '/', [rfReplaceAll]);
     if (ExpandFileName(AFileName) = AFileName) then
       Exit(AFileName);
@@ -928,30 +932,31 @@ begin
     RemoveFromStringList(FDefines, Trim(Argument))
   else if (Directive = 'i') or (Directive = 'include') or (Directive = 'include_once') then
   begin
+    IncludeFile := Argument;
     if ({$IFNDEF FPC}@{$ENDIF}FOnFindFile <> nil) then
-      NewTokenizer := FOnFindFile(Self, Argument);
+      NewTokenizer := FOnFindFile(Self, IncludeFile);
 
-    if (Argument = '') or (not FileExists(Argument)) then
+    if (IncludeFile = '') or (not FileExists(IncludeFile)) then
     begin
-      Argument := FindFile(Argument);
-      if (Argument = '') then
+      IncludeFile := FindFile(IncludeFile);
+      if (IncludeFile = '') then
         LapeExceptionFmt(lpeFileNotFound, [Argument], Sender.DocPos);
     end;
-    Argument := ExpandFileName(Argument);
+    IncludeFile := ExpandFileName(IncludeFile);
 
-    if (Directive = 'include_once') and (FIncludes.IndexOf(Argument) > -1) then
+    if (Directive = 'include_once') and (FIncludes.IndexOf(IncludeFile) > -1) then
       Exit(True)
     else if (not Sender.InPeek) then
-      FIncludes.add(Argument);
+      FIncludes.add(IncludeFile);
 
     if (NewTokenizer = nil) then
-      if (FTokenizer + 1 < Length(FTokenizers)) and (FTokenizers[FTokenizer + 1] <> nil) and (FTokenizers[FTokenizer + 1].FileName = Argument) then
+      if (FTokenizer + 1 < Length(FTokenizers)) and (FTokenizers[FTokenizer + 1] <> nil) and (FTokenizers[FTokenizer + 1].FileName = IncludeFile) then
       begin
         NewTokenizer := FTokenizers[FTokenizer + 1];
         NewTokenizer.Reset();
       end
       else
-        NewTokenizer := TLapeTokenizerFile.Create(Argument);
+        NewTokenizer := TLapeTokenizerFile.Create(IncludeFile);
 
     pushTokenizer(NewTokenizer);
   end
