@@ -8,9 +8,9 @@
       <Version Value="11"/>
       <PathDelim Value="\"/>
       <SearchPaths>
-        <IncludeFiles Value="D:\Lazarus\Lape\"/>
-        <OtherUnitFiles Value="D:\Lazarus\Lape\"/>
-        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\"/>
+        <IncludeFiles Value=".."/>
+        <OtherUnitFiles Value=".."/>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
       <CodeGeneration>
         <SmartLinkUnit Value="True"/>
@@ -246,10 +246,13 @@ http://code.google.com/p/la-pe/"/>
       </Item52>
     </Files>
     <Type Value="RunTimeOnly"/>
-    <RequiredPkgs Count="1">
+    <RequiredPkgs Count="2">
       <Item1>
-        <PackageName Value="FCL"/>
+        <PackageName Value="LCLBase"/>
       </Item1>
+      <Item2>
+        <PackageName Value="FCL"/>
+      </Item2>
     </RequiredPkgs>
     <UsageOptions>
       <UnitPath Value="$(PkgOutDir)"/>

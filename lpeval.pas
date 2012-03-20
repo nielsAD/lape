@@ -260,7 +260,7 @@ implementation
 
 uses
   Variants, Math,
-  {$IFDEF LCL}LCLIntf{$ELSE}Windows{$ENDIF},
+  {$IFDEF Delphi}Windows{$ELSE}LCLIntf{$ENDIF},
   lpexceptions, lpparser;
 
 {$RangeChecks Off}
@@ -644,4 +644,4 @@ initialization
   LoadEvalArr(LapeEvalArr);
 
 end.
-
+
