@@ -230,11 +230,11 @@ var
   procedure DoCheckInternal; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     try
-      PEvalBool(@Stack[StackPos - SizeOf(EvalBool)])^ := opCodeTypeP(PtrUInt(CodeBase) + PtrUInt(PCodePos(@Stack[StackPos - SizeOf(Pointer)])^))^ = opCodeType(ocIncTry);
+      PEvalBool(@Stack[StackPos - SizeOf(Pointer)])^ := opCodeTypeP(PtrUInt(CodeBase) + PtrUInt(PCodePos(@Stack[StackPos - SizeOf(Pointer)])^))^ = opCodeType(ocIncTry);
     except
-      PEvalBool(@Stack[StackPos - SizeOf(EvalBool)])^ := False;
+      PEvalBool(@Stack[StackPos - SizeOf(Pointer)])^ := False;
     end;
-    Inc(StackPos, SizeOf(EvalBool) - SizeOf(Pointer));
+    Dec(StackPos, SizeOf(Pointer) - SizeOf(EvalBool));
     Inc(Code, ocSize);
   end;
 
@@ -434,7 +434,7 @@ var
       Code := @opNone
     else
     begin
-	  DoPopVar();
+	    DoPopVar();
       Dec(CallStackPos);
       with CallStack[CallStackPos] do
       begin

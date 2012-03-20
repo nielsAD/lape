@@ -479,7 +479,7 @@ end;
 function TLapeCodeEmitterBase._IsInternal(var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocIsInternal, Offset, Pos);
-  IncStack(SizeOf(EvalBool) - SizeOf(Pointer));
+  DecStack(SizeOf(Pointer) - SizeOf(EvalBool));
 end;
 
 function TLapeCodeEmitterBase._InitStackLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
