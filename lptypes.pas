@@ -213,8 +213,8 @@ type
 
   TLapeBaseClass = class(TObject, IUnknown)
   protected
-    function _AddRef: Integer; stdcall;
-    function _Release: Integer; stdcall;
+    function _AddRef: Integer; stdcall; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+    function _Release: Integer; stdcall; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
   public
     constructor Create; virtual;
     {$IFDEF Lape_TrackObjects}
