@@ -213,8 +213,8 @@ type
 
   TLapeBaseClass = class(TObject, IUnknown)
   protected
-    function _AddRef: Integer; stdcall; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
-    function _Release: Integer; stdcall; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+    function _AddRef: Integer; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+    function _Release: Integer; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
   public
     constructor Create; virtual;
     {$IFDEF Lape_TrackObjects}
@@ -1004,12 +1004,12 @@ begin
   end;
 end;
 
-function TLapeBaseClass._AddRef: Integer; stdcall;
+function TLapeBaseClass._AddRef: Integer; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
 begin
   Result := -1;
 end;
 
-function TLapeBaseClass._Release: Integer; stdcall;
+function TLapeBaseClass._Release: Integer; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
 begin
   Result := -1;
 end;
@@ -1040,7 +1040,7 @@ begin
 end;
 {$ENDIF}
 
-function TLapeBaseClass.QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; stdcall;
+function TLapeBaseClass.QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
 begin
   if getInterface(IId, Obj) then
     Result := 0
