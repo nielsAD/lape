@@ -220,7 +220,7 @@ type
     {$IFDEF Lape_TrackObjects}
     destructor Destroy; override;
     {$ENDIF}
-    function QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; stdcall;
+    function QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
     function GetSelf: TLapeBaseClass; inline;
   end;
 
