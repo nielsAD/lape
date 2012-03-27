@@ -237,6 +237,15 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_Default = class(TLapeTree_InternalMethod)
+  public
+    procedure ClearCache; override;
+    function isConstant: Boolean; override;
+    function resType: TLapeType; override;
+    function Evaluate: TLapeGlobalVar; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_InternalMethod_Swap = class(TLapeTree_InternalMethod)
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
@@ -2604,6 +2613,68 @@ begin
     FCompiler.VarToDefault(Param, Offset, @_DocPos);
 
   Param.Spill(1);
+end;
+
+procedure TLapeTree_InternalMethod_Default.ClearCache;
+begin
+  FConstant := bUnknown;
+  inherited;
+end;
+
+function TLapeTree_InternalMethod_Default.isConstant: Boolean;
+begin
+  if (FConstant = bUnknown) then
+    if (FParams.Count = 1) and (not isEmpty(FParams[0])) and FParams[0].isConstant() then
+      FConstant := bTrue
+    else
+      FConstant := bFalse;
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_Default.resType: TLapeType;
+begin
+  if (FResType = nil) then
+    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    begin
+      FResType := FParams[0].resType();
+      if (FResType <> nil) and (FResType is TLapeType_Type) then
+        FResType := TLapeType_Type(FResType).TType;
+    end;
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_Default.Evaluate: TLapeGlobalVar;
+var
+  ParamType: TLapeType;
+begin
+  if (FRes = nil) and isConstant() then
+  begin
+    if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+      LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+    ParamType := FParams[0].resType();
+    if (ParamType = nil) or (not (ParamType is TLapeType_Type)) then
+      LapeException(lpeTypeExpected, DocPos)
+    else
+      ParamType := TLapeType_Type(ParamType).TType;
+
+    FRes := TLapeGlobalVar(FCompiler.addManagedDecl(ParamType.NewGlobalVarP()));
+  end;
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_Default.Compile(var Offset: Integer): TResVar;
+begin
+  if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  Result := FParams[0].Compile(Offset);
+  if (not Result.HasType()) or (Result.VarType is TLapeType_Type) then
+    LapeException(lpeCannotEvalRunTime, DocPos)
+  else if (not Result.Writeable) then
+    LapeException(lpeVariableExpected, DocPos);
+
+  FCompiler.VarToDefault(Result, Offset, @_DocPos);
 end;
 
 constructor TLapeTree_InternalMethod_Swap.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

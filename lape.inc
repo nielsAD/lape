@@ -5,9 +5,6 @@
 
 	Defines for the Lape project.
 }
-{$IFDEF FPC}
-  {$MODE objfpc}{$H+}
-{$ENDIF}
 
 {.$DEFINE Lape_CaseSensitive}            //Case sentive in script
 {$DEFINE Lape_DoubleKeywordsCache}      //Create a double cache for keywords to speed up parsing (more memory, faster)
@@ -18,7 +15,9 @@
 {.$DEFINE Lape_TrackObjects}             //Track all created classes with a list to check for leaks
 {.$DEFINE Lape_Unicode}                  //Use unicodestrings
 
-{$IFNDEF FPC}
+{$IFDEF FPC}
+  {$MODE objfpc}{$H+}
+{$ELSE}
   {$DEFINE Delphi}
   {$POINTERMATH ON}
 {$ENDIF}

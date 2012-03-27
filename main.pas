@@ -102,6 +102,7 @@ begin
       Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
       Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
       Compiler.addGlobalFunc('procedure MyStupidProc', @MyStupidProc);
+      ExposeGlobals(Compiler);
 
       try
         t := getTickCount;

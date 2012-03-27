@@ -2646,6 +2646,8 @@ begin
   then
     LapeException(lpeImpossible);
 
+  AMethod.isConstant := True;
+
   if (AMethod.VarType is TLapeType_MethodOfObject) then
     case FOfObject of
       bUnknown: FOfObject := bTrue;
@@ -2681,7 +2683,14 @@ function TLapeType_OverloadedMethod.overrideMethod(AMethod: TLapeGlobalVar): TLa
 var
   i: Integer;
 begin
+  if (AMethod = nil) or (not AMethod.HasType()) or
+     (not ((AMethod.VarType is TLapeType_Method) or (AMethod.VarType is TLapeType_OverloadedMethod)))
+  then
+    LapeException(lpeImpossible);
+
   Result := nil;
+  AMethod.isConstant := True;
+
   for i := 0 to FManagedDecls.Items.Count - 1 do
     if TLapeType_Method(TLapeGlobalVar(FManagedDecls.Items[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
     begin
