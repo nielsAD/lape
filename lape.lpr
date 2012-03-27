@@ -11,7 +11,7 @@ uses
 
   lpparser, lpcompiler, lptypes, lpeval, lpinterpreter, lpexceptions,
   lpvartypes, lpcodeemitter, lptree, lpdisassembler, lpvartypes_array, 
-lpvartypes_ord, lpvartypes_record;
+lpvartypes_ord, lpvartypes_record, lputils;
 
 {$R *.res}
 

@@ -40,7 +40,7 @@ var
 implementation
 
 uses
-  lpparser, lpcompiler, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
+  lpparser, lpcompiler, lputils, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
   LCLIntf, Variants, typinfo;
 
 {$R *.lfm}
@@ -102,10 +102,10 @@ begin
       Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
       Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
       Compiler.addGlobalFunc('procedure MyStupidProc', @MyStupidProc);
-      ExposeGlobals(Compiler);
 
       try
         t := getTickCount;
+        ExposeGlobals(Compiler);
         if Compiler.Compile() then
           m.Lines.add('Compiling Time: ' + IntToStr(getTickCount - t) + 'ms.')
         else
