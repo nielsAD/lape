@@ -211,16 +211,25 @@ type
   PLapeSmallSet = ^TLapeSmallSet;
   PLapeLargeSet = ^TLapeLargeSet;
 
+  {$IFNDEF MSWINDOWS}
+    {$DEFINE Interface_CDecl}
+  {$ENDIF}
+  {$IFDEF FPC}
+    {$IF (fpc_version < 2) OR (fpc_release < 6)}
+      {$UNDEF Interface_CDecl}
+    {$ENDIF}
+  {$ENDIF}
+
   TLapeBaseClass = class(TObject, IUnknown)
   protected
-    function _AddRef: Integer; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
-    function _Release: Integer; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+    function _AddRef: Integer; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};
+    function _Release: Integer; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};
   public
     constructor Create; virtual;
     {$IFDEF Lape_TrackObjects}
     destructor Destroy; override;
     {$ENDIF}
-    function QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+    function QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};
     function GetSelf: TLapeBaseClass; inline;
   end;
 
@@ -1004,12 +1013,12 @@ begin
   end;
 end;
 
-function TLapeBaseClass._AddRef: Integer; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+function TLapeBaseClass._AddRef: Integer; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};
 begin
   Result := -1;
 end;
 
-function TLapeBaseClass._Release: Integer; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+function TLapeBaseClass._Release: Integer; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};
 begin
   Result := -1;
 end;
@@ -1040,7 +1049,7 @@ begin
 end;
 {$ENDIF}
 
-function TLapeBaseClass.QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; {$IFNDEF MSWINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+function TLapeBaseClass.QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} IID: TGUID; out Obj): HResult; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};
 begin
   if getInterface(IId, Obj) then
     Result := 0
