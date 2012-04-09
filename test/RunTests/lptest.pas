@@ -27,7 +27,7 @@ implementation
 
 uses
   {$IFDEF FPC}LCLIntf{$ELSE}Windows{$ENDIF}, strutils,
-  lpcompiler, lpparser, lpexceptions, lpinterpreter;
+  lpcompiler, lpparser, lpexceptions, lpinterpreter, lputils;
 
 constructor TLapeTester.Create(AFolder: lpString = '..'; ADebug: Boolean = False);
 begin

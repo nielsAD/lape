@@ -182,6 +182,7 @@ type
     function getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
     function getExpression(AName: lpString; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
 
+    procedure addBaseDefine(Define: lpString); virtual;
     function addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration; override;
     function addLocalVar(AVar: TLapeType; Name: lpString = ''): TLapeVar; virtual;
 
@@ -580,11 +581,8 @@ procedure TLapeCompiler.InitBaseDefinitions;
     addGlobalVar(OLMethod.NewGlobalVar('ToString')).isConstant := True;
   end;
 begin
-  with FBaseDefines do
-  begin
-    add('Lape');
-    add('Sesquipedalian');
-  end;
+  addBaseDefine('Lape');
+  addBaseDefine('Sesquipedalian');
 
   addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System').isConstant := True;
 
@@ -3157,6 +3155,11 @@ end;
 function TLapeCompiler.getExpression(AName: lpString; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase;
 begin
   Result := getExpression(AName, FStackInfo, Pos, LocalOnly);
+end;
+
+procedure TLapeCompiler.addBaseDefine(Define: lpString);
+begin
+  FBaseDefines.Add(Define);
 end;
 
 function TLapeCompiler.addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration;

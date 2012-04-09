@@ -324,8 +324,8 @@ begin
     GetGlobalPtr()  + LineEnding +
     GetGlobalName() + LineEnding +
     GetGlobalVal()  + LineEnding +
-    VariantInvoke() + LineEnding +
-    ToString()
+    VariantInvoke() {+ LineEnding +
+    ToString()      }
   );
 end;
 

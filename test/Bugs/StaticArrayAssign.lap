@@ -1,0 +1,11 @@
+{$assertions on}
+
+const
+  a: array[0..3] of Int32 = [1, 2, 3, 4];
+var
+  b: array[0..3] of Int64;
+begin
+  b := a;
+  Assert(b[0] = 1, 'b[0] <> 1');
+  Assert(b[3] = 4, 'b[3] <> 4');
+end;
