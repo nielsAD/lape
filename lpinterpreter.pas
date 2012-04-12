@@ -112,8 +112,10 @@ begin
   if (Merge.JumpException.Obj <> nil) then
   begin
     if (AJump.JumpException.Obj <> nil) and (AJump.JumpException.Obj <> Merge.JumpException.Obj) then
-      FreeAndNil(AJump.JumpException.Obj);
-    AJump.JumpException := Merge.JumpException;
+      //FreeAndNil(AJump.JumpException.Obj);
+      Merge.JumpException.Obj.Free()
+    else
+      AJump.JumpException := Merge.JumpException;
   end;
 
   if (Merge.JumpSafe > AJump.JumpSafe) then

@@ -1,7 +1,11 @@
 procedure Final;
+var
+  a = 5;
+  b = 0;
 begin
   try
   finally
+    Halt();
   end;
   WriteLn('one');
 end;
@@ -17,7 +21,7 @@ begin
     Final();
     WriteLn('two');
   end;
-  WriteLn('nope!');
+  WriteLn('Nope!');
 end;
 
 begin
@@ -26,5 +30,5 @@ begin
   except
     WriteLn('three');
   end;
-  WriteLn('four');
+  WriteLn('Nope!');
 end;

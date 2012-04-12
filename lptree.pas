@@ -5349,8 +5349,8 @@ begin
     else
       FCompiler.Emitter._IncTry(Offset - o_try, Try_NoExcept, o_try, @_DocPos);
     FFinally.Compile(Offset);
-    FCompiler.Emitter._EndTry(Offset, @FFinally._DocPos);
   end;
+  FCompiler.Emitter._EndTry(Offset, @_DocPos);
 end;
 
 end.
