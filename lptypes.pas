@@ -211,13 +211,8 @@ type
   PLapeSmallSet = ^TLapeSmallSet;
   PLapeLargeSet = ^TLapeLargeSet;
 
-  {$IFNDEF MSWINDOWS}
+  {$IFDEF NOT(WINDOWS) AND ((fpc_version > 2) OR ((fpc_version = 2) AND (fpc_release >= 6)))}
     {$DEFINE Interface_CDecl}
-  {$ENDIF}
-  {$IFDEF FPC}
-    {$IF (fpc_version < 2) OR (fpc_release < 6)}
-      {$UNDEF Interface_CDecl}
-    {$ENDIF}
   {$ENDIF}
 
   TLapeBaseClass = class(TObject, IUnknown)

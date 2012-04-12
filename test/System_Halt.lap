@@ -1,0 +1,18 @@
+procedure NestIt(ToDo: Integer = 3);
+begin
+  try
+    if (ToDo <= 1) then
+      Halt
+    else
+      NestIt(ToDo - 1);
+
+    WriteLn('See me not, you will');
+  finally
+    WriteLn('Out of NestIt(', ToDo, ')!');
+  end;
+end;
+
+begin
+  NestIt();
+  WriteLn('See me not, you will');
+end;

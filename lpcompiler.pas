@@ -2728,6 +2728,7 @@ begin
   FInternalMethodMap['Break'] := TLapeTree_InternalMethod_Break;
   FInternalMethodMap['Continue'] := TLapeTree_InternalMethod_Continue;
   FInternalMethodMap['Exit'] := TLapeTree_InternalMethod_Exit;
+  FInternalMethodMap['Halt'] := TLapeTree_InternalMethod_Halt;
 
   FInternalMethodMap['New'] := TLapeTree_InternalMethod_New;
   FInternalMethodMap['Dispose'] := TLapeTree_InternalMethod_Dispose;

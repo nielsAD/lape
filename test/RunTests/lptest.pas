@@ -102,7 +102,8 @@ begin
 
     Output := Trim(Output);
     if (Expect <> '') and (Output <> Expect) then
-      LapeExceptionFmt('Expected output "%s", but got "%s"', [Expect, Output]);
+      LapeExceptionFmt('Expected output: %s', [LineEnding + Expect]);
+      //LapeExceptionFmt('Expected output "%s", but got "%s"', [Expect, Output]);
   finally
     Free();
   end;
@@ -147,6 +148,8 @@ var
             WriteLn('Failed :: ', GetTickCount() - StartTime, 'ms');
             if (not FDebug) then
               WriteLn(Output);
+
+            WriteLn('');
             Writeln(E.Message);
             WriteLn('');
           end;

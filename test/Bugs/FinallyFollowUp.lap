@@ -1,0 +1,28 @@
+procedure Final;
+begin
+  try
+  finally
+  end;
+  WriteLn('one');
+end;
+
+procedure Test;
+var
+  a = 10;
+  b = 0;
+begin
+  try
+    a div b;
+  finally
+    Final();
+    WriteLn('two');
+  end;
+end;
+
+begin
+  try
+    Test();
+  except
+    WriteLn('three');
+  end;
+end;

@@ -224,6 +224,11 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_Halt = class(TLapeTree_InternalMethod)
+  public
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_InternalMethod_New = class(TLapeTree_InternalMethod)
   public
     function Compile(var Offset: Integer): TResVar; override;
@@ -2499,6 +2504,14 @@ begin
     FCompiler.Emitter._JmpSafe(EndJump, Offset, @_DocPos);
 end;
 
+function TLapeTree_InternalMethod_Halt.Compile(var Offset: Integer): TResVar;
+begin
+  Result := NullResVar;
+  if (FParams.Count <> 0) then
+    LapeException(lpeTooMuchParameters, DocPos);
+
+  FCompiler.Emitter._JmpSafe(EndJump, Offset, @_DocPos);
+end;
 
 function TLapeTree_InternalMethod_New.Compile(var Offset: Integer): TResVar;
 var
