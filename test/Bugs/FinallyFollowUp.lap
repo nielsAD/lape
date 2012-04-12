@@ -17,6 +17,7 @@ begin
     Final();
     WriteLn('two');
   end;
+  WriteLn('nope!');
 end;
 
 begin

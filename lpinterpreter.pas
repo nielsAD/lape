@@ -95,6 +95,31 @@ uses
 
 {$OverFlowChecks Off}
 
+type
+  TInJump = record
+    JumpException: record
+      Obj: Exception;
+      Pos: TDocPos;
+    end;
+    JumpSafe: PByte;
+  end;
+
+const
+  InEmptyJump: TInJump = (JumpException: (Obj: nil; Pos: (Line: 0; Col: 0; FileName: '')); JumpSafe: nil);
+
+procedure MergeJumps(var AJump: TInJump; const Merge: TInJump);
+begin
+  if (Merge.JumpException.Obj <> nil) then
+  begin
+    if (AJump.JumpException.Obj <> nil) and (AJump.JumpException.Obj <> Merge.JumpException.Obj) then
+      FreeAndNil(AJump.JumpException.Obj);
+    AJump.JumpException := Merge.JumpException;
+  end;
+
+  if (Merge.JumpSafe > AJump.JumpSafe) then
+    AJump.JumpSafe := Merge.JumpSafe;
+end;
+
 procedure RunCode(Code: PByte; var DoContinue: TInitBool);
 const
   opNone: opCodeType = opCodeType(ocNone);
@@ -115,15 +140,12 @@ var
     JmpFinally: PByte;
   end;
   TryStackPos: UInt32;
-  InException: record
-    Obj: Exception;
-    Pos: TDocPos;
-  end;
-  InSafeJump: PByte;
+  InJump: TInJump;
 
   CallStack: array of record
     CalledFrom: PByte;
     StackP, VarStackP: UInt32;
+    Jump: TInJump;
   end;
   CallStackPos: UInt32;
 
@@ -193,30 +215,30 @@ var
       Code := TryStack[TryStackPos].Jmp;
     end
     else
-      raise InException.Obj;
+      raise InJump.JumpException.Obj;
   end;
 
   procedure HandleSafeJump; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
     IsEndJump: Boolean;
   begin
-    IsEndJump := (CodeBase = PByte(PtrUInt(InSafeJump) - EndJump));
+    IsEndJump := (CodeBase = PByte(PtrUInt(InJump.JumpSafe) - EndJump));
 
-    while (TryStackPos > 0) and (IsEndJump or (TryStack[TryStackPos - 1].Jmp < InSafeJump)) and (TryStack[TryStackPos - 1].JmpFinally = nil) do
+    while (TryStackPos > 0) and (IsEndJump or (TryStack[TryStackPos - 1].Jmp < InJump.JumpSafe)) and (TryStack[TryStackPos - 1].JmpFinally = nil) do
       Dec(TryStackPos);
 
-    if (TryStackPos > 0) and (IsEndJump or (TryStack[TryStackPos - 1].Jmp < InSafeJump)) and  (TryStack[TryStackPos - 1].JmpFinally <> nil) then
+    if (TryStackPos > 0) and (IsEndJump or (TryStack[TryStackPos - 1].Jmp < InJump.JumpSafe)) and  (TryStack[TryStackPos - 1].JmpFinally <> nil) then
     begin
       Assert(IsEndJump or (TryStack[TryStackPos - 1].JmpFinally >= Code));
       Dec(TryStackPos);
       Code := TryStack[TryStackPos].JmpFinally;
     end
-    else if (CodeBase = PByte(PtrUInt(InSafeJump) - EndJump)) then
+    else if (CodeBase = PByte(PtrUInt(InJump.JumpSafe) - EndJump)) then
       Code := @opNone
     else
     begin
-      Code := InSafeJump;
-      InSafeJump := nil;
+      Code := InJump.JumpSafe;
+      InJump.JumpSafe := nil;
     end;
   end;
 
@@ -350,23 +372,23 @@ var
   begin
     Dec(StackPos, SizeOf(TCodePos));
     //JumpTo(PCodePos(@Stack[StackPos])^);
-    InSafeJump := @Stack[StackPos];
-    if (PCodePos(InSafeJump)^ = 0) then
+    InJump.JumpSafe := @Stack[StackPos];
+    if (PCodePos(InJump.JumpSafe)^ = 0) then
       LapeException(lpeInvalidJump);
 
-    InSafeJump := PByte(PtrUInt(CodeBase) + PCodePos(InSafeJump)^);
+    InJump.JumpSafe := PByte(PtrUInt(CodeBase) + PCodePos(InJump.JumpSafe)^);
     HandleSafeJump();
   end;
 
   procedure DoJmpSafe; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    InSafeJump := PByte(PtrUInt(CodeBase) + PCodePos(PtrUInt(Code) + ocSize)^);
+    InJump.JumpSafe := PByte(PtrUInt(CodeBase) + PCodePos(PtrUInt(Code) + ocSize)^);
     HandleSafeJump();
   end;
 
   procedure DoJmpSafeR; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    InSafeJump := PByte(PtrInt(Code) + PCodeOffset(PtrUInt(Code) + ocSize)^);
+    InJump.JumpSafe := PByte(PtrInt(Code) + PCodeOffset(PtrUInt(Code) + ocSize)^);
     HandleSafeJump();
   end;
 
@@ -398,9 +420,9 @@ var
 
   procedure DoEndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (InException.Obj <> nil) then
+    if (InJump.JumpException.Obj <> nil) then
       HandleException()
-    else if (InSafeJump <> nil) then
+    else if (InJump.JumpSafe <> nil) then
       HandleSafeJump()
     else
       Inc(Code, ocSize);
@@ -408,7 +430,7 @@ var
 
   procedure DoCatchException; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    FreeAndNil(InException.Obj);
+    FreeAndNil(InJump.JumpException.Obj);
     Inc(Code, ocSize);
   end;
 
@@ -423,6 +445,9 @@ var
       VarStackP := VarStackPos;
       PushToVar(ParamSize);
       StackP := StackPos + StackPosOffset;
+
+      Jump := InJump;
+      InJump := InEmptyJump;
       JumpTo(Jmp);
     end;
     Inc(CallStackPos);
@@ -441,16 +466,20 @@ var
         Code := CalledFrom;
         VarStackPos := VarStackP;
         StackPos := StackP;
+        MergeJumps(InJump, Jump);
       end;
     end;
   end;
 
   procedure DoDecCall_EndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  var
+    tmp: TInJump;
   begin
+    tmp := InJump;
     DoDecCall();
-    if (InException.Obj <> nil) then
+    if (tmp.JumpException.Obj = InJump.JumpException.Obj) and (InJump.JumpException.Obj <> nil) then
       HandleException()
-    else if (InSafeJump <> nil) then
+    else if (tmp.JumpSafe = InJump.JumpSafe) and (InJump.JumpSafe <> nil) then
       HandleSafeJump();
   end;
 
@@ -485,11 +514,11 @@ var
       while (DoContinue = bTrue) do {$I lpinterpreter_opcodecase.inc}
     except
       {$IFDEF Lape_EmitPos}
-      if (ExceptObject <> InException.Obj) then
-        InException.Pos := PDocPos(PtrUInt(Code) + SizeOf(opCodeType))^;
+      if (ExceptObject <> InJump.JumpException.Obj) then
+        InJump.JumpException.Pos := PDocPos(PtrUInt(Code) + SizeOf(opCodeType))^;
       {$ENDIF}
 
-      InException.Obj := Exception(AcquireExceptionObject());
+      InJump.JumpException.Obj := Exception(AcquireExceptionObject());
       HandleException();
       GoBack := True;
     end;
@@ -502,7 +531,7 @@ var
     else if (DoContinue = bFalse) then
     begin
       DoContinue := bTrue;
-      InSafeJump := PByte(PtrUInt(CodeBase) + EndJump);
+      InJump.JumpSafe := PByte(PtrUInt(CodeBase) + EndJump);
       HandleSafeJump();
       goto Start;
     end;
@@ -527,17 +556,15 @@ begin
   VarStackLen := 0;
   TryStackPos := 0;
   CallStackpos := 0;
-  InException.Obj := nil;
-  InException.Pos := NullDocPos;
-  InSafeJump := nil;
+  InJump := InEmptyJump;
 
   try
     Code := CodeBase;
     DaLoop();
   except
     on E: Exception do
-      if (E = InException.Obj) then
-        LapeExceptionFmt(lpeRuntime, [E.Message], InException.Pos)
+      if (E = InJump.JumpException.Obj) then
+        LapeExceptionFmt(lpeRuntime, [E.Message], InJump.JumpException.Pos)
       else
         LapeExceptionFmt(lpeRuntime, [E.Message]);
   end;

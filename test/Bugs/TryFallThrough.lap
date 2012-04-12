@@ -1,0 +1,27 @@
+procedure Stupid;
+var
+  a = 100;
+  b = 0;
+begin
+  a div b;
+end;
+
+procedure test;
+begin
+  Stupid();
+  WriteLn('Nope!');
+end;
+
+procedure test2;
+begin
+  try
+    test;
+  except
+    WriteLn('Ohai1');
+  end;
+end;
+
+begin
+  test2;
+  WriteLn('Ohai2'); 
+end;
