@@ -1,0 +1,21 @@
+{$assertions on}
+
+procedure TerminateScript;
+begin
+  Halt;
+end;
+
+procedure Test;
+begin
+  TerminateScript;
+end;
+
+procedure InTest;
+begin
+  Test;
+end;
+
+begin
+  InTest();
+  Assert(False, 'Nope!');
+end.

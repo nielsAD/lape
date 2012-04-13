@@ -3626,8 +3626,8 @@ end;
 
 function TLapeCompilerBase.DecStackInfo(var Offset: Integer; InFunction: Boolean = False; Emit: Boolean = True; DoFree: Boolean = False; Pos: PDocPos = nil): TLapeStackInfo;
 var
-  i: Integer;
-  InitStackPos: Integer;
+  i,
+  CodePos, IncTryJump, InitStackPos: Integer;
 
   procedure RemoveIncTry;
   begin
@@ -3639,6 +3639,13 @@ var
   begin
     Emitter.Delete(FStackInfo.CodePos + ocSize + SizeOf(TOC_IncTry), ocSize + SizeOf(TStackOffset), Offset);
     Dec(InitStackPos, ocSize + SizeOf(TStackOffset));
+  end;
+
+  procedure RemoveInitStack;
+  begin
+    Emitter.Delete(InitStackPos, ocSize + SizeOf(TStackOffset), Offset);
+    if (IncTryJump > 0) then
+      Emitter._IncTry(IncTryJump - ocSize - SizeOf(TStackOffset), Try_NoExcept, FStackInfo.CodePos, Pos);
   end;
 
   function NeedFinalization(v: TLapeVar): Boolean;
@@ -3660,7 +3667,10 @@ begin
 
     if Emit then
     begin
-      InitStackPos := FStackInfo.CodePos + ocSize*2 + SizeOf(TOC_IncTry) + SizeOf(TStackOffset);
+      CodePos := FStackInfo.CodePos;
+      IncTryJump := 0;
+      InitStackPos := CodePos + ocSize*2 + SizeOf(TOC_IncTry) + SizeOf(TStackOffset);
+
       if (FStackInfo.TotalNoParamSize <= 0) then
         RemoveExpandVar();
       if (FStackInfo.TotalSize <= 0) and (not InFunction) then
@@ -3668,7 +3678,8 @@ begin
       else
       begin
         Emitter._DecTry(Offset, Pos);
-        Emitter._IncTry(Offset - FStackInfo.CodePos, Try_NoExcept, FStackInfo.CodePos, Pos);
+        Emitter._IncTry(Offset - CodePos, Try_NoExcept, CodePos, Pos);
+        IncTryJump := Offset - CodePos;
 
         with FStackInfo.VarStack do
         begin
@@ -3704,20 +3715,20 @@ begin
 
         if (not InFunction) then
           if FStackInfo.NeedInitialization then
-            Emitter._ExpandVarAndInit(FStackInfo.TotalSize, FStackInfo.CodePos, Pos)
+            Emitter._ExpandVarAndInit(FStackInfo.TotalSize, CodePos, Pos)
           else
-            Emitter._ExpandVar(FStackInfo.TotalSize, FStackInfo.CodePos, Pos)
+            Emitter._ExpandVar(FStackInfo.TotalSize, CodePos, Pos)
         else if (FStackInfo.TotalNoParamSize > 0) then
           if FStackInfo.NeedInitialization then
-            Emitter._GrowVarAndInit(FStackInfo.TotalNoParamSize, FStackInfo.CodePos, Pos)
+            Emitter._GrowVarAndInit(FStackInfo.TotalNoParamSize, CodePos, Pos)
           else
-            Emitter._GrowVar(FStackInfo.TotalNoParamSize, FStackInfo.CodePos, Pos);
+            Emitter._GrowVar(FStackInfo.TotalNoParamSize, CodePos, Pos);
       end;
 
       if (Emitter.MaxStack > 0) then
         Emitter._InitStackLen(Emitter.MaxStack, InitStackPos, Pos)
       else
-        Emitter.Delete(InitStackPos, ocSize + SizeOf(TStackOffset), Offset);
+        RemoveInitStack();
     end
     else
       FStackInfo.FullDisposal := lcoFullDisposal in FOptions;
