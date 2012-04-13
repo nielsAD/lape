@@ -6,7 +6,7 @@ object Form1: TForm1
   Caption = 'Form1'
   ClientHeight = 407
   ClientWidth = 470
-  LCLVersion = '0.9.31'
+  LCLVersion = '1.1'
   inline e: TSynEdit
     Left = 0
     Height = 246
