@@ -3678,8 +3678,8 @@ begin
       else
       begin
         Emitter._DecTry(Offset, Pos);
-        Emitter._IncTry(Offset - CodePos, Try_NoExcept, CodePos, Pos);
         IncTryJump := Offset - CodePos;
+        Emitter._IncTry(IncTryJump, Try_NoExcept, CodePos, Pos);
 
         with FStackInfo.VarStack do
         begin

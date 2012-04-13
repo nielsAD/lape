@@ -2,6 +2,7 @@
 
 procedure TerminateScript;
 begin
+  WriteLn('Terminating..');
   Halt;
 end;
 
