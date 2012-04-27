@@ -1399,19 +1399,19 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
       if (not (FValues[i] is TLapeTree_ExprBase)) then
         LapeException(lpeInvalidCast, FValues[i].DocPos)
       else
-      with TLapeTree_Operator.Create(op_Assign, FValues[i]) do
-      try
-        Left := TLapeTree_Operator.Create(op_Index, FValues[i]);
-        with TLapeTree_Operator(Left) do
-        begin
-          Left := TLapeTree_ResVar.Create(Result, FValues[i]);
-          Right := TLapeTree_Integer.Create(i + TLapeType_StaticArray(FType).Range.Lo, FValues[i]);
+        with TLapeTree_Operator.Create(op_Assign, FValues[i]) do
+        try
+          Left := TLapeTree_Operator.Create(op_Index, FValues[i]);
+          with TLapeTree_Operator(Left) do
+          begin
+            Left := TLapeTree_ResVar.Create(Result, FValues[i]);
+            Right := TLapeTree_Integer.Create(i + TLapeType_StaticArray(FType).Range.Lo, FValues[i]);
+          end;
+          Right := TLapeTree_ResVar.Create(FValues[i].Compile(Offset), FValues[i]);
+          Compile(Offset);
+        finally
+          Free();
         end;
-        Right := TLapeTree_ResVar.Create(FValues[i].Compile(Offset), FValues[i]);
-        Compile(Offset);
-      finally
-        Free();
-      end;
   end;
 
   procedure doRecord;
@@ -1438,6 +1438,15 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         end
       else if (not isEmpty(FValues[i])) then
         LapeException(lpeInvalidCast, FValues[i].DocPos)
+      else if (lcoAlwaysInitialize in FCompiler.Options) then
+        with TLapeTree_Operator.Create(op_Dot, Self) do
+        try
+          Left := TLapeTree_ResVar.Create(Result, Self);
+          Right := TLapeTree_Field.Create(TLapeType_Record(FType).FieldMap.Key[i], Self);
+          FCompiler.VarToDefault(Compile(Offset), Offset, @_DocPos);
+        finally
+          Free();
+        end;
   end;
 
 var
@@ -1459,8 +1468,8 @@ begin
   if wasConstant then
     Result.Writeable := True;
 
-  FCompiler.VarToDefault(Result, Offset, @_DocPos);
-
+  if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
+    FCompiler.VarToDefault(Result, Offset, @_DocPos);
   if (FType is TLapeType_StaticArray) then
     doStaticArray()
   else if (FType is TLapeType_Set) or (FType is TLapeType_DynArray) then
