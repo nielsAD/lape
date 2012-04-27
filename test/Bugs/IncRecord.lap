@@ -1,0 +1,16 @@
+{$assertions on}
+
+type
+  TPoint = record
+    x, y: Integer;
+  end;
+
+var
+  t: TPoint;
+begin
+  t := [10, 20];
+  Assert((t.x = 10) and (t.y = 20), 't <> (10, 20)');
+
+  t := [t.x + 1, t.y + 1];
+  Assert((t.x = 11) and (t.y = 21), 't <> (11, 21)');
+end;
