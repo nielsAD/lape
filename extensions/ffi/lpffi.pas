@@ -68,6 +68,7 @@ type
     procedure addArg(Arg: TFFIType; TakePtr: Boolean = False); overload;
 
     procedure Call(Func, Res, Args: Pointer; TakePointers: Boolean = True); overload;
+    procedure Call(Func, Res: Pointer); overload;
     procedure Call(Func, Res: Pointer; Args: array of Pointer; TakePointers: Boolean = True); overload;
     procedure Call(Func: Pointer; Args: array of Pointer; TakePointers: Boolean = True); overload;
 
@@ -297,9 +298,17 @@ begin
   ffi_call(FCif, Func, Res, Args);
 end;
 
+procedure TFFICifManager.Call(Func, Res: Pointer);
+begin
+  Call(Func, Res, nil, False);
+end;
+
 procedure TFFICifManager.Call(Func, Res: Pointer; Args: array of Pointer; TakePointers: Boolean = True);
 begin
-  Call(Func, Res, @Args[0], TakePointers);
+  if (Length(Args) > 0) then
+    Call(Func, Res, @Args[0], TakePointers)
+  else
+    Call(Func, Res);
 end;
 
 procedure TFFICifManager.Call(Func: Pointer; Args: array of Pointer; TakePointers: Boolean = True);
