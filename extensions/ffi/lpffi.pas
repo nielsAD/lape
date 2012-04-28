@@ -23,7 +23,10 @@ type
     procedure TryAlter;
   protected
     FTyp: TFFIType;
-    FElems: array of TFFITypeManager;
+    FElems: array of record
+      Typ: TFFITypeManager;
+      DoFree: Boolean;
+    end;
 
     function getTyp: TFFIType;
     procedure setTyp(ATyp: TFFIType);
@@ -33,8 +36,8 @@ type
     constructor Create(FFIType: TFFIType); reintroduce;
     destructor Destroy; override;
 
-    procedure addElem(Elem: TFFITypeManager); overload;
-    procedure addElem(Elem: TFFIType); overload;
+    procedure addElem(Elem: TFFITypeManager; DoManage: Boolean = True); overload;
+    procedure addElem(Elem: TFFIType; DoManage: Boolean = True); overload;
 
     property Typ: TFFIType read getTyp write setTyp;
     property PTyp: PFFIType read getPTyp;
@@ -50,6 +53,7 @@ type
     FABI: TFFIABI;
     FArgs: array of record
       Typ: TFFITypeManager;
+      DoFree: Boolean;
       TakePointer: Boolean;
     end;
     FRes: TFFITypeManager;
@@ -60,12 +64,14 @@ type
     function getPCif: PFFICif;
     procedure PrepareCif;
   public
+    ManageResType: Boolean;
+
     constructor Create(AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
     constructor Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
     destructor Destroy; override;
 
-    procedure addArg(Arg: TFFITypeManager; TakePtr: Boolean = False); overload;
-    procedure addArg(Arg: TFFIType; TakePtr: Boolean = False); overload;
+    procedure addArg(Arg: TFFITypeManager; DoManage: Boolean = True; TakePtr: Boolean = False); overload;
+    procedure addArg(Arg: TFFIType; DoManage: Boolean = True; TakePtr: Boolean = False); overload;
 
     procedure Call(Func, Res, Args: Pointer; TakePointers: Boolean = True); overload;
     procedure Call(Func, Res: Pointer); overload;
@@ -129,7 +135,7 @@ begin
 
   SetLength(PElems, l + 1);
   for i := 0 to l - 1 do
-    PElems[i] := FElems[i].PTyp;
+    PElems[i] := FElems[i].Typ.PTyp;
   PElems[l] := nil;
 
   FTyp._type := ffi_type_struct;
@@ -153,22 +159,27 @@ var
   i: Integer;
 begin
   for i := 0 to High(FElems) do
-    FElems[i].Free();
+    if FElems[i].DoFree then
+      FElems[i].Typ.Free();
   inherited;
 end;
 
-procedure TFFITypeManager.addElem(Elem: TFFITypeManager);
+procedure TFFITypeManager.addElem(Elem: TFFITypeManager; DoManage: Boolean = True);
 begin
   Assert(Elem <> nil);
   TryAlter();
 
   SetLength(FElems, Length(FElems) + 1);
-  FElems[High(FElems)] := Elem;
+  with FElems[High(FElems)] do
+  begin
+    Typ := Elem;
+    DoFree := DoManage;
+  end;
 end;
 
-procedure TFFITypeManager.addElem(Elem: TFFIType);
+procedure TFFITypeManager.addElem(Elem: TFFIType; DoManage: Boolean = True);
 begin
-  addElem(TFFITypeManager.Create(Elem));
+  addElem(TFFITypeManager.Create(Elem), DoManage);
 end;
 
 procedure TFFICifManager.TryAlter;
@@ -235,6 +246,7 @@ begin
 
   PArgs := nil;
   Prepared := False;
+  ManageResType := True;
 
   FABI := AABI;
   FArgs := nil;
@@ -255,14 +267,15 @@ destructor TFFICifManager.Destroy;
 var
   i: Integer;
 begin
-  if (FRes <> nil) then
+  if (FRes <> nil) and ManageResType then
     FRes.Free();
   for i := 0 to High(FArgs) do
-    FArgs[i].Typ.Free();
+    if FArgs[i].DoFree then
+      FArgs[i].Typ.Free();
   inherited;
 end;
 
-procedure TFFICifManager.addArg(Arg: TFFITypeManager; TakePtr: Boolean = False);
+procedure TFFICifManager.addArg(Arg: TFFITypeManager; DoManage: Boolean = True; TakePtr: Boolean = False);
 begin
   Assert(Arg <> nil);
   TryAlter();
@@ -271,13 +284,14 @@ begin
   with FArgs[High(FArgs)] do
   begin
     Typ := Arg;
+    DoFree := DoManage;
     TakePointer := TakePtr;
   end;
 end;
 
-procedure TFFICifManager.addArg(Arg: TFFIType; TakePtr: Boolean = False);
+procedure TFFICifManager.addArg(Arg: TFFIType; DoManage: Boolean = True; TakePtr: Boolean = False);
 begin
-  addArg(TFFITypeManager.Create(Arg), TakePtr);
+  addArg(TFFITypeManager.Create(Arg), DoManage, TakePtr);
 end;
 
 procedure TFFICifManager.Call(Func, Res, Args: Pointer; TakePointers: Boolean = True);
@@ -340,12 +354,12 @@ function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
     i: Integer;
   begin
     for i := 0 to Size - 1 do
-      Result.addElem(FFIType);
+      Result.addElem(FFIType, i = 0);
   end;
 
   procedure FFIStaticArray(VarType: TLapeType_StaticArray);
   begin
-    if (VarType = nil) or (VarType.Range.Hi > VarType.Range.Lo) then
+    if (VarType = nil) or (VarType.Range.Lo > VarType.Range.Hi) then
       LapeException(lpeInvalidCast);
     FFIArray(VarType.Range.Hi - VarType.Range.Lo + 1, LapeTypeToFFIType(VarType.PType));
   end;
@@ -436,7 +450,7 @@ begin
 
   try
     for i := 0 to Header.Params.Count - 1 do
-      Result.addArg(LapeParamToFFIType(Header.Params[i]), LapeFFIPointerParam(Header.Params[i].ParType));
+      Result.addArg(LapeParamToFFIType(Header.Params[i]), True, LapeFFIPointerParam(Header.Params[i].ParType));
   except
     Result.Free();
   end;
