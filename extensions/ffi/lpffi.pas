@@ -58,7 +58,7 @@ type
     procedure setRes(ARes: TFFITypeManager);
     function getCif: TFFICif;
     function getPCif: PFFICif;
-    function PrepareCif: TFFIStatus;
+    procedure PrepareCif;
   public
     constructor Create(AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
     constructor Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
@@ -80,6 +80,7 @@ type
 
 const
   lpeAlterPrepared = 'Cannot alter an already prepared object';
+  lpeCannotPrepare = 'Cannot prepare object';
 
 function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
 function LapeFFIPointerParam(ParType: ELapeParameterType): Boolean;
@@ -200,13 +201,13 @@ begin
   Result := @FCif;
 end;
 
-function TFFICifManager.PrepareCif: TFFIStatus;
+procedure TFFICifManager.PrepareCif;
 var
   i: Integer;
   r, a: Pointer;
 begin
   if Prepared then
-    Exit(FFI_OK);
+    Exit;
 
   SetLength(PArgs, Length(FArgs));
   for i := 0 to High(FArgs) do
@@ -222,7 +223,8 @@ begin
   else
     a := nil;
 
-  Result := ffi_prep_cif(FCif, FABI, Length(FArgs), r, a);
+  if (ffi_prep_cif(FCif, FABI, Length(FArgs), r, a) <> FFI_OK) then
+    LapeException(lpeCannotPrepare);
   Prepared := True;
 end;
 
