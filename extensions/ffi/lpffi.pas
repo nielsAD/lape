@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils, ffi,
-  lptypes, lpvartypes, lpvartypes_record, lpcompiler;
+  lptypes, lpvartypes, lpvartypes_array, lpvartypes_record, lpcompiler;
 
 type
   TFFITypeManager = class(TLapeBaseClass)
@@ -71,7 +71,7 @@ type
   end;
 
 const
-  lpeAlterPrepared = 'Cannot alter an already prepared object!';
+  lpeAlterPrepared = 'Cannot alter an already prepared object';
 
 function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
 function LapeParamToFFIType(Param: TLapeParameter): TFFITypeManager;
@@ -282,12 +282,19 @@ function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
     end;
   end;
 
-  procedure FFIByteArray(Size: Integer);
+  procedure FFIArray(Size: Integer; FFIType: TFFITypeManager);
   var
     i: Integer;
   begin
     for i := 0 to Size - 1 do
-      Result.addElem(ffi_type_uint8);
+      Result.addElem(FFIType);
+  end;
+
+  procedure FFIStaticArray(VarType: TLapeType_StaticArray);
+  begin
+    if (VarType = nil) or (VarType.Range.Hi > VarType.Range.Lo) then
+      LapeException(lpeInvalidCast);
+    FFIArray(VarType.Range.Hi - VarType.Range.Lo + 1, LapeTypeToFFIType(VarType.PType));
   end;
 
   procedure FFIRecord(VarType: TLapeType_Record);
@@ -338,10 +345,10 @@ begin
         ltSmallEnum,
         ltLargeEnum:   Result.Typ := ConvertBaseIntType(DetermineIntType(VarType.Size, False));
         ltSmallSet:    Result.Typ := ffi_type_uint32;
-        ltStaticArray,
         ltShortString,
         ltVariant,
-        ltLargeSet:    FFIByteArray(VarType.Size);
+        ltLargeSet:    FFIArray(VarType.Size, TFFITypeManager.Create(ffi_type_uint8));
+        ltStaticArray: FFIStaticArray(VarType as TLapeType_StaticArray);
         ltRecord:      FFIRecord(VarType as TLapeType_Record);
         ltUnion:       FFIUnion(VarType as TLapeType_Union);
       end;
