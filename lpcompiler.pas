@@ -2781,8 +2781,8 @@ end;
 
 destructor TLapeCompiler.Destroy;
 begin
-  setTokenizer(nil);
   EndImporting();
+  setTokenizer(nil);
   if FreeTree and (FDelayedTree <> nil) then
     FreeAndNil(FDelayedTree);
   FreeAndNil(FIncludes);
