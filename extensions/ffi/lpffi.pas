@@ -16,31 +16,33 @@ uses
   lptypes, lpvartypes, lpvartypes_record, lpcompiler;
 
 type
-  TFFITypeManager = object
+  TFFITypeManager = class(TLapeBaseClass)
   protected
     PElems: array of PFFIType;
   public
     Typ: TFFIType;
     Elems: array of TFFITypeManager;
 
-    class function New(FFIType: TFFIType): TFFITypeManager;
+    constructor Create(FFIType: TFFIType); reintroduce;
+    destructor Destroy; override;
+
     procedure PrepareType;
   end;
 
-  TFFICifManager = object
+  TFFICifManager = class(TLapeBaseClass)
   protected
     PArgs: array of PFFIType;
   public
     Cif: TFFICif;
     ABI: TFFIABI;
+
     Args: array of TFFITypeManager;
-
     Res: TFFITypeManager;
-    HasRes: Boolean;
 
-    class function New(AABI: TFFIABI = FFI_DEFAULT_ABI; ArgCount: Integer = 0): TFFICifManager; overload;
-    class function New(ResType: TFFITypeManager; ArgCount: Integer = 0; AABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager; overload;
-    class function New(ResType: TFFITypeManager; ArgTypes: array of TFFITypeManager; AABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager; overload;
+    constructor Create(AABI: TFFIABI = FFI_DEFAULT_ABI; ResType: TFFITypeManager = nil; ArgCount: Integer = 0); reintroduce; overload;
+    constructor Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
+    destructor Destroy; override;
+
     function PrepareCif: TFFIStatus;
   end;
 
@@ -54,11 +56,21 @@ implementation
 uses
   lpexceptions, lpparser;
 
-class function TFFITypeManager.New(FFIType: TFFIType): TFFITypeManager;
+constructor TFFITypeManager.Create(FFIType: TFFIType);
 begin
-  Result.Typ := FFIType;
-  Result.Elems := nil;
-  Result.PElems := nil;
+  inherited Create();
+  Typ := FFIType;
+  Elems := nil;
+  PElems := nil;
+end;
+
+destructor TFFITypeManager.Destroy;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Elems) do
+    Elems[i].Free();
+  inherited;
 end;
 
 procedure TFFITypeManager.PrepareType;
@@ -83,28 +95,32 @@ begin
   Typ.elements := @PElems[0];
 end;
 
-class function TFFICifManager.New(AABI: TFFIABI = FFI_DEFAULT_ABI; ArgCount: Integer = 0): TFFICifManager;
+constructor TFFICifManager.Create(AABI: TFFIABI = FFI_DEFAULT_ABI; ResType: TFFITypeManager = nil; ArgCount: Integer = 0);
 begin
-  FillChar(Result, SizeOf(TFFICifManager), 0);
-  Result.ABI := AABI;
-  Result.HasRes := False;
-  SetLength(Result.Args, ArgCount);
+  inherited Create();
+  ABI := AABI;
+  Res := ResType;
+  SetLength(Args, ArgCount);
 end;
 
-class function TFFICifManager.New(ResType: TFFITypeManager; ArgCount: Integer = 0; AABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager;
-begin
-  Result := New(AABI, ArgCount);
-  Result.Res := ResType;
-  Result.HasRes := True;
-end;
-
-class function TFFICifManager.New(ResType: TFFITypeManager; ArgTypes: array of TFFITypeManager; AABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager;
+constructor TFFICifManager.Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI);
 var
   i: Integer;
 begin
-  Result := New(ResType, Length(ArgTypes), AABI);
+  Create(AABI, ResType, Length(ArgTypes));
   for i := 0 to High(ArgTypes) do
-    Result.Args[i] := ArgTypes[i];
+    Args[i] := ArgTypes[i];
+end;
+
+destructor TFFICifManager.Destroy;
+var
+  i: Integer;
+begin
+  if (Res <> nil) then
+    Res.Free();
+  for i := 0 to High(Args) do
+    Args[i].Free();
+  inherited;
 end;
 
 function TFFICifManager.PrepareCif: TFFIStatus;
@@ -119,7 +135,7 @@ begin
     PArgs[i] := @Args[i].Typ;
   end;
 
-  if HasRes then
+  if (Res <> nil) then
     r := @Res.Typ
   else
     r := nil;
@@ -149,20 +165,19 @@ function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
     end;
   end;
 
-  function FFIByteArray(Size: Integer): TFFITypeManager;
+  procedure FFIByteArray(Size: Integer);
   var
     i: Integer;
   begin
     SetLength(Result.Elems, Size);
     for i := 0 to Size - 1 do
-      Result.Elems[i] := TFFITypeManager.New(ffi_type_uint8);
+      Result.Elems[i] := TFFITypeManager.Create(ffi_type_uint8);
   end;
 
-  function FFIRecord(VarType: TLapeType_Record): TFFITypeManager;
+  procedure FFIRecord(VarType: TLapeType_Record);
   var
     i: Integer;
   begin
-    Result := TFFITypeManager.New(ffi_type_void);
     if (VarType = nil) or (VarType.FieldMap.Count < 1) then
       LapeException(lpeInvalidCast);
 
@@ -171,11 +186,10 @@ function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
       Result.Elems[i] := LapeTypeToFFIType(VarType.FieldMap.ItemsI[i].FieldType);
   end;
 
-  function FFIUnion(VarType: TLapeType_Union): TFFITypeManager;
+  procedure FFIUnion(VarType: TLapeType_Union);
   var
     i, m: Integer;
   begin
-    Result := TFFITypeManager.New(ffi_type_void);
     if (VarType = nil) or (VarType.FieldMap.Count < 1) then
       LapeException(lpeInvalidCast);
 
@@ -191,38 +205,42 @@ function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
   end;
 
 begin
-  Result := TFFITypeManager.New(ffi_type_void);
+  Result := TFFITypeManager.Create(ffi_type_void);
   if (VarType = nil) or (VarType.Size <= 0) then
     Exit;
 
-  if (VarType.BaseIntType <> ltUnknown) then
-    Result.Typ := ConvertBaseIntType(VarType.BaseIntType)
-  else if (VarType.BaseType in LapePointerTypes) then
-    Result.Typ := ffi_type_pointer
-  else
-    case VarType.BaseType of
-      ltSingle:      Result.Typ := ffi_type_float;
-      ltDouble:      Result.Typ := ffi_type_double;
-      ltCurrency:    Result.Typ := ffi_type_uint64;
-      ltExtended:    Result.Typ := ffi_type_longdouble;
-      ltSmallEnum,
-      ltLargeEnum:   Result.Typ := ConvertBaseIntType(DetermineIntType(VarType.Size, False));
-      ltSmallSet:    Result.Typ := ffi_type_uint32;
-      ltStaticArray,
-      ltShortString,
-      ltVariant,
-      ltLargeSet:    Result := FFIByteArray(VarType.Size);
-      ltRecord:      Result := FFIRecord(VarType as TLapeType_Record);
-      ltUnion:       Result := FFIUnion(VarType as TLapeType_Union);
-    end;
+  try
+    if (VarType.BaseIntType <> ltUnknown) then
+      Result.Typ := ConvertBaseIntType(VarType.BaseIntType)
+    else if (VarType.BaseType in LapePointerTypes) then
+      Result.Typ := ffi_type_pointer
+    else
+      case VarType.BaseType of
+        ltSingle:      Result.Typ := ffi_type_float;
+        ltDouble:      Result.Typ := ffi_type_double;
+        ltCurrency:    Result.Typ := ffi_type_uint64;
+        ltExtended:    Result.Typ := ffi_type_longdouble;
+        ltSmallEnum,
+        ltLargeEnum:   Result.Typ := ConvertBaseIntType(DetermineIntType(VarType.Size, False));
+        ltSmallSet:    Result.Typ := ffi_type_uint32;
+        ltStaticArray,
+        ltShortString,
+        ltVariant,
+        ltLargeSet:    FFIByteArray(VarType.Size);
+        ltRecord:      FFIRecord(VarType as TLapeType_Record);
+        ltUnion:       FFIUnion(VarType as TLapeType_Union);
+      end;
 
-  Result.PrepareType();
+    Result.PrepareType();
+  except
+    Result.Free();
+  end;
 end;
 
 function LapeParamToFFIType(Param: TLapeParameter): TFFITypeManager;
 begin
   if (Param.ParType in [lptVar, lptOut]) or (Param.VarType = nil) then
-    Result := TFFITypeManager.New(ffi_type_pointer)
+    Result := TFFITypeManager.Create(ffi_type_pointer)
   else
     Result := LapeTypeToFFIType(Param.VarType);
 end;
@@ -232,17 +250,21 @@ var
   i: Integer;
 begin
   if (Header = nil) then
-    Exit;
+    Exit(nil);
 
   if (Header.Res <> nil) then
-    Result := TFFICifManager.New(LapeTypeToFFIType(Header.Res), Header.Params.Count, ABI)
+    Result := TFFICifManager.Create(ABI, LapeTypeToFFIType(Header.Res), Header.Params.Count)
   else
-    Result := TFFICifManager.New(ABI, Header.Params.Count);
+    Result := TFFICifManager.Create(ABI, nil, Header.Params.Count);
 
-  for i := 0 to Header.Params.Count - 1 do
-    Result.Args[i] := LapeParamToFFIType(Header.Params[i]);
+  try
+    for i := 0 to Header.Params.Count - 1 do
+      Result.Args[i] := LapeParamToFFIType(Header.Params[i]);
 
-  Result.PrepareCif();
+    Result.PrepareCif();
+  except
+    Result.Free();
+  end;
 end;
 
 type
@@ -254,8 +276,8 @@ var
   Method: TLapeType_Method;
   OldState: Pointer;
 begin
-  if (c = nil) then
-    Exit;
+  if (c = nil) or (Header = '') then
+    Exit(nil);
 
   OldState := c.getTempTokenizerState(Header + ';', 'ffi');
   try
