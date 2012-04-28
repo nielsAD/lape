@@ -17,34 +17,61 @@ uses
 
 type
   TFFITypeManager = class(TLapeBaseClass)
-  protected
+  private
     PElems: array of PFFIType;
-  public
-    Typ: TFFIType;
-    Elems: array of TFFITypeManager;
+    Prepared: Boolean;
+    procedure TryAlter;
+  protected
+    FTyp: TFFIType;
+    FElems: array of TFFITypeManager;
 
+    function getTyp: TFFIType;
+    procedure setTyp(ATyp: TFFIType);
+    function getPTyp: PFFIType;
+    procedure PrepareType;
+  public
     constructor Create(FFIType: TFFIType); reintroduce;
     destructor Destroy; override;
 
-    procedure PrepareType;
+    procedure addElem(Elem: TFFITypeManager); overload;
+    procedure addElem(Elem: TFFIType); overload;
+
+    property Typ: TFFIType read getTyp write setTyp;
+    property PTyp: PFFIType read getPTyp;
   end;
 
   TFFICifManager = class(TLapeBaseClass)
-  protected
+  private
     PArgs: array of PFFIType;
+    Prepared: Boolean;
+    procedure TryAlter;
+  protected
+    FCif: TFFICif;
+    FABI: TFFIABI;
+    FArgs: array of TFFITypeManager;
+    FRes: TFFITypeManager;
+
+    procedure setABI(AABI: TFFIABI);
+    procedure setRes(ARes: TFFITypeManager);
+    function getCif: TFFICif;
+    function getPCif: PFFICif;
+    function PrepareCif: TFFIStatus;
   public
-    Cif: TFFICif;
-    ABI: TFFIABI;
-
-    Args: array of TFFITypeManager;
-    Res: TFFITypeManager;
-
-    constructor Create(AABI: TFFIABI = FFI_DEFAULT_ABI; ResType: TFFITypeManager = nil; ArgCount: Integer = 0); reintroduce; overload;
+    constructor Create(AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
     constructor Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
     destructor Destroy; override;
 
-    function PrepareCif: TFFIStatus;
+    procedure addArg(Arg: TFFITypeManager); overload;
+    procedure addArg(Arg: TFFIType); overload;
+
+    property ABI: TFFIABI write setABI;
+    property Res: TFFITypeManager write setRes;
+    property Cif: TFFICif read getCif;
+    property PCif: PFFICif read getPCif;
   end;
+
+const
+  lpeAlterPrepared = 'Cannot alter an already prepared object!';
 
 function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
 function LapeParamToFFIType(Param: TLapeParameter): TFFITypeManager;
@@ -56,71 +83,112 @@ implementation
 uses
   lpexceptions, lpparser;
 
-constructor TFFITypeManager.Create(FFIType: TFFIType);
+procedure TFFITypeManager.TryAlter;
 begin
-  inherited Create();
-  Typ := FFIType;
-  Elems := nil;
-  PElems := nil;
+  if Prepared then
+    LapeException(lpeAlterPrepared);
 end;
 
-destructor TFFITypeManager.Destroy;
-var
-  i: Integer;
+function TFFITypeManager.getTyp: TFFIType;
 begin
-  for i := 0 to High(Elems) do
-    Elems[i].Free();
-  inherited;
+  PrepareType();
+  Result := FTyp;
+end;
+
+procedure TFFITypeManager.setTyp(ATyp: TFFIType);
+begin
+  TryAlter();
+  FTyp := ATyp;
+end;
+
+function TFFITypeManager.getPTyp: PFFIType;
+begin
+  PrepareType();
+  Result := @FTyp;
 end;
 
 procedure TFFITypeManager.PrepareType;
 var
   i, l: Integer;
 begin
-  l := Length(Elems);
-  if (l <= 1) then
+  l := Length(FElems);
+  if (l <= 1) or Prepared then
     Exit;
 
-  FillChar(Typ, SizeOf(TFFIType), 0);
+  FillChar(FTyp, SizeOf(TFFIType), 0);
 
   SetLength(PElems, l + 1);
   for i := 0 to l - 1 do
-  begin
-    Elems[i].PrepareType();
-    PElems[i] := @Elems[i].Typ;
-  end;
+    PElems[i] := FElems[i].PTyp;
   PElems[l] := nil;
 
-  Typ._type := ffi_type_struct;
-  Typ.elements := @PElems[0];
+  FTyp._type := ffi_type_struct;
+  FTyp.elements := @PElems[0];
+  Prepared := True;
 end;
 
-constructor TFFICifManager.Create(AABI: TFFIABI = FFI_DEFAULT_ABI; ResType: TFFITypeManager = nil; ArgCount: Integer = 0);
+constructor TFFITypeManager.Create(FFIType: TFFIType);
 begin
   inherited Create();
-  ABI := AABI;
-  Res := ResType;
-  SetLength(Args, ArgCount);
+
+  PElems := nil;
+  Prepared := False;
+
+  FTyp := FFIType;
+  FElems := nil;
 end;
 
-constructor TFFICifManager.Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI);
+destructor TFFITypeManager.Destroy;
 var
   i: Integer;
 begin
-  Create(AABI, ResType, Length(ArgTypes));
-  for i := 0 to High(ArgTypes) do
-    Args[i] := ArgTypes[i];
-end;
-
-destructor TFFICifManager.Destroy;
-var
-  i: Integer;
-begin
-  if (Res <> nil) then
-    Res.Free();
-  for i := 0 to High(Args) do
-    Args[i].Free();
+  for i := 0 to High(FElems) do
+    FElems[i].Free();
   inherited;
+end;
+
+procedure TFFITypeManager.addElem(Elem: TFFITypeManager);
+begin
+  Assert(Elem <> nil);
+  TryAlter();
+
+  SetLength(FElems, Length(FElems) + 1);
+  FElems[High(FElems)] := Elem;
+end;
+
+procedure TFFITypeManager.addElem(Elem: TFFIType);
+begin
+  addElem(TFFITypeManager.Create(Elem));
+end;
+
+procedure TFFICifManager.TryAlter;
+begin
+  if Prepared then
+    LapeException(lpeAlterPrepared);
+end;
+
+procedure TFFICifManager.setABI(AABI: TFFIABI);
+begin
+  TryAlter();
+  FABI := AABI;
+end;
+
+procedure TFFICifManager.setRes(ARes: TFFITypeManager);
+begin
+  TryAlter();
+  FRes := ARes;
+end;
+
+function TFFICifManager.getCif: TFFICif;
+begin
+  PrepareCif();
+  Result := FCif;
+end;
+
+function TFFICifManager.getPCif: PFFICif;
+begin
+  PrepareCif();
+  Result := @FCif;
 end;
 
 function TFFICifManager.PrepareCif: TFFIStatus;
@@ -128,24 +196,73 @@ var
   i: Integer;
   r, a: Pointer;
 begin
-  SetLength(PArgs, Length(Args));
-  for i := 0 to High(Args) do
-  begin
-    Args[i].PrepareType();
-    PArgs[i] := @Args[i].Typ;
-  end;
+  if Prepared then
+    Exit(FFI_OK);
 
-  if (Res <> nil) then
-    r := @Res.Typ
+  SetLength(PArgs, Length(FArgs));
+  for i := 0 to High(FArgs) do
+    PArgs[i] := FArgs[i].PTyp;
+
+  if (FRes <> nil) then
+    r := FRes.PTyp
   else
     r := nil;
 
-  if (Length(Args) > 0) then
+  if (Length(FArgs) > 0) then
     a := @PArgs[0]
   else
     a := nil;
 
-  Result := ffi_prep_cif(Cif, ABI, Length(Args), r, a);
+  Result := ffi_prep_cif(FCif, FABI, Length(FArgs), r, a);
+  Prepared := True;
+end;
+
+constructor TFFICifManager.Create(AABI: TFFIABI = FFI_DEFAULT_ABI);
+begin
+  inherited Create();
+  FillChar(FCif, SizeOf(TFFICif), 0);
+
+  PArgs := nil;
+  Prepared := False;
+
+  FABI := AABI;
+  FArgs := nil;
+  FRes := nil;
+end;
+
+constructor TFFICifManager.Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI);
+var
+  i: Integer;
+begin
+  Create(AABI);
+  Res := ResType;
+  for i := 0 to High(ArgTypes) do
+    addArg(ArgTypes[i]);
+end;
+
+destructor TFFICifManager.Destroy;
+var
+  i: Integer;
+begin
+  if (FRes <> nil) then
+    FRes.Free();
+  for i := 0 to High(FArgs) do
+    FArgs[i].Free();
+  inherited;
+end;
+
+procedure TFFICifManager.addArg(Arg: TFFITypeManager);
+begin
+  Assert(Arg <> nil);
+  TryAlter();
+
+  SetLength(FArgs, Length(FArgs) + 1);
+  FArgs[High(FArgs)] := Arg;
+end;
+
+procedure TFFICifManager.addArg(Arg: TFFIType);
+begin
+  addArg(TFFITypeManager.Create(Arg));
 end;
 
 function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
@@ -169,9 +286,8 @@ function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
   var
     i: Integer;
   begin
-    SetLength(Result.Elems, Size);
     for i := 0 to Size - 1 do
-      Result.Elems[i] := TFFITypeManager.Create(ffi_type_uint8);
+      Result.addElem(ffi_type_uint8);
   end;
 
   procedure FFIRecord(VarType: TLapeType_Record);
@@ -181,9 +297,8 @@ function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
     if (VarType = nil) or (VarType.FieldMap.Count < 1) then
       LapeException(lpeInvalidCast);
 
-    SetLength(Result.Elems, VarType.FieldMap.Count);
     for i := 0 to VarType.FieldMap.Count - 1 do
-      Result.Elems[i] := LapeTypeToFFIType(VarType.FieldMap.ItemsI[i].FieldType);
+      Result.addElem(LapeTypeToFFIType(VarType.FieldMap.ItemsI[i].FieldType));
   end;
 
   procedure FFIUnion(VarType: TLapeType_Union);
@@ -230,8 +345,6 @@ begin
         ltRecord:      FFIRecord(VarType as TLapeType_Record);
         ltUnion:       FFIUnion(VarType as TLapeType_Union);
       end;
-
-    Result.PrepareType();
   except
     Result.Free();
   end;
@@ -252,16 +365,13 @@ begin
   if (Header = nil) then
     Exit(nil);
 
+  Result := TFFICifManager.Create(ABI);
   if (Header.Res <> nil) then
-    Result := TFFICifManager.Create(ABI, LapeTypeToFFIType(Header.Res), Header.Params.Count)
-  else
-    Result := TFFICifManager.Create(ABI, nil, Header.Params.Count);
+    Result.Res := LapeTypeToFFIType(Header.Res);
 
   try
     for i := 0 to Header.Params.Count - 1 do
-      Result.Args[i] := LapeParamToFFIType(Header.Params[i]);
-
-    Result.PrepareCif();
+      Result.addArg(LapeParamToFFIType(Header.Params[i]));
   except
     Result.Free();
   end;
