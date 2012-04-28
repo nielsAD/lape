@@ -69,6 +69,7 @@ type
 
     procedure Call(Func, Res, Args: Pointer; TakePointers: Boolean = True); overload;
     procedure Call(Func, Res: Pointer; Args: array of Pointer; TakePointers: Boolean = True); overload;
+    procedure Call(Func: Pointer; Args: array of Pointer; TakePointers: Boolean = True); overload;
 
     property ABI: TFFIABI write setABI;
     property Res: TFFITypeManager write setRes;
@@ -299,6 +300,11 @@ end;
 procedure TFFICifManager.Call(Func, Res: Pointer; Args: array of Pointer; TakePointers: Boolean = True);
 begin
   Call(Func, Res, @Args[0], TakePointers);
+end;
+
+procedure TFFICifManager.Call(Func: Pointer; Args: array of Pointer; TakePointers: Boolean = True);
+begin
+  Call(Func, nil, Args, TakePointers);
 end;
 
 function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
