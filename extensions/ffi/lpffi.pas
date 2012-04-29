@@ -16,6 +16,7 @@ uses
   lptypes, lpvartypes, lpvartypes_array, lpvartypes_record, lpcompiler;
 
 type
+  TFFITypeManager = class;
   TFFITypeManager = class(TLapeBaseClass)
   private
     PElems: array of PFFIType;
@@ -73,7 +74,7 @@ type
     procedure addArg(Arg: TFFITypeManager; DoManage: Boolean = True; TakePtr: Boolean = False); overload;
     procedure addArg(Arg: TFFIType; DoManage: Boolean = True; TakePtr: Boolean = False); overload;
 
-    procedure Call(Func, Res, Args: Pointer; TakePointers: Boolean = True); overload;
+    procedure Call(Func, Res: Pointer; Args: PPointerArray; TakePointers: Boolean = True); overload;
     procedure Call(Func, Res: Pointer); overload;
     procedure Call(Func, Res: Pointer; Args: array of Pointer; TakePointers: Boolean = True); overload;
     procedure Call(Func: Pointer; Args: array of Pointer; TakePointers: Boolean = True); overload;
@@ -138,7 +139,7 @@ begin
     PElems[i] := FElems[i].Typ.PTyp;
   PElems[l] := nil;
 
-  FTyp._type := ffi_type_struct;
+  FTyp._type := Ord(FFI_CTYPE_STRUCT);
   FTyp.elements := @PElems[0];
   Prepared := True;
 end;
@@ -294,7 +295,7 @@ begin
   addArg(TFFITypeManager.Create(Arg), DoManage, TakePtr);
 end;
 
-procedure TFFICifManager.Call(Func, Res, Args: Pointer; TakePointers: Boolean = True);
+procedure TFFICifManager.Call(Func, Res: Pointer; Args: PPointerArray; TakePointers: Boolean = True);
 var
   i: Integer;
   p: array of Pointer;
@@ -305,9 +306,9 @@ begin
     SetLength(p, Length(FArgs));
     for i := 0 to High(p) do
       if FArgs[i].TakePointer then
-        p[i] := @PParamArray(Args)^[i]
+        p[i] := @Args^[i]
       else
-        p[i] := PParamArray(Args)^[i];
+        p[i] := Args^[i];
     Args := @p[0];
   end;
 
@@ -316,13 +317,13 @@ end;
 
 procedure TFFICifManager.Call(Func, Res: Pointer);
 begin
-  Call(Func, Res, nil, False);
+  Call(Func, Res, PPointerArray(nil), False);
 end;
 
 procedure TFFICifManager.Call(Func, Res: Pointer; Args: array of Pointer; TakePointers: Boolean = True);
 begin
   if (Length(Args) > 0) then
-    Call(Func, Res, @Args[0], TakePointers)
+    Call(Func, Res, PPointerArray(@Args[0]), TakePointers)
   else
     Call(Func, Res);
 end;

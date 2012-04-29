@@ -47,64 +47,78 @@ TODO:
 
 type
   TFFIStatus = (
-      FFI_OK := 0,
-      FFI_BAD_TYPEDEF,
-      FFI_BAD_ABI
+    FFI_OK = 0,
+    FFI_BAD_TYPEDEF,
+    FFI_BAD_ABI
   );
 
   TFFIABI = (
-      FFI_FIRST_ABI := 0,
-  {$IFDEF LINUX}
-    FFI_SYSV,
-    FFI_UNIX64,   { Unix variants all use the same ABI for x86-64  }
-    FFI_LAST_ABI,
+    FFI_FIRST_ABI = 0,
 
-    {$IFDEF CPU32}
-    FFI_DEFAULT_ABI := FFI_SYSV
-    {$ELSE}
-    FFI_DEFAULT_ABI := FFI_UNIX64
-    {$ENDIF}
-  {$ENDIF}
-
-  {$IFDEF MSWINDOWS}
-    {$IFDEF CPU32}
+    {$IFDEF LINUX}
       FFI_SYSV,
-      FFI_STDCALL,
-      FFI_THISCALL,
-      FFI_FASTCALL,
-      FFI_MS_CDECL,
+      FFI_UNIX64,   { Unix variants all use the same ABI for x86-64  }
       FFI_LAST_ABI,
-      FFI_DEFAULT_ABI := FFI_MS_CDECL
-  (*
-    TODO:
-    #ifdef _MSC_VER
-      FFI_DEFAULT_ABI = FFI_MS_CDECL
-    #else
-      FFI_DEFAULT_ABI = FFI_SYSV
-    #endif
-  *)
-    {$ELSE}
-      FFI_WIN64,
-      FFI_LAST_ABI,
-      FFI_DEFAULT_ABI := FFI_WIN64
+
+      {$IFDEF CPU32}
+        FFI_DEFAULT_ABI := FFI_SYSV
+      {$ELSE}
+        FFI_DEFAULT_ABI := FFI_UNIX64
+      {$ENDIF}
     {$ENDIF}
-  {$ENDIF}
+
+    {$IFDEF MSWINDOWS}
+      {$IFDEF CPU32}
+        FFI_SYSV,
+        FFI_STDCALL,
+        FFI_THISCALL,
+        FFI_FASTCALL,
+        FFI_MS_CDECL,
+        FFI_LAST_ABI,
+        FFI_DEFAULT_ABI := FFI_SYSV
+      {$ELSE}
+        FFI_WIN64,
+        FFI_LAST_ABI,
+        FFI_DEFAULT_ABI := FFI_WIN64
+      {$ENDIF}
+    {$ENDIF}
   );
+
+  TFFI_CTYPE = (
+    FFI_CTYPE_VOID = 0,
+    FFI_CTYPE_INT,
+    FFI_CTYPE_FLOAT,
+    FFI_CTYPE_DOUBLE,
+    FFI_CTYPE_LONGDOUBLE,
+    FFI_CTYPE_UINT8,
+    FFI_CTYPE_SINT8,
+    FFI_CTYPE_UINT16,
+    FFI_CTYPE_SINT16,
+    FFI_CTYPE_UINT32,
+    FFI_CTYPE_SINT32,
+    FFI_CTYPE_UINT64,
+    FFI_CTYPE_SINT64,
+    FFI_CTYPE_STRUCT,
+    FFI_CTYPE_POINTER,
+    FFI_CTYPE_LAST := FFI_CTYPE_POINTER
+  );
+
   PFFIType = ^TFFIType;
-  PPFFIType = ^PFFIType;
+  TFFITypeArray = array[0..High(PointerArray)] of PFFIType;
+  PFFITypeArray = ^TFFITypeArray;
 
   TFFIType = record
     size: csize_t;
     alignment: cushort;
     _type: cushort;
-
-    elements: PPFFIType;
+    elements: PFFITypeArray;
   end;
 
+  PFFICif = ^TFFICif;
   TFFICif = record
     abi: TFFIABI;
     nargs: cunsigned;
-    arg_types: PPFFIType;
+    arg_types: PFFITypeArray;
     rtype: PFFIType;
     bytes: cunsigned;
     flags: cunsigned;
@@ -112,30 +126,11 @@ type
     // TODO
     {$ENDIF}
   end;
-  PFFICif = ^TFFICif;
-
-
-  TPointerArray = Array of Pointer;
-  TClosureBindingFunction = procedure(var cif: TFFICif; var ret: cuint;
-    args: TPointerArray; userdata: Pointer); cdecl;
 
 const
   FFI_TRAMPOLINE_SIZE =
-  {$IFDEF WINDOWS}
-  {$IFDEF CPU32}
-  52
-  {$ELSE}
-  29
-  {$ENDIF}
-  {$ENDIF}
-  {$IFDEF LINUX}
-  {$IFDEF CPU32}
-  10
-  {$ELSE}
-  24
-  {$ENDIF}
-  {$ENDIF}
-  ;
+    {$IFDEF WINDOWS}{$IFDEF CPU32}52{$ELSE}29{$ENDIF}{$ENDIF}
+    {$IFDEF LINUX}{$IFDEF CPU32}10{$ELSE}24{$ENDIF}{$ENDIF};
 
   (*
   #if FFI_CLOSURES
@@ -164,30 +159,52 @@ const
   *)
 
 type
+  TClosureBindingFunction = procedure(
+      var cif: TFFICif;
+      ret: Pointer;
+      args: PPointerArray;
+      userdata: Pointer
+    ); cdecl;
+
+  PFFIClosure = ^TFFIClosure;
   TFFIClosure = record
-    tramp: array [0..FFI_TRAMPOLINE_SIZE] of cchar; // Let's hope FFI_EXEC_TRAMPOLINE_TABLE is not defined/true
+    tramp: array [0..FFI_TRAMPOLINE_SIZE - 1] of cchar; // Let's hope FFI_EXEC_TRAMPOLINE_TABLE is not defined/true
     cif: PFFICif;
     fun: TClosureBindingFunction;
     user_data: Pointer;
   end;
-  PFFIClosure = ^TFFIClosure;
 
-function ffi_prep_cif(out cif: TFFICif; abi: TFFIABI; nargs: cuint; rtype: PFFIType;
-    atypes: PPFFIType): TFFIStatus;  cdecl; external;
-procedure ffi_call(var cif: TFFICif; fn: Pointer; rvalue: Pointer; avalue: Pointer);
-  cdecl; external;
+function ffi_prep_cif(
+    out cif: TFFICif;
+    abi: TFFIABI;
+    nargs: cuint;
+    rtype: PFFIType;
+    atypes: PFFITypeArray
+  ): TFFIStatus; cdecl; external;
 
-function ffi_closure_alloc(size: csize_t; code: Pointer): Pointer;  cdecl; external;
-procedure ffi_closure_free(closure: Pointer); cdecl; external;
+procedure ffi_call(
+    var cif: TFFICif;
+    fn: Pointer;
+    rvalue: Pointer;
+    avalue: PPointerArray
+  ); cdecl; external;
 
-{ I don't think we need this one }
-{
-function ffi_prep_closure(closure: PFFIClosure; var CIF: TFFICif;
-    fun: TClosureBindingFunction; user_data: Pointer): TFFIStatus;  cdecl; external;
-}
+function ffi_closure_alloc(
+    size: csize_t;
+    var code: Pointer
+  ): Pointer; cdecl; external;
 
-function ffi_prep_closure_loc(closure: PFFIClosure; var CIF: TFFICif;
-    fun: TClosureBindingFunction; user_data: Pointer; codeloc: Pointer): TFFIStatus;  cdecl; external;
+procedure ffi_closure_free(
+    closure: Pointer
+  ); cdecl; external;
+
+function ffi_prep_closure_loc(
+    out closure: TFFIClosure;
+    var CIF: TFFICif;
+    fun: TClosureBindingFunction;
+    user_data: Pointer;
+    codeloc: Pointer
+  ): TFFIStatus; cdecl; external;
 
 var
   ffi_type_void: TFFIType; cvar; external;
@@ -204,10 +221,6 @@ var
   ffi_type_longdouble: TFFIType; cvar; external;
   ffi_type_pointer: TFFIType; cvar; external;
 
-const
-  ffi_type_struct = 13;
-
 implementation
-
 
 end.
