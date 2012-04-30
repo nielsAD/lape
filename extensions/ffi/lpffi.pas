@@ -38,12 +38,13 @@ type
     destructor Destroy; override;
 
     procedure addElem(Elem: TFFITypeManager; DoManage: Boolean = True); overload;
-    procedure addElem(Elem: TFFIType; DoManage: Boolean = True); overload;
+    procedure addElem(Elem: TFFIType); overload;
 
     property Typ: TFFIType read getTyp write setTyp;
     property PTyp: PFFIType read getPTyp;
   end;
 
+  TArrayOfPointer = array of Pointer;
   TFFICifManager = class(TLapeBaseClass)
   private
     PArgs: array of PFFIType;
@@ -68,21 +69,56 @@ type
     ManageResType: Boolean;
 
     constructor Create(AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
-    constructor Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
+    constructor Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI); overload;
+    constructor Create(ArgTypes: array of TFFIType; ResType: TFFIType = nil; AABI: TFFIABI = FFI_DEFAULT_ABI); overload;
     destructor Destroy; override;
 
     procedure addArg(Arg: TFFITypeManager; DoManage: Boolean = True; TakePtr: Boolean = False); overload;
-    procedure addArg(Arg: TFFIType; DoManage: Boolean = True; TakePtr: Boolean = False); overload;
+    procedure addArg(Arg: TFFIType; TakePtr: Boolean = False); overload;
+    function TakePointers(Args: PPointerArray; TakeAddr: Boolean = True): TArrayOfPointer;
 
-    procedure Call(Func, Res: Pointer; Args: PPointerArray; TakePointers: Boolean = True); overload;
+    procedure Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True); overload;
     procedure Call(Func, Res: Pointer); overload;
-    procedure Call(Func, Res: Pointer; Args: array of Pointer; TakePointers: Boolean = True); overload;
-    procedure Call(Func: Pointer; Args: array of Pointer; TakePointers: Boolean = True); overload;
+    procedure Call(Func, Res: Pointer; Args: array of Pointer; ATakePointers: Boolean = True); overload;
+    procedure Call(Func: Pointer; Args: array of Pointer; ATakePointers: Boolean = True); overload;
 
-    property ABI: TFFIABI write setABI;
-    property Res: TFFITypeManager write setRes;
+    property ABI: TFFIABI read FABI write setABI;
+    property Res: TFFITypeManager read FRes write setRes;
     property Cif: TFFICif read getCif;
     property PCif: PFFICif read getPCif;
+  end;
+
+  generic TFFIClosureManager<TUserData> = class(TLapeBaseClass)
+  public type
+    TFreeUserData = procedure(AData: TUserData);
+  var private
+    Prepared: Boolean;
+    procedure TryAlter;
+  protected
+    FClosure: PFFIClosure;
+    FCif: TFFICifManager;
+    FCallback: TClosureBindingFunction;
+    FFunc: Pointer;
+
+    function getClosure: TFFIClosure;
+    function getPClosure: PFFIClosure;
+    procedure setCif(ACif: TFFICifManager);
+    procedure setCallback(AFunc: TClosureBindingFunction);
+    function getFunc: Pointer;
+    procedure PrepareClosure;
+  public
+    UserData: TUserData;
+    ManageCif: Boolean;
+    FreeData: TFreeUserData;
+
+    constructor Create(ACif: TFFICifManager = nil; ACallback: TClosureBindingFunction = nil); reintroduce;
+    destructor Destroy; override;
+
+    property Closure: TFFIClosure read getClosure;
+    property PClosure: PFFIClosure read getPClosure;
+    property Cif: TFFICifManager read FCif write setCif;
+    property Callback: TClosureBindingFunction read FCallback write setCallback;
+    property Func: Pointer read getFunc;
   end;
 
 const
@@ -94,6 +130,21 @@ function LapeFFIPointerParam(ParType: ELapeParameterType): Boolean;
 function LapeParamToFFIType(Param: TLapeParameter): TFFITypeManager;
 function LapeHeaderToFFICif(Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager; overload;
 function LapeHeaderToFFICif(Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager; overload;
+
+type
+  TImportClosureData = packed record
+    NativeFunc: Pointer;
+    NativeCif: TFFICifManager;
+  end;
+  TImportClosure = specialize TFFIClosureManager<TImportClosureData>;
+
+  TExportClosureData = record
+    LapeFunc: TCodePos;
+  end;
+  TExportClosure = specialize TFFIClosureManager<TExportClosureData>;
+
+function LapeImportWrapper(Func: Pointer;  Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure;
+function LapeExportWrapper(Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
 
 implementation
 
@@ -178,9 +229,9 @@ begin
   end;
 end;
 
-procedure TFFITypeManager.addElem(Elem: TFFIType; DoManage: Boolean = True);
+procedure TFFITypeManager.addElem(Elem: TFFIType);
 begin
-  addElem(TFFITypeManager.Create(Elem), DoManage);
+  addElem(TFFITypeManager.Create(Elem), True);
 end;
 
 procedure TFFICifManager.TryAlter;
@@ -198,6 +249,8 @@ end;
 procedure TFFICifManager.setRes(ARes: TFFITypeManager);
 begin
   TryAlter();
+  if (FRes <> nil) and (FRes <> ARes) and ManageResType then
+    FRes.Free();
   FRes := ARes;
 end;
 
@@ -264,6 +317,16 @@ begin
     addArg(ArgTypes[i]);
 end;
 
+constructor TFFICifManager.Create(ArgTypes: array of TFFIType; ResType: TFFIType = nil; AABI: TFFIABI = FFI_DEFAULT_ABI);
+var
+  i: Integer;
+begin
+  Create(AABI);
+  Res := TFFITypeManager.Create(ResType);
+  for i := 0 to High(ArgTypes) do
+    addArg(ArgTypes[i]);
+end;
+
 destructor TFFICifManager.Destroy;
 var
   i: Integer;
@@ -290,26 +353,44 @@ begin
   end;
 end;
 
-procedure TFFICifManager.addArg(Arg: TFFIType; DoManage: Boolean = True; TakePtr: Boolean = False);
+procedure TFFICifManager.addArg(Arg: TFFIType; TakePtr: Boolean = False);
 begin
-  addArg(TFFITypeManager.Create(Arg), DoManage, TakePtr);
+  addArg(TFFITypeManager.Create(Arg), True, TakePtr);
 end;
 
-procedure TFFICifManager.Call(Func, Res: Pointer; Args: PPointerArray; TakePointers: Boolean = True);
+function TFFICifManager.TakePointers(Args: PPointerArray; TakeAddr: Boolean = True): TArrayOfPointer;
 var
   i: Integer;
-  p: array of Pointer;
+begin
+  Result := nil;
+  if (Args = nil) or (Length(FArgs) <= 0) then
+    Exit;
+
+  SetLength(Result, Length(FArgs));
+  if TakeAddr then
+    for i := 0 to High(Result) do
+      if FArgs[i].TakePointer then
+        Result[i] := @Args^[i]
+      else
+        Result[i] := Args^[i]
+  else
+    for i := 0 to High(Result) do
+      if FArgs[i].TakePointer then
+        Result[i] := PPointer(Args^[i])^
+      else
+        Result[i] := Args^[i];
+end;
+
+procedure TFFICifManager.Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True);
+var
+  p: TArrayOfPointer;
 begin
   PrepareCif();
-  if TakePointers and (Args <> nil) and (Length(FArgs) > 0) then
+  if ATakePointers then
   begin
-    SetLength(p, Length(FArgs));
-    for i := 0 to High(p) do
-      if FArgs[i].TakePointer then
-        p[i] := @Args^[i]
-      else
-        p[i] := Args^[i];
-    Args := @p[0];
+    p := TakePointers(Args);
+    if (Length(p) > 0) then
+      Args := @p[0];
   end;
 
   ffi_call(FCif, Func, Res, Args);
@@ -320,17 +401,93 @@ begin
   Call(Func, Res, PPointerArray(nil), False);
 end;
 
-procedure TFFICifManager.Call(Func, Res: Pointer; Args: array of Pointer; TakePointers: Boolean = True);
+procedure TFFICifManager.Call(Func, Res: Pointer; Args: array of Pointer; ATakePointers: Boolean = True);
 begin
   if (Length(Args) > 0) then
-    Call(Func, Res, PPointerArray(@Args[0]), TakePointers)
+    Call(Func, Res, PPointerArray(@Args[0]), ATakePointers)
   else
     Call(Func, Res);
 end;
 
-procedure TFFICifManager.Call(Func: Pointer; Args: array of Pointer; TakePointers: Boolean = True);
+procedure TFFICifManager.Call(Func: Pointer; Args: array of Pointer; ATakePointers: Boolean = True);
 begin
-  Call(Func, nil, Args, TakePointers);
+  Call(Func, nil, Args, ATakePointers);
+end;
+
+procedure TFFIClosureManager.TryAlter;
+begin
+  if Prepared then
+    LapeException(lpeAlterPrepared);
+end;
+
+function TFFIClosureManager.getClosure: TFFIClosure;
+begin
+  PrepareClosure();
+  Result := FClosure^;
+end;
+
+function TFFIClosureManager.getPClosure: PFFIClosure;
+begin
+  PrepareClosure();
+  Result := FClosure;
+end;
+
+procedure TFFIClosureManager.setCif(ACif: TFFICifManager);
+begin
+  TryAlter();
+  if (FCif <> nil) and (FCif <> ACif) and ManageCif then
+    FCif.Free();
+  FCif := ACif;
+end;
+
+procedure TFFIClosureManager.setCallback(AFunc: TClosureBindingFunction);
+begin
+  TryAlter();
+  FCallback := AFunc;
+end;
+
+function TFFIClosureManager.getFunc: Pointer;
+begin
+  PrepareClosure();
+  Result := FFunc;
+end;
+
+procedure TFFIClosureManager.PrepareClosure;
+begin
+  if Prepared then
+    Exit;
+
+  if (FCif = nil) or
+     (FCallback = nil) or
+     (ffi_prep_closure_loc(FClosure^, FCif.PCif^, FCallback, @UserData, FFunc) <> FFI_OK)
+  then
+    LapeException(lpeCannotPrepare);
+
+  Prepared := True;
+end;
+
+constructor TFFIClosureManager.Create(ACif: TFFICifManager = nil; ACallback: TClosureBindingFunction = nil);
+begin
+  inherited Create();
+
+  Prepared := False;
+  ManageCif := True;
+  FreeData := nil;
+
+  FClosure := ffi_closure_alloc(SizeOf(TFFIClosure), FFunc);
+  FCif := ACif;
+  FCallback := ACallback;
+end;
+
+destructor TFFIClosureManager.Destroy;
+begin
+  if (FreeData <> nil) then
+    FreeData(UserData);
+  if (FCif <> nil) and ManageCif then
+    FCif.Free();
+  if (FClosure <> nil) then
+    ffi_closure_free(FClosure);
+  inherited;
 end;
 
 function LapeTypeToFFIType(VarType: TLapeType): TFFITypeManager;
@@ -450,6 +607,8 @@ begin
     Result.Res := LapeTypeToFFIType(Header.Res);
 
   try
+    if MethodOfObject(Header) then
+      Result.addArg(ffi_type_pointer);
     for i := 0 to Header.Params.Count - 1 do
       Result.addArg(LapeParamToFFIType(Header.Params[i]), True, LapeFFIPointerParam(Header.Params[i].ParType));
   except
@@ -481,6 +640,14 @@ begin
   finally
     c.resetTokenizerState(OldState);
   end;
+end;
+
+function LapeImportWrapper(Func: Pointer; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure;
+begin
+end;
+
+function LapeExportWrapper(Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
+begin
 end;
 
 end.

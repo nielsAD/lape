@@ -30,20 +30,28 @@
 unit ffi;
 
 {$mode objfpc}{$H+}
-{$linklib libffi}
+{.$DEFINE StaticFFI}
+{.$DEFINE DynamicFFI}
 
 interface
 
+{$IFDEF StaticFFI}
+  {$LINKLIB libffi}
+  {$UNDEF DynamicFFI}
+{$ENDIF}
+
 uses
-    Classes, SysUtils, ctypes;
+  ctypes {$IFDEF DynamicFFI},dynlibs{$ENDIF};
 
 (*
 TODO:
   -  Add ARM compat. Replace cpu32 ifdef's with better ifdefs.
   -  Mac compat.
   -  Test architectures.
-  -  Clean up some parameters (I think we can use more arrays and less pointers)
 *)
+
+const
+  LibFFI = 'libffi';
 
 type
   TFFIStatus = (
@@ -132,32 +140,6 @@ const
     {$IFDEF WINDOWS}{$IFDEF CPU32}52{$ELSE}29{$ENDIF}{$ENDIF}
     {$IFDEF LINUX}{$IFDEF CPU32}10{$ELSE}24{$ENDIF}{$ENDIF};
 
-  (*
-  #if FFI_CLOSURES
-
-  #ifdef _MSC_VER
-  __declspec(align(8))
-  #endif
-  typedef struct {
-  #if @FFI_EXEC_TRAMPOLINE_TABLE@
-    void *trampoline_table;
-    void *trampoline_table_entry;
-  #else
-    char tramp[FFI_TRAMPOLINE_SIZE];
-  #endif
-    ffi_cif   *cif;
-    void     (*fun)(ffi_cif*,void*,void**,void*);
-    void      *user_data;
-  #ifdef __GNUC__
-  } ffi_closure __attribute__((aligned (8)));
-  #else
-  } ffi_closure;
-  # ifdef __sgi
-  #  pragma pack 0
-  # endif
-  #endif
-  *)
-
 type
   TClosureBindingFunction = procedure(
       var cif: TFFICif;
@@ -174,53 +156,163 @@ type
     user_data: Pointer;
   end;
 
-function ffi_prep_cif(
-    out cif: TFFICif;
-    abi: TFFIABI;
-    nargs: cuint;
-    rtype: PFFIType;
-    atypes: PFFITypeArray
-  ): TFFIStatus; cdecl; external;
+  TFFIPrepCif = function(
+      out cif: TFFICif;
+      abi: TFFIABI;
+      nargs: cuint;
+      rtype: PFFIType;
+      atypes: PFFITypeArray
+    ): TFFIStatus; cdecl;
 
-procedure ffi_call(
-    var cif: TFFICif;
-    fn: Pointer;
-    rvalue: Pointer;
-    avalue: PPointerArray
-  ); cdecl; external;
+  TFFICall = procedure(
+      var cif: TFFICif;
+      fn: Pointer;
+      rvalue: Pointer;
+      avalue: PPointerArray
+    ); cdecl;
 
-function ffi_closure_alloc(
-    size: csize_t;
-    var code: Pointer
-  ): Pointer; cdecl; external;
+  TFFIClosureAlloc = function(
+      size: csize_t;
+      var code: Pointer
+    ): Pointer; cdecl;
 
-procedure ffi_closure_free(
-    closure: Pointer
-  ); cdecl; external;
+  TFFIClosureFree = procedure(
+      closure: Pointer
+    ); cdecl;
 
-function ffi_prep_closure_loc(
-    out closure: TFFIClosure;
-    var CIF: TFFICif;
-    fun: TClosureBindingFunction;
-    user_data: Pointer;
-    codeloc: Pointer
-  ): TFFIStatus; cdecl; external;
+  TFFIPrepClosureLoc = function(
+      out closure: TFFIClosure;
+      var CIF: TFFICif;
+      fun: TClosureBindingFunction;
+      user_data: Pointer;
+      codeloc: Pointer
+    ): TFFIStatus; cdecl;
 
 var
-  ffi_type_void: TFFIType; cvar; external;
-  ffi_type_uint8: TFFIType; cvar; external;
-  ffi_type_sint8: TFFIType; cvar; external;
-  ffi_type_uint16: TFFIType; cvar; external;
-  ffi_type_sint16: TFFIType; cvar; external;
-  ffi_type_uint32: TFFIType; cvar; external;
-  ffi_type_sint32: TFFIType; cvar; external;
-  ffi_type_uint64: TFFIType; cvar; external;
-  ffi_type_sint64: TFFIType; cvar; external;
-  ffi_type_float: TFFIType; cvar; external;
-  ffi_type_double: TFFIType; cvar; external;
-  ffi_type_longdouble: TFFIType; cvar; external;
-  ffi_type_pointer: TFFIType; cvar; external;
+  ffi_prep_cif: TFFIPrepCif = nil;
+  ffi_call: TFFICall = nil;
+  ffi_closure_alloc: TFFIClosureAlloc = nil;
+  ffi_closure_free: TFFIClosureFree = nil;
+  ffi_prep_closure_loc: TFFIPrepClosureLoc = nil;
+
+  {$IFDEF DynamicFFI}
+  ffi_libhandle: TLibHandle = NilHandle;
+  {$ENDIF}
+
+  ffi_type_void: TFFIType;       {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_uint8: TFFIType;      {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_sint8: TFFIType;      {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_uint16: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_sint16: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_uint32: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_sint32: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_uint64: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_sint64: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_float: TFFIType;      {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_double: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_longdouble: TFFIType; {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_pointer: TFFIType;    {$IFDEF StaticFFI}cvar; external;{$ENDIF}
 
 implementation
 
+{$IFNDEF DynamicFFI}
+  function _ffi_prep_cif(out cif: TFFICif; abi: TFFIABI; nargs: cuint; rtype: PFFIType; atypes: PFFITypeArray): TFFIStatus; cdecl; external {$IFNDEF StaticFFI}LibFFI{$ENDIF} name 'ffi_prep_cif';
+  procedure _ffi_call(var cif: TFFICif; fn: Pointer; rvalue: Pointer; avalue: PPointerArray); cdecl; external {$IFNDEF StaticFFI}LibFFI{$ENDIF} name 'ffi_call';
+  function _ffi_closure_alloc(size: csize_t; var code: Pointer): Pointer; cdecl; external {$IFNDEF StaticFFI}LibFFI{$ENDIF} name 'ffi_closure_alloc';
+  procedure _ffi_closure_free(closure: Pointer); cdecl; external {$IFNDEF StaticFFI}LibFFI{$ENDIF} name 'ffi_closure_free';
+  function _ffi_prep_closure_loc(out closure: TFFIClosure; var CIF: TFFICif; fun: TClosureBindingFunction; user_data, codeloc: Pointer): TFFIStatus; cdecl; external {$IFNDEF StaticFFI}LibFFI{$ENDIF} name 'ffi_prep_closure_loc';
+{$ENDIF}
+
+{$IFNDEF StaticFFI}
+type
+  generic TFFIBaseType<_T> = class
+  public type
+    TAlignStruct = record
+      c: cchar;
+      x: _T;
+    end;
+  var public
+    class function getOffset: Integer;
+    class function getFFIType(FFI_CType: TFFI_CTYPE = FFI_CTYPE_VOID): TFFIType;
+  end;
+
+  TFFIBaseType_UInt8      = specialize TFFIBaseType<cuint8>;
+  TFFIBaseType_SInt8      = specialize TFFIBaseType<cint8>;
+  TFFIBaseType_UInt16     = specialize TFFIBaseType<cuint16>;
+  TFFIBaseType_SInt16     = specialize TFFIBaseType<cint16>;
+  TFFIBaseType_UInt32     = specialize TFFIBaseType<cuint32>;
+  TFFIBaseType_SInt32     = specialize TFFIBaseType<cint32>;
+  TFFIBaseType_UInt64     = specialize TFFIBaseType<cuint64>;
+  TFFIBaseType_SInt64     = specialize TFFIBaseType<cint64>;
+  TFFIBaseType_Float      = specialize TFFIBaseType<cfloat>;
+  TFFIBaseType_Double     = specialize TFFIBaseType<cdouble>;
+  TFFIBaseType_LongDouble = specialize TFFIBaseType<clongdouble>;
+  TFFIBaseType_Pointer    = specialize TFFIBaseType<Pointer>;
+
+class function TFFIBaseType.getOffset: Integer;
+var
+  t: TAlignStruct;
+begin
+  Result := PtrUInt(@t.x) - PtrUInt(@t.c);
+end;
+
+class function TFFIBaseType.getFFIType(FFI_CType: TFFI_CTYPE = FFI_CTYPE_VOID): TFFIType;
+begin
+  with Result do
+  begin
+    size := SizeOf(_T);
+    alignment := getOffset();
+    _type := Ord(FFI_CType);
+    Result.elements := nil;
+  end;
+end;
+{$ENDIF}
+
+initialization
+  {$IFDEF DynamicFFI}
+  ffi_libhandle := SafeLoadLibrary(LibFFI);
+  if (ffi_libhandle <> NilHandle) then
+  begin
+    Pointer(ffi_prep_cif) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_cif');
+    Pointer(ffi_call) := GetProcedureAddress(ffi_libhandle, 'ffi_call');
+    Pointer(ffi_closure_alloc) := GetProcedureAddress(ffi_libhandle, 'ffi_closure_alloc');
+    Pointer(ffi_closure_free) := GetProcedureAddress(ffi_libhandle, 'ffi_closure_free');
+    Pointer(ffi_prep_closure_loc) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_closure_loc');
+  end;
+  {$ELSE}
+  ffi_prep_cif := @_ffi_prep_cif;
+  ffi_call := @_ffi_call;
+  ffi_closure_alloc := @_ffi_closure_alloc;
+  ffi_closure_free := @_ffi_closure_free;
+  ffi_prep_closure_loc := @_ffi_prep_closure_loc;
+  {$ENDIF}
+
+  {$IFNDEF StaticFFI}
+  with ffi_type_void do
+  begin
+    size := 1;
+    alignment := 1;
+    _type := Ord(FFI_CTYPE_VOID);
+    elements := nil;
+  end;
+
+  ffi_type_uint8      := TFFIBaseType_UInt8.getFFIType(FFI_CTYPE_UINT8);
+  ffi_type_sint8      := TFFIBaseType_SInt8.getFFIType(FFI_CTYPE_SINT8);
+  ffi_type_uint16     := TFFIBaseType_UInt16.getFFIType(FFI_CTYPE_UINT16);
+  ffi_type_sint16     := TFFIBaseType_SInt16.getFFIType(FFI_CTYPE_SINT16);
+  ffi_type_uint32     := TFFIBaseType_UInt32.getFFIType(FFI_CTYPE_UINT32);
+  ffi_type_sint32     := TFFIBaseType_SInt32.getFFIType(FFI_CTYPE_SINT32);
+  ffi_type_uint64     := TFFIBaseType_UInt64.getFFIType(FFI_CTYPE_UINT64);
+  ffi_type_sint64     := TFFIBaseType_SInt64.getFFIType(FFI_CTYPE_SINT64);
+  ffi_type_float      := TFFIBaseType_Float.getFFIType(FFI_CTYPE_FLOAT);
+  ffi_type_double     := TFFIBaseType_Double.getFFIType(FFI_CTYPE_DOUBLE);
+  ffi_type_longdouble := TFFIBaseType_LongDouble.getFFIType(FFI_CTYPE_LONGDOUBLE);
+  ffi_type_pointer    := TFFIBaseType_Pointer.getFFIType(FFI_CTYPE_POINTER);
+  {$ENDIF}
+
+finalization
+  {$IFDEF DynamicFFI}
+  if (ffi_libhandle <> NilHandle) then
+    UnloadLibrary(ffi_libhandle);
+  {$ENDIF}
 end.
