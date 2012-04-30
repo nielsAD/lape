@@ -144,6 +144,7 @@ type
   TExportClosureData = record
     LapeFunc: PByte;
     NativeCif: TFFICifManager;
+    FreeCif: Boolean;
     ParamSizes: array of Integer;
     TotalParamSize: Integer;
   end;
@@ -699,6 +700,12 @@ begin
   Result := LapeImportWrapper(Func, LapeHeaderToFFICif(Compiler, Header, ABI));
 end;
 
+procedure FreeExportClosureData(const AData: TExportClosureData);
+begin
+  if (AData.NativeCif <> nil) and AData.FreeCif then
+    AData.NativeCif.Free();
+end;
+
 procedure LapeExportBinder(var Cif: TFFICif; Res: Pointer; Args: PPointerArray; UserData: Pointer); cdecl;
 var
   i, b: Integer;
@@ -739,9 +746,12 @@ begin
   Assert(NativeCif <> nil);
 
   Result := TExportClosure.Create(NativeCif, @LapeExportBinder);
+  Result.FreeData := @FreeExportClosureData;
+
   try
     Result.UserData.LapeFunc := Func;
     Result.UserData.NativeCif := NativeCif;
+    Result.UserData.FreeCif := True;
     Result.UserData.TotalParamSize := 0;
 
     SetLength(Result.UserData.ParamSizes, Length(ParamSizes));
