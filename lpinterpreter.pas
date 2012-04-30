@@ -85,8 +85,8 @@ const
   TryStackSize = 256;
   CallStackSize = 512;
 
-procedure RunCode(Code: PByte; var DoContinue: TInitBool); overload;
-procedure RunCode(Code: PByte); overload;
+procedure RunCode(Code: PByte; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil); overload;
+procedure RunCode(Code: PByte; InitialVarStack: TByteArray = nil); overload;
 
 implementation
 
@@ -122,7 +122,7 @@ begin
     AJump.JumpSafe := Merge.JumpSafe;
 end;
 
-procedure RunCode(Code: PByte; var DoContinue: TInitBool);
+procedure RunCode(Code: PByte; var DoContinue: TInitBool; InitialVarStack: TByteArray);
 const
   opNone: opCodeType = opCodeType(ocNone);
 var
@@ -550,12 +550,15 @@ begin
 
   VarStackIndex := 0;
   SetLength(VarStackStack, VarStackStackSize);
-  SetLength(VarStackStack[0].Stack, VarStackSize);
+
+  VarStackLen := Length(InitialVarStack);
+  if (VarStackLen < VarStackSize) then
+    SetLength(InitialVarStack, VarStackSize);
+  VarStackStack[0].Stack := InitialVarStack;
   VarStack := VarStackStack[0].Stack;
 
   StackPos := 0;
   VarStackPos := 0;
-  VarStackLen := 0;
   TryStackPos := 0;
   CallStackpos := 0;
   InJump := InEmptyJump;
@@ -572,12 +575,12 @@ begin
   end;
 end;
 
-procedure RunCode(Code: PByte);
+procedure RunCode(Code: PByte; InitialVarStack: TByteArray = nil);
 var
   DoContinue: TInitBool;
 begin
   DoContinue := bTrue;
-  RunCode(Code, DoContinue);
+  RunCode(Code, DoContinue, InitialVarStack);
 end;
 
 end.
