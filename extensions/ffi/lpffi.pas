@@ -90,7 +90,7 @@ type
 
   generic TFFIClosureManager<TUserData> = class(TLapeBaseClass)
   public type
-    TFreeUserData = procedure(AData: TUserData);
+    TFreeUserData = procedure(const AData: TUserData);
   var private
     Prepared: Boolean;
     procedure TryAlter;
@@ -132,18 +132,24 @@ function LapeHeaderToFFICif(Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT
 function LapeHeaderToFFICif(Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager; overload;
 
 type
+  PImportClosureData = ^TImportClosureData;
   TImportClosureData = packed record
     NativeFunc: Pointer;
     NativeCif: TFFICifManager;
+    FreeCif: Boolean;
   end;
   TImportClosure = specialize TFFIClosureManager<TImportClosureData>;
 
+  PExportClosureData = ^TExportClosureData;
   TExportClosureData = record
     LapeFunc: TCodePos;
   end;
   TExportClosure = specialize TFFIClosureManager<TExportClosureData>;
 
-function LapeImportWrapper(Func: Pointer;  Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure;
+function LapeImportWrapper(Func: Pointer; NativeCif: TFFICifManager): TImportClosure; overload;
+function LapeImportWrapper(Func: Pointer; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
+function LapeImportWrapper(Func: Pointer; Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
+
 function LapeExportWrapper(Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
 
 implementation
@@ -281,12 +287,12 @@ begin
   if (FRes <> nil) then
     r := FRes.PTyp
   else
-    r := nil;
+    r := @ffi_type_void;
 
   if (Length(FArgs) > 0) then
     a := @PArgs[0]
   else
-    a := nil;
+    a := @ffi_type_void;
 
   if (ffi_prep_cif(FCif, FABI, Length(FArgs), r, a) <> FFI_OK) then
     LapeException(lpeCannotPrepare);
@@ -642,12 +648,52 @@ begin
   end;
 end;
 
+procedure FreeImportClosureData(const AData: TImportClosureData);
+begin
+  if (AData.NativeCif <> nil) and AData.FreeCif then
+    AData.NativeCif.Free();
+end;
+
+procedure LapeImportBinder(var Cif: TFFICif; Res: Pointer; Args: PPointerArray; UserData: Pointer); cdecl;
+begin
+  with PImportClosureData(UserData)^ do
+    if (NativeCif.Res <> nil) then
+      NativeCif.Call(NativeFunc, Pointer(args^[1]^), PPointerArray(Args^[0]^))
+    else
+      NativeCif.Call(NativeFunc, nil, PPointerArray(Args^[0]^));
+end;
+
+function LapeImportWrapper(Func: Pointer; NativeCif: TFFICifManager): TImportClosure;
+begin
+  Result := TImportClosure.Create(TFFICifManager.Create(), @LapeImportBinder);
+  Result.FreeData := @FreeImportClosureData;
+
+  try
+    Result.UserData.NativeFunc := Func;
+    Result.UserData.NativeCif := NativeCif;
+    Result.UserData.FreeCif := True;
+
+    Result.Cif.addArg(ffi_type_pointer);
+    if (Result.UserData.NativeCif.Res <> nil) then
+      Result.Cif.addArg(ffi_type_pointer);
+  except
+    Result.Free();
+  end;
+end;
+
 function LapeImportWrapper(Func: Pointer; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure;
 begin
+  Result := LapeImportWrapper(Func, LapeHeaderToFFICif(Header, ABI));
+end;
+
+function LapeImportWrapper(Func: Pointer; Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure;
+begin
+  Result := LapeImportWrapper(Func, LapeHeaderToFFICif(Compiler, Header, ABI));
 end;
 
 function LapeExportWrapper(Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
 begin
+
 end;
 
 end.
