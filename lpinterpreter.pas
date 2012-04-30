@@ -85,8 +85,8 @@ const
   TryStackSize = 256;
   CallStackSize = 512;
 
-procedure RunCode(Code: PByte; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil); overload;
-procedure RunCode(Code: PByte; InitialVarStack: TByteArray = nil); overload;
+procedure RunCode(Code: PByte; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
+procedure RunCode(Code: PByte; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
 
 implementation
 
@@ -122,7 +122,7 @@ begin
     AJump.JumpSafe := Merge.JumpSafe;
 end;
 
-procedure RunCode(Code: PByte; var DoContinue: TInitBool; InitialVarStack: TByteArray);
+procedure RunCode(Code: PByte; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0);
 const
   opNone: opCodeType = opCodeType(ocNone);
 var
@@ -565,6 +565,8 @@ begin
 
   try
     Code := CodeBase;
+    JumpTo(InitialJump);
+
     DaLoop();
   except
     on E: Exception do
@@ -575,12 +577,12 @@ begin
   end;
 end;
 
-procedure RunCode(Code: PByte; InitialVarStack: TByteArray = nil);
+procedure RunCode(Code: PByte; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0);
 var
   DoContinue: TInitBool;
 begin
   DoContinue := bTrue;
-  RunCode(Code, DoContinue, InitialVarStack);
+  RunCode(Code, DoContinue, InitialVarStack, InitialJump);
 end;
 
 end.

@@ -142,9 +142,9 @@ type
 
   PExportClosureData = ^TExportClosureData;
   TExportClosureData = record
-    LapeFunc: PByte;
+    CodeBase: PByte;
+    CodePos: TCodePos;
     NativeCif: TFFICifManager;
-    FreeCif: Boolean;
     ParamSizes: array of Integer;
     TotalParamSize: Integer;
   end;
@@ -154,8 +154,8 @@ function LapeImportWrapper(Func: Pointer; NativeCif: TFFICifManager): TImportClo
 function LapeImportWrapper(Func: Pointer; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
 function LapeImportWrapper(Func: Pointer; Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
 
-function LapeExportWrapper(Func: PByte; NativeCif: TFFICifManager; ParamSizes: array of Integer): TExportClosure; overload;
-function LapeExportWrapper(Func: PByte; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
+function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamSizes: array of Integer): TExportClosure; overload;
+function LapeExportWrapper(Code: PByte; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
 function LapeExportWrapper(Func: TLapeGlobalVar; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
 
 
@@ -700,12 +700,6 @@ begin
   Result := LapeImportWrapper(Func, LapeHeaderToFFICif(Compiler, Header, ABI));
 end;
 
-procedure FreeExportClosureData(const AData: TExportClosureData);
-begin
-  if (AData.NativeCif <> nil) and AData.FreeCif then
-    AData.NativeCif.Free();
-end;
-
 procedure LapeExportBinder(var Cif: TFFICif; Res: Pointer; Args: PPointerArray; UserData: Pointer); cdecl;
 var
   i, b: Integer;
@@ -735,23 +729,21 @@ begin
     if (NativeCif.Res <> nil) then
       PPointer(@VarStack[b])^ := Res;
 
-    RunCode(LapeFunc, VarStack);
+    RunCode(CodeBase, VarStack, CodePos);
   end;
 end;
 
-function LapeExportWrapper(Func: PByte; NativeCif: TFFICifManager; ParamSizes: array of Integer): TExportClosure;
+function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamSizes: array of Integer): TExportClosure;
 var
   i: Integer;
 begin
   Assert(NativeCif <> nil);
 
   Result := TExportClosure.Create(NativeCif, @LapeExportBinder);
-  Result.FreeData := @FreeExportClosureData;
-
   try
-    Result.UserData.LapeFunc := Func;
+    Result.UserData.CodeBase := Code;
+    Result.UserData.CodePos := Func;
     Result.UserData.NativeCif := NativeCif;
-    Result.UserData.FreeCif := True;
     Result.UserData.TotalParamSize := 0;
 
     SetLength(Result.UserData.ParamSizes, Length(ParamSizes));
@@ -768,40 +760,52 @@ begin
   end;
 end;
 
-function LapeExportWrapper(Func: PByte; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
+function LapeExportWrapper(Code: PByte; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
 var
-  i: Integer;
+  i, c: Integer;
   ParSizes: array of Integer;
 begin
   if (Header = nil) or (Header.BaseType <> ltScriptMethod) then
     Exit(nil);
 
+  c := 0;
   SetLength(ParSizes, Header.Params.Count);
+  if MethodOfObject(Header) then
+  begin
+    SetLength(ParSizes, Length(ParSizes) + 1);
+    ParSizes[0] := -1;
+    Inc(c);
+  end;
+
   for i := 0 to High(ParSizes) do
+  begin
     if (Header.Params[i].ParType in Lape_RefParams) or (Header.Params[i].VarType = nil) then
-      ParSizes[i] := -1
+      ParSizes[c] := -1
     else
-      ParSizes[i] := Header.Params[i].VarType.Size;
+      ParSizes[c] := Header.Params[i].VarType.Size;
+    Inc(c);
+  end;
 
   if (Header.Res <> nil) then
   begin
-    SetLength(ParSizes, Length(ParSizes) + 1);
-    ParSizes[High(ParSizes)] := -1;
+    SetLength(ParSizes, c + 1);
+    ParSizes[c] := -1;
   end;
 
-  Result := LapeExportWrapper(Func, LapeHeaderToFFICif(Header, ABI), ParSizes);
+  Result := LapeExportWrapper(Code, Func, LapeHeaderToFFICif(Header, ABI), ParSizes);
 end;
 
 function LapeExportWrapper(Func: TLapeGlobalVar; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
 begin
-  if (Func = nil) or (not Func.HasType()) or  (Func.VarType.Size < SizeOf(Pointer)) or
+  if (Func = nil) or (not Func.HasType()) or (Func.VarType.Size < SizeOf(Pointer)) or
      (Func.VarType.Compiler = nil) or (Func.VarType.Compiler.Emitter = nil) or
      (PCodePos(Func.Ptr)^ = 0) or (PCodePos(Func.Ptr)^ = EndJump)
   then
     Exit(nil);
 
   Result := LapeExportWrapper(
-    PByte(PtrUInt(Func.VarType.Compiler.Emitter.Code) + PCodePos(Func.Ptr^)),
+    Func.VarType.Compiler.Emitter.Code,
+    TCodePos(Func.Ptr^),
     Func.VarType as TLapeType_Method,
     ABI);
 end;

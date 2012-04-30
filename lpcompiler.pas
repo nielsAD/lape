@@ -3017,7 +3017,8 @@ begin
       LapeException(lpeExpressionExpected);
 
     FDelayedTree.Compile(False).Spill(1);
-    FTree.Compile().Spill(1);
+    if (FTree <> nil) then
+      FTree.Compile().Spill(1);
 
     FDelayedTree.Compile(True, ldfStatements).Spill(1);
     DecStackInfo(False, True, True);
