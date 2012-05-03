@@ -565,7 +565,8 @@ begin
 
   try
     Code := CodeBase;
-    JumpTo(InitialJump);
+    if (InitialJump > 0) then
+      JumpTo(InitialJump);
 
     DaLoop();
   except
