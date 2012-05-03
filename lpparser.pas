@@ -363,6 +363,10 @@ var
   Lape_KeywordsCache: array[Byte] of array of TLapeKeyword;
   {$ENDIF}
 
+  {$IF NOT DECLARED(FormatSettings)} //FPC < 2.6 workaround
+  FormatSettings: TFormatSettings absolute DefaultFormatSettings;
+  {$IFEND}
+
 function LapeTokenToString(Token: EParserToken): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function ParserTokenToOperator(Token: EParserToken): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function StrToFloatDot(Str: lpString): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
