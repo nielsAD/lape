@@ -26,8 +26,17 @@ type
 implementation
 
 uses
-  {$IFDEF FPC}LCLIntf{$ELSE}Windows{$ENDIF}, strutils,
+  {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF} strutils,
   lpcompiler, lpparser, lpexceptions, lpinterpreter, lputils;
+
+{$IFNDEF FPC} //Internal error workaround
+{$IF NOT DECLARED(GetTickCount)}
+function GetTickCount: UInt32;
+begin
+  Result := Trunc(Now() * 24 * 60 * 60 * 1000);
+end;
+{$IFEND}
+{$ENDIF}
 
 constructor TLapeTester.Create(AFolder: lpString = '..'; ADebug: Boolean = False);
 begin
@@ -189,6 +198,6 @@ begin
 end;
 
 initialization
-  DecimalSeparator := ',';
+  FormatSettings.DecimalSeparator := ',';
 end.
 

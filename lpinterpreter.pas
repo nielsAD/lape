@@ -564,10 +564,7 @@ begin
   InJump := InEmptyJump;
 
   try
-    Code := CodeBase;
-    if (InitialJump > 0) then
-      JumpTo(InitialJump);
-
+    Code := PByte(PtrUInt(CodeBase) + InitialJump);
     DaLoop();
   except
     on E: Exception do

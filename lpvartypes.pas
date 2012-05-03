@@ -1691,7 +1691,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
       CastVar.VarPos.StackVar := FCompiler.getTempVar(CastVar.VarType, 1);
       try
         if DoRight then
-          Res := CastVar.VarType.Eval(op, Dest, Left, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Right, Offset, Pos), Offset, Pos)
+          Res := Left.VarType.Eval(op, Dest, Left, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Right, Offset, Pos), Offset, Pos)
         else
           Res := CastVar.VarType.Eval(op, Dest, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Left, Offset, Pos), Right, Offset, Pos);
         Result := True;
