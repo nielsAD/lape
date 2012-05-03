@@ -247,7 +247,8 @@ begin
     if (ALen < OldLen) and PType.NeedFinalization then
     begin
       Inc(PtrUInt(AVar), SizeOf(SizeInt) + SizeOf(PtrInt));
-      for i := ALen to OldLen - 1 do
+      i := ALen;
+      while (i < OldLen) do
       begin
         tmpLeft := PType.NewGlobalVarP(Pointer(PtrInt(AVar) + (i * PType.Size)));
         try
@@ -255,6 +256,7 @@ begin
         finally
           tmpLeft.Free();
         end;
+        Inc(i);
       end;
       Dec(PtrUInt(AVar), SizeOf(SizeInt) + SizeOf(PtrInt));
     end;
@@ -284,7 +286,9 @@ begin
     if (ALen < OldLen) then
       i := ALen;
     Inc(PtrUInt(AVar), SizeOf(PtrInt) + SizeOf(SizeInt));
-    for i := i - 1 downto 0 do
+
+    Dec(i);
+    while (i >= 0) do
     begin
       tmpLeft := PType.NewGlobalVarP(Pointer(PtrInt(NewP) + (i * PType.Size)));
       tmpRight := PType.NewGlobalVarP(Pointer(PtrInt(AVar) + (i * PType.Size)));
@@ -294,6 +298,7 @@ begin
         tmpLeft.Free();
         tmpRight.Free();
       end;
+      Dec(i);
     end;
 
     AVar := NewP;

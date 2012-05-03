@@ -1,6 +1,7 @@
 package lape;
 
 {$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
 {$ALIGN 8}
 {$ASSERTIONS OFF}
 {$BOOLEVAL OFF}
@@ -22,6 +23,8 @@ package lape;
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
 {$DESCRIPTION 'Scripting engine for Lazarus/Delphi with a Pascal derived syntax.'}
 {$RUNONLY}
 {$IMPLICITBUILD ON}
@@ -39,6 +42,7 @@ contains
   lpparser in '..\lpparser.pas',
   lptree in '..\lptree.pas',
   lptypes in '..\lptypes.pas',
+  lputils in '..\lputils.pas',
   lpvartypes in '..\lpvartypes.pas',
   lpvartypes_array in '..\lpvartypes_array.pas',
   lpvartypes_ord in '..\lpvartypes_ord.pas',

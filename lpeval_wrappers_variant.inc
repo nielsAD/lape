@@ -142,7 +142,7 @@ begin
 end;
 
 type
-  TSizeIntArray = array of SizeInt;
+  TSizeIntArray = array of {$IFDEF FPC}SizeInt{$ELSE}Integer{$ENDIF};
   PSizeIntArray = ^TSizeIntArray;
 
 procedure _LapeVarTypeIsValidArrayType(const Params: PParamArray; const Result: Pointer);
