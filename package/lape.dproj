@@ -7,7 +7,7 @@
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 			<FrameworkType>None</FrameworkType>
 			<Base>True</Base>
-			<Platform Condition="'$(Platform)'==''">OSX32</Platform>
+			<Platform Condition="'$(Platform)'==''">Win32</Platform>
 			<TargetedPlatforms>7</TargetedPlatforms>
 			<AppType>Package</AppType>
 		</PropertyGroup>

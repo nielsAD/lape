@@ -197,6 +197,7 @@ type
     i: Integer;
     n: lpString;
   begin
+    Result := '';
     for i := 0 to Decls.Items.Count - 1 do
       with Decls.Items[i] do
       begin
