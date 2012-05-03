@@ -49,7 +49,11 @@ end;
 
 procedure _LapeGetTickCount(const Params: PParamArray; const Result: Pointer);
 begin
+  {$IF DECLARED(GetTickCount)}
   PUInt32(Result)^ := GetTickCount();
+  {$ELSE}
+  PUInt32(Result)^ := Trunc(Now() * 24 * 60 * 60 * 1000);
+  {$IFEND}
 end;
 
 procedure _LapeSleep(const Params: PParamArray);

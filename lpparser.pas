@@ -409,12 +409,12 @@ end;
 
 function StrToFloatDot(Str: lpString): Extended;
 begin
-  Result := StrToFloat(StringReplace(Str, '.', DecimalSeparator, []));
+  Result := StrToFloat(StringReplace(Str, '.', FormatSettings.DecimalSeparator, []));
 end;
 
 function StrToFloatDotDef(Str: lpString; Default: Extended): Extended;
 begin
-  Result := StrToFloatDef(StringReplace(Str, '.', DecimalSeparator, []), Default);
+  Result := StrToFloatDef(StringReplace(Str, '.', FormatSettings.DecimalSeparator, []), Default);
 end;
 
 function StrToUInt64(Str: lpString): UInt64;

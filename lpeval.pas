@@ -260,7 +260,7 @@ implementation
 
 uses
   Variants, Math,
-  {$IFDEF Delphi}Windows{$ELSE}LCLIntf{$ENDIF},
+  {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
   lpexceptions, lpparser;
 
 {$RangeChecks Off}
