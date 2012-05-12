@@ -22,57 +22,57 @@ type
   TGetEvalRes = function(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType;
   TGetEvalProc = function(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc;
 
-procedure _LapeWrite(const Params: PParamArray);
-procedure _LapeWriteLn(const Params: PParamArray);
+procedure _LapeWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeWriteLn(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer);
-procedure _LapeRaise(const Params: PParamArray);
-procedure _LapeRaiseString(const Params: PParamArray);
-procedure _LapeAssert(const Params: PParamArray);
-procedure _LapeAssertMsg(const Params: PParamArray);
+procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeRaise(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeRaiseString(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeAssert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeAssertMsg(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer);
-procedure _LapeAllocMem(const Params: PParamArray; const Result: Pointer);
-procedure _LapeFreeMem(const Params: PParamArray);
-procedure _LapeFreeMemSize(const Params: PParamArray);
-procedure _LapeReallocMem(const Params: PParamArray);
-procedure _LapeFillMem(const Params: PParamArray);
-procedure _LapeMove(const Params: PParamArray);
+procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeAllocMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeFreeMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeFreeMemSize(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeReallocMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeFillMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeMove(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeHigh(const Params: PParamArray; const Result: Pointer);
-procedure _LapeLength(const Params: PParamArray; const Result: Pointer);
-procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer);
-procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer);
-procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer);
-procedure _LapeAStr_SetLen(const Params: PParamArray);
-procedure _LapeWStr_SetLen(const Params: PParamArray);
-procedure _LapeUStr_SetLen(const Params: PParamArray);
+procedure _LapeHigh(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeLength(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeAStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeWStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeUStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Int8(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_UInt16(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Int16(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_UInt32(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Int32(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_UInt64(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Int64(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Single(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Double(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Currency(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Extended(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Boolean(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_ByteBool(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_WordBool(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_LongBool(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_AnsiChar(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_WideChar(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_ShortString(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_AnsiString(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_WideString(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_UnicodeString(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Variant(const Params: PParamArray; const Result: Pointer);
-procedure _LapeToString_Pointer(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Int8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_UInt16(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Int16(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_UInt32(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Int32(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_UInt64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Int64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Single(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Double(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Currency(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Extended(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Boolean(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_ByteBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_WordBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_LongBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_AnsiChar(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_WideChar(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_ShortString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_AnsiString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_WideString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_UnicodeString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Variant(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeToString_Pointer(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
 {$I lpeval_headers_math.inc}
 {$I lpeval_headers_string.inc}
@@ -85,7 +85,7 @@ procedure LoadToStrArr(var Arr: TLapeToStrArr);
 function ValidEvalFunction(p: Pointer): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function ValidEvalFunction(p: TLapeEvalProc): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
-procedure LapeEval_Error(const Dest, Left, Right: Pointer);
+procedure LapeEval_Error(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure ClearEvalRes(var Arr: TLapeEvalRes);
 procedure ClearEvalArr(var Arr: TLapeEvalArr);
 procedure LoadEvalRes(var Arr: TLapeEvalRes);
@@ -268,234 +268,234 @@ uses
 type
   PBoolean = ^Boolean; //Make sure it's not ^Byte
 
-procedure _LapeWrite(const Params: PParamArray);
+procedure _LapeWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   Write(PlpString(Params^[0])^);
 end;
 
-procedure _LapeWriteLn(const Params: PParamArray);
+procedure _LapeWriteLn(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   WriteLn('');
 end;
 
-procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer);
+procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PEvalBool(Result)^ := Assigned(PPointer(Params^[0])^);
 end;
 
-procedure _LapeRaise(const Params: PParamArray);
+procedure _LapeRaise(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   raise Exception(Params^[0]^);
 end;
 
-procedure _LapeRaiseString(const Params: PParamArray);
+procedure _LapeRaiseString(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   LapeException(PlpString(Params^[0])^);
 end;
 
-procedure _LapeAssert(const Params: PParamArray);
+procedure _LapeAssert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (not PEvalBool(Params^[0])^) then
     LapeException(lpeAssertionFailure);
 end;
 
-procedure _LapeAssertMsg(const Params: PParamArray);
+procedure _LapeAssertMsg(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (not PEvalBool(Params^[0])^) then
     LapeExceptionFmt(lpeAssertionFailureMsg, [PlpString(Params^[1])^]);
 end;
 
-procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer);
+procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   GetMem(PPointer(Result)^, PInt32(Params^[0])^);
 end;
 
-procedure _LapeAllocMem(const Params: PParamArray; const Result: Pointer);
+procedure _LapeAllocMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PPointer(Result)^ := AllocMem(PInt32(Params^[0])^);
 end;
 
-procedure _LapeFreeMem(const Params: PParamArray);
+procedure _LapeFreeMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   FreeMem(PPointer(Params^[0])^);
 end;
 
-procedure _LapeFreeMemSize(const Params: PParamArray);
+procedure _LapeFreeMemSize(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   FreeMem(PPointer(Params^[0])^, PInt32(Params^[1])^);
 end;
 
-procedure _LapeReallocMem(const Params: PParamArray);
+procedure _LapeReallocMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   ReallocMem(PPointer(Params^[0])^, PInt32(Params^[1])^);
 end;
 
-procedure _LapeFillMem(const Params: PParamArray);
+procedure _LapeFillMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   FillChar(Params^[0]^, PInt32(Params^[1])^, PUInt8(Params^[2])^);
 end;
 
-procedure _LapeMove(const Params: PParamArray);
+procedure _LapeMove(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   Move(Params^[0]^, Params^[1]^, PInt32(Params^[2])^);
 end;
 
-procedure _LapeHigh(const Params: PParamArray; const Result: Pointer);
+procedure _LapeHigh(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt32(Result)^ := High(PCodeArray(Params^[0])^);
 end;
 
-procedure _LapeLength(const Params: PParamArray; const Result: Pointer);
+procedure _LapeLength(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt32(Result)^ := Length(PCodeArray(Params^[0])^);
 end;
 
-procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt32(Result)^ := Length(PAnsiString(Params^[0])^);
 end;
 
-procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt32(Result)^ := Length(PWideString(Params^[0])^);
 end;
 
-procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer);
+procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt32(Result)^ := Length(PUnicodeString(Params^[0])^);
 end;
 
-procedure _LapeAStr_SetLen(const Params: PParamArray);
+procedure _LapeAStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   SetLength(PAnsiString(Params^[0])^, PInt32(Params^[1])^);
 end;
 
-procedure _LapeWStr_SetLen(const Params: PParamArray);
+procedure _LapeWStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   SetLength(PWideString(Params^[0])^, PInt32(Params^[1])^);
 end;
 
-procedure _LapeUStr_SetLen(const Params: PParamArray);
+procedure _LapeUStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   SetLength(PUnicodeString(Params^[0])^, PInt32(Params^[1])^);
 end;
 
-procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := '*UNKNOWN*';
 end;
 
-procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := IntToStr(PUInt8(Params^[0])^);
 end;
 
-procedure _LapeToString_Int8(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Int8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := IntToStr(PInt8(Params^[0])^);
 end;
 
-procedure _LapeToString_UInt16(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_UInt16(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := IntToStr(PUInt16(Params^[0])^);
 end;
 
-procedure _LapeToString_Int16(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Int16(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := IntToStr(PInt16(Params^[0])^);
 end;
 
-procedure _LapeToString_UInt32(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_UInt32(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := IntToStr(PUInt32(Params^[0])^);
 end;
 
-procedure _LapeToString_Int32(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Int32(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := IntToStr(PInt32(Params^[0])^);
 end;
 
-procedure _LapeToString_UInt64(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_UInt64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := IntToStr(PUInt64(Params^[0])^);
 end;
 
-procedure _LapeToString_Int64(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Int64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := IntToStr(PInt64(Params^[0])^);
 end;
 
-procedure _LapeToString_Single(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Single(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := FloatToStr(PSingle(Params^[0])^);
 end;
 
-procedure _LapeToString_Double(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Double(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := FloatToStr(PDouble(Params^[0])^);
 end;
 
-procedure _LapeToString_Currency(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Currency(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := FloatToStr(PCurrency(Params^[0])^);
 end;
 
-procedure _LapeToString_Extended(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Extended(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := FloatToStr(PExtended(Params^[0])^);
 end;
 
-procedure _LapeToString_Boolean(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Boolean(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := BoolToStr(PBoolean(Params^[0])^, True);
 end;
 
-procedure _LapeToString_ByteBool(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_ByteBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := BoolToStr(PBoolean(Params^[0])^, True);
 end;
 
-procedure _LapeToString_WordBool(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_WordBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := BoolToStr(PWordBool(Params^[0])^, True);
 end;
 
-procedure _LapeToString_LongBool(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_LongBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := BoolToStr(PLongBool(Params^[0])^, True);
 end;
 
-procedure _LapeToString_AnsiChar(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_AnsiChar(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := PAnsiChar(Params^[0])^;
 end;
 
-procedure _LapeToString_WideChar(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_WideChar(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := PWideChar(Params^[0])^;
 end;
 
-procedure _LapeToString_ShortString(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_ShortString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := PShortString(Params^[0])^;
 end;
 
-procedure _LapeToString_AnsiString(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_AnsiString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := PAnsiString(Params^[0])^;
 end;
 
-procedure _LapeToString_WideString(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_WideString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := PWideString(Params^[0])^;
 end;
 
-procedure _LapeToString_UnicodeString(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_UnicodeString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := PUnicodeString(Params^[0])^;
 end;
 
-procedure _LapeToString_Variant(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Variant(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   try
     PlpString(Result)^ := VarToStr(PVariant(Params^[0])^);
@@ -504,7 +504,7 @@ begin
   end;
 end;
 
-procedure _LapeToString_Pointer(const Params: PParamArray; const Result: Pointer);
+procedure _LapeToString_Pointer(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (PPointer(Params^[0])^ = nil) then
     PlpString(Result)^ := 'nil'
@@ -567,7 +567,7 @@ begin
    Result := ValidEvalFunction(Pointer({$IFNDEF FPC}@{$ENDIF}p));
 end;
 
-procedure LapeEval_Error(const Dest, Left, Right: Pointer);
+procedure LapeEval_Error(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   LapeException(lpeInvalidEvaluation);
 end;
@@ -606,12 +606,12 @@ begin
   {$I lpeval_arr.inc}
 end;
 
-procedure lpeAddr(const Dest, Left, Right: Pointer);
+procedure lpeAddr(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PPointer(Dest)^ := Left;
 end;
 
-procedure lpeDeref(const Dest, Left, Right: Pointer);
+procedure lpeDeref(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PPointer(Dest)^ := PPointer(Left)^;
 end;
@@ -644,4 +644,6 @@ initialization
   LoadEvalArr(LapeEvalArr);
 
 end.
+
+
 

@@ -7,47 +7,47 @@
 }
 {%MainUnit lpeval.pas}
 
-procedure _LapeEncodeDate(const Params: PParamArray; const Result: Pointer);
+procedure _LapeEncodeDate(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := EncodeDate(PUInt16(Params^[0])^, PUInt16(Params^[1])^, PUInt16(Params^[2])^);
 end;
 
-procedure _LapeEncodeTime(const Params: PParamArray; const Result: Pointer);
+procedure _LapeEncodeTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := EncodeTime(PUInt16(Params^[0])^, PUInt16(Params^[1])^, PUInt16(Params^[2])^, PUInt16(Params^[3])^);
 end;
 
-procedure _LapeDecodeDate(const Params: PParamArray);
+procedure _LapeDecodeDate(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   DecodeDate(PDateTime(Params^[0])^, PUInt16(Params^[1])^, PUInt16(Params^[2])^, PUInt16(Params^[3])^);
 end;
 
-procedure _LapeDecodeDateFully(const Params: PParamArray; const Result: Pointer);
+procedure _LapeDecodeDateFully(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PBoolean(Result)^ := DecodeDateFully(PDateTime(Params^[0])^, PUInt16(Params^[1])^, PUInt16(Params^[2])^, PUInt16(Params^[3])^, PUInt16(Params^[4])^);
 end;
 
-procedure _LapeDecodeTime(const Params: PParamArray);
+procedure _LapeDecodeTime(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   DecodeTime(PDateTime(Params^[0])^, PUInt16(Params^[1])^, PUInt16(Params^[2])^, PUInt16(Params^[3])^, PUInt16(Params^[4])^);
 end;
 
-procedure _LapeDate(const Params: PParamArray; const Result: Pointer);
+procedure _LapeDate(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := Date();
 end;
 
-procedure _LapeTime(const Params: PParamArray; const Result: Pointer);
+procedure _LapeTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := Time();
 end;
 
-procedure _LapeNow(const Params: PParamArray; const Result: Pointer);
+procedure _LapeNow(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := Now();
 end;
 
-procedure _LapeGetTickCount(const Params: PParamArray; const Result: Pointer);
+procedure _LapeGetTickCount(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   {$IF DECLARED(GetTickCount)}
   PUInt32(Result)^ := GetTickCount();
@@ -56,52 +56,52 @@ begin
   {$IFEND}
 end;
 
-procedure _LapeSleep(const Params: PParamArray);
+procedure _LapeSleep(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   Sleep(PUInt32(Params^[0])^);
 end;
 
-procedure _LapeReplaceTime(const Params: PParamArray);
+procedure _LapeReplaceTime(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   ReplaceTime(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
 end;
 
-procedure _LapeReplaceDate(const Params: PParamArray);
+procedure _LapeReplaceDate(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   ReplaceDate(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
 end;
 
-procedure _LapeFormatDateTime(const Params: PParamArray; const Result: Pointer);
+procedure _LapeFormatDateTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := FormatDateTime(PlpString(Params^[0])^, PDateTime(Params^[1])^);
 end;
 
-procedure _LapeStrToDate(const Params: PParamArray; const Result: Pointer);
+procedure _LapeStrToDate(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := StrToDate(PlpString(Params^[0])^);
 end;
 
-procedure _LapeStrToDateDef(const Params: PParamArray; const Result: Pointer);
+procedure _LapeStrToDateDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := StrToDateDef(PlpString(Params^[0])^, PDateTime(Params^[1])^);
 end;
 
-procedure _LapeStrToTime(const Params: PParamArray; const Result: Pointer);
+procedure _LapeStrToTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := StrToTime(PlpString(Params^[0])^);
 end;
 
-procedure _LapeStrToTimeDef(const Params: PParamArray; const Result: Pointer);
+procedure _LapeStrToTimeDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := StrToTimeDef(PlpString(Params^[0])^, PDateTime(Params^[1])^);
 end;
 
-procedure _LapeStrToDateTime(const Params: PParamArray; const Result: Pointer);
+procedure _LapeStrToDateTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := StrToDateTime(PlpString(Params^[0])^);
 end;
 
-procedure _LapeStrToDateTimeDef(const Params: PParamArray; const Result: Pointer);
+procedure _LapeStrToDateTimeDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := StrToDateTimeDef(PlpString(Params^[0])^, PDateTime(Params^[1])^);
 end;

@@ -139,9 +139,9 @@ type
   PEvalBool = ^EvalBool;
 
   EMemoryPos = (mpNone, mpStack, mpMem, mpVar);
-  TLapeEvalProc = procedure(const Dest, Left, Right: Pointer);
+  TLapeEvalProc = procedure(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
   TLapeImportedProc = procedure(const Params: PParamArray);
-  TLapeImportedFunc = procedure(const Params: PParamArray; const Result: Pointer);
+  TLapeImportedFunc = procedure(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
   ELapeBaseType = (
     ltUnknown,
@@ -2001,4 +2001,4 @@ finalization
 {$ENDIF}
 
 end.
-
+

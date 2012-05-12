@@ -7,26 +7,26 @@
 }
 {%MainUnit lpeval.pas}
 
-procedure _LapeEncodeDate(const Params: PParamArray; const Result: Pointer);
-procedure _LapeEncodeTime(const Params: PParamArray; const Result: Pointer);
-procedure _LapeDecodeDate(const Params: PParamArray);
-procedure _LapeDecodeDateFully(const Params: PParamArray; const Result: Pointer);
-procedure _LapeDecodeTime(const Params: PParamArray);
+procedure _LapeEncodeDate(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeEncodeTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeDecodeDate(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeDecodeDateFully(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeDecodeTime(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeDate(const Params: PParamArray; const Result: Pointer);
-procedure _LapeTime(const Params: PParamArray; const Result: Pointer);
-procedure _LapeNow(const Params: PParamArray; const Result: Pointer);
+procedure _LapeDate(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeNow(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeGetTickCount(const Params: PParamArray; const Result: Pointer);
-procedure _LapeSleep(const Params: PParamArray);
+procedure _LapeGetTickCount(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeSleep(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeReplaceTime(const Params: PParamArray);
-procedure _LapeReplaceDate(const Params: PParamArray);
+procedure _LapeReplaceTime(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeReplaceDate(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeFormatDateTime(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToDate(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToDateDef(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToTime(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToTimeDef(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToDateTime(const Params: PParamArray; const Result: Pointer);
-procedure _LapeStrToDateTimeDef(const Params: PParamArray; const Result: Pointer);
+procedure _LapeFormatDateTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeStrToDate(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeStrToDateDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeStrToTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeStrToTimeDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeStrToDateTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeStrToDateTimeDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

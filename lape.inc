@@ -21,3 +21,6 @@
   {$DEFINE Delphi}
   {$POINTERMATH ON}
 {$ENDIF}
+
+{$MACRO ON}
+{$define {$IFDEF Lape_CDECL}cdecl;{$ENDIF}:=cdecl;}

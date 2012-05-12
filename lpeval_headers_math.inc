@@ -7,24 +7,24 @@
 }
 {%MainUnit lpeval.pas}
 
-procedure _LapeAbs(const Params: PParamArray; const Result: Pointer);
-procedure _LapeAbsI(const Params: PParamArray; const Result: Pointer);
-procedure _LapeSqr(const Params: PParamArray; const Result: Pointer);
-procedure _LapeSqrt(const Params: PParamArray; const Result: Pointer);
-procedure _LapeArcTan(const Params: PParamArray; const Result: Pointer);
-procedure _LapeLn(const Params: PParamArray; const Result: Pointer);
-procedure _LapeSin(const Params: PParamArray; const Result: Pointer);
-procedure _LapeCos(const Params: PParamArray; const Result: Pointer);
-procedure _LapeExp(const Params: PParamArray; const Result: Pointer);
-procedure _LapeRound(const Params: PParamArray; const Result: Pointer);
-procedure _LapeRoundTo(const Params: PParamArray; const Result: Pointer);
-procedure _LapeFrac(const Params: PParamArray; const Result: Pointer);
-procedure _LapeInt(const Params: PParamArray; const Result: Pointer);
-procedure _LapeTrunc(const Params: PParamArray; const Result: Pointer);
-procedure _LapeCeil(const Params: PParamArray; const Result: Pointer);
-procedure _LapeFloor(const Params: PParamArray; const Result: Pointer);
+procedure _LapeAbs(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeAbsI(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeSqr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeSqrt(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArcTan(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeLn(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeSin(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeCos(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeExp(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeRound(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeRoundTo(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeFrac(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeInt(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeTrunc(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeCeil(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeFloor(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeRandomRange(const Params: PParamArray; const Result: Pointer);
-procedure _LapeRandom(const Params: PParamArray; const Result: Pointer);
-procedure _LapeRandomF(const Params: PParamArray; const Result: Pointer);
-procedure _LapeRandomize(const Params: PParamArray);
+procedure _LapeRandomRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeRandom(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeRandomF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeRandomize(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
