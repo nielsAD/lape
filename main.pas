@@ -47,26 +47,26 @@ uses
 
 { TForm1 }
 
-procedure IntTest(Params: PParamArray);
+procedure IntTest(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt32(Params^[0])^ := PInt32(Params^[0])^ + 1;
 end;
 
-procedure MyWrite(Params: PParamArray);
+procedure MyWrite(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   with TForm1(Params^[0]) do
     m.Text := m.Text + PlpString(Params^[1])^;
   Write(PlpString(Params^[1])^);
 end;
 
-procedure MyWriteLn(Params: PParamArray);
+procedure MyWriteLn(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   with TForm1(Params^[0]) do
     Form1.m.Text := Form1.m.Text + LineEnding;
   WriteLn();
 end;
 
-procedure MyStupidProc(Params: PParamArray);
+procedure MyStupidProc(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   raise Exception.Create('Wat! Exception!');
 end;

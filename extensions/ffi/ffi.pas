@@ -31,7 +31,7 @@ unit ffi;
 
 {$mode objfpc}{$H+}
 {.$DEFINE StaticFFI}
-{.$DEFINE DynamicFFI}
+{$DEFINE DynamicFFI}
 
 interface
 

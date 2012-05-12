@@ -59,12 +59,12 @@ begin
   Output := Output + LineEnding;
 end;
 
-procedure _WriteWrap(Params: PParamArray);
+procedure _WriteWrap(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   _Write(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
-procedure _WriteLnWrap(Params: PParamArray);
+procedure _WriteLnWrap(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   _WriteLn(PlpString(Params^[0])^);
 end;
