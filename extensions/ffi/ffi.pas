@@ -41,7 +41,7 @@ interface
 {$ENDIF}
 
 uses
-  ctypes {$IFDEF DynamicFFI},dynlibs{$ENDIF};
+  ctypes, dynlibs;
 
 (*
 TODO:
@@ -51,7 +51,7 @@ TODO:
 *)
 
 const
-  LibFFI = 'libffi';
+  LibFFI = 'libffi.' + SharedSuffix;
 
 type
   TFFIStatus = (
