@@ -193,7 +193,7 @@ var
   i, l: Integer;
 begin
   l := Length(FElems);
-  if (l <= 1) or Prepared then
+  if (l < 1) or Prepared then
     Exit;
 
   FillChar(FTyp, SizeOf(TFFIType), 0);
