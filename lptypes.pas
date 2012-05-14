@@ -535,7 +535,8 @@ const
   LapeStructTypes = [ltRecord..ltUnion];
   LapeProcTypes = [ltScriptMethod..ltImportedMethod];
   LapeOrdinalTypes = LapeIntegerTypes + LapeBoolTypes + LapeCharTypes + LapeEnumTypes;
-  LapePointerTypes = ([ltPointer] + LapeProcTypes + LapeArrayTypes) - [ltShortString, ltStaticArray];
+  LapeRefTypes = LapeArrayTypes - [ltShortString, ltStaticArray];
+  LapePointerTypes = [ltPointer] + LapeProcTypes + LapeRefTypes;
   LapeStackTypes = LapeOrdinalTypes + LapeRealTypes + LapeSetTypes;
   LapeIfTypes = LapeOrdinalTypes + LapeStringTypes + LapePointerTypes + LapeRealTypes + [ltVariant];
   LapeNoInitTypes = LapeOrdinalTypes + LapeRealTypes + [ltPointer, ltScriptMethod, ltImportedMethod, ltShortString];

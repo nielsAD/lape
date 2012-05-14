@@ -22,16 +22,15 @@
 (*
   Features:
       - Experimental support for ffi_call, ffi_prep_cif, ffi_prep_closure,
-      ffi_prep_closure_loc.
+        ffi_prep_closure_loc.
       - All the requires types have been ported to their FPC equivalent;
-      TFFIClosure however requires some extra additions per architecture.
-      Currently only tested on x64 GNU/Linux.
+        TFFIClosure however requires some extra additions per architecture.
 *)
 unit ffi;
 
 {$mode objfpc}{$H+}
 {.$DEFINE StaticFFI}
-{$DEFINE DynamicFFI}
+{.$DEFINE DynamicFFI}
 
 interface
 
@@ -213,7 +212,28 @@ var
   ffi_type_longdouble: TFFIType; {$IFDEF StaticFFI}cvar; external;{$ENDIF}
   ffi_type_pointer: TFFIType;    {$IFDEF StaticFFI}cvar; external;{$ENDIF}
 
+function FFILoaded: Boolean;
+procedure AssertFFILoaded;
+
 implementation
+
+uses
+  sysutils;
+
+function FFILoaded: Boolean;
+begin
+  {$IFDEF DynamicFFI}
+  Result := ffi_libhandle <> NilHandle;
+  {$ELSE}
+  Result := True;
+  {$ENDIF}
+end;
+
+procedure AssertFFILoaded;
+begin
+  if (not FFILoaded()) then
+    raise EAssertionFailed.Create('libffi is not loaded');
+end;
 
 {$IFNDEF DynamicFFI}
   function _ffi_prep_cif(out cif: TFFICif; abi: TFFIABI; nargs: cuint; rtype: PFFIType; atypes: PFFITypeArray): TFFIStatus; cdecl; external {$IFNDEF StaticFFI}LibFFI{$ENDIF} name 'ffi_prep_cif';
@@ -312,7 +332,7 @@ initialization
 
 finalization
   {$IFDEF DynamicFFI}
-  if (ffi_libhandle <> NilHandle) then
+  if FFILoaded() then
     UnloadLibrary(ffi_libhandle);
   {$ENDIF}
 end.
