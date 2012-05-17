@@ -311,9 +311,11 @@ type
       Exit;
 
     Result :=
-      'function ToString(const v): string; overload; begin' +
-      '  Result := GetGlobalName(Pointer(v));' +
-      '  if (Result = '''') then Result := ToString(Pointer(v));'+
+      'function ToString(const p: Pointer): string; override;' +
+      'var n: string; begin' +
+      '  Result := inherited();' +
+      '  n := GetGlobalName(p);' +
+      '  if (n <> '''') then Result := Result + ''::"'' + n + ''"'';' +
       'end;';
   end;
 
@@ -325,8 +327,8 @@ begin
     GetGlobalPtr()  + LineEnding +
     GetGlobalName() + LineEnding +
     GetGlobalVal()  + LineEnding +
-    VariantInvoke() {+ LineEnding +
-    ToString()      }
+    VariantInvoke() + LineEnding +
+    ToString()
   );
 end;
 

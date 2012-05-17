@@ -581,6 +581,8 @@ function LapeHash(const Value: lpString): UInt32;
 function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
+function PointerToString(const p: Pointer): lpString;
+
 function VarTypeToVType(v: TVarType): SizeInt;
 function VariantToVarRec(const v: Variant): TVarRec; overload;
 function VariantToVarRec(const v: Variant; out Container: TVarRecContainer): TVarRec; overload;
@@ -676,6 +678,14 @@ function LapeOperatorToString(Token: EOperator): lpString;
 begin
   Result := getEnumName(TypeInfo(EOperator), Ord(Token));
   Delete(Result, 1, 3);
+end;
+
+function PointerToString(const p: Pointer): lpString;
+begin
+  if ((p = nil) or (PPointer(p)^ = nil)) then
+    Result := 'nil'
+  else
+    Result := '0x'+IntToHex(PtrUInt(p^), 1);
 end;
 
 function VarTypeToVType(v: TVarType): SizeInt;

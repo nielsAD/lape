@@ -339,7 +339,9 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
+
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
+    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
 
     function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean; virtual;
     procedure addParam(Param: TLapeParameter); virtual;
@@ -1299,7 +1301,7 @@ begin
   if (AVar <> nil) and ({$IFNDEF FPC}@{$ENDIF}LapeToStrArr[BaseType] <> nil) then
     LapeToStrArr[BaseType](@AVar, @Result)
   else
-    Result := AsString;
+    Result := AsString + ' (' + PointerToString(AVar) + ')';
 end;
 
 function TLapeType.VarToInt(AVar: Pointer): Int64;
@@ -1985,15 +1987,14 @@ end;
 
 function TLapeType_Pointer.VarToString(AVar: Pointer): lpString;
 begin
-  if ((AVar = nil) or (PPointer(AVar)^ = nil)) then
-    Result := 'nil'
-  else
+  Result := PointerToString(AVar);
+  if (AVar <> nil) and HasType() then
   begin
-    Result := '0x'+IntToHex(PtrUInt(PPointer(AVar)^), 1);
-    try
-      if HasType() then
+    AVar := PPointer(AVar)^;
+    if (AVar <> nil) then
+      try
         Result := Result + '(' + FPType.VarToString(PPointer(AVar)^) + ')';
-    except end;
+      except end;
   end;
 end;
 
@@ -2310,6 +2311,11 @@ begin
   Result := (Other <> nil) and (Other is TLapeType_Method) and EqualParams(Other as TLapeType_Method, ContextOnly);
   if Result and (not ContextOnly) then
     Result := (Other.BaseType = BaseType);
+end;
+
+function TLapeType_Method.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+begin
+  Result := 'begin Result := ''' + AsString + ' ('' + System.ToString(Pointer(' + AIA + 'Param0)) + '')''; end;';
 end;
 
 function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean;
