@@ -307,8 +307,11 @@ begin
   else
     a := @ffi_type_void;
 
+  Assert(FFILoaded());
+
   if (ffi_prep_cif(FCif, FABI, Length(FArgs), r, a) <> FFI_OK) then
     LapeException(lpeCannotPrepare);
+
   Prepared := True;
 end;
 
@@ -475,6 +478,8 @@ procedure TFFIClosureManager.PrepareClosure;
 begin
   if Prepared then
     Exit;
+
+  Assert(FFILoaded());
 
   if (FCif = nil) or
      (FCallback = nil) or

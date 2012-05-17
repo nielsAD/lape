@@ -1,5 +1,5 @@
 (*
-	Copyright (c) 2012 by Merlijn Wajer
+	Copyright (c) 2012 by Merlijn Wajer and Niels AD
 
     ffi.pas is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as
@@ -29,8 +29,12 @@
 unit ffi;
 
 {$mode objfpc}{$H+}
-{.$DEFINE StaticFFI}
-{.$DEFINE DynamicFFI}
+
+{.$DEFINE StaticFFI}  //Link at compile time into the executable
+{$DEFINE DynamicFFI}  //Load library dynamically, use AssertFFILoaded() to check
+
+// If neither StaticFFI or DynamicFFI is defined, linking will be done at start of
+// program (but will fail to start if library is not found)
 
 interface
 
@@ -215,6 +219,11 @@ var
 function FFILoaded: Boolean;
 procedure AssertFFILoaded;
 
+{$IFDEF DynamicFFI}
+procedure LoadFFI(LibPath: string = ''; LibName: string = LibFFI);
+procedure UnloadFFI;
+{$ENDIF}
+
 implementation
 
 uses
@@ -288,10 +297,15 @@ begin
 end;
 {$ENDIF}
 
-initialization
-  {$IFDEF DynamicFFI}
-  ffi_libhandle := SafeLoadLibrary(LibFFI);
-  if (ffi_libhandle <> NilHandle) then
+{$IFDEF DynamicFFI}
+procedure LoadFFI(LibPath: string = ''; LibName: string = LibFFI);
+begin
+  UnloadFFI();
+  if (LibPath <> '') then
+    LibPath := IncludeTrailingPathDelimiter(LibPath);
+  ffi_libhandle := SafeLoadLibrary(LibPath + LibName);
+
+  if FFILoaded() then
   begin
     Pointer(ffi_prep_cif) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_cif');
     Pointer(ffi_call) := GetProcedureAddress(ffi_libhandle, 'ffi_call');
@@ -299,6 +313,28 @@ initialization
     Pointer(ffi_closure_free) := GetProcedureAddress(ffi_libhandle, 'ffi_closure_free');
     Pointer(ffi_prep_closure_loc) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_closure_loc');
   end;
+end;
+
+procedure UnloadFFI;
+begin
+  if FFILoaded() then
+    if UnloadLibrary(ffi_libhandle) then
+    begin
+      ffi_libhandle := NilHandle;
+
+      Pointer(ffi_prep_cif) := nil;
+      Pointer(ffi_call) := nil;
+      Pointer(ffi_closure_alloc) := nil;
+      Pointer(ffi_closure_free) := nil;
+      Pointer(ffi_prep_closure_loc) := nil;
+    end;
+end;
+
+{$ENDIF}
+
+initialization
+  {$IFDEF DynamicFFI}
+  LoadFFI();
   {$ELSE}
   ffi_prep_cif := @_ffi_prep_cif;
   ffi_call := @_ffi_call;
@@ -332,7 +368,6 @@ initialization
 
 finalization
   {$IFDEF DynamicFFI}
-  if FFILoaded() then
-    UnloadLibrary(ffi_libhandle);
+  UnloadFFI();
   {$ENDIF}
 end.
