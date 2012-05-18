@@ -353,6 +353,7 @@ begin
     Exit;
 
   ExposeGlobals(Compiler, True, False);
+  Compiler.addBaseDefine('Lape_ExposeGlobals');
   Compiler.AfterParsing.AddProc(@_ExposeGlobals_FillProcs);
 end;
 

@@ -33,8 +33,8 @@ unit ffi;
 {.$DEFINE StaticFFI}  //Link at compile time into the executable
 {$DEFINE DynamicFFI}  //Load library dynamically, use AssertFFILoaded() to check
 
-// If neither StaticFFI or DynamicFFI is defined, linking will be done at start of
-// program (but will fail to start if library is not found)
+// If neither StaticFFI or DynamicFFI are defined, linking will be done at start of
+// the program (but will fail to start if library is not found)
 
 interface
 
@@ -329,7 +329,6 @@ begin
       Pointer(ffi_prep_closure_loc) := nil;
     end;
 end;
-
 {$ENDIF}
 
 initialization
