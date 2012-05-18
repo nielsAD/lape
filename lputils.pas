@@ -76,7 +76,7 @@ begin
         'function WStrGet(var s: WideString; Index: SizeInt): WideChar; begin Result := s[Index]; end;' + LineEnding +
         'function VarArrayGet(var s: Variant; Index: Int32): Variant; overload; begin Result := VarArrayGet(s, [Index]); end;' + LineEnding +
         'procedure VarArraySet(c: Variant; Index: Int32; var s: Variant); overload; begin VarArraySet(s, c, [Index]); end;' + LineEnding +
-        'function PadZ(s: string; Len: SizeInt): string; begin Result := PadL(s, Len, ''0''); end;' + LineEnding +
+        'function PadZ(s: string; Len: SizeInt): string; begin Result := PadL(s, Len, '#39'0'#39'); end;' + LineEnding +
         'function Replicate(c: Char; l: SizeInt): string; begin Result := StringOfChar(c, l); end;' + LineEnding +
         'function Int64ToStr(i: Int64): string; begin Result := IntToStr(i); end;' + LineEnding +
         'function UInt64ToStr(i: UInt64): string; begin Result := IntToStr(i); end;'
@@ -94,10 +94,10 @@ begin
         'erInterfaceNotSupported, erCustomError)',
         'TIFException');
       addDelayedCode(
-        'function ExceptionToString(Ex: TIFException; Param: string): string; begin ' +
-          'Result := ToString(Ex);'                                                   +
-          'if (Param <> '''') then Result := Result + ''('' + Param + '')'';'         +
-        'end;'                                                                        + LineEnding +
+        'function ExceptionToString(Ex: TIFException; Param: string): string; begin '         +
+          'Result := ToString(Ex);'                                                           +
+          'if (Param <> '#39#39') then Result := Result + '#39'('#39' + Param + '#39')'#39';' +
+        'end;'                                                                                + LineEnding +
         'procedure RaiseException(Ex: TIFException; Param: string); overload; begin RaiseException(ExceptionToString(Ex, Param)); end;'
       );
     end;
@@ -118,7 +118,7 @@ begin
   if (Result <> '') then
   begin
     AName := LapeCase(AName);
-    Result := '''' + AName + ''': Result := ' + Result + AName + ';' + LineEnding;
+    Result := #39 + AName + #39': Result := ' + Result + AName + ';' + LineEnding;
   end;
 end;
 
@@ -133,7 +133,7 @@ begin
   if (v.VarType is TLapeType_Method) then
     Result := Result + AIA;
   if (Result <> '') then
-    Result := Result + AName + ': Result := ''' + AName + ''';' + LineEnding;
+    Result := Result + AName + ': Result := '#39 + AName + #39';' + LineEnding;
 end;
 
 function ExposeGlobals__GetVal(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
@@ -144,7 +144,7 @@ begin
 
   AName := LapeCase(AName);
   if Compiler.getBaseType(ltVariant).CompatibleWith(v.VarType) then
-    Result := '''' + AName + ''': Result := ' + AName + ';' + LineEnding;
+    Result := #39 + AName + #39': Result := ' + AName + ';' + LineEnding;
 end;
 
 function ExposeGlobals__Invoke(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
@@ -178,7 +178,7 @@ begin
     if (not ParamsCompatible(Params)) then
       Exit;
 
-    Result := '''' + AName + ''': begin ' +
+    Result := #39 + AName + #39': begin ' +
       'Assert(Length(Params) = ' + IntToStr(Params.Count) + ');' +
       'Result := ';
     if (Res = nil) or (not VariantType.CompatibleWith(Res)) then
@@ -262,7 +262,7 @@ type
     Result := 'function GetGlobalName(Ptr: Pointer): string;';
     if DoOverride then
       Result := Result + 'override;';
-    Result := Result + 'begin Result := '''';';
+    Result := Result + 'begin Result := '#39#39';';
     if (not HeaderOnly) then
     begin
       Result := Result + 'case Ptr of ' + LineEnding +
@@ -325,7 +325,7 @@ type
       'var n: string; begin' +
       '  Result := inherited();' +
       '  n := GetGlobalName(p);' +
-      '  if (n <> '''') then Result := ''"'' + n + ''"::'' + Result;' +
+      '  if (n <> '#39#39') then Result := '#39'"'#39' + n + '#39'"::'#39' + Result;' +
       'end;';
   end;
 

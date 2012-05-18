@@ -1980,8 +1980,20 @@ function TLapeType_Pointer.VarToStringBody(ToStr: TLapeType_OverloadedMethod = n
 begin
   Result := 'begin Result := System.ToString(Pointer(Param0));';
   if HasType() and (ToStr <> nil) and (ToStr.getMethod(getTypeArray([PType])) <> nil) then
-    Result := Result + 'if (Param0 <> nil) then ' +
-      'try Result := Result + '#39' ('#39' + System.ToString(Param0^) + '#39')'#39'; except end;';
+  begin
+    Result := Result                   +
+      'if (Param0 <> nil) then '       +
+      'try'                            +
+      ' Result := Result + '#39' ('#39 +
+      ' + System.ToString(';
+
+    if (PType is TLapeType_Method) then
+      Result := Result + AIA;
+
+    Result := Result +
+      ' Param0^) + '#39')'#39';' +
+      'except end;';
+  end;
   Result := Result + 'end;';
 end;
 
@@ -2315,7 +2327,7 @@ end;
 
 function TLapeType_Method.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 begin
-  Result := 'begin Result := ''' + AsString + ' ('' + System.ToString(Pointer(' + AIA + 'Param0)) + '')''; end;';
+  Result := 'begin Result := '#39 + AsString + ' ('#39' + System.ToString(Pointer(' + AIA + 'Param0)) + '#39')'#39'; end;';
 end;
 
 function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean;
