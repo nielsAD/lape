@@ -30,6 +30,7 @@ type
   TLapeCompiler = class;
   TLapeHandleDirective = function(Sender: TLapeCompiler; Directive, Argument: lpString; InPeek: Boolean): Boolean of object;
   TLapeFindFile = function(Sender: TLapeCompiler; var FileName: lpString): TLapeTokenizerBase of object;
+  TLapeCompilerNotification = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifier<TLapeCompiler>;
   TLapeTokenizerArray = array of TLapeTokenizerBase;
 
   TLapeConditional = record
@@ -81,6 +82,7 @@ type
 
     FOnHandleDirective: TLapeHandleDirective;
     FOnFindFile: TLapeFindFile;
+    FAfterParsing: TLapeCompilerNotification;
 
     function getDocPos: TDocPos; override;
     procedure Reset; override;
@@ -168,6 +170,7 @@ type
     function addDelayedExpression(Node: TLapeTree_Base; AfterCompilation: Boolean = True; IsGlobal: Boolean = False): TLapeTree_Base; virtual;
     function ParseFile: TLapeTree_Base; virtual;
     procedure EmitCode(ACode: lpString; var Offset: Integer; Pos: PDocPos = nil); override;
+
     function Compile: Boolean; virtual;
     procedure CheckAfterCompile; virtual;
 
@@ -233,6 +236,7 @@ type
     property Defines: TStringList read FDefines write setBaseDefines;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
+    property AfterParsing: TLapeCompilerNotification read FAfterParsing;
   end;
 
   TLapeType_SystemUnit = class(TLapeType)
@@ -2712,6 +2716,7 @@ begin
 
   FOnHandleDirective := nil;
   FOnFindFile := nil;
+  FAfterParsing := TLapeCompilerNotification.Create();
 
   FBaseDefines := TStringList.Create();
   FBaseDefines.CaseSensitive := LapeCaseSensitive;
@@ -2789,6 +2794,7 @@ begin
   FreeAndNil(FDefines);
   FreeAndNil(FBaseDefines);
   FreeAndNil(FConditionalStack);
+  FreeAndNil(FAfterParsing);
   FreeAndNil(FTreeMethodMap);
   FreeAndNil(FInternalMethodMap);
   inherited;
@@ -3015,6 +3021,8 @@ begin
     FTree := ParseFile();
     if (FTree = nil) and (FDelayedTree.GlobalCount(False) <= 0) then
       LapeException(lpeExpressionExpected);
+
+    FAfterParsing.Notify(Self);
 
     FDelayedTree.Compile(False).Spill(1);
     if (FTree <> nil) then

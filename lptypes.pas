@@ -390,6 +390,22 @@ type
     property Sorted: Boolean read getSorted write setSorted;
   end;
 
+  {$IFDEF FPC}generic{$ENDIF} TLapeNotifier<_T> = class(TLapeBaseClass)
+  public type
+     TNotifyProc = procedure(Sender: _T);
+     TNotifiers = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TNotifyProc>;
+   var protected
+     FNotifiers: TNotifiers;
+   public
+     constructor Create; reintroduce; virtual;
+     destructor Destroy; override;
+
+     procedure AddProc(const Proc: TNotifyProc); virtual;
+     procedure DeleteProc(const Proc: TNotifyProc); virtual;
+
+     procedure Notify(Sender: _T); virtual;
+  end;
+
   TLapeDeclaration = class;
   TLapeDeclarationClass = class of TLapeDeclaration;
   TLapeDeclArray = array of TLapeDeclaration;
@@ -1728,6 +1744,42 @@ function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ExportToArrays: TTArrays;
 begin
   Result.Keys := FStringList.ExportToArray();
   Result.Items := FItems.ExportToArray;
+end;
+
+constructor TLapeNotifier{$IFNDEF FPC}<_T>{$ENDIF}.Create;
+begin
+  inherited;
+  FNotifiers := TNotifiers.Create(nil, dupIgnore, False);
+end;
+
+destructor TLapeNotifier{$IFNDEF FPC}<_T>{$ENDIF}.Destroy;
+begin
+  FNotifiers.Free;
+  inherited;
+end;
+
+procedure TLapeNotifier{$IFNDEF FPC}<_T>{$ENDIF}.AddProc(const Proc: TNotifyProc);
+begin
+  FNotifiers.add(Proc);
+end;
+
+procedure TLapeNotifier{$IFNDEF FPC}<_T>{$ENDIF}.DeleteProc(const Proc: TNotifyProc);
+var
+  p: TNotifyProc;
+begin
+  p := FNotifiers.DeleteItem(Proc); //Assign to p to work around Delphi compiler bug
+end;
+
+procedure TLapeNotifier{$IFNDEF FPC}<_T>{$ENDIF}.Notify(Sender: _T);
+var
+  i: Integer;
+  p: TNotifyProc;
+begin
+  for i := FNotifiers.Count - 1 downto 0 do
+  begin
+    p := FNotifiers[i];
+    p(Sender);
+  end;
 end;
 
 constructor TLapeDeclarationList.Create(AList: TLapeDeclCollection; ManageDeclarations: Boolean = True);

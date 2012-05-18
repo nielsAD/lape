@@ -75,6 +75,7 @@ resourcestring
   lpeTypeExpected = 'Type expected';
   lpeUnexpectedToken = 'Found unexpected token "%s"';
   lpeUnknownDeclaration = 'Unknown declaration "%s"';
+  lpeUnknownDirective = 'Unknown compiler directive';
   lpeUnknownOC = 'Unknown opcode';
   lpeUnknownParent = 'Cannot find parent declaration';
   lpeVariableExpected = 'Variable expected';

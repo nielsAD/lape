@@ -19,7 +19,8 @@ type
   PSInitSet = set of PSInit;
 
 procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);
-procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly: Boolean = False; DoOverride: Boolean = False);
+procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean); overload;
+procedure ExposeGlobals(Compiler: TLapeCompiler); overload;
 
 implementation
 
@@ -109,11 +110,16 @@ begin
   if (not v.HasType()) or MethodOfObject(v.VarType) then
     Exit;
 
-  AName := LapeCase(AName);
   if v.Writeable then
-    Result := '''' + AName + ''': Result := @' + AName + ';' + LineEnding
-  else if (v.VarType is TLapeType_Method) then
-    Result := '''' + AName + ''': Result := ' + AIA + AName + ';' + LineEnding;
+    Result := '@';
+  if (v.VarType is TLapeType_Method) then
+    Result := Result + AIA;
+
+  if (Result <> '') then
+  begin
+    AName := LapeCase(AName);
+    Result := '''' + AName + ''': Result := ' + Result + AName + ';' + LineEnding;
+  end;
 end;
 
 function ExposeGlobals__GetName(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
@@ -123,9 +129,11 @@ begin
     Exit;
 
   if v.Writeable then
-    Result := '@' + AName + ': Result := ''' + AName + ''';' + LineEnding
-  else if (v.VarType is TLapeType_Method) then
-    Result := AIA + AName + ': Result := ''' + AName + ''';' + LineEnding;
+    Result := '@';
+  if (v.VarType is TLapeType_Method) then
+    Result := Result + AIA;
+  if (Result <> '') then
+    Result := Result + AName + ': Result := ''' + AName + ''';' + LineEnding;
 end;
 
 function ExposeGlobals__GetVal(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
@@ -174,7 +182,7 @@ begin
       'Assert(Length(Params) = ' + IntToStr(Params.Count) + ');' +
       'Result := ';
     if (Res = nil) or (not VariantType.CompatibleWith(Res)) then
-      Result := Result + 'Null; ';
+      Result := Result + 'Unassigned; ';
     Result := Result + AName + '(';
 
     for i := 0 to Params.Count - 1 do
@@ -188,7 +196,7 @@ begin
   end;
 end;
 
-procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly: Boolean = False; DoOverride: Boolean = False);
+procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean);
 type
   TTraverseCallback = function(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 
@@ -200,7 +208,7 @@ type
     Result := '';
     for i := 0 to Decls.Items.Count - 1 do
       with Decls.Items[i] do
-      begin
+      try
         if (Name = '') then
           if (BaseName = '') then
             Continue
@@ -223,6 +231,8 @@ type
             if (VarType is TLapeType_Type) or (VarType is TLapeType_OverloadedMethod) then
               Result := Result + TraverseGlobals(VarType.ManagedDecls, Callback, n);
           end;
+      except
+        {catch exception}
       end;
   end;
 
@@ -285,7 +295,7 @@ type
 
   function VariantInvoke: lpString;
   begin
-    Result := 'function VariantInvoke(Name: string; Params: array of Variant): Variant;';
+    Result := 'function VariantInvoke(Name: string; Params: array of Variant = []): Variant;';
     if DoOverride then
       Result := Result + 'override;';
     Result := Result + 'begin Result := Unassigned;';
@@ -315,7 +325,7 @@ type
       'var n: string; begin' +
       '  Result := inherited();' +
       '  n := GetGlobalName(p);' +
-      '  if (n <> '''') then Result := Result + ''::"'' + n + ''"'';' +
+      '  if (n <> '''') then Result := ''"'' + n + ''"::'' + Result;' +
       'end;';
   end;
 
@@ -330,6 +340,20 @@ begin
     VariantInvoke() + LineEnding +
     ToString()
   );
+end;
+
+procedure _ExposeGlobals_FillProcs(Compiler: TLapeCompiler);
+begin
+  ExposeGlobals(Compiler, False, True);
+end;
+
+procedure ExposeGlobals(Compiler: TLapeCompiler);
+begin
+  if (Compiler = nil) then
+    Exit;
+
+  ExposeGlobals(Compiler, True, False);
+  Compiler.AfterParsing.AddProc(@_ExposeGlobals_FillProcs);
 end;
 
 end.

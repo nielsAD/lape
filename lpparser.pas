@@ -834,7 +834,8 @@ begin
         if (CurChar = '$') then
         begin
           Result := setTok(tk_Directive);
-          HandleDirective();
+          if (not HandleDirective()) then
+            LapeException(lpeUnknownDirective, DocPos);
         end
         else
         begin
