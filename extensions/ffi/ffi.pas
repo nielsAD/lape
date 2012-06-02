@@ -41,6 +41,12 @@ interface
 {$IFDEF StaticFFI}
   {$LINKLIB libffi}
   {$UNDEF DynamicFFI}
+
+  {$IFDEF WINDOWS}
+    {$LINKLIB libgcc}
+    {$LINKLIB libmsvcrt}
+    {$LINKLIB libkernel32}
+  {$ENDIF}
 {$ENDIF}
 
 uses

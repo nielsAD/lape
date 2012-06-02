@@ -41,7 +41,7 @@ implementation
 
 uses
   lpparser, lpcompiler, lputils, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
-  LCLIntf, Variants, typinfo;
+  LCLIntf, Variants, typinfo, lpffi, ffi;
 
 {$R *.lfm}
 
@@ -95,7 +95,9 @@ begin
     try
       Parser := TLapeTokenizerString.Create(e.Lines.Text);
       Compiler := TLapeCompiler.Create(Parser);
+
       InitializePascalScriptBasics(Compiler);
+      ExposeGlobals(Compiler);
 
       Compiler.addGlobalFunc('procedure Integer.test;', @IntTest);
 
@@ -105,7 +107,6 @@ begin
 
       try
         t := getTickCount;
-        ExposeGlobals(Compiler);
         if Compiler.Compile() then
           m.Lines.add('Compiling Time: ' + IntToStr(getTickCount - t) + 'ms.')
         else
@@ -167,11 +168,63 @@ begin
   //LapePrintEvalRes;
 end;
 
-procedure TForm1.btnEvalArrClick(Sender: TObject);
+type
+  ttest = array of string;
+
+function testHoi(a: string): ttest; cdecl;
 begin
-  m.Clear;
-  //LapePrintEvalArr;
+  SetLength(Result, 3);
+  Result[0] := 'Hello ' + a;
 end;
 
+const
+  header = 'function testHoi(a: string): array of string;';
+
+procedure testCall;
+var
+  Compiler: TLapeCompiler;
+  Cif: TFFICifManager;
+  Arg1: string;
+  Res: ttest;
+begin
+  Arg1 := 'hoi';
+  //Res := testHoi(Arg1);
+  //Dec(PPtrInt(PtrInt(Arg1) - SizeOf(Pointer))^);
+  //res := 'hoi';
+
+  Compiler := TLapeCompiler.Create(nil);
+  try
+    Cif := LapeHeaderToFFICif(Compiler, header);
+    try
+      Cif.Call(@testHoi, @res, [@arg1]);
+      WriteLn('Result: ', Res[0], ' :: ', Arg1, ' :: ');
+      WriteLn(Res[0], PPtrInt(PtrInt(Res) - SizeOf(Pointer)*2)^);
+    finally
+      Cif.Free();
+    end;
+  finally
+    Compiler.Free();
+  end;
+end;
+
+procedure TForm1.btnEvalArrClick(Sender: TObject);
+begin
+  //m.Clear;
+  //LapePrintEvalArr;
+
+  testCall();
+end;
+
+{$IFDEF WINDOWS}
+initialization
+  if (not FFILoaded()) then
+    LoadFFI(
+    {$IFDEF Win32}
+    'extensions\ffi\bin\win32'
+    {$ELSE}
+    'extensions\ffi\bin\win64'
+    {$ENDIF}
+    );
+{$ENDIF}
 end.
 
