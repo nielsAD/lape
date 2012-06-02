@@ -642,7 +642,12 @@ initialization
   ClearEvalArr(LapeEvalArr);
   LoadEvalRes(LapeEvalRes);
   LoadEvalArr(LapeEvalArr);
-
+  
+finalization
+  ClearToStrArr(LapeToStrArr);
+  ClearEvalRes(LapeEvalRes);
+  ClearEvalArr(LapeEvalArr);
+  
 end.
 
 

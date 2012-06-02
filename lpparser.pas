@@ -637,19 +637,34 @@ begin
   Result := False;
 end;
 
-procedure Lape_InitKeywordsCache;
+procedure Lape_ClearKeywordsCache;
 var
-  Hash: Byte;
   i: Integer;
   {$IFDEF Lape_DoubleKeywordsCache}
-  ii, StrLen: Integer;
+  ii: Integer;
   {$ENDIF}
 begin
   {$IFDEF Lape_DoubleKeywordsCache}
   for i := Low(Lape_KeywordsCache) to High(Lape_KeywordsCache) do
     for ii := Low(Lape_KeywordsCache[i]) to High(Lape_KeywordsCache[i]) do
       Lape_KeywordsCache[i][ii] := nil;
+  {$ELSE}
+  for i := Low(Lape_KeywordsCache) to High(Lape_KeywordsCache) do
+    Lape_KeywordsCache[i] := nil;
+  {$ENDIF}
+end;
 
+procedure Lape_InitKeywordsCache;
+var
+  Hash: Byte;
+  i: Integer;
+  {$IFDEF Lape_DoubleKeywordsCache}
+  StrLen: Integer;
+  {$ENDIF}
+begin
+  Lape_ClearKeywordsCache();
+
+  {$IFDEF Lape_DoubleKeywordsCache}
   for i := Low(Lape_Keywords) to High(Lape_Keywords) do
   begin
     Hash := Lape_HashKeyword(UpperCase(Lape_Keywords[i].Keyword));
@@ -658,9 +673,6 @@ begin
     Lape_KeywordsCache[StrLen][Hash][High(Lape_KeywordsCache[StrLen][Hash])] := Lape_Keywords[i];
   end;
   {$ELSE}
-  for i := Low(Lape_KeywordsCache) to High(Lape_KeywordsCache) do
-    Lape_KeywordsCache[i] := nil;
-
   for i := Low(Lape_Keywords) to High(Lape_Keywords) do
   begin
     Hash := Lape_HashKeyword(UpperCase(Lape_Keywords[i].Keyword));
@@ -1295,5 +1307,6 @@ end;
 initialization
   Lape_InitKeywordsCache();
 finalization
+  Lape_ClearKeywordsCache();
 end.
 

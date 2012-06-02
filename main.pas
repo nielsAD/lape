@@ -215,7 +215,7 @@ begin
   testCall();
 end;
 
-{$IFDEF WINDOWS}
+{$IF DEFINED(WINDOWS) AND DECLARED(LoadFFI)}
 initialization
   if (not FFILoaded()) then
     LoadFFI(
@@ -225,6 +225,6 @@ initialization
     'extensions\ffi\bin\win64'
     {$ENDIF}
     );
-{$ENDIF}
+{$IFEND}
 end.
 
