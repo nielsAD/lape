@@ -309,7 +309,7 @@ begin
   UnloadFFI();
   if (LibPath <> '') then
     LibPath := IncludeTrailingPathDelimiter(LibPath);
-  ffi_libhandle := SafeLoadLibrary(LibPath + LibName);
+  ffi_libhandle := LoadLibrary(LibPath + LibName);
 
   if FFILoaded() then
   begin
