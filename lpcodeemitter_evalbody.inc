@@ -1,9 +1,9 @@
 {
-	Author: Niels A.D
-	Project: Lape (http://code.google.com/p/la-pe/)
-	License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
+  Author: Niels A.D
+  Project: Lape (http://code.google.com/p/la-pe/)
+  License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
 
-	Evaluation bodies for emitter class.
+  Evaluation bodies for emitter class.
 }
 {%MainUnit lpcodeemitter.pas}
 

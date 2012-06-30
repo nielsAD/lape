@@ -1,9 +1,9 @@
 {
-	Author: Niels A.D
-	Project: Lape (http://code.google.com/p/la-pe/)
-	License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
+  Author: Niels A.D
+  Project: Lape (http://code.google.com/p/la-pe/)
+  License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
 
-	Bytecode emitter.
+  Bytecode emitter.
 }
 unit lpcodeemitter;
 

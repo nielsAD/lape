@@ -1,5 +1,5 @@
 (*
-	Copyright (c) 2012 by Merlijn Wajer and Niels AD
+    Copyright (c) 2012 by Merlijn Wajer and Niels AD
 
     ffi.pas is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as

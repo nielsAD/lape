@@ -4,9 +4,9 @@
   
   HeapSort:
     The HeapSort algorithm first transforms your array into a binary heap by sinking down smaller elements for all nodes
-	that have child nodes in the tree. Next it switches the first element with the last element in the array and decreases
-	the size of the unsorted area by 1. The element now at the top is sunk down the remaining tree which moves the largest
-	element currently present to the top of the tree. Now the process repeats.
+    that have child nodes in the tree. Next it switches the first element with the last element in the array and decreases
+    the size of the unsorted area by 1. The element now at the top is sunk down the remaining tree which moves the largest
+    element currently present to the top of the tree. Now the process repeats.
 }
 
 procedure HeapSort(var Arr: array of Int32);

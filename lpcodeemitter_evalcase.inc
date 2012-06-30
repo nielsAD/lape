@@ -1,9 +1,9 @@
 {
-	Author: Niels A.D
-	Project: Lape (http://code.google.com/p/la-pe/)
-	License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
+  Author: Niels A.D
+  Project: Lape (http://code.google.com/p/la-pe/)
+  License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
 
-	Redirects the input of 3 certain variables to the correct evaluation emitter function.
+  Redirects the input of 3 certain variables to the correct evaluation emitter function.
 }
 {%MainUnit lpvartypes.pas}
 

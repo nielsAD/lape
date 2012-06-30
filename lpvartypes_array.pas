@@ -1,7 +1,7 @@
 {
-	Author: Niels A.D
-	Project: Lape (http://code.google.com/p/la-pe/)
-	License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
+  Author: Niels A.D
+  Project: Lape (http://code.google.com/p/la-pe/)
+  License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
 
   Array types.
 }
@@ -854,12 +854,12 @@ begin
       Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
 
       if Left.HasType() then
-	    begin
+      begin
         Right.VarType := Left.VarType;
         Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, Offset, Pos);
-	    end
+      end
       else
-	    begin
+      begin
         Left.VarType := Self;
         if (Left.VarPos.MemPos = mpStack) and (not Left.VarPos.ForceVariable) then
         begin
@@ -967,13 +967,13 @@ end;
 function TLapeType_String.VarToString(AVar: Pointer): lpString;
 begin
   if (FBaseType = ltAnsiString) then
- 	  Result := '"'+PAnsiString(AVar)^+'"'
- 	else if (FBaseType = ltWideString) then
- 	  Result := '" '+PWideString(AVar)^+'"'
- 	else if (FBaseType = ltUnicodeString) then
- 	  Result := '"'+PUnicodeString(AVar)^+'"'
- 	else
- 	  Result := '"'+PlpString(AVar)^+'"';
+    Result := '"'+PAnsiString(AVar)^+'"'
+  else if (FBaseType = ltWideString) then
+    Result := '" '+PWideString(AVar)^+'"'
+  else if (FBaseType = ltUnicodeString) then
+    Result := '"'+PUnicodeString(AVar)^+'"'
+  else
+    Result := '"'+PlpString(AVar)^+'"';
 end;
 
 function TLapeType_String.NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;

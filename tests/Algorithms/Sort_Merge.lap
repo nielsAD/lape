@@ -4,9 +4,9 @@
   
   MergeSort:
     Divides up the array into 2 parts recursively until it can no longer be divided because there's only a single item
-	left in the sub-array. After doing this it recurses back up, merging the 2 sorted sub-arrays by looping through the 2
-	parts, placing the smallest item currently in either one first in the resulting array. The 2 sub-arrays in the
-	lowest recursion level is always sorted as it contains a single item.
+    left in the sub-array. After doing this it recurses back up, merging the 2 sorted sub-arrays by looping through the 2
+    parts, placing the smallest item currently in either one first in the resulting array. The 2 sub-arrays in the
+    lowest recursion level is always sorted as it contains a single item.
 }
 
 procedure Merge(var Arr, Aux: array of Int32; const Lo, Mid, Hi: Int32);

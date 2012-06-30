@@ -1,9 +1,9 @@
 {
-	Author: Niels A.D
-	Project: Lape (http://code.google.com/p/la-pe/)
-	License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
+  Author: Niels A.D
+  Project: Lape (http://code.google.com/p/la-pe/)
+  License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
 
-	Opcodes and bytecode interpreter.
+  Opcodes and bytecode interpreter.
 }
 unit lpinterpreter;
 
@@ -461,7 +461,7 @@ var
       Code := @opNone
     else
     begin
-	    DoPopVar();
+      DoPopVar();
       Dec(CallStackPos);
       with CallStack[CallStackPos] do
       begin

@@ -4,7 +4,7 @@
   
   InsertionSort:
     Loops through the array, moves every item it encounters up in the array towards the start until
-	it's placed before every larger item that has been encountered so far.
+    it's placed before every larger item that has been encountered so far.
 }
 
 procedure InsertionSort(var Arr: array of Int32);

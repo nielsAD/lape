@@ -1,9 +1,9 @@
 {
-	Author: Niels A.D
-	Project: Lape (http://code.google.com/p/la-pe/)
-	License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
+  Author: Niels A.D
+  Project: Lape (http://code.google.com/p/la-pe/)
+  License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
 
-	All (script)type and (script)variable classes, including corresponding evaluation functions (runtime/compile time).
+  All (script)type and (script)variable classes, including corresponding evaluation functions (runtime/compile time).
 }
 unit lpvartypes_record;
 
@@ -301,15 +301,15 @@ begin
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
     try
       tmpType := Right.VarType;
-	    Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
+      Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
 
       if Left.HasType() then
-	    begin
+      begin
         Right.VarType := Left.VarType;
         Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, Offset, Pos);
-	    end
-	    else
-	    begin
+      end
+      else
+      begin
         RightVar := _ResVar.New(FCompiler.getConstant(Size));
         tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
@@ -317,7 +317,7 @@ begin
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3, Offset, @Self._DocPos);
         Result := Left;
-	    end;
+      end;
 
     finally
       Left.VarType := Self;

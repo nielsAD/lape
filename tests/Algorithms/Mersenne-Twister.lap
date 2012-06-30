@@ -1,10 +1,10 @@
 { ******************************************************************
     Mersenne Twister Random Number Generator for pascal
-	
-	By Alex Vergara Gil
-	http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/VERSIONS/PASCAL/pascal.html
-	
-	modified to compile with Lape
+
+  By Alex Vergara Gil
+  http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/VERSIONS/PASCAL/pascal.html
+
+  modified to compile with Lape
   ******************************************************************}
 const
   N          = 624;

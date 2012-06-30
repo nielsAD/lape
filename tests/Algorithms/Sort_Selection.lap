@@ -4,7 +4,7 @@
   
   SelectionSort:
     Loops through the array, it finds the smallest item in the array and swaps it
-	with the item at it's current index.
+    with the item at it's current index.
 }
 
 procedure SelectionSort(var Arr: array of Int32);

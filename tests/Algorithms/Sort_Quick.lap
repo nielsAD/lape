@@ -4,16 +4,16 @@
   
   QuickSort:
     This algorithm is somewhat similar to MergeSort, it also divides up the problem and solves it recursively. The concept is
-	fairly straightforward. You start with an array, you take the first item of this array and compare it from both left and
-	right to the other items in the array. From the left you want to find an item that is larger or equal to this first value,
-	and from the right smaller or equal. If you find these, you swap them and resume from the current position until you've swapped
-	them to a point where both your positions have crossed each other. What has happened is that you have moved all values larger
-	than the first value to the right and all the ones smaller to the left. When the algorithm stops partitioning, your right
-	position will be at the index where the last smaller value is located. This is swapped with the first value. Now you have
-	this first value in a position where all values left of it are smaller and all values right of it are larger. Now you apply
-	the same function recursively to these 2 sub-arrays of smaller and larger values until you reach a point where you're trying
-	to sort single values which are obviously sorted as there's only 1 value. Once the recursion is complete, the entire array
-	will be sorted.
+    fairly straightforward. You start with an array, you take the first item of this array and compare it from both left and
+    right to the other items in the array. From the left you want to find an item that is larger or equal to this first value,
+    and from the right smaller or equal. If you find these, you swap them and resume from the current position until you've swapped
+    them to a point where both your positions have crossed each other. What has happened is that you have moved all values larger
+    than the first value to the right and all the ones smaller to the left. When the algorithm stops partitioning, your right
+    position will be at the index where the last smaller value is located. This is swapped with the first value. Now you have
+    this first value in a position where all values left of it are smaller and all values right of it are larger. Now you apply
+    the same function recursively to these 2 sub-arrays of smaller and larger values until you reach a point where you're trying
+    to sort single values which are obviously sorted as there's only 1 value. Once the recursion is complete, the entire array
+    will be sorted.
 }
 
 function Partition(var Arr: array of Int32; const Lo, Hi: Int32): Int32;

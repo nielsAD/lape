@@ -2,9 +2,9 @@
   Based on: http://nothingsimple.com/FastBitSort.pdf
   
   Fast Bit Sort:
-    We are given an unsorted integer array A[0...n1] containing n integers where each integer is of width B	bits.
+    We are given an unsorted integer array A[0...n1] containing n integers where each integer is of width B bits.
     We prepare by having a low pointer L pointing to the lowest element 0 and a high pointer H pointing to the
-    highest element n1.	We also initialize a mask M with the highest bit set as in M = 2(B1). We sort by looking at
+    highest element n1. We also initialize a mask M with the highest bit set as in M = 2(B1). We sort by looking at
     the highest bit only and as such, testing and ensuring when the highest bit set, the datum is in the lower part
     of A and when the highest bit is reset, the datum is in the upper part of A. Then, we proceed through the lower
     bits for each sub part created by the previous. For signed integers, when the highest bit is set, the data belongs
