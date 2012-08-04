@@ -786,7 +786,7 @@ var
     else
     begin
       Conditional := FConditionalStack.Pop();
-      Conditional.Eval := not Conditional.Eval;
+      Conditional.Eval := (not InIgnore()) and (not Conditional.Eval);
       FConditionalStack.Push(Conditional);
     end;
   end;
