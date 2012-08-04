@@ -1,0 +1,21 @@
+{$DEFINE BAR}
+
+begin
+  WriteLn('Hai');
+  
+  {$IFDEF FOO}
+    {$IFDEF BAR}
+      WriteLn('Hoi');
+    {$ELSE}
+      WriteLn('Hey');
+    {$ENDIF}
+  {$ELSE}
+    WriteLn('Hi');
+  {$ENDIF}
+
+  {$IFDEF BAR}
+    WriteLn('Bye');
+  {$ENDIF}
+  
+  WriteLn('Zonk');
+end.
