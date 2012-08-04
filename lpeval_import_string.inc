@@ -39,8 +39,8 @@ addGlobalFunc('function AnsiDequotedStr(s: string; AQuote: Char): string;', @_La
 addGlobalFunc('function WrapText(Line, BreakStr: string; BreakChars: set of AnsiChar; MaxCol: Int32): string;', @_LapeWrapText);
 addGlobalFunc('function AdjustLineBreaks(s: string; Style: TTextLineBreakStyle): string;', @_LapeAdjustLineBreaks);
 
-addGlobalFunc('function IntToHex(Value: Int64; Digits: Int32): string; overload;', @_LapeIntToHex);
-addGlobalFunc('function IntToHex(Value: UInt64; Digits: Int32): string; overload;', @_LapeUIntToHex);
+addGlobalFunc('function IntToHex(Value: Int64; Digits: Int32 = 1): string; overload;', @_LapeIntToHex);
+addGlobalFunc('function IntToHex(Value: UInt64; Digits: Int32 = 1): string; overload;', @_LapeUIntToHex);
 addGlobalFunc('function IntToStr(i: Int64): string; overload;', @_LapeToString_Int64);
 addGlobalFunc('function IntToStr(i: UInt64): string; overload;', @_LapeToString_UInt64);
 addGlobalFunc('function StrToInt(s: string): Int32;', @_LapeStrToInt);
