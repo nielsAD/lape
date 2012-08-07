@@ -42,11 +42,11 @@ type
     function NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; virtual;
 
     function HasChild(AName: lpString): Boolean; override;
-    function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
-    function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
+    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
 
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
     procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); override;
 
     property FieldMap: TRecordFieldMap read FFieldMap;
@@ -201,7 +201,7 @@ begin
   Result := FFieldMap.ExistsKey(AName) or HasSubDeclaration(AName);
 end;
 
-function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
+function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 var
   i: Integer;
 begin
@@ -220,7 +220,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
+function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   if (Op = op_Dot) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.Ptr)^) then
     Result := FFieldMap[PlpString(Right.Ptr)^].FieldType
@@ -228,7 +228,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Record.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_Record.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
   i: Integer;
   LeftVar, RightVar, LeftFieldName, RightFieldName: TLapeGlobalVar;
@@ -254,9 +254,9 @@ begin
       LeftFieldName := FCompiler.getBaseType(ltString).NewGlobalVarStr(FFieldMap.Key[i]);
       RightFieldName := FCompiler.getBaseType(ltString).NewGlobalVarStr(TLapeType_Record(Right.VarType).FieldMap.Key[i]);
 
-      LeftVar := EvalConst(op_Dot, Left, LeftFieldName);
-      RightVar := Right.VarType.EvalConst(op_Dot, Right, RightFieldName);
-      LeftVar.VarType.EvalConst(op_Assign, LeftVar, RightVar);
+      LeftVar := EvalConst(op_Dot, Left, LeftFieldName, []);
+      RightVar := Right.VarType.EvalConst(op_Dot, Right, RightFieldName, []);
+      LeftVar.VarType.EvalConst(op_Assign, LeftVar, RightVar, []);
     finally
       if (LeftFieldName <> nil) then
         FreeAndNil(LeftFieldName);
@@ -273,7 +273,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Record.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_Record.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   i, FieldOffset: Integer;
   tmpVar, LeftVar, RightVar, LeftFieldName, RightFieldName: TResVar;
@@ -306,7 +306,7 @@ begin
       if Left.HasType() then
       begin
         Right.VarType := Left.VarType;
-        Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, Offset, Pos);
+        Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, [], Offset, Pos);
       end
       else
       begin
@@ -330,9 +330,9 @@ begin
         LeftFieldName := _ResVar.New(FCompiler.getConstant(FFieldMap.Key[i]));
         RightFieldName := _ResVar.New(FCompiler.getConstant(TLapeType_Record(Right.VarType).FieldMap.Key[i]));
 
-        LeftVar := Eval(op_Dot, tmpVar, Left, LeftFieldName, Offset, Pos);
-        RightVar := Right.VarType.Eval(op_Dot, tmpVar, Right, RightFieldName, Offset, Pos);
-        LeftVar.VarType.Eval(op_Assign, Dest, LeftVar, RightVar, Offset, Pos);
+        LeftVar := Eval(op_Dot, tmpVar, Left, LeftFieldName, [], Offset, Pos);
+        RightVar := Right.VarType.Eval(op_Dot, tmpVar, Right, RightFieldName, [], Offset, Pos);
+        LeftVar.VarType.Eval(op_Assign, Dest, LeftVar, RightVar, [], Offset, Pos);
 
         if (LeftVar.VarPos.MemPos = mpStack) then
         begin

@@ -201,6 +201,9 @@ type
     property AsInteger: Int64 read getAsInt;
   end;
 
+  ELapeEvalFlag = (lefAssigning);
+  ELapeEvalFlags = set of ELapeEvalFlag;
+
   TLapeType = class(TLapeManagingDeclaration)
   protected
     FBaseType: ELapeBaseType;
@@ -248,12 +251,12 @@ type
     function HasChild(ADecl: TLapeDeclaration): Boolean; overload; virtual;
     function HasConstantChild(AName: lpString): Boolean; virtual;
 
-    function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; overload; virtual;
-    function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; overload; virtual;
+    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; overload; virtual;
+    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; overload; virtual;
     function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; virtual;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; virtual;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; overload; virtual;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Pos: PDocPos = nil): TResVar; overload; virtual;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; virtual;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; overload; virtual;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; Pos: PDocPos = nil): TResVar; overload; virtual;
 
     procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); overload; virtual;
     procedure Finalize(AVar: TResVar; UseCompiler: Boolean = True; Pos: PDocPos = nil); overload; virtual;
@@ -288,8 +291,8 @@ type
     function HasChild(AName: lpString): Boolean; override;
     function HasConstantChild(AName: lpString): Boolean; override;
 
-    function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
+    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
   end;
 
   TLapeType_Pointer = class(TLapeType)
@@ -308,9 +311,9 @@ type
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
 
     function HasType: Boolean;
-    function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     property PType: TLapeType read FPType;
   end;
@@ -318,9 +321,9 @@ type
   TLapeType_Label = class(TLapeType_Pointer)
   public
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
   end;
 
   TLapeType_Method = class(TLapeType)
@@ -350,9 +353,9 @@ type
     function NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; overload; virtual;
     function NewGlobalVar(CodePos: TCodePos; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; overload; virtual;
 
-    function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     property Params: TLapeParameterList read FParams;
     property ParamSize: Integer read getParamSize;
@@ -373,9 +376,9 @@ type
 
     function NewGlobalVar(AMethod: TMethod; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; overload; virtual;
 
-    function EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     property SelfVar: TLapeVar read FSelf write FSelf;
   end;
@@ -417,8 +420,8 @@ type
 
     function NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; virtual;
 
-    function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
+    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
 
     property MethodOfObject: TInitBool read FOfObject;
   end;
@@ -454,10 +457,10 @@ type
     function CanHaveChild: Boolean; override;
     function HasChild(AName: lpString): Boolean; override;
 
-    function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
+    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
     function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     procedure addVar(RefVar: TLapeVar; AName: lpString); overload; virtual;
     procedure addVar(RefVar: TResVar; AName: lpString); overload; virtual;
@@ -1169,7 +1172,7 @@ begin
   begin
     Result := TLapeClassType(Self.ClassType).Create(VarType, True, True, Name, @_DocPos);
     if HasType() then
-      VarType.EvalConst(op_Assign, Result, Self);
+      VarType.EvalConst(op_Assign, Result, Self, []);
   end;
 end;
 
@@ -1178,7 +1181,7 @@ var
   Res: TLapeGlobalVar;
 begin
   if (Other <> nil) and HasType() then
-    Res := VarType.EvalConst(op_cmp_Equal, Self, Other)
+    Res := VarType.EvalConst(op_cmp_Equal, Self, Other, [])
   else
     Exit(False);
 
@@ -1436,7 +1439,7 @@ begin
     Result := (not MethodOfObject(VarType)) and Readable and (BaseType = ltImportedMethod);
 end;
 
-function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
+function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   Assert(FCompiler <> nil);
 
@@ -1456,25 +1459,25 @@ begin
   then
   begin
     if Right.CompatibleWith(Self) then
-      Result := Right.EvalRes(Op, Right);
+      Result := Right.EvalRes(Op, Right, Flags);
 
     if ((Result = nil) or (Size >= Right.Size)) and
         CompatibleWith(Right) and
-        (EvalRes(Op, Self) <> nil)
+        (EvalRes(Op, Self, Flags) <> nil)
     then
-      Result := EvalRes(Op, Self);
+      Result := EvalRes(Op, Self, Flags);
   end;
 end;
 
-function TLapeType.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
+function TLapeType.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
 var
   d: TLapeDeclArray;
 begin
   if (Right = nil) then
-    Result := EvalRes(Op, TLapeType(nil))
+    Result := EvalRes(Op, TLapeType(nil), Flags)
   else
   begin
-    Result := EvalRes(Op, Right.VarType);
+    Result := EvalRes(Op, Right.VarType, Flags);
     if (Result = nil) and (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
     begin
       d := FManagedDecls.getByName(PlpString(Right.Ptr)^);
@@ -1488,7 +1491,7 @@ begin
      (Right <> nil) and
      Right.HasType()
   then
-    Result := EvalRes(Op, Right.VarType);
+    Result := EvalRes(Op, Right.VarType, Flags);
 end;
 
 function TLapeType.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
@@ -1503,7 +1506,7 @@ begin
       Result := Right.HasType() and Right.VarType.IsOrdinal();
 end;
 
-function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 
   function TryCast(DoRight: Boolean; out Res: TLapeGlobalVar): Boolean;
   var
@@ -1524,15 +1527,15 @@ function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeG
           CastVar := Right.VarType.NewGlobalVarP(Left.Ptr)
       else
         if DoRight then
-          CastVar := Left.VarType.EvalConst(op_Assign, Left.VarType.NewGlobalVarP(), Right)
+          CastVar := Left.VarType.EvalConst(op_Assign, Left.VarType.NewGlobalVarP(), Right, [])
         else
-          CastVar := Right.VarType.EvalConst(op_Assign, Right.VarType.NewGlobalVarP(), Left);
+          CastVar := Right.VarType.EvalConst(op_Assign, Right.VarType.NewGlobalVarP(), Left, []);
 
       try
         if DoRight then
-          Res := CastVar.VarType.EvalConst(op, Left, CastVar)
+          Res := CastVar.VarType.EvalConst(op, Left, CastVar, Flags)
         else
-          Res := CastVar.VarType.EvalConst(op, CastVar, Right);
+          Res := CastVar.VarType.EvalConst(op, CastVar, Right, Flags);
         Result := True;
       finally
         CastVar.Free();
@@ -1585,7 +1588,7 @@ begin
   try
     if (Right = nil) then
     begin
-      ResType := EvalRes(Op);
+      ResType := EvalRes(Op, TLapeType(nil), Flags);
       if (ResType <> nil) or ((op = op_Deref) and ((not Left.HasType()) or (Left.BaseType = ltPointer))) then
         if (op = op_Addr) then
           if (not Left.Writeable) then
@@ -1600,7 +1603,7 @@ begin
     else if (op <> op_Assign) or CompatibleWith(Right.VarType) then
     begin
       EvalProc := getEvalProc(Op, FBaseType, Right.BaseType);
-      ResType := EvalRes(Op, Right);
+      ResType := EvalRes(Op, Right, Flags);
     end
     else
       EvalProc := nil;
@@ -1650,7 +1653,7 @@ begin
   end;
 end;
 
-function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 
   function TryCast(DoRight: Boolean; out Res: TResVar): Boolean;
   var
@@ -1674,7 +1677,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
         Right.VarType := Left.VarType
       else
         Left.VarType := Right.VarType;
-      Res := Left.VarType.Eval(op, Dest, Left, Right, Offset, Pos);
+      Res := Left.VarType.Eval(op, Dest, Left, Right, Flags, Offset, Pos);
       Exit(True);
     except
       Result := False;
@@ -1693,9 +1696,9 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
       CastVar.VarPos.StackVar := FCompiler.getTempVar(CastVar.VarType, 1);
       try
         if DoRight then
-          Res := Left.VarType.Eval(op, Dest, Left, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Right, Offset, Pos), Offset, Pos)
+          Res := Left.VarType.Eval(op, Dest, Left, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Right, [], Offset, Pos), Flags, Offset, Pos)
         else
-          Res := CastVar.VarType.Eval(op, Dest, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Left, Offset, Pos), Right, Offset, Pos);
+          Res := CastVar.VarType.Eval(op, Dest, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Left, [], Offset, Pos), Right, Flags, Offset, Pos);
         Result := True;
       finally
         CastVar.Spill(1);
@@ -1749,7 +1752,7 @@ begin
     Exit(Left);
   end;
 
-  Result.VarType := EvalRes(Op, Right.VarType);
+  Result.VarType := EvalRes(Op, Right.VarType, Flags);
   if (not Result.HasType()) and (op = op_Deref) and ((not Left.HasType()) or (Left.VarType.BaseType = ltPointer)) then
     Result.VarType := TLapeType.Create(ltUnknown, FCompiler);
 
@@ -1812,12 +1815,12 @@ begin
   end;
 end;
 
-function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Pos: PDocPos = nil): TResVar;
+function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; Pos: PDocPos = nil): TResVar;
 var
   Offset: Integer;
 begin
   Offset := -1;
-  Result := Eval(op, Dest, Left, Right, Offset, Pos);
+  Result := Eval(op, Dest, Left, Right, Flags, Offset, Pos);
 end;
 
 procedure TLapeType.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
@@ -1868,9 +1871,9 @@ begin
 
   try
     if UseCompiler and (FCompiler <> nil) then
-      Eval(op_Assign, tmpVar, AVar, EmptyVar, Offset, Pos)
+      Eval(op_Assign, tmpVar, AVar, EmptyVar, [], Offset, Pos)
     else if (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) then
-      EvalConst(op_Assign, AVar.VarPos.GlobalVar, EmptyVar.VarPos.GlobalVar);
+      EvalConst(op_Assign, AVar.VarPos.GlobalVar, EmptyVar.VarPos.GlobalVar, []);
   finally
     if (not UseCompiler) or (FCompiler = nil) then
       FreeAndNil(EmptyVar.VarPos.GlobalVar);
@@ -1935,7 +1938,7 @@ begin
   Result := ((FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(AName)) or inherited;
 end;
 
-function TLapeType_TypeEnum.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
+function TLapeType_TypeEnum.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   if (Op = op_Dot) and (FTType <> nil) and ValidFieldName(Right) and
      (FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(PlpString(Right.Ptr)^)
@@ -1945,7 +1948,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_TypeEnum.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_TypeEnum.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 begin
   Assert((Left = nil) or (Left.VarType = Self));
   if (Op = op_Dot) and ValidFieldName(Right) and (FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(PlpString(Right.Ptr)^) then
@@ -2047,7 +2050,7 @@ begin
   Result := (FPType <> nil);
 end;
 
-function TLapeType_Pointer.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
+function TLapeType_Pointer.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   if (op = op_Deref) then
     Result := FPType
@@ -2061,7 +2064,7 @@ begin
   end;
 end;
 
-function TLapeType_Pointer.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_Pointer.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
   tmpType: TLapeType;
   TypeSize, IndexVar: TLapeGlobalVar;
@@ -2087,7 +2090,7 @@ begin
     IndexVar := nil;
     try
       if (TypeSize <> nil) and (TypeSize.AsInteger > 1) then
-        IndexVar := Right.VarType.EvalConst(op_Multiply, Right, TypeSize)
+        IndexVar := Right.VarType.EvalConst(op_Multiply, Right, TypeSize, [])
       else
         IndexVar := Right;
 
@@ -2095,7 +2098,8 @@ begin
         EvalConst(
           op_Plus,
           Left,
-          IndexVar
+          IndexVar,
+          []
         );
       Result.CopyFlags(Left);
     finally
@@ -2108,7 +2112,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Pointer.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_Pointer.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   tmpType: TLapeType;
   tmpVar, IndexVar: TResVar;
@@ -2142,6 +2146,7 @@ begin
             tmpVar,
             Right,
             _ResVar.New(FCompiler.getConstant(FPType.Size)),
+            [],
             Offset,
             Pos
           );
@@ -2152,6 +2157,7 @@ begin
         Dest,
         Left,
         IndexVar,
+        [],
         Offset,
         Pos
       );
@@ -2169,7 +2175,7 @@ begin
   FStatic := True;
 end;
 
-function TLapeType_Label.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
+function TLapeType_Label.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   if (op in LabelOperators) then
     Result := inherited
@@ -2177,7 +2183,7 @@ begin
     LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), 'label']);
 end;
 
-function TLapeType_Label.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_Label.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 begin
   if (op in LabelOperators) then
     Result := inherited
@@ -2185,7 +2191,7 @@ begin
     LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), 'label']);
 end;
 
-function TLapeType_Label.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_Label.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 begin
   if (op in LabelOperators) then
     Result := inherited
@@ -2399,7 +2405,7 @@ begin
   PCodePos(Result.Ptr)^ := CodePos;
 end;
 
-function TLapeType_Method.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
+function TLapeType_Method.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 var
   m: TLapeGlobalVar;
 begin
@@ -2416,7 +2422,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Method.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_Method.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
   m: TLapeGlobalVar;
 begin
@@ -2429,7 +2435,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeType_Method.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_Method.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   m: TLapeGlobalVar;
 begin
@@ -2497,7 +2503,7 @@ begin
   TMethod(Result.Ptr^) := AMethod
 end;
 
-function TLapeType_MethodOfObject.EvalRes(Op: EOperator; Right: TLapeType = nil): TLapeType;
+function TLapeType_MethodOfObject.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 var
   m: TLapeGlobalVar;
 begin
@@ -2511,14 +2517,14 @@ begin
   if (Op in [op_cmp_Equal, op_cmp_NotEqual, op_Assign]) then
     Result := inherited
   else if CompatibleWith(Right) then
-    Result := FMethodRecord.EvalRes(Op, FMethodRecord)
+    Result := FMethodRecord.EvalRes(Op, FMethodRecord, Flags)
   else
-    Result := FMethodRecord.EvalRes(Op, Right);
+    Result := FMethodRecord.EvalRes(Op, Right, Flags);
   if (Result = FMethodRecord) then
     Result := Self;
 end;
 
-function TLapeType_MethodOfObject.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_MethodOfObject.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
   VarType: TLapeType;
   m: TLapeGlobalVar;
@@ -2541,19 +2547,19 @@ begin
     try
       VarType := Right.VarType;
       Right.VarType := FMethodRecord;
-      Result := FMethodRecord.EvalConst(Op, Left, Right);
+      Result := FMethodRecord.EvalConst(Op, Left, Right, Flags);
     finally
       Right.VarType := VarType;
     end
     else
-      Result := FMethodRecord.EvalConst(Op, Left, Right);
+      Result := FMethodRecord.EvalConst(Op, Left, Right, Flags);
   finally
     if (Left.VarType <> nil) then
       Left.VarType := Self;
   end;
 end;
 
-function TLapeType_MethodOfObject.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_MethodOfObject.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   VarType: TLapeType;
   m: TLapeGlobalVar;
@@ -2575,12 +2581,12 @@ begin
     try
       VarType := Right.VarType;
       Right.VarType := FMethodRecord;
-      Result := FMethodRecord.Eval(Op, Dest, Left, Right, Offset, Pos);
+      Result := FMethodRecord.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
     finally
       Right.VarType := VarType;
     end
     else
-      Result := FMethodRecord.Eval(Op, Dest, Left, Right, Offset, Pos);
+      Result := FMethodRecord.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
   finally
     Left.VarType := Self;
   end;
@@ -2829,7 +2835,7 @@ begin
   //Result.setReadWrite(False, False);
 end;
 
-function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
+function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   if (Op = op_Index) and (Right <> nil) and (Right.BaseType in LapeIntegerTypes) then
     if (FManagedDecls.Items[Right.AsInteger] = nil) then
@@ -2840,7 +2846,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_OverloadedMethod.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_OverloadedMethod.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 begin
   Assert((Left = nil) or (Left.VarType = Self));
   if (Op = op_Index) and (Left <> nil) and (Right <> nil) and (Right.BaseType in LapeIntegerTypes) then
@@ -2890,7 +2896,7 @@ begin
   Result := FVarMap.ExistsKey(AName) or HasSubDeclaration(AName);
 end;
 
-function TLapeType_VarRefMap.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
+function TLapeType_VarRefMap.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.Ptr)^) then
     with FVarMap[PlpString(Right.Ptr)^] do
@@ -2909,7 +2915,7 @@ begin
     Result := (FVarMap[PlpString(Right.Ptr)^].RefVar is TLapeGlobalVar);
 end;
 
-function TLapeType_VarRefMap.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_VarRefMap.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 begin
   Assert((Left = nil) or (Left.VarType = Self));
   if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.Ptr)^) then
@@ -2918,7 +2924,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_VarRefMap.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_VarRefMap.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 begin
   Assert(Left.VarType = Self);
   if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.VarPos.GlobalVar.Ptr)^) then

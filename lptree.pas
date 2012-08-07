@@ -921,11 +921,11 @@ begin
     begin
       tmpCondition := ConditionVar;
       if getBaseType(ltEvalBool).CompatibleWith(ConditionVar.VarType) then
-        ConditionVar := getBaseType(ltEvalBool).Eval(op_Assign, tmpVar, getTempStackVar(ltEvalBool), ConditionVar, Offset, @_DocPos)
+        ConditionVar := getBaseType(ltEvalBool).Eval(op_Assign, tmpVar, getTempStackVar(ltEvalBool), ConditionVar, [], Offset, @_DocPos)
       else if (ConditionVar.VarType.BaseType in LapeStringTypes) then
-        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, _ResVar.New(getConstant('')), Offset, @_DocPos)
+        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, _ResVar.New(getConstant('')), [], Offset, @_DocPos)
       else
-        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, _ResVar.New(getConstant(0)), Offset, @_DocPos);
+        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, _ResVar.New(getConstant(0)), [], Offset, @_DocPos);
       tmpCondition.Spill(1);
     end;
 
@@ -1200,7 +1200,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
       else if (FValues[i] is TLapeTree_ExprBase) then
       begin
         tmpVar := Result;
-        Result := FType.EvalConst(op_Plus, tmpVar, TLapeTree_ExprBase(FValues[i]).Evaluate());
+        Result := FType.EvalConst(op_Plus, tmpVar, TLapeTree_ExprBase(FValues[i]).Evaluate(), []);
         tmpVar.Free();
       end
       else if (FValues[i] is TLapeTree_Range) then
@@ -1209,7 +1209,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
         begin
           tmpVar := Result;
-          Result := FType.EvalConst(op_Plus, Result, FieldVar);
+          Result := FType.EvalConst(op_Plus, Result, FieldVar, []);
           tmpVar.Free();
         end;
       finally
@@ -1238,8 +1238,8 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         else if (FValues[i] is TLapeTree_ExprBase) then
         try
           try
-            FieldVar := FType.EvalConst(op_Index, Result, Counter);
-            FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate());
+            FieldVar := FType.EvalConst(op_Index, Result, Counter, []);
+            FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate(), []);
           except on E: lpException do
             LapeException(E.Message, FValues[i].DocPos);
           end;
@@ -1253,8 +1253,8 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
           for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
           try
             try
-              FieldVar := FType.EvalConst(op_Index, Result, Counter);
-              FieldVar.VarType.EvalConst(op_Assign, FieldVar, tmpVar);
+              FieldVar := FType.EvalConst(op_Index, Result, Counter, []);
+              FieldVar.VarType.EvalConst(op_Assign, FieldVar, tmpVar, []);
             except on E: lpException do
               LapeException(E.Message, FValues[i].DocPos);
             end;
@@ -1294,8 +1294,8 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
       try
         tmpVar := FCompiler.getConstant(TLapeType_Record(FType).FieldMap.Key[i], ltString);
         try
-          FieldVar := FType.EvalConst(op_Dot, Result, tmpVar);
-          FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate());
+          FieldVar := FType.EvalConst(op_Dot, Result, tmpVar, []);
+          FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate(), []);
         except on E: lpException do
           LapeException(E.Message, FValues[i].DocPos);
         end;
@@ -1365,7 +1365,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         else
           Counter := FCompiler.getTempVar(ltInt32, BigLock);
         Counter.isConstant := False;
-        tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), TLapeTree_Range(FValues[i]).Lo.Compile(Offset), Offset, @FValues[i]._DocPos);
+        tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), TLapeTree_Range(FValues[i]).Lo.Compile(Offset), [], Offset, @FValues[i]._DocPos);
 
         with TLapeTree_For.Create(FValues[i]) do
         try
@@ -1699,7 +1699,7 @@ var
       if VarType.Equals(Result.VarType) or (not Result.HasType()) or (VarType.Size = Result.VarType.Size) then
         Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.NewGlobalVarP(Result.Ptr), Result.Name <> ''))
       else if VarType.CompatibleWith(Result.VarType) then
-        Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.EvalConst(op_Assign, VarType.NewGlobalVarP(), Result)))
+        Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.EvalConst(op_Assign, VarType.NewGlobalVarP(), Result, [])))
       else
         LapeException(lpeInvalidCast);
     except on E: lpException do
@@ -1758,7 +1758,7 @@ var
         if (Params[i].VarType <> nil) and (not Params[i].VarType.Equals(Par.VarType)) then
           if Params[i].VarType.CompatibleWith(Par.VarType) then
           try
-            Par := TLapeGlobalVar(FCompiler.addManagedVar(Params[i].VarType.EvalConst(op_Assign, Params[i].VarType.NewGlobalVarP(), Par)));
+            Par := TLapeGlobalVar(FCompiler.addManagedVar(Params[i].VarType.EvalConst(op_Assign, Params[i].VarType.NewGlobalVarP(), Par, [])));
           except on E: lpException do
             LapeException(E.Message, FParams[i].DocPos);
           end
@@ -1854,7 +1854,7 @@ var
         end;
 
         tmpRes := Result;
-        Result := VarType.Eval(op_Assign, tmpVar, DestVar, Result, Offset, @Self._DocPos);
+        Result := VarType.Eval(op_Assign, tmpVar, DestVar, Result, [], Offset, @Self._DocPos);
         tmpRes.Spill(1);
 
         if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
@@ -1889,7 +1889,7 @@ var
         if AVar.HasType() and AVar.VarType.NeedInitialization then
           FCompiler.Emitter._InitStack(AVar.VarType.Size, Offset, @DocPos);
         Result.VarType := AVar.VarType;
-        Result := AVar.VarType.Eval(op_Assign, tmpVar, Result, AVar, Offset, @DocPos);
+        Result := AVar.VarType.Eval(op_Assign, tmpVar, Result, AVar, [], Offset, @DocPos);
       end;
     end
     else
@@ -1914,7 +1914,7 @@ var
       Par.setConstant(False, False);
 
       tmpRes := ParamVar;
-      ParamVar := Param.VarType.Eval(op_Assign, tmpVar, Par, ParamVar, Offset, @DocPos);
+      ParamVar := Param.VarType.Eval(op_Assign, tmpVar, Par, ParamVar, [], Offset, @DocPos);
       tmpRes.Spill(1);
     except on E: lpException do
       LapeException(E.Message, DocPos);
@@ -2349,7 +2349,7 @@ begin
   Param.VarType := FCompiler.getBaseType(ltPointer);
   DestVar.VarType := Param.VarType;
 
-  Param.VarType.Eval(op_Assign, tmpVar, DestVar, Param, Offset, @_DocPos);
+  Param.VarType.Eval(op_Assign, tmpVar, DestVar, Param, [], Offset, @_DocPos);
   Param.Spill(1);
 
   FCompiler.Emitter._IsInternal(Offset, @_DocPos);
@@ -3153,7 +3153,7 @@ begin
       Param.VarType := tmpType;
       Counter := FCompiler.getTempVar(ltInt32, BigLock);
       Counter.isConstant := False;
-      tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), _ResVar.New(FCompiler.getConstant(0)), Offset, @_DocPos);
+      tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), _ResVar.New(FCompiler.getConstant(0)), [], Offset, @_DocPos);
 
       with TLapeTree_For.Create(Self) do
       try
@@ -3592,7 +3592,7 @@ begin
     LapeException(lpeInvalidLabel, [FParams[0]]);
 
   ResVar := FCompiler.getTempStackVar(ltPointer);
-  ResVar := ResVar.VarType.Eval(op_Assign, tmpVar, ResVar, Param, Offset, @_DocPos);
+  ResVar := ResVar.VarType.Eval(op_Assign, tmpVar, ResVar, Param, [], Offset, @_DocPos);
   FCompiler.Emitter._JmpVar(Offset, @_DocPos);
 end;
 
@@ -3866,10 +3866,10 @@ begin
 
       try
         if LeftVar.HasType() then
-          Result := LeftVar.VarType.EvalConst(FOperatorType, LeftVar, RightVar)
+          Result := LeftVar.VarType.EvalConst(FOperatorType, LeftVar, RightVar, [])
         else with TLapeType.Create(ltUnknown, FCompiler) do
         try
-          Result := EvalConst(FOperatorType, LeftVar, RightVar);
+          Result := EvalConst(FOperatorType, LeftVar, RightVar, []);
         finally
           Free();
         end;
@@ -3959,10 +3959,10 @@ begin
     else
     try
       if LeftVar.HasType() then
-        Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, Offset, @_DocPos)
+        Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, [], Offset, @_DocPos)
       else with TLapeType.Create(ltUnknown, FCompiler) do
       try
-        Result := Eval(OperatorType, FDest, LeftVar, RightVar, Offset, @_DocPos);
+        Result := Eval(OperatorType, FDest, LeftVar, RightVar, [], Offset, @_DocPos);
       finally
         Free();
       end;
@@ -5149,7 +5149,7 @@ begin
     begin
       CounterVar := FCompiler.getTempVar(Count.VarType, BigLock);
       CounterVar.isConstant := False;
-      Count := CounterVar.VarType.Eval(op_Assign, Result, _ResVar.New(CounterVar), Count, Offset, @FCounter._DocPos);
+      Count := CounterVar.VarType.Eval(op_Assign, Result, _ResVar.New(CounterVar), Count, [], Offset, @FCounter._DocPos);
     end;
     if (not Count.HasType()) or (not Count.Writeable) or (not Count.VarType.IsOrdinal(True)) then
       LapeException(lpeInvalidIterator, FCounter.DocPos);

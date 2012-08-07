@@ -247,8 +247,8 @@ type
     function HasChild(AName: lpString): Boolean; override;
     function HasChild(ADecl: TLapeDeclaration): Boolean; override;
 
-    function EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar; override;
+    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
   end;
 
 implementation
@@ -1918,7 +1918,7 @@ begin
             Result.addVar(VarDecl);
           end
           else
-            DefVal.VarType.EvalConst(op_Assign, TLapeGlobalVar(DefVal), DefConstVal)
+            DefVal.VarType.EvalConst(op_Assign, TLapeGlobalVar(DefVal), DefConstVal, [])
         else if (Default <> nil) then
         begin
           VarDecl.VarDecl := DefVal;
@@ -3502,7 +3502,7 @@ begin
   Result := CanHaveChild() and FCompiler.hasDeclaration(ADecl, nil);
 end;
 
-function TLapeType_SystemUnit.EvalRes(Op: EOperator; Right: TLapeGlobalVar): TLapeType;
+function TLapeType_SystemUnit.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
 
   function getType(d: TLapeDeclaration): TLapeType;
   begin
@@ -3520,7 +3520,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_SystemUnit.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): TLapeGlobalVar;
+function TLapeType_SystemUnit.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
   FieldName: lpString;
   Decl: TLapeTree_ExprBase;
