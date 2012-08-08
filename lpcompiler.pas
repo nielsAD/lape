@@ -611,6 +611,10 @@ begin
   addGlobalFunc('procedure _assert(Expr: EvalBool); overload;', @_LapeAssert);
   addGlobalFunc('procedure _assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
 
+  addGlobalFunc('procedure UniqueString(var Str: AnsiString); overload;', @_LapeAStr_Unique);
+  addGlobalFunc('procedure UniqueString(var Str: WideString); overload;', @_LapeWStr_Unique);
+  addGlobalFunc('procedure UniqueString(var Str: UnicodeString); overload;', @_LapeUStr_Unique);
+
   {$I lpeval_import_math.inc}
   {$I lpeval_import_string.inc}
   {$I lpeval_import_datetime.inc}

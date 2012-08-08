@@ -349,6 +349,7 @@ type
     FOperatorType: EOperator;
     FLeft: TLapeTree_Base;
     FRight: TLapeTree_ExprBase;
+    FAssigning: TInitBool;
 
     function getLeft: TLapeTree_ExprBase; virtual;
     procedure setLeft(Node: TLapeTree_ExprBase); virtual;
@@ -363,7 +364,10 @@ type
     function FoldConstants(DoFree: Boolean = True): TLapeTree_Base; override;
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; override;
 
+    function isAssigning: Boolean; virtual;
     function isConstant: Boolean; override;
+
+    function EvalFlags: ELapeEvalFlags; virtual;
     function resType(Restructure: Boolean): TLapeType; overload;
     function resType: TLapeType; overload; override;
     function Evaluate: TLapeGlobalVar; override;
@@ -1238,7 +1242,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         else if (FValues[i] is TLapeTree_ExprBase) then
         try
           try
-            FieldVar := FType.EvalConst(op_Index, Result, Counter, []);
+            FieldVar := FType.EvalConst(op_Index, Result, Counter, [lefAssigning]);
             FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate(), []);
           except on E: lpException do
             LapeException(E.Message, FValues[i].DocPos);
@@ -1253,7 +1257,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
           for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
           try
             try
-              FieldVar := FType.EvalConst(op_Index, Result, Counter, []);
+              FieldVar := FType.EvalConst(op_Index, Result, Counter, [lefAssigning]);
               FieldVar.VarType.EvalConst(op_Assign, FieldVar, tmpVar, []);
             except on E: lpException do
               LapeException(E.Message, FValues[i].DocPos);
@@ -1294,7 +1298,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
       try
         tmpVar := FCompiler.getConstant(TLapeType_Record(FType).FieldMap.Key[i], ltString);
         try
-          FieldVar := FType.EvalConst(op_Dot, Result, tmpVar, []);
+          FieldVar := FType.EvalConst(op_Dot, Result, tmpVar, [lefAssigning]);
           FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate(), []);
         except on E: lpException do
           LapeException(E.Message, FValues[i].DocPos);
@@ -3667,6 +3671,7 @@ end;
 procedure TLapeTree_Operator.ClearCache;
 begin
   FRestructure := bUnknown;
+  FAssigning := bUnknown;
   inherited;
 end;
 
@@ -3700,6 +3705,29 @@ begin
   end
 end;
 
+function TLapeTree_Operator.isAssigning: Boolean;
+begin
+  if (FAssigning = bUnknown) then
+  begin
+    Result := (not isEmpty(FParent)) and (FParent is TLapeTree_Operator) and (
+      (
+        (TLapeTree_Operator(FParent).FLeft = Self) and
+        (TLapeTree_Operator(FParent).OperatorType = op_Assign)
+      ) or (
+        (TLapeTree_Operator(FParent).FLeft <> Self) and
+        TLapeTree_Operator(FParent).isAssigning()
+      )
+    );
+
+    if Result then
+      FAssigning := bTrue
+    else
+      FAssigning := bFalse;
+  end;
+
+  Result := (FAssigning = bTrue);
+end;
+
 function TLapeTree_Operator.isConstant: Boolean;
 begin
   if (FConstant = bUnknown) then
@@ -3731,6 +3759,13 @@ begin
   Result := inherited;
 end;
 
+function TLapeTree_Operator.EvalFlags: ELapeEvalFlags;
+begin
+  Result := [];
+  if isAssigning() then
+    Result := Result + [lefAssigning];
+end;
+
 function TLapeTree_Operator.resType(Restructure: Boolean): TLapeType;
 var
   LeftType, RightType: TLapeType;
@@ -3758,9 +3793,9 @@ begin
       if (LeftType = nil) then
         LeftType := FCompiler.addManagedType(TLapeType.Create(ltUnknown, FCompiler));
       if (FRight <> nil) and (FRight is TLapeTree_GlobalVar) then
-        Result := LeftType.EvalRes(FOperatorType, TLapeTree_GlobalVar(FRight).GlobalVar)
+        Result := LeftType.EvalRes(FOperatorType, TLapeTree_GlobalVar(FRight).GlobalVar, EvalFlags())
       else if (LeftType <> nil) then
-        Result := LeftType.EvalRes(FOperatorType, RightType);
+        Result := LeftType.EvalRes(FOperatorType, RightType, EvalFlags());
 
       if (LeftType <> nil) and (FRight <> nil) and
          ((Result = nil)  and ((FOperatorType = op_IN) and (FRight is TLapeTree_OpenArray)) or
@@ -3866,10 +3901,10 @@ begin
 
       try
         if LeftVar.HasType() then
-          Result := LeftVar.VarType.EvalConst(FOperatorType, LeftVar, RightVar, [])
+          Result := LeftVar.VarType.EvalConst(FOperatorType, LeftVar, RightVar, EvalFlags())
         else with TLapeType.Create(ltUnknown, FCompiler) do
         try
-          Result := EvalConst(FOperatorType, LeftVar, RightVar, []);
+          Result := EvalConst(FOperatorType, LeftVar, RightVar, EvalFlags());
         finally
           Free();
         end;
@@ -3959,10 +3994,10 @@ begin
     else
     try
       if LeftVar.HasType() then
-        Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, [], Offset, @_DocPos)
+        Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, EvalFlags(), Offset, @_DocPos)
       else with TLapeType.Create(ltUnknown, FCompiler) do
       try
-        Result := Eval(OperatorType, FDest, LeftVar, RightVar, [], Offset, @_DocPos);
+        Result := Eval(OperatorType, FDest, LeftVar, RightVar, EvalFlags(), Offset, @_DocPos);
       finally
         Free();
       end;

@@ -62,6 +62,9 @@ type
   TLapeType_String = class(TLapeType_DynArray)
   public
     function VarToString(AVar: Pointer): lpString; override;
+    procedure VarUnique(var AVar: Pointer); overload; virtual;
+    procedure VarUnique(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
+
     function NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
     function NewGlobalVar(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; reintroduce; overload; virtual;
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
@@ -376,7 +379,7 @@ begin
       VarSetLength(PPointer(ALeft.Ptr)^, TLapeType_StaticArray(ARight.VarType).Range.Hi - TLapeType_StaticArray(ARight.VarType).Range.Lo + 1);
       Result := ALeft;
 
-      IndexVar := EvalConst(op_Index, ALeft, FCompiler.getConstant(0), []);
+      IndexVar := EvalConst(op_Index, ALeft, FCompiler.getConstant(0), [lefAssigning]);
       try
         IndexVar.VarType := ARight.VarType;
         IndexVar.VarType.EvalConst(op_Assign, IndexVar, ARight, []);
@@ -392,7 +395,7 @@ begin
     IndexVar := FCompiler.getConstant(Length(PCodeArray(Result.Ptr)^));
     VarSetLength(PPointer(Result.Ptr)^, IndexVar.AsInteger + 1);
 
-    IndexVar := EvalConst(op_Index, Result, IndexVar, []);
+    IndexVar := EvalConst(op_Index, Result, IndexVar, [lefAssigning]);
     try
       PType.EvalConst(op_Assign, IndexVar, ARight, []);
     finally
@@ -600,10 +603,10 @@ begin
 
     IndexVar := _ResVar.New(FCompiler.getTempVar(ltInt32, BigLock));
     try
-    {FCompiler.EmitCode(
-      'System.SetLength(Result, System.Length(Result) + 1);' +
-      'Result[System.High(Result)] := Right;'
-    , ['Result', 'Right'], [], [Result, ARight], Offset, Pos);}
+      {FCompiler.EmitCode(
+        'System.SetLength(Result, System.Length(Result) + 1);' +
+        'Result[System.High(Result)] := Right;'
+      , ['Result', 'Right'], [], [Result, ARight], Offset, Pos);}
 
       IndexVar.isConstant := False;
       with TLapeTree_Operator.Create(op_Plus, FCompiler, Pos) do
@@ -979,6 +982,31 @@ begin
     Result := '"'+PlpString(AVar)^+'"';
 end;
 
+procedure TLapeType_String.VarUnique(var AVar: Pointer);
+begin
+  if (BaseType in LapeStringTypes) then
+    case BaseType of
+      ltAnsiString:    UniqueString(AnsiString(AVar));
+      ltWideString:    UniqueString(WideString(AVar));
+      ltUnicodeString: UniqueString(UnicodeString(AVar));
+      else LapeException(lpeImpossible);
+    end;
+end;
+
+procedure TLapeType_String.VarUnique(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
+begin
+  Assert(FCompiler <> nil);
+  //FCompiler.EmitCode('System.UniqueString(AVar);', ['AVar'], [], [AVar], Offset, Pos);
+
+  with TLapeTree_Invoke.Create('UniqueString', FCompiler, Pos) do
+  try
+    addParam(TLapeTree_ResVar.Create(AVar, FCompiler, Pos));
+    Compile(Offset);
+  finally
+    Free();
+  end;
+end;
+
 function TLapeType_String.NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
   Result := NewGlobalVarP(nil, AName, ADocPos);
@@ -1011,6 +1039,9 @@ begin
 
   if (op = op_Index) and (Right <> nil) then
   begin
+    if (lefAssigning in Flags) then
+      VarUnique(PPointer(Left.Ptr)^);
+
     tmpType := Right.VarType;
     if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
       if Right.HasType() then
@@ -1047,6 +1078,8 @@ begin
   Assert(FCompiler <> nil);
   Assert(Left.VarType is TLapeType_Pointer);
 
+  if (op = op_Index) and (lefAssigning in Flags) then
+    VarUnique(Left.IncLock(), Offset, Pos);
   Result := inherited;
   if (op = op_Index) and HasType() then
   begin
