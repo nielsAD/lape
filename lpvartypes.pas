@@ -295,6 +295,18 @@ type
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
   end;
 
+  TLapeType_Property = class(TLapeType)
+  protected
+    FGetter: TLapeDeclaration;
+    FSetter: TLapeDeclaration;
+  public
+    constructor Create(AGetter, ASetter: TLapeDeclaration; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
+    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+
+    property Getter: TLapeDeclaration read FGetter;
+    property Setter: TLapeDeclaration read FSetter;
+  end;
+
   TLapeType_Pointer = class(TLapeType)
   protected
     FPType: TLapeType;
@@ -1955,6 +1967,21 @@ begin
     Result := FTType.NewGlobalVarStr(PlpString(Right.Ptr)^)
   else
     Result := inherited;
+end;
+
+constructor TLapeType_Property.Create(AGetter, ASetter: TLapeDeclaration; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
+begin
+  inherited Create(ltUnknown, ACompiler, AName, ADocPos);
+  FGetter := AGetter;
+  FSetter := ASetter;
+end;
+
+function TLapeType_Property.CreateCopy(DeepCopy: Boolean = False): TLapeType;
+type
+  TLapeClassType = class of TLapeType_Property;
+begin
+  Result := TLapeClassType(Self.ClassType).Create(FGetter, FSetter, FCompiler, Name, @_DocPos);
+  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
 end;
 
 function TLapeType_Pointer.getAsString: lpString;

@@ -3763,7 +3763,7 @@ function TLapeTree_Operator.EvalFlags: ELapeEvalFlags;
 begin
   Result := [];
   if isAssigning() then
-    Result := Result + [lefAssigning];
+    Include(Result, lefAssigning);
 end;
 
 function TLapeTree_Operator.resType(Restructure: Boolean): TLapeType;
