@@ -1,0 +1,25 @@
+{$assertions on}
+
+procedure test;
+var
+  c: Int32;
+  t: array [0..2] of Int32;
+begin
+  for t[0] := 1 to 5 do
+    for t[1] := 1 to 5 do
+      for t[2] := 1 to 5 do
+        inc(c);
+  Assert(c = 125, 'Local c');
+end;
+
+var
+  c: Int32;
+  t: array [0..2] of Int32;
+begin
+  for t[0] := 1 to 5 do
+    for t[1] := 1 to 5 do
+      for t[2] := 1 to 5 do
+        inc(c);
+  Assert(c = 125, 'Global c');
+  test();
+end;

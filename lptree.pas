@@ -1361,27 +1361,27 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
       else if (FValues[i] is TLapeTree_Range) then
       begin
         if (FType is TLapeType_Set) then
-          Counter := FCompiler.getTempVar(TLapeType_Set(FType).Range, BigLock)
+          Counter := FCompiler.getTempVar(TLapeType_Set(FType).Range)
         else
-          Counter := FCompiler.getTempVar(ltInt32, BigLock);
+          Counter := FCompiler.getTempVar(ltInt32);
         Counter.isConstant := False;
         tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), TLapeTree_Range(FValues[i]).Lo.Compile(Offset), Offset, @FValues[i]._DocPos);
 
         with TLapeTree_For.Create(FValues[i]) do
         try
-          Counter := TLapeTree_ResVar.Create(tmpVar, FValues[i]);
+          Counter := TLapeTree_ResVar.Create(tmpVar.IncLock(), FValues[i]);
           Limit := TLapeTree_ResVar.Create(TLapeTree_Range(FValues[i]).Hi.Compile(Offset), FValues[i]);
           Body := TLapeTree_Operator.Create(op_Plus, FValues[i]);
           with TLapeTree_Operator(Body) do
           begin
             Dest := Result;
             Left := TLapeTree_ResVar.Create(Result, FValues[i]);
-            Right := TLapeTree_ResVar.Create(tmpVar, FValues[i]);
+            Right := TLapeTree_ResVar.Create(tmpVar.IncLock(), FValues[i]);
           end;
           Compile(Offset);
         finally
           Free();
-          tmpVar.Spill(BigLock);
+          tmpVar.Spill();
         end;
       end
       else
@@ -3104,7 +3104,7 @@ begin
   ArrayType := nil;
   tmpVar := NullResVar;
 
-  if (not FParams[0].CompileToTempVar(Offset, Param, BigLock)) or (not Param.HasType()) or
+  if (not FParams[0].CompileToTempVar(Offset, Param)) or (not Param.HasType()) or
      (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray, ltShortString]))
   then
     LapeException(lpeInvalidEvaluation, DocPos);
@@ -3112,7 +3112,7 @@ begin
   tmpType := Param.VarType;
   ArrayType := TLapeType_DynArray(Param.VarType).PType;
 
-  if (not FParams[1].CompileToTempVar(Offset, Len, BigLock)) or (ArrayType = nil) or
+  if (not FParams[1].CompileToTempVar(Offset, Len)) or (ArrayType = nil) or
      (not Len.HasType()) or (not (Len.VarType.BaseType in LapeIntegerTypes))
   then
     LapeException(lpeInvalidEvaluation, DocPos);
@@ -3135,8 +3135,8 @@ begin
   try
     with TLapeTree_Invoke.Create(_ArraySetLength, Self) do
     try
-      addParam(TLapeTree_ResVar.Create(Param, Self.FParams[0]));
-      addParam(TLapeTree_ResVar.Create(Len, Self.FParams[1]));
+      addParam(TLapeTree_ResVar.Create(Param.IncLock(), Self.FParams[0]));
+      addParam(TLapeTree_ResVar.Create(Len.IncLock(), Self.FParams[1]));
       if (not (Param.VarType.BaseType in LapeStringTypes)) then
       begin
         addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
@@ -3151,17 +3151,17 @@ begin
     if (FParams.Count > 2) then
     begin
       Param.VarType := tmpType;
-      Counter := FCompiler.getTempVar(ltInt32, BigLock);
+      Counter := FCompiler.getTempVar(ltInt32);
       Counter.isConstant := False;
       tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), _ResVar.New(FCompiler.getConstant(0)), Offset, @_DocPos);
 
       with TLapeTree_For.Create(Self) do
       try
-        Counter := TLapeTree_ResVar.Create(tmpVar, Self);
+        Counter := TLapeTree_ResVar.Create(tmpVar.IncLock(), Self);
         Limit := TLapeTree_Operator.Create(op_Minus, Self);
         with TLapeTree_Operator(Limit) do
         begin
-          Left := TLapeTree_ResVar.Create(Len, FParams[1]);
+          Left := TLapeTree_ResVar.Create(Len.IncLock(), FParams[1]);
           Right := TLapeTree_Integer.Create(1, Self);
         end;
         Body := TSetLength(Self.ClassType).Create(Self);
@@ -3172,8 +3172,8 @@ begin
               addParam(TLapeTree_Operator.Create(op_Index, Self.FParams[0]));
               with TLapeTree_Operator(Params[0]) do
               begin
-                Left := TLapeTree_ResVar.Create(Param, Self.FParams[0]);
-                Right := TLapeTree_ResVar.Create(tmpVar, Self.FParams[0]);
+                Left := TLapeTree_ResVar.Create(Param.IncLock(), Self.FParams[0]);
+                Right := TLapeTree_ResVar.Create(tmpVar.IncLock(), Self.FParams[0]);
               end;
             end
             else if (i <> 1) then
@@ -3181,12 +3181,12 @@ begin
         Compile(Offset);
       finally
         Free();
-        tmpVar.Spill(BigLock);
+        tmpVar.Spill();
       end;
     end;
   finally
-    Param.Spill(BigLock);
-    Len.Spill(BigLock);
+    Param.Spill();
+    Len.Spill();
   end;
 end;
 
@@ -4784,7 +4784,7 @@ begin
 
   CheckField := nil;
   opOR := nil;
-  if (not FCondition.CompileToTempVar(Offset, ConditionVar, BigLock)) then
+  if (not FCondition.CompileToTempVar(Offset, ConditionVar)) then
     LapeException(lpeInvalidCondition, DocPos);
 
   try
@@ -4798,20 +4798,20 @@ begin
           CheckField.Left := TLapeTree_Operator.Create(op_cmp_GreaterThanOrEqual, FValues[i]);
           with TLapeTree_Operator(CheckField.Left) do
           begin
-            Left := TLapeTree_ResVar.Create(ConditionVar, FValues[i]);
+            Left := TLapeTree_ResVar.Create(ConditionVar.IncLock(), FValues[i]);
             Right := Lo;
           end;
           CheckField.Right := TLapeTree_Operator.Create(op_cmp_LessThanOrEqual, FValues[i]);
           with TLapeTree_Operator(CheckField.Right) do
           begin
-            Left := TLapeTree_ResVar.Create(ConditionVar, FValues[i]);
+            Left := TLapeTree_ResVar.Create(ConditionVar.IncLock(), FValues[i]);
             Right := Hi;
           end;
         end
       else if (FValues[i] is TLapeTree_ExprBase) then
       begin
         CheckField := TLapeTree_Operator.Create(op_cmp_Equal, FValues[i]);
-        CheckField.Left := TLapeTree_ResVar.Create(ConditionVar, FCondition);
+        CheckField.Left := TLapeTree_ResVar.Create(ConditionVar.IncLock(), FCondition);
         CheckField.Right := FValues[i] as TLapeTree_ExprBase;
       end
       else
@@ -4850,7 +4850,7 @@ begin
     raise;
   end;
 
-  ConditionVar.Spill(BigLock);
+  ConditionVar.Spill();
 end;
 
 procedure TLapeTree_Case.setCondition(Node: TLapeTree_ExprBase);
@@ -4919,17 +4919,17 @@ begin
 
   if (FFields.Count > 0) then
   begin
-    if (not FCondition.CompileToTempVar(Offset, ConditionVar, BigLock)) then
+    if (not FCondition.CompileToTempVar(Offset, ConditionVar)) then
       LapeException(lpeInvalidCondition, DocPos);
 
     for i := 0 to FFields.Count - 1 do
-      FFields[i].Condition := TLapeTree_ResVar.Create(ConditionVar, FCondition);
+      FFields[i].Condition := TLapeTree_ResVar.Create(ConditionVar.IncLock(), FCondition);
     FFields[FFields.Count - 1].ElseBody := FElse;
     for i := FFields.Count - 1 downto 1 do
       FFields[i - 1].ElseBody := FFields[i];
     Result := FFields[0].Compile(Offset);
 
-    ConditionVar.Spill(BigLock);
+    ConditionVar.Spill();
   end
   else if (FElse <> nil) then
     Result := FElse.Compile(Offset);
@@ -5140,14 +5140,14 @@ begin
   Assert(FLimit <> nil);
 
   CounterVar := nil;
-  Count := FCounter.Compile(Offset);
+  Count := FCounter.Compile(Offset).IncLock();
   try
-    if (not FLimit.CompileToTempVar(Offset, Lim, BigLock)) or (not Lim.HasType()) or (not Lim.VarType.IsOrdinal(True)) then
+    if (not FLimit.CompileToTempVar(Offset, Lim)) or (not Lim.HasType()) or (not Lim.VarType.IsOrdinal(True)) then
       LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
     if Count.HasType() and (not Count.Writeable) then
     begin
-      CounterVar := FCompiler.getTempVar(Count.VarType, BigLock);
+      CounterVar := FCompiler.getTempVar(Count.VarType);
       CounterVar.isConstant := False;
       Count := CounterVar.VarType.Eval(op_Assign, Result, _ResVar.New(CounterVar), Count, Offset, @FCounter._DocPos);
     end;
@@ -5158,15 +5158,14 @@ begin
       FCondition := TLapeTree_Operator.Create(op_cmp_GreaterThanOrEqual, Self)
     else
       FCondition := TLapeTree_Operator.Create(op_cmp_LessThanOrEqual, Self);
-    TLapeTree_Operator(FCondition).Left := TLapeTree_ResVar.Create(Count, FCounter);
-    TLapeTree_Operator(FCondition).Right := TLapeTree_ResVar.Create(Lim, FLimit);
+    TLapeTree_Operator(FCondition).Left := TLapeTree_ResVar.Create(Count.IncLock(), FCounter);
+    TLapeTree_Operator(FCondition).Right := TLapeTree_ResVar.Create(Lim.IncLock(), FLimit);
 
     Result := inherited;
   finally
     setCondition(nil);
-    if (CounterVar <> nil) then
-      Count.Spill(BigLock);
-    Lim.Spill(BigLock);
+    Count.Spill();
+    Lim.Spill();
   end;
 end;
 
