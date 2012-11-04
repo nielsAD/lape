@@ -340,7 +340,7 @@ begin
     else
     begin
       for i := 0 to FFieldMap.Count - 1 do
-      try
+      begin
         LeftFieldName := _ResVar.New(FCompiler.getConstant(FFieldMap.Key[i]));
         RightFieldName := _ResVar.New(FCompiler.getConstant(TLapeType_Record(Right.VarType).FieldMap.Key[i]));
 
@@ -358,7 +358,7 @@ begin
           if (FieldOffset > 0) then
             FCompiler.Emitter._GrowStack(FieldOffset, Offset, Pos);
         end;
-      finally
+
         LeftVar.Spill(1);
         RightVar.Spill(1);
       end;

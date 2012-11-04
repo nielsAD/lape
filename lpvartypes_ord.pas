@@ -709,14 +709,13 @@ begin
       if (Result.VarType.BaseIntType = BaseIntType) then
         Result.VarType := Self
       else
-      try
+      begin
         Dest := tmpDest;
         tmpDest := Result;
         Result := NullResVar;
         Result.VarType := Self;
         FCompiler.getDestVar(Dest, Result, op_Unknown);
         Result := Eval(op_Assign, tmpVar, Result, tmpDest, [], Offset, Pos);
-      finally
         tmpDest.Spill(1);
       end;
   finally
