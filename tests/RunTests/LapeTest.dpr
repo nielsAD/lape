@@ -4,13 +4,16 @@ program LapeTest;
 
 uses
   SysUtils,
-  lptest, lpparser;
+  lptest;
 
 begin
   try
     with TLapeTester.Create() do
     try
-      TestFiles();
+      if TestFiles() then
+        ExitCode := 0
+      else
+        ExitCode := 1;
     finally
       Free();
     end;

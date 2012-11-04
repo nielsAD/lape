@@ -211,7 +211,7 @@ type
   PLapeSmallSet = ^TLapeSmallSet;
   PLapeLargeSet = ^TLapeLargeSet;
 
-  {$IF (NOT DEFINED(WINDOWS)) AND (FPC_FULLVERSION >= 20501)}
+  {$IF DEFINED(FPC) AND (NOT DEFINED(WINDOWS)) AND (FPC_FULLVERSION >= 20501)}
     {$DEFINE Interface_CDecl}
   {$IFEND}
 

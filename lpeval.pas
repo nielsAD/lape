@@ -398,6 +398,18 @@ begin
   UniqueString(PUnicodeString(Params^[0])^);
 end;
 
+{$IF NOT(DECLARED(UIntToStr))}
+function UIntToStr(i: UInt32): lpString; inline; overload;
+begin
+  Result := IntToStr(i);
+end;
+
+function UIntToStr(i: UInt64): lpString; inline; overload;
+begin
+  Result := IntToStr(i);
+end;
+{$IFEND}
+
 procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := '*UNKNOWN*';
@@ -405,7 +417,7 @@ end;
 
 procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToStr(PUInt8(Params^[0])^);
+  PlpString(Result)^ := UIntToStr(PUInt8(Params^[0])^);
 end;
 
 procedure _LapeToString_Int8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -415,7 +427,7 @@ end;
 
 procedure _LapeToString_UInt16(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToStr(PUInt16(Params^[0])^);
+  PlpString(Result)^ := UIntToStr(PUInt16(Params^[0])^);
 end;
 
 procedure _LapeToString_Int16(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -425,7 +437,7 @@ end;
 
 procedure _LapeToString_UInt32(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToStr(PUInt32(Params^[0])^);
+  PlpString(Result)^ := UIntToStr(PUInt32(Params^[0])^);
 end;
 
 procedure _LapeToString_Int32(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -435,7 +447,7 @@ end;
 
 procedure _LapeToString_UInt64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToStr(PUInt64(Params^[0])^);
+  PlpString(Result)^ := UIntToStr(PUInt64(Params^[0])^);
 end;
 
 procedure _LapeToString_Int64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

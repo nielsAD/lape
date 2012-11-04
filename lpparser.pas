@@ -421,16 +421,57 @@ begin
   Result := StrToFloatDef(StringReplace(Str, '.', FormatSettings.DecimalSeparator, []), Default);
 end;
 
+{$IFNDEF FPC}
+//Warren P - http://stackoverflow.com/questions/6077258/
+function TryStrToUInt64(StrValue: string; var uValue:UInt64): Boolean;
+var
+  n, Base, Len, Digit: UInt32;
+  NextValue: UInt64;
+begin
+  Result := False;
+  uValue := 0;
+
+  StrValue := Trim(UpperCase(StrValue));
+  Len := Length(StrValue);
+  Base := 10;
+  n := 1;
+
+  if (Len < 1) or (Len > 20) or (StrValue[1] = '-') then
+    Exit;
+  if (StrValue[1] = '$') then
+  begin
+    Base := 16;
+    Inc(n);
+    if (Len > 17) then
+      Exit;
+  end;
+
+  for n := n to Length(StrValue) do
+  begin
+    if (StrValue[n] in ['0'..'9']) then
+      Digit := Ord(StrValue[n]) - Ord('0')
+    else if (Base = 16) and (StrValue[n] in ['A'..'F']) then
+      Digit := (Ord(StrValue[n]) - Ord('A')) + 10
+    else
+      Exit;
+
+    NextValue := (uValue * Base) + Digit;
+    if (Nextvalue < uValue) then
+      Exit;
+    uValue := Nextvalue;
+  end;
+
+  Result := True;
+end;
+{$ENDIF}
+
 function StrToUInt64(Str: lpString): UInt64;
 {$IFDEF FPC}
 begin Result := StrToQWord(Str); end;
 {$ELSE}
-var
-  Code: Integer;
 begin
-  Val(Str, Result, Code);
-  if (Code <> 0) then
-    EConvertError.CreateFmt('"%s" is not a valid UInt64', [Str]);
+  if (not TryStrToUInt64(Str, Result)) then
+    raise EConvertError.CreateFmt('"%s" is not a valid UInt64', [Str]);
 end;
 {$ENDIF}
 
@@ -438,11 +479,8 @@ function StrToUInt64Def(Str: lpString; const Default: UInt64): UInt64;
 {$IFDEF FPC}
 begin Result := StrToQWordDef(Str, Default); end;
 {$ELSE}
-var
-  Code: Integer;
 begin
-  Val(Str, Result, Code);
-  if (Code <> 0) then
+  if (not TryStrToUInt64(Str, Result)) then
     Result := Default;
 end;
 {$ENDIF}

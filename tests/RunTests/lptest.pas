@@ -17,7 +17,7 @@ type
     constructor Create(AFolder: lpString = '..'; ADebug: Boolean = False); reintroduce;
 
     class procedure TestFile(FileName: lpString; out Output: lpString; ExpectFile: lpString = '');
-    procedure TestFiles;
+    function TestFiles: Boolean;
 
     property Folder: lpString read FFolder;
     property Debug: Boolean read FDebug;
@@ -118,7 +118,7 @@ begin
   end;
 end;
 
-procedure TLapeTester.TestFiles;
+function TLapeTester.TestFiles: Boolean;
 var
   Output: lpString;
   Fail, Pass: Integer;
@@ -195,6 +195,8 @@ begin
   WriteLn(Format('Ran %d tests in %.2f seconds', [Pass + Fail, ((GetTickCount() - StartTime) / 1000)]));
   WriteLn(Format('%3d / %d tests failed', [Fail, Pass + Fail]));
   WriteLn(Format('%3d / %d tests passed', [Pass, Pass + Fail]));
+
+  Result := (Fail = 0);
 end;
 
 initialization

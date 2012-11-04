@@ -42,7 +42,10 @@ begin
 
     with TLapeTester.Create(Folder, HasOption('e', 'explicit')) do
     try
-      TestFiles();
+      if TestFiles() then
+        ExitCode := 0
+      else
+        ExitCode := 1;
     finally
       Free();
     end;
