@@ -766,7 +766,11 @@ function TLapeType_Bool.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: EL
 begin
   Result := inherited;
   if (Result = nil) then
+  begin
     Result := FVarType.EvalRes(Op, Right, Flags);
+    if (Result = FVarType) then
+      Result := Self;
+  end;
 end;
 
 function TLapeType_Bool.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
@@ -786,6 +790,8 @@ begin
     Left.VarType := FVarType;
     try
       Result := FVarType.EvalConst(Op, Left, Right, Flags);
+      if (Result.VarType = FVarType) then
+        Result.VarType := Self;
     finally
       Left.VarType := Self;
     end;
@@ -806,6 +812,8 @@ begin
     Left.VarType := FVarType;
     try
       Result := FVarType.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
+      if (Result.VarType = FVarType) then
+        Result.VarType := Self;
     finally
       Left.VarType := Self;
     end;

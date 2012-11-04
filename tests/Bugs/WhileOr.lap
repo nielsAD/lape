@@ -1,0 +1,43 @@
+{$assertions on}
+
+function max(a, b: Integer): Integer;
+begin
+  if (a > b) then
+    Result := a
+  else
+    Result := b;
+end;
+
+var 
+  a, b,c : integer;
+begin
+  {$B-}
+  a := 1;
+  b := 2;
+  c := 5;
+
+  while ((a > 0) or (b > 0) or (c > 0)) do
+  begin
+    a := max(0, a-1);
+    b := max(0, b-1);
+    c := max(0, c-1);
+  end;
+  Assert(a = 0, 'Short');
+  Assert(b = 0, 'Short');
+  Assert(c = 0, 'Short');
+  
+  {$B+}
+  a := 1;
+  b := 2;
+  c := 5;
+
+  while ((a > 0) or (b > 0) or (c > 0)) do
+  begin
+    a := max(0, a-1);
+    b := max(0, b-1);
+    c := max(0, c-1);
+  end;
+  Assert(a = 0, 'Full');
+  Assert(b = 0, 'Full');
+  Assert(c = 0, 'Full');
+end.

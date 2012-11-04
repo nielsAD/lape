@@ -938,14 +938,18 @@ end;
 
 procedure TLapeTree_DestExprBase.setDest(ResVar: TResVar);
 begin
-  FDest.Spill(1);
+  FDest.Spill();
   FDest := ResVar;
 end;
 
 function TLapeTree_DestExprBase.CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean;
+var
+  tmpDest: TResVar;
 begin
-  Dest := VarResVar;
+  tmpDest := FDest;
+  FDest := VarResVar;
   Result := inherited;
+  FDest := tmpDest;
 end;
 
 procedure TLapeTree_OpenArray.setType(AType: TLapeType);
@@ -1464,7 +1468,7 @@ begin
     Result := FDest
   else
   begin
-    FDest.Spill();
+    Dest := NullResVar;
     Result := _ResVar.New(FCompiler.getTempVar(FType));
   end;
 
@@ -1843,7 +1847,7 @@ var
       Result := FParams[0].Compile(Offset);
       if VarType.Equals(Result.VarType) or (not Result.HasType()) or (VarType.Size = Result.VarType.Size) then
       begin
-        FDest.Spill();
+        Dest := NullResVar;
         Result.VarType := VarType;
       end
       else if VarType.CompatibleWith(Result.VarType) then
@@ -1852,13 +1856,13 @@ var
           DestVar := FDest
         else
         begin
-          FDest.Spill();
+          Dest := NullResVar;
           DestVar := _ResVar.New(Compiler.getTempVar(VarType));
           DestVar.isConstant := False;
         end;
 
         tmpRes := Result;
-        Result := VarType.Eval(op_Assign, tmpVar, DestVar, Result, [], Offset, @Self._DocPos);
+        Result := DestVar.VarType.Eval(op_Assign, tmpVar, DestVar, Result, [], Offset, @Self._DocPos);
         tmpRes.Spill(1);
 
         if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
@@ -1962,7 +1966,7 @@ var
 
     with TLapeType_Method(IdentVar.VarType) do
     begin
-      FDest.Spill();
+      Dest := NullResVar;
       //if ParamInitialization then
       //  FCompiler.Emitter._InitStack(ParamSize, Offset, @Self._DocPos);
 
@@ -2026,7 +2030,7 @@ var
     with TLapeType_Method(IdentVar.VarType) do
     begin
       if (Res = nil) then
-        FDest.Spill();
+        Dest := NullResVar;
 
       for i := 0 to Params.Count - 1 do
       begin
@@ -2368,7 +2372,7 @@ begin
     Result := FDest;
   end
   else
-    FDest.Spill();
+    Dest := NullResVar;
 end;
 
 function TLapeTree_InternalMethod_Break.Compile(var Offset: Integer): TResVar;
@@ -2379,7 +2383,7 @@ var
   JumpSafe: Boolean;
 begin
   Result := NullResVar;
-  FDest := NullResVar;
+  Dest := NullResVar;
   Node := FParent;
 
   if (not (FParams.Count in [0, 1])) then
@@ -2430,7 +2434,7 @@ var
   JumpSafe: Boolean;
 begin
   Result := NullResVar;
-  FDest := NullResVar;
+  Dest := NullResVar;
   Node := FParent;
 
   if (not (FParams.Count in [0, 1])) then
@@ -2480,7 +2484,7 @@ var
   ResultDecl: TLapeDeclaration;
 begin
   Result := NullResVar;
-  FDest := NullResVar;
+  Dest := NullResVar;
   Node := FParent;
 
   if (FParams.Count <> 0) then
@@ -2533,7 +2537,7 @@ var
   IsPointer: Boolean;
 begin
   Result := NullResVar;
-  FDest := NullResVar;
+  Dest := NullResVar;
   if (FParams.Count <> 1) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
@@ -2587,7 +2591,7 @@ var
   _Dispose: TLapeGlobalVar;
 begin
   Result := NullResVar;
-  FDest := NullResVar;
+  Dest := NullResVar;
   if (FParams.Count <> 1) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
@@ -3048,7 +3052,7 @@ begin
 
   if (Param.VarType.BaseType = ltShortString) then
   begin
-    FDest.Spill();
+    Dest := NullResVar;
     Result := Param;
     Result.VarType := FCompiler.getBaseType(ltUInt8);
   end
@@ -3104,7 +3108,7 @@ begin
   if (FParams.Count < 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
 
-  FDest.Spill();
+  Dest := NullResVar;
   ArrayType := nil;
   tmpVar := NullResVar;
 
@@ -3333,7 +3337,7 @@ begin
         Left := TLapeTree_ResVar.Create(VarParam, FParams[0]);
         Right := TLapeTree_ResVar.Create(CountParam.IncLock(), Self);
         Result := Compile(Offset);
-        Self.Dest := Dest;
+        Self.FDest := Dest;
       finally
         Free();
       end
@@ -3460,7 +3464,7 @@ begin
   if (not (FParams.Count in [1, 2])) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
-  FDest.Spill();
+  Dest := NullResVar;
   OldVarParam := FParams.Delete(0);
   if (FParams.Count > 0) then
     OldCountParam := FParams.Delete(0)
@@ -3504,7 +3508,7 @@ var
   Pred: TLapeTree_Operator;
 begin
   Result := NullResVar;
-  FDest := NullResVar;
+  Dest := NullResVar;
   if (not (FParams.Count in [1, 2])) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
@@ -3989,7 +3993,8 @@ begin
     if DoneAssignment then
     begin
       Result := LeftVar;
-      FDest.Spill();
+      Dest := NullResVar;
+      TLapeTree_DestExprBase(FRight).Dest := NullResVar;
     end
     else
     try
