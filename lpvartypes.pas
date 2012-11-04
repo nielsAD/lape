@@ -1760,7 +1760,7 @@ begin
   end;
   if (op = op_UnaryPlus) then
   begin
-    Dest.Spill();
+    Dest := NullResVar;
     Exit(Left);
   end;
 
@@ -2189,6 +2189,7 @@ begin
         Pos
       );
 
+    IndexVar.Spill(1);
     Result.setConstant(wasConstant, False);
     Right.VarType := tmpType;
   end
@@ -2957,7 +2958,7 @@ begin
   if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.VarPos.GlobalVar.Ptr)^) then
     with FVarMap[PlpString(Right.VarPos.GlobalVar.Ptr)^] do
     begin
-      Dest.Spill();
+      Dest := NullResVar;
       if (RefVar <> nil) then
         Result := _ResVar.New(RefVar)
       else
@@ -4008,7 +4009,7 @@ end;
 procedure TLapeCompilerBase.getDestVar(var Dest, Res: TResVar; Op: EOperator);
 begin
   if (op = op_Assign) then
-    Dest.Spill()
+    Dest := NullResVar
   else if (op <> op_Deref) and (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and
     Res.HasType() and Res.VarType.Equals(Dest.VarType)
   then
@@ -4031,7 +4032,7 @@ begin
         else
           StackVar := getTempVar(Res.VarType);
       end;
-    Dest.Spill();
+    Dest := NullResVar;
   end;
 end;
 

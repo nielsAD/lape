@@ -428,7 +428,7 @@ begin
     if (not ALeft.VarPos.isPointer) then
     begin
       if (Dest.VarPos.MemPos = mpStack) then
-        Dest.Spill();
+        Dest := NullResVar;
       Result := inherited Eval(Op, Dest, ALeft, ARight, Flags, Offset, Pos);
       Result.VarPos.isPointer := True;
       Result.VarType := FPType;
@@ -477,16 +477,14 @@ begin
       with TLapeTree_If.Create(FCompiler, Pos) do
       try
         Body := TLapeTree_StatementList.Create(Self.FCompiler, Pos);
-        with TLapeTree_StatementList(Body) do
+
+        Node := TLapeTree_InternalMethod_SetLength.Create(Body);
+        with TLapeTree_InternalMethod_SetLength(Node) do
         begin
-          Node := TLapeTree_InternalMethod_SetLength.Create(Body);
-          with TLapeTree_InternalMethod_SetLength(Node) do
-          begin
-            addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), Body));
-            addParam(TLapeTree_Integer.Create(0, Body));
-          end;
-          addStatement(Node);
+          addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), Body));
+          addParam(TLapeTree_Integer.Create(0, Body));
         end;
+        TLapeTree_StatementList(Body).addStatement(Node);
 
         ALeft.VarType := FCompiler.getPointerType(ltNativeInt);
         ARight.VarType := ALeft.VarType;
@@ -520,7 +518,6 @@ begin
 
             Body := TLapeTree_InternalMethod_Inc.Create(Condition);
             with TLapeTree_InternalMethod(Body) do
-            begin
               with TLapeTree_Operator.Create(op_Deref, Condition) do
               begin
                 Left := TLapeTree_Operator.Create(op_Index, Condition);
@@ -531,9 +528,8 @@ begin
                 end;
                 addParam(Left.Parent as TLapeTree_ExprBase);
               end;
-            end;
-           end;
-           addStatement(Node);
+          end;
+          addStatement(Node);
         end;
 
         Compile(Offset);
@@ -831,18 +827,21 @@ begin
       else
         Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
 
+      tmpVar := Right.VarType.Eval(op_Minus, tmpVar, Right, _ResVar.New(
+          FCompiler.getConstant(FRange.Lo, DetermineIntType(FRange.Lo, Right.VarType.BaseType, False), False, True)
+        ), [], Offset, Pos);
+
       Result := //Result := @Pointer[Index - Lo]^
         inherited Eval(
           Op,
           Dest,
           LeftVar,
-          Right.VarType.Eval(op_Minus, tmpVar, Right, _ResVar.New(
-            FCompiler.getConstant(FRange.Lo, DetermineIntType(FRange.Lo, Right.VarType.BaseType, False), False, True)
-          ), [], Offset, Pos),
+          tmpVar,
           Flags,
           Offset,
           Pos
         );
+      tmpVar.Spill(1);
     finally
       Right.VarType := tmpType;
     end;

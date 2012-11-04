@@ -300,7 +300,7 @@ begin
   if (Op = op_Dot) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.VarPos.GlobalVar.Ptr)^) then
     with FFieldMap[PlpString(Right.VarPos.GlobalVar.Ptr)^] do
     begin
-      Dest.Spill();
+      Dest := NullResVar;
       Result := Left.IncLock();
       Result.VarType :=FieldType;
       case Left.VarPos.MemPos of
@@ -476,13 +476,13 @@ function TLapeType_SetterMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Rig
 begin
   if (op = op_Assign) then
   begin
-    Dest.Spill();
+    Dest := NullResVar;
     if (Left.VarType = Self) then
       Left.VarType := FMethod;
 
-    with TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Left, FCompiler, @_DocPos), FCompiler, @_DocPos) do
+    with TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Left.IncLock(), FCompiler, @_DocPos), FCompiler, @_DocPos) do
     try
-      addParam(TLapeTree_ResVar.Create(Right, FCompiler, @_DocPos));
+      addParam(TLapeTree_ResVar.Create(Right.IncLock(), FCompiler, @_DocPos));
       Compile(Offset);
     finally
       Free();

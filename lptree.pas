@@ -78,7 +78,7 @@ type
 
     function Compile(var Offset: Integer): TResVar; overload; virtual;
     function Compile: TResVar; overload; virtual;
-    function CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean; virtual;
+    function CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 0): Boolean; virtual;
 
     property Parent: TLapeTree_Base read FParent write setParent;
     property Compiler: TLapeCompilerBase read FCompiler;
@@ -107,7 +107,7 @@ type
     FDest: TResVar;
     procedure setDest(ResVar: TResVar); virtual;
   public
-    function CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean; override;
+    function CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 0): Boolean; override;
     property Dest: TResVar read FDest write setDest;
   end;
 
@@ -823,7 +823,7 @@ begin
   Result := Compile(Offset);
 end;
 
-function TLapeTree_Base.CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean;
+function TLapeTree_Base.CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 0): Boolean;
 begin
   v := Compile(Offset).IncLock(Lock);
   Result := (v.VarPos.MemPos <> mpStack) and v.HasType();
@@ -942,7 +942,7 @@ begin
   FDest := ResVar;
 end;
 
-function TLapeTree_DestExprBase.CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 1): Boolean;
+function TLapeTree_DestExprBase.CompileToTempVar(var Offset: Integer; out v: TResVar; Lock: Integer = 0): Boolean;
 var
   tmpDest: TResVar;
 begin
@@ -1389,7 +1389,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           Compile(Offset);
         finally
           Free();
-          tmpVar.Spill();
+          tmpVar.Spill(1);
         end;
       end
       else
@@ -1974,7 +1974,7 @@ var
       try
         if (ParamVars[i].VarPos.MemPos = NullResVar.VarPos.MemPos) then
           if (Params[i].ParType in Lape_RefParams) then
-            FParams[i].CompileToTempVar(Offset, ParamVars[i], 0)
+            FParams[i].CompileToTempVar(Offset, ParamVars[i])
           else
             ParamVars[i] := getStackVar(FParams[i], Offset);
 
@@ -2035,7 +2035,7 @@ var
       for i := 0 to Params.Count - 1 do
       begin
         if (ParamVars[i].VarPos.MemPos = NullResVar.VarPos.MemPos) then
-          FParams[i].CompileToTempVar(Offset, ParamVars[i], 0);
+          FParams[i].CompileToTempVar(Offset, ParamVars[i]);
 
         if (ParamVars[i].VarPos.MemPos = mpStack) or
            ((Params[i].VarType <> ParamVars[i].VarType) and (not ParamVars[i].HasType()))
@@ -3189,12 +3189,12 @@ begin
         Compile(Offset);
       finally
         Free();
-        tmpVar.Spill();
+        tmpVar.Spill(1);
       end;
     end;
   finally
-    Param.Spill();
-    Len.Spill();
+    Param.Spill(1);
+    Len.Spill(1);
   end;
 end;
 
@@ -4010,10 +4010,8 @@ begin
       LapeException(E.Message, DocPos);
     end;
   finally
-    if ((FLeft <> nil) or (FRight <> nil)) then
-      LeftVar.Spill(1);
-    if ((FLeft <> nil) and (FRight <> nil)) then
-      RightVar.Spill(1);
+    LeftVar.Spill(1);
+    RightVar.Spill(1);
   end;
 end;
 
@@ -4890,7 +4888,7 @@ begin
     raise;
   end;
 
-  ConditionVar.Spill();
+  ConditionVar.Spill(1);
 end;
 
 procedure TLapeTree_Case.setCondition(Node: TLapeTree_ExprBase);
@@ -4969,7 +4967,7 @@ begin
       FFields[i - 1].ElseBody := FFields[i];
     Result := FFields[0].Compile(Offset);
 
-    ConditionVar.Spill();
+    ConditionVar.Spill(1);
   end
   else if (FElse <> nil) then
     Result := FElse.Compile(Offset);
@@ -5000,7 +4998,7 @@ begin
     LapeException(lpeInvalidCondition, [FCondition, Self]);
 
   FCompiler.Emitter._JmpRIf(FStartBodyOffset - Offset, ConditionVar, Offset, @_DocPos);
-  ConditionVar.Spill();
+  ConditionVar.Spill(1);
 end;
 
 constructor TLapeTree_While.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
@@ -5204,8 +5202,8 @@ begin
     Result := inherited;
   finally
     setCondition(nil);
-    Count.Spill();
-    Lim.Spill();
+    Count.Spill(1);
+    Lim.Spill(1);
   end;
 end;
 
