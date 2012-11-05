@@ -3806,7 +3806,11 @@ begin
          ((lcoShortCircuit in FCompilerOptions) and (Result <> nil) and (Result.BaseType in LapeBoolTypes) and (FOperatorType in [op_AND, op_OR]) and
           (LeftType.BaseType in LapeBoolTypes) and (RightType <> nil) and (RightType.BaseType in LapeBoolTypes)))
       then
-        FRestructure := bTrue
+      begin
+        FRestructure := bTrue;
+        if (Result = nil) then
+          Result := FCompiler.getBaseType(ltEvalBool);
+      end
       else
         FRestructure := bFalse;
     finally
@@ -3819,7 +3823,7 @@ begin
   begin
     FRestructure := bFalse;
 
-    tmpLeft := FLeft.FoldConstants(True) as TLapeTree_ExprBase;
+    tmpLeft := FLeft.FoldConstants() as TLapeTree_ExprBase;
     if (FOperatorType = op_IN) then
       FLeft := TLapeTree_MultiIf.Create(tmpLeft, FRight as TLapeTree_OpenArray)
     else
@@ -3830,8 +3834,6 @@ begin
       if (FOperatorType <> op_IN) then
         Condition := tmpLeft;
 
-      if (Result = nil) then
-        Result := FCompiler.getBaseType(ltEvalBool);
       ResVar := FCompiler.getTempStackVar(Result);
       ResVar.VarPos.ForceVariable := True;
 
@@ -4810,10 +4812,32 @@ begin
 end;
 
 function TLapeTree_MultiIf.Compile(var Offset: Integer): TResVar;
+
+  function CreateOp(op: EOperator; Condition: TResVar; var Cmp: TLapeTree_ExprBase): TLapeTree_Operator;
+  var
+    tmpRes: TLapeTree_Operator;
+  begin
+    tmpRes := TLapeTree_Operator.Create(op, Cmp);
+    with tmpRes do
+    begin
+      Left := TLapeTree_ResVar.Create(Condition.IncLock(), Cmp);
+      Right := Cmp;
+      Cmp := FRight;
+    end;
+
+    Result := TLapeTree_Operator(tmpRes.FoldConstants(False));
+    if (tmpRes <> Result) then
+    begin
+      Cmp.Parent := nil;
+      tmpRes.Free();
+    end;
+  end;
+
 var
   i: Integer;
   ConditionVar: TResVar;
   CheckField, opOR: TLapeTree_Operator;
+  Vals: TLapeStatementList.TTArray;
   tmpExpr: TLapeTree_ExprBase;
 begin
   Result := NullResVar;
@@ -4827,34 +4851,21 @@ begin
 
   try
 
-    for i := FValues.Count - 1 downto 0 do
+    Vals := FValues.ExportToArray();
+    for i := 0 to High(Vals) do
     begin
-      if (FValues[i] is TLapeTree_Range) then
-        with TLapeTree_Range(FValues[i]) do
+      if (Vals[i] is TLapeTree_Range) then
+        with TLapeTree_Range(Vals[i]) do
         begin
-          CheckField := TLapeTree_Operator.Create(op_AND, FValues[i]);
-          CheckField.Left := TLapeTree_Operator.Create(op_cmp_GreaterThanOrEqual, FValues[i]);
-          with TLapeTree_Operator(CheckField.Left) do
-          begin
-            Left := TLapeTree_ResVar.Create(ConditionVar.IncLock(), FValues[i]);
-            Right := Lo;
-          end;
-          CheckField.Right := TLapeTree_Operator.Create(op_cmp_LessThanOrEqual, FValues[i]);
-          with TLapeTree_Operator(CheckField.Right) do
-          begin
-            Left := TLapeTree_ResVar.Create(ConditionVar.IncLock(), FValues[i]);
-            Right := Hi;
-          end;
+          CheckField := TLapeTree_Operator.Create(op_AND, Vals[i]);
+          CheckField.Left := CreateOp(op_cmp_GreaterThanOrEqual, ConditionVar, FLo);
+          CheckField.Right := CreateOp(op_cmp_LessThanOrEqual, ConditionVar, FHi);
+          Parent := Vals[i];
         end
-      else if (FValues[i] is TLapeTree_ExprBase) then
-      begin
-        CheckField := TLapeTree_Operator.Create(op_cmp_Equal, FValues[i]);
-        CheckField.Left := TLapeTree_ResVar.Create(ConditionVar.IncLock(), FCondition);
-        CheckField.Right := FValues[i] as TLapeTree_ExprBase;
-      end
+      else if (Vals[i] is TLapeTree_ExprBase) then
+        CheckField := CreateOp(op_cmp_Equal, ConditionVar, TLapeTree_ExprBase(Vals[i]))
       else
         LapeException(lpeInvalidEvaluation, DocPos);
-      CheckField := TLapeTree_Operator(CheckField.FoldConstants());
 
       if (opOR = nil) then
         opOR := CheckField
@@ -4877,15 +4888,24 @@ begin
         Result := FElse.Compile(Offset);
     finally
       FCondition := tmpExpr;
-      FreeAndnil(opOR);
     end;
+  finally
+    for i := 0 to High(Vals) do
+      if (Vals[i].Parent <> Self) then
+      begin
+        if (Vals[i] is TLapeTree_Range) then
+          with TLapeTree_Range(Vals[i]) do
+          begin
+            Lo := FLo;
+            Hi := FHi;
+          end;
+        addValue(Vals[i]);
+      end;
 
-  except
     if (CheckField <> nil) then
       CheckField.Free();
-    if (opOR <> nil) then
+    if (opOR <> nil) and (opOr <> CheckField) then
       opOR.Free();
-    raise;
   end;
 
   ConditionVar.Spill(1);
