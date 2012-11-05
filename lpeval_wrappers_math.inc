@@ -17,6 +17,11 @@ begin
   PInt64(Result)^ := Abs(PInt64(Params^[0])^);
 end;
 
+procedure _LapePower(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PExtended(Result)^ := Power(PExtended(Params^[0])^, PExtended(Params^[1])^);
+end;
+
 procedure _LapeSqr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PExtended(Result)^ := Sqr(PExtended(Params^[0])^);

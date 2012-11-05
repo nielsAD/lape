@@ -1934,7 +1934,7 @@ begin
         if (DefVal is TLapeVar) then
           TLapeVar(DefVal).setReadWrite(isConst and (DefConstVal <> nil), not isConst);
       end;
-    until OneOnly or (Next() <> tk_Identifier);
+    until (Next() <> tk_Identifier) or OneOnly;
 
     if wasShortCircuit then
       FOptions := FOptions + [lcoShortCircuit];
