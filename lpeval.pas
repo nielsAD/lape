@@ -267,6 +267,7 @@ uses
   lpexceptions, lpparser;
 
 {$RangeChecks Off}
+{$OverflowChecks Off}
 
 type
   PBoolean = ^Boolean; //Make sure it's not ^Byte
@@ -681,4 +682,4 @@ finalization
 end.
 
 
-
+
