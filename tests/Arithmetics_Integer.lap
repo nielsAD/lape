@@ -4,7 +4,7 @@
 procedure Test_Int8;
 const
   _a: Int8 = 2;
-  _b: Int8 = 10;
+  _b: Int8 = 8;
   res: Int8 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
 var
   a, b: Int8;
@@ -16,31 +16,31 @@ begin
   Assert(Low(a)  = -128, 'Low');
   Assert(High(a) =  127, 'High');
 
-  Assert(a = 2,  'a <> 2');
-  Assert(b = 10, 'b <> 10');
+  Assert(a = 2, 'a <> 2');
+  Assert(b = 8, 'b <> 10');
 
   Assert(a = a,  'a <> a');
   Assert(a <> b, 'a = b');
 
-  Assert(a + b = 12, 'a + b');
-  Assert(b + a = 12, 'b + a');
+  Assert(a + b = 10, 'a + b');
+  Assert(b + a = 10, 'b + a');
 
   Assert(b - a = -(a - b), 'b - a <> -(a - b)');
   Assert(b - a =  -a + b,  'b - a <>  -a + b');
 
-  Assert(a - b = -8, 'a - b');
-  Assert(b - a =  8, 'b - a');
+  Assert(a - b = -6, 'a - b');
+  Assert(b - a =  6, 'b - a');
 
   Assert(a * b = b * a, 'a * b <> b * a');
   Assert(a + a = 2 * a, 'a + a <> 2 * a');
 
-  Assert(a * b = 20,    'a * b');
-  Assert(b * a = 20,    'b * a');
+  Assert(a * b = 16,    'a * b');
+  Assert(b * a = 16,    'b * a');
 
   Assert(a / b <> b / a, 'a / b = b / a');
-  Assert(a / b = 0.2,    'a / b');
+  Assert(a / b = 0.25,   'a / b');
 
-  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = 4.0,     'b / a');
   Assert(b / a = b div a, 'b div a');
   Assert(a div b = 0,     'a div b');
   
@@ -54,7 +54,7 @@ end;
 procedure Test_UInt8;
 const
   _a: UInt8 = 2;
-  _b: UInt8 = 10;
+  _b: UInt8 = 8;
   res: UInt8 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
 var
   a, b: UInt8;
@@ -66,31 +66,31 @@ begin
   Assert(Low(a)  = 0,   'Low');
   Assert(High(a) = 255, 'High');
 
-  Assert(a = 2,  'a <> 2');
-  Assert(b = 10, 'b <> 10');
+  Assert(a = 2, 'a <> 2');
+  Assert(b = 8, 'b <> 10');
 
   Assert(a = a,  'a <> a');
   Assert(a <> b, 'a = b');
 
-  Assert(a + b = 12, 'a + b');
-  Assert(b + a = 12, 'b + a');
+  Assert(a + b = 10, 'a + b');
+  Assert(b + a = 10, 'b + a');
 
   Assert(b - a = -(a - b), 'b - a <> -(a - b)');
   Assert(b - a =  -a + b,  'b - a <>  -a + b');
 
-  Assert(a - b = -8, 'a - b');
-  Assert(b - a =  8, 'b - a');
+  Assert(a - b = -6, 'a - b');
+  Assert(b - a =  6, 'b - a');
 
   Assert(a * b = b * a, 'a * b <> b * a');
   Assert(a + a = 2 * a, 'a + a <> 2 * a');
 
-  Assert(a * b = 20,    'a * b');
-  Assert(b * a = 20,    'b * a');
+  Assert(a * b = 16,    'a * b');
+  Assert(b * a = 16,    'b * a');
 
   Assert(a / b <> b / a, 'a / b = b / a');
-  Assert(a / b = 0.2,    'a / b');
+  Assert(a / b = 0.25,   'a / b');
 
-  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = 4.0,     'b / a');
   Assert(b / a = b div a, 'b div a');
   Assert(a div b = 0,     'a div b');
   
@@ -104,7 +104,7 @@ end;
 procedure Test_Int16;
 const
   _a: Int16 = 2;
-  _b: Int16 = 10;
+  _b: Int16 = 8;
   res: Int16 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
 var
   a, b: Int16;
@@ -116,31 +116,31 @@ begin
   Assert(Low(a)  = -32768, 'Low');
   Assert(High(a) =  32767, 'High');
 
-  Assert(a = 2,  'a <> 2');
-  Assert(b = 10, 'b <> 10');
+  Assert(a = 2, 'a <> 2');
+  Assert(b = 8, 'b <> 10');
 
   Assert(a = a,  'a <> a');
   Assert(a <> b, 'a = b');
 
-  Assert(a + b = 12, 'a + b');
-  Assert(b + a = 12, 'b + a');
+  Assert(a + b = 10, 'a + b');
+  Assert(b + a = 10, 'b + a');
 
   Assert(b - a = -(a - b), 'b - a <> -(a - b)');
   Assert(b - a =  -a + b,  'b - a <>  -a + b');
 
-  Assert(a - b = -8, 'a - b');
-  Assert(b - a =  8, 'b - a');
+  Assert(a - b = -6, 'a - b');
+  Assert(b - a =  6, 'b - a');
 
   Assert(a * b = b * a, 'a * b <> b * a');
   Assert(a + a = 2 * a, 'a + a <> 2 * a');
 
-  Assert(a * b = 20,    'a * b');
-  Assert(b * a = 20,    'b * a');
+  Assert(a * b = 16,    'a * b');
+  Assert(b * a = 16,    'b * a');
 
   Assert(a / b <> b / a, 'a / b = b / a');
-  Assert(a / b = 0.2,    'a / b');
+  Assert(a / b = 0.25,   'a / b');
 
-  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = 4.0,     'b / a');
   Assert(b / a = b div a, 'b div a');
   Assert(a div b = 0,     'a div b');
   
@@ -154,7 +154,7 @@ end;
 procedure Test_UInt16;
 const
   _a: UInt16 = 2;
-  _b: UInt16 = 10;
+  _b: UInt16 = 8;
   res: UInt16 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
 var
   a, b: UInt16;
@@ -166,31 +166,31 @@ begin
   Assert(Low(a)  = 0,     'Low');
   Assert(High(a) = 65535, 'High');
 
-  Assert(a = 2,  'a <> 2');
-  Assert(b = 10, 'b <> 10');
+  Assert(a = 2, 'a <> 2');
+  Assert(b = 8, 'b <> 10');
 
   Assert(a = a,  'a <> a');
   Assert(a <> b, 'a = b');
 
-  Assert(a + b = 12, 'a + b');
-  Assert(b + a = 12, 'b + a');
+  Assert(a + b = 10, 'a + b');
+  Assert(b + a = 10, 'b + a');
 
   Assert(b - a = -(a - b), 'b - a <> -(a - b)');
   Assert(b - a =  -a + b,  'b - a <>  -a + b');
 
-  Assert(a - b = -8, 'a - b');
-  Assert(b - a =  8, 'b - a');
+  Assert(a - b = -6, 'a - b');
+  Assert(b - a =  6, 'b - a');
 
   Assert(a * b = b * a, 'a * b <> b * a');
   Assert(a + a = 2 * a, 'a + a <> 2 * a');
 
-  Assert(a * b = 20,    'a * b');
-  Assert(b * a = 20,    'b * a');
+  Assert(a * b = 16,    'a * b');
+  Assert(b * a = 16,    'b * a');
 
   Assert(a / b <> b / a, 'a / b = b / a');
-  Assert(a / b = 0.2,    'a / b');
+  Assert(a / b = 0.25,   'a / b');
 
-  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = 4.0,     'b / a');
   Assert(b / a = b div a, 'b div a');
   Assert(a div b = 0,     'a div b');
   
@@ -204,7 +204,7 @@ end;
 procedure Test_Int32;
 const
   _a: Int32 = 2;
-  _b: Int32 = 10;
+  _b: Int32 = 8;
   res: Int32 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
 var
   a, b: Int32;
@@ -216,31 +216,31 @@ begin
   Assert(Low(a)  = -2147483648, 'Low');
   Assert(High(a) =  2147483647, 'High');
 
-  Assert(a = 2,  'a <> 2');
-  Assert(b = 10, 'b <> 10');
+  Assert(a = 2, 'a <> 2');
+  Assert(b = 8, 'b <> 10');
 
   Assert(a = a,  'a <> a');
   Assert(a <> b, 'a = b');
 
-  Assert(a + b = 12, 'a + b');
-  Assert(b + a = 12, 'b + a');
+  Assert(a + b = 10, 'a + b');
+  Assert(b + a = 10, 'b + a');
 
   Assert(b - a = -(a - b), 'b - a <> -(a - b)');
   Assert(b - a =  -a + b,  'b - a <>  -a + b');
 
-  Assert(a - b = -8, 'a - b');
-  Assert(b - a =  8, 'b - a');
+  Assert(a - b = -6, 'a - b');
+  Assert(b - a =  6, 'b - a');
 
   Assert(a * b = b * a, 'a * b <> b * a');
   Assert(a + a = 2 * a, 'a + a <> 2 * a');
 
-  Assert(a * b = 20,    'a * b');
-  Assert(b * a = 20,    'b * a');
+  Assert(a * b = 16,    'a * b');
+  Assert(b * a = 16,    'b * a');
 
   Assert(a / b <> b / a, 'a / b = b / a');
-  Assert(a / b = 0.2,    'a / b');
+  Assert(a / b = 0.25,   'a / b');
 
-  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = 4.0,     'b / a');
   Assert(b / a = b div a, 'b div a');
   Assert(a div b = 0,     'a div b');
   
@@ -254,7 +254,7 @@ end;
 procedure Test_UInt32;
 const
   _a: UInt32 = 2;
-  _b: UInt32 = 10;
+  _b: UInt32 = 8;
   res: UInt32 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
 var
   a, b: UInt32;
@@ -266,31 +266,31 @@ begin
   Assert(Low(a)  = 0,          'Low');
   Assert(High(a) = 4294967295, 'High');
 
-  Assert(a = 2,  'a <> 2');
-  Assert(b = 10, 'b <> 10');
+  Assert(a = 2, 'a <> 2');
+  Assert(b = 8, 'b <> 10');
 
   Assert(a = a,  'a <> a');
   Assert(a <> b, 'a = b');
 
-  Assert(a + b = 12, 'a + b');
-  Assert(b + a = 12, 'b + a');
+  Assert(a + b = 10, 'a + b');
+  Assert(b + a = 10, 'b + a');
 
   Assert(b - a = -(a - b), 'b - a <> -(a - b)');
   Assert(b - a =  -a + b,  'b - a <>  -a + b');
 
-  Assert(a - b = -8, 'a - b');
-  Assert(b - a =  8, 'b - a');
+  Assert(a - b = -6, 'a - b');
+  Assert(b - a =  6, 'b - a');
 
   Assert(a * b = b * a, 'a * b <> b * a');
   Assert(a + a = 2 * a, 'a + a <> 2 * a');
 
-  Assert(a * b = 20,    'a * b');
-  Assert(b * a = 20,    'b * a');
+  Assert(a * b = 16,    'a * b');
+  Assert(b * a = 16,    'b * a');
 
   Assert(a / b <> b / a, 'a / b = b / a');
-  Assert(a / b = 0.2,    'a / b');
+  Assert(a / b = 0.25,   'a / b');
 
-  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = 4.0,     'b / a');
   Assert(b / a = b div a, 'b div a');
   Assert(a div b = 0,     'a div b');
   
@@ -304,7 +304,7 @@ end;
 procedure Test_Int64;
 const
   _a: Int64 = 2;
-  _b: Int64 = 10;
+  _b: Int64 = 8;
   res: Int64 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
 var
   a, b: Int64;
@@ -316,31 +316,31 @@ begin
   Assert(Low(a)  = -9223372036854775808, 'Low');
   Assert(High(a) =  9223372036854775807, 'High');
 
-  Assert(a = 2,  'a <> 2');
-  Assert(b = 10, 'b <> 10');
+  Assert(a = 2, 'a <> 2');
+  Assert(b = 8, 'b <> 10');
 
   Assert(a = a,  'a <> a');
   Assert(a <> b, 'a = b');
 
-  Assert(a + b = 12, 'a + b');
-  Assert(b + a = 12, 'b + a');
+  Assert(a + b = 10, 'a + b');
+  Assert(b + a = 10, 'b + a');
 
   Assert(b - a = -(a - b), 'b - a <> -(a - b)');
   Assert(b - a =  -a + b,  'b - a <>  -a + b');
 
-  Assert(a - b = -8, 'a - b');
-  Assert(b - a =  8, 'b - a');
+  Assert(a - b = -6, 'a - b');
+  Assert(b - a =  6, 'b - a');
 
   Assert(a * b = b * a, 'a * b <> b * a');
   Assert(a + a = 2 * a, 'a + a <> 2 * a');
 
-  Assert(a * b = 20,    'a * b');
-  Assert(b * a = 20,    'b * a');
+  Assert(a * b = 16,    'a * b');
+  Assert(b * a = 16,    'b * a');
 
   Assert(a / b <> b / a, 'a / b = b / a');
-  Assert(a / b = 0.2,    'a / b');
+  Assert(a / b = 0.25,   'a / b');
 
-  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = 4.0,     'b / a');
   Assert(b / a = b div a, 'b div a');
   Assert(a div b = 0,     'a div b');
   
@@ -354,7 +354,7 @@ end;
 procedure Test_UInt64;
 const
   _a: UInt64 = 2;
-  _b: UInt64 = 10;
+  _b: UInt64 = 8;
   res: UInt64 = (_a * _b * (((_a + _b) - (_b + _a) + (_b div _a))) div _a) div _b;
 var
   a, b: UInt64;
@@ -366,31 +366,31 @@ begin
   Assert(Low(a)  = 0,                    'Low');
   Assert(High(a) = 18446744073709551615, 'High');
 
-  Assert(a = 2,  'a <> 2');
-  Assert(b = 10, 'b <> 10');
+  Assert(a = 2, 'a <> 2');
+  Assert(b = 8, 'b <> 10');
 
   Assert(a = a,  'a <> a');
   Assert(a <> b, 'a = b');
 
-  Assert(a + b = 12, 'a + b');
-  Assert(b + a = 12, 'b + a');
+  Assert(a + b = 10, 'a + b');
+  Assert(b + a = 10, 'b + a');
 
   Assert(b - a = -(a - b), 'b - a <> -(a - b)');
   Assert(b - a =  -a + b,  'b - a <>  -a + b');
 
-  Assert(a - b = -8, 'a - b');
-  Assert(b - a =  8, 'b - a');
+  Assert(a - b = -6, 'a - b');
+  Assert(b - a =  6, 'b - a');
 
   Assert(a * b = b * a, 'a * b <> b * a');
   Assert(a + a = 2 * a, 'a + a <> 2 * a');
 
-  Assert(a * b = 20,    'a * b');
-  Assert(b * a = 20,    'b * a');
+  Assert(a * b = 16,    'a * b');
+  Assert(b * a = 16,    'b * a');
 
   Assert(a / b <> b / a, 'a / b = b / a');
-  Assert(a / b = 0.2,    'a / b');
+  Assert(a / b = 0.25,   'a / b');
 
-  Assert(b / a = 5.0,     'b / a');
+  Assert(b / a = 4.0,     'b / a');
   Assert(b / a = b div a, 'b div a');
   Assert(a div b = 0,     'a div b');
   
