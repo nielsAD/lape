@@ -1,5 +1,40 @@
 {$assertions on}
 
+procedure Test_TruncString;
+const
+  _a: string[3] = 'haihai';
+  _b: string[5] = 'baibai';
+  res: string[9] = _a + ' ' + _b;
+var
+  a: string[3];
+  b: string[5];
+begin
+  a := _a;
+  b := _b;
+
+  Assert(Length(a) = 3, 'Length(a)');
+  Assert(Length(b) = 5, 'Length(b)');
+
+  Assert(a[1] = 'h', 'a[1]');
+  Assert(a[1] + b[2] + a[3] = a, 'a[1] + b[2] + a[3]');
+
+  Assert(a = 'hai',   'a <> hai');
+  Assert(b = 'baiba', 'b <> bai');
+
+  Assert(a = a,  'a <> a');
+  Assert(a <> b, 'a = b');
+
+  Assert(a + b = 'haibaiba', 'a + b');
+  Assert(b + a = 'baibahai', 'b + a');
+  Assert(a + ' ' + b = res, 'res');
+
+  a := b;
+  Assert(a = 'bai', 'a <> _b');
+
+  b := 'kai' + a;
+  Assert(b = 'kaiba', 'b <> kaiba');
+end;
+
 procedure Test_ShortString;
 const
   _a: shortstring = 'hai';
@@ -88,6 +123,7 @@ begin
 end;
 
 begin
+  Test_TruncString();   WriteLn('TruncString   :: Passed');
   Test_ShortString();   WriteLn('ShortString   :: Passed');
   Test_AnsiString();    WriteLn('AnsiString    :: Passed');
   Test_UnicodeString(); WriteLn('UnicodeString :: Passed');

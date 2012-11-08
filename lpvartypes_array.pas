@@ -1170,7 +1170,6 @@ begin
       else
         Result := inherited;
 
-      Result := inherited;
       if (Result <> nil) and Result.HasType() and (Result.VarType is TLapeType_ShortString) and (FRange.Hi <> TLapeType_ShortString(Result.VarType).Range.Hi) then
         with Result do
         begin
