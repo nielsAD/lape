@@ -124,6 +124,7 @@ begin
   with TLapeType_DynArray(Result) do
   begin
     copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
   end;
 end;
@@ -717,6 +718,7 @@ begin
   with TLapeType_StaticArray(Result) do
   begin
     copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
   end;
 end;

@@ -16,8 +16,8 @@ addGlobalVar(SecsPerDay, 'SecsPerDay').isConstant := True;
 addGlobalVar(MSecsPerDay, 'MSecsPerDay').isConstant := True;
 addGlobalVar(DateDelta, 'DateDelta').isConstant := True;
 
-addGlobalType(getBaseType(ltDouble).createCopy(), 'TDateTime');
-addGlobalType(getBaseType(ltDouble).createCopy(), 'TTime');
+addGlobalType(getBaseType(ltDouble).createCopy(), 'TDateTime', False);
+addGlobalType(getBaseType(ltDouble).createCopy(), 'TTime', False);
 
 addGlobalFunc('function EncodeDate(Year, Month, Day: UInt16): TDateTime;', @_LapeEncodeDate);
 addGlobalFunc('function EncodeTime(Hour, Min, Sec, MSec: UInt16): TDateTime;', @_LapeEncodeTime);

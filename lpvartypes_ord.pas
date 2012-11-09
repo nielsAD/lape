@@ -421,6 +421,7 @@ begin
   with TLapeType_SubRange(Result) do
   begin
     copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
   end;
 end;
@@ -602,6 +603,7 @@ begin
   with TLapeType_Enum(Result) do
   begin
     copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
   end;
 end;
@@ -754,6 +756,7 @@ begin
   with TLapeType_Bool(Result) do
   begin
     copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
 
     FRange := Self.Range;
@@ -911,6 +914,7 @@ type
 begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, Name, @_DocPos);
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_Set.NewGlobalVar(Values: array of UInt8; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;

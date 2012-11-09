@@ -66,6 +66,8 @@ type
     procedure decTokenizerLock(var ATokenizer: TLapeTokenizerBase; DoFree: Boolean = True);
     procedure setTokenizersPeek(Peek: Boolean);
   protected
+    FTypeID: Integer;
+
     FTokenizers: TLapeTokenizerArray;
     FTokenizer: Integer;
 
@@ -86,6 +88,7 @@ type
 
     function getDocPos: TDocPos; override;
     procedure Reset; override;
+
     function getImporting: Boolean; virtual;
     procedure setImporting(Import: Boolean); virtual;
     procedure setBaseDefines(Defines: TStringList); virtual;
@@ -96,6 +99,7 @@ type
     procedure pushConditional(AEval: Boolean; ADocPos: TDocPos); virtual;
     function popConditional: TDocPos; virtual;
 
+    procedure SetUniqueTypeID(Typ: TLapeType); virtual;
     function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
@@ -211,7 +215,7 @@ type
     function addGlobalVar(Value: Variant; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
 
-    function addGlobalType(Typ: TLapeType; AName: lpString = ''): TLapeType; overload; virtual;
+    function addGlobalType(Typ: TLapeType; AName: lpString = ''; ACopy: Boolean = True): TLapeType; overload; virtual;
     function addGlobalType(Str: lpString; AName: lpString): TLapeType; overload; virtual;
 
     function addGlobalFunc(AHeader: lpString; Value: Pointer): TLapeGlobalVar; overload; virtual;
@@ -313,6 +317,8 @@ end;
 procedure TLapeCompiler.Reset;
 begin
   inherited;
+
+  FTypeID := TypeID_User;;
   EndImporting();
 
   FTokenizer := High(FTokenizers);
@@ -463,6 +469,12 @@ begin
     AParams[High(AParams)] := AResult;
     AResult := nil;
   end;
+end;
+
+procedure TLapeCompiler.SetUniqueTypeID(Typ: TLapeType);
+begin
+  Typ.TypeID := FTypeID;
+  Inc(FTypeID);
 end;
 
 function TLapeCompiler.GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
@@ -1696,6 +1708,29 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     end;
   end;
 
+  procedure ParseTypeType;
+  var
+    TypeExpr: TlapeTree_Base;
+  begin
+    TypeExpr := ParseTypeExpression([tk_sym_Equals, tk_op_Assign, tk_sym_ParenthesisClose, tk_sym_SemiColon]);
+    try
+      if (TypeExpr <> nil) and (TypeExpr is TLapeTree_VarType) and (TLapeTree_VarType(TypeExpr).VarType <> nil) then
+      begin
+        Result := TLapeTree_VarType(TypeExpr).VarType.CreateCopy(True);
+        SetUniqueTypeID(Result);
+        addManagedType(Result);
+      end
+      else
+        LapeException(lpeTypeExpected, Tokenizer.DocPos);
+    finally
+      if (TypeExpr <> nil) then
+      begin
+        Tokenizer.tempRollBack();
+        TypeExpr.Free();
+      end;
+    end;
+  end;
+
   procedure ParseDef;
   var
     TypeExpr: TlapeTree_Base;
@@ -1764,6 +1799,7 @@ begin
       tk_sym_ParenthesisOpen: ParseEnum();
       tk_kw_Function, tk_kw_Procedure,
       tk_kw_External, {tk_kw_Export,} tk_kw_Private: ParseMethodType();
+      tk_kw_Type: ParseTypeType();
       else ParseDef();
     end;
 
@@ -3337,10 +3373,12 @@ begin
   Result := addGlobalVar(TLapeType_Pointer(FBaseTypes[ltPointer]).NewGlobalVar(Value), AName);
 end;
 
-function TLapeCompiler.addGlobalType(Typ: TLapeType; AName: lpString = ''): TLapeType;
+function TLapeCompiler.addGlobalType(Typ: TLapeType; AName: lpString = ''; ACopy: Boolean = True): TLapeType;
 begin
   if (Typ <> nil) then
   begin
+    if (not ACopy) then
+      SetUniqueTypeID(Typ);
     if (AName <> '') then
       Typ.Name := AName;
     if (Length(FGlobalDeclarations.getByName(Typ.Name)) > 0) then
@@ -3552,4 +3590,4 @@ begin
 end;
 
 end.
-
+

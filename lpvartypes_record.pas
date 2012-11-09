@@ -200,6 +200,7 @@ begin
   with TLapeType_Record(Result) do
   begin
     copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    TypeID := Self.TypeID;
     FInit := Self.FInit;
     FSize := Self.FSize;
   end;
@@ -462,6 +463,7 @@ type
 begin
   Result := TLapeClassType(Self.ClassType).Create(FMethod, FCompiler, Name, @_DocPos);
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_SetterMethod.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;

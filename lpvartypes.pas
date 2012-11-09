@@ -226,6 +226,8 @@ type
     function getFinalization: Boolean; virtual;
     function getAsString: lpString; virtual;
   public
+    TypeID: Integer;
+
     constructor Create(ABaseType: ELapeBaseType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; virtual;
 
@@ -664,6 +666,9 @@ function ValidFieldName(Field: TResVar): Boolean; overload; {$IFDEF Lape_Inline}
 
 const
   BigLock = 256;
+
+  TypeID_Uknown = Ord(Low(ELapeBaseType)) - 1;
+  TypeID_User = Ord(High(ELapeBaseType)) + 1;
 
   NullResVar: TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpNone;  GlobalVar: nil));
   VarResVar:  TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpVar;   StackVar : nil));
@@ -1291,6 +1296,7 @@ end;
 constructor TLapeType.Create(ABaseType: ELapeBaseType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited Create(AName, ADocPos);
+  TypeID := TypeID_Uknown;
 
   FBaseType := ABaseType;
   FCompiler := ACompiler;
@@ -1357,6 +1363,7 @@ function TLapeType.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolea
 begin
   Result := (Other = Self) or (
     (Other <> nil) and
+    (TypeID = Other.TypeID) and
     ((not ContextOnly) or (ClassType = Other.ClassType)) and
     (Other.BaseType = BaseType) and
     (Other.Size = Size) and
@@ -1375,6 +1382,7 @@ type
 begin
   Result := TLapeClassType(Self.ClassType).Create(FBaseType, FCompiler, Name, @_DocPos);
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType.NewGlobalVarP(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -1933,6 +1941,7 @@ function TLapeType_Type.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 begin
   Result := TLapeTTypeClass(Self.ClassType).Create(FTType, FCompiler, Name, @_DocPos);
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_TypeEnum.CanHaveChild: Boolean;
@@ -1982,6 +1991,7 @@ type
 begin
   Result := TLapeClassType(Self.ClassType).Create(FGetter, FSetter, FCompiler, Name, @_DocPos);
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_Pointer.getAsString: lpString;
@@ -2000,7 +2010,7 @@ end;
 
 function TLapeType_Pointer.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
 begin
-  if (Other <> nil) and (Other.BaseType = BaseType) and ContextOnly then
+  if (Other <> nil) and (Other.TypeID = TypeID) and (Other.BaseType = BaseType) and ContextOnly then
     Result := (not HasType()) or (not TLapeType_Pointer(Other).HasType()) or inherited
   else
     Result := inherited;
@@ -2046,6 +2056,7 @@ type
 begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, FPType, Name, @_DocPos);
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_Pointer.NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil; AsValue: Boolean = True): TLapeGlobalVar;
@@ -2342,6 +2353,7 @@ begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, FParams, Res, Name, @_DocPos);
 
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.TypeID := TypeID;
   Result.FBaseType := FBaseType;
 end;
 
@@ -2354,7 +2366,7 @@ end;
 
 function TLapeType_Method.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
 begin
-  Result := (Other <> nil) and (Other is TLapeType_Method) and EqualParams(Other as TLapeType_Method, ContextOnly);
+  Result := (Other <> nil) and (Other.TypeID = TypeID) and (Other is TLapeType_Method) and EqualParams(Other as TLapeType_Method, ContextOnly);
   if Result and (not ContextOnly) then
     Result := (Other.BaseType = BaseType);
 end;
@@ -2652,6 +2664,7 @@ begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, FObjectType, FParams, Res, Name, @_DocPos);
 
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.TypeID := TypeID;
   Result.FBaseType := FBaseType;
 end;
 
@@ -2679,6 +2692,7 @@ type
 begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, Name, @_DocPos);
   Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.TypeID := TypeID;
 
   TLapeType_OverloadedMethod(Result).FOfObject := FOfObject;
 end;
@@ -4188,4 +4202,4 @@ initialization
 finalization
   EmptyStackInfo.Free();
 end.
-
+
