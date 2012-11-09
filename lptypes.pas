@@ -1192,7 +1192,7 @@ var
   a: TTArray;
   i: Integer;
 begin
-  Sort := Sort and (SizeOf(_T) in [SizeOf(UInt8), SizeOf(UInt16), SizeOf(UInt32), SizeOf(UInt64)]);
+  Sort := Sort and (Byte(SizeOf(_T)) in [SizeOf(UInt8), SizeOf(UInt16), SizeOf(UInt32), SizeOf(UInt64)]);
   if (FSorted <> Sort) then
   begin
     FSorted := Sort;

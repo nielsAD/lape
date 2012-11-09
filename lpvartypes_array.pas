@@ -1151,6 +1151,7 @@ end;
 function TLapeType_ShortString.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
   EvalProc: TLapeEvalProc;
+  tmpString: TLapeGlobalVar;
 begin
   Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType is TLapeType_Pointer));
@@ -1166,18 +1167,17 @@ begin
     begin
       if (FRange.Hi < High(UInt8)) then
       begin
-        Result := FCompiler.getBaseType(ltShortString).NewGlobalVarP();
-        Result := Result.VarType.EvalConst(Op, Result, Right, Flags);
+        tmpString := FCompiler.getBaseType(ltShortString).NewGlobalVarP();
+        Result := tmpString.VarType.EvalConst(op_Assign, tmpString, Right, Flags);
       end
       else
         Result := inherited;
 
       if (Result <> nil) and Result.HasType() and (Result.VarType is TLapeType_ShortString) and (FRange.Hi <> TLapeType_ShortString(Result.VarType).Range.Hi) then
-        with Result do
-        begin
-          Result := EvalConst(op_Assign, Left, Result, []);
-          Free();
-        end;
+      begin
+        Result := EvalConst(op_Assign, Left, Result, []);
+        tmpString.Free();
+      end;
     end
   else
     Result := inherited;
@@ -1207,7 +1207,7 @@ begin
       begin
         tmpString := FCompiler.getTempStackVar(ltShortString);
         FCompiler.getDestVar(Dest, tmpString, op_Unknown);
-        Result := tmpString.VarType.Eval(Op, Dest, tmpString, Right, Flags, Offset, Pos)
+        Result := tmpString.VarType.Eval(op_Assign, Dest, tmpString, Right, Flags, Offset, Pos)
       end
       else
         Result := inherited;

@@ -25,7 +25,7 @@
         Ported from the Ada language implementation in September 2007
         by John Walker.
 		
-		Modified to compile with Lape.
+        Modified to compile with Lape.
 }
 
 type
