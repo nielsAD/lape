@@ -598,6 +598,11 @@ function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}i
 function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
 function PointerToString(const p: Pointer): lpString;
+{$IF NOT(DECLARED(UIntToStr))}
+function UIntToStr(i: UInt32): lpString; inline; overload;
+function UIntToStr(i: UInt64): lpString; inline; overload;
+{$DEFINE DoUIntToStr}
+{$IFEND}
 
 function VarTypeToVType(v: TVarType): SizeInt;
 function VariantToVarRec(const v: Variant): TVarRec; overload;
@@ -703,6 +708,18 @@ begin
   else
     Result := '0x'+IntToHex(PtrUInt(p^), 1);
 end;
+
+{$IFDEF DoUIntToStr}
+function UIntToStr(i: UInt32): lpString; inline; overload;
+begin
+  Result := IntToStr(i);
+end;
+
+function UIntToStr(i: UInt64): lpString; inline; overload;
+begin
+  Result := IntToStr(i);
+end;
+{$ENDIF}
 
 function VarTypeToVType(v: TVarType): SizeInt;
 begin

@@ -149,7 +149,7 @@ type
     function setTok(ATok: EParserToken): EParserToken; virtual;
     function getTokString: lpString; virtual; abstract;
     function getTokInt: Integer; virtual;
-    function getTokInt64: Int64; virtual;
+    function getTokUInt64: UInt64; virtual;
     function getTokFloat: Extended; virtual;
     function getTokChar: WideChar; virtual;
     function getTokLen: Integer; virtual;
@@ -182,7 +182,7 @@ type
     property Tok: EParserToken read FTok;
     property TokString: lpString read getTokString;
     property TokInteger: Integer read getTokInt;
-    property TokInt64: Int64 read getTokInt64;
+    property TokUInt64: UInt64 read getTokUInt64;
     property TokFloat: Extended read getTokFloat;
     property TokChar: WideChar read getTokChar;
     property TokStart: Integer read FTokStart;
@@ -898,7 +898,7 @@ begin
     '0'..'9':
       begin
         Char := getChar(1);
-        while (Char in ['0'..'9']) do
+        while (Char in ['0'..'9', '_']) do
         begin
           Inc(FPos);
           Char := getChar(1);
@@ -910,7 +910,7 @@ begin
         begin
           Inc(FPos, 2);
           Char := getChar(1);
-          while (Char in ['0'..'9']) do
+          while (Char in ['0'..'9', '_']) do
           begin
             Inc(FPos);
             Char := getChar(1);
@@ -918,7 +918,7 @@ begin
           if (Char in ['e', 'E']) and (getChar(2) in ['+', '-']) and (getChar(3) in ['0'..'9']) then
           begin
             Inc(FPos, 3);
-            while (getChar(1) in ['0'..'9']) do
+            while (getChar(1) in ['0'..'9', '_']) do
               Inc(FPos);
           end;
 
@@ -930,7 +930,7 @@ begin
         if (getChar(1) in ['0'..'9', 'A'..'F', 'a'..'f']) then
         begin
           Inc(FPos);
-          while (getChar(1) in ['0'..'9', 'A'..'F', 'a'..'f']) do Inc(FPos);
+          while (getChar(1) in ['0'..'9', 'A'..'F', 'a'..'f', '_']) do Inc(FPos);
           Result := setTok(tk_typ_Integer_Hex);
         end
         else
@@ -941,7 +941,7 @@ begin
         if (getChar(1) in ['0'..'1']) then
         begin
           Inc(FPos);
-          while (getChar(1) in ['0'..'1']) do Inc(FPos);
+          while (getChar(1) in ['0'..'1', '_']) do Inc(FPos);
           Result := setTok(tk_typ_Integer_Bin);
         end
         else
@@ -1032,11 +1032,11 @@ end;
 
 function TLapeTokenizerBase.getTokInt: Integer;
 begin
-  Result := getTokInt64();
+  Result := Integer(getTokUInt64());
 end;
 
-function TLapeTokenizerBase.getTokInt64: Int64;
-  function Bin2Dec(s: lpString): Int64;
+function TLapeTokenizerBase.getTokUInt64: UInt64;
+  function Bin2Dec(s: lpString): UInt64;
   var
     i: Integer;
   begin
@@ -1044,20 +1044,21 @@ function TLapeTokenizerBase.getTokInt64: Int64;
     if (Length(s) > 0) and (s[1] <> '%') then
       s := '%' + s;
     for i := 2 to Length(s) do
-      Result := (Result shl 1) + Int64(Ord(s[i])) - Int64(Ord('0'));
+      Result := (Result shl 1) + UInt64(Ord(s[i])) - UInt64(Ord('0'));
   end;
+var
+  TokStr: string;
 begin
+  TokStr := StringReplace(getTokString(), '_', '', [rfReplaceAll]);
   case FTok of
-    {StrToInt should take care of hex!
-    tk_typ_Integer_Hex: Result := Hex2Dec(getTokString());}
-    tk_typ_Integer_Bin: Result := Bin2Dec(getTokString());
-    else Result := StrToInt64Def(getTokString(), -1);
+    tk_typ_Integer_Bin: Result := Bin2Dec(TokStr);
+    else Result := StrToUInt64Def(TokStr, UInt64(-1));
   end;
 end;
 
 function TLapeTokenizerBase.getTokFloat: Extended;
 begin
-  Result := StrToFloatDotDef(getTokString(), -1);
+  Result := StrToFloatDotDef(StringReplace(getTokString(), '_', '', [rfReplaceAll]), -1);
 end;
 
 function TLapeTokenizerBase.getTokChar: WideChar;

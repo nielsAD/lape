@@ -442,6 +442,7 @@ type
     constructor Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload;
     constructor Create(AStr: lpString; ASource: TLapeTree_Base); overload;
     constructor Create(AValue: Int64; ASource: TLapeTree_Base); overload;
+    constructor Create(AValue: UInt64; ASource: TLapeTree_Base); overload;
   end;
 
   TLapeTree_Float = class(TLapeTree_GlobalVar)
@@ -4170,7 +4171,7 @@ end;
 constructor TLapeTree_Integer.Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getConstant(AStr, ltNativeInt), ACompiler, ADocPos);
+  inherited Create(ACompiler.getConstant(StringReplace(AStr, '_', '', [rfReplaceAll]), ltNativeInt), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Integer.Create(AStr: lpString; ASource: TLapeTree_Base);
@@ -4185,10 +4186,15 @@ begin
   Create(IntToStr(AValue), ASource);
 end;
 
+constructor TLapeTree_Integer.Create(AValue: UInt64; ASource: TLapeTree_Base);
+begin
+  Create(UIntToStr(AValue), ASource);
+end;
+
 constructor TLapeTree_Float.Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getConstant(AStr, ltExtended), ACompiler, ADocPos);
+  inherited Create(ACompiler.getConstant(StringReplace(AStr, '_', '', [rfReplaceAll]), ltExtended), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Float.Create(AStr: lpString; ASource: TLapeTree_Base);
@@ -5420,4 +5426,4 @@ begin
 end;
 
 end.
-
+

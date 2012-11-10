@@ -399,18 +399,6 @@ begin
   UniqueString(PUnicodeString(Params^[0])^);
 end;
 
-{$IF NOT(DECLARED(UIntToStr))}
-function UIntToStr(i: UInt32): lpString; inline; overload;
-begin
-  Result := IntToStr(i);
-end;
-
-function UIntToStr(i: UInt64): lpString; inline; overload;
-begin
-  Result := IntToStr(i);
-end;
-{$IFEND}
-
 procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := '*UNKNOWN*';
@@ -682,4 +670,4 @@ finalization
 end.
 
 
-
+
