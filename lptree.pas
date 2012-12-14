@@ -4216,7 +4216,7 @@ end;
 
 constructor TLapeTree_String.Create(AValue: UnicodeString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  inherited Create(AValue,ltUnicodeString, ACompiler, ADocPos);
+  inherited Create(AValue, ltUnicodeString, ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_String.Create(AValue: lpString; ASource: TLapeTree_Base);

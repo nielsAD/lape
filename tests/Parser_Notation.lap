@@ -3,13 +3,15 @@
 begin
   Assert($FF = 255,          'Hex 255');
   Assert($ABCDEF = 11259375, 'Hex ABCDEF');
-  Assert($ABCDEF = $abcdef,  'Hex abcdef');
+  Assert($ABCDEF = $abc_def, 'Hex abcdef');
 
-  Assert(%11111111 = 255, 'Binary 255');
-  Assert(%10 = 2,         'Binary 1');
+  Assert(%11111111  = 255, 'Binary 255');
+  Assert(%1111_1111 = 255, 'Binary underscore');
+  Assert(%10 = 2,          'Binary 1');
 
-  Assert(1.0E+1 = 10,  'Scientific+');
-  Assert(1.0E-1 = 0.1, 'Scientific-');
+  Assert(1.0E+1 = 10,     'Scientific+');
+  Assert(1.0E-1 = 0.1,    'Scientific-');
+  Assert(1.0_1E+1 = 10.1, 'Scientific underscore');
 
   Assert(#$68#$6F#$69 = 'hoi', 'Hex Char');
   Assert('ho'#105 = 'hoi',     'String+Char');

@@ -91,12 +91,12 @@ procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of
 
 implementation
 
-{$IFDEF Delphi}
-function ReturnAddr: Pointer;
+{$IF DEFINED(Delphi) AND (CompilerVersion < 21.00)}
+function ReturnAddress: Pointer;
 asm
   MOV  EAX, [EBP+4]
 end;
-{$ENDIF}
+{$IFEND}
 
 procedure _LapeException(Msg: lpString); inline;
 {$IFDEF FPC}
@@ -105,7 +105,7 @@ begin
 end;
 {$ELSE}
 begin
-  raise lpException.Create(Msg) at ReturnAddr;
+  raise lpException.Create(Msg) at ReturnAddress;
 end;
 {$ENDIF}
 
