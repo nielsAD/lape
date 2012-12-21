@@ -70,7 +70,7 @@ type
 
     constructor Create(AABI: TFFIABI = FFI_DEFAULT_ABI); reintroduce; overload;
     constructor Create(ArgTypes: array of TFFITypeManager; ResType: TFFITypeManager = nil; AABI: TFFIABI = FFI_DEFAULT_ABI); overload;
-    constructor Create(ArgTypes: array of TFFIType; ResType: TFFIType = nil; AABI: TFFIABI = FFI_DEFAULT_ABI); overload;
+    constructor Create(ArgTypes: array of TFFIType; ResType: TFFIType; AABI: TFFIABI = FFI_DEFAULT_ABI); overload;
     destructor Destroy; override;
 
     procedure addArg(Arg: TFFITypeManager; DoManage: Boolean = True; TakePtr: Boolean = False); overload;
@@ -339,7 +339,7 @@ begin
     addArg(ArgTypes[i]);
 end;
 
-constructor TFFICifManager.Create(ArgTypes: array of TFFIType; ResType: TFFIType = nil; AABI: TFFIABI = FFI_DEFAULT_ABI);
+constructor TFFICifManager.Create(ArgTypes: array of TFFIType; ResType: TFFIType; AABI: TFFIABI = FFI_DEFAULT_ABI);
 var
   i: Integer;
 begin
