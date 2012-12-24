@@ -1,0 +1,28 @@
+{$assertions on}
+
+type
+  t1 = record
+    a: Integer;
+  end;
+
+  t2 = record(t1)
+    b: Integer;
+  end;
+
+function t1.getA: Integer;
+begin
+  Result := a + 1;
+end;
+
+function t2.getA: Integer; override;
+begin
+  Result := inherited() - 1;
+end;
+
+var
+  a: t1 = [1];
+  b: t2 = [2, 3];
+begin
+  Assert(a.getA() = 2);
+  Assert(b.getA() = 2);
+end;

@@ -1560,16 +1560,28 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
   procedure ParseRecord(IsPacked: Boolean = False);
   var
     i: Integer;
+    IsRecord: Boolean;
     Rec: TLapeType_Record absolute Result;
     FieldType: TLapeType;
     Identifiers: TStringArray;
   begin
-    if (Tokenizer.Tok = tk_kw_Record) then
+    IsRecord := Tokenizer.Tok = tk_kw_Record;
+
+    Next();
+    if (Tokenizer.Tok = tk_sym_ParenthesisOpen) then
+    begin
+      FieldType := ParseType(nil, addToStackOwner, ScopedEnums);
+      if (not (FieldType is TLapeType_Record)) or (IsRecord <> (FieldType.BaseType = ltRecord)) then
+        LapeException(lpeUnknownParent, Tokenizer.DocPos);
+      Tokenizer.Expect(tk_sym_ParenthesisClose, True, True);
+
+      Rec := FieldType.CreateCopy(True) as TLapeType_Record;
+    end
+    else if IsRecord then
       Rec := TLapeType_Record.Create(Self, nil, '', getPDocPos())
     else
       Rec := TLapeType_Union.Create(Self, nil, '', getPDocPos());
 
-    Next();
     repeat
       Identifiers := ParseIdentifierList();
       Expect(tk_sym_Colon, False, False);

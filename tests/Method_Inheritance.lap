@@ -1,0 +1,52 @@
+{$assertions on}
+
+type
+  ta = record
+    a: string;
+  end;
+
+  tb = ta;
+  tc = type ta;
+
+function ta.test: string;
+begin
+  Result := a + 'a';
+end;
+
+function tb.test: string; override;
+begin
+  Result := inherited() + 'b';
+end;
+
+function tc.test: string; override;
+begin
+  Result := inherited() + 'c';
+end;
+
+type
+  td = tc;
+  te = type tc;
+
+function td.test: string; override;
+begin
+  Result := inherited() + 'd';
+end;
+
+function te.test: string; override;
+begin
+  Result := inherited() + 'e';
+end;
+
+var
+  a: ta = ['1'];
+  b: tb = ['2'];
+  c: tc = ['3'];
+  d: td = ['4'];
+  e: te = ['5'];
+begin
+  Assert(a.test() = '1ab',    'a');
+  Assert(b.test() = '2ab',    'b');
+  Assert(c.test() = '3abcd',  'c');
+  Assert(d.test() = '4abcd',  'd');
+  Assert(e.test() = '5abcde', 'e');
+end;
