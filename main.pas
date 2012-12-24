@@ -55,7 +55,7 @@ end;
 procedure MyWrite(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   with TForm1(Params^[0]) do
-    m.Text := m.Text + PlpString(Params^[1])^;
+    m.Text := m.Text + {$IF DEFINED(Lape_Unicode)}UTF8Encode(PlpString(Params^[1])^){$ELSE}PlpString(Params^[1])^{$IFEND};
   Write(PlpString(Params^[1])^);
 end;
 
@@ -93,10 +93,10 @@ begin
   Compiler := nil;
   with Form1 do
     try
-      Parser := TLapeTokenizerString.Create(e.Lines.Text);
+      Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND});
       Compiler := TLapeCompiler.Create(Parser);
 
-      InitializePascalScriptBasics(Compiler);
+      InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
       ExposeGlobals(Compiler);
 
       Compiler.addGlobalFunc('procedure Integer.test;', @IntTest);
@@ -121,7 +121,7 @@ begin
 
       try
         if Disassemble then
-          DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.getByClass(TLapeGlobalVar), Compiler.GlobalDeclarations.getByClass(TLapeGlobalVar)));
+          DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.getByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.getByClass(TLapeGlobalVar, bTrue)));
 
         if Run then
         begin

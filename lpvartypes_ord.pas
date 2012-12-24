@@ -420,7 +420,7 @@ begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, FVarType, Name, @_DocPos);
   with TLapeType_SubRange(Result) do
   begin
-    copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
   end;
@@ -602,7 +602,7 @@ begin
 
   with TLapeType_Enum(Result) do
   begin
-    copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
   end;
@@ -755,7 +755,7 @@ begin
 
   with TLapeType_Bool(Result) do
   begin
-    copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
 
@@ -913,7 +913,7 @@ type
   TLapeClassType = class of TLapeType_Set;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, Name, @_DocPos);
-  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;
 end;
 

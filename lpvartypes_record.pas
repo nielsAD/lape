@@ -199,7 +199,7 @@ begin
 
   with TLapeType_Record(Result) do
   begin
-    copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FInit := Self.FInit;
     FSize := Self.FSize;
@@ -213,7 +213,7 @@ end;
 
 function TLapeType_Record.HasChild(AName: lpString): Boolean;
 begin
-  Result := FFieldMap.ExistsKey(AName) or HasSubDeclaration(AName);
+  Result := FFieldMap.ExistsKey(AName) or HasSubDeclaration(AName, bTrue);
 end;
 
 function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
@@ -462,7 +462,7 @@ type
   TLapeClassType = class of TLapeType_SetterMethod;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FMethod, FCompiler, Name, @_DocPos);
-  Result.copyManagedDecls(FManagedDecls, not DeepCopy);
+  Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;
 end;
 

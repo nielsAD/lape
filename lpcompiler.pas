@@ -1417,6 +1417,8 @@ begin
             Result.Method.Name := FuncName;
             OldDeclaration := TLapeGlobalVar(OldDeclaration).CreateCopy(False);
           end;
+
+          setMethodDefaults(OldDeclaration as TLapeGlobalVar, TLapeGlobalVar(OldDeclaration).VarType as TLapeType_Method);
           OldDeclaration.Name := 'inherited';
           OldDeclaration := addLocalDecl(OldDeclaration);
         end;
@@ -3245,7 +3247,7 @@ begin
   begin
     if (AName <> '') then
       AVar.Name := AName;
-    if (Length(FGlobalDeclarations.getByName(AVar.Name)) > 0) then
+    if (Length(FGlobalDeclarations.getByName(AVar.Name, bTrue)) > 0) then
       LapeExceptionFmt(lpeDuplicateDeclaration, [AVar.Name]);
     AVar.isConstant := False;
     FGlobalDeclarations.addDeclaration(AVar);
@@ -3381,7 +3383,7 @@ begin
       SetUniqueTypeID(Typ);
     if (AName <> '') then
       Typ.Name := AName;
-    if (Length(FGlobalDeclarations.getByName(Typ.Name)) > 0) then
+    if (Length(FGlobalDeclarations.getByName(Typ.Name, bTrue)) > 0) then
       LapeExceptionFmt(lpeDuplicateDeclaration, [Typ.Name]);
     FGlobalDeclarations.addDeclaration(Typ);
   end;

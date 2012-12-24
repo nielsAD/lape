@@ -223,13 +223,13 @@ type
           Continue;
 
         if (Decls.Items[i] is TLapeType) then
-          Result := Result + TraverseGlobals(TLapeType(Decls.Items[i]).ManagedDecls, Callback, n)
+          Result := Result + TraverseGlobals(TLapeType(Decls.Items[i]).ManagedDeclarations, Callback, n)
         else if (Decls.Items[i] is TLapeGlobalvar) then
           with TLapeGlobalVar(Decls.Items[i]) do
           begin
             Result := Result + Callback(TLapeGlobalVar(Decls.Items[i]), n, Compiler);
             if (VarType is TLapeType_Type) or (VarType is TLapeType_OverloadedMethod) then
-              Result := Result + TraverseGlobals(VarType.ManagedDecls, Callback, n);
+              Result := Result + TraverseGlobals(VarType.ManagedDeclarations, Callback, n);
           end;
       except
         {catch exception}

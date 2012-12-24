@@ -123,7 +123,7 @@ begin
   Result := TLapeClassType(Self.ClassType).Create(FPType, FCompiler, Name, @_DocPos);
   with TLapeType_DynArray(Result) do
   begin
-    copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
   end;
@@ -717,7 +717,7 @@ begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FPType, FCompiler, Name, @_DocPos);
   with TLapeType_StaticArray(Result) do
   begin
-    copyManagedDecls(Self.ManagedDecls, not DeepCopy);
+    inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
   end;

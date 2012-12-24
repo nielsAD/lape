@@ -2212,7 +2212,7 @@ begin
 
   _Write := ACompiler['_write'];
   if (_Write <> nil) and (_Write.VarType is TLapeType_OverloadedMethod) then
-    _Write := _Write.VarType.ManagedDecls.Items[0] as TLapeGlobalVar;
+    _Write := _Write.VarType.ManagedDeclarations.Items[0] as TLapeGlobalVar;
 
   Assert(_Write <> nil);
   setIdent(TLapeTree_GlobalVar.Create(_Write, Self));
@@ -2263,7 +2263,7 @@ begin
 
   _WriteLn := FCompiler['_writeln'];
   if (_WriteLn <> nil) and (_WriteLn.VarType is TLapeType_OverloadedMethod) then
-    _WriteLn := _WriteLn.VarType.ManagedDecls.Items[0] as TLapeGlobalVar;
+    _WriteLn := _WriteLn.VarType.ManagedDeclarations.Items[0] as TLapeGlobalVar;
   Assert(_WriteLn <> nil);
 
   with TLapeTree_Invoke.Create(_WriteLn, Self) do
@@ -3138,7 +3138,7 @@ begin
   end;
 
   if (_ArraySetLength <> nil) and (_ArraySetLength.VarType is TLapeType_OverloadedMethod) then
-    _ArraySetLength := _ArraySetLength.VarType.ManagedDecls.Items[0] as TLapeGlobalVar;
+    _ArraySetLength := _ArraySetLength.VarType.ManagedDeclarations.Items[0] as TLapeGlobalVar;
   Assert(_ArraySetLength <> nil);
 
   try
