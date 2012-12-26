@@ -1,0 +1,27 @@
+{$assertions on}
+
+type
+  TBigArray = array[1..3000] of Byte;
+  TBigArrayArray = array of TBigArray;
+
+const
+  fill: TBigArray = [Low(TBigArray)..High(TBigArray)];
+
+var
+  bigAA: TBigArrayArray;
+
+procedure AddA(ar: TBigArray);
+begin
+  setLength(bigAA, Length(bigAA) + 1);
+  bigAA[High(bigAA)] := ar;
+end;
+
+begin
+  Assert(Length(bigAA) = 0);
+
+  for 1 to 3 do
+    AddA(fill);
+
+  Assert(Length(bigAA) = 3);
+  WriteLn(bigAA);
+end.

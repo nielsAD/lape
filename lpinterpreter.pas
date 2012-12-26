@@ -184,15 +184,22 @@ var
     OldLen: UInt32;
   begin
     if (VarStackLen + Size > UInt32(Length(VarStack))) then
-    begin
-      OldLen := VarStackLen - VarStackPos;
-      ExpandVarStack(Size + OldLen);
-      with VarStackStack[VarStackIndex - 1] do
+      if (VarStackPos = 0) then
       begin
-        Dec(Pos, OldLen);
-        Move(Stack[Pos], VarStack[0], OldLen);
-      end;
-    end
+        Inc(VarStackLen, Size);
+        SetLength(VarStack, VarStackLen);
+        VarStackStack[VarStackIndex].Stack := VarStack;
+      end
+      else
+      begin
+        OldLen := VarStackLen - VarStackPos;
+        ExpandVarStack(Size + OldLen);
+        with VarStackStack[VarStackIndex - 1] do
+        begin
+          Dec(Pos, OldLen);
+          Move(Stack[Pos], VarStack[0], OldLen);
+        end;
+      end
     else
       Inc(VarStackLen, Size);
   end;
