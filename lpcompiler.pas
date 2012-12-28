@@ -857,6 +857,8 @@ begin
   Directive := LowerCase(Directive);
   if (Directive = 'ifdef') or (Directive = 'ifndef') then
     pushConditional((not InIgnore()) and (HasDefine(Trim(Argument)) xor (Directive = 'ifndef')), Sender.DocPos)
+  else if (Directive = 'ifdecl') or (Directive = 'ifndecl') then
+    pushConditional((not InIgnore()) and (hasDeclaration(Trim(Argument)) xor (Directive = 'ifndecl')), Sender.DocPos)
   else if (Directive = 'else') then
     switchConditional()
   else if (Directive = 'endif') then

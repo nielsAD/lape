@@ -1,0 +1,21 @@
+var
+  Bar = False;
+begin
+  WriteLn('Hai');
+  
+  {$IFDECL Foo}
+    {$IFDECL Bar}
+      WriteLn('Hoi');
+    {$ELSE}
+      WriteLn('Hey');
+    {$ENDIF}
+  {$ELSE}
+    WriteLn('Hi');
+  {$ENDIF}
+
+  {$IFDECL Bar}
+    WriteLn('Bye');
+  {$ENDIF}
+  
+  WriteLn('Zonk');
+end.
