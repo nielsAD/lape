@@ -59,7 +59,7 @@ begin
 
     if (psiUselessTypes in Initialize) then
     begin
-      addGlobalType(getPointerType({$IFDEF Delphi}ltUnicodeString{$ELSE}ltAnsiString{$ENDIF}).createCopy(), 'NativeString');
+      addGlobalType(getPointerType({$IFDEF Lape_Unicode}ltUnicodeString{$ELSE}ltAnsiString{$ENDIF}).createCopy(), 'NativeString');
       addGlobalType(getPointerType(ltString).createCopy(), 'AnyString');
       addGlobalType(getPointerType(ltString).createCopy(), 'tbtString');
       addGlobalType(getPointerType(ltPointer).createCopy(), '___Pointer');
@@ -107,7 +107,7 @@ end;
 function ExposeGlobals__GetPtr(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 begin
   Result := '';
-  if (not v.HasType()) or MethodOfObject(v.VarType) then
+  if (not v.HasType()) or (v.VarType.EvalRes(op_Addr) = nil) or MethodOfObject(v.VarType) then
     Exit;
 
   if v.Writeable then
@@ -125,7 +125,7 @@ end;
 function ExposeGlobals__GetName(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 begin
   Result := '';
-  if (not v.HasType()) or MethodOfObject(v.VarType) then
+  if (not v.HasType()) or (v.VarType.EvalRes(op_Addr) = nil) or MethodOfObject(v.VarType) then
     Exit;
 
   if v.Writeable then
@@ -167,7 +167,7 @@ var
   i: Integer;
 begin
   Result := '';
-  if (not v.HasType()) or (not  (v.VarType is TLapeType_Method)) or MethodOfObject(v.VarType) then
+  if (not v.HasType()) or (not (v.VarType is TLapeType_Method)) or MethodOfObject(v.VarType) then
     Exit;
 
   AName := LapeCase(AName);
@@ -196,45 +196,52 @@ begin
   end;
 end;
 
-procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean);
 type
   TTraverseCallback = function(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 
-  function TraverseGlobals(Decls: TLapeDeclarationList; Callback: TTraverseCallback; BaseName: lpString = ''): lpString;
-  var
-    i: Integer;
-    n: lpString;
-  begin
-    Result := '';
-    for i := 0 to Decls.Items.Count - 1 do
-      with Decls.Items[i] do
-      try
-        if (Name = '') then
-          if (BaseName = '') then
-            Continue
-          else
-            n := BaseName + '[' + IntToStr(i) + ']'
-        else if (BaseName <> '') then
-          n := BaseName + '.' + Name
+function TraverseGlobals(Compiler: TLapeCompiler; Callback: TTraverseCallback; BaseName: lpString = ''; Decls: TLapeDeclarationList = nil): lpString;
+var
+  i: Integer;
+  n: lpString;
+begin
+  Result := '';
+  if (Decls = nil) then
+    if (Compiler = nil) then
+      Exit
+    else
+      Decls := Compiler.GlobalDeclarations;
+
+  for i := 0 to Decls.Items.Count - 1 do
+    with Decls.Items[i] do
+    try
+      if (Name = '') then
+        if (BaseName = '') then
+          Continue
         else
-          n := Name;
+          n := BaseName + '[' + IntToStr(i) + ']'
+      else if (BaseName <> '') then
+        n := BaseName + '.' + Name
+      else
+        n := Name;
 
-        if (n = '') or (n[1] = '!') then
-          Continue;
+      if (n = '') or (n[1] = '!') then
+        Continue;
 
-        if (Decls.Items[i] is TLapeType) then
-          Result := Result + TraverseGlobals(TLapeType(Decls.Items[i]).ManagedDeclarations, Callback, n)
-        else if (Decls.Items[i] is TLapeGlobalvar) then
-          with TLapeGlobalVar(Decls.Items[i]) do
-          begin
-            Result := Result + Callback(TLapeGlobalVar(Decls.Items[i]), n, Compiler);
-            if (VarType is TLapeType_Type) or (VarType is TLapeType_OverloadedMethod) then
-              Result := Result + TraverseGlobals(VarType.ManagedDeclarations, Callback, n);
-          end;
-      except
-        {catch exception}
-      end;
-  end;
+      if (Decls.Items[i] is TLapeType) then
+        Result := Result + TraverseGlobals(Compiler, Callback, n, TLapeType(Decls.Items[i]).ManagedDeclarations)
+      else if (Decls.Items[i] is TLapeGlobalvar) then
+        with TLapeGlobalVar(Decls.Items[i]) do
+        begin
+          Result := Result + Callback(TLapeGlobalVar(Decls.Items[i]), n, Compiler);
+          if (VarType is TLapeType_Type) or (VarType is TLapeType_OverloadedMethod) then
+            Result := Result + TraverseGlobals(Compiler, Callback, n, VarType.ManagedDeclarations);
+        end;
+    except
+      {catch exception}
+    end;
+end;
+
+procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean);
 
   function GetGlobalPtr: lpString;
   begin
@@ -251,7 +258,7 @@ type
       {$ENDIF}
 
       Result := Result + LineEnding +
-        TraverseGlobals(Compiler.GlobalDeclarations, @ExposeGlobals__GetPtr) +
+        TraverseGlobals(Compiler, @ExposeGlobals__GetPtr) +
         'end;';
     end;
     Result := Result + 'end;';
@@ -266,7 +273,7 @@ type
     if (not HeaderOnly) then
     begin
       Result := Result + 'case Ptr of ' + LineEnding +
-        TraverseGlobals(Compiler.GlobalDeclarations, @ExposeGlobals__GetName) +
+        TraverseGlobals(Compiler, @ExposeGlobals__GetName) +
         'end;';
     end;
     Result := Result + 'end;';
@@ -287,7 +294,7 @@ type
       {$ENDIF}
 
       Result := Result + LineEnding +
-        TraverseGlobals(Compiler.GlobalDeclarations, @ExposeGlobals__GetVal) +
+        TraverseGlobals(Compiler, @ExposeGlobals__GetVal) +
         'end;';
     end;
     Result := Result + 'end;';
@@ -308,7 +315,7 @@ type
       {$ENDIF}
 
       Result := Result + LineEnding +
-        TraverseGlobals(Compiler.GlobalDeclarations, @ExposeGlobals__Invoke) +
+        TraverseGlobals(Compiler, @ExposeGlobals__Invoke) +
         'end;';
     end;
     Result := Result + 'end;';

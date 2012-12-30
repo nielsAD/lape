@@ -2218,7 +2218,7 @@ begin
   if (op in LabelOperators) then
     Result := inherited
   else
-    LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), 'label']);
+    Result := nil;
 end;
 
 function TLapeType_Label.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
