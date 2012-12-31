@@ -68,7 +68,4 @@ addGlobalFunc('function StringReplace(S, OldPattern, NewPattern: string; Flags: 
 addGlobalFunc('Function IsDelimiter(Delimiters, s: string; Index: SizeInt): EvalBool;', @_LapeIsDelimiter);
 
 addGlobalFunc('function Pos(Substr: string; Source: string): SizeInt;', @_LapePos);
-addGlobalFunc('function Copy(Source: string; Index, Size: SizeInt): string;', @_LapeCopy);
-addGlobalFunc('procedure Insert(Source: string; var s: string; Index: SizeInt);', @_LapeInsert);
-addGlobalFunc('procedure Delete(var s: string; Index, Size: SizeInt);', @_LapeDelete);
 addGlobalFunc('function StringOfChar(c: Char; l: SizeInt): string;', @_LapeStringOfChar);

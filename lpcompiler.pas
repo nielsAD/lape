@@ -564,6 +564,31 @@ end;
 
 procedure TLapeCompiler.InitBaseDefinitions;
 
+  procedure addCompilerFuncs;
+  const
+    pn = lptNormal;
+    pv = lptVar;
+  var
+    a, w, u, i, n: TLapeType;
+    gn: TlapeGlobalVar;
+  begin
+    a := getBaseType(ltAnsiString);
+    w := getBaseType(ltWideString);
+    u := getBaseType(ltUnicodeString);
+    i := getBaseType(ltInt32);
+
+    n := nil;
+    gn := nil;
+
+    addGlobalFunc([n, n, i], [pv, pv, pn], [gn, gn, gn], @_LapeMove, '!move');
+    addGlobalFunc([n], [pn], [gn], i, @_LapeHigh, '!high');
+    addGlobalFunc([n], [pn], [gn], i, @_LapeLength, '!length');
+
+    addGlobalFunc([a], [pn], [gn], i, @_LapeAStr_GetLen, '!astr_getlen');
+    addGlobalFunc([w], [pn], [gn], i, @_LapeWStr_GetLen, '!wstr_getlen');
+    addGlobalFunc([u], [pn], [gn], i, @_LapeUStr_GetLen, '!ustr_getlen');
+  end;
+
   function NewMagicMethod(GetMethod: TLapeGetOverloadedMethod; NeedFullMatch: Boolean = True): TLapeType_OverloadedMethod;
   begin
     Result := TLapeType_OverloadedMethod.Create(Self);
@@ -600,6 +625,7 @@ begin
   addBaseDefine('Lape');
   addBaseDefine('Sesquipedalian');
 
+  addCompilerFuncs();
   addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System').isConstant := True;
 
   addGlobalType(TLapeType_Label.Create(Self), '!label');
@@ -617,11 +643,41 @@ begin
   addGlobalVar(False, 'False').isConstant := True;
   addGlobalVar(nil, 'nil').isConstant := True;
 
+  addGlobalFunc('procedure _Write(s: string);', @_LapeWrite);
+  addGlobalFunc('procedure _WriteLn();', @_LapeWriteLn);
+
+  addGlobalFunc('procedure _Assert(Expr: EvalBool); overload;', @_LapeAssert);
+  addGlobalFunc('procedure _Assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
+
+  addGlobalFunc('procedure _AStr_SetLen(s: AnsiString; l: Int32);', @_LapeAStr_SetLen);
+  addGlobalFunc('procedure _WStr_SetLen(s: WideString; l: Int32);', @_LapeWStr_SetLen);
+  addGlobalFunc('procedure _UStr_SetLen(s: UnicodeString; l: Int32);', @_LapeUStr_SetLen);
+
+  addGlobalFunc('function _SStr_Copy(s: AnsiString; Start, Count: Int32): AnsiString;', @_LapeSStr_Copy);
+  addGlobalFunc('function _AStr_Copy(s: AnsiString; Start, Count: Int32): AnsiString;', @_LapeAStr_Copy);
+  addGlobalFunc('function _WStr_Copy(s: WideString; Start, Count: Int32): WideString;', @_LapeWStr_Copy);
+  addGlobalFunc('function _UStr_Copy(s: UnicodeString; Start, Count: Int32): UnicodeString;', @_LapeUStr_Copy);
+
+  addGlobalFunc('procedure _AStr_Delete(s: AnsiString; Start, Count: Int32);', @_LapeAStr_Delete);
+  addGlobalFunc('procedure _WStr_Delete(s: WideString; Start, Count: Int32);', @_LapeWStr_Delete);
+  addGlobalFunc('procedure _UStr_Delete(s: UnicodeString; Start, Count: Int32);', @_LapeUStr_Delete);
+
+  addGlobalFunc('procedure _AStr_Insert(Src: AnsiString; var Dst: AnsiString; Pos, Count: Int32);', @_LapeAStr_Insert);
+  addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: AnsiString; Pos, Count: Int32);', @_LapeWStr_Insert);
+  addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: AnsiString; Pos, Count: Int32);', @_LapeUStr_Insert);
+
+  addGlobalFunc('function GetMem(i: Int32): Pointer;', @_LapeGetMem);
+  addGlobalFunc('function AllocMem(i: Int32): Pointer;', @_LapeAllocMem);
+  addGlobalFunc('procedure FreeMem(p: Pointer);', @_LapeFreeMem);
+
+  addGlobalFunc('procedure FreeMemSize(p: Pointer; s: Int32);', @_LapeFreeMemSize);
+  addGlobalFunc('procedure ReallocMem(var p: Pointer; s: Int32);', @_LapeReallocMem);
+  addGlobalFunc('procedure FillMem(var p; s: Int32; b: UInt8 = 0);', @_LapeFillMem);
+  addGlobalFunc('procedure Move(var Src, Dst; s: Int32);', @_LapeMove);
+
   addGlobalFunc('function Assigned(p: Pointer): EvalBool;', @_LapeAssigned);
   //addGlobalFunc('procedure RaiseException(Ex: TExceptionObject); overload;', @_LapeRaise);
   addGlobalFunc('procedure RaiseException(Ex: string); overload;', @_LapeRaiseString);
-  addGlobalFunc('procedure _assert(Expr: EvalBool); overload;', @_LapeAssert);
-  addGlobalFunc('procedure _assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
 
   addGlobalFunc('procedure UniqueString(var Str: AnsiString); overload;', @_LapeAStr_Unique);
   addGlobalFunc('procedure UniqueString(var Str: WideString); overload;', @_LapeWStr_Unique);
@@ -641,7 +697,10 @@ begin
     Format(_LapeToString_Set, ['Large', Ord(High(ELapeLargeEnum))]) +
     _LapeToString_Array +
     _LapeSwap +
-    _LapeSetLength
+    _LapeSetLength +
+    _LapeCopy +
+    _LapeDelete +
+    _LapeInsert
   );
 end;
 
@@ -2801,7 +2860,11 @@ begin
   FInternalMethodMap['Low'] := TLapeTree_InternalMethod_Low;
   FInternalMethodMap['High'] := TLapeTree_InternalMethod_High;
   FInternalMethodMap['Length'] := TLapeTree_InternalMethod_Length;
+
   FInternalMethodMap['SetLength'] := TLapeTree_InternalMethod_SetLength;
+  FInternalMethodMap['Copy'] := TLapeTree_InternalMethod_Copy;
+  FInternalMethodMap['Delete'] := TLapeTree_InternalMethod_Delete;
+  FInternalMethodMap['Insert'] := TLapeTree_InternalMethod_Insert;
 
   FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
   FInternalMethodMap['Succ'] := TLapeTree_InternalMethod_Succ;
@@ -2812,27 +2875,6 @@ begin
   FInternalMethodMap['Label'] := TLapeTree_InternalMethod_Label;
   FInternalMethodMap['GoTo'] := TLapeTree_InternalMethod_GoTo;
 
-  addGlobalFunc([getBaseType(ltString)], [lptNormal], [TLapeGlobalVar(nil)], @_LapeWrite, '_write');
-  addGlobalFunc([], [], [], @_LapeWriteLn, '_writeln');
-
-  addGlobalFunc([getBaseType(ltInt32)],   [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltPointer), @_LapeGetMem, 'GetMem');
-  addGlobalFunc([getBaseType(ltInt32)],   [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltPointer), @_LapeAllocMem, 'AllocMem');
-  addGlobalFunc([getBaseType(ltPointer)], [lptNormal], [TLapeGlobalVar(nil)], @_LapeFreeMem, 'FreeMem');
-  addGlobalFunc([getBaseType(ltPointer), getBaseType(ltInt32)], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeFreeMemSize, 'FreeMemSize');
-  addGlobalFunc([getBaseType(ltPointer), getBaseType(ltInt32)], [lptVar,    lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeReallocMem, 'ReallocMem');
-  addGlobalFunc([TLapeType(nil), getBaseType(ltInt32), getBaseType(ltUInt8)], [lptVar, lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), getConstant(0, ltUInt8, False, True)], @_LapeFillMem, 'FillMem');
-  addGlobalFunc([TLapeType(nil), TLapeType(nil),       getBaseType(ltInt32)], [lptVar, lptVar,    lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeMove, 'Move');
-
-  addGlobalFunc([TLapeType(nil), TLapeType(nil), getBaseType(ltInt32)], [lptVar, lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeMove, '!move');
-  addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeHigh, '!high');
-  addGlobalFunc([TLapeType(nil)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeLength, '!length');
-
-  addGlobalFunc([getBaseType(ltAnsiString)],    [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeAStr_GetLen, '!astr_getlen');
-  addGlobalFunc([getBaseType(ltWideString)],    [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeWStr_GetLen, '!wstr_getlen');
-  addGlobalFunc([getBaseType(ltUnicodeString)], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltInt32), @_LapeUStr_GetLen, '!ustr_getlen');
-  addGlobalFunc([getBaseType(ltAnsiString),    getBaseType(ltInt32)], [lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeAStr_SetLen, '!astr_setlen');
-  addGlobalFunc([getBaseType(ltWideString),    getBaseType(ltInt32)], [lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeWStr_SetLen, '!wstr_setlen');
-  addGlobalFunc([getBaseType(ltUnicodeString), getBaseType(ltInt32)], [lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], @_LapeUStr_SetLen, '!ustr_setlen');
   setTokenizer(ATokenizer);
   Reset();
 

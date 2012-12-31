@@ -247,21 +247,6 @@ begin
   PSizeInt(Result)^ := Pos(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
-procedure _LapeCopy(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PlpString(Result)^ := Copy(PlpString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
-end;
-
-procedure _LapeInsert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  Insert(PlpString(Params^[0])^, PlpString(Params^[1])^, PSizeInt(Params^[2])^);
-end;
-
-procedure _LapeDelete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  Delete(PlpString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
-end;
-
 procedure _LapeStringOfChar(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := StringOfChar(PlpChar(Params^[0])^, PSizeInt(Params^[1])^);

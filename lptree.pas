@@ -231,6 +231,7 @@ type
 
   TLapeTree_InternalMethod_New = class(TLapeTree_InternalMethod)
   public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
@@ -300,6 +301,21 @@ type
   end;
 
   TLapeTree_InternalMethod_SetLength = class(TLapeTree_InternalMethod)
+  public
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_Copy = class(TLapeTree_InternalMethod)
+  public
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_Delete = class(TLapeTree_InternalMethod)
+  public
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_Insert = class(TLapeTree_InternalMethod)
   public
     function Compile(var Offset: Integer): TResVar; override;
   end;
@@ -2324,6 +2340,7 @@ end;
 constructor TLapeTree_InternalMethod_Assert.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited Create('_assert', ACompiler, ADocPos);
+  FForceParam := True;
 end;
 
 function TLapeTree_InternalMethod_Assert.Compile(var Offset: Integer): TResVar;
@@ -2531,6 +2548,12 @@ begin
   FCompiler.Emitter._JmpSafe(EndJump, Offset, @_DocPos);
 end;
 
+constructor TLapeTree_InternalMethod_New.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FForceParam := True;
+end;
+
 function TLapeTree_InternalMethod_New.Compile(var Offset: Integer): TResVar;
 var
   Param: TResVar;
@@ -2580,6 +2603,7 @@ end;
 constructor TLapeTree_InternalMethod_Dispose.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
+  FForceParam := True;
   FunctionOnly := False;
   ForceDefault := False;
 end;
@@ -3127,9 +3151,9 @@ begin
     LapeException(lpeInvalidEvaluation, DocPos);
 
   case Param.VarType.BaseType of
-    ltAnsiString:    _ArraySetLength := FCompiler['!astr_setlen'];
-    ltWideString:    _ArraySetLength := FCompiler['!wstr_setlen'];
-    ltUnicodeString: _ArraySetLength := FCompiler['!ustr_setlen'];
+    ltAnsiString:    _ArraySetLength := FCompiler['_astr_setlen'];
+    ltWideString:    _ArraySetLength := FCompiler['_wstr_setlen'];
+    ltUnicodeString: _ArraySetLength := FCompiler['_ustr_setlen'];
     else
     begin
       _ArraySetLength := FCompiler['_ArraySetLength'];
@@ -3197,6 +3221,19 @@ begin
     Param.Spill(1);
     Len.Spill(1);
   end;
+end;
+
+function TLapeTree_InternalMethod_Copy.Compile(var Offset: Integer): TResVar;
+begin
+
+end;
+
+function TLapeTree_InternalMethod_Delete.Compile(var Offset: Integer): TResVar;
+begin
+end;
+
+function TLapeTree_InternalMethod_Insert.Compile(var Offset: Integer): TResVar;
+begin
 end;
 
 procedure TLapeTree_InternalMethod_Succ.ClearCache;

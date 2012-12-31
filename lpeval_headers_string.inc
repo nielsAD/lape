@@ -61,7 +61,4 @@ procedure _LapeStringReplace(const Params: PParamArray; const Result: Pointer); 
 procedure _LapeIsDelimiter(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
 procedure _LapePos(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeCopy(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeInsert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeDelete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeStringOfChar(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
