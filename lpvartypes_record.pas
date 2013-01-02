@@ -166,7 +166,12 @@ begin
       if (i > 0) then
         Result := Result + ' + ' + #39', '#39;
       if (ToStr <> nil) and (ToStr.getMethod(getTypeArray(FieldType)) <> nil) then
-        Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(Param0.' + FFieldMap.Key[i] + ')';
+      begin
+        Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(';
+        if (FieldType is TLapeType_Method) then
+          Result := Result + AIA;
+        Result := Result + 'Param0.' + FFieldMap.Key[i] + ')';
+      end;
     end;
   Result := Result + ' + '#39'}'#39'; end;';
 end;
