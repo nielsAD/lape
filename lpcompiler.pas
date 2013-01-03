@@ -665,8 +665,8 @@ begin
   addGlobalFunc('procedure _UStr_Delete(var s: UnicodeString; Start: Int32; Count: Int32 = High(Int32));', @_LapeUStr_Delete);
 
   addGlobalFunc('procedure _AStr_Insert(Src: AnsiString; var Dst: AnsiString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeAStr_Insert);
-  addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: AnsiString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeWStr_Insert);
-  addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: AnsiString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeUStr_Insert);
+  addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: WideString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeWStr_Insert);
+  addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: UnicodeString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeUStr_Insert);
 
   addGlobalFunc('function GetMem(i: Int32): Pointer;', @_LapeGetMem);
   addGlobalFunc('function AllocMem(i: Int32): Pointer;', @_LapeAllocMem);

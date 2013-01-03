@@ -307,11 +307,13 @@ var
     'var'                                                                                + LineEnding +
     '  i, Len: SizeInt;'                                                                 + LineEnding +
     'begin'                                                                              + LineEnding +
-    '  if (p = nil) or (Start < 0) or (Count <= 0) then'                                 + LineEnding +
+    '  if (p = nil) or (Count <= 0) then'                                                + LineEnding +
     '    Exit;'                                                                          + LineEnding +
     ''                                                                                   + LineEnding +
     '  Len := PSizeInt(p)[-1]^' {$IFDEF FPC}+'+1'{$ENDIF}+';'                            + LineEnding +
-    '  if (Start >= Len) then'                                                           + LineEnding +
+    '  if (Start < 0) then'                                                              + LineEnding +
+    '    Start := 0'                                                                     + LineEnding +
+    '  else if (Start >= Len) then'                                                      + LineEnding +
     '    Exit'                                                                           + LineEnding +
     '  else if (Start + Int64(Count) > Len) then'                                        + LineEnding +
     '    Count := Len - Start;'                                                          + LineEnding +
@@ -332,7 +334,7 @@ var
 
   _LapeInsert: lpString =
     'procedure _ArrayInsert(Src: Pointer; var Dst: Pointer;'                             + LineEnding +
-    '  Start: Int32 = 0; Count: Int32 = 1; LenSrc, ElSize: Int32;'                       + LineEnding +
+    '  Start: Int32 = 0; Count: Int32 = 0; LenSrc, ElSize: Int32;'                       + LineEnding +
     '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
     '  Copy: private procedure(Src, Dst: Pointer));'                                     + LineEnding +
     'type'                                                                               + LineEnding +
@@ -547,21 +549,21 @@ end;
 procedure _LapeAStr_Insert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (PInt32(Params^[3])^ > 0) then
-    Delete(PAnsiString(Params^[0])^, PInt32(Params^[2])^, PInt32(Params^[3])^);
+    Delete(PAnsiString(Params^[1])^, PInt32(Params^[2])^, PInt32(Params^[3])^);
   Insert(PAnsiString(Params^[0])^, PAnsiString(Params^[1])^, PInt32(Params^[2])^);
 end;
 
 procedure _LapeWStr_Insert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (PInt32(Params^[3])^ > 0) then
-    Delete(PWideString(Params^[0])^, PInt32(Params^[2])^, PInt32(Params^[3])^);
+    Delete(PWideString(Params^[1])^, PInt32(Params^[2])^, PInt32(Params^[3])^);
   Insert(PWideString(Params^[0])^, PWideString(Params^[1])^, PInt32(Params^[2])^);
 end;
 
 procedure _LapeUStr_Insert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (PInt32(Params^[3])^ > 0) then
-    Delete(PUnicodeString(Params^[0])^, PInt32(Params^[2])^, PInt32(Params^[3])^);
+    Delete(PUnicodeString(Params^[1])^, PInt32(Params^[2])^, PInt32(Params^[3])^);
   Insert(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, PInt32(Params^[2])^);
 end;
 

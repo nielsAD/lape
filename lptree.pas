@@ -3154,9 +3154,9 @@ begin
     LapeException(lpeInvalidEvaluation, DocPos);
 
   case Param.VarType.BaseType of
-    ltAnsiString:    _ArraySetLength := FCompiler['_astr_setlen'];
-    ltWideString:    _ArraySetLength := FCompiler['_wstr_setlen'];
-    ltUnicodeString: _ArraySetLength := FCompiler['_ustr_setlen'];
+    ltAnsiString:    _ArraySetLength := FCompiler['_Astr_Setlen'];
+    ltWideString:    _ArraySetLength := FCompiler['_Wstr_Setlen'];
+    ltUnicodeString: _ArraySetLength := FCompiler['_Ustr_Setlen'];
     else
     begin
       _ArraySetLength := FCompiler['_ArraySetLength'];
@@ -3285,10 +3285,10 @@ begin
 
   try
     case ParRes.VarType.BaseType of
-      ltShortString:   _ArrayCopy := FCompiler['_sstr_copy'];
-      ltAnsiString:    _ArrayCopy := FCompiler['_astr_copy'];
-      ltWideString:    _ArrayCopy := FCompiler['_wstr_copy'];
-      ltUnicodeString: _ArrayCopy := FCompiler['_ustr_copy'];
+      ltShortString:   _ArrayCopy := FCompiler['_SStr_Copy'];
+      ltAnsiString:    _ArrayCopy := FCompiler['_AStr_Copy'];
+      ltWideString:    _ArrayCopy := FCompiler['_WStr_Copy'];
+      ltUnicodeString: _ArrayCopy := FCompiler['_UStr_Copy'];
       else
       begin
         _ArrayCopy := FCompiler['_ArrayCopy'];
@@ -3378,9 +3378,9 @@ begin
 
   ArrayType := TLapeType_DynArray(Param.VarType).PType;
   case Param.VarType.BaseType of
-    ltAnsiString:    _ArrayDelete := FCompiler['_astr_delete'];
-    ltWideString:    _ArrayDelete := FCompiler['_wstr_delete'];
-    ltUnicodeString: _ArrayDelete := FCompiler['_ustr_delete'];
+    ltAnsiString:    _ArrayDelete := FCompiler['_Astr_Delete'];
+    ltWideString:    _ArrayDelete := FCompiler['_WStr_Delete'];
+    ltUnicodeString: _ArrayDelete := FCompiler['_UStr_Delete'];
     else
     begin
       _ArrayDelete := FCompiler['_ArrayDelete'];
@@ -3414,8 +3414,101 @@ begin
 end;
 
 function TLapeTree_InternalMethod_Insert.Compile(var Offset: Integer): TResVar;
+var
+  SrcRes, DstRes: TResVar;
+  Src, Expr: TLapeTree_ExprBase;
+  wasConstant: Boolean;
+  ArrayType: TLapeType;
+  _ArrayDelete: TLapeGlobalVar;
 begin
   Result := NullResVar;
+  Dest := NullResVar;
+  Expr := nil;
+
+  if (FParams.Count < 2) or (FParams.Count > 4) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  if (not FParams[1].CompileToTempVar(Offset, DstRes)) or (not DstRes.HasType()) or
+     (not (DstRes.VarType.BaseType in LapeArrayTypes - [ltStaticArray, ltShortString]))
+  then
+    LapeException(lpeInvalidEvaluation, DocPos);
+
+  ArrayType := TLapeType_DynArray(DstRes.VarType).PType;
+  FParams[0] := TLapeTree_ExprBase(FParams[0].setExpectedType(DstRes.VarType).setExpectedType(ArrayType));
+  if (not FParams[0].CompileToTempVar(Offset, SrcRes)) or (not SrcRes.HasType()) or (ArrayType = nil) then
+    LapeException(lpeInvalidEvaluation, DocPos);
+
+  wasConstant :=  not SrcRes.Writeable;
+  if wasConstant then
+    SrcRes.Writeable := True;
+  Src := TLapeTree_ResVar.Create(SrcRes.IncLock(), FParams[0]);
+
+  try
+    case DstRes.VarType.BaseType of
+      ltAnsiString:    _ArrayDelete := FCompiler['_AStr_Insert'];
+      ltWideString:    _ArrayDelete := FCompiler['_WStr_Insert'];
+      ltUnicodeString: _ArrayDelete := FCompiler['_UStr_Insert'];
+      else
+      begin
+        _ArrayDelete := FCompiler['_ArrayInsert'];
+
+        if DstRes.VarType.Equals(SrcRes.VarType) then
+          TLapeTree_ResVar(Src).FResVar.VarType := FCompiler.getBaseType(ltPointer)
+        else if ArrayType.Equals(SrcRes.VarType) or (
+          (SrcRes.VarType is TLapeType_StaticArray) and
+          ArrayType.Equals(TLapeType_StaticArray(SrcRes.VarType).PType))
+        then
+        begin
+          Expr := TLapeTree_Operator.Create(op_Addr, Src);
+          TLapeTree_Operator(Expr).Left := Src;
+          Src := Expr;
+
+          if ArrayType.Equals(SrcRes.VarType) then
+            Expr := TLapeTree_Integer.Create(1, FParams[0])
+          else
+            Expr := nil;
+        end
+        else
+            LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], DocPos);
+
+        DstRes.VarType := FCompiler.getBaseType(ltPointer);
+      end;
+    end;
+
+    with TLapeTree_Invoke.Create(_ArrayDelete, Self) do
+    try
+      addParam(Src);
+      addParam(TLapeTree_ResVar.Create(DstRes.IncLock(), Self.FParams[1]));
+      addParam(Self.FParams[2]);
+      addParam(Self.FParams[2]);
+
+      if (not (DstRes.VarType.BaseType in LapeStringTypes)) then
+      begin
+        if (Expr = nil) then
+        begin
+          Expr := TLapeTree_InternalMethod_Length.Create(Self);
+          TLapeTree_InternalMethod_Length(Expr).addParam(TLapeTree_ResVar.Create(SrcRes.IncLock(), Self.FParams[0]));
+        end;
+        addParam(TLapeTree_ExprBase(Expr.FoldConstants()));
+
+        addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Assign', [ArrayType, ArrayType]), Self));
+      end;
+
+      Result := Compile(Offset);
+    finally
+      Self.addParam(Params[2]);
+      Self.addParam(Params[2]);
+      Free();
+    end;
+  finally
+    if wasConstant then
+      SrcRes.Writeable := False;
+
+    SrcRes.Spill(1);
+    DstRes.Spill(1);
+  end;
 end;
 
 procedure TLapeTree_InternalMethod_Succ.ClearCache;

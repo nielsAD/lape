@@ -1,0 +1,29 @@
+var
+  a: ansistring    = '1345';
+  b: widestring    = '3567';
+  c: unicodestring = '5789';
+  d: array of string = ['0', '1', '2', '3', '4'];
+  e: array of string;
+  f: array of record a: string; b: Int32; end = [['7', 7], ['8', 8], ['9', 9]];
+begin
+  Insert('23', a, 2, 10);
+  Insert('45', b, 2, 10);
+  Insert('67', c, 2, 1);
+
+  Insert('0', a);
+  Insert('90', c, 10);
+  WriteLn(a + b + c);
+
+  e := d;
+  Insert('-1', d);
+  Insert('50', d, 10);
+  Insert(['0', '0', '0'], d, 3);
+  WriteLn(e, ' <> ', d);
+
+  Insert(e, d, 1, 2);
+  WriteLn(d);
+
+  Insert(['6', 6], f);
+  Insert(['7.5', 7], f, 1, 2);
+  WriteLn(f);
+end;

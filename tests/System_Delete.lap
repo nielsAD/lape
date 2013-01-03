@@ -1,0 +1,22 @@
+{$assertions on}
+
+var
+  a: ansistring    = '12345';
+  b: widestring    = '34567';
+  c: unicodestring = '56789';
+  d: array of string = ['0', '1', '2', '3', '4'];
+  e: array of string;
+  f: array of record a: string; b: Int32; end = [['7', 7], ['8', 8], ['9', 9]];
+begin
+  Delete(a, 3);
+  Delete(b, 3);
+  Delete(c, 3, 2);
+  Assert(a + b + c = '1234569', 'a + b + c');
+
+  e := d;
+  Delete(d, 2, 1);
+  Assert(Length(e) = Length(d) + 1, 'Length');
+
+  Delete(f, 0, 2);
+  Assert(f[0].b = 9, 'f[0] <> 9');
+end;
