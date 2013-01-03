@@ -516,7 +516,7 @@ begin
   GetMethod_FixupParams(AType, AParams, AResult, True);
   if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult <> nil) or (not AParams[0].CompatibleWith(AParams[1])) then
     Exit;
-  if (not (lcoFullDisposal in FOptions)) and (not AParams[0].NeedFinalization) then
+  if (not (lcoFullDisposal in FOptions)) and (not AParams[0].NeedFinalization) and (not AParams[1].NeedFinalization) then
     Exit;
 
   if (AType = nil) then

@@ -666,7 +666,7 @@ function ValidFieldName(Field: TResVar): Boolean; overload; {$IFDEF Lape_Inline}
 const
   BigLock = 256;
 
-  TypeID_Uknown = Ord(Low(ELapeBaseType)) - 1;
+  TypeID_Unknown = Ord(Low(ELapeBaseType)) - 1;
   TypeID_User = Ord(High(ELapeBaseType)) + 1;
 
   NullResVar: TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpNone;  GlobalVar: nil));
@@ -1295,7 +1295,7 @@ end;
 constructor TLapeType.Create(ABaseType: ELapeBaseType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited Create(AName, ADocPos);
-  TypeID := TypeID_Uknown;
+  TypeID := TypeID_Unknown;
 
   FBaseType := ABaseType;
   FCompiler := ACompiler;
