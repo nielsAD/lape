@@ -660,9 +660,9 @@ begin
   addGlobalFunc('procedure _WStr_Copy(s: WideString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: WideString);', @_LapeWStr_Copy);
   addGlobalFunc('procedure _UStr_Copy(s: UnicodeString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: UnicodeString);', @_LapeUStr_Copy);
 
-  addGlobalFunc('procedure _AStr_Delete(s: AnsiString; Start: Int32; Count: Int32 = High(Int32));', @_LapeAStr_Delete);
-  addGlobalFunc('procedure _WStr_Delete(s: WideString; Start: Int32; Count: Int32 = High(Int32));', @_LapeWStr_Delete);
-  addGlobalFunc('procedure _UStr_Delete(s: UnicodeString; Start: Int32; Count: Int32 = High(Int32));', @_LapeUStr_Delete);
+  addGlobalFunc('procedure _AStr_Delete(var s: AnsiString; Start: Int32; Count: Int32 = High(Int32));', @_LapeAStr_Delete);
+  addGlobalFunc('procedure _WStr_Delete(var s: WideString; Start: Int32; Count: Int32 = High(Int32));', @_LapeWStr_Delete);
+  addGlobalFunc('procedure _UStr_Delete(var s: UnicodeString; Start: Int32; Count: Int32 = High(Int32));', @_LapeUStr_Delete);
 
   addGlobalFunc('procedure _AStr_Insert(Src: AnsiString; var Dst: AnsiString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeAStr_Insert);
   addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: AnsiString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeWStr_Insert);
