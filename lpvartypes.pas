@@ -3912,7 +3912,7 @@ begin
      (PtrCheckOnly or (AVar.VarType.EvalRes(op_cmp_Equal, AVar.VarType) <> nil))
   then
   begin
-    GlobalVars := FManagedDeclarations.getByClass(TLapeDeclarationClass(AVar.ClassType), True);
+    GlobalVars := FManagedDeclarations.getByClass(TLapeDeclarationClass(AVar.ClassType), bTrue, True);
     for i := 0 to High(GlobalVars) do
       if (AVar = GlobalVars[i]) then
         Exit(AVar)
@@ -3947,7 +3947,7 @@ begin
     Exit(AType);
 
   {$IFDEF Lape_SmallCode}
-  Types := FManagedDeclarations.getByClass(TLapeDeclarationClass(AType.ClassType), True);
+  Types := FManagedDeclarations.getByClass(TLapeDeclarationClass(AType.ClassType), bTrue, True);
   for i := 0 to High(Types) do
     if (AType = Types[i]) then
       Exit(AType)

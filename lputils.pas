@@ -12,20 +12,22 @@ unit lputils;
 interface
 
 uses
-  lpcompiler;
+  lptypes, lpvartypes, lpcompiler;
 
 type
   PSInit = (psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions, psiUselessTypes);
   PSInitSet = set of PSInit;
+  TTraverseCallback = function(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 
 procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);
+function TraverseGlobals(Compiler: TLapeCompiler; Callback: TTraverseCallback; BaseName: lpString = ''; Decls: TLapeDeclarationList = nil): lpString;
 procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean); overload;
 procedure ExposeGlobals(Compiler: TLapeCompiler); overload;
 
 implementation
 
 uses
-  lptypes, lpvartypes, lpparser, lpeval,
+  lpparser, lpeval,
   SysUtils;
 
 procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);
@@ -195,9 +197,6 @@ begin
     Result := Result + '); end;' + LineEnding;
   end;
 end;
-
-type
-  TTraverseCallback = function(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 
 function TraverseGlobals(Compiler: TLapeCompiler; Callback: TTraverseCallback; BaseName: lpString = ''; Decls: TLapeDeclarationList = nil): lpString;
 var

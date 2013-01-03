@@ -516,6 +516,8 @@ begin
   GetMethod_FixupParams(AType, AParams, AResult, True);
   if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult <> nil) or (not AParams[0].CompatibleWith(AParams[1])) then
     Exit;
+  if (not (lcoFullDisposal in FOptions)) and (not AParams[0].NeedFinalization) then
+    Exit;
 
   if (AType = nil) then
     AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptVar, lptOut], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
@@ -653,18 +655,18 @@ begin
   addGlobalFunc('procedure _WStr_SetLen(s: WideString; l: Int32);', @_LapeWStr_SetLen);
   addGlobalFunc('procedure _UStr_SetLen(s: UnicodeString; l: Int32);', @_LapeUStr_SetLen);
 
-  addGlobalFunc('function _SStr_Copy(s: AnsiString; Start, Count: Int32): AnsiString;', @_LapeSStr_Copy);
-  addGlobalFunc('function _AStr_Copy(s: AnsiString; Start, Count: Int32): AnsiString;', @_LapeAStr_Copy);
-  addGlobalFunc('function _WStr_Copy(s: WideString; Start, Count: Int32): WideString;', @_LapeWStr_Copy);
-  addGlobalFunc('function _UStr_Copy(s: UnicodeString; Start, Count: Int32): UnicodeString;', @_LapeUStr_Copy);
+  addGlobalFunc('procedure _SStr_Copy(s: ShortString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: string);', @_LapeSStr_Copy);
+  addGlobalFunc('procedure _AStr_Copy(s: AnsiString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: AnsiString);', @_LapeAStr_Copy);
+  addGlobalFunc('procedure _WStr_Copy(s: WideString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: WideString);', @_LapeWStr_Copy);
+  addGlobalFunc('procedure _UStr_Copy(s: UnicodeString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: UnicodeString);', @_LapeUStr_Copy);
 
-  addGlobalFunc('procedure _AStr_Delete(s: AnsiString; Start, Count: Int32);', @_LapeAStr_Delete);
-  addGlobalFunc('procedure _WStr_Delete(s: WideString; Start, Count: Int32);', @_LapeWStr_Delete);
-  addGlobalFunc('procedure _UStr_Delete(s: UnicodeString; Start, Count: Int32);', @_LapeUStr_Delete);
+  addGlobalFunc('procedure _AStr_Delete(s: AnsiString; Start: Int32; Count: Int32 = High(Int32));', @_LapeAStr_Delete);
+  addGlobalFunc('procedure _WStr_Delete(s: WideString; Start: Int32; Count: Int32 = High(Int32));', @_LapeWStr_Delete);
+  addGlobalFunc('procedure _UStr_Delete(s: UnicodeString; Start: Int32; Count: Int32 = High(Int32));', @_LapeUStr_Delete);
 
-  addGlobalFunc('procedure _AStr_Insert(Src: AnsiString; var Dst: AnsiString; Pos, Count: Int32);', @_LapeAStr_Insert);
-  addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: AnsiString; Pos, Count: Int32);', @_LapeWStr_Insert);
-  addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: AnsiString; Pos, Count: Int32);', @_LapeUStr_Insert);
+  addGlobalFunc('procedure _AStr_Insert(Src: AnsiString; var Dst: AnsiString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeAStr_Insert);
+  addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: AnsiString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeWStr_Insert);
+  addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: AnsiString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeUStr_Insert);
 
   addGlobalFunc('function GetMem(i: Int32): Pointer;', @_LapeGetMem);
   addGlobalFunc('function AllocMem(i: Int32): Pointer;', @_LapeAllocMem);
