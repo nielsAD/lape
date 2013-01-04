@@ -847,8 +847,8 @@ var
         Result := (lcoAutoInvoke in FOptions)
       else if (Def = 'scopedenums') then
         Result := (lcoScopedEnums in FOptions)
-      else if (Def = 'varstringchecks') then
-        Result := (lcoVarStringChecks in FOptions)
+      else if (Def = 'continuecase') then
+        Result := (lcoContinueCase in FOptions)
       else
         Result := False;
     end;
@@ -992,8 +992,8 @@ begin
     setOption(lcoAutoInvoke)
   else if (Directive = 's') or (Directive = 'scopedenums') then
     setOption(lcoScopedEnums)
-  else if (Directive = 'v') or (Directive = 'varstringchecks') then
-    setOption(lcoVarStringChecks)
+  else if (Directive = 'continuecase') then
+    setOption(lcoContinueCase)
   else
     Result := False;
 end;
