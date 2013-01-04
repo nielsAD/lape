@@ -1576,9 +1576,9 @@ function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: 
     Result := d[0] as TLapeGlobalVar;
 
     if (Result <> nil) and
+        Left.Writeable and
         Result.Readable and
-        Result.HasType() and
-        (Result.VarType is TLapeType_MethodOfObject)
+        MethodOfObject(Result.VarType)
     then
     begin
       Assert(Result.Size >= SizeOf(TMethod));
@@ -1740,8 +1740,8 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
     Assert(Length(d) = 1);
     Result := _ResVar.New(d[0] as TLapeGlobalVar);
 
-    if Result.Readable and
-       Result.HasType() and
+    if Left.Writeable and
+       Result.Readable and
        MethodOfObject(Result.VarType)
     then
     begin

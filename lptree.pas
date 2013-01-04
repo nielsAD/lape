@@ -4847,6 +4847,24 @@ begin
 
   FCompiler.IncStackInfo(FStackInfo, Offset, True, @_DocPos);
   try
+    if MethodOfObject(Method.VarType) then
+      with TLapeTree_InternalMethod_Assert.Create(Self) do
+      try
+        addParam(TLapeTree_Operator.Create(op_cmp_NotEqual, Self));
+        addParam(TLapeTree_String.Create(lpeVariableExpected, Self));
+
+        with TLapeTree_Operator(Params[0]) do
+        begin
+          Left := TLapeTree_Operator.Create(op_Addr, Self);
+          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.Vars[0]), Self);
+          Right := TLapeTree_GlobalVar.Create('nil', ltPointer, Self);
+        end;
+
+        Compile(Offset);
+      finally
+        Free();
+      end;
+
     Result := FStatements.Compile(Offset);
 
     for i := 0 to FExitStatements.Count - 1 do

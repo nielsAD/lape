@@ -28,9 +28,11 @@ begin
   Result := IntToStr(a) + '.' + IntToStr(b);
 end;   
 
+var
+  s = '23';
 begin
   MyMethod(1);
-  MyMethod('23'.DoAppend(4).DoAppend('5'));
+  MyMethod(s.DoAppend(4).DoAppend('5'));
   WriteLn(MyMethod());
   
   WriteLn(IntToStr(6, 7)); 
