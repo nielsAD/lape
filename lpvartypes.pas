@@ -1575,11 +1575,7 @@ function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: 
     Assert(Length(d) = 1);
     Result := d[0] as TLapeGlobalVar;
 
-    if (Result <> nil) and
-        Left.Writeable and
-        Result.Readable and
-        MethodOfObject(Result.VarType)
-    then
+    if (Result <> nil) and Left.Writeable and Result.Readable and MethodOfObject(Result.VarType) then
     begin
       Assert(Result.Size >= SizeOf(TMethod));
       Result := Result.CreateCopy();
@@ -1740,10 +1736,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
     Assert(Length(d) = 1);
     Result := _ResVar.New(d[0] as TLapeGlobalVar);
 
-    if Left.Writeable and
-       Result.Readable and
-       MethodOfObject(Result.VarType)
-    then
+    if Left.Writeable and Result.Readable and MethodOfObject(Result.VarType) then
     begin
       Res.VarType := Result.VarType;
       FCompiler.getDestVar(Dest, Res, op_Dot);
@@ -1933,7 +1926,10 @@ end;
 constructor TLapeType_Type.Create(AType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited Create(ltUnknown, ACompiler, AName, ADocPos);
+
   FTType := AType;
+  if (FTType <> nil) then
+    inheritManagedDecls(FTType);
 end;
 
 function TLapeType_Type.CreateCopy(DeepCopy: Boolean = False): TLapeType;

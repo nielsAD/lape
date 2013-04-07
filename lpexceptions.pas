@@ -91,7 +91,7 @@ procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of
 
 implementation
 
-{$IF DEFINED(Delphi) AND (CompilerVersion < 21.00)}
+{$IF DEFINED(Delphi) AND (CompilerVersion <= 21.00)}
 function ReturnAddress: Pointer;
 asm
   MOV  EAX, [EBP+4]

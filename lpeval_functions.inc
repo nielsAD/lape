@@ -2787,14 +2787,14 @@ procedure lpePointer_ADD_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpePointer_ADD_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) + PUInt64(Right)^); end;
 procedure lpePointer_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) + PInt64(Right)^); end;
 
-procedure lpePointer_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) + PUInt8(Right)^); end;
-procedure lpePointer_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) + PInt8(Right)^); end;
-procedure lpePointer_SUB_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) + PUInt16(Right)^); end;
-procedure lpePointer_SUB_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) + PInt16(Right)^); end;
-procedure lpePointer_SUB_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) + PUInt32(Right)^); end;
-procedure lpePointer_SUB_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) + PInt32(Right)^); end;
-procedure lpePointer_SUB_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) + PUInt64(Right)^); end;
-procedure lpePointer_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) + PInt64(Right)^); end;
+procedure lpePointer_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) - PUInt8(Right)^); end;
+procedure lpePointer_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) - PInt8(Right)^); end;
+procedure lpePointer_SUB_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) - PUInt16(Right)^); end;
+procedure lpePointer_SUB_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) - PInt16(Right)^); end;
+procedure lpePointer_SUB_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) - PUInt32(Right)^); end;
+procedure lpePointer_SUB_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) - PInt32(Right)^); end;
+procedure lpePointer_SUB_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) - PUInt64(Right)^); end;
+procedure lpePointer_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) - PInt64(Right)^); end;
 
 //Method
 procedure lpeDot(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Data := Left; TMethod(Dest^).Code := PPointer(Right)^; end;

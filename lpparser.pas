@@ -363,8 +363,13 @@ var
   Lape_KeywordsCache: array[Byte] of array of TLapeKeyword;
   {$ENDIF}
 
-  {$IF NOT DECLARED(FormatSettings)} //FPC < 2.6 workaround
-  FormatSettings: TFormatSettings absolute DefaultFormatSettings;
+  {$IF NOT DECLARED(FormatSettings)}
+  FormatSettings: TFormatSettings
+    {$IF DECLARED(DefaultFormatSettings)}
+    absolute DefaultFormatSettings
+    {$ELSE}
+    {$DEFINE LoadDefaultFormatSettings}
+    {$IFEND};
   {$IFEND}
 
 function LapeTokenToString(Token: EParserToken): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -1345,6 +1350,9 @@ end;
 
 initialization
   Lape_InitKeywordsCache();
+  {$IFDEF LoadDefaultFormatSettings}
+  GetLocaleFormatSettings(0, FormatSettings);
+  {$ENDIF}
 finalization
   Lape_ClearKeywordsCache();
 end.
