@@ -2371,26 +2371,33 @@ begin
       FParams[i].Parent := Self;
     end;
 
+  try
   if (FParams.Count < 2) then
-    Result := FParams[0].Compile(Offset)
+    Res := FParams[0]
   else
-    try
-      for i := 0 to FParams.Count - 2 do
-      begin
-        Par := TLapeTree_Operator.Create(op_Plus, Self);
-        if (Res <> nil) then
-          TLapeTree_Operator(Par).Left := Res
-        else
-          TLapeTree_Operator(Par).FLeft := FParams[i];
-        TLapeTree_Operator(Par).FRight := FParams[i + 1];
-        Res := Par;
-      end;
-
-      Result := Res.Compile(Offset);
-    finally;
+    for i := 0 to FParams.Count - 2 do
+    begin
+      Par := TLapeTree_Operator.Create(op_Plus, Self);
       if (Res <> nil) then
-        Res.Free();
+        TLapeTree_Operator(Par).Left := Res
+      else
+        TLapeTree_Operator(Par).FLeft := FParams[i];
+      TLapeTree_Operator(Par).FRight := FParams[i + 1];
+      Res := Par;
     end;
+
+    if (Res is TLapeTree_DestExprBase) then
+      TLapeTree_DestExprBase(Res).Dest := FDest
+    else
+      Dest := NullResVar;
+
+    Result := Res.Compile(Offset);
+    if (Res is TLapeTree_DestExprBase) then
+      Dest := TLapeTree_DestExprBase(Res).Dest;
+  finally
+    if (FParams.Count >= 2) and (Res <> nil) then
+      Res.Free();
+  end;
 end;
 
 constructor TLapeTree_InternalMethod_Assert.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
