@@ -147,7 +147,7 @@ begin
     '    Result := System.ToString['+IntToStr(Index)+'](p^);'                               + LineEnding +
     '  end;'                                                                                + LineEnding +
     'type'                                                                                  + LineEnding +
-    '  TArrayToString = function(const Arr; AToString: System.Pointer; Len, Size: System.Int32): System.string;' + LineEnding +
+    '  TArrayToString = function(constref Arr; AToString: System.Pointer; Len, Size: System.Int32): System.string;' + LineEnding +
     'var'                                                                                   + LineEnding +
     '  Len: System.Int32;'                                                                  + LineEnding +
     'begin'                                                                                 + LineEnding +

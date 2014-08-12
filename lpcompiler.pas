@@ -552,7 +552,7 @@ begin
   if (AResult = nil) and (AType = nil) then
     AResult := getBaseType(ltString);
   if (AType = nil) then
-    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConst], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConstRef], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
   Result := AType.NewGlobalVar(@_LapeToString_Unknown);
   Sender.addMethod(Result);
@@ -612,7 +612,7 @@ procedure TLapeCompiler.InitBaseDefinitions;
             TLapeType_Method.Create(
               Self,
               [getBaseType(BaseType)],
-              [lptConst],
+              [lptConstRef],
               [TLapeGlobalVar(nil)],
               getBaseType(ltString)
             )
@@ -1239,7 +1239,8 @@ begin
                 Expect(tk_sym_SemiColon, False, False);
               Break;
             end;
-          tk_kw_Const: Param.ParType := lptConst;
+          tk_kw_Const:    Param.ParType := lptConst;
+          tk_kw_ConstRef: Param.ParType := lptConstRef;
           tk_kw_Out:   Param.ParType := lptOut;
           tk_kw_Var:   Param.ParType := lptVar;
         end;
@@ -1466,11 +1467,12 @@ begin
 
           TLapeType_Method(Result.Method.VarType).setImported(Result.Method, TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).BaseType = ltImportedMethod);
           Move(TLapeGlobalVar(OldDeclaration).Ptr^, Result.Method.Ptr^, FuncHeader.Size);
-          setMethodDefaults(Result.Method, Result.Method.VarType as TLapeType_Method);
 
           Result.Method.Name := 'inherited';
           Result.Method.DeclarationList := nil;
+          setMethodDefaults(Result.Method, Result.Method.VarType as TLapeType_Method);
           addLocalDecl(Result.Method, FStackInfo);
+
           Result.Method := OldDeclaration as TLapeGlobalVar;
         end
         else

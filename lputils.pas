@@ -327,7 +327,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
       Exit;
 
     Result :=
-      'function ToString(const p: Pointer): string; override;' +
+      'function ToString(constref p: Pointer): string; override;' +
       'var n: string; begin' +
       '  Result := inherited();' +
       '  n := GetGlobalName(p);' +

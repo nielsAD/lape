@@ -93,7 +93,7 @@ type
     property isConstant: Boolean read getConstant write setConstant;
   end;
 
-  ELapeParameterType = (lptNormal, lptConst, lptVar, lptOut);
+  ELapeParameterType = (lptNormal, lptConst, lptConstRef, lptVar, lptOut);
   TLapeParameter = record
     ParType: ELapeParameterType;
     VarType: TLapeType;
@@ -677,9 +677,10 @@ const
   NullWithDecl: TLapeWithDeclRec = (WithVar: nil; WithType: nil);
   NullVarRef: TLapeVarRef = (Lock: -1; ResVar: (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpNone; GlobalVar: nil)); RefVar: nil);
 
-  Lape_RefParams = [lptConst, lptOut, lptVar];
-  Lape_ValParams = [lptConst, lptNormal];
-  Lape_SelfParam = lptVar;
+  Lape_RefParams   = [lptConstRef, lptOut, lptVar];
+  Lape_ConstParams = [lptConst, lptConstRef];
+  Lape_ValParams   = Lape_ConstParams + [lptNormal];
+  Lape_SelfParam   = lptVar;
 
 var
   LapeReservedLocals: lpString = '|System|';
@@ -1115,7 +1116,7 @@ constructor TLapeParameterVar.Create(AParType: ELapeParameterType; AVarType: TLa
 begin
   inherited Create(AVarType, AStack, AName, ADocPos, AList);
   FParType := AParType;
-  isConstant := (FParType = lptConst);
+  isConstant := (FParType in Lape_ConstParams);
 end;
 
 function TLapeGlobalVar.getAsString: lpString;
