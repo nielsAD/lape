@@ -349,6 +349,7 @@ begin
       begin
         LeftFieldName := _ResVar.New(FCompiler.getConstant(FFieldMap.Key[i]));
         RightFieldName := _ResVar.New(FCompiler.getConstant(TLapeType_Record(Right.VarType).FieldMap.Key[i]));
+        Dest := NullResVar;
 
         LeftVar := Eval(op_Dot, tmpVar, Left, LeftFieldName, [lefAssigning], Offset, Pos);
         RightVar := Right.VarType.Eval(op_Dot, tmpVar, Right, RightFieldName, [], Offset, Pos);

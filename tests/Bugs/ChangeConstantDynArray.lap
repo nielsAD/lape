@@ -1,0 +1,20 @@
+{$assertions on}
+
+var
+  a: array of Int32;
+
+procedure InitializeArrays();
+var
+  b: array of Int32;
+begin
+  a := b := [1];
+
+  Assert((a[0] = b[0]) and (a[0] = 1), 'a <> [1]');
+
+  a[0] := 2;
+end;
+
+begin
+  for 0 to 2 do
+    InitializeArrays();
+end;

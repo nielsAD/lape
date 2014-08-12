@@ -454,7 +454,9 @@ begin
   end
   else if (op = op_Assign) and (BaseType = ltDynArray) and CompatibleWith(ARight.VarType) then
   begin
+    Dest := NullResVar;
     Result := ALeft;
+
     if (ALeft.VarPos.MemPos = mpStack) then
     begin
       tmpVar := FCompiler.getTempVar(Self);

@@ -559,7 +559,7 @@ const
   LapeNoInitTypes = LapeOrdinalTypes + LapeRealTypes + [ltPointer, ltScriptMethod, ltImportedMethod, ltShortString];
 
   NullDocPos: TDocPos = (Line: 0; Col: 0; FileName: '');
-  NullRange: TLapeRange = (Lo: 0; Hi: 0);
+  NullRange: TLapeRange = (Lo: 0; Hi: -1);
 
   UnaryOperators = [op_Addr, op_Deref, op_NOT, op_UnaryMinus, op_UnaryPlus];
   BinaryOperators = [op_AND, op_OR, op_XOR];
