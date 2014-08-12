@@ -2662,7 +2662,7 @@ begin
   try
 
     if (lcoLooseSyntax in FOptions) and isNext([tk_kw_Var]) then
-      with ParseVarBlock(True, [tk_kw_To]) do
+      with ParseVarBlock(True, [tk_kw_To, tk_kw_DownTo]) do
       try
         if (Vars.Count <> 1) then
           LapeException(lpeVariableExpected, DocPos);
@@ -2682,12 +2682,15 @@ begin
         Free();
       end
     else
+    begin
       Result.Counter := ParseExpression();
+      Expect([tk_kw_To, tk_kw_DownTo], False, True);
+    end;
 
-    Expect([tk_kw_To, tk_kw_DownTo], False, False);
-    if (Tokenizer.Tok = tk_kw_DownTo) then
+    if (Tokenizer.LastTok = tk_kw_DownTo) then
       Result.WalkDown := True;
-    Result.Limit := ParseExpression();
+    Result.Limit := ParseExpression([], False);
+
     Expect([tk_kw_With, tk_kw_Do], False, False);
     if (Tokenizer.Tok = tk_kw_With) then
     begin
