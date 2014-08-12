@@ -2435,14 +2435,17 @@ begin
         tk_sym_Colon:
           begin
             PopOpStack(op_Label);
+            if (VarStack.Count <> 1) then
+              LapeException(lpeInvalidLabel, Tokenizer.DocPos);
             if (Method <> nil) then
               LapeException(lpeCannotEvalConstProc, Tokenizer.DocPos);
 
             Method := TLapeTree_InternalMethod_Label.Create(Self, getPDocPos());
             Method.addParam(VarStack.Pop());
-            VarStack.Push(Method);
 
+            VarStack.Push(Method);
             Method := nil;
+
             Next();
             Break;
           end;
