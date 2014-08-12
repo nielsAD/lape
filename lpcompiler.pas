@@ -2030,7 +2030,7 @@ begin
           DefVal := addLocalVar(VarType, Identifiers[i]);
 
         if (DefConstVal <> nil) then
-          if (not (DefVal is TLapeGlobalVar)) then
+          if (not (DefVal is TLapeGlobalVar)) or (VarType is TLapeType_Method) then
           begin
             VarDecl.VarDecl := DefVal;
             VarDecl.Default := TLapeTree_GlobalVar.Create(DefConstVal, Self, GetPDocPos());
