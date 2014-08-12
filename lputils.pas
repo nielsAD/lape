@@ -204,11 +204,18 @@ var
   n: lpString;
 begin
   Result := '';
+
+  if (BaseName = 'System') then
+    Exit;
+
   if (Decls = nil) then
     if (Compiler = nil) then
       Exit
     else
       Decls := Compiler.GlobalDeclarations;
+
+  if Decls.HasParent() then
+    TraverseGlobals(Compiler, Callback, BaseName, Decls.Parent);
 
   for i := 0 to Decls.Items.Count - 1 do
     with Decls.Items[i] do
@@ -330,8 +337,11 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
       'function ToString(constref p: Pointer): string; override;' +
       'var n: string; begin' +
       '  Result := inherited();' +
-      '  n := GetGlobalName(p);' +
-      '  if (n <> '#39#39') then Result := '#39'"'#39' + n + '#39'"::'#39' + Result;' +
+      '  if (p <> nil) then' +
+      '  begin' +
+      '    n := GetGlobalName(p);' +
+      '    if (n <> '#39#39') then Result := '#39'"'#39' + n + '#39'"::'#39' + Result;' +
+      '  end;' +
       'end;';
   end;
 

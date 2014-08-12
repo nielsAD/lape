@@ -246,10 +246,12 @@ type
   TLapeType_SystemUnit = class(TLapeType)
   public
     constructor Create(ACompiler: TLapeCompilerBase); reintroduce; virtual;
+    procedure ClearSubDeclarations; override;
 
     function CanHaveChild: Boolean; override;
     function HasChild(AName: lpString): Boolean; override;
     function HasChild(ADecl: TLapeDeclaration): Boolean; override;
+    function HasConstantChild(AName: lpString): Boolean; override;
 
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
@@ -1195,7 +1197,7 @@ var
   i: Integer;
   Pos: TDocPos;
   isFunction: Boolean;
-  Typ: TLapeType;
+  Typ: TLapeDeclaration;
   Identifiers: TStringArray;
   Param: TLapeParameter;
   Token: EParserToken;
@@ -1216,14 +1218,19 @@ begin
         Expect(tk_Identifier, True, False);
         Token := tk_NULL;
 
-        Typ := getDeclaration(Name) as TLapeType;
+        Typ := getDeclaration(Name);
         Name := Tokenizer.TokString;
-        if (not (Typ is TLapeType)) then
-          LapeException(lpeTypeExpected, [Tokenizer]);
+        if (Typ is TLapeVar) then
+          Typ := TLapeVar(Typ).VarType;
 
-        addVar(Lape_SelfParam, Typ, 'Self');
-        Result.Free();
-        Result := TLapeType_MethodOfType.Create(Self, Typ, nil, nil, '', @Pos);
+        if (Typ is TLapeType) and (TLapeType(Typ).Size > 0) then
+        begin
+          addVar(Lape_SelfParam, TLapeType(Typ), 'Self');
+          Result.Free();
+          Result := TLapeType_MethodOfType.Create(Self, TLapeType(Typ), nil, nil, '', @Pos);
+        end
+        else if (not (Typ is TLapeType_SystemUnit)) then
+          LapeException(lpeTypeExpected, [Tokenizer]);
       end;
     end;
 
@@ -3002,9 +3009,9 @@ begin
   if ResetState then
   begin
     FConditionalStack.Reset();
-    while (FStackInfo <> nil) and (FStackInfo.Owner <> nil) do
-      FStackInfo := FStackInfo.Owner;
+    FStackInfo := nil;
   end;
+
   if (FStackInfo = nil) then
     FStackInfo := EmptyStackInfo;
 end;
@@ -3221,15 +3228,15 @@ function TLapeCompiler.getDeclarationNoWith(AName: lpString; AStackInfo: TLapeSt
 begin
   Result := getDeclaration(AName, AStackInfo, LocalOnly);
   if (Result is TLapeWithDeclaration) then
+    with TLapeWithDeclaration(Result), TLapeTree_Operator.Create(op_Dot, Self) do
     try
-      with TLapeWithDeclaration(Result), TLapeTree_Operator.Create(op_Dot, Self) do
-      try
-        Left := TLapeTree_WithVar.Create(WithDeclRec, Self);
-        Right := TLapeTree_Field.Create(AName, Self);
-        Result := Evaluate();
-      finally
-        Free();
-      end;
+      Left := TLapeTree_WithVar.Create(WithDeclRec, Self);
+      Right := TLapeTree_Field.Create(AName, Self);
+
+      if isConstant() then
+        Result := Evaluate()
+      else
+        Result := nil;
     finally
       Free();
     end;
@@ -3595,10 +3602,17 @@ end;
 constructor TLapeType_SystemUnit.Create(ACompiler: TLapeCompilerBase);
 begin
   inherited Create(ltUnknown, ACompiler);
+
+  if (ACompiler <> nil) then
+    ManagedDeclarations := ACompiler.GlobalDeclarations;
 end;
 
-function TLapeType_SystemUnit.CanHaveChild: Boolean;
+procedure TLapeType_SystemUnit.ClearSubDeclarations;
 begin
+  //Nothing
+end;
+
+function TLapeType_SystemUnit.CanHaveChild: Boolean;begin
   Result := (FCompiler <> nil);
 end;
 
@@ -3610,6 +3624,11 @@ end;
 function TLapeType_SystemUnit.HasChild(ADecl: TLapeDeclaration): Boolean;
 begin
   Result := CanHaveChild() and FCompiler.hasDeclaration(ADecl, nil);
+end;
+
+function TLapeType_SystemUnit.HasConstantChild(AName: lpString): Boolean;
+begin
+  Result := HasChild(AName);
 end;
 
 function TLapeType_SystemUnit.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;

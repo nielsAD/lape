@@ -414,6 +414,7 @@ type
   TLapeDeclarationList = class(TLapeBaseClass)
   protected
     FList: TLapeDeclCollection;
+    function getItemCount: Integer; virtual;
   public
     Parent: TLapeDeclarationList;
     FreeDecls: Boolean;
@@ -438,6 +439,7 @@ type
     function getByClassAndName(AName: lpString; AClass: TLapeDeclarationClass; CheckParent: TInitBool; FullClassMatch: Boolean = False): TLapeDeclArray; virtual;
 
     property Items: TLapeDeclCollection read FList;
+    property ItemCount: Integer read getItemCount;
   end;
 
   TLapeDeclaration = class(TLapeBaseDeclClass)
@@ -1819,6 +1821,13 @@ end;
 function TLapeDeclarationList.HasParent: Boolean;
 begin
   Result := Parent <> nil;
+end;
+
+function TLapeDeclarationList.getItemCount: Integer;
+begin
+  Result := Items.Count;
+  if HasParent() then
+    Inc(Result, Parent.ItemCount);
 end;
 
 procedure TLapeDeclarationList.Clear;

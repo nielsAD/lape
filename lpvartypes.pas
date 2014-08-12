@@ -1416,7 +1416,7 @@ end;
 
 function TLapeType.CanHaveChild: Boolean;
 begin
-  Result := (FBaseType in LapeStructTypes) or (FManagedDecls.Items.Count > 0);
+  Result := (FBaseType in LapeStructTypes) or (FManagedDecls.ItemCount > 0);
 end;
 
 function TLapeType.IsOrdinal(OrPointer: Boolean = False): Boolean;
@@ -1501,8 +1501,11 @@ begin
     if (Result = nil) and (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
     begin
       d := FManagedDecls.getByName(PlpString(Right.Ptr)^, bTrue);
-      if (Length(d) = 1) and (d[0] is TLapeVar) then
-        Result := TLapeVar(d[0]).VarType;
+      if (Length(d) = 1) then
+        if (d[0] is TLapeType) then
+          Result := TLapeType(d[0])
+        else if (d[0] is TLapeVar) then
+          Result := TLapeVar(d[0]).VarType;
     end;
   end;
 
@@ -1574,6 +1577,9 @@ function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: 
 
     d := FManagedDecls.getByName(Field, bTrue);
     Assert(Length(d) = 1);
+
+    if (d[0] is TLapeType) then
+      d[0] := FCompiler.getTypeVar(TLapeType(d[0]));
     Result := d[0] as TLapeGlobalVar;
 
     if (Result <> nil) and Left.Writeable and Result.Readable and MethodOfObject(Result.VarType) then
@@ -1735,6 +1741,9 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
 
     d := FManagedDecls.getByName(Field, bTrue);
     Assert(Length(d) = 1);
+
+    if (d[0] is TLapeType) then
+      d[0] := FCompiler.getTypeVar(TLapeType(d[0]));
     Result := _ResVar.New(d[0] as TLapeGlobalVar);
 
     if Left.Writeable and Result.Readable and MethodOfObject(Result.VarType) then
