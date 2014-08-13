@@ -4710,7 +4710,7 @@ begin
     if (FStatements[i] <> nil) then
     begin
       Result.Spill(1);
-      Result := FStatements[i].Compile(Offset);
+      FStatements[i].CompileToTempVar(Offset, Result);
     end;
 end;
 
@@ -4793,7 +4793,11 @@ begin
   begin
     if (AfterCompilation = FDelay[i]) and (FStatements[i] <> nil) then
       if (Filter = ldfAll) or ((Filter <> ldfMethods) xor (FStatements[i] is TLapeTree_Method)) then
-        Result := FStatements[i].Compile(Offset);
+      begin
+        Result.Spill(1);
+        FStatements[i].CompileToTempVar(Offset, Result);
+      end;
+
     Inc(i);
   end;
 end;
@@ -5062,7 +5066,7 @@ begin
     end;
 
   if (FBody <> nil) then
-    Result := FBody.Compile(Offset);
+    FBody.CompileToTempVar(Offset, Result);
 
   for i := 0 to High(ResVarList) do
     ResVarList[i].Spill(BigLock);
@@ -5114,7 +5118,7 @@ begin
     FStartBodyOffset := FCompiler.Emitter.CheckOffset(Offset);
 
   if (FBody <> nil) then
-    Result := FBody.Compile(Offset)
+    FBody.CompileToTempVar(Offset, Result)
   else
     Result := NullResVar;
 end;
@@ -5162,7 +5166,8 @@ begin
 
   if (FElse <> nil) then
   begin
-    Result := FElse.Compile(Offset);
+    Result.Spill(1);
+    FElse.CompileToTempVar(Offset, Result);
 
     if (FBody <> nil) then
       FCompiler.Emitter._JmpR(Offset - if_e, if_e, @_DocPos)
@@ -5289,7 +5294,7 @@ begin
       if (FCondition <> nil) then
         Result := inherited
       else
-        Result := FElse.Compile(Offset);
+        FElse.CompileToTempVar(Offset, Result);
     finally
       FCondition := tmpExpr;
     end;
@@ -5430,11 +5435,11 @@ begin
     for i := FFields.Count - 1 downto 1 do
       FFields[i - 1].ElseBody := FFields[i];
 
-    Result := FFields[0].Compile(Offset);
+    FFields[0].CompileToTempVar(Offset, Result);
     ConditionVar.Spill(1);
   end
   else if (FElse <> nil) then
-    Result := FElse.Compile(Offset);
+    FElse.CompileToTempVar(Offset, Result);
 
   CompileContinue(nil);
 end;
@@ -5583,7 +5588,7 @@ begin
 
   FStartBodyOffset := FCompiler.Emitter.CheckOffset(Offset);
   if (FBody <> nil) then
-    Result := FBody.Compile(Offset)
+    FBody.CompileToTempVar(Offset, Result)
   else
     Result := NullResVar;
 
@@ -5741,7 +5746,7 @@ begin
   Result := NullResVar;
   StartOffset := FCompiler.Emitter.CheckOffset(Offset);
   if (FBody <> nil) then
-    Result := FBody.Compile(Offset);
+    FBody.CompileToTempVar(Offset, Result);
 
   for i := 0 to FContinueStatements.Count - 1 do
     with FContinueStatements[i] do
@@ -5844,6 +5849,7 @@ end;
 function TLapeTree_Try.Compile(var Offset: Integer): TResVar;
 var
   o_try, o_except, o_jmp: Integer;
+  tmp: TResVar;
 begin
   Result := NullResVar;
   Assert((FExcept <> nil) or (FFinally <> nil));
@@ -5854,7 +5860,7 @@ begin
 
   o_except := 0;
   if (FBody <> nil) then
-    Result := FBody.Compile(Offset);
+    FBody.CompileToTempVar(Offset, Result);
 
   FCompiler.Emitter._DecTry(Offset, @_DocPos);
   if (FExcept <> nil) then
@@ -5865,7 +5871,7 @@ begin
     else
       o_except := Offset;
     FCompiler.Emitter._CatchException(Offset, @FExcept._DocPos);
-    FExcept.Compile(Offset);
+    FExcept.CompileToTempVar(Offset, tmp);
     FCompiler.Emitter._JmpR(Offset - o_jmp, o_jmp, @FExcept._DocPos);
   end;
   if (FFinally <> nil) then
@@ -5874,7 +5880,7 @@ begin
       FCompiler.Emitter._IncTry(o_except - o_try, Offset - o_except, o_try, @_DocPos)
     else
       FCompiler.Emitter._IncTry(Offset - o_try, Try_NoExcept, o_try, @_DocPos);
-    FFinally.Compile(Offset);
+    FFinally.CompileToTempVar(Offset, tmp);
   end;
   FCompiler.Emitter._EndTry(Offset, @_DocPos);
 end;

@@ -1,0 +1,6 @@
+var
+  i: Int32 = 0;
+begin
+  for 0 to 1000000 do
+    i+1;
+end;

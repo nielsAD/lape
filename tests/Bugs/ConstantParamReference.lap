@@ -1,0 +1,16 @@
+{$assertions on}
+
+var
+  x: UInt32 = 1;
+
+procedure Test(const i: UInt32);
+begin
+  Assert(i = 1, 'i <> 1');
+  x := 42;
+  Assert(i = 1, 'i <> 1');
+end;
+
+begin
+  Test(x);
+end;
+
