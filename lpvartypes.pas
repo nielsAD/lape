@@ -4013,7 +4013,6 @@ begin
   Emitter.CheckOffset(CodePos);
   Result := addManagedVar(getGlobalType('!label').NewGlobalVarP(), True) as TLapeGlobalVar;
 
-  //Result.isConstant := False;
   PCodePos(Result.Ptr)^ := CodePos;
   Emitter.addCodePointer(Result.Ptr);
 end;

@@ -74,11 +74,14 @@ type
 
     {$IFDEF LINUX}
       FFI_SYSV,
-      FFI_UNIX64,   { Unix variants all use the same ABI for x86-64  }
+      FFI_UNIX64,
+      FFI_THISCALL,
+      FFI_FASTCALL,
+      FFI_STDCALL,
       FFI_LAST_ABI,
 
       {$IFDEF CPU32}
-        FFI_DEFAULT_ABI := FFI_SYSV
+        FFI_DEFAULT_ABI := FFI_FASTCALL
       {$ELSE}
         FFI_DEFAULT_ABI := FFI_UNIX64
       {$ENDIF}
@@ -92,7 +95,7 @@ type
         FFI_FASTCALL,
         FFI_MS_CDECL,
         FFI_LAST_ABI,
-        FFI_DEFAULT_ABI := FFI_SYSV
+        FFI_DEFAULT_ABI := FFI_FASTCALL
       {$ELSE}
         FFI_WIN64,
         FFI_LAST_ABI,

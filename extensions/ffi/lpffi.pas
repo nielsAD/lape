@@ -121,23 +121,6 @@ type
     property Func: Pointer read getFunc;
   end;
 
-const
-  lpeAlterPrepared = 'Cannot alter an already prepared object';
-  lpeCannotPrepare = 'Cannot prepare object';
-
-  LapeComplexParamTypes = [ltShortString, ltStaticArray];
-  LapeComplexReturnTypes = LapeStringTypes + [ltStaticArray];
-
-var
-  ffi_type_complex: TFFIType;
-
-function LapeTypeToFFIType(VarType: TLapeType; AsResult: Boolean = False): TFFITypeManager;
-function LapeFFIPointerParam(Param: TLapeParameter): Boolean;
-function LapeParamToFFIType(Param: TLapeParameter): TFFITypeManager;
-function LapeHeaderToFFICif(Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager; overload;
-function LapeHeaderToFFICif(Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager; overload;
-
-type
   PImportClosureData = ^TImportClosureData;
   TImportClosureData = packed record
     NativeFunc: Pointer;
@@ -156,6 +139,24 @@ type
   end;
   TExportClosure = specialize TFFIClosureManager<TExportClosureData>;
 
+const
+  lpeAlterPrepared = 'Cannot alter an already prepared object';
+  lpeCannotPrepare = 'Cannot prepare object';
+
+  LapeComplexParamTypes = [ltShortString, ltStaticArray];
+  LapeComplexReturnTypes = LapeStringTypes + [ltStaticArray];
+
+  FFI_LAPE_ABI = {$IF DEFINED(Lape_CDECL) AND DECLARED(FFI_SYSV)}FFI_SYSV{$ELSE}FFI_DEFAULT_ABI{$IFEND};
+
+var
+  ffi_type_complex: TFFIType;
+
+function LapeTypeToFFIType(VarType: TLapeType; AsResult: Boolean = False): TFFITypeManager;
+function LapeFFIPointerParam(Param: TLapeParameter): Boolean;
+function LapeParamToFFIType(Param: TLapeParameter): TFFITypeManager;
+function LapeHeaderToFFICif(Header: TLapeType_Method; ABI: TFFIABI = FFI_LAPE_ABI): TFFICifManager; overload;
+function LapeHeaderToFFICif(Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_LAPE_ABI): TFFICifManager; overload;
+
 function LapeImportWrapper(Func: Pointer; NativeCif: TFFICifManager): TImportClosure; overload;
 function LapeImportWrapper(Func: Pointer; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
 function LapeImportWrapper(Func: Pointer; Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
@@ -163,7 +164,6 @@ function LapeImportWrapper(Func: Pointer; Compiler: TLapeCompiler; Header: lpStr
 function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamSizes: array of Integer): TExportClosure; overload;
 function LapeExportWrapper(Code: PByte; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
 function LapeExportWrapper(Func: TLapeGlobalVar; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
-
 
 implementation
 
@@ -624,7 +624,7 @@ begin
     Result := LapeTypeToFFIType(Param.VarType);
 end;
 
-function LapeHeaderToFFICif(Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager;
+function LapeHeaderToFFICif(Header: TLapeType_Method; ABI: TFFIABI = FFI_LAPE_ABI): TFFICifManager;
 var
   i: Integer;
 begin
@@ -647,7 +647,7 @@ end;
 
 type
   __LapeCompiler = class(TLapeCompiler);
-function LapeHeaderToFFICif(Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TFFICifManager;
+function LapeHeaderToFFICif(Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_LAPE_ABI): TFFICifManager;
 var
   c: __LapeCompiler absolute Compiler;
   s: lpString;
@@ -690,7 +690,7 @@ function LapeImportWrapper(Func: Pointer; NativeCif: TFFICifManager): TImportClo
 begin
   Assert(NativeCif <> nil);
 
-  Result := TImportClosure.Create(TFFICifManager.Create(), @LapeImportBinder);
+  Result := TImportClosure.Create(TFFICifManager.Create(FFI_LAPE_ABI), @LapeImportBinder);
   Result.FreeData := @FreeImportClosureData;
 
   try
