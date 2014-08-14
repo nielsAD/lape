@@ -41,7 +41,7 @@ implementation
 
 uses
   lpparser, lpcompiler, lputils, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
-  LCLIntf, Variants, typinfo, lpffi, ffi;
+  LCLIntf, typinfo, lpffi, ffi;
 
 {$R *.lfm}
 
@@ -66,9 +66,17 @@ begin
   WriteLn();
 end;
 
-procedure MyStupidProc(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure MyStupidProc(Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+var
+  x: TIntegerArray;
 begin
-  raise Exception.Create('Wat! Exception!');
+  SetLength(x, 5);
+  TIntegerArray(Result^) := x;
+end;
+
+function StupidProc(abc: TIntegerArray): TIntegerArray; cdecl;
+begin
+  SetLength(Result, 5);
 end;
 
 procedure Compile(Run, Disassemble: Boolean);
@@ -88,6 +96,7 @@ var
   t: Cardinal;
   Parser: TLapeTokenizerBase;
   Compiler: TLapeCompiler;
+  c: TImportClosure;
 begin
   Parser := nil;
   Compiler := nil;
@@ -99,11 +108,12 @@ begin
       InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
       ExposeGlobals(Compiler);
 
-      Compiler.addGlobalFunc('procedure Integer.test;', @IntTest);
-
       Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
       Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
-      Compiler.addGlobalFunc('procedure MyStupidProc', @MyStupidProc);
+      Compiler.addGlobalFunc('function MyStupidProc: array of integer', @MyStupidProc);
+
+      c := LapeImportWrapper(@StupidProc, Compiler, 'function(abc: array of integer): array of integer', FFI_SYSV);
+      Compiler.addGlobalFunc('function StupidProc(abc: array of integer): array of integer', c.Func);
 
       try
         t := getTickCount;
@@ -138,6 +148,7 @@ begin
         Compiler.Free()
       else if (Parser <> nil) then
         Parser.Free();
+      c.Free();
     end;
 end;
 

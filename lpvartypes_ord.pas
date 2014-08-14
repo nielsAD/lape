@@ -885,7 +885,7 @@ begin
   if (Index < 0) then
     Exit;
 
-  Result := 'type TSetToString = function(constref ASet; AToString: System.Pointer; Lo, Hi: System.Int32): System.string;' + LineEnding + 'begin ';
+  Result := 'type TSetToString = private function(constref ASet; AToString: System.Pointer; Lo, Hi: System.Int32): System.string;' + LineEnding + 'begin ';
   if FSmall then
     Result := Result + 'Result := TSetToString('+AIA+'System._SmallSetToString)'
   else

@@ -147,7 +147,7 @@ begin
     '    Result := System.ToString['+IntToStr(Index)+'](p^);'                               + LineEnding +
     '  end;'                                                                                + LineEnding +
     'type'                                                                                  + LineEnding +
-    '  TArrayToString = function(constref Arr; AToString: System.Pointer; Len, Size: System.Int32): System.string;' + LineEnding +
+    '  TArrayToString = private function(constref Arr; AToString: System.Pointer; Len, Size: System.Int32): System.string;' + LineEnding +
     'var'                                                                                   + LineEnding +
     '  Len: System.Int32;'                                                                  + LineEnding +
     'begin'                                                                                 + LineEnding +
@@ -318,7 +318,7 @@ begin
   try
     addParam(TLapeTree_ResVar.Create(AVar, FCompiler, Pos));
     addParam(TLapeTree_ResVar.Create(ALen, FCompiler, Pos));
-    Compile(Offset);
+    Compile(Offset).Spill(1);
   finally
     Free();
   end;
@@ -460,7 +460,6 @@ begin
     if (ALeft.VarPos.MemPos = mpStack) then
     begin
       tmpVar := FCompiler.getTempVar(Self);
-      tmpVar.isConstant := False;
       ALeft := _ResVar.New(tmpVar);
     end;
 
@@ -535,7 +534,7 @@ begin
           addStatement(Node);
         end;
 
-        Compile(Offset);
+        Compile(Offset).Spill(1);
       finally
         Free();
       end;
@@ -606,7 +605,6 @@ begin
     , ['Result', 'Right'], [], [Result, ARight], Offset, Pos);}
 
     IndexVar := _ResVar.New(FCompiler.getTempVar(ltInt32));
-    IndexVar.isConstant := False;
     with TLapeTree_Operator.Create(op_Plus, FCompiler, Pos) do
     try
       Left := TLapeTree_Operator.Create(op_Assign, FCompiler, Pos);
@@ -1001,7 +999,7 @@ begin
   with TLapeTree_Invoke.Create('UniqueString', FCompiler, Pos) do
   try
     addParam(TLapeTree_ResVar.Create(AVar, FCompiler, Pos));
-    Compile(Offset);
+    Compile(Offset).Spill(1);
   finally
     Free();
   end;

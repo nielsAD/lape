@@ -1063,8 +1063,7 @@ constructor TLapeStackTempVar.Create(AVarType: TLapeType; AStack: TLapeVarStack;
 begin
   inherited;
   FLock := 0;
-  isConstant := True;
-  //setReadWrite(False, False);
+  isConstant := False;
 end;
 
 function TLapeStackTempVar.getLocked: Boolean;
@@ -2879,7 +2878,6 @@ function TLapeType_OverloadedMethod.NewGlobalVar(AName: lpString = ''; ADocPos: 
 begin
   Result := NewGlobalVarP(nil, AName, ADocPos);
   Result.isConstant := True;
-  //Result.setReadWrite(False, False);
 end;
 
 function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
@@ -3176,8 +3174,7 @@ begin
       begin
         Result := FVarStack[i] as TLapeStackTempVar;
         Result.VarType := VarType;
-        Result.isConstant := True;
-        //Result.setReadWrite(False, False);
+        Result.isConstant := False;
         Exit;
       end;
     Result := addVar(VarType) as TLapeStackTempVar;

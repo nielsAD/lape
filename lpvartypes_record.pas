@@ -491,7 +491,7 @@ begin
     with TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Left.IncLock(), FCompiler, @_DocPos), FCompiler, @_DocPos) do
     try
       addParam(TLapeTree_ResVar.Create(Right.IncLock(), FCompiler, @_DocPos));
-      Compile(Offset);
+      Compile(Offset).Spill(1);
     finally
       Free();
     end;
