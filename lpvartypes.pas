@@ -251,7 +251,7 @@ type
 
     function HasChild(AName: lpString): Boolean; overload; virtual;
     function HasChild(ADecl: TLapeDeclaration): Boolean; overload; virtual;
-    function HasConstantChild(AName: lpString): Boolean; virtual;
+    function HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; overload; virtual;
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; overload; virtual;
@@ -291,7 +291,7 @@ type
   public
     function CanHaveChild: Boolean; override;
     function HasChild(AName: lpString): Boolean; override;
-    function HasConstantChild(AName: lpString): Boolean; override;
+    function HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean; override;
 
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
@@ -436,6 +436,7 @@ type
 
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     property MethodOfObject: TInitBool read FOfObject;
   end;
@@ -1447,10 +1448,13 @@ begin
   Result := HasSubDeclaration(ADecl, bTrue);
 end;
 
-function TLapeType.HasConstantChild(AName: lpString): Boolean;
+function TLapeType.HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean;
 var
   Decls: TLapeDeclArray;
 begin
+  if (Left <> nil) and (not Left.Writeable) then
+    Exit(HasChild(AName));
+
   Decls := FManagedDecls.getByClassAndName(AName, TLapeGlobalVar, bTrue);
   if (Length(Decls) <= 0) then
     Result := HasChild(AName)
@@ -1523,7 +1527,7 @@ begin
   Result := (op <> op_dot) and ((Left = nil) or Left.Readable) and ((Right = nil) or Right.Readable);
   if (not Result) and (Right <> nil) and Right.Readable then
     if (op = op_Dot) and CanHaveChild() and ValidFieldName(Right) then
-      Result := HasConstantChild(PlpString(Right.Ptr)^)
+      Result := HasConstantChild(Left, PlpString(Right.Ptr)^)
     else if (op = op_Index) and (BaseType in [ltUnknown{overloaded method}, ltShortString, ltStaticArray]) then
       Result := Right.HasType() and Right.VarType.IsOrdinal();
 end;
@@ -1734,7 +1738,6 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
     d: TLapeDeclArray;
     Res: TResVar;
   begin
-    Res := NullResVar;
     if (not HasSubDeclaration(Field, bTrue)) then
       LapeExceptionFmt(lpeUnknownDeclaration, [Field]);
 
@@ -1747,9 +1750,13 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
 
     if Left.Writeable and Result.Readable and MethodOfObject(Result.VarType) then
     begin
-      Res.VarType := Result.VarType;
+      Res := NullResVar;
+      Res.VarType := FCompiler.getGlobalType('TMethod');
+
       FCompiler.getDestVar(Dest, Res, op_Dot);
-      FCompiler.Emitter._Eval(getEvalProc(op_Dot, ltUnknown, ltPointer), Res, Left.IncLock(), Result, Offset, Pos);
+      FCompiler.Emitter._Eval(getEvalProc(op_Dot, ltUnknown, ltPointer), Res, Left, Result, Offset, Pos);
+
+      Res.VarType := Result.VarType;
       Result := Res;
     end;
   end;
@@ -1955,10 +1962,10 @@ end;
 
 function TLapeType_TypeEnum.HasChild(AName: lpString): Boolean;
 begin
-  Result := HasConstantChild(AName) or inherited;
+  Result := HasConstantChild(nil, AName) or inherited;
 end;
 
-function TLapeType_TypeEnum.HasConstantChild(AName: lpString): Boolean;
+function TLapeType_TypeEnum.HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean;
 begin
   Result := ((FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(AName)) or inherited;
 end;
@@ -2903,6 +2910,34 @@ begin
     Result := inherited;
 end;
 
+function TLapeType_OverloadedMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+var
+  Res: TResVar;
+begin
+  Assert(Left.VarType = Self);
+  if (Op = op_Index) and (Right.VarPos.MemPos = mpMem) and Left.Writeable and
+      Right.HasType() and Right.isConstant and (Right.VarType.BaseType in LapeIntegerTypes)
+  then
+    if (FManagedDecls.Items[Right.VarPos.GlobalVar.AsInteger] = nil) then
+      LapeException(lpeOutOfTypeRange)
+    else
+    begin
+      Res := _ResVar.New(TLapeGlobalVar(FManagedDecls.Items[Right.VarPos.GlobalVar.AsInteger]));
+      Res.VarType := FCompiler.getBaseType(ltPointer);
+      Left.VarType := Res.VarType;
+
+      try
+        Dest := NullResVar;
+        Result := Left.VarType.Eval(op_Assign, Dest, Left.IncLock(), Res, Flags, Offset, Pos);
+        Result.VarType := TLapeGlobalVar(FManagedDecls.Items[Right.VarPos.GlobalVar.AsInteger]).VarType;
+      finally
+        Res.Spill(1);
+      end;
+    end
+  else
+    Result := inherited;
+end;
+
 constructor TLapeWithDeclaration.Create(AWithDeclRec: TLapeWithDeclRec);
 begin
   inherited Create();
@@ -3199,6 +3234,8 @@ function TLapeStackInfo.addVar(StackVar: TLapeStackVar): TLapeStackVar;
 begin
   if (StackVar = nil) then
     Exit(nil);
+  Assert(StackVar.Size > 0);
+
   StackVar.Stack := FVarStack;
   Result := StackVar;
   addDeclaration(StackVar);

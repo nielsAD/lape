@@ -2797,7 +2797,7 @@ procedure lpePointer_SUB_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpePointer_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) - PInt64(Right)^); end;
 
 //Method
-procedure lpeDot(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Data := Left; TMethod(Dest^).Code := PPointer(Right)^; end;
+procedure lpeDotMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Data := Left; if (Right <> nil) then TMethod(Dest^).Code := PPointer(Right)^ else TMethod(Dest^).Code := nil; end;
 procedure lpeSMethod_ASGN_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCodePos(Dest)^ := PtrUInt(PPointer(Left)^); end;
 procedure lpeSMethod_ASGN_SMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCodePos(Dest)^ := PCodePos(Left)^; end;
 

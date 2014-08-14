@@ -251,7 +251,7 @@ type
     function CanHaveChild: Boolean; override;
     function HasChild(AName: lpString): Boolean; override;
     function HasChild(ADecl: TLapeDeclaration): Boolean; override;
-    function HasConstantChild(AName: lpString): Boolean; override;
+    function HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean; override;
 
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
@@ -3626,7 +3626,7 @@ begin
   Result := CanHaveChild() and FCompiler.hasDeclaration(ADecl, nil);
 end;
 
-function TLapeType_SystemUnit.HasConstantChild(AName: lpString): Boolean;
+function TLapeType_SystemUnit.HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean;
 begin
   Result := HasChild(AName);
 end;
