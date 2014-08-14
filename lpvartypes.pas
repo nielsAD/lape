@@ -2578,7 +2578,7 @@ end;
 function TLapeType_MethodOfObject.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
   VarType: TLapeType;
-  m: TLapeGlobalVar;
+  MethodIndex: Integer;
 begin
   Assert((Left = nil) or (Left.VarType = Self));
   if (Left <> nil) then
@@ -2586,9 +2586,9 @@ begin
 
   if (Right <> nil) and Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
   begin
-    m := TLapeType_OverloadedMethod(Right.VarType).getMethod(Self);
-    if (m <> nil) then
-      Right := m;
+    MethodIndex := TLapeType_OverloadedMethod(Right.VarType).getMethodIndex(Self);
+    if (MethodIndex >= 0) then
+      Right := Right.VarType.EvalConst(op_Index, Right, FCompiler.getConstant(MethodIndex), Flags);
   end;
 
   try
@@ -2605,24 +2605,28 @@ begin
     else
       Result := FMethodRecord.EvalConst(Op, Left, Right, Flags);
   finally
-    if (Left.VarType <> nil) then
+    if (Left <> nil) then
       Left.VarType := Self;
   end;
 end;
 
 function TLapeType_MethodOfObject.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
+  tmpRes: TResVar;
   VarType: TLapeType;
-  m: TLapeGlobalVar;
+  MethodIndex: Integer;
 begin
   Assert(Left.VarType = Self);
   Left.VarType := FMethodRecord;
 
   if Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
   begin
-    m := TLapeType_OverloadedMethod(Right.VarType).getMethod(Self);
-    if (m <> nil) then
-      Right := _ResVar.New(m);
+    MethodIndex := TLapeType_OverloadedMethod(Right.VarType).getMethodIndex(Self);
+    if (MethodIndex >= 0) then
+    begin
+      tmpRes := NullResVar;
+      Right := Right.VarType.Eval(op_Index, tmpRes, Right, _ResVar.New(FCompiler.getConstant(MethodIndex)), Flags, Offset, Pos);
+    end;
   end;
 
   try
