@@ -3239,6 +3239,7 @@ begin
       Left := TLapeTree_VarType.Create(WithDeclRec.WithType, Self);
       Right := TLapeTree_Field.Create(AName, Self);
 
+      Result.Free();
       if isConstant() then
         Result := Evaluate()
       else
