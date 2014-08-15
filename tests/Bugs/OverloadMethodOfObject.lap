@@ -1,0 +1,42 @@
+type
+  x = record
+    a: Integer;
+  end;
+  y = record(x)
+    b: Integer;
+  end;
+
+procedure x.test;
+begin
+end;
+
+procedure x.test(a: Integer); overload;
+
+  procedure test1(a, b: Integer);
+  begin
+    WriteLn('x', a, b);
+  end;
+
+begin
+  test1(a, 0);
+end;
+
+procedure y.test(a, b: Integer); overload;
+
+  procedure test1(a, b, c: Integer);
+  begin
+    WriteLn('y', a, b, c);
+  end;
+
+begin
+  test(a);
+  test1(a, b, 0);
+end;
+
+var
+  a: x = [1];
+  b: y = [2, 3];
+begin
+  a.test(7);
+  b.test(8, 9);
+end;

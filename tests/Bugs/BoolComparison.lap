@@ -1,0 +1,39 @@
+var
+  b: Boolean = 3;
+  w: WordBool = 4;
+  l: LongBool = 5;
+begin
+  WriteLn(b = b);
+  WriteLn(b = w);
+  WriteLn(b = l);
+  WriteLn(w = b);
+  WriteLn(w = w);
+  WriteLn(w = l);
+  WriteLn(l = b);
+  WriteLn(l = w);
+  WriteLn(l = l);
+
+  WriteLn(not not b);
+  WriteLn(not not w);
+  WriteLn(not not l);
+
+  WriteLn(not b = not b);
+  WriteLn(not b = not w);
+  WriteLn(not b = not l);
+  WriteLn(not w = not b);
+  WriteLn(not w = not w);
+  WriteLn(not w = not l);
+  WriteLn(not l = not b);
+  WriteLn(not l = not w);
+  WriteLn(not l = not l);
+
+  WriteLn(not b <> b);
+  WriteLn(b <> not w);
+  WriteLn(not b <> l);
+  WriteLn(w <> not b);
+  WriteLn(not w <> w);
+  WriteLn(w <> not l);
+  WriteLn(not l <> b);
+  WriteLn(l <> not w);
+  WriteLn(not l <>l);
+end;
