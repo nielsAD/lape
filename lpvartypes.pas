@@ -438,7 +438,7 @@ type
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
-    property MethodOfObject: TInitBool read FOfObject;
+    property MethodsOfObject: TInitBool read FOfObject;
   end;
 
   TLapeWithDeclRec = record
@@ -510,7 +510,7 @@ type
     procedure Clear; override;
 
     function getDeclaration(Name: lpString; CheckParent: TInitBool; CheckWith: Boolean): TLapeDeclaration; virtual;
-    function hasDeclaration(Name: lpString; CheckParent: TInitBool;CheckWith: Boolean): Boolean; overload; virtual;
+    function hasDeclaration(Name: lpString; CheckParent: TInitBool; CheckWith: Boolean): Boolean; overload; virtual;
     function hasDeclaration(Decl: TLapeDeclaration; CheckParent: TInitBool; CheckWith: Boolean): Boolean; overload; virtual;
 
     function getTempVar(VarType: TLapeType; Lock: Integer = 1): TLapeStackTempVar; virtual;
@@ -747,7 +747,7 @@ function MethodOfObject(VarType: TLapeType): Boolean;
 begin
   Result := (VarType is TLapeType_MethodOfObject) or
            ((VarType is TLapeType_OverloadedMethod) and
-            (TLapeType_OverloadedMethod(VarType).MethodOfObject = bTrue));
+            (TLapeType_OverloadedMethod(VarType).MethodsOfObject = bTrue));
 end;
 
 function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload;
@@ -1754,7 +1754,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
       Res.VarType := FCompiler.getGlobalType('TMethod');
 
       FCompiler.getDestVar(Dest, Res, op_Dot);
-      FCompiler.Emitter._Eval(getEvalProc(op_Dot, ltUnknown, ltPointer), Res, Left, Result, Offset, Pos);
+      FCompiler.Emitter._Eval(getEvalProc(op_Dot, ltUnknown, ltPointer), Res, Left.IncLock(), Result, Offset, Pos);
 
       Res.VarType := Result.VarType;
       Result := Res;
@@ -2729,7 +2729,7 @@ begin
 
   AMethod.isConstant := True;
 
-  if (AMethod.VarType is TLapeType_MethodOfObject) then
+  if MethodOfObject(AMethod.VarType) then
     case FOfObject of
       bUnknown: FOfObject := bTrue;
       bFalse: LapeException(lpeImpossible);

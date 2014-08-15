@@ -4269,7 +4269,7 @@ begin
       if (FOperatorType = op_Assign) and ((LeftVar = nil) or (not LeftVar.Writeable)) then
         LapeException(lpeCannotAssign, [FLeft, Self]);
 
-      if (not isEmpty(FRight)) then
+      if (LeftVar <> nil) and (not isEmpty(FRight)) then
         FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
 
       Short := (FOperatorType in [op_AND, op_OR]) and (LeftVar <> nil) and (FRight <> nil) and canShort(LeftVar.VarType) and canShort(FRight.resType());
@@ -4285,7 +4285,7 @@ begin
         Exit(RightVar);
 
       try
-        if LeftVar.HasType() then
+        if (LeftVar <> nil) and LeftVar.HasType() then
           Result := LeftVar.VarType.EvalConst(FOperatorType, LeftVar, RightVar, EvalFlags())
         else with TLapeType.Create(ltUnknown, FCompiler) do
         try

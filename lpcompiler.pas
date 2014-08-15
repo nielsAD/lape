@@ -1401,7 +1401,7 @@ begin
         Result.SelfVar := _ResVar.New(FStackInfo.Vars[0]);
         SelfWith.WithType := TLapeType_MethodOfType(FuncHeader).ObjectType;
         SelfWith.WithVar := @Result.SelfVar;
-        FStackInfo.addWith(SelfWith);
+        FStackInfo.Owner.addWith(SelfWith);
       end;
     end;
 
@@ -1414,8 +1414,14 @@ begin
           with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
           begin
             if (OldDeclaration <> nil) then
+            begin
+              if (not LocalDecl) and (OldDeclaration.DeclarationList <> nil) then
+                OldDeclaration := TLapeGlobalVar(OldDeclaration).CreateCopy(False);
               addMethod(OldDeclaration as TLapeGlobalVar);
-            OldDeclaration := addLocalDecl(NewGlobalVar(FuncName, @_DocPos), FStackInfo.Owner);
+            end;
+
+            OldDeclaration := addLocalDecl(NewGlobalVar('', @_DocPos), FStackInfo.Owner);
+            OldDeclaration.Name := FuncName;
           end
         else if (not (OldDeclaration is TLapeGlobalVar)) or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod)) or (TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).getMethod(FuncHeader) <> nil) then
           LapeException(lpeCannotOverload, Tokenizer.DocPos);
@@ -3230,7 +3236,7 @@ begin
   if (Result is TLapeWithDeclaration) then
     with TLapeWithDeclaration(Result), TLapeTree_Operator.Create(op_Dot, Self) do
     try
-      Left := TLapeTree_WithVar.Create(WithDeclRec, Self);
+      Left := TLapeTree_VarType.Create(WithDeclRec.WithType, Self);
       Right := TLapeTree_Field.Create(AName, Self);
 
       if isConstant() then
