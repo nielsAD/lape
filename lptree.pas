@@ -1874,13 +1874,10 @@ begin
         if (RealIdent <> FIdent) then
           IdentVar := FIdent.Evaluate();
         if (IdentVar.VarType is TLapeType_OverloadedMethod) then
-          with TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes()) do
-          begin
-            FRes := IdentVar;
-            IdentVar := VarType.NewGlobalVarP(IdentVar.Ptr);
-            TMethod(IdentVar.Ptr^).Code := TMethod(Ptr^).Code;
-            FreeAndNil(FRes);
-          end;
+        begin
+          FreeAndNil(IdentVar);
+          IdentVar := TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes());
+        end;
       end;
 
       if (IdentVar = nil) or (IdentVar.Ptr = nil) or
@@ -2196,12 +2193,15 @@ begin
       if (RealIdent <> FIdent) then
         IdentVar := FIdent.Compile(Offset);
       if (IdentVar.VarType is TLapeType_OverloadedMethod) then
-        with TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes()) do
+        if IdentVar.isConstant then
+        begin
+          Result := IdentVar;
+          IdentVar := _ResVar.New(TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes()));
+          Result.Spill(1);
+        end
+        else with TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes()) do
         begin
           IdentVar.VarType := VarType;
-          if (IdentVar.VarPos.MemPos = mpVar) then
-            IdentVar.VarPos.StackVar.VarType := VarType;
-
           Dec(Offset, SizeOf(Pointer));
           FCompiler.Emitter.Delete(Offset, SizeOf(Pointer));
           FCompiler.Emitter._Pointer(Ptr, Offset);
@@ -2224,10 +2224,7 @@ begin
     begin
       if (FParams.Count > Params.Count) then
         if (FParams.Count > 0) then
-        begin
-          //WriteLn(Name, ' ', ClassName, ' ', DeclarationList.Items.Sorted);
           LapeException(lpeTooMuchParameters, FParams[Params.Count].DocPos)
-        end
         else
           LapeException(lpeTooMuchParameters, Self.DocPos);
 

@@ -3813,8 +3813,6 @@ begin
           Emitter._EndTry(Offset, Pos);
         end;
 
-        //WriteLn('Vars on stack: ', FStackInfo.Count);
-
         if (not InFunction) then
           if FStackInfo.NeedInitialization then
             Emitter._ExpandVarAndInit(FStackInfo.TotalSize, CodePos, Pos)

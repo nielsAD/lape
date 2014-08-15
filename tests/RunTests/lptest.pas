@@ -134,7 +134,7 @@ var
     if (FindFirst(Folder + '*.lap', faAnyFile - faDirectory, Res) = 0) then
     try
       repeat
-        Write(Format('Testing %25s :: ', [ExtractFileName(Res.Name)]));
+        Write(Format('Testing %27s :: ', [ExtractFileName(Res.Name)]));
         Inc(Result);
 
         Output := '';
