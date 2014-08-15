@@ -627,6 +627,7 @@ end;
 function LapeHeaderToFFICif(Header: TLapeType_Method; ABI: TFFIABI = FFI_LAPE_ABI): TFFICifManager;
 var
   i: Integer;
+  SelfParam: TLapeParameter;
 begin
   if (Header = nil) then
     Exit(nil);
@@ -637,7 +638,14 @@ begin
 
   try
     if MethodOfObject(Header) then
-      Result.addArg(ffi_type_pointer);
+    begin
+      SelfParam := NullParameter;
+      SelfParam.ParType := Lape_SelfParam;
+      if (Header is TLapeType_MethodOfType) then
+        SelfParam.VarType := TLapeType_MethodOfType(Header).ObjectType;
+      Result.addArg(LapeParamToFFIType(SelfParam), True, LapeFFIPointerParam(SelfParam))
+    end;
+
     for i := 0 to Header.Params.Count - 1 do
       Result.addArg(LapeParamToFFIType(Header.Params[i]), True, LapeFFIPointerParam(Header.Params[i]));
   except
