@@ -36,6 +36,8 @@ type
   PUInt64 = ^UInt64;
   //PInt64 = ^Int64;   Already defined
 
+  PByteBool = ^ByteBool;
+
   {$IFDEF FPC}
   NativeInt = PtrInt;
   NativeUInt = PtrUInt;

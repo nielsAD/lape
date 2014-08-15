@@ -411,7 +411,7 @@ end;
 
 procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := Assigned(PPointer(Params^[0])^);
+  PEvalBool(Result)^ := Assigned(Params^[0]) and Assigned(PPointer(Params^[0])^);
 end;
 
 procedure _LapeRaise(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

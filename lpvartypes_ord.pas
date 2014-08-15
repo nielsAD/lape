@@ -122,6 +122,7 @@ type
     function NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
 
+    function EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean; virtual;
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
@@ -625,14 +626,23 @@ begin
     Result := NewGlobalVar(FMemberMap.IndexOf(Str), AName, ADocPos);
 end;
 
+function TLapeType_Enum.EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean;
+const
+  BoolOperators = BinaryOperators + EnumOperators - [op_cmp_Equal, op_cmp_NotEqual];
+begin
+  if (Right = nil) or (not Right.IsOrdinal()) then
+    Result := False
+  else if (BaseType in LapeBoolTypes) then
+    Result := (op in BoolOperators) and ((not (Right.BaseType in LapeEnumTypes)) or (Right.BaseType in LapeBoolTypes))
+  else
+    Result := (op in EnumOperators) and ((not (Right.BaseType in LapeEnumTypes)) or Equals(Right));
+end;
+
 function TLapeType_Enum.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   Assert(FCompiler <> nil);
 
-  if (Right <> nil) and Right.IsOrdinal() and
-     (((BaseType in LapeBoolTypes) and (op in BinaryOperators + EnumOperators) and (Right.BaseType in LapeBoolTypes)) or
-     ((op in EnumOperators) and ((not (Right.BaseType in LapeEnumTypes)) or Equals(Right))))
-  then
+  if EvalAsSubType(Op, Right) then
   begin
     Result := FCompiler.getBaseType(BaseIntType).EvalRes(Op, FCompiler.getBaseType(Right.BaseIntType), Flags);
     if (Result <> nil) and (not (op in CompareOperators)) then
@@ -650,10 +660,7 @@ begin
   Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType = Self));
 
-  if (Right <> nil) and Right.HasType() and Right.VarType.IsOrdinal() and
-     (((BaseType in LapeBoolTypes) and (op in BinaryOperators + EnumOperators) and (Right.BaseType in LapeBoolTypes)) or
-     ((op in EnumOperators) and ((not (Right.BaseType in LapeEnumTypes)) or Equals(Right.VarType))))
-  then
+  if (Right <> nil) and Right.HasType() and EvalAsSubType(Op, Right.VarType) then
   try
     tmpType := Right.VarType;
     if (not IsOrdinal()) or (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
@@ -690,10 +697,7 @@ begin
   Assert(FCompiler <> nil);
   Assert(Left.VarType = Self);
 
-  if Right.HasType() and Right.VarType.IsOrdinal() and
-     (((BaseType in LapeBoolTypes) and (op in BinaryOperators + EnumOperators) and (Right.VarType.BaseType in LapeBoolTypes)) or
-     ((op in EnumOperators) and ((not (Right.VarType.BaseType in LapeEnumTypes)) or Equals(Right.VarType))))
-  then
+  if Right.HasType() and EvalAsSubType(Op, Right.VarType) then
   try
     tmpVar := NullResVar;
     tmpDest := NullResVar;
@@ -824,7 +828,7 @@ end;
 
 constructor TLapeType_ByteBool.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 const
-  BoolRange: TLapeRange =(Lo: Ord(Low(UInt8{ByteBool})); Hi: Ord(High(UInt8{ByteBool})));
+  BoolRange: TLapeRange = (Lo: Ord(Low(UInt8{ByteBool})); Hi: Ord(High(UInt8{ByteBool})));
 begin
   inherited Create(ACompiler, AName, ADocPos);
   FRange := BoolRange;
@@ -834,7 +838,7 @@ end;
 
 constructor TLapeType_WordBool.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 const
-  BoolRange: TLapeRange =(Lo: Ord(Low(UInt16{WordBool})); Hi: Ord(High(UInt16{WordBool})));
+  BoolRange: TLapeRange = (Lo: Ord(Low(UInt16{WordBool})); Hi: Ord(High(UInt16{WordBool})));
 begin
   inherited Create(ACompiler, AName, ADocPos);
   FRange := BoolRange;
@@ -844,7 +848,7 @@ end;
 
 constructor TLapeType_LongBool.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 const
-  BoolRange: TLapeRange =(Lo: Ord(Low(UInt32{LongBool})); Hi: Ord(High(UInt32{LongBool})));
+  BoolRange: TLapeRange = (Lo: Ord(Low(UInt32{LongBool})); Hi: Ord(High(UInt32{LongBool})));
 begin
   inherited Create(ACompiler, AName, ADocPos);
   FRange := BoolRange;
