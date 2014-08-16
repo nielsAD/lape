@@ -297,7 +297,6 @@ function TLapeType_Record.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TR
 var
   i, FieldOffset: Integer;
   tmpVar, LeftVar, RightVar, LeftFieldName, RightFieldName: TResVar;
-  tmpType: TLapeType;
 begin
   Assert(FCompiler <> nil);
   Assert(Left.VarType = Self);
@@ -319,8 +318,7 @@ begin
     end
   else if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
-    try
-      tmpType := Right.VarType;
+    begin
       Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
 
       if Left.HasType() then
@@ -338,10 +336,6 @@ begin
         FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3, Offset, @Self._DocPos);
         Result := Left;
       end;
-
-    finally
-      Left.VarType := Self;
-      Right.VarType := tmpType;
     end
     else
     begin

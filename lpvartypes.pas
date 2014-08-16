@@ -2163,7 +2163,6 @@ end;
 
 function TLapeType_Pointer.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
-  tmpType: TLapeType;
   tmpVar, IndexVar: TResVar;
   wasConstant: Boolean;
 begin
@@ -2174,7 +2173,6 @@ begin
   if (op = op_Index) then
   begin
     wasConstant := Left.isConstant;
-    tmpType := Right.VarType;
 
     if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
       if Right.HasType() then
@@ -2213,7 +2211,6 @@ begin
 
     IndexVar.Spill(1);
     Result.setConstant(wasConstant, False);
-    Right.VarType := tmpType;
   end
   else
     Result := inherited;
@@ -2613,7 +2610,6 @@ end;
 function TLapeType_MethodOfObject.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   tmpRes: TResVar;
-  VarType: TLapeType;
   MethodIndex: Integer;
 begin
   Assert(Left.VarType = Self);
@@ -2629,21 +2625,13 @@ begin
     end;
   end;
 
-  try
-    if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
-      Result := inherited
-    else if CompatibleWith(Right.VarType) then
-    try
-      VarType := Right.VarType;
+  if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
+    Result := inherited
+  else
+  begin
+    if CompatibleWith(Right.VarType) then
       Right.VarType := FMethodRecord;
-      Result := FMethodRecord.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
-    finally
-      Right.VarType := VarType;
-    end
-    else
-      Result := FMethodRecord.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
-  finally
-    Left.VarType := Self;
+    Result := FMethodRecord.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
   end;
 end;
 

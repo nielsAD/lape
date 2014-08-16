@@ -691,17 +691,15 @@ end;
 
 function TLapeType_Enum.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
-  tmpType: TLapeType;
   tmpVar, tmpDest: TResVar;
 begin
   Assert(FCompiler <> nil);
   Assert(Left.VarType = Self);
 
   if Right.HasType() and EvalAsSubType(Op, Right.VarType) then
-  try
+  begin
     tmpVar := NullResVar;
     tmpDest := NullResVar;
-    tmpType := Right.VarType;
     if (not IsOrdinal()) or (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
       LapeException(lpeInvalidEvaluation);
 
@@ -724,9 +722,6 @@ begin
         Result := Eval(op_Assign, tmpVar, Result, tmpDest, [], Offset, Pos);
         tmpDest.Spill(1);
       end;
-  finally
-    Left.VarType := Self;
-    Right.VarType := tmpType;
   end
   else
     Result := inherited;
@@ -773,6 +768,9 @@ begin
   Result := inherited;
   if (Result = nil) then
   begin
+    if Equals(Right, False) then
+      Right := FVarType;
+
     Result := FVarType.EvalRes(Op, Right, Flags);
     if (Result = FVarType) then
       Result := Self;
@@ -781,7 +779,7 @@ end;
 
 function TLapeType_Bool.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
-  Res: TLapeType;
+  Res, tmpType: TLapeType;
 begin
   Assert(Left.VarType = Self);
   if (Right = nil) or (not Right.HasType()) then
@@ -794,12 +792,22 @@ begin
   else
   begin
     Left.VarType := FVarType;
+    if (Right <> nil) and Right.HasType() and Equals(Right.VarType) then
+    begin
+      tmpType := Right.VarType;
+      Right.VarType := FVarType;
+    end
+    else
+      tmpType := nil;
+
     try
       Result := FVarType.EvalConst(Op, Left, Right, Flags);
       if (Result.VarType = FVarType) then
         Result.VarType := Self;
     finally
       Left.VarType := Self;
+      if (tmpType <> nil) then
+        Right.VarType := tmpType;
     end;
   end;
 end;
@@ -816,13 +824,12 @@ begin
   else
   begin
     Left.VarType := FVarType;
-    try
-      Result := FVarType.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
-      if (Result.VarType = FVarType) then
-        Result.VarType := Self;
-    finally
-      Left.VarType := Self;
-    end;
+    if Right.HasType() and Equals(Right.VarType) then
+      Right.VarType := FVarType;
+
+    Result := FVarType.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
+    if (Result.VarType = FVarType) then
+      Result.VarType := Self;
   end;
 end;
 

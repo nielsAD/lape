@@ -789,7 +789,6 @@ function TLapeType_StaticArray.Eval(Op: EOperator; var Dest: TResVar; Left, Righ
 var
   tmpVar, LeftVar: TResVar;
   wasConstant: Boolean;
-  tmpType: TLapeType;
   CounterVar, IndexLow, IndexHigh: TLapeVar;
   LoopOffset: Integer;
 begin
@@ -816,8 +815,7 @@ begin
     if (FRange.Lo = 0) then
       Result := inherited Eval(Op, Dest, LeftVar, Right, Flags, Offset, Pos)
     else
-    try
-      tmpType := Right.VarType;
+    begin
       if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
         if Right.HasType() then
           LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
@@ -841,8 +839,6 @@ begin
           Pos
         );
       tmpVar.Spill(1);
-    finally
-      Right.VarType := tmpType;
     end;
   finally
     if (not Left.VarPos.isPointer) or (Left.VarPos.Offset > 0) then
@@ -853,8 +849,7 @@ begin
   end
   else if (op = op_Assign) and (BaseType = ltStaticArray) and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) then
-    try
-      tmpType := Right.VarType;
+    begin
       Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
 
       if Left.HasType() then
@@ -895,10 +890,6 @@ begin
           Left.VarPos.ForceVariable := False;
         end;
       end;
-
-    finally
-      Left.VarType := Self;
-      Right.VarType := tmpType;
     end
     else
     begin
