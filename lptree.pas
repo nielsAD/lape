@@ -239,7 +239,6 @@ type
   TLapeTree_InternalMethod_Dispose = class(TLapeTree_InternalMethod)
   public
     FunctionOnly: Boolean;
-    ForceDefault: Boolean;
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
@@ -2172,6 +2171,8 @@ var
 
     o_else := FCompiler.Emitter._JmpR(0, Offset, @_DocPos);
     FCompiler.Emitter._JmpRIfNot(Offset - o_if, IsScriptMethod, o_if, @_DocPos);
+    IsScriptMethod.Spill(1);
+
     Result := DoImportedMethod(IdentVar, ParamVars);
     FCompiler.Emitter._JmpR(Offset - o_else, o_else, @_DocPos);
     FDest := tmpDest;
@@ -2673,7 +2674,6 @@ begin
   inherited;
   FForceParam := True;
   FunctionOnly := False;
-  ForceDefault := False;
 end;
 
 function TLapeTree_InternalMethod_Dispose.Compile(var Offset: Integer): TResVar;
@@ -2730,10 +2730,7 @@ begin
         Free();
       end
     else if (_Dispose = nil) then
-      ForceDefault := True;
-
-  if ForceDefault then
-    FCompiler.VarToDefault(Param, Offset, @_DocPos);
+      FCompiler.VarToDefault(Param, Offset, @_DocPos);
 
   Param.Spill(1);
 end;
@@ -3963,6 +3960,9 @@ begin
   ResVar := FCompiler.getTempStackVar(ltPointer);
   ResVar := ResVar.VarType.Eval(op_Assign, tmpVar, ResVar, Param, [], Offset, @_DocPos);
   FCompiler.Emitter._JmpVar(Offset, @_DocPos);
+
+  Param.Spill(1);
+  ResVar.Spill(1);
 end;
 
 constructor TLapeTree_Callback.Create(ACompiler: TLapeCompilerBase; ACallback: TLapeTreeCallback; AData: Pointer = nil; ADocPos: PDocPos = nil);
@@ -4852,6 +4852,7 @@ begin
   Assert(Method <> nil);
   FExitStatements.Clear();
 
+  Result := NullResVar;
   fo := FCompiler.Emitter._JmpR(0, Offset, @_DocPos);
   mo := FCompiler.Emitter.getCodeOffset(Offset);
 
@@ -4878,7 +4879,7 @@ begin
         Free();
       end;
 
-    Result := FStatements.Compile(Offset);
+    FStatements.Compile(Offset).Spill(1);
 
     for i := 0 to FExitStatements.Count - 1 do
       with FExitStatements[i] do
@@ -5612,7 +5613,7 @@ begin
       Step := IncDec.Params.Delete(1);
     end
     else
-      IncDec.Compile(Offset);
+      IncDec.Compile(Offset).Spill(1);
   finally
     IncDec.Free();
   end;
@@ -5866,7 +5867,10 @@ begin
     else
       o_except := Offset;
     FCompiler.Emitter._CatchException(Offset, @FExcept._DocPos);
+
     FExcept.CompileToTempVar(Offset, tmp);
+    tmp.Spill(1);
+
     FCompiler.Emitter._JmpR(Offset - o_jmp, o_jmp, @FExcept._DocPos);
   end;
   if (FFinally <> nil) then
@@ -5875,7 +5879,9 @@ begin
       FCompiler.Emitter._IncTry(o_except - o_try, Offset - o_except, o_try, @_DocPos)
     else
       FCompiler.Emitter._IncTry(Offset - o_try, Try_NoExcept, o_try, @_DocPos);
+
     FFinally.CompileToTempVar(Offset, tmp);
+    tmp.Spill(1);
   end;
   FCompiler.Emitter._EndTry(Offset, @_DocPos);
 end;
