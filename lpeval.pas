@@ -137,7 +137,7 @@ var
     '  TEnum = (se0, se1 = %d);'                                                         + LineEnding +
     '  TSet = set of TEnum;'                                                             + LineEnding +
     '  PSet = ^TSet;'                                                                    + LineEnding +
-    '  TToString = function(const Enum: TEnum): string;'                                 + LineEnding +
+    '  TToString = function(constref Enum: TEnum): string;'                                 + LineEnding +
     'var'                                                                                + LineEnding +
     '  e: TEnum;'                                                                        + LineEnding +
     'begin'                                                                              + LineEnding +
@@ -154,7 +154,7 @@ var
 
   _LapeToString_Array: lpString =
     'function _ArrayToString(Arr: Pointer;'                                              + LineEnding +
-    '  AToString: private function(const p: Pointer): string;'                           + LineEnding +
+    '  AToString: private function(p: Pointer): string;'                                 + LineEnding +
     '  Len, Size: Int32): string;'                                                       + LineEnding +
     'var'                                                                                + LineEnding +
     '  i: Int32;'                                                                        + LineEnding +

@@ -142,7 +142,7 @@ begin
     Exit;
 
   Result :=
-    '  function _ElementToString(const p: System.Pointer): System.string;'                  + LineEnding +
+    '  function _ElementToString(p: System.Pointer): System.string;'                        + LineEnding +
     '  begin'                                                                               + LineEnding +
     '    Result := System.ToString['+IntToStr(Index)+'](p^);'                               + LineEnding +
     '  end;'                                                                                + LineEnding +

@@ -2171,11 +2171,12 @@ var
 
     o_else := FCompiler.Emitter._JmpR(0, Offset, @_DocPos);
     FCompiler.Emitter._JmpRIfNot(Offset - o_if, IsScriptMethod, o_if, @_DocPos);
-    IsScriptMethod.Spill(1);
-
     Result := DoImportedMethod(IdentVar, ParamVars);
     FCompiler.Emitter._JmpR(Offset - o_else, o_else, @_DocPos);
     FDest := tmpDest;
+
+    IsScriptMethod.Spill(1);
+    Assert(Result.VarPos.MemPos = tmpRes.VarPos.MemPos);
   end;
 
 begin

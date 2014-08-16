@@ -552,7 +552,7 @@ begin
       Result := Result + #39 + FMemberMap[i] + #39;
     end;
   Result := Format(
-    'type TEnumToString = function(constref Arr; Index, Lo, Hi: System.Int32): System.string;' + LineEnding +
+    'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.Int32): System.string;' + LineEnding +
     'begin Result := TEnumToString('+AIA+'System._EnumToString)([%s], System.Ord(Param0), %d, %d); end;',
     [Result, FRange.Lo, FRange.Hi]
   );
