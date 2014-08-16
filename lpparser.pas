@@ -293,32 +293,32 @@ const
   OperatorAssociative: array[EOperator] of EOperatorAssociative = (
     assocNone,                          //op_Unkown
 
-    assocRight,                         //op_cmp_Equal
-    assocRight,                         //op_cmp_GreaterThan
-    assocRight,                         //op_cmp_GreaterThanOrEqual
-    assocRight,                         //op_cmp_LessThan
-    assocRight,                         //op_cmp_LessThanOrEqual
-    assocRight,                         //op_cmp_NotEqual
+    assocLeft,                          //op_cmp_Equal
+    assocLeft,                          //op_cmp_GreaterThan
+    assocLeft,                          //op_cmp_GreaterThanOrEqual
+    assocLeft,                          //op_cmp_LessThan
+    assocLeft,                          //op_cmp_LessThanOrEqual
+    assocLeft,                          //op_cmp_NotEqual
 
     assocRight,                         //op_Addr
-    assocRight,                         //op_AND
+    assocLeft,                          //op_AND
     assocRight,                         //op_Assign
     assocLeft,                          //op_Deref
     assocLeft,                          //op_DIV
     assocLeft,                          //op_Divide
     assocLeft,                          //op_Dot
-    assocRight,                         //op_IN
+    assocLeft,                          //op_IN
     assocLeft,                          //op_Index
     assocLeft,                          //op_Minus
     assocLeft,                          //op_MOD
     assocLeft,                          //op_Multiply
     assocRight,                         //op_NOT
-    assocRight,                         //op_OR
+    assocLeft,                          //op_OR
     assocLeft,                          //op_Plus
     assocRight,                         //op_Power
-    assocRight,                         //op_SHL
-    assocRight,                         //op_SHR
-    assocRight,                         //op_XOR
+    assocLeft,                          //op_SHL
+    assocLeft,                          //op_SHR
+    assocLeft,                          //op_XOR
 
     assocRight,                         //op_UnaryMinus
     assocRight                          //op_UnaryPlus
@@ -327,35 +327,35 @@ const
   OperatorPrecedence: array[EOperator] of Byte = (
     0,                                  //op_Unkown
 
-    9,                                  //op_cmp_Equal
-    8,                                  //op_cmp_GreaterThan
-    8,                                  //op_cmp_GreaterThanOrEqual
-    8,                                  //op_cmp_LessThan
-    8,                                  //op_cmp_LessThanOrEqual
-    9,                                  //op_cmp_NotEqual
+    7,                                  //op_cmp_Equal
+    7,                                  //op_cmp_GreaterThan
+    7,                                  //op_cmp_GreaterThanOrEqual
+    7,                                  //op_cmp_LessThan
+    7,                                  //op_cmp_LessThanOrEqual
+    7,                                  //op_cmp_NotEqual
 
     2,                                  //op_Addr
     5,                                  //op_AND
-    10,                                 //op_Assign
+    8,                                  //op_Assign
     1,                                  //op_Deref
     5,                                  //op_DIV
     5,                                  //op_Divide
     1,                                  //op_Dot
-    8,                                  //op_IN
+    7,                                  //op_IN
     1,                                  //op_Index
     6,                                  //op_Minus
     5,                                  //op_MOD
     5,                                  //op_Multiply
-    3,                                  //op_NOT
+    4,                                  //op_NOT
     6,                                  //op_OR
     6,                                  //op_Plus
-    4,                                  //op_Power
-    7,                                  //op_SHL
-    7,                                  //op_SHR
-    5,                                  //op_XOR
+    3,                                  //op_Power
+    5,                                  //op_SHL
+    5,                                  //op_SHR
+    6,                                  //op_XOR
 
-    3,                                  //op_UnaryMinus
-    3                                   //op_UnaryPlus
+    4,                                  //op_UnaryMinus
+    4                                   //op_UnaryPlus
   );
 
 var
