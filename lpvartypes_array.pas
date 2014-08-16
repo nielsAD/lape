@@ -346,8 +346,12 @@ begin
 
   if (op = op_Index) then
   begin
+    //Cache AsString before changing FBaseType
+    GetAsString();
+
     tmpType := FBaseType;
     FBaseType := ltPointer;
+
     IndexVar := nil;
     try
       IndexVar := inherited EvalConst(Op, ALeft, ARight, Flags);
@@ -424,8 +428,12 @@ begin
 
   if (op = op_Index) then
   try
+    //Cache AsString before changing FBaseType
+    GetAsString();
+
     tmpType := FBaseType;
     FBaseType := ltPointer;
+
     if (not ALeft.VarPos.isPointer) then
     begin
       if (Dest.VarPos.MemPos = mpStack) then

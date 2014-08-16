@@ -2007,9 +2007,8 @@ end;
 
 function TLapeType_Pointer.getAsString: lpString;
 begin
-  if (FAsString = '') and (FBaseType = ltPointer) then
-    if HasType() then
-      FAsString := '^'+FPType.AsString;
+  if (FAsString = '') and (FBaseType = ltPointer) and HasType() then
+    FAsString := '^'+FPType.AsString;
   Result := inherited;
 end;
 
