@@ -202,6 +202,7 @@ function TraverseGlobals(Compiler: TLapeCompiler; Callback: TTraverseCallback; B
 var
   i: Integer;
   n: lpString;
+  Decl: TLapeDeclaration;
 begin
   Result := '';
 
@@ -217,34 +218,36 @@ begin
   if Decls.HasParent() then
     TraverseGlobals(Compiler, Callback, BaseName, Decls.Parent);
 
-  for i := 0 to Decls.Items.Count - 1 do
-    with Decls.Items[i] do
+  for i := 0 to Decls.Count - 1 do
+  begin
+    Decl := Decls[i];
     try
-      if (Name = '') then
+      if (Decl.Name = '') then
         if (BaseName = '') then
           Continue
         else
           n := BaseName + '[' + IntToStr(i) + ']'
       else if (BaseName <> '') then
-        n := BaseName + '.' + Name
+        n := BaseName + '.' + Decl.Name
       else
-        n := Name;
+        n := Decl.Name;
 
       if (n = '') or (n[1] = '!') then
         Continue;
 
-      if (Decls.Items[i] is TLapeType) then
-        Result := Result + TraverseGlobals(Compiler, Callback, n, TLapeType(Decls.Items[i]).ManagedDeclarations)
-      else if (Decls.Items[i] is TLapeGlobalvar) then
-        with TLapeGlobalVar(Decls.Items[i]) do
+      if (Decl is TLapeType) then
+        Result := Result + TraverseGlobals(Compiler, Callback, n, TLapeType(Decl).ManagedDeclarations)
+      else if (Decl is TLapeGlobalvar) then
+        with TLapeGlobalVar(Decl) do
         begin
-          Result := Result + Callback(TLapeGlobalVar(Decls.Items[i]), n, Compiler);
+          Result := Result + Callback(TLapeGlobalVar(Decl), n, Compiler);
           if (VarType is TLapeType_Type) or (VarType is TLapeType_OverloadedMethod) then
             Result := Result + TraverseGlobals(Compiler, Callback, n, VarType.ManagedDeclarations);
         end;
     except
       {catch exception}
     end;
+  end;
 end;
 
 procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean);

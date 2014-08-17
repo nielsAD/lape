@@ -237,7 +237,7 @@ end;
 function TLapeCodeEmitterBase.addCodePointer(p: PCodePos): Integer;
 begin
   if (p <> nil) then
-    Result := FCodePointers.add(p)
+    Result := FCodePointers.Add(p)
   else
     Result := -1;
 end;

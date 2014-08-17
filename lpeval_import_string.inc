@@ -24,8 +24,8 @@ addGlobalFunc('function AnsiUpperCase(s: string): string;', @_LapeAnsiUpperCase)
 addGlobalFunc('function AnsiLowerCase(s: string): string;', @_LapeAnsiLowerCase);
 addGlobalFunc('function AnsiCompareStr(s1, s2: string): Int32;', @_LapeAnsiCompareStr);
 addGlobalFunc('function AnsiCompareText(s1, s2: string): Int32;', @_LapeAnsiCompareText);
-addGlobalFunc('function AnsiSameText(s1,s2:String): EvalBool;', @_LapeAnsiSameText);
-addGlobalFunc('function AnsiSameStr(s1,s2:String): EvalBool;', @_LapeAnsiSameStr);
+addGlobalFunc('function AnsiSameText(s1,s2: string): EvalBool;', @_LapeAnsiSameText);
+addGlobalFunc('function AnsiSameStr(s1,s2: string): EvalBool;', @_LapeAnsiSameStr);
 
 addGlobalFunc('function Trim(s: string): string;', @_LapeTrim);
 addGlobalFunc('function TrimLeft(s: string): string;', @_LapeTrimLeft);

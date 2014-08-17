@@ -82,7 +82,7 @@ const
   StackSize = 2048 * SizeOf(Pointer);
   VarStackSize = 512 * SizeOf(Pointer);
   VarStackStackSize = 32;
-  TryStackSize = 256;
+  TryStackSize = 512;
   CallStackSize = 512;
 
 procedure RunCode(Code: PByte; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
@@ -99,13 +99,13 @@ type
   TInJump = record
     JumpException: record
       Obj: Exception;
-      Pos: TDocPos;
+      Pos: PDocPos;
     end;
     JumpSafe: PByte;
   end;
 
 const
-  InEmptyJump: TInJump = (JumpException: (Obj: nil; Pos: (Line: 0; Col: 0; FileName: '')); JumpSafe: nil);
+  InEmptyJump: TInJump = (JumpException: (Obj: nil; Pos: nil); JumpSafe: nil);
 
 procedure MergeJumps(var AJump: TInJump; const Merge: TInJump);
 begin
@@ -524,7 +524,7 @@ var
     except
       {$IFDEF Lape_EmitPos}
       if (ExceptObject <> InJump.JumpException.Obj) then
-        InJump.JumpException.Pos := PDocPos(PtrUInt(Code) + SizeOf(opCodeType))^;
+        InJump.JumpException.Pos := PDocPos(PtrUInt(Code) + SizeOf(opCodeType));
       {$ENDIF}
 
       InJump.JumpException.Obj := Exception(AcquireExceptionObject());
@@ -575,8 +575,8 @@ begin
     DaLoop();
   except
     on E: Exception do
-      if (E = InJump.JumpException.Obj) then
-        LapeExceptionFmt(lpeRuntime, [E.Message], InJump.JumpException.Pos)
+      if (E = InJump.JumpException.Obj) and (InJump.JumpException.Pos <> nil) then
+        LapeExceptionFmt(lpeRuntime, [E.Message], InJump.JumpException.Pos^)
       else
         LapeExceptionFmt(lpeRuntime, [E.Message]);
   end;

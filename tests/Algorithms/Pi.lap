@@ -1,7 +1,7 @@
 //Taken from the DWScript project (http://code.google.com/p/dwscript/)
 //Adjusted to compile with Lape
 
-function Chr(c: Int32): Char;
+function Chr(c: Int32): AnsiChar;
 begin
   UInt8(Result) := c;
 end;   

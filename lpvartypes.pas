@@ -491,7 +491,7 @@ type
     FOldMaxStack: Integer;
 
     function getVar(Index: Integer): TLapeStackVar; virtual;
-    function getCount: Integer; virtual;
+    function getVarCount: Integer; virtual;
     function getTotalSize: Integer; virtual;
     function getTotalParamSize: Integer; virtual;
     function getTotalNoParamSize: Integer; virtual;
@@ -519,12 +519,12 @@ type
     function addVar(VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
     function addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
     function addWith(AWith: TLapeWithDeclRec): Integer; virtual;
-    procedure delWith(Count: Integer); virtual;
+    procedure delWith(ACount: Integer); virtual;
 
     property VarStack: TLapeVarStack read FVarStack;
     property WithStack: TLapeWithDeclarationList read FWithStack;
     property Vars[Index: Integer]: TLapeStackVar read getVar; default;
-    property Count: Integer read getCount;
+    property VarCount: Integer read getVarCount;
     property TotalSize: Integer read getTotalSize;
     property TotalParamSize: Integer read getTotalParamSize;
     property TotalNoParamSize: Integer read getTotalNoParamSize;
@@ -1029,7 +1029,7 @@ begin
       FStack.DeleteItem(Self);
     FStack := Stack;
     if (FStack <> nil) then
-      FStack.add(Self);
+      FStack.Add(Self);
   end;
 end;
 
@@ -2343,7 +2343,7 @@ begin
     Param.ParType := AParTypes[i];
     Param.VarType := AParams[i];
     Param.Default := AParDefaults[i];
-    FParams.add(Param);
+    FParams.Add(Param);
   end;
 end;
 
@@ -2685,7 +2685,7 @@ begin
   FOfObject := bUnknown;
   OnFunctionNotFound := nil;
   NeedFullMatch := False;
-  FManagedDecls.Items.Sorted := False;
+  FManagedDecls.Sorted := False;
 end;
 
 function TLapeType_OverloadedMethod.CreateCopy(DeepCopy: Boolean = False): TLapeType;
@@ -2728,8 +2728,8 @@ begin
     end;
 
   if (AMethod.VarType is TLapeType_OverloadedMethod) then
-    for i := 0 to AMethod.VarType.FManagedDecls.Items.Count - 1 do
-      addMethod(TLapeGlobalVar(AMethod.VarType.FManagedDecls.Items[i]).CreateCopy(False))
+    for i := 0 to AMethod.VarType.FManagedDecls.Count - 1 do
+      addMethod(TLapeGlobalVar(AMethod.VarType.FManagedDecls[i]).CreateCopy(False))
   else if DoOverride then
   begin
     AMethod := overrideMethod(AMethod);
@@ -2738,8 +2738,8 @@ begin
   end
   else
   begin
-    for i := 0 to FManagedDecls.Items.Count - 1 do
-      if TLapeType_Method(TLapeGlobalVar(FManagedDecls.Items[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
+    for i := 0 to FManagedDecls.Count - 1 do
+      if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
         LapeExceptionFmt(lpeDuplicateDeclaration, [AMethod.VarType.AsString]);
 
     AMethod.Name := Name;
@@ -2750,6 +2750,7 @@ end;
 function TLapeType_OverloadedMethod.overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar;
 var
   i: Integer;
+  OldMethod: TLapeGlobalVar;
 begin
   if (AMethod = nil) or (not AMethod.HasType()) or
      (not ((AMethod.VarType is TLapeType_Method) or (AMethod.VarType is TLapeType_OverloadedMethod)))
@@ -2759,13 +2760,17 @@ begin
   Result := nil;
   AMethod.isConstant := True;
 
-  for i := 0 to FManagedDecls.Items.Count - 1 do
-    if TLapeType_Method(TLapeGlobalVar(FManagedDecls.Items[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
+  for i := 0 to FManagedDecls.Count - 1 do
+  begin
+    OldMethod := TLapeGlobalVar(FManagedDecls[i]);
+    if TLapeType_Method(OldMethod.VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
     begin
-      Result := FManagedDecls.Items[i] as TLapeGlobalVar;
+      Result := OldMethod;
       FManagedDecls.Delete(i);
       Break;
     end;
+  end;
+
   FManagedDecls.addDeclaration(AMethod);
 end;
 
@@ -2776,12 +2781,12 @@ begin
   if (AType = nil) then
     Exit(-1);
 
-  for i := 0 to FManagedDecls.Items.Count - 1 do
-    if TLapeType_Method(TLapeGlobalVar(FManagedDecls.Items[i]).VarType).EqualParams(AType, False) then
+  for i := 0 to FManagedDecls.Count - 1 do
+    if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AType, False) then
       Exit(i);
 
   if ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
-    Result := FManagedDecls.Items.IndexOf(OnFunctionNotFound(Self, AType, nil, nil))
+    Result := FManagedDecls.IndexOf(OnFunctionNotFound(Self, AType, nil, nil))
   else
     Result := -1;
 end;
@@ -2809,8 +2814,8 @@ begin
   Result := -1;
   MinWeight := High(Integer);
 
-  for MethodIndex := 0 to FManagedDecls.Items.Count - 1 do
-    with TLapeType_Method(TLapeGlobalVar(FManagedDecls.Items[MethodIndex]).VarType) do
+  for MethodIndex := 0 to FManagedDecls.Count - 1 do
+    with TLapeType_Method(TLapeGlobalVar(FManagedDecls[MethodIndex]).VarType) do
     begin
       if (Length(AParams) > Params.Count) or ((AResult <> nil) and (Res = nil)) then
         Continue;
@@ -2858,18 +2863,18 @@ begin
     end;
 
   if (Result < 0) and ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
-    Result := FManagedDecls.Items.IndexOf(OnFunctionNotFound(Self, nil, AParams, AResult));
+    Result := FManagedDecls.IndexOf(OnFunctionNotFound(Self, nil, AParams, AResult));
 end;
 
 
 function TLapeType_OverloadedMethod.getMethod(AType: TLapeType_Method): TLapeGlobalVar;
 begin
-  Result := FManagedDecls.Items[getMethodIndex(AType)] as TLapeGlobalVar;
+  Result := FManagedDecls[getMethodIndex(AType)] as TLapeGlobalVar;
 end;
 
 function TLapeType_OverloadedMethod.getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar;
 begin
-  Result := FManagedDecls.Items[getMethodIndex(AParams, AResult)] as TLapeGlobalVar;
+  Result := FManagedDecls[getMethodIndex(AParams, AResult)] as TLapeGlobalVar;
 end;
 
 function TLapeType_OverloadedMethod.NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -2879,12 +2884,17 @@ begin
 end;
 
 function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
+var
+  Method: TLapeGlobalVar;
 begin
   if (Op = op_Index) and (Right <> nil) and (Right.BaseType in LapeIntegerTypes) then
-    if (FManagedDecls.Items[Right.AsInteger] = nil) then
-      LapeException(lpeOutOfTypeRange)
-    else
-      Result := TLapeGlobalVar(FManagedDecls.Items[Right.AsInteger]).VarType
+  begin
+    Method := TLapeGlobalVar(FManagedDecls[Right.AsInteger]);
+    if (Method = nil) then
+      LapeException(lpeOutOfTypeRange);
+
+    Result := Method.VarType
+  end
   else
     Result := inherited;
 end;
@@ -2893,10 +2903,11 @@ function TLapeType_OverloadedMethod.EvalConst(Op: EOperator; Left, Right: TLapeG
 begin
   Assert((Left = nil) or (Left.VarType = Self));
   if (Op = op_Index) and (Left <> nil) and (Right <> nil) and (Right.BaseType in LapeIntegerTypes) then
-    if (FManagedDecls.Items[Right.AsInteger] = nil) then
-      LapeException(lpeOutOfTypeRange)
-    else
-      Result := TLapeGlobalVar(FManagedDecls.Items[Right.AsInteger])
+  begin
+    Result := TLapeGlobalVar(FManagedDecls[Right.AsInteger]);
+    if (Result = nil) then
+      LapeException(lpeOutOfTypeRange);
+  end
   else
     Result := inherited;
 end;
@@ -2904,27 +2915,29 @@ end;
 function TLapeType_OverloadedMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   Res: TResVar;
+  Method: TLapeGlobalVar;
 begin
   Assert(Left.VarType = Self);
   if (Op = op_Index) and (Right.VarPos.MemPos = mpMem) and Left.Writeable and
       Right.HasType() and Right.isConstant and (Right.VarType.BaseType in LapeIntegerTypes)
   then
-    if (FManagedDecls.Items[Right.VarPos.GlobalVar.AsInteger] = nil) then
-      LapeException(lpeOutOfTypeRange)
-    else
-    begin
-      Res := _ResVar.New(TLapeGlobalVar(FManagedDecls.Items[Right.VarPos.GlobalVar.AsInteger]));
-      Res.VarType := FCompiler.getBaseType(ltPointer);
-      Left.VarType := Res.VarType;
+  begin
+    Method := TLapeGlobalVar(FManagedDecls[Right.VarPos.GlobalVar.AsInteger]);
+    if (Method = nil) then
+      LapeException(lpeOutOfTypeRange);
 
-      try
-        Dest := NullResVar;
-        Result := Left.VarType.Eval(op_Assign, Dest, Left.IncLock(), Res, Flags, Offset, Pos);
-        Result.VarType := TLapeGlobalVar(FManagedDecls.Items[Right.VarPos.GlobalVar.AsInteger]).VarType;
-      finally
-        Res.Spill(1);
-      end;
-    end
+    Res := _ResVar.New(Method);
+    Res.VarType := FCompiler.getBaseType(ltPointer);
+    Left.VarType := Res.VarType;
+
+    try
+      Dest := NullResVar;
+      Result := Left.VarType.Eval(op_Assign, Dest, Left.IncLock(), Res, Flags, Offset, Pos);
+      Result.VarType := Method.VarType;
+    finally
+      Res.Spill(1);
+    end;
+  end
   else
     Result := inherited;
 end;
@@ -3025,7 +3038,7 @@ begin
         FLock := BigLock * BigLock;
       end;
 
-  FVarMap.add(AName, Rec);
+  FVarMap.Add(AName, Rec);
 end;
 
 procedure TLapeType_VarRefMap.addVar(RefVar: TResVar; AName: lpString);
@@ -3042,7 +3055,7 @@ begin
         FLock := BigLock * BigLock;
       end;
 
-  FVarMap.add(AName, Rec);
+  FVarMap.Add(AName, Rec);
 end;
 
 function TLapeStackInfo.getVar(Index: Integer): TLapeStackVar;
@@ -3050,7 +3063,7 @@ begin
   Result := FVarStack[Index];
 end;
 
-function TLapeStackInfo.getCount: Integer;
+function TLapeStackInfo.getVarCount: Integer;
 begin
   Result := FVarStack.Count;
 end;
@@ -3218,7 +3231,7 @@ begin
          (Pos(LapeCase('|'+Decl.Name+'|'), LapeReservedLocals) > 0)
   then
     LapeExceptionFmt(lpeDuplicateDeclaration, [Decl.Name]);
-  Result := FList.add(Decl);
+  Result := FList.Add(Decl);
 end;
 
 function TLapeStackInfo.addVar(StackVar: TLapeStackVar): TLapeStackVar;
@@ -3247,14 +3260,14 @@ end;
 
 function TLapeStackInfo.addWith(AWith: TLapeWithDeclRec): Integer;
 begin
-  Result := FWithStack.add(AWith);
+  Result := FWithStack.Add(AWith);
 end;
 
-procedure TLapeStackInfo.delWith(Count: Integer);
+procedure TLapeStackInfo.delWith(ACount: Integer);
 var
   i: Integer;
 begin
-  for i := FWithStack.Count - 1 downto FWithStack.Count - Count do
+  for i := FWithStack.Count - 1 downto FWithStack.Count - ACount do
     FWithStack.Delete(i);
 end;
 
@@ -3717,6 +3730,7 @@ function TLapeCompilerBase.DecStackInfo(var Offset: Integer; InFunction: Boolean
 var
   i,
   CodePos, IncTryJump, InitStackPos: Integer;
+  Item: TLapeVar;
 
   procedure RemoveIncTry;
   begin
@@ -3775,21 +3789,22 @@ begin
           i := 0;
           while (i < Count) do
           begin
-            if NeedFinalization(Items[i]) then
+            Item := Items[i];
+            if NeedFinalization(Item) then
             begin
-              FinalizeVar(_ResVar.New(Items[i]), Offset, Pos);
-              if (Items[i] is TLapeStackTempVar) then
+              FinalizeVar(_ResVar.New(Item), Offset, Pos);
+              if (Item is TLapeStackTempVar) then
               begin
-                //if TLapeStackTempVar(Items[i]).Locked then
-                //  WriteLn(Items[i].Name, ' ', Items[i].VarType.AsString, ' still locked! ', TLapeStackTempVar(Items[i]).FLock);
-                TLapeStackTempVar(Items[i]).Locked := True;
+                //if TLapeStackTempVar(Item).Locked then
+                //  WriteLn(Item.Name, ' ', Item.VarType.AsString, ' still locked! ', TLapeStackTempVar(Item).FLock);
+                TLapeStackTempVar(Item).Locked := True;
               end;
             end;
             Inc(i);
           end;
           for i := 0 to Count - 1 do
-            if (Items[i] is TLapeStackTempVar) then
-              TLapeStackTempVar(Items[i]).Locked := False;
+            if (Item is TLapeStackTempVar) then
+              TLapeStackTempVar(Item).Locked := False;
         end;
 
         if InFunction then
@@ -3959,9 +3974,10 @@ begin
 
   Result := addManagedDecl(AVar) as TLapeVar;
   {$IFNDEF Lape_SmallCode}
-  if (AVar is TLapeGlobalVar) and AVar.HasType() and AVar.Readable and (AVar.Name = '') then
+  if (AVar is TLapeGlobalVar) then
     with AVar as TLapeGlobalVar do
-      FCachedDeclarations.add(AsString + ':' + LapeTypeToString(BaseType), TLapeGlobalVar(AVar));
+      if HasType() and Readable and (Name = '') and ((AsString <> '') or (BaseType <> ltUnknown)) then
+        FCachedDeclarations.Add(AsString + ':' + LapeTypeToString(BaseType), TLapeGlobalVar(AVar));
   {$ENDIF}
 end;
 
@@ -4214,7 +4230,7 @@ begin
       Exit;
   end;
 
-  if GlobalDeclarations.Items.ExistsItem(ADecl) then
+  if GlobalDeclarations.HasSubDeclaration(ADecl, bFalse) then
     Result := True
   else if (ADecl <> nil) then
     Result := (getBaseType(ADecl.Name) <> nil)

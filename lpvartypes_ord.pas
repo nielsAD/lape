@@ -523,8 +523,8 @@ begin
     FRange.Lo := Value;
 
   for i := FMemberMap.Count to Value - 1 do
-    FMemberMap.add('');
-  FMemberMap.add(AName);
+    FMemberMap.Add('');
+  FMemberMap.Add(AName);
 
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
   if (not FSmall) then

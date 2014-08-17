@@ -87,8 +87,8 @@ begin
   with TLapeCompiler.Create(TLapeTokenizerFile.Create(FileName)) do
   try
     InitializePascalScriptBasics(GetSelf() as TLapeCompiler, [psiTypeAlias]);
-    addGlobalMethod('procedure _write(s: string); override;', @_WriteWrap, @Output);
-    addGlobalMethod('procedure _writeln; override;', @_WriteLnWrap, @Output);
+    addGlobalMethod('procedure _Write(s: string); override;', @_WriteWrap, @Output);
+    addGlobalMethod('procedure _WriteLn; override;', @_WriteLnWrap, @Output);
 
     try
       if (not Compile()) then

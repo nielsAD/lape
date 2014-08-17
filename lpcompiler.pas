@@ -633,7 +633,7 @@ begin
   addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System').isConstant := True;
 
   addGlobalType(TLapeType_Label.Create(Self), '!label');
-  addGlobalType(getBaseType(ltString).createCopy(), 'String');
+  addGlobalType(getBaseType(ltString).createCopy(), 'string');
   addGlobalType(getBaseType(ltChar).createCopy(), 'Char');
   addGlobalType(getBaseType(ltEvalBool).createCopy(), 'EvalBool');
   addGlobalType('packed record Method, Self: Pointer; end;', 'TMethod');
@@ -657,7 +657,7 @@ begin
   addGlobalFunc('procedure _WStr_SetLen(s: WideString; l: Int32);', @_LapeWStr_SetLen);
   addGlobalFunc('procedure _UStr_SetLen(s: UnicodeString; l: Int32);', @_LapeUStr_SetLen);
 
-  addGlobalFunc('procedure _SStr_Copy(s: ShortString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: string);', @_LapeSStr_Copy);
+  addGlobalFunc('procedure _SStr_Copy(s: ShortString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: AnsiString);', @_LapeSStr_Copy);
   addGlobalFunc('procedure _AStr_Copy(s: AnsiString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: AnsiString);', @_LapeAStr_Copy);
   addGlobalFunc('procedure _WStr_Copy(s: WideString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: WideString);', @_LapeWStr_Copy);
   addGlobalFunc('procedure _UStr_Copy(s: UnicodeString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: UnicodeString);', @_LapeUStr_Copy);
@@ -674,7 +674,6 @@ begin
   addGlobalFunc('function AllocMem(i: Int32): Pointer;', @_LapeAllocMem);
   addGlobalFunc('procedure FreeMem(p: Pointer);', @_LapeFreeMem);
 
-  addGlobalFunc('procedure FreeMemSize(p: Pointer; s: Int32);', @_LapeFreeMemSize);
   addGlobalFunc('procedure ReallocMem(var p: Pointer; s: Int32);', @_LapeReallocMem);
   addGlobalFunc('procedure FillMem(var p; s: Int32; b: UInt8 = 0);', @_LapeFillMem);
   addGlobalFunc('procedure Move(var Src, Dst; s: Int32);', @_LapeMove);
@@ -929,7 +928,7 @@ begin
   else if InIgnore() then
     {nothing}
   else if (Directive = 'define') then
-    FDefines.add(Trim(Argument))
+    FDefines.Add(Trim(Argument))
   else if (Directive = 'undef') then
     RemoveFromStringList(FDefines, Trim(Argument))
   else if (Directive = 'i') or (Directive = 'include') or (Directive = 'include_once') then
@@ -949,7 +948,7 @@ begin
     if (Directive = 'include_once') and (FIncludes.IndexOf(IncludeFile) > -1) then
       Exit(True)
     else if (not Sender.InPeek) then
-      FIncludes.add(IncludeFile);
+      FIncludes.Add(IncludeFile);
 
     if (NewTokenizer = nil) then
       if (FTokenizer + 1 < Length(FTokenizers)) and (FTokenizers[FTokenizer + 1] <> nil) and (FTokenizers[FTokenizer + 1].FileName = IncludeFile) then
@@ -1536,7 +1535,7 @@ begin
         else if FuncForwards.ExistsItem(Result.Method) then
           LapeExceptionFmt(lpeDuplicateDeclaration, [FuncName], Tokenizer.DocPos)
         else
-          FuncForwards.add(Result.Method);
+          FuncForwards.Add(Result.Method);
 
         Result.FreeStackInfo := False;
         FreeAndNil(Result);
@@ -1709,7 +1708,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     else
     begin
       Result := TLapeType_Pointer.Create(Self, PointerType, '', @DocPos);
-      TypeForwards.add(Tokenizer.TokString, Result);
+      TypeForwards.Add(Tokenizer.TokString, Result);
     end;
   end;
 
@@ -1853,7 +1852,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
 
           if (Left <> nil) and (Left is TLapeTree_VarType) and
             (TLapeTree_VarType(Left).VarType <> nil) and
-            (TLapeTree_VarType(Left).VarType.BaseType = ltAnsiString)
+            (TLapeTree_VarType(Left).VarType.BaseType = ltString)
           then
             Result := addManagedType(TLapeType_ShortString.Create(Self, Range.Hi, '', @Left._DocPos))
           else
