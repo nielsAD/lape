@@ -131,12 +131,13 @@ var
     'end;';
 
   _LapeToString_Set: lpString =
-    'function _%sSetToString(ASet, AToString: Pointer; Lo, Hi: Int32): string;'          + LineEnding +
+    'function _%sSetToString(ASet: Pointer;'                                             + LineEnding +
+    '  AToString: function(constref Enum): string;'                                      + LineEnding +
+    '  Lo, Hi: Int32): string;'                                                          + LineEnding +
     'type'                                                                               + LineEnding +
     '  TEnum = (se0, se1 = %d);'                                                         + LineEnding +
     '  TSet = set of TEnum;'                                                             + LineEnding +
     '  PSet = ^TSet;'                                                                    + LineEnding +
-    '  TToString = function(constref Enum: TEnum): string;'                                 + LineEnding +
     'var'                                                                                + LineEnding +
     '  e: TEnum;'                                                                        + LineEnding +
     'begin'                                                                              + LineEnding +
@@ -146,7 +147,7 @@ var
     '    begin'                                                                          + LineEnding +
     '      if (Result <> '#39#39') then'                                                 + LineEnding +
     '        Result := Result + '#39', '#39';'                                           + LineEnding +
-    '      Result := Result + TToString(AToString)(e);'                                  + LineEnding +
+    '      Result := Result + AToString(e);'                                             + LineEnding +
     '    end;'                                                                           + LineEnding +
     '  Result := '#39'['#39'+Result+'#39']'#39';'                                        + LineEnding +
     'end;';

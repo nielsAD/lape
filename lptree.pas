@@ -813,7 +813,9 @@ begin
 
   if (Method = nil) then
     Method := Compiler.addManagedVar(Compiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar;
+
   Result := _ResVar.New(Method);
+  Result.VarType := Compiler.getBaseType(ltPointer);
 end;
 
 constructor TLapeTreeType.Create(ADecl: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase);

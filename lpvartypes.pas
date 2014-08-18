@@ -1189,8 +1189,12 @@ begin
   begin
     Result := TLapeClassType(Self.ClassType).Create(VarType, True, True, Name, @_DocPos);
     if HasType() then
+    begin
+      Result.Writeable := True;
       VarType.EvalConst(op_Assign, Result, Self, []);
+    end;
   end;
+  Result.CopyFlags(Self);
 end;
 
 function TLapeGlobalVar.Equals(Other: TLapeGlobalVar): Boolean;
@@ -1585,7 +1589,7 @@ function TLapeType.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: 
       d[0] := FCompiler.getTypeVar(TLapeType(d[0]));
     Result := d[0] as TLapeGlobalVar;
 
-    if (Result <> nil) and Left.Writeable and Result.Readable and MethodOfObject(Result.VarType) then
+    if (Result <> nil) and Left.Writeable and MethodOfObject(Result.VarType) then
     begin
       Assert(Result.Size >= SizeOf(TMethod));
       Result := Result.CreateCopy();
@@ -1748,7 +1752,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
       d[0] := FCompiler.getTypeVar(TLapeType(d[0]));
     Result := _ResVar.New(d[0] as TLapeGlobalVar);
 
-    if Left.Writeable and Result.Readable and MethodOfObject(Result.VarType) then
+    if Left.Writeable and MethodOfObject(Result.VarType) then
     begin
       Res := NullResVar;
       Res.VarType := FCompiler.getGlobalType('TMethod');
@@ -2373,7 +2377,7 @@ end;
 
 function TLapeType_Method.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
 begin
-  Result := (Other <> nil) and (Other.TypeID = TypeID) and (Other is TLapeType_Method) and EqualParams(Other as TLapeType_Method, ContextOnly);
+  Result := (Other <> nil) and (Other.TypeID = TypeID) and (Size = Other.Size) and (Other is TLapeType_Method) and EqualParams(Other as TLapeType_Method, ContextOnly);
   if Result and (not ContextOnly) then
     Result := (Other.BaseType = BaseType);
 end;
@@ -2463,8 +2467,11 @@ begin
       Right := m.VarType;
   end;
 
-  if (FBaseType = ltPointer) and (Op = op_Assign) and (Right <> nil) and ((Right.BaseType = ltPointer) or Equals(Right)) then
-    Result := Self
+  if (Op = op_Assign) and (Right <> nil) and (Right is TLapeType_Method) then
+    if Equals(Right) and (FBaseType in [ltPointer, Right.BaseType]) then
+      Result := Self
+    else
+      Result := nil
   else
     Result := inherited;
 end;
@@ -2714,7 +2721,7 @@ begin
   then
     LapeException(lpeImpossible);
 
-  AMethod.isConstant := True;
+  AMethod.setReadWrite(False, False);
 
   if MethodOfObject(AMethod.VarType) then
     case FOfObject of
@@ -2758,7 +2765,7 @@ begin
     LapeException(lpeImpossible);
 
   Result := nil;
-  AMethod.isConstant := True;
+  AMethod.setReadWrite(False, False);
 
   for i := 0 to FManagedDecls.Count - 1 do
   begin
@@ -2880,7 +2887,7 @@ end;
 function TLapeType_OverloadedMethod.NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
   Result := NewGlobalVarP(nil, AName, ADocPos);
-  Result.isConstant := True;
+  Result.setReadWrite(False, False);
 end;
 
 function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;

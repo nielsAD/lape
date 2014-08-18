@@ -109,7 +109,7 @@ end;
 function ExposeGlobals__GetPtr(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 begin
   Result := '';
-  if (not v.HasType()) or (v.VarType.EvalRes(op_Addr) = nil) or MethodOfObject(v.VarType) then
+  if (not v.HasType()) or (v.VarType is TLapeType_OverloadedMethod) or (v.VarType.EvalRes(op_Addr) = nil) then
     Exit;
 
   if v.Writeable then
@@ -127,26 +127,26 @@ end;
 function ExposeGlobals__GetName(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 begin
   Result := '';
-  if (not v.HasType()) or (v.VarType.EvalRes(op_Addr) = nil) or MethodOfObject(v.VarType) then
+  if (not v.HasType()) or (v.VarType is TLapeType_OverloadedMethod) or (v.VarType.EvalRes(op_Addr) = nil) then
     Exit;
 
   if v.Writeable then
     Result := '@';
   if (v.VarType is TLapeType_Method) then
     Result := Result + AIA;
+
   if (Result <> '') then
-    Result := Result + AName + ': Result := '#39 + AName + #39';' + LineEnding;
+    Result := 'Pointer(' + Result + AName + '): Result := '#39 + AName + #39';' + LineEnding;
 end;
 
 function ExposeGlobals__GetVal(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 begin
   Result := '';
-  if (not v.HasType()) then
+  if (not v.HasType()) or (not v.Readable) or (not Compiler.getBaseType(ltVariant).CompatibleWith(v.VarType)) then
     Exit;
 
   AName := LapeCase(AName);
-  if Compiler.getBaseType(ltVariant).CompatibleWith(v.VarType) then
-    Result := #39 + AName + #39': Result := ' + AName + ';' + LineEnding;
+  Result := #39 + AName + #39': Result := ' + AName + ';' + LineEnding;
 end;
 
 function ExposeGlobals__Invoke(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
@@ -199,6 +199,21 @@ begin
 end;
 
 function TraverseGlobals(Compiler: TLapeCompiler; Callback: TTraverseCallback; BaseName: lpString = ''; Decls: TLapeDeclarationList = nil): lpString;
+
+  function TraverseBaseTypes(Compiler: TLapeCompiler; Callback: TTraverseCallback): lpString;
+  var
+    BaseType: ELapeBaseType;
+    Typ: TLapeType;
+  begin
+    Result := '';
+    for BaseType := Succ(ltUnknown) to High(ELapeBaseType) do
+    begin
+      Typ := Compiler.getBaseType(BaseType);
+      if (Typ <> nil) then
+        Result := Result + TraverseGlobals(Compiler, Callback, Typ.Name, Typ.ManagedDeclarations);
+    end;
+  end;
+
 var
   i: Integer;
   n: lpString;
@@ -213,7 +228,10 @@ begin
     if (Compiler = nil) then
       Exit
     else
+    begin
+      Result := TraverseBaseTypes(Compiler, Callback);
       Decls := Compiler.GlobalDeclarations;
+    end;
 
   if Decls.HasParent() then
     TraverseGlobals(Compiler, Callback, BaseName, Decls.Parent);

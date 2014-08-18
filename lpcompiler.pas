@@ -623,7 +623,7 @@ procedure TLapeCompiler.InitBaseDefinitions;
           )
         );
 
-    addGlobalVar(OLMethod.NewGlobalVar('ToString')).isConstant := True;
+    addGlobalVar(OLMethod.NewGlobalVar('ToString'));
   end;
 begin
   addBaseDefine('Lape');
@@ -691,8 +691,8 @@ begin
   {$I lpeval_import_datetime.inc}
   {$I lpeval_import_variant.inc}
 
-  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose')).isConstant := True;
-  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign')).isConstant := True;
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
   addToString();
   addDelayedCode(
     _LapeToString_Enum +
@@ -1452,7 +1452,7 @@ begin
             OldDeclaration := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).overrideMethod(Result.Method)
         end;
 
-        if (OldDeclaration = nil) or (not (OldDeclaration is TLapeGlobalVar)) or (not TLapeGlobalVar(OldDeclaration).isConstant) or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
+        if (OldDeclaration = nil) or (not (OldDeclaration is TLapeGlobalVar)) or TLapeGlobalVar(OldDeclaration).Readable or TLapeGlobalVar(OldDeclaration).Writeable or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
           LapeException(lpeUnknownParent, Tokenizer.DocPos);
         if (not TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).EqualParams(FuncHeader, False)) then
           LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
@@ -1542,7 +1542,7 @@ begin
         Exit;
       end;
 
-      Result.Method.isConstant := True;
+      Result.Method.setReadWrite(False, False);
       if isExternal then
         Exit;
 
@@ -3535,7 +3535,7 @@ end;
 function TLapeCompiler.addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: Pointer; AName: lpString): TLapeGlobalVar;
 begin
   Result := addGlobalVar(TLapeType_Method(addManagedType(TLapeType_Method.Create(Self, AParams, AParTypes, AParDefaults, ARes))).NewGlobalVar(Value), AName);
-  Result.isConstant := True;
+  Result.setReadWrite(False, False);
 end;
 
 function TLapeCompiler.addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: Pointer; AName: lpString): TLapeGlobalVar;
@@ -3548,7 +3548,7 @@ begin
   Assert(AFunc <> nil);
 
   Result := TLapeType_MethodOfObject(addManagedType(TLapeType_MethodOfObject.Create(AFunc.VarType as TLapeType_Method))).NewGlobalVar(Value, AFunc.Name);
-  Result.isConstant := True;
+  Result.setReadWrite(False, False);
 
   if (AFunc.DeclarationList <> nil) then
     Result.DeclarationList := AFunc.DeclarationList
