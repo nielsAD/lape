@@ -1,0 +1,86 @@
+{$assertions on}
+{$rangechecks on}
+
+procedure TestString(Index: Integer; Str: string; Error: Boolean);
+begin
+  try
+    Str[Index] := 'y';
+    WriteLn(Str[Index], Index);
+  except
+    Assert(Error, 'No range error expected!');
+    Exit;
+  end;
+  Assert(not Error, 'Range error expected!');
+end;
+
+procedure TestShortString(Index: Integer; Str: string[3]; Error: Boolean);
+begin
+  try
+    Str[Index] := 'y';
+    WriteLn(Str[Index], Index);
+  except
+    Assert(Error, 'No range error expected!');
+    Exit;
+  end;
+  Assert(not Error, 'Range error expected!');
+end;
+
+procedure TestDynArray(Index: Integer; Arr: array of Int32; Error: Boolean);
+begin
+  try
+    Arr[Index] := 4;
+    WriteLn(Arr[Index], Index);
+  except
+    Assert(Error, 'No range error expected!');
+    Exit;
+  end;
+  Assert(not Error, 'Range error expected!');
+end;
+
+procedure TestConstArray(Index: Integer; Arr: array[1..3] of Int32; Error: Boolean);
+begin
+  try
+    Arr[Index] := 4;
+    WriteLn(Arr[Index], Index);
+  except
+    Assert(Error, 'No range error expected!');
+    Exit;
+  end;
+  Assert(not Error, 'Range error expected!');
+end;
+
+{$rangechecks off}
+procedure TestDisabled(Index: Integer; constref Arr: array[1..3] of Int32);
+begin
+  WriteLn(Arr[Index]);
+end;
+
+type
+  TDisabledProc = procedure(Index: Integer; constref Arr: array[1..5] of Int32);
+begin
+  TestString(-1, 'hoi', True);
+  TestString(00, 'hoi', True);
+  TestString(01, 'hoi', False);
+  TestString(03, 'hoi', False);
+  TestString(04, 'hoi', True);
+
+  TestShortString(-1, 'hi', True);
+  TestShortString(00, 'hi', True);
+  TestShortString(01, 'hi', False);
+  TestShortString(03, 'hi', False);
+  TestShortString(04, 'hi', True);
+
+  TestDynArray(-1, [6, 7, 8], True);
+  TestDynArray(00, [6, 7, 8], False);
+  TestDynArray(01, [6, 7, 8], False);
+  TestDynArray(03, [6, 7, 8], True);
+
+  TestConstArray(-1, [6, 7, 8], True);
+  TestConstArray(00, [6, 7, 8], True);
+  TestConstArray(01, [6, 7, 8], False);
+  TestConstArray(03, [6, 7, 8], False);
+  TestConstArray(04, [6, 7, 8], True);
+
+  TDisabledProc(@TestDisabled)(3, [5, 6, 7, 8, 9]);
+  TDisabledProc(@TestDisabled)(5, [5, 6, 7, 8, 9]);
+end;
