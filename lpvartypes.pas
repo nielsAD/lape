@@ -32,7 +32,7 @@ type
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke];
+  Lape_OptionsDef = [lcoRangeCheck, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke];
   Lape_PackRecordsDef = 2;
 
 type
@@ -201,7 +201,7 @@ type
     property AsInteger: Int64 read getAsInt;
   end;
 
-  ELapeEvalFlag = (lefAssigning);
+  ELapeEvalFlag = (lefAssigning, lefRangeCheck);
   ELapeEvalFlags = set of ELapeEvalFlag;
 
   TLapeType = class(TLapeManagingDeclaration)
@@ -2038,14 +2038,7 @@ begin
     Result := Result                   +
       'if (Param0 <> nil) then '       +
       'try'                            +
-      ' Result := Result + '#39' ('#39 +
-      ' + System.ToString(';
-
-    if (PType is TLapeType_Method) then
-      Result := Result + AIA;
-
-    Result := Result +
-      ' Param0^) + '#39')'#39';' +
+      '  Result := Result + '#39' ('#39' + System.ToString(Param0^) + '#39')'#39';' +
       'except end;';
   end;
   Result := Result + 'end;';
@@ -2384,7 +2377,7 @@ end;
 
 function TLapeType_Method.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 begin
-  Result := 'begin Result := '#39 + AsString + ' ('#39' + System.ToString(Pointer(' + AIA + 'Param0)) + '#39')'#39'; end;';
+  Result := 'begin Result := '#39 + AsString + ' ('#39' + System.ToString(Pointer(Param0)) + '#39')'#39'; end;';
 end;
 
 function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean;

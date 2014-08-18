@@ -562,7 +562,7 @@ begin
 
   Body := AParams[0].VarToStringBody(Sender);
   if (Body <> '') then
-    Result := addGlobalFunc(AType, 'ToString', 'override;' + Body + LineEnding).Method
+    Result := addGlobalFunc(AType, 'ToString', 'override;' + LapeDelayedFlags + Body + LineEnding).Method
   else
     Result.Free();
 end;
@@ -653,6 +653,7 @@ begin
 
   addGlobalFunc('procedure _Assert(Expr: EvalBool); overload;', @_LapeAssert);
   addGlobalFunc('procedure _Assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
+  addGlobalFunc('procedure _RangeCheck(Idx, Lo, Hi: Int32);', @_LapeRangeCheck);
 
   addGlobalFunc('procedure _AStr_SetLen(s: AnsiString; l: Int32);', @_LapeAStr_SetLen);
   addGlobalFunc('procedure _WStr_SetLen(s: WideString; l: Int32);', @_LapeWStr_SetLen);

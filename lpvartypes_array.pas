@@ -31,6 +31,9 @@ type
     procedure VarSetLength(var AVar: Pointer; ALen: Integer); overload; virtual;
     procedure VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
+    procedure RangeCheck(AVar, AIndex: TLapeGlobalVar); virtual;
+    procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil); virtual;
+
     function EvalRes(Op: EOperator; ARight: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
@@ -64,6 +67,7 @@ type
     function VarToString(AVar: Pointer): lpString; override;
     procedure VarUnique(var AVar: Pointer); overload; virtual;
     procedure VarUnique(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
+    function VarHi(AVar: Pointer = nil): TLapeGlobalVar; override;
 
     function NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
     function NewGlobalVar(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; reintroduce; overload; virtual;
@@ -86,7 +90,9 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; ASize: UInt8 = High(UInt8); AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
+
     function VarToString(AVar: Pointer): lpString; override;
+    function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
 
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
     function NewGlobalVar(Str: ShortString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; reintroduce; overload; virtual;
@@ -155,9 +161,9 @@ begin
     '  if (Len <= 0) then'                                                                  + LineEnding +
     '    Result := '#39'[]'#39''                                                            + LineEnding +
     '  else'                                                                                + LineEnding +
-    '    Result := TArrayToString('+AIA+'System._ArrayToString)('                           + LineEnding +
+    '    Result := TArrayToString(System._ArrayToString)('                                  + LineEnding +
     '      Param0['+IntToStr(VarLo().AsInteger)+'],'                                        + LineEnding +
-    '      '+AIA+'_ElementToString, Len, System.SizeOf(Param0[0]));'                        + LineEnding +
+    '      _ElementToString, Len, System.SizeOf(Param0[0]));'                               + LineEnding +
     'end;';
 end;
 
@@ -324,6 +330,100 @@ begin
   end;
 end;
 
+procedure TLapeType_DynArray.RangeCheck(AVar, AIndex: TLapeGlobalVar);
+var
+  Idx: Integer;
+  Lo, Hi: TLapeGlobalVar;
+begin
+  if (AVar = nil) or (not AIndex.HasType()) then
+    LapeException(lpeInvalidEvaluation)
+  else if (not AIndex.VarType.IsOrdinal()) then
+    LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString]);
+
+  Idx := AIndex.AsInteger;
+  Lo := VarLo(AVar.Ptr);
+  Hi := VarHi(Avar.Ptr);
+  if ((Lo <> nil) and (Idx < Lo.AsInteger)) or ((Hi <> nil) and (Idx > Hi.AsInteger)) then
+    LapeException(lpeOutOfTypeRange);
+end;
+
+procedure TLapeType_DynArray.RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil);
+var
+  Idx: Integer;
+  Lo, Hi: TLapeGlobalVar;
+  Check, Len: TLapeTree_Invoke;
+begin
+  if (not AIndex.HasType()) then
+    LapeException(lpeInvalidEvaluation)
+  else if (not AIndex.VarType.IsOrdinal()) then
+    LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString]);
+
+  if AVar.isConstant and (AVar.VarPos.MemPos = mpMem) then
+  begin
+    Lo := VarLo(AVar.VarPos.GlobalVar.Ptr);
+    Hi := VarHi(AVar.VarPos.GlobalVar.Ptr);
+  end
+  else
+  begin
+    Lo := VarLo();
+    Hi := VarHi();
+  end;
+
+  if AIndex.isConstant and (AIndex.VarPos.MemPos = mpMem) then
+  begin
+    Idx := AIndex.VarPos.GlobalVar.AsInteger;
+    if (FBaseType in LapeStringTypes) then
+      Dec(Idx);
+
+    if (Idx < 0) then
+      LapeException(lpeOutOfTypeRange)
+    else if (Lo <> nil) and (Hi <> nil) then
+      if (Idx > Hi.AsInteger - Lo.AsInteger) then
+        LapeException(lpeOutOfTypeRange)
+      else
+        Exit;
+  end;
+
+  if (not (lefRangeCheck in Flags)) then
+    Exit;
+
+  AIndex.VarType := FCompiler.getBaseType(AIndex.VarType.BaseIntType);
+  if (AIndex.VarPos.MemPos = mpStack) then
+  begin
+    AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
+    FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset, @_DocPos);
+  end;
+
+  Check := TLapeTree_Invoke.Create('_RangeCheck', FCompiler, Pos) ;
+  with Check do
+  try
+    if (FBaseType in LapeStringTypes) then
+      Idx := 1
+    else
+      Idx := 0;
+
+    addParam(TLapeTree_ResVar.Create(AIndex.IncLock(), Check));
+    addParam(TLapeTree_Integer.Create(Idx, Check));
+
+    if (Lo <> nil) and (Hi <> nil) then
+      addParam(TLapeTree_Integer.Create(Hi.AsInteger - Lo.AsInteger + Idx, Check))
+    else
+    begin
+      if (FBaseType in LapeStringTypes) then
+        Len := TLapeTree_InternalMethod_Length.Create(FCompiler, Pos)
+      else
+        Len := TLapeTree_InternalMethod_High.Create(FCompiler, Pos);
+
+      Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Len));
+      addParam(Len);
+    end;
+
+    Compile(Offset).Spill(1);
+  finally
+    Free();
+  end;
+end;
+
 function TLapeType_DynArray.EvalRes(Op: EOperator; ARight: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   if (op = op_Index) then
@@ -348,6 +448,7 @@ begin
   begin
     //Cache AsString before changing FBaseType
     GetAsString();
+    RangeCheck(ALeft, ARight);
 
     tmpType := FBaseType;
     FBaseType := ltPointer;
@@ -427,38 +528,41 @@ begin
   tmpVar := nil;
 
   if (op = op_Index) then
-  try
+  begin
     //Cache AsString before changing FBaseType
     GetAsString();
+    RangeCheck(ALeft, ARight, Flags, Offset, Pos);
 
     tmpType := FBaseType;
     FBaseType := ltPointer;
 
-    if (not ALeft.VarPos.isPointer) then
-    begin
-      if (Dest.VarPos.MemPos = mpStack) then
-        Dest := NullResVar;
-      Result := inherited Eval(Op, Dest, ALeft, ARight, Flags, Offset, Pos);
-      Result.VarPos.isPointer := True;
-      Result.VarType := FPType;
-    end
-    else
-    begin
-      IndexVar := inherited Eval(Op, IndexVar, ALeft, ARight, Flags, Offset, Pos);
-      Result := //Result := Pointer[Index]^
-        Eval(
-          op_Deref,
-          Dest,
-          IndexVar,
-          NullResVar,
-          [],
-          Offset,
-          Pos
-        );
-      IndexVar.Spill(1);
+    try
+      if (not ALeft.VarPos.isPointer) then
+      begin
+        if (Dest.VarPos.MemPos = mpStack) then
+          Dest := NullResVar;
+        Result := inherited Eval(Op, Dest, ALeft, ARight, Flags, Offset, Pos);
+        Result.VarPos.isPointer := True;
+        Result.VarType := FPType;
+      end
+      else
+      begin
+        IndexVar := inherited Eval(Op, IndexVar, ALeft, ARight, Flags, Offset, Pos);
+        Result := //Result := Pointer[Index]^
+          Eval(
+            op_Deref,
+            Dest,
+            IndexVar,
+            NullResVar,
+            [],
+            Offset,
+            Pos
+          );
+        IndexVar.Spill(1);
+      end;
+    finally
+      FBaseType := tmpType;
     end;
-  finally
-    FBaseType := tmpType;
   end
   else if (op = op_Assign) and (BaseType = ltDynArray) and CompatibleWith(ARight.VarType) then
   begin
@@ -487,6 +591,7 @@ begin
       with TLapeTree_If.Create(FCompiler, Pos) do
       try
         Body := TLapeTree_StatementList.Create(Self.FCompiler, Pos);
+        Body.CompilerOptions := Body.CompilerOptions - [lcoRangeCheck];
 
         Node := TLapeTree_InternalMethod_SetLength.Create(Body);
         with TLapeTree_InternalMethod_SetLength(Node) do
@@ -565,6 +670,8 @@ begin
       try
         Left := TLapeTree_ResVar.Create(ALeft.IncLock(), FCompiler, Pos);
         Right := TLapeTree_Integer.Create(0, Left);
+
+        CompilerOptions := CompilerOptions - [lcoRangeCheck];
         IndexVar := Compile(Offset);
       finally
         Free();
@@ -636,6 +743,7 @@ begin
       Left := TLapeTree_Operator.Create(op_Index, FCompiler, Pos);
       with TLapeTree_Operator(Left) do
       begin
+        CompilerOptions := CompilerOptions - [lcoRangeCheck];
         Left := TLapeTree_ResVar.Create(Result.IncLock(), FCompiler, Pos);
         Right := TLapeTree_ResVar.Create(IndexVar.IncLock(), Left);
       end;
@@ -758,17 +866,9 @@ begin
   if (op = op_Index) and (Left <> nil) and (Right <> nil) then
   begin
     Assert(HasType());
+    RangeCheck(Left, Right);
 
-    i := Right.AsInteger;
-    if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
-      if Right.HasType() then
-        LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
-      else
-        LapeException(lpeInvalidEvaluation)
-    else if (i < FRange.Lo) or (i > FRange.Hi) then
-      LapeException(lpeOutOfTypeRange);
-
-    Result := FPType.NewGlobalVarP(Pointer(PtrInt(Left.Ptr) + (FPType.Size * (i - FRange.Lo))));
+    Result := FPType.NewGlobalVarP(Pointer(PtrInt(Left.Ptr) + (FPType.Size * (Right.AsInteger - FRange.Lo))));
     Result.CopyFlags(Left);
   end
   else if (op = op_Assign) and (BaseType = ltStaticArray) and (Left <> nil) and (Right <> nil) and CompatibleWith(Right.VarType) then
@@ -824,17 +924,16 @@ begin
       Result := inherited Eval(Op, Dest, LeftVar, Right, Flags, Offset, Pos)
     else
     begin
-      if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
-        if Right.HasType() then
-          LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
-        else
-          LapeException(lpeInvalidEvaluation)
+      if Right.isConstant and (Right.VarPos.MemPos = mpMem) then
+        tmpVar := _ResVar.New(FCompiler.getConstant(Right.VarPos.GlobalVar.AsInteger - FRange.Lo))
       else
-        Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
+      begin
+        if Right.HasType() and Right.VarType.IsOrdinal() then
+          Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
 
-      tmpVar := Right.VarType.Eval(op_Minus, tmpVar, Right, _ResVar.New(
-          FCompiler.getConstant(FRange.Lo, DetermineIntType(FRange.Lo, Right.VarType.BaseType, False), False, True)
-        ), [], Offset, Pos);
+        IndexLow := FCompiler.getConstant(FRange.Lo, DetermineIntType(FRange.Lo, Right.VarType.BaseType, False));
+        tmpVar := Right.VarType.Eval(op_Minus, tmpVar, Right, _ResVar.New(IndexLow), [], Offset, Pos);
+      end;
 
       Result := //Result := @Pointer[Index - Lo]^
         inherited Eval(
@@ -1004,6 +1103,14 @@ begin
   end;
 end;
 
+function TLapeType_String.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
+begin
+  if (FCompiler = nil) or (AVar = nil) then
+    Result := nil
+  else
+    Result := FCompiler.getConstant(Length(PString(AVar)^) - 1);
+end;
+
 function TLapeType_String.NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
   Result := NewGlobalVarP(nil, AName, ADocPos);
@@ -1027,9 +1134,6 @@ begin
 end;
 
 function TLapeType_String.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
-var
-  tmpType: TLapeType;
-  IndexVar: TLapeGlobalVar;
 begin
   Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType is TLapeType_Pointer));
@@ -1039,32 +1143,16 @@ begin
     if (lefAssigning in Flags) then
       VarUnique(PPointer(Left.Ptr)^);
 
-    tmpType := Right.VarType;
-    if (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
-      if Right.HasType() then
-        LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
-      else
-        LapeException(lpeInvalidEvaluation)
-    else if (Right.AsInteger < 1) then
-      LapeException(lpeOutOfTypeRange)
-    else
-      Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
+    if (Right <> nil) and Right.HasType() and Right.VarType.IsOrdinal() then
+      Right := FCompiler.getConstant(Right.AsInteger - 1);
 
-    IndexVar := nil;
-    try
-      IndexVar := Right.VarType.EvalConst(op_Minus, Right, FCompiler.getConstant(1, ltUInt8, False, True), []);
-      Result := //Result := Pointer[Index - 1]^
-        inherited EvalConst(
-          Op,
-          Left,
-          IndexVar,
-          Flags
-        );
-    finally
-      if (IndexVar <> nil) then
-        IndexVar.Free();
-      Right.VarType := tmpType;
-    end;
+    Result := //Result := Pointer[Index - 1]^
+      inherited EvalConst(
+        Op,
+        Left,
+        Right,
+        Flags
+      );
   end
   else
     Result := inherited;
@@ -1131,6 +1219,14 @@ end;
 function TLapeType_ShortString.VarToString(AVar: Pointer): lpString;
 begin
   Result := '"'+PShortString(AVar)^+'"';
+end;
+
+function TLapeType_ShortString.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
+begin
+  if (FCompiler = nil) then
+    Result := nil
+  else
+    Result := FCompiler.getConstant(1);
 end;
 
 function TLapeType_ShortString.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;

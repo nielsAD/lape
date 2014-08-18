@@ -30,6 +30,7 @@ procedure _LapeRaise(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDI
 procedure _LapeRaiseString(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAssert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAssertMsg(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeRangeCheck(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
 procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAllocMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -107,9 +108,7 @@ function LapeEval_GetRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseTy
 function LapeEval_GetProc(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc;
 
 const
-  //AutoInvokeAddress
-  AIA = '{$IFDEF AUTOINVOKE}@{$ENDIF}';
-  LapeDelayedFlags = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}';
+  LapeDelayedFlags = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$RANGECHECKS OFF}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}';
 
 var
   LapeEvalErrorProc: TLapeEvalProc = {$IFDEF FPC}@{$ENDIF}LapeEval_Error;
@@ -435,6 +434,12 @@ procedure _LapeAssertMsg(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$
 begin
   if (not PEvalBool(Params^[0])^) then
     LapeExceptionFmt(lpeAssertionFailureMsg, [PlpString(Params^[1])^]);
+end;
+
+procedure _LapeRangeCheck(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PInt32(Params^[0])^ < PInt32(Params^[1])^) or (PInt32(Params^[0])^ > PInt32(Params^[2])^) then
+    LapeException(lpeOutOfTypeRange);
 end;
 
 procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

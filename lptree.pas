@@ -82,7 +82,7 @@ type
 
     property Parent: TLapeTree_Base read FParent write setParent;
     property Compiler: TLapeCompilerBase read FCompiler;
-    property CompilerOptions: ECompilerOptionsSet read FCompilerOptions;
+    property CompilerOptions: ECompilerOptionsSet read FCompilerOptions write FCompilerOptions;
   end;
 
   TLapeTree_ExprBase = class(TLapeTree_Base)
@@ -1560,6 +1560,8 @@ begin
 
   if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
     FCompiler.VarToDefault(Result, Offset, @_DocPos);
+
+  Exclude(FCompilerOptions, lcoRangeCheck);
   if (FType is TLapeType_StaticArray) then
     doStaticArray()
   else if (FType is TLapeType_Set) or (FType is TLapeType_DynArray) then
@@ -3186,6 +3188,7 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
   tmpVar := NullResVar;
+  Exclude(FCompilerOptions, lcoRangeCheck);
 
   if (FParams.Count < 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
@@ -4145,6 +4148,8 @@ end;
 function TLapeTree_Operator.EvalFlags: ELapeEvalFlags;
 begin
   Result := [];
+  if (lcoRangeCheck in FCompilerOptions) then
+    Include(Result, lefRangeCheck);
   if isAssigning() then
     Include(Result, lefAssigning);
 end;

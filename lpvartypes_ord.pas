@@ -553,7 +553,7 @@ begin
     end;
   Result := Format(
     'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.Int32): System.string;' + LineEnding +
-    'begin Result := TEnumToString('+AIA+'System._EnumToString)([%s], System.Ord(Param0), %d, %d); end;',
+    'begin Result := TEnumToString(System._EnumToString)([%s], System.Ord(Param0), %d, %d); end;',
     [Result, FRange.Lo, FRange.Hi]
   );
 end;
@@ -898,10 +898,10 @@ begin
 
   Result := 'type TSetToString = private function(constref ASet; AToString: System.Pointer; Lo, Hi: System.Int32): System.string;' + LineEnding + 'begin ';
   if FSmall then
-    Result := Result + 'Result := TSetToString('+AIA+'System._SmallSetToString)'
+    Result := Result + 'Result := TSetToString(System._SmallSetToString)'
   else
-    Result := Result + 'Result := TSetToString('+AIA+'System._LargeSetToString)';
-  Result := Format(Result + '(Param0, '+AIA+'System.ToString[%d], %d, %d); end;', [Index, FRange.Range.Lo, FRange.Range.Hi]);
+    Result := Result + 'Result := TSetToString(System._LargeSetToString)';
+  Result := Format(Result + '(Param0, System.ToString[%d], %d, %d); end;', [Index, FRange.Range.Lo, FRange.Range.Hi]);
 end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;
