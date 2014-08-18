@@ -44,6 +44,7 @@ type
     Tokenizer: Integer;
     Tokenizers: array of TLapeTokenizerBase;
     TokStates: array of Pointer;
+    Options: ECompilerOptionsSet;
     Defines: lpString;
     Conditionals: TLapeConditionalStack.TTArray;
   end;
@@ -695,6 +696,7 @@ begin
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
   addToString();
   addDelayedCode(
+    LapeDelayedFlags +
     _LapeToString_Enum +
     Format(_LapeToString_Set, ['Small', Ord(High(ELapeSmallEnum))]) +
     Format(_LapeToString_Set, ['Large', Ord(High(ELapeLargeEnum))]) +
@@ -2940,6 +2942,7 @@ begin
         TokStates[i] := nil;
     end;
 
+    Options := FOptions;
     Defines := FDefines.Text;
     Conditionals := FConditionalStack.ExportToArray();
   end;
@@ -2966,6 +2969,7 @@ begin
       end;
     end;
 
+    FOptions := Options;
     FDefines.Text := Defines;
     FConditionalStack.ImportFromArray(Conditionals);
   end;
@@ -3015,6 +3019,8 @@ begin
   begin
     FConditionalStack.Reset();
     FStackInfo := nil;
+    FOptions := FBaseOptions;
+    FDefines.Text := FBaseDefines.Text;
   end;
 
   if (FStackInfo = nil) then

@@ -109,6 +109,7 @@ function LapeEval_GetProc(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalP
 const
   //AutoInvokeAddress
   AIA = '{$IFDEF AUTOINVOKE}@{$ENDIF}';
+  LapeDelayedFlags = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}';
 
 var
   LapeEvalErrorProc: TLapeEvalProc = {$IFDEF FPC}@{$ENDIF}LapeEval_Error;
@@ -225,7 +226,7 @@ var
     '      Exit;'                                                                        + LineEnding +
     '    end;'                                                                           + LineEnding +
     ''                                                                                   + LineEnding +
-    '    if (NewLen < OldLen) and (Pointer('+AIA+'Dispose) <> nil) then'                 + LineEnding +
+    '    if (NewLen < OldLen) and (Pointer(Dispose) <> nil) then'                        + LineEnding +
     '    begin'                                                                          + LineEnding +
     '      Inc(p, HeaderSize);'                                                          + LineEnding +
     '      for i := NewLen * ElSize to (OldLen - 1) * ElSize with ElSize do'             + LineEnding +
@@ -252,7 +253,7 @@ var
     '  begin'                                                                            + LineEnding +
     '    Dec(PtrInt(p^));'                                                               + LineEnding +
     '    NewP := nil;'                                                                   + LineEnding +
-    '    _ArraySetLength(NewP, NewLen, ElSize, '+AIA+'Dispose, '+AIA+'Copy);'            + LineEnding +
+    '    _ArraySetLength(NewP, NewLen, ElSize, Dispose, Copy);'                          + LineEnding +
     ''                                                                                   + LineEnding +
     '    i := OldLen;'                                                                   + LineEnding +
     '    if (NewLen < OldLen) then'                                                      + LineEnding +
@@ -260,7 +261,7 @@ var
     '    if (i >= 1) then'                                                               + LineEnding +
     '    begin'                                                                          + LineEnding +
     '      Inc(p, HeaderSize);'                                                          + LineEnding +
-    '      if (Pointer('+AIA+'Copy) = nil) then'                                         + LineEnding +
+    '      if (Pointer(Copy) = nil) then'                                                + LineEnding +
     '        Move(p^, NewP^, i * ElSize)'                                                + LineEnding +
     '      else for i := (i - 1) * ElSize downto 0 with ElSize do'                       + LineEnding +
     '        Copy(p[i], NewP[i]);'                                                       + LineEnding +
@@ -290,7 +291,7 @@ var
     '  _ArraySetLength(Result, Count, ElSize, nil, nil);'                                + LineEnding +
     '  Inc(p, Start * ElSize);'                                                          + LineEnding +
     ''                                                                                   + LineEnding +
-    '  if (Pointer('+AIA+'Copy) = nil) then'                                             + LineEnding +
+    '  if (Pointer(Copy) = nil) then'                                                    + LineEnding +
     '    Move(p^, Result^, Count * ElSize)'                                              + LineEnding +
     '  else'                                                                             + LineEnding +
     '    for i := 0 to (Count - 1) * ElSize with ElSize do'                              + LineEnding +
@@ -318,10 +319,10 @@ var
     '  else if (Start + Int64(Count) > Len) then'                                        + LineEnding +
     '    Count := Len - Start;'                                                          + LineEnding +
     ''                                                                                   + LineEnding +
-    '  _ArraySetLength(p, Len, ElSize, '+AIA+'Dispose, '+AIA+'Copy);'                    + LineEnding +
+    '  _ArraySetLength(p, Len, ElSize, Dispose, Copy);'                                  + LineEnding +
     '  Inc(p, Start * ElSize);'                                                          + LineEnding +
     ''                                                                                   + LineEnding +
-    '  if (Pointer('+AIA+'Dispose) <> nil) then'                                         + LineEnding +
+    '  if (Pointer(Dispose) <> nil) then'                                                + LineEnding +
     '    for i := 0 to (Count - 1) * ElSize with ElSize do'                              + LineEnding +
     '      Dispose(p[i]);'                                                               + LineEnding +
     ''                                                                                   + LineEnding +
@@ -357,12 +358,12 @@ var
     '  else if (Start + Int64(Count) > LenDst) then'                                     + LineEnding +
     '    Count := LenDst - Start;'                                                       + LineEnding +
     ''                                                                                   + LineEnding +
-    '  _ArraySetLength(Dst, LenDst + LenSrc, ElSize, '+AIA+'Dispose, '+AIA+'Copy);'      + LineEnding +
+    '  _ArraySetLength(Dst, LenDst + LenSrc, ElSize, Dispose, Copy);'                    + LineEnding +
     '  Inc(Dst, Start * ElSize);'                                                        + LineEnding +
     ''                                                                                   + LineEnding +
     '  if (Count <> LenSrc) then'                                                        + LineEnding +
     '  begin'                                                                            + LineEnding +
-    '    if (Count > LenSrc) and (Pointer('+AIA+'Dispose) <> nil) then'                  + LineEnding +
+    '    if (Count > LenSrc) and (Pointer(Dispose) <> nil) then'                         + LineEnding +
     '      for i := LenSrc * ElSize to (Count - 1) * ElSize with ElSize do'              + LineEnding +
     '        Dispose(Dst[i]);'                                                           + LineEnding +
     ''                                                                                   + LineEnding +
@@ -372,12 +373,12 @@ var
     '      (LenDst - Start - Count) * ElSize'                                            + LineEnding +
     '    );'                                                                             + LineEnding +
     ''                                                                                   + LineEnding +
-    '    if (LenSrc > Count) and (Pointer('+AIA+'Copy) <> nil) then'                     + LineEnding +
+    '    if (LenSrc > Count) and (Pointer(Copy) <> nil) then'                            + LineEnding +
     '      FillMem(Dst[Count * ElSize]^, (LenSrc - Count) * ElSize);'                    + LineEnding +
     '  end;'                                                                             + LineEnding +
     ''                                                                                   + LineEnding +
     '  if (LenSrc > 0) then'                                                             + LineEnding +
-    '    if (Pointer('+AIA+'Copy) = nil) then'                                           + LineEnding +
+    '    if (Pointer(Copy) = nil) then'                                                 + LineEnding +
     '      Move(Src^, Dst^, LenSrc * ElSize)'                                            + LineEnding +
     '    else for i := 0 to (LenSrc - 1) * ElSize with ElSize do'                        + LineEnding +
     '      Copy(Src[i], Dst[i]);'                                                        + LineEnding +

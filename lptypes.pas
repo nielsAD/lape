@@ -1999,7 +1999,7 @@ begin
     for i := 0 to FList.Count - 1 do
     begin
       Decl := FList[i];
-      if (Decl = nil) or (Decl.NameHash <> Hash) or (LapeCase(FList[i].Name) <> AName) then
+      if (Decl = nil) or (Decl.NameHash <> Hash) or (LapeCase(Decl.Name) <> AName) then
         Continue;
 
       SetLength(Result, Length(Result) + 1);
@@ -2070,8 +2070,8 @@ begin
     begin
       Decl := FList[i];
       if (Decl = nil) or (Decl.NameHash <> Hash) or
-         ((Decl.ClassType <> AClass) and (FullClassMatch or (not (FList[i] is AClass)))) or
-         (LapeCase(FList[i].Name) <> AName)
+         ((Decl.ClassType <> AClass) and (FullClassMatch or (not (Decl is AClass)))) or
+         (LapeCase(Decl.Name) <> AName)
       then
         Continue;
 

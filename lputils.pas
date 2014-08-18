@@ -70,6 +70,7 @@ begin
 
     if (psiFunctionWrappers in Initialize) then
       addDelayedCode(
+        LapeDelayedFlags +
         'function Chr(IntValue: UInt8):  AnsiChar; overload; begin Result := AnsiChar(IntValue); end;' + LineEnding +
         'function Chr(IntValue: UInt16): WideChar; overload; begin Result := WideChar(IntValue); end;' + LineEnding +
         'function StrGet(var s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
@@ -96,6 +97,7 @@ begin
         'erInterfaceNotSupported, erCustomError)',
         'TIFException');
       addDelayedCode(
+        LapeDelayedFlags +
         'function ExceptionToString(Ex: TIFException; Param: string): string; begin '         +
           'Result := ToString(Ex);'                                                           +
           'if (Param <> '#39#39') then Result := Result + '#39'('#39' + Param + '#39')'#39';' +
@@ -109,34 +111,32 @@ end;
 function ExposeGlobals__GetPtr(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 begin
   Result := '';
-  if (not v.HasType()) or (v.VarType is TLapeType_OverloadedMethod) or (v.VarType.EvalRes(op_Addr) = nil) then
+
+  if (not v.HasType()) then
+    Exit
+  else if v.Writeable and (v.VarType.EvalRes(op_Addr) <> nil) then
+    Result := '@'
+  else if (not (v.VarType is TLapeType_Method)) then
     Exit;
 
-  if v.Writeable then
-    Result := '@';
-  if (v.VarType is TLapeType_Method) then
-    Result := Result + AIA;
-
-  if (Result <> '') then
-  begin
-    AName := LapeCase(AName);
-    Result := #39 + AName + #39': Result := ' + Result + AName + ';' + LineEnding;
-  end;
+  AName := LapeCase(AName);
+  Result := #39 + AName + #39': Result := ' + Result + AName + ';' + LineEnding;
 end;
 
 function ExposeGlobals__GetName(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
 begin
   Result := '';
-  if (not v.HasType()) or (v.VarType is TLapeType_OverloadedMethod) or (v.VarType.EvalRes(op_Addr) = nil) then
+
+  if (not v.HasType()) then
+    Exit
+  else if v.Writeable and (v.VarType.EvalRes(op_Addr) <> nil) then
+    Result := '@' + AName
+  else if (v.VarType is TLapeType_Method) then
+    Result := 'Pointer(' + AName + ')'
+  else
     Exit;
 
-  if v.Writeable then
-    Result := '@';
-  if (v.VarType is TLapeType_Method) then
-    Result := Result + AIA;
-
-  if (Result <> '') then
-    Result := 'Pointer(' + Result + AName + '): Result := '#39 + AName + #39';' + LineEnding;
+  Result := Result + ': Result := '#39 + AName + #39';' + LineEnding;
 end;
 
 function ExposeGlobals__GetVal(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompiler): lpString;
@@ -371,6 +371,7 @@ begin
     Exit;
 
   Compiler.addDelayedCode(
+    LapeDelayedFlags +
     GetGlobalPtr()  + LineEnding +
     GetGlobalName() + LineEnding +
     GetGlobalVal()  + LineEnding +
