@@ -611,7 +611,7 @@ end;
 function LapeFFIPointerParam(Param: TLapeParameter): Boolean;
 begin
   Result :=
-    (Param.ParType in [lptVar, lptOut]) or
+    (Param.ParType in [lptConstRef, lptVar, lptOut]) or
     (Param.VarType = nil) or
     (Param.VarType.BaseType in LapeComplexParamTypes);
 end;

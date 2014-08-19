@@ -463,6 +463,7 @@ begin
           nil,
           []
         );
+      Result.CopyFlags(ALeft);
     finally
       if (IndexVar <> nil) then
         IndexVar.Free();
@@ -562,6 +563,7 @@ begin
       end;
     finally
       FBaseType := tmpType;
+      Result.CopyFlags(ALeft);
     end;
   end
   else if (op = op_Assign) and (BaseType = ltDynArray) and CompatibleWith(ARight.VarType) then
