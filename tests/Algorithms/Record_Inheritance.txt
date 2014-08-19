@@ -1,0 +1,5 @@
+TPoint: 1, 2
+Dispose TPoint
+TPoint: 4, 5
+T3DPoint: 6
+Dispose T3DPoint

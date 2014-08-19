@@ -241,10 +241,10 @@ begin
     Decl := Decls[i];
     try
       if (Decl.Name = '') then
-        if (BaseName = '') then
-          Continue
-        else
+        if (Decl is TLapeGlobalVar) and (TLapeGlobalVar(Decl).VarType is TLapeType_Method) then
           n := BaseName + '[' + IntToStr(i) + ']'
+        else
+          Continue
       else if (BaseName <> '') then
         n := BaseName + '.' + Decl.Name
       else

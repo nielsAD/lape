@@ -145,7 +145,8 @@ type
     FParams: TLapeExpressionList;
 
     procedure setIdent(Node: TLapeTree_ExprBase); virtual;
-    function getRealIdent: TLapeTree_ExprBase; virtual;
+    function getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBase; virtual; overload;
+    function getRealIdent: TLapeTree_ExprBase; virtual; overload;
 
     procedure DeleteChild(Node: TLapeTree_Base); override;
     function getParamTypes: TLapeTypeArray; virtual;
@@ -1416,6 +1417,8 @@ begin
         LapeException(lpeInvalidCast, DocPos);
 
       Result := FCompiler.addManagedVar(Result) as TLapeGlobalVar;
+      Result.isConstant := True;
+
       FRes := Result;
     except
       Result.Free();
@@ -1550,13 +1553,8 @@ begin
   if (not canCast()) then
     LapeException(lpeInvalidEvaluation, DocPos);
 
-  //if FDest.HasType() and (FDest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and FType.Equals(FDest.VarType) then
-  //  Result := FDest
-  //else
-  begin
-    Dest := NullResVar;
-    Result := _ResVar.New(FCompiler.getTempVar(FType));
-  end;
+  Dest := NullResVar;
+  Result := _ResVar.New(FCompiler.getTempVar(FType));
 
   if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
     FCompiler.VarToDefault(Result, Offset, @_DocPos);
@@ -1570,6 +1568,8 @@ begin
     doRecord()
   else
     LapeException(lpeInvalidCast, DocPos);
+
+  Result.isConstant := True;
 end;
 
 procedure TLapeTree_Invoke.setIdent(Node: TLapeTree_ExprBase);
@@ -1591,11 +1591,14 @@ begin
     Ident := TLapeTree_VarType.Create(TLapeType_Type(TLapeTree_GlobalVar(FIdent).GlobalVar.VarType).TType, Ident);
 end;
 
-function TLapeTree_Invoke.getRealIdent: TLapeTree_ExprBase;
+function TLapeTree_Invoke.getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBase;
 var
   Typ: TLapeType;
 begin
   Result := FIdent;
+  if (ExpectType <> nil) and (FRealIdent <> nil) and (FRealIdent.resType() = nil) then
+    FreeAndNil(FRealIdent);
+
   if (FRealIdent <> nil) then
     Result := FRealIdent
   else if (not isEmpty(FIdent)) and (not (FIdent is TLapeTree_VarType)) then
@@ -1603,10 +1606,15 @@ begin
     Typ := FIdent.resType();
     if (Typ is TLapeType_OverloadedMethod) then
     begin
-      FRealIdent := TLapeTree_GlobalVar.Create(TLapeType_OverloadedMethod(Typ).getMethod(getParamTypes()), FIdent);
+      FRealIdent := TLapeTree_GlobalVar.Create(TLapeType_OverloadedMethod(Typ).getMethod(getParamTypes(), ExpectType), FIdent);
       Result := FRealIdent;
     end;
   end;
+end;
+
+function TLapeTree_Invoke.getRealIdent: TLapeTree_ExprBase;
+begin
+  Result := getRealIdent(nil);
 end;
 
 procedure TLapeTree_Invoke.DeleteChild(Node: TLapeTree_Base);
@@ -1720,20 +1728,9 @@ begin
 end;
 
 function TLapeTree_Invoke.setExpectedType(ExpectType: TLapeType): TLapeTree_Base;
-var
-  Method: TLapeGlobalVar;
 begin
+  getRealIdent(ExpectType);
   Result := Self;
-  if (not isEmpty(Self)) and (RealIdent = nil) and (FIdent is TLapeTree_GlobalVar) then
-    with TLapeTree_GlobalVar(FIdent), GlobalVar do
-    begin
-      if (GlobalVar <> nil) and (VarType <> nil) and (VarType is TLapeType_OverloadedMethod) then
-        Method := TLapeType_OverloadedMethod(VarType).getMethod(getParamTypes(), ExpectType)
-      else
-        Method := nil;
-      if (Method <> nil) then
-        Ident := TLapeTree_GlobalVar.Create(Method, Ident);
-    end
 end;
 
 function TLapeTree_Invoke.isConstant: Boolean;
@@ -1875,7 +1872,10 @@ begin
       if MethodOfObject(IdentVar.VarType) and (not (FIdent is TLapeTree_GlobalVar)) then
       begin
         if (RealIdent <> FIdent) then
+        begin
+          FreeAndNil(IdentVar);
           IdentVar := FIdent.Evaluate();
+        end;
         if (IdentVar.VarType is TLapeType_OverloadedMethod) then
         begin
           FreeAndNil(IdentVar);
@@ -1902,7 +1902,7 @@ type
   TResVarArray = array of TResVar;
 var
   i: Integer;
-  IdentVar: TResVar;
+  IdentVar, MethodVar: TResVar;
   ParamVars: TResVarArray;
 
   function DoCast: TResVar;
@@ -2087,6 +2087,7 @@ var
         if (lcoAlwaysInitialize in FCompilerOptions) then
           FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
 
+        Result.isConstant := True;
         AssignToStack(Result, Self._DocPos);
       end;
 
@@ -2097,6 +2098,9 @@ var
   function DoImportedMethod(IdentVar: TResVar; var ParamVars: TResVarArray): TResVar;
   var
     i: Integer;
+    {$IFDEF Lape_InitExternalFuncResult}
+    wasConstant: Boolean;
+    {$ENDIF}
   begin
     Assert(IdentVar.VarType is TLapeType_Method);
     Assert(IdentVar.VarType.BaseType in [ltPointer, ltImportedMethod]);
@@ -2140,7 +2144,12 @@ var
         FCompiler.getDestVar(FDest, Result, op_Unknown);
 
         {$IFDEF Lape_InitExternalFuncResult}
+        wasConstant := not Result.Writeable;
+        if wasConstant then
+          Result.Writeable := True;
         FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
+        if wasConstant then
+          Result.Writeable := False;
         {$ENDIF}
 
         FCompiler.Emitter._InvokeImportedFunc(IdentVar, Result, i * SizeOf(Pointer), Offset, @Self._DocPos)
@@ -2196,21 +2205,25 @@ begin
        (not (FIdent is TLapeTree_GlobalVar))
     then
     begin
+      MethodVar := IdentVar;
       if (RealIdent <> FIdent) then
         IdentVar := FIdent.Compile(Offset);
+
       if (IdentVar.VarType is TLapeType_OverloadedMethod) then
-        if IdentVar.isConstant then
+        if (not IdentVar.Readable) and (not IdentVar.Writeable) then
         begin
-          Result := IdentVar;
-          IdentVar := _ResVar.New(TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes()));
-          Result.Spill(1);
+          IdentVar.Spill(1);
+          IdentVar := MethodVar;
         end
-        else with TLapeType_OverloadedMethod(IdentVar.VarType).getMethod(getParamTypes()) do
+        else
         begin
-          IdentVar.VarType := VarType;
+          Assert(MethodVar.VarPos.MemPos = mpMem);
+          IdentVar.VarType := MethodVar.VarType;
+
           Dec(Offset, SizeOf(Pointer));
           FCompiler.Emitter.Delete(Offset, SizeOf(Pointer));
-          FCompiler.Emitter._Pointer(Ptr, Offset);
+          FCompiler.Emitter._Pointer(MethodVar.VarPos.GlobalVar.Ptr, Offset);
+          MethodVar.Spill(1);
         end;
     end;
 
@@ -2463,7 +2476,11 @@ begin
   if (FDest.VarPos.MemPos = mpVar) and ((not FDest.HasType()) or FDest.VarType.Equals(Result.VarType)) then
   begin
     if (not FDest.HasType()) then
+    begin
       Dest := _ResVar.New(Compiler.getTempVar(Result.VarType));
+      Dest.isConstant := True;
+    end;
+
     FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
     Result := FDest;
   end
@@ -3374,7 +3391,6 @@ begin
     end;
 
     Result := _ResVar.New(FCompiler.getTempVar(resType()));
-    Result.isConstant := False;
     FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
 
     with TLapeTree_Invoke.Create(_ArrayCopy, Self) do
@@ -3397,7 +3413,9 @@ begin
 
       addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
       Compile(Offset).Spill(1);
+
       Result.VarType := Self.resType();
+      Result.isConstant := True;
     finally
       Self.addParam(Params[2]);
       Free();

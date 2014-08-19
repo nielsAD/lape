@@ -26,14 +26,14 @@ end;
 function IntToStr(a: Int32; b: Int32): string; overload;
 begin
   Result := IntToStr(a) + '.' + IntToStr(b);
-end;   
+end;
 
 var
   s = '23';
 begin
   MyMethod(1);
-  MyMethod(s.DoAppend(4).DoAppend('5'));
+  MyMethod((s := s.DoAppend(4)).DoAppend('5'));
   WriteLn(MyMethod());
-  
-  WriteLn(IntToStr(6, 7)); 
+
+  WriteLn(IntToStr(6, 7));
 end;

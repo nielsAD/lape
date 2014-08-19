@@ -1728,6 +1728,8 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
           Res := Left.VarType.Eval(op, Dest, Left, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Right, [], Offset, Pos), Flags, Offset, Pos)
         else
           Res := CastVar.VarType.Eval(op, Dest, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Left, [], Offset, Pos), Right, Flags, Offset, Pos);
+
+        Res.CopyFlags(Left);
         Result := True;
       finally
         CastVar.Spill(1);
@@ -1754,10 +1756,9 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
 
     if Left.Writeable and MethodOfObject(Result.VarType) then
     begin
-      Res := NullResVar;
-      Res.VarType := FCompiler.getGlobalType('TMethod');
+      Dest := NullResVar;
+      Res := _ResVar.New(FCompiler.getTempVar(FCompiler.getGlobalType('TMethod')));
 
-      FCompiler.getDestVar(Dest, Res, op_Dot);
       FCompiler.Emitter._Eval(getEvalProc(op_Dot, ltUnknown, ltPointer), Res, Left.IncLock(), Result, Offset, Pos);
 
       Res.VarType := Result.VarType;
@@ -4081,6 +4082,7 @@ begin
           StackVar := getTempVar(ltPointer)
         else
           StackVar := getTempVar(Res.VarType);
+        StackVar.isConstant := True;
       end;
     Dest := NullResVar;
   end;

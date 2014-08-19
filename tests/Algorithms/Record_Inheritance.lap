@@ -1,0 +1,104 @@
+{$autoinvoke on}
+
+type
+  PPoint = ^TPoint;
+  TPoint = record
+    x, y: Int32;
+    Ohai: private procedure of object;
+    Test: private procedure of object;
+    Free: private procedure of object;
+  end;
+
+  P3DPoint = ^T3DPoint;
+  T3DPoint = record(TPoint)
+    z: Int32;
+  end;
+
+procedure TPoint.Ohai;
+begin
+  WriteLn('Hello, world!');
+end;
+
+procedure TPoint.Test;
+begin
+  WriteLn('TPoint: ', x, ', ', y);
+end;
+
+procedure TPoint.Free;
+var
+  p: PPoint;
+begin
+  WriteLn('Dispose TPoint');
+  p := @Self;
+  Dispose(p);
+end;
+
+procedure TPoint.Init;
+begin
+  with Self do
+  begin
+    TMethod(@Ohai) := [@TPoint.Ohai, @Self];
+    TMethod(@Test) := [@TPoint.Test, @Self];
+    TMethod(@Free) := [@TPoint.Free, @Self];
+  end;
+end;
+
+function TPoint.Create(ax: Int32 = 1; ay: Int32 = 2): PPoint;
+begin
+  New(Result);
+  with Result^ do
+  begin
+    Init();
+    x := ax;
+    y := ay;
+  end;
+end;
+
+procedure T3DPoint.Test; override;
+begin
+  inherited;
+  WriteLn('T3DPoint: ', z);
+end;
+
+procedure T3DPoint.Free; override;
+var
+  p: P3DPoint;
+begin
+  WriteLn('Dispose T3DPoint');
+  p := @Self;
+  Dispose(p);
+end;
+
+procedure T3DPoint.Init; override;
+begin
+  inherited;
+  with Self do
+  begin
+    TMethod(@Test) := [@T3DPoint.Test, @Self];
+    TMethod(@Free) := [@T3DPoint.Free, @Self];
+  end;
+end;
+
+function T3DPoint.Create(ax: Int32 = 4; ay: Int32 = 5; az: Int32 = 6): P3DPoint; overload;
+begin
+  New(Result);
+  with Result^ do
+  begin
+    Init();
+    x := ax;
+    y := ay;
+    z := az;
+  end;
+end;
+
+var
+  p: PPoint;
+begin
+  p := TPoint.Create;
+  p^.Test();
+  p^.Free();
+
+  P3DPoint(p) := T3DPoint.Create;
+  p^.Test();
+  p^.Free();
+end;
