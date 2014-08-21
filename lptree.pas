@@ -145,8 +145,8 @@ type
     FParams: TLapeExpressionList;
 
     procedure setIdent(Node: TLapeTree_ExprBase); virtual;
-    function getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBase; virtual; overload;
-    function getRealIdent: TLapeTree_ExprBase; virtual; overload;
+    function getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBase; overload; virtual;
+    function getRealIdent: TLapeTree_ExprBase; overload; virtual;
 
     procedure DeleteChild(Node: TLapeTree_Base); override;
     function getParamTypes: TLapeTypeArray; virtual;

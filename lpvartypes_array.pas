@@ -31,8 +31,8 @@ type
     procedure VarSetLength(var AVar: Pointer; ALen: Integer); overload; virtual;
     procedure VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
-    procedure RangeCheck(AVar, AIndex: TLapeGlobalVar); virtual;
-    procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil); virtual;
+    procedure RangeCheck(AVar, AIndex: TLapeGlobalVar); overload; virtual;
+    procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
     function EvalRes(Op: EOperator; ARight: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
