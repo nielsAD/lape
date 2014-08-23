@@ -45,6 +45,7 @@ type
     Tokenizers: array of TLapeTokenizerBase;
     TokStates: array of Pointer;
     Options: ECompilerOptionsSet;
+    Options_PackRecords: UInt8;
     Defines: lpString;
     Conditionals: TLapeConditionalStack.TTArray;
   end;
@@ -2944,6 +2945,7 @@ begin
     end;
 
     Options := FOptions;
+    Options_PackRecords := FOptions_PackRecords;
     Defines := FDefines.Text;
     Conditionals := FConditionalStack.ExportToArray();
   end;
@@ -2971,6 +2973,7 @@ begin
     end;
 
     FOptions := Options;
+    FOptions_PackRecords := Options_PackRecords;
     FDefines.Text := Defines;
     FConditionalStack.ImportFromArray(Conditionals);
   end;
@@ -3021,6 +3024,7 @@ begin
     FConditionalStack.Reset();
     FStackInfo := nil;
     FOptions := FBaseOptions;
+    FOptions_PackRecords := FBaseOptions_PackRecords;
     FDefines.Text := FBaseDefines.Text;
   end;
 

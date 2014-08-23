@@ -159,9 +159,9 @@ var
   begin
     Result := True;
     for i := 0 to Params.Count - 1 do
-      if (not (Params[i].ParType in Lape_ValParams)) then
+      if (Params[i].VarType = nil) or (not (Params[i].ParType in Lape_ValParams)) then
         Exit(False)
-      else if (not VariantType.CompatibleWith(Params[i].VarType)) then
+      else if (not Params[i].VarType.CompatibleWith(VariantType)) then
         Exit(False);
   end;
 
@@ -181,7 +181,7 @@ begin
       Exit;
 
     Result := #39 + AName + #39': begin ' +
-      'Assert(Length(Params) = ' + IntToStr(Params.Count) + ');' +
+      'Assert(ParamsLen = ' + IntToStr(Params.Count) + ');' +
       'Result := ';
     if (Res = nil) or (not VariantType.CompatibleWith(Res)) then
       Result := Result + 'Unassigned; ';
@@ -332,6 +332,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
     Result := 'function VariantInvoke(Name: string; Params: array of Variant = []): Variant;';
     if DoOverride then
       Result := Result + 'override;';
+    Result := Result + 'var ParamsLen: Integer := Length(Params);';
     Result := Result + 'begin Result := Unassigned;';
     if (not HeaderOnly) then
     begin

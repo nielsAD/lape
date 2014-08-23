@@ -1148,11 +1148,11 @@ begin
     {$IFDEF Lape_SmallCode}
     //FPtr := AllocMem(Size);
     FBasePtr := AllocMem(Size + 4);
-    FPtr := {$IFDEF FPC}Align(FBasePtr, 4){$ELSE}Pointer(PtrUInt(FBasePtr) + PtrUInt(FBasePtr) mod 4){$ENDIF};
+    FPtr := {$IFDEF FPC}Align(FBasePtr, 4){$ELSE}Pointer((PtrUInt(FBasePtr) + 3) and not 3){$ENDIF};
     {$ELSE}
     //Assure aligned memory
     FBasePtr := AllocMem(Size + 16);
-    FPtr := {$IFDEF FPC}Align(FBasePtr, 16){$ELSE}Pointer(PtrUInt(FBasePtr) + PtrUInt(FBasePtr) mod 16){$ENDIF};
+    FPtr := {$IFDEF FPC}Align(FBasePtr, 16){$ELSE}Pointer((PtrUInt(FBasePtr) + 15) and not 15){$ENDIF};
     {$ENDIF}
   end;
 end;

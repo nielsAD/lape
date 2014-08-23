@@ -526,6 +526,7 @@ end;
 constructor TFFIClosureManager.Create(ACif: TFFICifManager = nil; ACallback: TClosureBindingFunction = nil);
 begin
   inherited Create();
+  Assert(FFILoaded());
 
   Prepared := False;
   ManageCif := True;

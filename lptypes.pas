@@ -1892,16 +1892,21 @@ begin
 end;
 
 procedure TLapeDeclarationList.Clear;
+var
+  i: Integer;
 begin
   if (FList <> nil) then
   begin
     if FreeDecls then
+    begin
       ClearSubDeclarations();
-    while (FList.Count > 0) do
-      if (FList[0] = nil) or (not FreeDecls) then
-        FList.Delete(0)
-      else
-        FList[0].Free();
+      for i := FList.Count - 1 downto 0 do
+        if (FList[i] <> nil) then
+        begin
+          FList[i].FList := nil;
+          FList[i].Free();
+        end;
+    end;
     FList.Clear();
   end;
 end;

@@ -35,7 +35,7 @@ type
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
     procedure ClearCache; override;
-    procedure addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1); virtual;
+    procedure addField(FieldType: TLapeType; AName: lpString; Alignment: UInt16 = 1); virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -57,7 +57,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); override;
-    procedure addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1); override;
+    procedure addField(FieldType: TLapeType; AName: lpString; Alignment: UInt16 = 1); override;
   end;
 
   TLapeType_SetterMethod = class(TLapeType)
@@ -118,21 +118,45 @@ begin
   FAsString := '';
 end;
 
-procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1);
+procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; Alignment: UInt16 = 1);
+
+  //http://graphics.stanford.edu/~seander/bithacks.html
+  function NextPowerOfTwo(const n: Integer): Integer;
+  begin
+    Result := n - 1;
+    Result := Result or (Result shr 1);
+    Result := Result or (Result shr 2);
+    Result := Result or (Result shr 4);
+    Result := Result or (Result shr 8);
+    Result := Result or (Result shr 16);
+    Result := Result + 1;
+  end;
+
 var
   Field: TRecordField;
+  FieldSize: Integer;
 begin
   if (FSize < 0) or (FFieldMap.Count < 1) then
     FSize := 0;
   if (FInit = bUnknown) or (FFieldMap.Count < 1) then
     FInit := bFalse;
-
-  Field.Offset := FSize;
-  Field.FieldType := FieldType;
   if FFieldMap.ExistsKey(AName) then
     LapeExceptionFmt(lpeDuplicateDeclaration, [AName]);
 
-  FSize := FSize + FieldType.Size + (FieldType.Size mod Alignment);
+  FieldSize := FieldType.Size;
+  if (FSize > 0) then
+  begin
+    if (FieldSize < Alignment) then
+      Alignment := NextPowerOfTwo(FieldSize);
+
+    Dec(Alignment);
+    FSize := (FSize + Alignment) and not Alignment;
+  end;
+
+  Field.Offset := FSize;
+  Field.FieldType := FieldType;
+
+  FSize := FSize + FieldSize;
   if (FInit <> bTrue) and FieldType.NeedInitialization then
     FInit := bTrue;
   FFieldMap[AName] := Field;
@@ -418,7 +442,7 @@ begin
   FBaseType := ltUnion;
 end;
 
-procedure TLapeType_Union.addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1);
+procedure TLapeType_Union.addField(FieldType: TLapeType; AName: lpString; Alignment: UInt16 = 1);
 var
   Field: TRecordField;
   FieldSize: Integer;
@@ -433,7 +457,7 @@ begin
   if FFieldMap.ExistsKey(AName) then
     LapeExceptionFmt(lpeDuplicateDeclaration, [AName]);
 
-  FieldSize := FieldType.Size + (FieldType.Size mod Alignment);
+  FieldSize := FieldType.Size;
   if (FieldSize > FSize) then
     FSize := FieldSize;
   if (FInit <> bTrue) and FieldType.NeedInitialization then
