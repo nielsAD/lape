@@ -146,18 +146,16 @@ const
   lpeAlterPrepared = 'Cannot alter an already prepared object';
   lpeCannotPrepare = 'Cannot prepare object';
 
-  LapeComplexParamTypes = [ltShortString, ltStaticArray];
-  LapeComplexReturnTypes = LapeStringTypes + [ltStaticArray];
-
   FFI_LAPE_ABI = {$IF DEFINED(Lape_CDECL) AND DECLARED(FFI_SYSV)}FFI_SYSV{$ELSE}FFI_DEFAULT_ABI{$IFEND};
 
 var
   ffi_type_complex: TFFIType;
 
 function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
-function LapeFFIPointerParam(const Param: TLapeParameter): Boolean;
-function LapeParamToFFIType(const Param: TLapeParameter): TFFITypeManager;
-function LapeResultToFFIType(const Res: TLapeType): TFFITypeManager;
+function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
+function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;
+function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
+function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;
 function LapeResultEvalProc(const Res: TFFIType): TLapeEvalProc;
 
 function LapeHeaderToFFICif(Header: TLapeType_Method; ABI: TFFIABI = FFI_LAPE_ABI): TFFICifManager; overload;
@@ -224,11 +222,11 @@ constructor TFFITypeManager.Create(FFIType: TFFIType);
 begin
   inherited Create();
 
-  PElems := nil;
-  Prepared := False;
-
   FTyp := FFIType;
+  Prepared := TFFI_CTYPE(FFIType._type) <> FFI_CTYPE_VOID;
+
   FElems := nil;
+  PElems := nil;
 end;
 
 destructor TFFITypeManager.Destroy;
@@ -626,39 +624,55 @@ begin
         ltCurrency:    Result.Typ := ffi_type_uint64;
         ltExtended:    Result.Typ := ffi_type_longdouble;
         ltSmallEnum,
-        ltLargeEnum:   Result.Typ := ConvertBaseIntType(DetermineIntType(VarType.Size, False));
-        ltSmallSet:    Result.Typ := ffi_type_uint32;
+        ltLargeEnum,
+        ltSmallSet:    Result.Typ := ConvertBaseIntType(DetermineIntType(VarType.Size, False));
         ltShortString,
         ltVariant,
         ltLargeSet:    FFIArray(VarType.Size, TFFITypeManager.Create(ffi_type_uint8));
         ltStaticArray: FFIStaticArray(VarType as TLapeType_StaticArray);
         ltRecord:      FFIRecord(VarType as TLapeType_Record);
         ltUnion:       FFIUnion(VarType as TLapeType_Union);
+        else Assert(False);
       end;
   except
     FreeAndNil(Result);
   end;
 end;
 
-function LapeFFIPointerParam(const Param: TLapeParameter): Boolean;
+function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
+const
+  PointerIfLarge = [ltStaticArray, ltLargeEnum];
 begin
+  //http://docwiki.embarcadero.com/RADStudio/en/Program_Control#Register_Convention
   Result :=
-    (Param.ParType in [lptConstRef, lptVar, lptOut]) or
+    (Param.ParType in Lape_RefParams) or
     (Param.VarType = nil) or
-    (Param.VarType.BaseType in LapeComplexParamTypes);
+    (Param.VarType.BaseType = ltShortString) or
+    ((Param.VarType.BaseType in PointerIfLarge) and (Param.VarType.Size > SizeOf(Pointer)))
+{$IF DECLARED(FFI_PASCAL) AND DECLARED(FFI_REGISTER)}
+    or ((ABI in [FFI_PASCAL, FFI_REGISTER]) and (
+      (Param.VarType.BaseType = ltVariant) or
+      ((Param.VarType.BaseType in LapeStructTypes) and (Param.VarType.Size > SizeOf(Pointer)))
+    ))
+{$IFEND};
 end;
 
-function LapeParamToFFIType(const Param: TLapeParameter): TFFITypeManager;
+function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;
 begin
-  if LapeFFIPointerParam(Param) then
+  if LapeFFIPointerParam(Param, ABI) then
     Result := TFFITypeManager.Create(ffi_type_pointer)
   else
     Result := LapeTypeToFFIType(Param.VarType);
 end;
 
-function LapeResultToFFIType(const Res: TLapeType): TFFITypeManager;
+function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
 begin
-  if (Res <> nil) and (Res.BaseType in LapeComplexReturnTypes) then
+  Result := (VarType <> nil) and (VarType.BaseType in LapeStringTypes + [ltVariant]);
+end;
+
+function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;
+begin
+  if LapeFFIComplexReturn(Res, ABI) then
     Result := TFFITypeManager.Create(ffi_type_complex)
   else
     Result := LapeTypeToFFIType(Res);
@@ -688,7 +702,7 @@ begin
 
   Result := TFFICifManager.Create(ABI);
   if (Header.Res <> nil) then
-    Result.setRes(LapeResultToFFIType(Header.Res));
+    Result.setRes(LapeResultToFFIType(Header.Res, ABI));
 
   try
     if MethodOfObject(Header) then
@@ -697,11 +711,11 @@ begin
       SelfParam.ParType := Lape_SelfParam;
       if (Header is TLapeType_MethodOfType) then
         SelfParam.VarType := TLapeType_MethodOfType(Header).ObjectType;
-      Result.addArg(LapeParamToFFIType(SelfParam), True, LapeFFIPointerParam(SelfParam))
+      Result.addArg(LapeParamToFFIType(SelfParam, ABI), True, LapeFFIPointerParam(SelfParam, ABI))
     end;
 
     for i := 0 to Header.Params.Count - 1 do
-      Result.addArg(LapeParamToFFIType(Header.Params[i]), True, LapeFFIPointerParam(Header.Params[i]));
+      Result.addArg(LapeParamToFFIType(Header.Params[i], ABI), True, LapeFFIPointerParam(Header.Params[i], ABI));
   except
     Result.Free();
   end;

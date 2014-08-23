@@ -78,10 +78,12 @@ type
       FFI_THISCALL,
       FFI_FASTCALL,
       FFI_STDCALL,
+      FFI_PASCAL,
+      FFI_REGISTER,
       FFI_LAST_ABI,
 
       {$IFDEF CPU32}
-        FFI_DEFAULT_ABI := FFI_FASTCALL
+        FFI_DEFAULT_ABI := FFI_REGISTER
       {$ELSE}
         FFI_DEFAULT_ABI := FFI_UNIX64
       {$ENDIF}
@@ -94,8 +96,10 @@ type
         FFI_THISCALL,
         FFI_FASTCALL,
         FFI_MS_CDECL,
+        FFI_PASCAL,
+        FFI_REGISTER,
         FFI_LAST_ABI,
-        FFI_DEFAULT_ABI := FFI_FASTCALL
+        FFI_DEFAULT_ABI := FFI_REGISTER
       {$ELSE}
         FFI_WIN64,
         FFI_LAST_ABI,
