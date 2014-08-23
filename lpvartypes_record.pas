@@ -24,8 +24,10 @@ type
 
   TLapeType_Record = class(TLapeType)
   protected
+    FAlignment: UInt16;
     FFieldMap: TRecordFieldMap;
     function getAsString: lpString; override;
+    function getSize: Integer; override;
   public
     FreeFieldMap: Boolean;
 
@@ -35,7 +37,7 @@ type
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
     procedure ClearCache; override;
-    procedure addField(FieldType: TLapeType; AName: lpString; Alignment: UInt16 = 1); virtual;
+    procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -50,6 +52,7 @@ type
     procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); override;
 
     property FieldMap: TRecordFieldMap read FFieldMap;
+    property Alignment: UInt16 read FAlignment;
   end;
 
   TLapeType_Union = class(TLapeType_Record)
@@ -57,7 +60,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); override;
-    procedure addField(FieldType: TLapeType; AName: lpString; Alignment: UInt16 = 1); override;
+    procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); override;
   end;
 
   TLapeType_SetterMethod = class(TLapeType)
@@ -77,7 +80,8 @@ type
 implementation
 
 uses
-  lpparser, lpeval, lpexceptions;
+  Math,
+  lpvartypes_array, lpparser, lpeval, lpexceptions;
 
 function TLapeType_Record.getAsString: lpString;
 var
@@ -93,6 +97,11 @@ begin
   Result := inherited;
 end;
 
+function TLapeType_Record.getSize: Integer;
+begin
+  Result := (inherited + (FAlignment - 1)) and not (FAlignment - 1);
+end;
+
 constructor TLapeType_Record.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil);
 const
   InvalidRec: TRecordField = (Offset: Word(-1); FieldType: nil);
@@ -104,6 +113,7 @@ begin
   if (AFieldMap = nil) then
     AFieldMap := TRecordFieldMap.Create(InvalidRec, dupError, False);
   FFieldMap := AFieldMap;
+  FAlignment := 1;
 end;
 
 destructor TLapeType_Record.Destroy;
@@ -118,18 +128,32 @@ begin
   FAsString := '';
 end;
 
-procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; Alignment: UInt16 = 1);
+procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1);
 
-  //http://graphics.stanford.edu/~seander/bithacks.html
-  function NextPowerOfTwo(const n: Integer): Integer;
+  //http://docwiki.embarcadero.com/RADStudio/en/Internal_Data_Formats#Record_Types
+  function AlignmentMask(Typ: TLapeType): UInt16;
   begin
-    Result := n - 1;
-    Result := Result or (Result shr 1);
-    Result := Result or (Result shr 2);
-    Result := Result or (Result shr 4);
-    Result := Result or (Result shr 8);
-    Result := Result or (Result shr 16);
-    Result := Result + 1;
+    if (Typ = nil) then
+      Exit(AAlignment);
+
+    if Typ.IsOrdinal() or (Typ.BaseType in LapePointerTypes) then
+      Result := Typ.Size
+    else
+    case Typ.BaseType of
+      ltLargeSet:    Result := SizeOf(UInt8);
+      ltExtended:    Result := SizeOf(Extended) and (SizeOf(Double) or (2*SizeOf(Double)));
+      ltShortString,
+      ltStaticArray: Result := AlignmentMask(TLapeType_StaticArray(Typ).PType);
+      ltRecord:      Result := TLapeType_Record(Typ).Alignment;
+      ltSingle,
+      ltDouble,
+      ltSmallSet:    Result := Typ.Size;
+      else
+        Result := AAlignment;
+    end;
+
+    if (Result < 1) then
+      Result := 1;
   end;
 
 var
@@ -144,13 +168,13 @@ begin
     LapeExceptionFmt(lpeDuplicateDeclaration, [AName]);
 
   FieldSize := FieldType.Size;
-  if (FSize > 0) then
+  if (FSize > 0) and (AAlignment > 1) then
   begin
-    if (FieldSize < Alignment) then
-      Alignment := NextPowerOfTwo(FieldSize);
+    AAlignment := Min(AAlignment, AlignmentMask(FieldType));
+    FAlignment := Max(FAlignment, AAlignment);
 
-    Dec(Alignment);
-    FSize := (FSize + Alignment) and not Alignment;
+    Dec(AAlignment);
+    FSize := (FSize + AAlignment) and not AAlignment;
   end;
 
   Field.Offset := FSize;
@@ -227,6 +251,7 @@ begin
     TypeID := Self.TypeID;
     FInit := Self.FInit;
     FSize := Self.FSize;
+    FAlignment := Self.FAlignment;
   end;
 end;
 
@@ -442,7 +467,7 @@ begin
   FBaseType := ltUnion;
 end;
 
-procedure TLapeType_Union.addField(FieldType: TLapeType; AName: lpString; Alignment: UInt16 = 1);
+procedure TLapeType_Union.addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1);
 var
   Field: TRecordField;
   FieldSize: Integer;
