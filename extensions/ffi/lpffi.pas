@@ -91,7 +91,7 @@ type
     property PCif: PFFICif read getPCif;
   end;
 
-  generic TFFIClosureManager<TUserData> = class(TLapeBaseClass)
+  {$IFDEF FPC}generic{$ENDIF} TFFIClosureManager<TUserData> = class(TLapeBaseClass)
   public type
     TFreeUserData = procedure(const AData: TUserData);
   var private
@@ -130,7 +130,7 @@ type
     NativeCif: TFFICifManager;
     FreeCif: Boolean;
   end;
-  TImportClosure = specialize TFFIClosureManager<TImportClosureData>;
+  TImportClosure = {$IFDEF FPC}specialize{$ENDIF} TFFIClosureManager<TImportClosureData>;
 
   PExportClosureData = ^TExportClosureData;
   TExportClosureData = record
@@ -140,7 +140,7 @@ type
     ParamSizes: array of Integer;
     TotalParamSize: Integer;
   end;
-  TExportClosure = specialize TFFIClosureManager<TExportClosureData>;
+  TExportClosure = {$IFDEF FPC}specialize{$ENDIF} TFFIClosureManager<TExportClosureData>;
 
 const
   lpeAlterPrepared = 'Cannot alter an already prepared object';
@@ -439,7 +439,7 @@ begin
       Args := nil;
   end;
 
-  if (FRes.Eval = nil) then
+  if ({$IFNDEF FPC}@{$ENDIF}FRes.Eval = nil) then
     ffi_call(FCif, Func, Res, Args)
   else
   begin
@@ -467,25 +467,25 @@ begin
   Call(Func, nil, Args, ATakePointers);
 end;
 
-procedure TFFIClosureManager.TryAlter;
+procedure TFFIClosureManager{$IFNDEF FPC}<TUserData>{$ENDIF}.TryAlter;
 begin
   if Prepared then
     LapeException(lpeAlterPrepared);
 end;
 
-function TFFIClosureManager.getClosure: TFFIClosure;
+function TFFIClosureManager{$IFNDEF FPC}<TUserData>{$ENDIF}.getClosure: TFFIClosure;
 begin
   PrepareClosure();
   Result := FClosure^;
 end;
 
-function TFFIClosureManager.getPClosure: PFFIClosure;
+function TFFIClosureManager{$IFNDEF FPC}<TUserData>{$ENDIF}.getPClosure: PFFIClosure;
 begin
   PrepareClosure();
   Result := FClosure;
 end;
 
-procedure TFFIClosureManager.setCif(ACif: TFFICifManager);
+procedure TFFIClosureManager{$IFNDEF FPC}<TUserData>{$ENDIF}.setCif(ACif: TFFICifManager);
 begin
   TryAlter();
   if (FCif <> nil) and (FCif <> ACif) and ManageCif then
@@ -493,19 +493,19 @@ begin
   FCif := ACif;
 end;
 
-procedure TFFIClosureManager.setCallback(AFunc: TClosureBindingFunction);
+procedure TFFIClosureManager{$IFNDEF FPC}<TUserData>{$ENDIF}.setCallback(AFunc: TClosureBindingFunction);
 begin
   TryAlter();
   FCallback := AFunc;
 end;
 
-function TFFIClosureManager.getFunc: Pointer;
+function TFFIClosureManager{$IFNDEF FPC}<TUserData>{$ENDIF}.getFunc: Pointer;
 begin
   PrepareClosure();
   Result := FFunc;
 end;
 
-procedure TFFIClosureManager.PrepareClosure;
+procedure TFFIClosureManager{$IFNDEF FPC}<TUserData>{$ENDIF}.PrepareClosure;
 begin
   if Prepared then
     Exit;
@@ -513,7 +513,7 @@ begin
   Assert(FFILoaded());
 
   if (FCif = nil) or
-     (FCallback = nil) or
+     ({$IFNDEF FPC}@{$ENDIF}FCallback = nil) or
      (ffi_prep_closure_loc(FClosure^, FCif.PCif^, FCallback, @UserData, FFunc) <> FFI_OK)
   then
     LapeException(lpeCannotPrepare);
@@ -521,7 +521,7 @@ begin
   Prepared := True;
 end;
 
-constructor TFFIClosureManager.Create(ACif: TFFICifManager = nil; ACallback: TClosureBindingFunction = nil);
+constructor TFFIClosureManager{$IFNDEF FPC}<TUserData>{$ENDIF}.Create(ACif: TFFICifManager = nil; ACallback: TClosureBindingFunction = nil);
 begin
   inherited Create();
   Assert(FFILoaded());
@@ -535,9 +535,9 @@ begin
   FCallback := ACallback;
 end;
 
-destructor TFFIClosureManager.Destroy;
+destructor TFFIClosureManager{$IFNDEF FPC}<TUserData>{$ENDIF}.Destroy;
 begin
-  if (FreeData <> nil) then
+  if ({$IFNDEF FPC}@{$ENDIF}FreeData <> nil) then
     FreeData(UserData);
   if (FCif <> nil) and ManageCif then
     FCif.Free();
@@ -717,7 +717,7 @@ begin
     for i := 0 to Header.Params.Count - 1 do
       Result.addArg(LapeParamToFFIType(Header.Params[i], ABI), True, LapeFFIPointerParam(Header.Params[i], ABI));
   except
-    Result.Free();
+    FreeAndNil(Result);
   end;
 end;
 
@@ -778,7 +778,7 @@ begin
     if (Result.UserData.NativeCif.Res <> nil) then
       Result.Cif.addArg(ffi_type_pointer);
   except
-    Result.Free();
+    FreeAndNil(Result);
   end;
 end;
 
@@ -848,7 +848,7 @@ begin
         Inc(Result.UserData.TotalParamSize, ParamSizes[i]);
     end;
   except
-    Result.Free();
+    FreeAndNil(Result);
   end;
 end;
 
