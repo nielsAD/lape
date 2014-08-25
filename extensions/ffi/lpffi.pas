@@ -707,6 +707,11 @@ begin
   try
     if MethodOfObject(Header) then
     begin
+      {$IF DEFINED(FFI_PASCAL)}
+      if (ABI = FFI_PASCAL) then
+        LapeException(lpeImpossible);
+      {$IFEND}
+
       SelfParam := NullParameter;
       SelfParam.ParType := Lape_SelfParam;
       if (Header is TLapeType_MethodOfType) then
@@ -864,6 +869,11 @@ begin
   SetLength(ParSizes, Header.Params.Count);
   if MethodOfObject(Header) then
   begin
+    {$IF DEFINED(FFI_PASCAL)}
+    if (ABI = FFI_PASCAL) then
+      LapeException(lpeImpossible);
+    {$IFEND}
+
     SetLength(ParSizes, Length(ParSizes) + 1);
     ParSizes[0] := -1;
     Inc(c);
