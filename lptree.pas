@@ -3590,7 +3590,8 @@ end;
 function TLapeTree_InternalMethod_Succ.isConstant: Boolean;
 begin
   if (FConstant = bUnknown) then
-    if (FParams.Count = 1) and (not isEmpty(FParams[0])) and FParams[0].isConstant() then
+    if  (FParams.Count in [1, 2]) and (not isEmpty(FParams[0])) and FParams[0].isConstant() and
+       ((FParams.Count = 1) or       ((not isEmpty(FParams[1])) and FParams[1].isConstant())) then
       FConstant := bTrue
     else
       FConstant := bFalse;
@@ -3662,12 +3663,8 @@ begin
           OldVarParam := FParams.Delete(0);
           addParam(TLapeTree_GlobalVar.Create(Result, Self));
           try
-            setIdent(TLapeTree_VarType.Create(VarParam.VarType, FParams[0]));
+            setIdent(TLapeTree_VarType.Create(ResultType, FParams[0]));
             FRes := inherited;
-
-            VarParam.Free();
-            VarParam := FRes;
-            FRes := ResultType.NewGlobalVarP(VarParam.Ptr);
           finally
             FParams.Delete(0).Free();
             addParam(OldVarParam);
@@ -3679,7 +3676,10 @@ begin
       end;
     finally
       if (OldCountParam <> nil) then
+      begin
+        CountParam.Free();
         addParam(OldCountParam);
+      end;
     end;
   end;
   Result := inherited;
