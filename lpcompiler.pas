@@ -28,7 +28,7 @@ type
   TLapeTree_OpStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeTree_Operator>;
 
   TLapeCompiler = class;
-  TLapeHandleDirective = function(Sender: TLapeCompiler; Directive, Argument: lpString; InPeek: Boolean): Boolean of object;
+  TLapeHandleDirective = function(Sender: TLapeCompiler; Directive, Argument: lpString; InPeek, InIgnore: Boolean): Boolean of object;
   TLapeFindFile = function(Sender: TLapeCompiler; var FileName: lpString): TLapeTokenizerBase of object;
   TLapeCompilerNotification = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifier<TLapeCompiler>;
   TLapeTokenizerArray = array of TLapeTokenizerBase;
@@ -917,7 +917,7 @@ begin
   NewTokenizer := nil;
 
   if ({$IFNDEF FPC}@{$ENDIF}FOnHandleDirective <> nil) then
-    if FOnHandleDirective(Self, Directive, Argument, Sender.InPeek) then
+    if FOnHandleDirective(Self, Directive, Argument, Sender.InPeek, InIgnore()) then
       Exit;
 
   Directive := LowerCase(Directive);
