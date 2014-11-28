@@ -2051,7 +2051,9 @@ var
       for i := 0 to Params.Count - 1 do
       try
         if (ParamVars[i].VarPos.MemPos = NullResVar.VarPos.MemPos) then
-          if (Params[i].ParType in Lape_RefParams) then
+          if  (Params[i].ParType in Lape_RefParams) or
+             ((Params[i].VarType <> nil) and (Params[i].VarType.NeedFinalization))
+          then
             FParams[i].CompileToTempVar(Offset, ParamVars[i])
           else
             ParamVars[i] := getStackVar(FParams[i], Offset);
