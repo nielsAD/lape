@@ -12,11 +12,13 @@
 
 *.bak
 *.local
-*.lps
 
 *.patch
 *.diff
 *.log
+
+*.lps
+gmon.out
 
 __history/
 lib/

@@ -1,0 +1,15 @@
+procedure BuggyBuggy(constref a: array of Integer);
+var
+  i: Integer;
+begin
+  for i := 0 to High(a) do
+  begin
+    Copy(a);
+    WriteLn(a[i]);
+  end;
+end;
+
+begin
+  BuggyBuggy([1..2]);
+end;
+
