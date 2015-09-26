@@ -29,6 +29,7 @@ type
   TPMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<string>;
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeDeclArray = nil);
 var
+  CodeBase: PByte;
   pMap: TPMap;
   op: EOperator;
   t1, t2: ELapeBaseType;
@@ -48,17 +49,17 @@ var
       Result := 'nil'
     else
     begin
-      s := IntToStr(PtrUInt(p));
+      s := IntToHex(PtrUInt(p), 0);
       if (pMap <> nil) and (pMap.ExistsKey(s)) then
         Result := pMap[s]
       else
-        Result := '$' + s;
+        Result := '$' + IntToHex(PtrUInt(p), 0);
     end;
   end;
 
   procedure _WriteLn(s: string); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    WriteLn(IntToStr(Code) + ' :: ' + s);
+    WriteLn('$', IntToHex(Code - CodeBase, 8), ' :: ', s);
   end;
 
   procedure _WriteLn(s: string; args: array of const); overload;
@@ -155,20 +156,25 @@ var
 
   procedure DoJmpSafe; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('JmpSafe %d', [PCodePos(PtrUInt(Code) + ocSize)^]);
+    _WriteLn('JmpSafe $%x', [PCodePos(PtrUInt(Code) + ocSize)^]);
     Inc(Code, ocSize + SizeOf(TCodePos));
   end;
 
   procedure DoJmpSafeR; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('JmpSafeR %d', [PCodeOffset(PtrUInt(Code) + ocSize)^]);
+    _WriteLn('JmpSafeR $%x', [TCodePos(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
     Inc(Code, ocSize + SizeOf(TCodeOffset));
   end;
 
   procedure DoIncTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     with POC_IncTry(PtrUInt(Code) + ocSize)^ do
-      _WriteLn('IncTry %d %d', [Jmp, NativeInt(JmpFinally)]);
+      if (JmpFinally = Try_NoFinally) then
+        _WriteLn('IncTry $%x (NoFinally)', [TCodePos(Code - CodeBase) + Jmp])
+      else if (JmpFinally = Try_NoExcept) then
+        _WriteLn('IncTry $%x (NoExcept)',  [TCodePos(Code - CodeBase) + Jmp])
+      else
+        _WriteLn('IncTry $%x $%x', [TCodePos(Code - CodeBase) + Jmp, TCodePos(Code - CodeBase) + Jmp + JmpFinally]);
     Inc(Code, ocSize + SizeOf(TOC_IncTry));
   end;
 
@@ -207,6 +213,8 @@ var
   {$I lpdisassembler_doeval.inc}
 
 begin
+  CodeBase := Code;
+
   {$IFDEF Lape_EmitPos}
   p.Line := 0;
   p.Col := 0;
@@ -225,23 +233,21 @@ begin
           proc := getEvalProc(op, t1, t2);
           if ValidEvalFunction(proc) then
             if (t2 = ltUnknown) then
-              pMap[IntToStr(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc))] := 'lpe'+LapeTypeToString(t1)+'_'+op_name[op]
+              pMap[IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0)] := 'lpe'+LapeTypeToString(t1)+'_'+op_name[op]
             else
-              pMap[IntToStr(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc))] := 'lpe'+LapeTypeToString(t1)+'_'+op_name[op]+'_'+LapeTypeToString(t2);
+              pMap[IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0)] := 'lpe'+LapeTypeToString(t1)+'_'+op_name[op]+'_'+LapeTypeToString(t2);
         end;
     end;
-    pMap[IntToStr(PtrUInt(getEvalProc(op_Addr, ltUnknown, ltUnknown)))] := 'lpeAddr';
-    pMap[IntToStr(PtrUInt(getEvalProc(op_Deref, ltUnknown, ltUnknown)))] := 'lpeDeref';
-
+    pMap[IntToHex(PtrUInt(getEvalProc(op_Addr, ltUnknown, ltUnknown)), 0)] := 'lpeAddr';
+    pMap[IntToHex(PtrUInt(getEvalProc(op_Deref, ltUnknown, ltUnknown)), 0)] := 'lpeDeref';
 
     for i := 0 to High(PointerNames) do
       if (PointerNames[i].Name = '') and (PointerNames[i] is TLapeGlobalVar) then
-        pMap[IntToStr(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr))] := TLapeGlobalVar(PointerNames[i]).AsString
+        pMap[IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0)] := TLapeGlobalVar(PointerNames[i]).AsString
       else if (PointerNames[i] is TLapeGlobalVar) then
-        pMap[IntToStr(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr))] := PointerNames[i].Name
+        pMap[IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0)] := PointerNames[i].Name
       else
-        pMap[IntToStr(PtrUInt(PointerNames[i]))] := PointerNames[i].Name;
-
+        pMap[IntToHex(PtrUInt(PointerNames[i]), 0)] := PointerNames[i].Name;
 
     while True do
     begin

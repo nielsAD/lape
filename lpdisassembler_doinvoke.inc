@@ -44,7 +44,7 @@ end;
 procedure DoIncCall_Ptr; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_Invoke_Ptr(PtrUInt(Code) + ocSize)^ do
-    _WriteLn('IncCall '+IntToStr(Ptr)+' '+IntToStr(ParamSize));
+    _WriteLn('IncCall '+IntToStr(Ptr)+' ($' + IntToHex(PCodePos(Ptr)^, 0) + ') ' +IntToStr(ParamSize));
   Inc(Code, SizeOf(TOC_Invoke_Ptr) + ocSize);
 end;
 
