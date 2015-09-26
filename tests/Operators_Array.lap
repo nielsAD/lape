@@ -13,8 +13,12 @@ var
   a: array of Int32;
   b: array[0..9] of Int32;
 begin
-  SetLength(a, 10);
+  Assert(Length(a) = 0, 'Length');
 
+  a := [];
+  Assert(Length(a) = 0, 'Assign []');
+
+  SetLength(a, 10);
   Assert(Length(a) = 10,    'Length');
   Assert(High(a) = High(b), 'High');
   Assert(Low(a) = Low(b),   'Low');
@@ -29,11 +33,22 @@ begin
   Assert(a[a[3]] = 3,     'a[a[3]] <> 3');
   Assert(ArraySum(a) = 9, 'Sum(a) <> 9');
 
+  a := [0, 1, 0, 3, 0, 5, 0, 0, 0, 0];
+  Assert(Length(a) = 10,  'Assign a');
+  Assert(a[3] = 3,        'Assign a[3] <> 3');
+  Assert(a[a[3]] = 3,     'Assign a[a[3]] <> 3');
+  Assert(ArraySum(a) = 9, 'Assign Sum(a) <> 9');
+
   b[1] := 2;
   b[3] := 2;
   b[5] := 2;
   Assert(b[a[3]] = 2,     'b[3] <> 2');
   Assert(ArraySum(b) = 6, 'Sum(a) <> 6');
+
+  b := [0, 2, 0, 2, 0, 2, 0, 0, 0, 0];
+  Assert(Length(b) = 10,  'Assign b');
+  Assert(b[a[3]] = 2,     'Assign b[3] <> 2');
+  Assert(ArraySum(b) = 6, 'Assign Sum(a) <> 6');
 
   a := a + 6;
   Assert(Length(a) = 11,   'Length +1');

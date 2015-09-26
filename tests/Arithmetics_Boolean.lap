@@ -20,6 +20,7 @@ begin
 
   Assert(a = not b, 'a <> not b');
   Assert(b = not a, 'b <> not a');
+  Assert(a xor b, 'a xor b = False');
 
   Assert(((a and b) xor (a and not b)) or (not a and not b) = res, 'res');
 end;
@@ -44,6 +45,7 @@ begin
 
   Assert(a = not b, 'a <> not b');
   Assert(b = not a, 'b <> not a');
+  Assert(a xor b, 'a xor b = False');
 
   Assert(((a and b) xor (a and not b)) or (not a and not b) = res, 'res');
 end;
@@ -68,6 +70,7 @@ begin
 
   Assert(a = not b, 'a <> not b');
   Assert(b = not a, 'b <> not a');
+  Assert(a xor b, 'a xor b = False');
 
   Assert(((a and b) xor (a and not b)) or (not a and not b) = res, 'res');
 end;
@@ -92,6 +95,7 @@ begin
 
   Assert(a = not b, 'a <> not b');
   Assert(b = not a, 'b <> not a');
+  Assert(a xor b, 'a xor b = False');
 
   Assert(((a and b) xor (a and not b)) or (not a and not b) = res, 'res');
 end;

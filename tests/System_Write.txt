@@ -3,6 +3,7 @@ Start the line, and end it.
 2
 True
 hoi
+nil
 [False, True]
 [1, 3, 4, 5, 7]
 [1, 2, True, hoi]

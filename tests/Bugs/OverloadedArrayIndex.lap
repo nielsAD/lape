@@ -1,0 +1,20 @@
+// Issue 34
+{$assertions on}
+
+function GetIndex: string;
+begin
+  Result := 'foo';
+end;
+
+function GetIndex: Integer; overload;
+begin
+  Result := 1;
+end;
+
+var
+  Arr: Array of Integer = [0,0];
+begin
+  Arr[Round(0)] = 0;
+  Arr[GetIndex()] := 1;
+  Assert(Arr[Round(0)+1] + Arr[GetIndex()-1] = 1);
+end.

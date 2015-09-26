@@ -12,10 +12,11 @@
 
 *.bak
 *.local
+*.lps
 
 *.patch
 *.diff
 *.log
 
-/__history
-/lib
+__history/
+lib/

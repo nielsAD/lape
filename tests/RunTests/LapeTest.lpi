@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
     <Version Value="9"/>
@@ -45,12 +45,6 @@
             </Debugging>
             <LinkSmart Value="True"/>
           </Linking>
-          <Other>
-            <CompilerMessages>
-              <MsgFileName Value=""/>
-            </CompilerMessages>
-            <CompilerPath Value="$(CompPath)"/>
-          </Other>
         </CompilerOptions>
       </Item2>
       <Item3 Name="Win64">
@@ -78,12 +72,6 @@
             </Debugging>
             <LinkSmart Value="True"/>
           </Linking>
-          <Other>
-            <CompilerMessages>
-              <MsgFileName Value=""/>
-            </CompilerMessages>
-            <CompilerPath Value="$(CompPath)"/>
-          </Other>
         </CompilerOptions>
       </Item3>
     </BuildModes>
@@ -109,12 +97,10 @@
       <Unit0>
         <Filename Value="LapeTest.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="LapeTest"/>
       </Unit0>
       <Unit1>
         <Filename Value="lptest.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="lptest"/>
       </Unit1>
     </Units>
   </ProjectOptions>
@@ -140,12 +126,6 @@
       </Debugging>
       <LinkSmart Value="True"/>
     </Linking>
-    <Other>
-      <CompilerMessages>
-        <MsgFileName Value=""/>
-      </CompilerMessages>
-      <CompilerPath Value="$(CompPath)"/>
-    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

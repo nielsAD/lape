@@ -1,39 +1,116 @@
-var
-  b: Boolean = 3;
-  w: WordBool = 4;
-  l: LongBool = 5;
+function ToString(constref e: Boolean):  string; override; begin Result := inherited()[1]; end;
+function ToString(constref b: ByteBool): string; override; begin Result := inherited()[1]; end;
+function ToString(constref w: WordBool): string; override; begin Result := inherited()[1]; end;
+function ToString(constref l: LongBool): string; override; begin Result := inherited()[1]; end;
+
+procedure TestBools(e: Boolean; b: ByteBool; w: WordBool; l: LongBool);
 begin
-  WriteLn(b = b);
-  WriteLn(b = w);
-  WriteLn(b = l);
-  WriteLn(w = b);
-  WriteLn(w = w);
-  WriteLn(w = l);
-  WriteLn(l = b);
-  WriteLn(l = w);
-  WriteLn(l = l);
+  if e and True then WriteLn('e') else if True and (not e) then WriteLn('ne') else WriteLn('xx');
+  if b and True then WriteLn('b') else if True and (not b) then WriteLn('nb') else WriteLn('xx');
+  if w and True then WriteLn('w') else if True and (not w) then WriteLn('nw') else WriteLn('xx');
+  if l and True then WriteLn('l') else if True and (not l) then WriteLn('nl') else WriteLn('xx');
 
-  WriteLn(not not b);
-  WriteLn(not not w);
-  WriteLn(not not l);
+  Write(((((e = e) = LongBool(True)) = Boolean.True) = WordBool(True)) = ByteBool(True));
+  Write(((((e = b) = WordBool(True)) = Boolean.True) = LongBool(True)) = ByteBool(True));
+  Write(((((e = w) = ByteBool(True)) = Boolean.True) = LongBool(True)) = WordBool(True));
+  Write(((((e = l) = Boolean.True) = ByteBool(True)) = WordBool(True)) = LongBool(True));
+  Write(((((b = e) = LongBool(True)) = Boolean.True) = WordBool(True)) = ByteBool(True));
+  Write(((((b = b) = WordBool(True)) = Boolean.True) = LongBool(True)) = ByteBool(True));
+  Write(((((b = w) = ByteBool(True)) = Boolean.True) = LongBool(True)) = WordBool(True));
+  Write(((((b = l) = Boolean.True) = ByteBool(True)) = WordBool(True)) = LongBool(True));
+  Write(((((w = e) = LongBool(True)) = Boolean.True) = WordBool(True)) = ByteBool(True));
+  Write(((((w = b) = WordBool(True)) = Boolean.True) = LongBool(True)) = ByteBool(True));
+  Write(((((w = w) = ByteBool(True)) = Boolean.True) = LongBool(True)) = WordBool(True));
+  Write(((((w = l) = Boolean.True) = ByteBool(True)) = WordBool(True)) = LongBool(True));
+  Write(((((l = e) = LongBool(True)) = Boolean.True) = WordBool(True)) = ByteBool(True));
+  Write(((((l = b) = WordBool(True)) = Boolean.True) = LongBool(True)) = ByteBool(True));
+  Write(((((l = w) = ByteBool(True)) = Boolean.True) = LongBool(True)) = WordBool(True));
+  Write(((((l = l) = Boolean.True) = ByteBool(True)) = WordBool(True)) = LongBool(True));
+  WriteLn();
 
-  WriteLn(not b = not b);
-  WriteLn(not b = not w);
-  WriteLn(not b = not l);
-  WriteLn(not w = not b);
-  WriteLn(not w = not w);
-  WriteLn(not w = not l);
-  WriteLn(not l = not b);
-  WriteLn(not l = not w);
-  WriteLn(not l = not l);
+  Write(not not e = e);
+  Write(not not b = b);
+  Write(not not w = w);
+  Write(not not l = l);
+  WriteLn();
 
-  WriteLn(not b <> b);
-  WriteLn(b <> not w);
-  WriteLn(not b <> l);
-  WriteLn(w <> not b);
-  WriteLn(not w <> w);
-  WriteLn(w <> not l);
-  WriteLn(not l <> b);
-  WriteLn(l <> not w);
-  WriteLn(not l <>l);
+  Write(not e = not e);
+  Write(not e = not b);
+  Write(not e = not w);
+  Write(not e = not l);
+  Write(not b = not e);
+  Write(not b = not b);
+  Write(not b = not w);
+  Write(not b = not l);
+  Write(not w = not e);
+  Write(not w = not b);
+  Write(not w = not w);
+  Write(not w = not l);
+  Write(not l = not e);
+  Write(not l = not b);
+  Write(not l = not w);
+  Write(not l = not l);
+  WriteLn();
+
+  Write(not e <> e);
+  Write(e <> not b);
+  Write(not e <> w);
+  Write(e <> not l);
+  Write(b <> not e);
+  Write(not b <> b);
+  Write(b <> not w);
+  Write(not b <> l);
+  Write(not w <> e);
+  Write(w <> not b);
+  Write(not w <> w);
+  Write(w <> not l);
+  Write(l <> not e);
+  Write(not l <> b);
+  Write(l <> not w);
+  Write(not l <> l);
+  WriteLn();
+
+  Write((not e = False) or (e = False));
+  Write((not b = False) or (b = False));
+  Write((not w = False) or (w = False));
+  Write((not l = False) or (l = False));
+  WriteLn();
+
+  Write(e xor not e);
+  Write(e xor not b);
+  Write(e xor not w);
+  Write(e xor not l);
+  Write(b xor not e);
+  Write(b xor not b);
+  Write(b xor not w);
+  Write(b xor not l);
+  Write(w xor not e);
+  Write(w xor not b);
+  Write(w xor not w);
+  Write(w xor not l);
+  Write(l xor not e);
+  Write(l xor not b);
+  Write(l xor not w);
+  Write(l xor not l);
+  WriteLn();
+
+  Write((e xor not False) xor (e xor not True));
+  Write((b xor not False) xor (b xor not True));
+  Write((w xor not False) xor (w xor not True));
+  Write((l xor not False) xor (l xor not True));
+  WriteLn();
 end;
+
+
+var
+  x: Boolean = False;
+  y: LongBool = True;
+begin
+  TestBools(False, False, False, False);
+  TestBools(True, True, True, True);
+  TestBools(x, x, x, x);
+  TestBools(not x, not x, not x, not x);
+  TestBools(not y, not y, not y, not y);
+  TestBools(y, y, y, y);
+end;
+
