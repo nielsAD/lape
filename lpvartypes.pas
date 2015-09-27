@@ -1368,7 +1368,7 @@ begin
   Result := (Other = Self) or (
     (Other <> nil) and
     (TypeID = Other.TypeID) and
-    ((not ContextOnly) or (ClassType = Other.ClassType)) and
+    (ContextOnly or (ClassType = Other.ClassType)) and
     (Other.BaseType = BaseType) and
     (Other.Size = Size) and
     (Other.AsString = AsString)
@@ -2025,7 +2025,7 @@ end;
 
 function TLapeType_Pointer.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
 begin
-  if (Other <> nil) and (Other.TypeID = TypeID) and (Other.BaseType = BaseType) and ContextOnly then
+  if ContextOnly and (Other <> nil) and (Other.TypeID = TypeID) and (ClassType = Other.ClassType) and (Other.BaseType = BaseType) then
     Result := (not HasType()) or (not TLapeType_Pointer(Other).HasType()) or inherited
   else
     Result := inherited;

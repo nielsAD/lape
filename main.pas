@@ -62,7 +62,7 @@ end;
 procedure MyWriteLn(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   with TForm1(Params^[0]) do
-    Form1.m.Text := Form1.m.Text + LineEnding;
+    Form1.m.Append('');
   WriteLn();
 end;
 
@@ -118,13 +118,13 @@ begin
       try
         t := getTickCount;
         if Compiler.Compile() then
-          m.Lines.add('Compiling Time: ' + IntToStr(getTickCount - t) + 'ms.')
+          m.Append('Compiling Time: ' + IntToStr(getTickCount - t) + 'ms.')
         else
-          m.Lines.add('Error!');
+          m.Append('Error!');
       except
         on E: Exception do
         begin
-          m.Lines.add('Compilation error: "' + E.Message + '"');
+          m.Append('Compilation error: "' + E.Message + '"');
           Exit;
         end;
       end;
@@ -136,12 +136,13 @@ begin
         if Run then
         begin
           t := getTickCount;
+          m.Append(LineEnding);
           RunCode(Compiler.Emitter.Code);
-          m.Lines.add('Running Time: ' + IntToStr(getTickCount - t) + 'ms.');
+          m.Append('Running Time: ' + IntToStr(getTickCount - t) + 'ms.');
         end;
       except
         on E: Exception do
-          m.Lines.add(E.Message);
+          m.Append(E.Message);
       end;
     finally
       if (Compiler <> nil) then

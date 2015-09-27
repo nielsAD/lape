@@ -61,10 +61,10 @@ begin
 
     if (psiUselessTypes in Initialize) then
     begin
-      addGlobalType(getPointerType({$IFDEF Lape_Unicode}ltUnicodeString{$ELSE}ltAnsiString{$ENDIF}).createCopy(), 'NativeString');
-      addGlobalType(getPointerType(ltString).createCopy(), 'AnyString');
-      addGlobalType(getPointerType(ltString).createCopy(), 'tbtString');
-      addGlobalType(getPointerType(ltPointer).createCopy(), '___Pointer');
+      addGlobalType(getBaseType({$IFDEF Lape_Unicode}ltUnicodeString{$ELSE}ltAnsiString{$ENDIF}).createCopy(), 'NativeString');
+      addGlobalType(getBaseType(ltString).createCopy(), 'AnyString');
+      addGlobalType(getBaseType(ltString).createCopy(), 'tbtString');
+      addGlobalType(getBaseType(ltPointer).createCopy(), '___Pointer');
       addGlobalType('array of Variant', 'TVariantArray');
     end;
 

@@ -679,7 +679,7 @@ begin
 
   addGlobalFunc('procedure ReallocMem(var p: Pointer; s: Int32);', @_LapeReallocMem);
   addGlobalFunc('procedure FillMem(var p; s: Int32; b: UInt8 = 0);', @_LapeFillMem);
-  addGlobalFunc('procedure Move(var Src, Dst; s: Int32);', @_LapeMove);
+  addGlobalFunc('procedure Move(constref Src; var Dst; s: Int32);', @_LapeMove);
 
   addGlobalFunc('function Assigned(constref p): EvalBool;', @_LapeAssigned);
   //addGlobalFunc('procedure RaiseException(Ex: TExceptionObject); overload;', @_LapeRaise);
