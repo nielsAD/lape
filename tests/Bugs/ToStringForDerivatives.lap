@@ -1,0 +1,24 @@
+type
+  TAliasedInteger = Integer;
+  TCustomInteger  = type integer;
+
+function ToString(constref i: TAliasedInteger): string; override;
+begin
+  Result := 'a' + inherited();
+end;
+
+function ToString(constref i: TCustomInteger): string; override;
+begin
+  Result := 'c' + inherited();
+end;
+
+var
+  a: Integer = 123;
+  b: TAliasedInteger = 456;
+  c: TCustomInteger  = 789;
+begin
+  WriteLn(a);
+  WriteLn(b);
+  WriteLn(c);
+end;
+
