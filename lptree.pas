@@ -1264,7 +1264,7 @@ function TLapeTree_OpenArray.resType: TLapeType;
           Result := FCompiler.addManagedType(TLapeType_StaticArray.Create(FRange, Result, FCompiler, '', @_DocPos));
     end
     else
-      Result := FCompiler.addManagedType(TLapeType_StaticArray.Create(NullRange, FCompiler.getBaseType(ltVariant), FCompiler, '', @_DocPos));
+      Result := FCompiler.addManagedType(TLapeType_DynArray.Create(FCompiler.getBaseType(ltVariant), FCompiler, '', @_DocPos));
   end;
 
 begin

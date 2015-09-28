@@ -71,8 +71,6 @@ begin
     if (psiFunctionWrappers in Initialize) then
       addDelayedCode(
         LapeDelayedFlags +
-        'function Chr(IntValue: UInt8):  AnsiChar; overload; begin Result := AnsiChar(IntValue); end;' + LineEnding +
-        'function Chr(IntValue: UInt16): WideChar; overload; begin Result := WideChar(IntValue); end;' + LineEnding +
         'function StrGet(var s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
         'function StrGet2(s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
         'procedure StrSet(c: Char; Index: SizeInt; var s: string); begin s[Index] := c; end;' + LineEnding +
