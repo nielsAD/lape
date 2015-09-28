@@ -160,6 +160,7 @@ type
       AEmitter: TLapeCodeEmitter = nil; ManageEmitter: Boolean = True
     ); reintroduce; virtual;
     destructor Destroy; override;
+    procedure Clear; override;
 
     function getState: Pointer; virtual;
     procedure setState(const State: Pointer; DoFreeState: Boolean = True); virtual;
@@ -321,8 +322,6 @@ end;
 procedure TLapeCompiler.Reset;
 begin
   inherited;
-
-  FTypeID := TypeID_User;;
   EndImporting();
 
   FTokenizer := High(FTokenizers);
@@ -547,6 +546,7 @@ end;
 function TLapeCompiler.GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Body: lpString;
+  Index: Integer;
 begin
   Result := nil;
   GetMethod_FixupParams(AType, AParams, AResult);
@@ -562,10 +562,30 @@ begin
   Sender.addMethod(Result);
 
   Body := AParams[0].VarToStringBody(Sender);
+  if (Body = '') and Sender.NeedFullMatch then
+  try
+    Sender.NeedFullMatch := False;
+
+    Assert(Result.DeclarationList = Sender.ManagedDeclarations);
+    Result.DeclarationList := nil;
+
+    Index := Sender.getMethodIndex(AParams, AResult);
+    if (Index = -1) then
+      Index := Sender.getMethodIndex(getTypeArray(getBaseType(AParams[0].BaseType)), AResult);
+
+    if (Index >= 0) then
+    begin
+      Body := 'begin Result := System.ToString[' + IntToStr(Index) + '](Param0); end;';
+      Result.DeclarationList := Sender.ManagedDeclarations;
+    end;
+  finally
+    Sender.NeedFullMatch := True;
+  end;
+
   if (Body <> '') then
     Result := addGlobalFunc(AType, 'ToString', 'override;' + LapeDelayedFlags + Body + LineEnding).Method
   else
-    Result.Free();
+    FreeAndNil(Result);
 end;
 
 procedure TLapeCompiler.InitBaseDefinitions;
@@ -689,14 +709,15 @@ begin
   addGlobalFunc('procedure UniqueString(var Str: WideString); overload;', @_LapeWStr_Unique);
   addGlobalFunc('procedure UniqueString(var Str: UnicodeString); overload;', @_LapeUStr_Unique);
 
+  addToString();
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
+
   {$I lpeval_import_math.inc}
   {$I lpeval_import_string.inc}
   {$I lpeval_import_datetime.inc}
   {$I lpeval_import_variant.inc}
 
-  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
-  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
-  addToString();
   addDelayedCode(
     LapeDelayedFlags +
     _LapeToString_Enum +
@@ -2922,6 +2943,12 @@ begin
   FreeAndNil(FTreeMethodMap);
   FreeAndNil(FInternalMethodMap);
   inherited;
+end;
+
+procedure TLapeCompiler.Clear;
+begin
+  inherited;
+  FTypeID := TypeID_User;
 end;
 
 function TLapeCompiler.getState: Pointer;

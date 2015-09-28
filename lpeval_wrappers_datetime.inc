@@ -32,6 +32,21 @@ begin
   DecodeTime(PDateTime(Params^[0])^, PUInt16(Params^[1])^, PUInt16(Params^[2])^, PUInt16(Params^[3])^, PUInt16(Params^[4])^);
 end;
 
+procedure _LapeDateTimeToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PlpString(Result)^ := DateTimeToStr(PDateTime(Params^[0])^);
+end;
+
+procedure _LapeDateToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PlpString(Result)^ := DateToStr(PDateTime(Params^[0])^);
+end;
+
+procedure _LapeTimeToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PlpString(Result)^ := TimeToStr(PDateTime(Params^[0])^);
+end;
+
 procedure _LapeDate(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PDateTime(Result)^ := Date();

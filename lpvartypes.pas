@@ -2797,6 +2797,9 @@ function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; ARes
   function SizeWeight(a, b: TLapeType): Integer; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     Result := Abs(a.Size - b.Size) * 4;
+    if (a.BaseType <> b.BaseType) then
+      Result := Result + 1;
+
     if (a.Size < b.Size) then
       Result := Result * 4
     else if (a.BaseType in LapeIntegerTypes) and (b.BaseType in LapeIntegerTypes) and
