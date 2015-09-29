@@ -1,0 +1,7 @@
+//Issue 37
+{$assertions on}
+
+type E = (ea, eb, ec, ed=9);
+begin
+  Assert(ToString(ed) = 'ed');;
+end;

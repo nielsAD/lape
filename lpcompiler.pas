@@ -1752,6 +1752,11 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     else
       StackOwner := FStackInfo.Owner;
 
+    if ScopedEnums then
+      Result := addManagedType(Enum)
+    else
+      Result := addManagedDecl(Enum) as TLapeType;
+
     repeat
       Expect(tk_Identifier, True, False);
       Name := Tokenizer.TokString;
@@ -1777,19 +1782,18 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
           Member.Free();
         end;
       except on E: lpException do
-        LapeException(E.Message, Tokenizer.DocPos);
+        begin
+          LapeException(E.Message, Tokenizer.DocPos);
+          Result := nil; // Do not free type, because enum members rely on it
+        end
       end
       else
         Val := Enum.addMember(Name);
 
       if (not ScopedEnums) then
         TLapeGlobalVar(addLocalDecl(Enum.NewGlobalVar(Val, Name), StackOwner)).isConstant := True;
-    until (Tokenizer.Tok in [tk_NULL, tk_sym_ParenthesisClose]);
 
-    if ScopedEnums then
-      Result := addManagedType(Enum)
-    else
-      Result := addManagedDecl(Enum) as TLapeType;
+    until (Tokenizer.Tok in [tk_NULL, tk_sym_ParenthesisClose]);
   end;
 
   procedure ParseMethodType;
