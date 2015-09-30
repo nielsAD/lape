@@ -1031,7 +1031,8 @@ var
   tmpDest: TResVar;
 begin
   tmpDest := FDest;
-  FDest := VarResVar;
+  if (FDest.VarPos.MemPos <> VarResVar.VarPos.MemPos) then
+    FDest := VarResVar;
   Result := inherited;
   FDest := tmpDest;
 end;
@@ -1453,7 +1454,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         with TLapeTree_Operator.Create(op_Plus, FValues[i]) do
         try
           Dest := Result;
-          Left := TLapeTree_ResVar.Create(Result, FValues[i]);
+          Left := TLapeTree_ResVar.Create(Result.IncLock(), FValues[i]);
           Right := TLapeTree_ResVar.Create(FValues[i].Compile(Offset), FValues[i]);
           Result := Compile(Offset);
           Assert(Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos);
@@ -1476,11 +1477,11 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           with TLapeTree_Operator(Body) do
           begin
             Dest := Result;
-            Left := TLapeTree_ResVar.Create(Result, FValues[i]);
+            Left := TLapeTree_ResVar.Create(Result.IncLock(), FValues[i]);
             Right := TLapeTree_ResVar.Create(tmpVar.IncLock(), FValues[i]);
-            Assert(Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos);
           end;
-          Compile(Offset).Spill(1);
+          Result := Compile(Offset);
+          Assert(TLapeTree_Operator(Body).Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos);
         finally
           Free();
           tmpVar.Spill(1);
@@ -1506,7 +1507,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           Left := TLapeTree_Operator.Create(op_Index, FValues[i]);
           with TLapeTree_Operator(Left) do
           begin
-            Left := TLapeTree_ResVar.Create(Result, FValues[i]);
+            Left := TLapeTree_ResVar.Create(Result.IncLock(), FValues[i]);
             Right := TLapeTree_Integer.Create(i + TLapeType_StaticArray(FType).Range.Lo, FValues[i]);
           end;
           Right := TLapeTree_ResVar.Create(FValues[i].Compile(Offset), FValues[i]);
@@ -1531,11 +1532,11 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           Left := TLapeTree_Operator.Create(op_Dot, FValues[i]);
           with TLapeTree_Operator(Left) do
           begin
-            Left := TLapeTree_ResVar.Create(Result, FValues[i]);
+            Left := TLapeTree_ResVar.Create(Result.IncLock(), FValues[i]);
             Right := TLapeTree_Field.Create(TLapeType_Record(FType).FieldMap.Key[i], FValues[i]);
           end;
           Right := TLapeTree_ResVar.Create(FValues[i].Compile(Offset), FValues[i]);
-          Compile(Offset).Spill(1);
+          Compile(Offset);
         finally
           Free();
         end
@@ -1544,7 +1545,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
       else if (lcoAlwaysInitialize in FCompilerOptions) then
         with TLapeTree_Operator.Create(op_Dot, Self) do
         try
-          Left := TLapeTree_ResVar.Create(Result, Self);
+          Left := TLapeTree_ResVar.Create(Result.IncLock(), Self);
           Right := TLapeTree_Field.Create(TLapeType_Record(FType).FieldMap.Key[i], Self);
           Val := Compile(Offset);
 

@@ -113,8 +113,8 @@ type
     destructor Destroy; override;
 
     function hasMember(AName: lpString): Boolean; virtual;
-    function addMember(Value: Int16; AName: lpString): Int16; overload; virtual;
-    function addMember(AName: lpString): Int16; overload; virtual;
+    function addMember(Value: Int64; AName: lpString): Int16; overload; virtual;
+    function addMember(AName: lpString): Int64; overload; virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -489,8 +489,13 @@ begin
   end;
   FMemberMap := AMemberMap;
 
-  while (FRange.Lo < FMemberMap.Count) and (FMemberMap[FRange.Lo] = '') do Inc(FRange.Lo);
   FRange.Hi := Int64(FMemberMap.Count) - 1;
+  while (FMemberMap.Count > 0) and (FMemberMap[0] = '') do
+  begin
+    FMemberMap.Delete(0);
+    Inc(FRange.Lo);
+  end;
+
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
   if FSmall then
     FBaseType := ltSmallEnum;
@@ -508,7 +513,7 @@ begin
   Result := FMemberMap.IndexOf(AName) > -1;
 end;
 
-function TLapeType_Enum.addMember(Value: Int16; AName: lpString): Int16;
+function TLapeType_Enum.addMember(Value: Int64; AName: lpString): Int16;
 var
   i: Integer;
 begin
@@ -533,7 +538,7 @@ begin
   ClearCache();
 end;
 
-function TLapeType_Enum.addMember(AName: lpString): Int16;
+function TLapeType_Enum.addMember(AName: lpString): Int64;
 begin
   Result := addMember(FMemberMap.Count, AName);
 end;
