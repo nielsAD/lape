@@ -227,19 +227,19 @@ begin
       if (op_name[op] = '') then
         Continue;
 
-      for t1 := Low(ELapeBaseType) to High(ELapeBaseType) do
-        for t2 := Low(ELapeBaseType) to High(ELapeBaseType) do
+      for t1 := High(ELapeBaseType) downto Low(ELapeBaseType)  do
+        for t2 := High(ELapeBaseType) downto Low(ELapeBaseType) do
         begin
           proc := getEvalProc(op, t1, t2);
           if ValidEvalFunction(proc) then
-            if (t2 = ltUnknown) then
+            if (t1 = ltUnknown) then
+              pMap[IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0)] := 'lpe'+op_name[op]
+            else if (t2 = ltUnknown) then
               pMap[IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0)] := 'lpe'+LapeTypeToString(t1)+'_'+op_name[op]
             else
               pMap[IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0)] := 'lpe'+LapeTypeToString(t1)+'_'+op_name[op]+'_'+LapeTypeToString(t2);
         end;
     end;
-    pMap[IntToHex(PtrUInt(getEvalProc(op_Addr, ltUnknown, ltUnknown)), 0)] := 'lpeAddr';
-    pMap[IntToHex(PtrUInt(getEvalProc(op_Deref, ltUnknown, ltUnknown)), 0)] := 'lpeDeref';
 
     for i := 0 to High(PointerNames) do
       if (PointerNames[i].Name = '') and (PointerNames[i] is TLapeGlobalVar) then

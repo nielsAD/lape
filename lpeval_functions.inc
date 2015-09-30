@@ -2817,7 +2817,8 @@ procedure lpePointer_SUB_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpePointer_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) - PInt64(Right)^); end;
 
 //Method
-procedure lpeDotMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Data := Left; if (Right <> nil) then TMethod(Dest^).Code := PPointer(Right)^ else TMethod(Dest^).Code := nil; end;
+procedure lpeTMethod_DOT(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Data := Right;               if (Left <> nil)  then TMethod(Dest^).Code := PPointer(Left)^      else TMethod(Dest^).Code := nil; end;
+procedure lpeTMethod_IDX(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Code := TMethod(Left^).Code; if (Right <> nil) then TMethod(Dest^).Data := TMethod(Right^).Data else TMethod(Dest^).Data := TMethod(Left^).Data; end;
 procedure lpeSMethod_ASGN_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCodePos(Dest)^ := PtrUInt(PPointer(Left)^); end;
 procedure lpeSMethod_ASGN_SMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCodePos(Dest)^ := PCodePos(Left)^; end;
 

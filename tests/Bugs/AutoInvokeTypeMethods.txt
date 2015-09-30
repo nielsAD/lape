@@ -1,0 +1,22 @@
+getFoo[2] OVERRIDE
+123.getFoo[1]
+getBar[1]
+getFoo[2] OVERRIDE
+123.getFoo[1]
+getBar[1]
+getFoo[2] OVERRIDE
+123.getFoo[1]
+getBar[1]
+getFoo[2] OVERRIDE
+123.getFoo[1]
+getBar[1]
+getBar[1]
+getFoo[2] OVERRIDE
+123.getFoo[1]
+getBar[1]
+getFoo[2] OVERRIDE
+123.getFoo[1]
+getBar[1]
+getFoo[2] OVERRIDE
+123.getFoo[1]
+getBar[1]

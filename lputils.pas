@@ -81,7 +81,7 @@ begin
         'function Replicate(c: Char; l: SizeInt): string; begin Result := StringOfChar(c, l); end;' + LineEnding +
         'function Int64ToStr(i: Int64): string; begin Result := IntToStr(i); end;' + LineEnding +
         'function UInt64ToStr(i: UInt64): string; begin Result := IntToStr(i); end;'
-      );
+      , '!addDelayedPSUseless');
 
     if (psiExceptions in Initialize) then
     begin
@@ -101,7 +101,7 @@ begin
           'if (Param <> '#39#39') then Result := Result + '#39'('#39' + Param + '#39')'#39';' +
         'end;'                                                                                + LineEnding +
         'procedure RaiseException(Ex: TIFException; Param: string); overload; begin RaiseException(ExceptionToString(Ex, Param)); end;'
-      );
+      , '!addDelayedPSExceptions');
     end;
   end;
 end;
@@ -376,7 +376,7 @@ begin
     GetGlobalVal()  + LineEnding +
     VariantInvoke() + LineEnding +
     ToString()
-  );
+  , '!addDelayedExpose');
 end;
 
 procedure _ExposeGlobals_FillProcs(Compiler: TLapeCompiler);

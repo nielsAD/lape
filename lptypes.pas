@@ -572,7 +572,7 @@ const
   LapePointerTypes = [ltPointer] + LapeProcTypes + LapeRefTypes;
   LapeStackTypes = LapeOrdinalTypes + LapeRealTypes + LapeSetTypes;
   LapeIfTypes = LapeOrdinalTypes + LapeStringTypes + LapePointerTypes + LapeRealTypes + [ltVariant];
-  LapeNoInitTypes = LapeOrdinalTypes + LapeRealTypes + [ltPointer, ltScriptMethod, ltImportedMethod, ltShortString];
+  LapeNoInitTypes = LapeOrdinalTypes + LapeRealTypes + [ltUnknown, ltPointer, ltScriptMethod, ltImportedMethod, ltShortString];
 
   NullDocPos: TDocPos = (Line: 0; Col: 0; FileName: '');
   NullRange: TLapeRange = (Lo: 0; Hi: -1);
@@ -588,8 +588,8 @@ const
     '=', '>', '>=', '<', '<=', '<>', '@', 'and', ':=', '^', 'div', '/', '.' , 'in',
     '[', '-', 'mod', '*', 'not', 'or', '+', '**', 'shl', 'shr', 'xor', '-', '+');
   op_name: array[EOperator] of lpString = ('',
-    'EQ', 'GT', 'GTEQ', 'LT', 'LTEQ', 'NEQ', {'ADDR'}'', 'AND', 'ASGN', {'DREF'}'', 'IDIV', 'DIV', {'dot'}'', 'IN',
-    {'index'}'', 'SUB', 'MOD', 'MUL', 'NOT', 'OR', 'ADD', {'power'}'', 'SHL', 'SHR', 'XOR', 'UMIN', {'UPOS'}'');
+    'EQ', 'GT', 'GTEQ', 'LT', 'LTEQ', 'NEQ', 'ADDR', 'AND', 'ASGN', 'DEREF', 'IDIV', 'DIV', 'DOT',
+    'IN', 'IDX', 'SUB', 'MOD', 'MUL', 'NOT', 'OR', 'ADD', 'POW', 'SHL', 'SHR', 'XOR', 'UMIN', 'UPOS');
 
 var
   lowUInt8: UInt8 = Low(UInt8);    highUInt8: UInt8 = High(UInt8);

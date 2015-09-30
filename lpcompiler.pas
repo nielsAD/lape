@@ -232,7 +232,7 @@ type
     function addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: TMethod; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: TMethod; AName: lpString): TLapeGlobalVar; overload; virtual;
 
-    function addDelayedCode(ACode: lpString; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base; virtual;
+    function addDelayedCode(ACode: lpString; AFileName: lpString = ''; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base; virtual;
 
     property InternalMethodMap: TLapeInternalMethodMap read FInternalMethodMap;
     property Tree: TLapeTree_Base read FTree;
@@ -570,7 +570,7 @@ begin
     Result.DeclarationList := nil;
 
     Index := Sender.getMethodIndex(AParams, AResult);
-    if (Index = -1) then
+    if (Index < 0) then
       Index := Sender.getMethodIndex(getTypeArray(getBaseType(AParams[0].BaseType)), AResult);
 
     if (Index >= 0) then
@@ -728,7 +728,8 @@ begin
     _LapeSetLength +
     _LapeCopy +
     _LapeDelete +
-    _LapeInsert
+    _LapeInsert,
+    '!addDelayedCore'
   );
 end;
 
@@ -1348,38 +1349,39 @@ var
 
   procedure setMethodDefaults(AVar: TLapeGlobalVar; AMethod: TLapeType_Method);
   var
-    i, ii: Integer;
+    i, Len: Integer;
     Params: TLapeParameterList.TTArray;
     NewMethod: TLapeType_Method;
   begin
     if (AMethod = nil) or (FStackInfo = nil) or (AMethod.ParamSize <= 0) or (FStackInfo.TotalParamSize <> AMethod.ParamSize) then
       Exit;
 
-    NewMethod := AMethod.CreateCopy(True) as TLapeType_Method;
-    NewMethod.Params.Clear();
-    ii := 0;
-
-    if (AMethod is TLapeType_MethodOfObject) then
-    begin
-      TLapeType_MethodOfObject(NewMethod).SelfVar := FStackInfo.Vars[ii];
-      Inc(ii);
-    end;
+    NewMethod := TLapeType_Method.Create(Self, nil, AMethod.Res, AMethod.Name, @AMethod._DocPos);
+    NewMethod.TypeID := AMethod.TypeID;
+    NewMethod.BaseType := AMethod.BaseType;
+    NewMethod.ImplicitParams := AMethod.ImplicitParams;
 
     Params := AMethod.Params.ExportToArray();
-    for i := 0 to High(Params) do
-    begin
-      {while (ii < FStackInfo.Items.Count) do
-      begin
-        if (FStackInfo.Items[ii] is TLapeParameterVar) then
-          Break;
-        Inc(ii);
-      end;
-      if (ii >= FStackInfo.Items.Count) then
-        LapeException(lpeImpossible);}
+    Len := Length(Params);
 
-      Params[i].Default := FStackInfo.Vars[ii];
+    if MethodOfObject(AMethod) then
+    begin
+      SetLength(Params, Len + 1);
+      if (Len > 0) then
+        Move(Params[0], Params[1], Len * SizeOf(Params[0]));
+
+      Params[0] := NullParameter;
+      Params[0].ParType := Lape_SelfParam;
+      Params[0].VarType := FStackInfo.VarStack[0].VarType;
+      Inc(Len);
+
+      Inc(NewMethod.ImplicitParams);
+    end;
+
+    for i := 0 to Len - 1 do
+    begin
+      Params[i].Default := FStackInfo[i];
       NewMethod.addParam(Params[i]);
-      Inc(ii);
     end;
 
     AVar.VarType := addManagedType(NewMethod);
@@ -1520,8 +1522,8 @@ begin
             OldDeclaration := TLapeGlobalVar(OldDeclaration).CreateCopy(False);
           end;
 
-          setMethodDefaults(OldDeclaration as TLapeGlobalVar, TLapeGlobalVar(OldDeclaration).VarType as TLapeType_Method);
           OldDeclaration.Name := 'inherited';
+          setMethodDefaults(OldDeclaration as TLapeGlobalVar, TLapeGlobalVar(OldDeclaration).VarType as TLapeType_Method);
           OldDeclaration := addLocalDecl(OldDeclaration);
         end;
 
@@ -1580,6 +1582,7 @@ begin
 
       if (Result.Statements = nil) or (not (Result.Statements.Statements[Result.Statements.Statements.Count - 1] is TLapeTree_StatementList)) then
         Expect(tk_kw_Begin, False, False);
+
     except
       Result.FreeStackInfo := False;
       FreeAndNil(Result);
@@ -2320,65 +2323,66 @@ var
   end;
 
   function ResolveMethods(Node: TLapeTree_Base): TLapeTree_Base;
-    function Resolve(Node: TLapeTree_Base; out DoContinue: Boolean): TLapeTree_Base;
+    function Resolve(Node: TLapeTree_Base; Recurse: Boolean; out HasChanged: Boolean): TLapeTree_Base;
+
       function MethodType(Typ: TLapeType): Boolean;
       begin
-        Result := (Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod);
+        Result := (Typ <> nil) and ((Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod));
       end;
+
+      function ResolveMethod(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
+      var
+        Op: EOperator;
+      begin
+        if (Node is TLapeTree_Operator) then
+          Op := TLapeTree_Operator(Node).OperatorType
+        else
+          Op := op_Unknown;
+
+        if (Op <> op_Assign) and MethodType(Node.resType()) then
+          Result := TLapeTree_Invoke.Create(Node, Node)
+        else if (Op = op_Addr) and MethodType(TLapeTree_Operator(Node).Left.resType()) then
+        begin
+          Result := TLapeTree_Operator(Node).Left;
+          Result.Parent := nil;
+          Node.Free();
+        end
+        else
+          Result := Node;
+      end;
+
     var
-      NewLeft, NewRight: TLapeTree_ExprBase;
-      ContinueL, ContinueR: Boolean;
+      LeftChanged, RightChanged: Boolean;
     begin
       Result := Node;
-      DoContinue := True;
+      HasChanged := False;
 
       if TLapeTree_Base.isEmpty(Node) or (not (lcoAutoInvoke in Node.CompilerOptions)) or
         (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke)
       then
         Exit;
 
-      if MethodType(TLapeTree_ExprBase(Node).resType()) and
-        ((not (Node is TLapeTree_Operator)) or (TLapeTree_Operator(Node).OperatorType <> op_Assign))
-      then
-      begin
-        Result := TLapeTree_Invoke.Create(Node as TLapeTree_ExprBase, Node);
-        DoContinue := (not MethodType(TLapeTree_ExprBase(Result).resType()));
-      end
-      else if (Node is TLapeTree_Operator) and (TLapeTree_Operator(Node).Left is TLapeTree_ExprBase) then
+      Result := ResolveMethod(TLapeTree_ExprBase(Node));
+      if (Result <> Node) then
+        HasChanged := True
+      else if (Node is TLapeTree_Operator) then
         with TLapeTree_Operator(Node) do
-          if (OperatorType = op_Addr) and MethodType(Left.resType()) then
-          begin
-            Result := Left;
-            Left.Parent := nil;
-
-            DoContinue := False;
-            Free();
-          end
+        begin
+          if (OperatorType <> op_Assign) or (not MethodType(Left.resType())) then
+            Left := TLapeTree_ExprBase(Resolve(Left, OperatorType <> op_Addr, LeftChanged))
           else
-          begin
-            if (OperatorType <> op_Assign) then
-              NewLeft := TLapeTree_ExprBase(Resolve(Left, ContinueL))
-            else
-            begin
-              NewLeft := Left;
-              ContinueL := True;
-            end;
-            NewRight := TLapeTree_ExprBase(Resolve(Right, ContinueR));
+            LeftChanged := False;
+          Right := TLapeTree_ExprBase(Resolve(Right, True, RightChanged));
 
-            if (NewLeft <> Left) or (NewRight <> Right) then
-            begin
-              Left := NewLeft;
-              Right := NewRight;
-              DoContinue := ContinueL and ContinueR;
-              if DoContinue then
-                Result := Resolve(Result, DoContinue);
-            end;
-          end;
+          HasChanged := LeftChanged or RightChanged;
+          if HasChanged and Recurse then
+            Result := ResolveMethod(TLapeTree_ExprBase(Node));
+        end;
     end;
   var
-    DoContinue: Boolean;
+    HasChanged: Boolean;
   begin
-    Result := Resolve(Node, DoContinue);
+    Result := Resolve(Node, True, HasChanged);
   end;
 
 begin
@@ -2439,7 +2443,7 @@ begin
               PopOpStack(op_Invoke);
               if (Method = nil) then
               begin
-                Expr := VarStack.Pop().FoldConstants() as TLapeTree_ExprBase;
+                Expr := ResolveMethods(VarStack.Pop().FoldConstants()) as TLapeTree_ExprBase;
                 if (Expr is TLapeTree_Invoke) and (TLapeTree_Invoke(Expr).Params.Count < 1) then
                   Method := Expr as TLapeTree_Invoke
                 else
@@ -3153,14 +3157,21 @@ end;
 
 procedure TLapeCompiler.EmitCode(ACode: lpString; var Offset: Integer; Pos: PDocPos = nil);
 var
+  FileName: lpString;
   OldState: Pointer;
 begin
-  if hasTokenizer() then
-    OldState := getTempTokenizerState(ACode, Tokenizer.FileName, False)
+  if (Pos <> nil) then
+    FileName := Pos^.FileName
   else
-    OldState := getTempTokenizerState(ACode, '!EmitCode', False);
+  begin
+    FileName := '!EmitCode';
+    if hasTokenizer() then
+      FileName := FileName + '::' + Tokenizer.FileName
+  end;
 
+  OldState := getTempTokenizerState(ACode, FileName, False);
   Tokenizer.OverridePos := Pos;
+
   try
     with ParseStatementList() do
     try
@@ -3386,7 +3397,7 @@ begin
   Typ := AName + ': ' + Typ;
   if (Value <> '') then
     Typ := Typ + ' = ' + Value;
-  OldState := getTempTokenizerState(Typ + ';', '!addGlobalVar');
+  OldState := getTempTokenizerState(Typ + ';', '!addGlobalVar::' + AName);
 
   try
     ParseVarBlock().Free();
@@ -3519,7 +3530,7 @@ var
   OldState: Pointer;
 begin
   Result := nil;
-  OldState := getTempTokenizerState(AName + ' = ' + Str + ';', '!addGlobalType');
+  OldState := getTempTokenizerState(AName + ' = ' + Str + ';', '!addGlobalType::' + AName);
 
   try
     ParseTypeBlock();
@@ -3564,7 +3575,7 @@ function TLapeCompiler.addGlobalFunc(AHeader: TLapeType_Method; AName, Body: lpS
 var
   OldState: Pointer;
 begin
-  OldState := getTempTokenizerState(Body, '!addGlobalFuncBdy');
+  OldState := getTempTokenizerState(Body, '!addGlobalFuncBdy::' + AName);
   try
     Result := ParseMethod(nil, AHeader, AName);
     CheckAfterCompile();
@@ -3628,16 +3639,20 @@ begin
   Result := addGlobalMethod(AParams, AParTypes, AParDefaults, nil, Value, AName);
 end;
 
-function TLapeCompiler.addDelayedCode(ACode: lpString; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base;
+function TLapeCompiler.addDelayedCode(ACode: lpString; AFileName: lpString = ''; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base;
 var
   Index: Integer;
   OldState: Pointer;
 begin
+  if (AFileName = '') then
+  begin
+    AFileName := '!addDelayedCode';
+    if hasTokenizer() and (not Importing) then
+      AFileName := AFileName + '::' + Tokenizer.FileName;
+  end;
+
   Index := FDelayedTree.Statements.Count;
-  if hasTokenizer() and (not Importing) then
-    OldState := getTempTokenizerState(ACode, Tokenizer.FileName)
-  else
-    OldState := getTempTokenizerState(ACode, '!addDelayedCode');
+  OldState := getTempTokenizerState(ACode, AFileName);
 
   try
     Result := ParseFile();
@@ -3697,7 +3712,7 @@ begin
   if (Op = op_Dot) and CanHaveChild() and (Right <> nil) and (Right.BaseType = ltString) then
     Result := getType(FCompiler.getDeclaration(PlpString(Right.Ptr)^, nil))
   else
-    Result := inherited;
+    Result := nil;
 end;
 
 function TLapeType_SystemUnit.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
