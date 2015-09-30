@@ -63,20 +63,6 @@ type
     procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); override;
   end;
 
-  TLapeType_SetterMethod = class(TLapeType)
-  protected
-    FMethod: TLapeType_Method;
-    FVarType: TLapeType;
-  public
-    constructor Create(AMethod: TLapeType_Method; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
-
-    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
-
-    property Method: TLapeType_Method read FMethod;
-  end;
-
 implementation
 
 uses
@@ -465,6 +451,7 @@ constructor TLapeType_Union.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRec
 begin
   inherited;
   FBaseType := ltUnion;
+  FInit := bFalse;
 end;
 
 procedure TLapeType_Union.addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1);
@@ -474,8 +461,8 @@ var
 begin
   if (FSize < 0) or (FFieldMap.Count < 1) then
     FSize := 0;
-  if (FInit = bUnknown) or (FFieldMap.Count < 1) then
-    FInit := bFalse;
+  if (FieldType = nil) or FieldType.NeedInitialization or FieldType.NeedFinalization then
+    LapeException(lpeInvalidUnionType);
 
   Field.Offset := 0;
   Field.FieldType := FieldType;
@@ -490,52 +477,6 @@ begin
   FFieldMap[AName] := Field;
 
   ClearCache();
-end;
-
-constructor TLapeType_SetterMethod.Create(AMethod: TLapeType_Method; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
-begin
-  Assert(AMethod <> nil);
-  inherited Create(ltUnknown, ACompiler, AName, ADocPos);
-
-  FMethod := AMethod;
-  FVarType := AMethod.Params[0].VarType;
-end;
-
-function TLapeType_SetterMethod.CreateCopy(DeepCopy: Boolean = False): TLapeType;
-type
-  TLapeClassType = class of TLapeType_SetterMethod;
-begin
-  Result := TLapeClassType(Self.ClassType).Create(FMethod, FCompiler, Name, @_DocPos);
-  Result.inheritManagedDecls(Self, not DeepCopy);
-  Result.TypeID := TypeID;
-end;
-
-function TLapeType_SetterMethod.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
-begin
-  if (op = op_Assign) and (Right <> nil) and (FVarType <> nil) and FVarType.CompatibleWith(Right) then
-    Result := FVarType
-  else
-    Result := inherited;
-end;
-
-function TLapeType_SetterMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
-begin
-  if (op = op_Assign) then
-  begin
-    Dest := NullResVar;
-    if (Left.VarType = Self) then
-      Left.VarType := FMethod;
-
-    with TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Left.IncLock(), FCompiler, @_DocPos), FCompiler, @_DocPos) do
-    try
-      addParam(TLapeTree_ResVar.Create(Right.IncLock(), FCompiler, @_DocPos));
-      Compile(Offset).Spill(1);
-    finally
-      Free();
-    end;
-  end
-  else
-    Result := inherited;
 end;
 
 end.

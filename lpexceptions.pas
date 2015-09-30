@@ -58,6 +58,7 @@ resourcestring
   lpeInvalidIterator = 'Variable cannot be used for iteration';
   lpeInvalidJump = 'Invalid jump';
   lpeInvalidRange = 'Expression is not a valid range';
+  lpeInvalidUnionType = 'Invalid union type';
   lpeInvalidValueForType = 'Invalid value for type "%s"';
   lpeInvalidWithReference = 'Invalid with-reference';
   lpeLostClosingParenthesis = 'Found closing parenthesis without matching opening parenthesis';
