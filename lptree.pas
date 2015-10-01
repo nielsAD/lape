@@ -4112,7 +4112,7 @@ begin
   begin
     FLeft := FLeft.FoldConstants() as TLapeTree_ExprBase;
     if (not isEmpty(Right)) then
-      FRight := TLapeTree_ExprBase(FRight.setExpectedType(Left.resType()).FoldConstants());
+      FRight := FRight.setExpectedType(Left.resType()).FoldConstants() as TLapeTree_ExprBase;
   end;
 
   Result := inherited;
@@ -4139,13 +4139,13 @@ begin
       end
       else
       begin
-        FLeft := TLapeTree_ExprBase(FLeft.setExpectedType(ExpectType));
+        FLeft := FLeft.setExpectedType(ExpectType) as TLapeTree_ExprBase;
         if (not isEmpty(Right)) then
-          FRight := TLapeTree_ExprBase(FRight.setExpectedType(Left.resType()));
+          FRight := FRight.setExpectedType(Left.resType()) as TLapeTree_ExprBase;
       end;
 
     if (not isEmpty(Right)) then
-      FRight := TLapeTree_ExprBase(FRight.setExpectedType(ExpectType));
+      FRight := FRight.setExpectedType(ExpectType) as TLapeTree_ExprBase;
   end;
 end;
 
@@ -4333,7 +4333,11 @@ begin
         LapeException(lpeCannotAssign, [FLeft, Self]);
 
       if (LeftVar <> nil) and (not isEmpty(FRight)) then
+      begin
         FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
+        if (FOperatorType = op_Index) then
+          FRight := FRight.setExpectedType(FCompiler.getBaseType(ltInt32)) as TLapeTree_ExprBase;
+      end;
 
       Short := (FOperatorType in [op_AND, op_OR]) and (LeftVar <> nil) and (FRight <> nil) and canShort(LeftVar.VarType) and canShort(FRight.resType());
       if Short and ((FOperatorType = op_AND) xor (LeftVar.AsInteger <> 0)) then
@@ -4416,6 +4420,8 @@ begin
   if (FRight <> nil) then
   begin
     FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
+    if (FOperatorType = op_Index) then
+      FRight := FRight.setExpectedType(FCompiler.getBaseType(ltInt32)) as TLapeTree_ExprBase;
 
     if (FOperatorType = op_Assign) and
       (FLeft <> nil) and LeftVar.Writeable and
