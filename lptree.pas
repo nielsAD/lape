@@ -1098,13 +1098,13 @@ begin
   if isEmpty(Self) then
     Exit;
     
-  OldType := FType;
+  OldType := ToType;
   if (ExpectType <> nil) then
     ToType := ExpectType
   else
     ToType := resType();
 
-  if canCast() then
+  if (ToType <> OldType) and canCast() then
   begin
     //Reference type to static type
     if (FType.BaseType = ltDynArray) and isConstant() and (FRange.Lo = 0) and (FRange.Hi >= 0) then
@@ -1118,6 +1118,7 @@ end;
 function TLapeTree_OpenArray.canCast: Boolean;
 var
   i: Integer;
+  HasRange: Boolean;
   CastTo: TLapeType;
 begin
   if (FCanCast = bUnknown) then
@@ -1130,7 +1131,9 @@ begin
     if (FType = nil) then
       FCanCast := bFalse;
 
+    HasRange := False;
     CastTo := nil;
+
     if (FCanCast <> bFalse) then
       if (FType is TLapeType_Set) then
         CastTo := TLapeType_Set(FType).Range
@@ -1161,13 +1164,22 @@ begin
           CastTo.CompatibleWith(TLapeTree_Range(FValues[i]).Lo.resType()) and
           CastTo.CompatibleWith(TLapeTree_Range(FValues[i]).Hi.resType())
         then
-          {nothing}
+          HasRange := True
         else
         begin
           FCanCast := bFalse;
           Break;
         end;
       end;
+
+    if (FCanCast <> bFalse) and (FType is TLapeType_StaticArray) then
+      if isConstant() and (FRange.Lo = 0) then
+        if (FRange.Hi = TLapeType_StaticArray(FType).Range.Hi - TLapeType_StaticArray(FType).Range.Lo) then
+          {nothing}
+        else
+          FCanCast := bFalse
+      else if HasRange then
+          FCanCast := bFalse;
   end;
 
   Result := (FCanCast = bTrue);
@@ -1647,7 +1659,7 @@ begin
       end;
     end;
 
-    if (FRealIdent = nil) then
+    if (FRealIdent = nil) and (ExpectType = nil) then
       FRealIdent := FExpr;
   end;
 
@@ -2349,7 +2361,6 @@ begin
   try
     for i := 0 to TempParams.Count - 1 do
     begin
-      //TempParams[i] := TempParams[i].setExpectedType(FCompiler.getBaseType(ltString)) as TLapeTree_ExprBase;
       FParams[0] := TempParams[i];
 
       if (not isEmpty(TempParams[i])) and (TempParams[i].resType() <> nil) and (not (TempParams[i].resType().BaseType in LapeStringTypes)) then
@@ -4097,11 +4108,11 @@ end;
 
 function TLapeTree_Operator.FoldConstants(DoFree: Boolean = True): TLapeTree_Base;
 begin
-  if (not isEmpty(Self)) and (not isEmpty(Left)) and (Left is TLapeTree_ExprBase) then
+  if (not isEmpty(Self)) and (not isEmpty(Left)) then
   begin
     FLeft := FLeft.FoldConstants() as TLapeTree_ExprBase;
-    if (not isEmpty(FRight)) then
-      FRight := FRight.setExpectedType(Left.resType()).FoldConstants() as TLapeTree_ExprBase;
+    if (not isEmpty(Right)) then
+      FRight := TLapeTree_ExprBase(FRight.setExpectedType(Left.resType()).FoldConstants());
   end;
 
   Result := inherited;
@@ -4113,16 +4124,29 @@ var
   Cast: TLapeTree_Invoke;
 begin
   Result := Self;
-  if (not isEmpty(Self)) and (OperatorType = op_Deref) and (not isEmpty(Left)) and (ExpectType <> nil) then
+  if (not isEmpty(Self)) and (ExpectType <> nil) then
   begin
-    Typ := Left.resType();
-    if (Typ <> nil) and (Typ is TLapeType_Pointer) and (not TLapeType_Pointer(Typ).HasType()) then
-    begin
-      Cast := TLapeTree_Invoke.Create(FCompiler.getPointerType(ExpectType), Self);
-      Cast.addParam(Left);
-      Left := Cast;
-    end;
-  end
+    if (not isEmpty(Left)) then
+      if(OperatorType = op_Deref) then
+      begin
+        Typ := Left.resType();
+        if (Typ <> nil) and (Typ is TLapeType_Pointer) and (not TLapeType_Pointer(Typ).HasType()) then
+        begin
+          Cast := TLapeTree_Invoke.Create(FCompiler.getPointerType(ExpectType), Self);
+          Cast.addParam(Left);
+          Left := Cast;
+        end;
+      end
+      else
+      begin
+        FLeft := TLapeTree_ExprBase(FLeft.setExpectedType(ExpectType));
+        if (not isEmpty(Right)) then
+          FRight := TLapeTree_ExprBase(FRight.setExpectedType(Left.resType()));
+      end;
+
+    if (not isEmpty(Right)) then
+      FRight := TLapeTree_ExprBase(FRight.setExpectedType(ExpectType));
+  end;
 end;
 
 function TLapeTree_Operator.isAssigning: Boolean;

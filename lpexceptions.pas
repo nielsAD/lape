@@ -45,7 +45,7 @@ resourcestring
   lpeFileNotFound = 'File "%s" not found';
   lpeImpossible = 'It''s impossible!';
   lpeIncompatibleAssignment = 'Can''t assign "%s" to "%s"';
-  lpeIncompatibleOperator = 'Operator "%s" not compatible with types';
+  lpeIncompatibleOperator = 'Operator "%s" is not supported for type';
   lpeIncompatibleOperator1 = 'Operator "%s" not compatible with "%s"';
   lpeIncompatibleOperator2 = 'Operator "%s" not compatible with types "%s" and "%s"';
   lpeInvalidAssignment = 'Invalid assignment';
