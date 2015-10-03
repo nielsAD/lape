@@ -23,3 +23,7 @@
   {$DEFINE Delphi}
   {$POINTERMATH ON}
 {$ENDIF}
+
+{$IF DEFINED(UNICODE) and not DEFINED(Lape_Unicode)}
+  {$DEFINE Lape_NeedAnsiStringsUnit}
+{$IFEND}

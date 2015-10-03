@@ -183,6 +183,7 @@ implementation
 
 uses
   Variants,
+  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpparser, lpeval, lpexceptions;
 
 function TLapeType_Integer{$IFNDEF FPC}<_Type>{$ENDIF}.NewGlobalVar(Val: _Type; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -202,18 +203,18 @@ begin
   if {(Length(Str) > 1) and (Str[1] <> '-')} (BaseType in LapeUnsignedIntegerTypes) then
   begin
     {$IFDEF FPC}
-    Result := NewGlobalVar(StrToUInt64(Str), AName, ADocPos);
+    Result := NewGlobalVar(StrToUInt64(string(Str)), AName, ADocPos);
     {$ELSE}
-    ui64 := StrToUInt64(Str); t := @ui64;
+    ui64 := StrToUInt64(string(Str)); t := @ui64;
     Result := NewGlobalVar(t^ , AName, ADocPos);
     {$ENDIF}
   end
   else
   begin
     {$IFDEF FPC}
-    Result := NewGlobalVar(StrToInt64(Str), AName, ADocPos);
+    Result := NewGlobalVar(StrToInt64(string(Str)), AName, ADocPos);
     {$ELSE}
-    i64 := StrToInt64(Str); t := @i64;
+    i64 := StrToInt64(string(Str)); t := @i64;
     Result := NewGlobalVar(t^ , AName, ADocPos);
     {$ENDIF}
   end;
@@ -229,9 +230,9 @@ function TLapeType_Float{$IFNDEF FPC}<_Type>{$ENDIF}.NewGlobalVarStr(Str: Unicod
 {$IFNDEF FPC}var a: Extended; b: PType;{$ENDIF}
 begin
   {$IFDEF FPC}
-  Result := NewGlobalVar(StrToFloatDot(Str), AName, ADocPos);
+  Result := NewGlobalVar(StrToFloatDot(string(Str)), AName, ADocPos);
   {$ELSE}
-  a := StrToFloatDot(Str); b := @a;
+  a := StrToFloatDot(string(Str)); b := @a;
   Result := NewGlobalVar(b^ , AName, ADocPos);
   {$ENDIF}
 end;
@@ -251,7 +252,7 @@ begin
     try
       if (Str[1] = '#') then
         Delete(Str, 1, 1);
-      c := StrToInt(Str);
+      c := StrToInt(string(Str));
       Result := NewGlobalVarP(nil, AName, ADocPos);
       case Size of
         SizeOf(UInt8):  PUInt8(Result.Ptr)^ := c;
@@ -363,7 +364,7 @@ begin
     if (FVarType <> nil) then
       FAsString := FVarType.VarToString(@FRange.Lo) + '..' + FVarType.VarToString(@FRange.Hi)
     else
-      FAsString := IntToStr(FRange.Lo) + '..' + IntToStr(FRange.Hi);
+      FAsString := lpString(IntToStr(FRange.Lo)) + '..' + lpString(IntToStr(FRange.Hi));
   Result := inherited;
 end;
 
@@ -390,7 +391,7 @@ begin
   if (Index < 0) then
     Exit;
 
-  Result := 'begin Result := System.ToString['+IntToStr(Index)+'](Param0); end;';
+  Result := 'begin Result := System.ToString['+lpString(IntToStr(Index))+'](Param0); end;';
 end;
 
 function TLapeType_SubRange.VarToString(AVar: Pointer): lpString;
@@ -398,20 +399,20 @@ begin
   if (FVarType <> nil) then
     Result := FVarType.VarToString(AVar)
   else
-    Result := IntToStr(VarToInt(AVar));
+    Result := lpString(IntToStr(VarToInt(AVar)));
 end;
 
 function TLapeType_SubRange.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FLo = nil) and (FCompiler <> nil) and IsOrdinal() then
-    FLo := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Lo))) as TLapeGlobalVar;
+    FLo := FCompiler.addManagedVar(NewGlobalVarStr(lpString(IntToStr(Range.Lo)))) as TLapeGlobalVar;
   Result := FLo;
 end;
 
 function TLapeType_SubRange.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FHi = nil) and (FCompiler <> nil) and IsOrdinal() then
-    FHi := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Hi))) as TLapeGlobalVar;
+    FHi := FCompiler.addManagedVar(NewGlobalVarStr(lpString(IntToStr(Range.Hi)))) as TLapeGlobalVar;
   Result := FHi;
 end;
 
@@ -468,7 +469,7 @@ begin
         Continue;
       if (FAsString <> '(') then
         FAsString := FAsString + ', ';
-      FAsString := FAsString + FMemberMap[i] + '=' + IntToStr(i);
+      FAsString := FAsString + lpString(FMemberMap[i]) + '=' + lpString(IntToStr(i));
     end;
     FAsString := FAsString + ')';
   end;
@@ -510,7 +511,7 @@ end;
 
 function TLapeType_Enum.hasMember(AName: lpString): Boolean;
 begin
-  Result := FMemberMap.IndexOf(AName) > -1;
+  Result := FMemberMap.IndexOf(string(AName)) > -1;
 end;
 
 function TLapeType_Enum.addMember(Value: Int64; AName: lpString): Int16;
@@ -529,7 +530,7 @@ begin
 
   for i := FMemberMap.Count to Value - 1 do
     FMemberMap.Add('');
-  FMemberMap.Add(AName);
+  FMemberMap.Add(string(AName));
 
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
   if (not FSmall) then
@@ -553,11 +554,11 @@ begin
   begin
     if (Result <> '') then
       Result := Result + ', ';
-    Result := Result + #39 + FMemberMap[i] + #39;
+    Result := Result + #39 + lpString(FMemberMap[i]) + #39;
   end;
-  Result := Format(
+  Result := Format(lpString(
     'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.Int32): System.string;' + LineEnding +
-    'begin Result := TEnumToString(System._EnumToString)([%s], System.Ord(Param0), %d, %d); end;',
+    'begin Result := TEnumToString(System._EnumToString)([%s], System.Ord(Param0), %d, %d); end;'),
     [Result, FRange.Lo, FRange.Hi]
   );
 end;
@@ -574,17 +575,17 @@ begin
       if (i = 0) then
         Result := 'False'
       else if (Abs(i) > 1) then
-        Result := 'True('+IntToStr(i)+')'
+        Result := 'True(' + lpString(IntToStr(i)) + ')'
       else
         Result := 'True'
     else
     begin
       if (i > -1) and (i < FMemberMap.Count) then
-        Result := FMemberMap[i];
+        Result := lpString(FMemberMap[i]);
 
       if (Result = '') then
         if (Name <> '') then
-          Result := Name + '(' + IntToStr(i) + ')'
+          Result := Name + '(' + lpString(IntToStr(i)) + ')'
         else
           Result := 'InvalidEnum';
     end;
@@ -624,8 +625,8 @@ end;
 
 function TLapeType_Enum.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
-  if (Str <> '') and (Str[1] in ['-', '0'..'9']) then
-    Result := NewGlobalVar(StrToInt64(Str), AName, ADocPos)
+  if (Str <> '') and (AnsiChar(Str[1]) in ['-', '0'..'9']) then
+    Result := NewGlobalVar(StrToInt64(string(Str)), AName, ADocPos)
   else
     Result := NewGlobalVar(FMemberMap.IndexOf(Str), AName, ADocPos);
 end;

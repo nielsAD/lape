@@ -403,7 +403,7 @@ type
     function isConstant: Boolean; override;
 
     function EvalFlags: ELapeEvalFlags; virtual;
-    function resType(Restructure: Boolean): TLapeType; overload;
+    function resType(Restructure: Boolean): TLapeType; reintroduce; overload;
     function resType: TLapeType; overload; override;
     function Evaluate: TLapeGlobalVar; override;
     function Compile(var Offset: Integer): TResVar; override;
@@ -774,6 +774,7 @@ implementation
 
 uses
   Math,
+  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
   lpexceptions, lpeval, lpinterpreter;
 
@@ -1353,7 +1354,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
             FieldVar := FType.EvalConst(op_Index, Result, Counter, [lefAssigning]);
             FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate(), []);
           except on E: lpException do
-            LapeException(E.Message, FValues[i].DocPos);
+            LapeException(lpString(E.Message), FValues[i].DocPos);
           end;
         finally
           if (FieldVar <> nil) then
@@ -1368,7 +1369,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
               FieldVar := FType.EvalConst(op_Index, Result, Counter, [lefAssigning]);
               FieldVar.VarType.EvalConst(op_Assign, FieldVar, tmpVar, []);
             except on E: lpException do
-              LapeException(E.Message, FValues[i].DocPos);
+              LapeException(lpString(E.Message), FValues[i].DocPos);
             end;
           finally
             Inc(CounterInt);
@@ -1409,7 +1410,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
           FieldVar := FType.EvalConst(op_Dot, Result, tmpVar, [lefAssigning]);
           FieldVar.VarType.EvalConst(op_Assign, FieldVar, TLapeTree_ExprBase(FValues[i]).Evaluate(), []);
         except on E: lpException do
-          LapeException(E.Message, FValues[i].DocPos);
+          LapeException(lpString(E.Message), FValues[i].DocPos);
         end;
       finally
         if (FieldVar <> nil) then
@@ -1850,7 +1851,7 @@ var
       else
         LapeException(lpeInvalidCast);
     except on E: lpException do
-      LapeException(E.Message, Self.DocPos);
+      LapeException(lpString(E.Message), Self.DocPos);
     end;
   end;
 
@@ -1908,7 +1909,7 @@ var
           try
             Par := TLapeGlobalVar(FCompiler.addManagedVar(Params[i].VarType.EvalConst(op_Assign, Params[i].VarType.NewGlobalVarP(), Par, [])));
           except on E: lpException do
-            LapeException(E.Message, FParams[i].DocPos);
+            LapeException(lpString(E.Message), FParams[i].DocPos);
           end
           else
             LapeExceptionFmt(lpeVariableOfTypeExpected, [Params[i].VarType.AsString, Par.VarType.AsString], FParams[i].DocPos);
@@ -2000,7 +2001,7 @@ var
       else
         LapeException(lpeInvalidCast);
     except on E: lpException do
-      LapeException(E.Message, Self.DocPos);
+      LapeException(lpString(E.Message), Self.DocPos);
     end;
   end;
 
@@ -2054,7 +2055,7 @@ var
       ParamVar := Param.VarType.Eval(op_Assign, tmpVar, Par, ParamVar, [], Offset, @DocPos);
       tmpRes.Spill(1);
     except on E: lpException do
-      LapeException(E.Message, DocPos);
+      LapeException(lpString(E.Message), DocPos);
     end
     else
       LapeExceptionFmt(lpeVariableOfTypeExpected, [Param.VarType.AsString, ParamVar.VarType.AsString], DocPos);
@@ -2128,7 +2129,7 @@ var
             LapeException(lpeCannotInvoke);
         end;
       except on E: lpException do
-        LapeException(E.Message, [FParams[i], Self]);
+        LapeException(lpString(E.Message), [FParams[i], Self]);
       end;
 
       Dest := NullResVar;
@@ -4363,7 +4364,7 @@ begin
 
         Result := FCompiler.addManagedVar(Result) as TLapeGlobalVar;
       except on E: lpException do
-        LapeException(E.Message, DocPos);
+        LapeException(lpString(E.Message), DocPos);
       end;
     finally
       FRes := Result;
@@ -4457,7 +4458,7 @@ begin
         Free();
       end;
     except on E: lpException do
-      LapeException(E.Message, DocPos);
+      LapeException(lpString(E.Message), DocPos);
     end;
   finally
     LeftVar.Spill(1);
@@ -4618,7 +4619,7 @@ end;
 constructor TLapeTree_Integer.Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getConstant(StringReplace(AStr, '_', '', [rfReplaceAll]), ltNativeInt), ACompiler, ADocPos);
+  inherited Create(ACompiler.getConstant(StringReplace(AStr, lpString('_'), lpString(''), [rfReplaceAll]), ltNativeInt), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Integer.Create(AStr: lpString; ASource: TLapeTree_Base);
@@ -4630,18 +4631,18 @@ end;
 
 constructor TLapeTree_Integer.Create(AValue: Int64; ASource: TLapeTree_Base);
 begin
-  Create(IntToStr(AValue), ASource);
+  Create(lpString(IntToStr(AValue)), ASource);
 end;
 
 constructor TLapeTree_Integer.Create(AValue: UInt64; ASource: TLapeTree_Base);
 begin
-  Create(UIntToStr(AValue), ASource);
+  Create(lpString(UIntToStr(AValue)), ASource);
 end;
 
 constructor TLapeTree_Float.Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getConstant(StringReplace(AStr, '_', '', [rfReplaceAll]), ltExtended), ACompiler, ADocPos);
+  inherited Create(ACompiler.getConstant(StringReplace(AStr, lpString('_'), lpString(''), [rfReplaceAll]), ltExtended), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Float.Create(AStr: lpString; ASource: TLapeTree_Base);
@@ -4653,17 +4654,17 @@ end;
 
 constructor TLapeTree_Float.Create(AValue: Extended; ASource: TLapeTree_Base);
 begin
-  Create(FloatToStr(AValue), ASource);
+  Create(lpString(FloatToStr(AValue)), ASource);
 end;
 
 constructor TLapeTree_String.Create(AValue: AnsiString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  inherited Create(AValue, ltAnsiString, ACompiler, ADocPos);
+  inherited Create(lpString(AValue), ltAnsiString, ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_String.Create(AValue: UnicodeString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  inherited Create(AValue, ltUnicodeString, ACompiler, ADocPos);
+  inherited Create(lpString(AValue), ltUnicodeString, ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_String.Create(AValue: lpString; ASource: TLapeTree_Base);
@@ -4675,14 +4676,14 @@ constructor TLapeTree_Char.Create(AValue: WideChar; ACompiler: TLapeCompilerBase
 begin
   Assert(ACompiler <> nil);
   if (AValue > #255) then
-    inherited Create(AValue, ltWideChar, ACompiler, ADocPos)
+    inherited Create(lpString(AValue), ltWideChar, ACompiler, ADocPos)
   else
-    inherited Create(AValue, ltChar, ACompiler, ADocPos);
+    inherited Create(lpString(AValue), ltChar, ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Char.Create(AValue: WideChar; ASource: TLapeTree_Base);
 begin
-  inherited Create(AValue, ltWideChar, ASource);
+  inherited Create(lpString(AValue), ltWideChar, ASource);
 end;
 
 procedure TLapeTree_Range.setLo(Node: TLapeTree_ExprBase);

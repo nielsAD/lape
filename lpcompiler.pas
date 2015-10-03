@@ -46,7 +46,7 @@ type
     TokStates: array of Pointer;
     Options: ECompilerOptionsSet;
     Options_PackRecords: UInt8;
-    Defines: lpString;
+    Defines: string;
     Conditionals: TLapeConditionalStack.TTArray;
   end;
 
@@ -264,6 +264,7 @@ implementation
 
 uses
   Variants,
+  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
   lpexceptions, lpeval, lpinterpreter;
 
@@ -571,11 +572,11 @@ begin
 
     Index := Sender.getMethodIndex(AParams, AResult);
     if (Index < 0) then
-      Index := Sender.getMethodIndex(getTypeArray(getBaseType(AParams[0].BaseType)), AResult);
+      Index := Sender.getMethodIndex(getTypeArray([getBaseType(AParams[0].BaseType)]), AResult);
 
     if (Index >= 0) then
     begin
-      Body := 'begin Result := System.ToString[' + IntToStr(Index) + '](Param0); end;';
+      Body := 'begin Result := System.ToString[' + lpString(IntToStr(Index)) + '](Param0); end;';
       Result.DeclarationList := Sender.ManagedDeclarations;
     end;
   finally
@@ -851,7 +852,7 @@ var
 
   function HasDefine(Def: lpString): Boolean;
   begin
-    if (FDefines.IndexOf(Def) > -1) then
+    if (FDefines.IndexOf(string(Def)) > -1) then
       Result := True
     else
     begin
@@ -895,7 +896,7 @@ var
     end;
   end;
 
-  procedure RemoveFromStringList(l: TStringList; s: lpString);
+  procedure RemoveFromStringList(l: TStringList; s: string);
   var
     i: Integer;
   begin
@@ -915,7 +916,7 @@ var
     if (AFileName = '') then
       Exit('');
 
-    Argument := StringReplace(Argument, '\', '/', [rfReplaceAll]);
+    Argument := StringReplace(Argument, lpString('\'), lpString('/'), [rfReplaceAll]);
     if (ExpandFileName(AFileName) = AFileName) then
       Exit(AFileName);
 
@@ -923,11 +924,11 @@ var
       if (FTokenizers[i] <> nil) then
       begin
         Dir := ExtractFilePath(FTokenizers[i].FileName);
-        if FileExists(Dir + AFileName) then
+        if FileExists(string(Dir + AFileName)) then
           Exit(Dir + AFileName);
       end;
 
-    if FileExists(AFileName) then
+    if FileExists(string(AFileName)) then
       Result := AFileName
     else
       Result := '';
@@ -954,16 +955,16 @@ begin
   else if InIgnore() then
     {nothing}
   else if (Directive = 'define') then
-    FDefines.Add(Trim(Argument))
+    FDefines.Add(string(Trim(Argument)))
   else if (Directive = 'undef') then
-    RemoveFromStringList(FDefines, Trim(Argument))
+    RemoveFromStringList(FDefines, string(Trim(Argument)))
   else if (Directive = 'i') or (Directive = 'include') or (Directive = 'include_once') then
   begin
     IncludeFile := Argument;
     if ({$IFNDEF FPC}@{$ENDIF}FOnFindFile <> nil) then
       NewTokenizer := FOnFindFile(Self, IncludeFile);
 
-    if (IncludeFile = '') or (not FileExists(IncludeFile)) then
+    if (IncludeFile = '') or (not FileExists(string(IncludeFile))) then
     begin
       IncludeFile := FindFile(IncludeFile);
       if (IncludeFile = '') then
@@ -971,10 +972,10 @@ begin
     end;
     IncludeFile := ExpandFileName(IncludeFile);
 
-    if (Directive = 'include_once') and (FIncludes.IndexOf(IncludeFile) > -1) then
+    if (Directive = 'include_once') and (FIncludes.IndexOf(string(IncludeFile)) > -1) then
       Exit(True)
     else if (not Sender.InPeek) then
-      FIncludes.Add(IncludeFile);
+      FIncludes.Add(string(IncludeFile));
 
     if (NewTokenizer = nil) then
       if (FTokenizer + 1 < Length(FTokenizers)) and (FTokenizers[FTokenizer + 1] <> nil) and (FTokenizers[FTokenizer + 1].FileName = IncludeFile) then
@@ -996,7 +997,7 @@ begin
       FOptions_PackRecords := 1
     else
     begin
-      FOptions_PackRecords := StrToIntDef(Argument, 0);
+      FOptions_PackRecords := StrToIntDef(string(Argument), 0);
       if (not (FOptions_PackRecords in [1, 2, 4, 8, 16])) then
         LapeException(lpeInvalidCondition, [Self]);
     end;
@@ -1338,12 +1339,12 @@ var
   var
     Method: TLapeTree_Method;
   begin
-    Method := FTreeMethodMap[IntToStr(PtrUInt(varFrom))];
+    Method := FTreeMethodMap[lpString(IntToStr(PtrUInt(varFrom)))];
     if (Method <> nil) then
     begin
       varTo.isConstant := True;
       Method.Method := varTo;
-      FTreeMethodMap[IntToStr(PtrUInt(varTo))] := Method;
+      FTreeMethodMap[lpString(IntToStr(PtrUInt(varTo)))] := Method;
     end;
   end;
 
@@ -1455,7 +1456,7 @@ begin
         try
           TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).addMethod(Result.Method, not LocalDecl);
         except on E: lpException do
-          LapeException(E.Message, Tokenizer.DocPos);
+          LapeException(lpString(E.Message), Tokenizer.DocPos);
         end;
 
         isNext([tk_kw_Forward]);
@@ -1578,7 +1579,7 @@ begin
 
       Next();
       Result.Statements := ParseBlockList();
-      FTreeMethodMap[IntToStr(PtrUInt(Result.Method))] := Result;
+      FTreeMethodMap[lpString(IntToStr(PtrUInt(Result.Method)))] := Result;
 
       if (Result.Statements = nil) or (not (Result.Statements.Statements[Result.Statements.Statements.Count - 1] is TLapeTree_StatementList)) then
         Expect(tk_kw_Begin, False, False);
@@ -1606,7 +1607,7 @@ begin
     if (FuncHeader <> nil) then
     begin
       for i := 0 to FuncHeader.Params.Count - 1 do
-        FStackInfo.addVar(FuncHeader.Params[i].ParType, FuncHeader.Params[i].VarType, 'Param'+IntToStr(i));
+        FStackInfo.addVar(FuncHeader.Params[i].ParType, FuncHeader.Params[i].VarType, lpString('Param'+IntToStr(i)));
       if (FuncHeader is TLapeType_MethodOfType) then
         FStackInfo.addVar(Lape_SelfParam, TLapeType_MethodOfType(FuncHeader).ObjectType, 'Self');
       if (FuncHeader.Res <> nil) then
@@ -1715,7 +1716,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     try
       Result := addManagedType(TLapeType_Set.Create(TLapeType_SubRange(SetType), Self, '', GetPDocPos));
     except on E: lpException do
-      LapeException(E.Message, Tokenizer.DocPos);
+      LapeException(lpString(E.Message), Tokenizer.DocPos);
     end;
   end;
 
@@ -1786,7 +1787,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         end;
       except on E: lpException do
         begin
-          LapeException(E.Message, Tokenizer.DocPos);
+          LapeException(lpString(E.Message), Tokenizer.DocPos);
           Result := nil; // Do not free type, because enum members rely on it
         end
       end
@@ -2212,7 +2213,7 @@ var
     DocPos := Tokenizer.DocPos;
     case Tokenizer.Tok of
       tk_typ_String: Str := getString();
-      tk_typ_Char: Str := Tokenizer.TokChar;
+      tk_typ_Char: Str := lpString(Tokenizer.TokChar);
       else LapeException(lpeImpossible);
     end;
     while isNext([tk_typ_String, tk_typ_Char], Token) do
@@ -2223,7 +2224,7 @@ var
             Str := Str + #39 + getString()
           else
             Str := Str + getString();
-        tk_typ_Char: Str := Str + Tokenizer.TokChar;
+        tk_typ_Char: Str := Str + lpString(Tokenizer.TokChar);
         else LapeException(lpeImpossible);
       end;
       ForceString := True;
@@ -2404,7 +2405,7 @@ begin
       case Tokenizer.Tok of
         tk_typ_Integer: PushVarStack(TLapeTree_Integer.Create(Tokenizer.TokString, Self, getPDocPos()));
         tk_typ_Integer_Hex,
-        tk_typ_Integer_Bin: PushVarStack(TLapeTree_Integer.Create(UIntToStr(Tokenizer.TokUInt64), Self, getPDocPos()));
+        tk_typ_Integer_Bin: PushVarStack(TLapeTree_Integer.Create(lpString(UIntToStr(Tokenizer.TokUInt64)), Self, getPDocPos()));
         tk_typ_Float: PushVarStack(TLapeTree_Float.Create(Tokenizer.TokString, Self, getPDocPos()));
         tk_typ_Char,
         tk_typ_String: ParseAndPushString();
@@ -3126,7 +3127,7 @@ begin
     Exit;
   FDelayedTree.addStatement(Node, AfterCompilation, IsGlobal);
   if (Node is TLapeTree_Method) then
-    FTreeMethodMap[IntToStr(PtrUInt(TLapeTree_Method(Node).Method))] := Node as TLapeTree_Method;
+    FTreeMethodMap[lpString(IntToStr(PtrUInt(TLapeTree_Method(Node).Method)))] := Node as TLapeTree_Method;
 end;
 
 function TLapeCompiler.ParseFile: TLapeTree_Base;
@@ -3346,7 +3347,7 @@ end;
 
 procedure TLapeCompiler.addBaseDefine(Define: lpString);
 begin
-  FBaseDefines.Add(Define);
+  FBaseDefines.Add(string(Define));
 end;
 
 function TLapeCompiler.addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration;

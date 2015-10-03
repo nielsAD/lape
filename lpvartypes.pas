@@ -284,7 +284,7 @@ type
     constructor Create(AType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
 
-    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+    //function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     property TType: TLapeType read FTType;
   end;
 
@@ -686,6 +686,7 @@ var
 implementation
 
 uses
+  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_array,
   lpexceptions, lpeval, lpinterpreter;
 
@@ -1968,10 +1969,11 @@ begin
   Result.TypeID := TypeID;
 end;
 
-function TLapeType_Type.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
+(*function TLapeType_Type.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   Result := nil;
 end;
+*)
 
 function TLapeType_TypeEnum.CanHaveChild: Boolean;
 begin
@@ -2082,10 +2084,10 @@ end;
 
 function TLapeType_Pointer.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
-  if (LapeCase(Str) = 'nil') then
+  if (LapeCase(lpString(Str)) = 'nil') then
     Result := NewGlobalVar(nil, AName, ADocPos)
   else
-    Result := NewGlobalVar(Pointer(StrToInt64(Str)), AName, ADocPos);
+    Result := NewGlobalVar(Pointer(StrToInt64(string(Str))), AName, ADocPos);
 end;
 
 function TLapeType_Pointer.HasType: Boolean;
@@ -2682,7 +2684,7 @@ begin
       FAsString := Name
     else
       FAsString := 'Overloaded Method';
-    FAsString := FAsString + ' [' + IntToStr(FManagedDecls.Count) + ']'
+    FAsString := FAsString + ' [' + lpString(IntToStr(FManagedDecls.Count)) + ']'
   end;
   Result := inherited;
 end;
@@ -4058,17 +4060,16 @@ end;
 function TLapeCompilerBase.getCachedConstant(Str: lpString; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar;
 begin
   Assert(getBaseType(BaseType) <> nil);
-  Result := nil;
 
   {$IFNDEF Lape_SmallCode}
   if (BaseType in LapeStringTypes) then
     Result := FCachedDeclarations['"' + Str + '":' + LapeTypeToString(BaseType)]
   else
     Result := FCachedDeclarations[Str + ':' + LapeTypeToString(BaseType)];
+  if (Result = nil) then
   {$ENDIF}
 
-  if (Result = nil) then
-    Result := addManagedVar(getBaseType(BaseType).NewGlobalVarStr(Str)) as TLapeGlobalVar;
+  Result := addManagedVar(getBaseType(BaseType).NewGlobalVarStr(Str)) as TLapeGlobalVar;
 end;
 
 function TLapeCompilerBase.getConstant(Str: lpString; BaseType: ELapeBaseType = ltString; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar;
@@ -4087,7 +4088,7 @@ end;
 
 function TLapeCompilerBase.getConstant(i: Int64; IntType: ELapeBaseType = ltNativeInt; DoGrow: Boolean = False; ForceType: Boolean = False): TLapeGlobalVar;
 begin
-  Result := getConstant(IntToStr(i), IntType, DoGrow, ForceType);
+  Result := getConstant(lpString(IntToStr(i)), IntType, DoGrow, ForceType);
 end;
 
 function TLapeCompilerBase.getLabel(CodePos: Integer): TLapeGlobalVar;

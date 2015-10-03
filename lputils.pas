@@ -108,7 +108,7 @@ end;
 
 procedure ExposeGlobals__GetPtr(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
 var
-  Temp: string;
+  Temp: lpString;
 begin
   Temp := '';
 
@@ -187,7 +187,7 @@ begin
       Exit;
 
     Temp := #39 + AName + #39': begin ' +
-      'Assert(ParamsLen = ' + IntToStr(Params.Count) + ');' +
+      'Assert(ParamsLen = ' + lpString(IntToStr(Params.Count)) + ');' +
       'Result := ';
     if (Res = nil) or (not VariantType.CompatibleWith(Res)) then
       Temp := Temp + 'Unassigned; ';
@@ -197,7 +197,7 @@ begin
     begin
       if (i > 0) then
         Temp := Temp + ', ';
-      Temp := Temp + 'Params[' + IntToStr(i) + ']';
+      Temp := Temp + 'Params[' + lpString(IntToStr(i)) + ']';
     end;
 
     Temp := Temp + '); end;' + LineEnding;
@@ -247,7 +247,7 @@ begin
     try
       if (Decl.Name = '') then
         if (Decl is TLapeGlobalVar) and (TLapeGlobalVar(Decl).VarType is TLapeType_Method) then
-          n := BaseName + '[' + IntToStr(i) + ']'
+          n := BaseName + '[' + lpString(IntToStr(i)) + ']'
         else
           Continue
       else if (BaseName <> '') then

@@ -21,9 +21,9 @@ uses
 type
   TLapeDisassemblerPointerMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<string>;
 
-procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap);
-procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase);
-procedure DisassembleCode(Code: PByte; PointerNames: TLapeDeclArray = nil);
+procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap); overload;
+procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase); overload;
+procedure DisassembleCode(Code: PByte; PointerNames: TLapeDeclArray = nil); overload;
 
 implementation
 
@@ -48,10 +48,10 @@ var
     else
     begin
       s := IntToHex(PtrUInt(p), 0);
-      if (PointerNames <> nil) and (PointerNames.ExistsKey(s)) then
-        Result := PointerNames[s]
+      if (PointerNames <> nil) and PointerNames.ExistsKey(lpString(s)) then
+        Result := PointerNames[lpString(s)]
       else
-        Result := '$' + IntToHex(PtrUInt(p), 0);
+        Result := '$' + s;
     end;
   end;
 
@@ -228,7 +228,7 @@ begin
           p.FileName := FileName;
           p.Line := Line;
           p.Col := Col;
-          _WriteLn('--> File "'+FileName+'", Line '+IntToStr(Line)+', Col '+IntToStr(Col));
+          _WriteLn('--> File "'+string(FileName)+'", Line '+IntToStr(Line)+', Col '+IntToStr(Col));
         end;
       {$ENDIF}
       {$I lpinterpreter_opcodecase.inc}
@@ -257,11 +257,11 @@ begin
         proc := getEvalProc(op, t1, t2);
         if ValidEvalFunction(proc) then
           if (t1 = ltUnknown) then
-            pMap[IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0)] := 'lpe'+op_name[op]
+            pMap[lpString(IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0))] := 'lpe'+string(op_name[op])
           else if (t2 = ltUnknown) then
-            pMap[IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0)] := 'lpe'+LapeTypeToString(t1)+'_'+op_name[op]
+            pMap[lpString(IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0))] := 'lpe'+string(LapeTypeToString(t1))+'_'+string(op_name[op])
           else
-            pMap[IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0)] := 'lpe'+LapeTypeToString(t1)+'_'+op_name[op]+'_'+LapeTypeToString(t2);
+            pMap[lpString(IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0))] := 'lpe'+string(LapeTypeToString(t1))+'_'+string(op_name[op]+'_'+LapeTypeToString(t2));
       end;
   end;
 end;
@@ -269,9 +269,9 @@ end;
 procedure Disassemble__PointerMap(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
 begin
   if (AName = '') then
-    TLapeDisassemblerPointerMap(Arg)[IntToHex(PtrUInt(v.Ptr), 0)] := v.AsString
+    TLapeDisassemblerPointerMap(Arg)[lpString(IntToHex(PtrUInt(v.Ptr), 0))] := string(v.AsString)
   else
-    TLapeDisassemblerPointerMap(Arg)[IntToHex(PtrUInt(v.Ptr), 0)] := AName;
+    TLapeDisassemblerPointerMap(Arg)[lpString(IntToHex(PtrUInt(v.Ptr), 0))] := string(AName);
 end;
 
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase);
@@ -299,11 +299,11 @@ begin
 
     for i := 0 to High(PointerNames) do
       if (PointerNames[i].Name = '') and (PointerNames[i] is TLapeGlobalVar) then
-        pMap[IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0)] := TLapeGlobalVar(PointerNames[i]).AsString
+        pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0))] := string(TLapeGlobalVar(PointerNames[i]).AsString)
       else if (PointerNames[i] is TLapeGlobalVar) then
-        pMap[IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0)] := PointerNames[i].Name
+        pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0))] := string(PointerNames[i].Name)
       else
-        pMap[IntToHex(PtrUInt(PointerNames[i]), 0)] := PointerNames[i].Name;
+        pMap[lpString(IntToHex(PtrUInt(PointerNames[i]), 0))] := string(PointerNames[i].Name);
 
     DisassembleCode(Code, pMap);
   finally

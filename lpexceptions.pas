@@ -18,7 +18,7 @@ uses
 type
   lpException = class(Exception);
 
-resourcestring
+const
   lpeArrayLengthsDontMatch = 'Length of arrays (%s) don''t match';
   lpeAssertionFailure = 'Assertion failure';
   lpeAssertionFailureMsg = 'Assertion failure: %s';
@@ -92,6 +92,11 @@ procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of
 
 implementation
 
+{$IFDEF Lape_NeedAnsiStringsUnit}
+uses
+  AnsiStrings;
+{$ENDIF}
+
 {$IF DEFINED(Delphi) AND (CompilerVersion <= 21.00)}
 function ReturnAddress: Pointer;
 asm
@@ -102,11 +107,11 @@ end;
 procedure _LapeException(Msg: lpString); inline;
 {$IFDEF FPC}
 begin
-  raise lpException.Create(Msg) at get_caller_addr(get_frame);
+  raise lpException.Create(string(Msg)) at get_caller_addr(get_frame);
 end;
 {$ELSE}
 begin
-  raise lpException.Create(Msg) at ReturnAddress;
+  raise lpException.Create(string(Msg)) at ReturnAddress;
 end;
 {$ENDIF}
 
@@ -114,9 +119,9 @@ function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString; {inline;}
 begin
   Result := Msg;
   if (DocPos.Line > 0) and (DocPos.Col > 0) then
-    Result := Format(lpeExceptionAt, [Result, DocPos.Line, DocPos.Col]);
+    Result := Format(lpString(lpeExceptionAt), [Result, DocPos.Line, DocPos.Col]);
   if (DocPos.FileName <> '') then
-    Result := Format(lpeExceptionIn, [Result, DocPos.FileName]);
+    Result := Format(lpString(lpeExceptionIn), [Result, DocPos.FileName]);
 end;
 
 procedure LapeException(Msg: lpString);

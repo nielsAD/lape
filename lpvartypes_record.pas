@@ -77,7 +77,7 @@ begin
   begin
     FAsString := 'record ';
     for i := 0 to FFieldMap.Count - 1 do
-      FAsString := FAsString + '[' + IntToStr(FFieldMap.ItemsI[i].Offset) + ']' + FFieldMap.ItemsI[i].FieldType.AsString + '; ';
+      FAsString := FAsString + '[' + lpString(IntToStr(FFieldMap.ItemsI[i].Offset)) + ']' + FFieldMap.ItemsI[i].FieldType.AsString + '; ';
     FAsString := FAsString + 'end';
   end;
   Result := inherited;
@@ -199,7 +199,7 @@ begin
     begin
       if (i > 0) then
         Result := Result + ' + ' + #39', '#39;
-      if (ToStr <> nil) and (ToStr.getMethod(getTypeArray(FieldType)) <> nil) then
+      if (ToStr <> nil) and (ToStr.getMethod(getTypeArray([FieldType])) <> nil) then
         Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(Param0.' + FFieldMap.Key[i] + ')';
     end;
   Result := Result + ' + '#39'}'#39'; end;';
