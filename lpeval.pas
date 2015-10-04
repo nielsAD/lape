@@ -107,9 +107,6 @@ procedure LoadEvalArr(var Arr: TLapeEvalArr);
 function LapeEval_GetRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType;
 function LapeEval_GetProc(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc;
 
-const
-  LapeDelayedFlags = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$RANGECHECKS OFF}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}';
-
 var
   LapeEvalErrorProc: TLapeEvalProc = {$IFDEF FPC}@{$ENDIF}LapeEval_Error;
   getEvalRes: TGetEvalRes = {$IFDEF FPC}@{$ENDIF}LapeEval_GetRes;
@@ -118,6 +115,8 @@ var
   LapeToStrArr: TLapeToStrArr;
   LapeEvalRes: TLapeEvalRes;
   LapeEvalArr: TLapeEvalArr;
+
+  LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$RANGECHECKS OFF}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}' + LineEnding;
 
   _LapeToString_Enum: lpString =
     'function _EnumToString(s: ^string; Index, Lo, Hi: Int32): string;'                  + LineEnding +
@@ -377,7 +376,7 @@ var
     '  end;'                                                                             + LineEnding +
     ''                                                                                   + LineEnding +
     '  if (LenSrc > 0) then'                                                             + LineEnding +
-    '    if (Pointer(Copy) = nil) then'                                                 + LineEnding +
+    '    if (Pointer(Copy) = nil) then'                                                  + LineEnding +
     '      Move(Src^, Dst^, LenSrc * ElSize)'                                            + LineEnding +
     '    else for i := 0 to (LenSrc - 1) * ElSize with ElSize do'                        + LineEnding +
     '      Copy(Src[i], Dst[i]);'                                                        + LineEnding +

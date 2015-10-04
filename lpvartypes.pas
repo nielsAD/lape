@@ -284,7 +284,7 @@ type
     constructor Create(AType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
 
-    //function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     property TType: TLapeType read FTType;
   end;
 
@@ -1969,11 +1969,10 @@ begin
   Result.TypeID := TypeID;
 end;
 
-(*function TLapeType_Type.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
+function TLapeType_Type.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   Result := nil;
 end;
-*)
 
 function TLapeType_TypeEnum.CanHaveChild: Boolean;
 begin
@@ -1997,7 +1996,7 @@ begin
   then
     Result := FTType
   else
-    Result := inherited;
+    Result := inherited EvalRes(Op, Right, Flags);
 end;
 
 function TLapeType_TypeEnum.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;

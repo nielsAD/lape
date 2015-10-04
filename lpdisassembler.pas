@@ -160,7 +160,7 @@ var
 
   procedure DoJmpSafeR; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('JmpSafeR $%x', [TCodePos(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
+    _WriteLn('JmpSafeR $%x', [PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
     Inc(Code, ocSize + SizeOf(TCodeOffset));
   end;
 
@@ -168,11 +168,11 @@ var
   begin
     with POC_IncTry(PtrUInt(Code) + ocSize)^ do
       if (JmpFinally = Try_NoFinally) then
-        _WriteLn('IncTry $%x (NoFinally)', [TCodePos(Code - CodeBase) + Jmp])
+        _WriteLn('IncTry $%x (NoFinally)', [PtrInt(Code - CodeBase) + Jmp])
       else if (JmpFinally = Try_NoExcept) then
-        _WriteLn('IncTry $%x (NoExcept)',  [TCodePos(Code - CodeBase) + Jmp])
+        _WriteLn('IncTry $%x (NoExcept)',  [PtrInt(Code - CodeBase) + Jmp])
       else
-        _WriteLn('IncTry $%x $%x', [TCodePos(Code - CodeBase) + Jmp, TCodePos(Code - CodeBase) + Jmp + JmpFinally]);
+        _WriteLn('IncTry $%x $%x', [PtrInt(Code - CodeBase) + Jmp, PtrInt(Code - CodeBase) + Jmp + Int32(JmpFinally)]);
     Inc(Code, ocSize + SizeOf(TOC_IncTry));
   end;
 

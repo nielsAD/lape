@@ -238,9 +238,6 @@ begin
       Decls := Compiler.GlobalDeclarations;
     end;
 
-  if Decls.HasParent() then
-    TraverseGlobals(Compiler, Callback, Arg, BaseName, Decls.Parent);
-
   for i := 0 to Decls.Count - 1 do
   begin
     Decl := Decls[i];

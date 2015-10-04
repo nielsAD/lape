@@ -1110,7 +1110,7 @@ begin
   if (Integer(FDocPos.Col) > FTokStart) then
     Result.Col := 0
   else
-    Result.Col := FTokStart - Integer(FDocPos.Col + NullPos.Col);
+    Result.Col := NullPos.Col + UInt32(FTokStart) - FDocPos.Col;
   if (FFileName <> '') then
     Result.FileName := FFileName
   else
