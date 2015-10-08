@@ -2754,12 +2754,15 @@ begin
       end
     else
     begin
-      Result.Counter := ParseExpression();
-      Expect([tk_kw_To, tk_kw_DownTo], False, True);
+      Result.Counter := ParseExpression([tk_op_In]);
+      Expect([tk_op_In, tk_kw_To, tk_kw_DownTo], False, True);
     end;
 
     if (Tokenizer.LastTok = tk_kw_DownTo) then
-      Result.WalkDown := True;
+      Result.WalkDown := True
+    else if (Tokenizer.LastTok = tk_op_In) then
+      Result.WalkIn := True;
+    
     Result.Limit := ParseExpression([], False);
 
     Expect([tk_kw_With, tk_kw_Do], False, False);

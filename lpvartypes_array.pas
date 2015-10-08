@@ -67,6 +67,7 @@ type
     function VarToString(AVar: Pointer): lpString; override;
     procedure VarUnique(var AVar: Pointer); overload; virtual;
     procedure VarUnique(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
+    function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
     function VarHi(AVar: Pointer = nil): TLapeGlobalVar; override;
 
     function NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
@@ -1146,6 +1147,14 @@ begin
   finally
     Free();
   end;
+end;
+
+function TLapeType_String.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
+begin
+  if (FCompiler = nil) then
+    Result := nil
+  else
+    Result := FCompiler.getConstant(1);   
 end;
 
 function TLapeType_String.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
