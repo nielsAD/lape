@@ -238,6 +238,14 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
+  
+  TLapeTree_InternalMethod_Operator = class(TLapeTree_InternalMethod)
+  public
+    FOperator: EOperator;
+    constructor Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce;
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
 
   TLapeTree_InternalMethod_Dispose = class(TLapeTree_InternalMethod)
   public
@@ -2717,6 +2725,95 @@ begin
   end;
 
   Param.Spill(1);
+end;
+
+constructor TLapeTree_InternalMethod_Operator.Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited Create(ACompiler, ADocPos);
+  if AOperator = op_UnaryMinus then 
+    self.FOperator := op_Minus
+  else
+    self.FOperator := AOperator;
+end;
+
+function TLapeTree_InternalMethod_Operator.resType: TLapeType;
+var
+  _LapeOperator: TLapeGlobalVar;
+  typ:TLapeType;
+  methodParams:TLapeTypeArray;
+  methodVar,identVar: TLapeTree_GlobalVar;
+  i:Int32;
+begin
+  (*
+    Might be ideal to find a faster way to look up the restype of overloaded ops.
+    This might involve a bit of work.
+    Currently this is fine, as I see no negative affect on compile-time.
+  *)
+  if (FResType = nil) and (FOperator <> op_Unknown) then
+  begin
+    if (FParams.Count < 1) then Exit(nil);
+
+    _LapeOperator := FCompiler['!op_'+op_name[FOperator]];
+    if _LapeOperator <> nil then
+    begin
+      methodVar := TLapeTree_GlobalVar.Create(_LapeOperator, Self);
+      typ := methodVar.resType;
+
+      SetLength(methodParams, FParams.Count);
+      for i:=0 to FParams.Count - 1 do
+        if isEmpty(FParams[i]) or (FParams[i].resType.BaseType = ltUnknown) then
+        begin
+          methodVar.Free();
+          Exit(nil);
+        end else
+          methodParams[i] := FParams[i].resType();
+
+      if TLapeType_OverloadedMethod(typ).ManagedDeclarations.Count > 0 then
+      begin
+        i := TLapeType_OverloadedMethod(typ).getMethodIndex(methodParams);
+        if (i <> -1) then
+        begin
+          identVar := TLapeTree_GlobalVar.Create(
+            TLapeType_OverloadedMethod(typ).ManagedDeclarations.Items[i] as TLapeGlobalVar,
+            methodVar
+          );
+          FResType := TLapeType_Method(identVar.resType).Res.CreateCopy();
+          identVar.Free();
+        end;
+      end;
+      methodVar.Free();
+    end;
+  end;
+  Result := Inherited;
+end;
+
+function TLapeTree_InternalMethod_Operator.Compile(var Offset: Integer): TResVar;
+var
+  _LapeOperator: TLapeGlobalVar;
+  method:TLapeTree_Invoke;
+  tmpVar:TResVar;
+  i:Int32;
+begin
+  Result := NullResVar;
+  if (FParams.Count < 1) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  
+  if self.resType() = nil then
+    Exit();
+
+  _LapeOperator := FCompiler['!op_'+op_name[FOperator]];
+  if _LapeOperator <> nil then
+  begin
+    Dest := NullResVar;
+    method := TLapeTree_Invoke.Create(_LapeOperator, Self);
+    for i:=0 to FParams.Count - 1 do
+    begin
+      FParams[i].CompileToTempVar(Offset, tmpVar);
+      method.addParam(TLapeTree_ResVar.Create(tmpVar.IncLock(), Self.FParams[i]));
+    end;
+    Result := method.Compile(Offset);
+    method.Free();
+  end;
 end;
 
 constructor TLapeTree_InternalMethod_Dispose.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

@@ -46,6 +46,7 @@ type
     {$IFDEF Lape_PascalLabels}tk_kw_Label,{$ENDIF}
     tk_kw_Of,
     tk_kw_Object,
+    tk_kw_Operator,
     tk_kw_Out,
     tk_kw_Overload,
     tk_kw_Override,
@@ -238,7 +239,7 @@ const
   ParserToken_Symbols = [tk_sym_BracketClose..tk_sym_SemiColon];
   ParserToken_Types = [tk_typ_Float..tk_typ_Char];
 
-  Lape_Keywords: array[0..45 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
+  Lape_Keywords: array[0..46 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
       (Keyword: 'AND';          Token: tk_op_AND),
       (Keyword: 'DIV';          Token: tk_op_DIV),
       (Keyword: 'IN';           Token: tk_op_IN),
@@ -270,6 +271,7 @@ const
       {$ENDIF}
       (Keyword: 'OBJECT';       Token: tk_kw_Object),
       (Keyword: 'OF';           Token: tk_kw_Of),
+      (Keyword: 'OPERATOR';     Token: tk_kw_Operator),
       (Keyword: 'OUT';          Token: tk_kw_Out),
       (Keyword: 'OVERLOAD';     Token: tk_kw_Overload),
       (Keyword: 'OVERRIDE';     Token: tk_kw_Override),

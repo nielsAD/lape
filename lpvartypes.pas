@@ -26,7 +26,8 @@ type
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
-    lcoContinueCase                    //      {$CONTINUECASE}
+    lcoContinueCase,                   //      {$CONTINUECASE}
+    lcoOpOverload                      //      {$OPOVERLOAD}
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
@@ -341,6 +342,7 @@ type
     FreeParams: Boolean;
     ImplicitParams: Integer;
     Res: TLapeType;
+    IsOperator: Boolean;
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -688,7 +690,7 @@ implementation
 uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_array,
-  lpexceptions, lpeval, lpinterpreter;
+  lpexceptions, lpeval, lpinterpreter, lptree;
 
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 var
@@ -1466,6 +1468,9 @@ begin
 end;
 
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
+var
+  method:TLapeTree_InternalMethod;
+  tmpRes:TLapeType;
 begin
   Assert(FCompiler <> nil);
 
@@ -1493,11 +1498,23 @@ begin
     then
       Result := EvalRes(Op, Self, Flags);
   end;
+  
+  if (lcoOpOverload in FCompiler.FOptions) and (Result = nil) and (op in UnaryOperators) and
+     (Self.BaseType <> ltUnknown) and (op in OverloadableOperators) then
+  begin
+    method := TLapeTree_InternalMethod_Operator.Create(op, FCompiler, nil);
+    method.addParam(TLapeTree_ResVar.Create(_ResVar.New(FCompiler.getTempVar(Self)), FCompiler, nil));
+    tmpRes := method.resType;
+    if tmpRes <> nil then Result := tmpRes;
+    method.Free();
+  end;
 end;
 
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
 var
   d: TLapeDeclArray;
+  method:TLapeTree_InternalMethod;
+  tmpRes:TLapeType;
 begin
   if (Right = nil) then
     Result := EvalRes(Op, TLapeType(nil), Flags)
@@ -1521,6 +1538,18 @@ begin
      Right.HasType()
   then
     Result := EvalRes(Op, Right.VarType, Flags);
+    
+  if (lcoOpOverload in FCompiler.FOptions) and (Result = nil) and (Self.BaseType <> ltUnknown) and 
+     (op in OverloadableOperators) and (((Right <> nil) and Right.HasType()) or (op in UnaryOperators)) then
+  begin
+    method := TLapeTree_InternalMethod_Operator.Create(op, FCompiler, nil);
+    method.addParam(TLapeTree_ResVar.Create(_ResVar.New(FCompiler.getTempVar(Self)), FCompiler, nil));
+    if not (op in UnaryOperators) then
+      method.addParam(TLapeTree_ResVar.Create(_ResVar.New(Right), FCompiler, nil));
+    tmpRes := method.resType;
+    if tmpRes <> nil then Result := tmpRes;
+    method.Free();
+  end;
 end;
 
 function TLapeType.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
@@ -1774,6 +1803,22 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
       Result := Res;
     end;
   end;
+  
+  function TryOperatorOverload(): TResVar;
+  var method: TLapeTree_InternalMethod;
+  begin
+    Result := NullResVar;
+    if (lcoOpOverload in FCompiler.FOptions) and (op in OverloadableOperators) and
+       (Right.HasType() or (op in UnaryOperators)) and Left.HasType() then
+    begin
+      method := TLapeTree_InternalMethod_Operator.Create(op, FCompiler, Pos);
+      method.addParam(TLapeTree_ResVar.Create(Left, FCompiler, Pos));
+      if not(op in UnaryOperators) then
+        method.addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
+      Result := method.Compile(Offset);
+      method.Free();
+    end;
+  end;
 
 var
   EvalProc: TLapeEvalProc;
@@ -1807,6 +1852,7 @@ begin
       EvalProc := nil;
 
     if (not Result.HasType()) or (not ValidEvalFunction(EvalProc)) then
+    try
       if (op = op_Dot) and ValidFieldName(Right) then
         Exit(EvalDot(PlpString(Right.VarPos.GlobalVar.Ptr)^))
       else if (op = op_Assign) and Right.HasType() then
@@ -1826,7 +1872,17 @@ begin
         LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
       else
         LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
-
+    except
+      on e: Exception do
+      begin
+        Dest := NullResVar;
+        Result := TryOperatorOverload();
+        if Result.HasType() then
+          Exit;
+        LapeException(e.Message);
+      end;
+    end; 
+        
     FCompiler.getDestVar(Dest, Result, op);
 
     if (op = op_Assign) then
@@ -2323,6 +2379,7 @@ begin
     AParams := TLapeParameterList.Create(NullParameter, dupAccept, False);
   FParams := AParams;
   Res := ARes;
+  IsOperator := False;
 end;
 
 constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil);
