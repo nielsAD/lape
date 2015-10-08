@@ -780,8 +780,8 @@ begin
       Result := _ResVar.New(tmpVar);
     end;
 
-    wasConstant := not ALeft.Writeable;
-    if wasConstant then ALeft.Writeable := True;
+    wasConstant := not Result.Writeable;
+    if wasConstant then Result.Writeable := True;
 
     Result := Eval(op_Assign, tmpResVar, Result, ALeft, [], Offset, Pos);
 
@@ -801,7 +801,7 @@ begin
       Free();
     end;
     IndexVar.Spill(1);
-    if wasConstant then ALeft.Writeable := False;
+    if wasConstant then Result.Writeable := False;
   end
   else
     Result := inherited;
