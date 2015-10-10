@@ -40,5 +40,6 @@ install:
   - ./travis-lazarus/.travis.install.py
 
 script:
+  - $LAZ_WINE lazbuild $LAZ_OPT ../../package/lape.lpk
   - $LAZ_WINE lazbuild $LAZ_OPT LapeTest.lpi
   - $LAZ_WINE ./LapeTest
