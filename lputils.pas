@@ -24,6 +24,9 @@ function TraverseGlobals(Compiler: TLapeCompiler; Callback: TTraverseCallback; B
 procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean); overload;
 procedure ExposeGlobals(Compiler: TLapeCompiler); overload;
 
+const
+  LapePascalScriptCompilerOptions = [lcoLooseSemicolon, lcoAutoInvoke];
+
 implementation
 
 uses
@@ -38,7 +41,7 @@ begin
   with Compiler do
   begin
     if (psiSettings in Initialize) then
-      Compiler.Options := Compiler.Options + [lcoLooseSemicolon, lcoAutoInvoke];
+      Compiler.Options := Compiler.Options + LapePascalScriptCompilerOptions;
 
     if (psiMagicMethod in Initialize) then
     begin

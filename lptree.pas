@@ -2100,9 +2100,7 @@ var
   function DoImportedMethod(IdentVar: TResVar; var ParamVars: TResVarArray): TResVar;
   var
     i: Integer;
-    {$IFDEF Lape_InitExternalFuncResult}
     wasConstant: Boolean;
-    {$ENDIF}
   begin
     Assert(IdentVar.VarType is TLapeType_Method);
     Assert(IdentVar.VarType.BaseType in [ltPointer, ltImportedMethod]);
@@ -2145,14 +2143,15 @@ var
           FDest := VarResVar;
         FCompiler.getDestVar(FDest, Result, op_Unknown);
 
-        {$IFDEF Lape_InitExternalFuncResult}
-        wasConstant := not Result.Writeable;
-        if wasConstant then
-          Result.Writeable := True;
-        FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
-        if wasConstant then
-          Result.Writeable := False;
-        {$ENDIF}
+        if (lcoInitExternalResult in FCompilerOptions) then
+        begin
+          wasConstant := not Result.Writeable;
+          if wasConstant then
+            Result.Writeable := True;
+          FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
+          if wasConstant then
+            Result.Writeable := False;
+        end;
 
         FCompiler.Emitter._InvokeImportedFunc(IdentVar, Result, i * SizeOf(Pointer), Offset, @Self._DocPos)
       end;
@@ -2237,9 +2236,8 @@ begin
       else
         LapeException(lpeCannotInvoke, FIdent.DocPos);
 
-    {$IFDEF Lape_InitExternalFuncResult}
-    Dest := NullResVar;
-    {$ENDIF}
+    if (lcoInitExternalResult in FCompilerOptions) then
+      Dest := NullResVar;
 
     with TLapeType_Method(IdentVar.VarType) do
     begin
@@ -3924,7 +3922,7 @@ end;
 constructor TLapeTree_InternalMethod_Label.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FForceParam := True;;
+  FForceParam := True;
 end;
 
 function TLapeTree_InternalMethod_Label.Compile(var Offset: Integer): TResVar;

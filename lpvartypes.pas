@@ -26,7 +26,8 @@ type
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
-    lcoContinueCase                    //      {$CONTINUECASE}
+    lcoContinueCase,                   //      {$CONTINUECASE}
+    lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
