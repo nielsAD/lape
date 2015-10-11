@@ -30,6 +30,7 @@ type
     lcoConstAddress,                   // {$J} {$CONSTADDRESS}
     lcoContinueCase,                   //      {$CONTINUECASE}
     lcoCOperators                      //      {$COPERATORS}
+    lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
