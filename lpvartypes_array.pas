@@ -67,6 +67,7 @@ type
     function VarToString(AVar: Pointer): lpString; override;
     procedure VarUnique(var AVar: Pointer); overload; virtual;
     procedure VarUnique(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
+    function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
     function VarHi(AVar: Pointer = nil): TLapeGlobalVar; override;
 
     function NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
@@ -432,6 +433,8 @@ begin
     Result := Self
   else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(ARight) then
     Result := Self
+  else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and (ARight <> nil) and (ARight is ClassType) and FPType.Equals(TLapeType_DynArray(ARight).FPType) then
+    Result := Self
   else
     Result := inherited;
 end;
@@ -520,6 +523,7 @@ var
   IndexVar, tmpResVar: TResVar;
   wasConstant: Boolean;
   Node: TLapeTree_Base;
+  Expr,IdxExpr: TLapeTree_ExprBase;
 begin
   Assert(FCompiler <> nil);
   Assert(ALeft.VarType is TLapeType_Pointer);
@@ -758,6 +762,46 @@ begin
     IndexVar.Spill(1);
     if wasConstant then
       Result.Writeable := False;
+  end
+  else if (op = op_Plus) and (BaseType = ltDynArray) and CompatibleWith(ARight.VarType) then
+  begin 
+    {!FIXME:
+      when `Result := StaticArray + DynArray` result-type is static array, causing this to fail.
+      On the other hand I am unsure why (left) StaticArray enters here.
+      - slacky
+    }
+    Result := NullResVar;
+    Result.VarType := Self;
+    FCompiler.getDestVar(Dest, Result, op);
+
+    if (Result.VarPos.MemPos = mpStack) then
+    begin
+      tmpVar := FCompiler.getTempVar(Self);
+      Result := _ResVar.New(tmpVar);
+    end;
+
+    wasConstant := not Result.Writeable;
+    if wasConstant then Result.Writeable := True;
+
+    Result := Eval(op_Assign, tmpResVar, Result, ALeft, [], Offset, Pos);
+
+    IndexVar := _ResVar.New(FCompiler.getTempVar(ltInt32));
+    with TLapeTree_InternalMethod_Insert.Create(FCompiler, Pos) do
+    try
+      addParam(TLapeTree_ResVar.Create(ARight, FCompiler, Pos));
+      addParam(TLapeTree_ResVar.Create(Result.IncLock(2), FCompiler, Pos));
+
+      IdxExpr := TLapeTree_ResVar.Create(IndexVar.IncLock(2), FCompiler, Pos);
+      Expr := TLapeTree_InternalMethod_Length.Create(IdxExpr);
+      TLapeTree_InternalMethod_Length(Expr).addParam(TLapeTree_ResVar.Create(Result.IncLock(), IdxExpr));
+      addParam(Expr);
+
+      Compile(Offset);
+    finally
+      Free();
+    end;
+    IndexVar.Spill(1);
+    if wasConstant then Result.Writeable := False;
   end
   else
     Result := inherited;
@@ -1103,6 +1147,14 @@ begin
   finally
     Free();
   end;
+end;
+
+function TLapeType_String.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
+begin
+  if (FCompiler = nil) then
+    Result := nil
+  else
+    Result := FCompiler.getConstant(1);   
 end;
 
 function TLapeType_String.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
