@@ -1759,11 +1759,12 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
 
     if (d[0] is TLapeType) then
       d[0] := FCompiler.getTypeVar(TLapeType(d[0]));
+
+    Dest := NullResVar;
     Result := _ResVar.New(d[0] as TLapeGlobalVar);
 
     if MethodOfObject(Result.VarType) and (not Result.Readable) and (not Result.Writeable) then
     begin
-      Dest := NullResVar;
       Res := _ResVar.New(FCompiler.getTempVar(FCompiler.getGlobalType('TMethod')));
       Res.VarType := Result.VarType;
 

@@ -2061,7 +2061,7 @@ begin
           VarType := Default.resType()
         else
           LapeException(lpeCannotAssign, Tokenizer.DocPos);
-      if (VarType = nil) then
+      if (VarType = nil) or (VarType.Size < 1) then
         LapeException(lpeTypeExpected, Tokenizer.DocPos);
 
       for i := 0 to High(Identifiers) do
