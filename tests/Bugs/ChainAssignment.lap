@@ -1,10 +1,17 @@
 {$assertions on}
 
+type
+  // Make sure this does not turn into int64
+  TSmallRec = record
+    a, b: Integer;
+  end;
+
 var
   a, b: Int32;
+  x, y, z: TSmallRec;
   s = '5';
 
-procedure test(var b: Int32);
+procedure TestInt(var b: Int32);
 var
   c: Int32;
 begin
@@ -15,10 +22,20 @@ begin
   Assert(b = a, 'b <> a');
 end;
 
+procedure TestSmallRec(z: TSmallRec);
+var
+  x, y: TSmallRec;
 begin
-  test(b);
+  x := y := z;
+end;
+
+begin
+  TestInt(b);
+  TestSmallRec(z);
 
   a := b := a + 3 - b;
   Assert(a = 3, 'a <> 3');
   Assert(a = b, 'a <> b');
+
+  x := y := z;
 end.

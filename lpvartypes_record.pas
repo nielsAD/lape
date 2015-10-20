@@ -355,6 +355,7 @@ begin
       begin
         Right.VarType := Left.VarType;
         Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, [], Offset, Pos);
+        Result.VarType := Self;
       end
       else
       begin
