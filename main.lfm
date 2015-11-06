@@ -1,12 +1,12 @@
 object Form1: TForm1
-  Left = 161
+  Left = 141
   Height = 407
-  Top = 395
+  Top = 379
   Width = 470
   Caption = 'Form1'
   ClientHeight = 407
   ClientWidth = 470
-  LCLVersion = '1.1'
+  LCLVersion = '1.4.2.0'
   inline e: TSynEdit
     Left = 0
     Height = 246
@@ -528,6 +528,7 @@ object Form1: TForm1
         ShiftMask = [ssShift, ssAlt, ssCtrl]
         Command = emcMouseLink
       end>
+    MouseTextActions = <>
     MouseSelActions = <    
       item
         ClickDir = cdDown
@@ -566,6 +567,13 @@ object Form1: TForm1
       'end;'
     )
     VisibleSpecialChars = [vscSpace, vscTabAtLast]
+    SelectedColor.BackPriority = 50
+    SelectedColor.ForePriority = 50
+    SelectedColor.FramePriority = 50
+    SelectedColor.BoldPriority = 50
+    SelectedColor.ItalicPriority = 50
+    SelectedColor.UnderlinePriority = 50
+    SelectedColor.StrikeOutPriority = 50
     BracketHighlightStyle = sbhsBoth
     BracketMatchColor.Background = clNone
     BracketMatchColor.Foreground = clNone
@@ -601,6 +609,8 @@ object Form1: TForm1
       object SynGutterSeparator1: TSynGutterSeparator
         Width = 2
         MouseActions = <>
+        MarkupInfo.Background = clWhite
+        MarkupInfo.Foreground = clGray
       end
       object SynGutterCodeFolding1: TSynGutterCodeFolding
         MouseActions = <        
@@ -734,24 +744,13 @@ object Form1: TForm1
   end
   object PasSyn: TSynPasSyn
     Enabled = False
-    AsmAttri.FrameEdges = sfeAround
     CommentAttri.Foreground = clGreen
-    CommentAttri.FrameEdges = sfeAround
     CommentAttri.Style = []
-    IDEDirectiveAttri.FrameEdges = sfeAround
-    IdentifierAttri.FrameEdges = sfeAround
-    KeyAttri.FrameEdges = sfeAround
     NumberAttri.Foreground = clNavy
-    NumberAttri.FrameEdges = sfeAround
-    SpaceAttri.FrameEdges = sfeAround
     StringAttri.Foreground = clTeal
-    StringAttri.FrameEdges = sfeAround
     SymbolAttri.Foreground = clMaroon
-    SymbolAttri.FrameEdges = sfeAround
-    CaseLabelAttri.FrameEdges = sfeAround
     CaseLabelAttri.Style = [fsItalic]
     DirectiveAttri.Foreground = clOlive
-    DirectiveAttri.FrameEdges = sfeAround
     CompilerMode = pcmDelphi
     NestedComments = False
     left = 432

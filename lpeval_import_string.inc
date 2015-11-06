@@ -69,3 +69,9 @@ addGlobalFunc('Function IsDelimiter(Delimiters, s: string; Index: SizeInt): Eval
 
 addGlobalFunc('function Pos(Substr: string; Source: string): SizeInt;', @_LapePos);
 addGlobalFunc('function StringOfChar(c: Char; l: SizeInt): string;', @_LapeStringOfChar);
+
+addDelayedCode(LapeDelayedFlags +
+  'function Chr(IntValue: UInt8):  AnsiChar; overload; begin Result := AnsiChar(IntValue); end;' + LineEnding +
+  'function Chr(IntValue: UInt16): WideChar; overload; begin Result := WideChar(IntValue); end;'
+,  '!addDelayedString');
+

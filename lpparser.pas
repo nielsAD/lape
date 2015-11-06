@@ -46,6 +46,7 @@ type
     {$IFDEF Lape_PascalLabels}tk_kw_Label,{$ENDIF}
     tk_kw_Of,
     tk_kw_Object,
+    tk_kw_Operator,
     tk_kw_Out,
     tk_kw_Overload,
     tk_kw_Override,
@@ -213,7 +214,8 @@ type
 
   TLapeTokenizerFile = class(TLapeTokenizerString)
   public
-    constructor Create(AFileName: lpString = ''); reintroduce; virtual;
+    constructor Create(AFileName: UnicodeString = ''); reintroduce; overload; virtual;
+    constructor Create(AFileName: AnsiString = ''); reintroduce; overload; virtual;
   end;
 
   TLapeKeyword = record
@@ -237,7 +239,7 @@ const
   ParserToken_Symbols = [tk_sym_BracketClose..tk_sym_SemiColon];
   ParserToken_Types = [tk_typ_Float..tk_typ_Char];
 
-  Lape_Keywords: array[0..45 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
+  Lape_Keywords: array[0..46 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
       (Keyword: 'AND';          Token: tk_op_AND),
       (Keyword: 'DIV';          Token: tk_op_DIV),
       (Keyword: 'IN';           Token: tk_op_IN),
@@ -268,6 +270,7 @@ const
       (Keyword: 'LABEL';        Token: tk_kw_Label),
       {$ENDIF}
       (Keyword: 'OBJECT';       Token: tk_kw_Object),
+      (Keyword: 'OPERATOR';     Token: tk_kw_Operator),
       (Keyword: 'OF';           Token: tk_kw_Of),
       (Keyword: 'OUT';          Token: tk_kw_Out),
       (Keyword: 'OVERLOAD';     Token: tk_kw_Overload),
@@ -376,10 +379,10 @@ var
 
 function LapeTokenToString(Token: EParserToken): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function ParserTokenToOperator(Token: EParserToken): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function StrToFloatDot(Str: lpString): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function StrToFloatDotDef(Str: lpString; Default: Extended): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function StrToUInt64(Str: lpString): UInt64;
-function StrToUInt64Def(Str: lpString; const Default: UInt64): UInt64;
+function StrToFloatDot(Str: string): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function StrToFloatDotDef(Str: string; Default: Extended): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function StrToUInt64(Str: string): UInt64;
+function StrToUInt64Def(Str: string; const Default: UInt64): UInt64;
 function DetermineIntType(IntType: ELapeBaseType; MinSize: UInt8): ELapeBaseType; overload;
 function DetermineIntType(Left, Right: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
 function DetermineIntType(Str: lpString; MinSize: UInt8): ELapeBaseType; overload;
@@ -397,11 +400,14 @@ implementation
 
 uses
   typinfo,
+  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpexceptions;
+
+{$WARN WIDECHAR_REDUCED OFF}
 
 function LapeTokenToString(Token: EParserToken): lpString;
 begin
-  Result := getEnumName(TypeInfo(EParserToken), Ord(Token));
+  Result := lpString(getEnumName(TypeInfo(EParserToken), Ord(Token)));
   if (Token in ParserToken_Symbols + ParserToken_Types) then
     Delete(Result, 1, 7)
   else if (Token in ParserToken_Keywords) then
@@ -418,12 +424,12 @@ begin
     Result := EOperator(Integer(Token) - Integer(ParserToken_FirstOperator) + 1);
 end;
 
-function StrToFloatDot(Str: lpString): Extended;
+function StrToFloatDot(Str: string): Extended;
 begin
   Result := StrToFloat(StringReplace(Str, '.', FormatSettings.DecimalSeparator, []));
 end;
 
-function StrToFloatDotDef(Str: lpString; Default: Extended): Extended;
+function StrToFloatDotDef(Str: string; Default: Extended): Extended;
 begin
   Result := StrToFloatDef(StringReplace(Str, '.', FormatSettings.DecimalSeparator, []), Default);
 end;
@@ -472,7 +478,7 @@ begin
 end;
 {$ENDIF}
 
-function StrToUInt64(Str: lpString): UInt64;
+function StrToUInt64(Str: string): UInt64;
 {$IFDEF FPC}
 begin Result := StrToQWord(Str); end;
 {$ELSE}
@@ -482,7 +488,7 @@ begin
 end;
 {$ENDIF}
 
-function StrToUInt64Def(Str: lpString; const Default: UInt64): UInt64;
+function StrToUInt64Def(Str: string; const Default: UInt64): UInt64;
 {$IFDEF FPC}
 begin Result := StrToQWordDef(Str, Default); end;
 {$ELSE}
@@ -522,7 +528,7 @@ function DetermineIntType(Str: lpString): ELapeBaseType;
     if (Length(Str) >= Len) then
       Result := Str
     else
-      Result := StringOfChar('0', Len - Length(Str));
+      Result := StringOfChar(lpChar('0'), Len - Length(Str));
   end;
 
   function PadComp(Str1, Str2: lpString): Integer;
@@ -551,7 +557,7 @@ function DetermineIntType(Str: lpString): ELapeBaseType;
 var
   Negative: Boolean;
 begin
-  Str := StringReplace(Str, ' ', '', [rfReplaceAll]);
+  Str := StringReplace(Str, lpString(' '), lpString(''), [rfReplaceAll]);
   if (Length(Str) < 1) then
     Exit(ltUnknown);
   Negative := (Str[1] = '-');
@@ -560,21 +566,21 @@ begin
   if (Length(Str) < 1) then
     Exit(ltUnknown);
 
-  if (Str[1] = '0') or (((not Negative) and (PadComp(Str, IntToStr(High(Int8))) <= 0)) or (Negative and (PadComp(Str, IntToStr(Low(Int8))) <= 0))) then
+  if (Str[1] = '0') or (((not Negative) and (PadComp(Str, lpString(IntToStr(High(Int8)))) <= 0)) or (Negative and (PadComp(Str, lpString(IntToStr(Low(Int8)))) <= 0))) then
     Result := ltInt8
-  else if (not Negative) and (PadComp(Str, IntToStr(High(UInt8))) <= 0) then
+  else if (not Negative) and (PadComp(Str, lpString(IntToStr(High(UInt8)))) <= 0) then
     Result := ltUInt8
-  else if ((not Negative) and (PadComp(Str, IntToStr(High(Int16))) <= 0)) or (Negative and (PadComp(Str, IntToStr(Low(Int16))) <= 0)) then
+  else if ((not Negative) and (PadComp(Str, lpString(IntToStr(High(Int16)))) <= 0)) or (Negative and (PadComp(Str, lpString(IntToStr(Low(Int16)))) <= 0)) then
     Result := ltInt16
-  else if (not Negative) and (PadComp(Str, IntToStr(High(UInt16))) <= 0) then
+  else if (not Negative) and (PadComp(Str, lpString(IntToStr(High(UInt16)))) <= 0) then
     Result := ltUInt16
-  else if ((not Negative) and (PadComp(Str, IntToStr(High(Int32))) <= 0)) or (Negative and (PadComp(Str, IntToStr(Low(Int32))) <= 0)) then
+  else if ((not Negative) and (PadComp(Str, lpString(IntToStr(High(Int32)))) <= 0)) or (Negative and (PadComp(Str, lpString(IntToStr(Low(Int32)))) <= 0)) then
       Result := ltInt32
-  else if (not Negative) and (PadComp(Str, IntToStr(High(UInt32))) <= 0) then
+  else if (not Negative) and (PadComp(Str, lpString(IntToStr(High(UInt32)))) <= 0) then
     Result := ltUInt32
-  else if ((not Negative) and (PadComp(Str, IntToStr(High(Int64))) <= 0)) or (Negative {and (PadComp(Str, IntToStr(Low(Int64))) <= 0)}) then
+  else if ((not Negative) and (PadComp(Str, lpString(IntToStr(High(Int64)))) <= 0)) or (Negative {and (PadComp(Str, lpString(IntToStr(Low(Int64)))) <= 0)}) then
     Result := ltInt64
-  else {if (not Negative) and (PadComp(Str, IntToStr(High(UInt64))) <= 0) then}
+  else {if (not Negative) and (PadComp(Str, lpString(IntToStr(High(UInt64)))) <= 0) then}
     Result := ltUInt64
 end;
 
@@ -590,7 +596,7 @@ end;
 
 function DetermineIntType(i: Int64): ELapeBaseType;
 begin
-  Result := DetermineIntType(IntToStr(i));
+  Result := DetermineIntType(lpString(IntToStr(i)));
 end;
 
 function DetermineIntType(i1, i2: Int64; MinSize: UInt8): ELapeBaseType;
@@ -666,14 +672,14 @@ begin
 
   {$IFDEF Lape_DoubleKeywordsCache}
   for i := High(Lape_KeywordsCache[StrLen][Hash]) downto 0 do
-    if (AnsiCompareStr(Lape_KeywordsCache[StrLen][Hash][i].Keyword, Str) = 0) then
+    if (CompareStr(Lape_KeywordsCache[StrLen][Hash][i].Keyword, Str) = 0) then
     begin
       Token := Lape_KeywordsCache[StrLen][Hash][i].Token;
       Exit(True);
     end;
   {$ELSE}
   for i := High(Lape_KeywordsCache[Hash]) downto 0 do
-    if (AnsiCompareStr(Lape_KeywordsCache[Hash][i].Keyword, b) = 0) then
+    if (CompareStr(Lape_KeywordsCache[Hash][i].Keyword, b) = 0) then
     begin
       Token := Lape_KeywordsCache[Hash][i].Token;
       Exit(True);
@@ -1054,18 +1060,18 @@ function TLapeTokenizerBase.getTokUInt64: UInt64;
       Result := (Result shl 1) + UInt64(Ord(s[i])) - UInt64(Ord('0'));
   end;
 var
-  TokStr: string;
+  TokStr: lpString;
 begin
-  TokStr := StringReplace(getTokString(), '_', '', [rfReplaceAll]);
+  TokStr := StringReplace(getTokString(), lpString('_'), lpString(''), [rfReplaceAll]);
   case FTok of
     tk_typ_Integer_Bin: Result := Bin2Dec(TokStr);
-    else Result := StrToUInt64Def(TokStr, UInt64(-1));
+    else Result := StrToUInt64Def(string(TokStr), UInt64(-1));
   end;
 end;
 
 function TLapeTokenizerBase.getTokFloat: Extended;
 begin
-  Result := StrToFloatDotDef(StringReplace(getTokString(), '_', '', [rfReplaceAll]), -1);
+  Result := StrToFloatDotDef(StringReplace(string(getTokString()), '_', '', [rfReplaceAll]), -1);
 end;
 
 function TLapeTokenizerBase.getTokChar: WideChar;
@@ -1074,7 +1080,7 @@ var
 begin
   Str := getTokString();
   Delete(Str, 1, 1);
-  Result := Chr(StrToIntDef(Str, 0));
+  Result := Chr(StrToIntDef(string(Str), 0));
 end;
 
 function TLapeTokenizerBase.getTokLen: Integer;
@@ -1103,10 +1109,10 @@ begin
     Exit(OverridePos^);
 
   Result.Line := FDocPos.Line + NullPos.Line;
-  if (FDocPos.Col > FTokStart) then
+  if (Integer(FDocPos.Col) > FTokStart) then
     Result.Col := 0
   else
-    Result.Col := FTokStart - FDocPos.Col + NullPos.Col;
+    Result.Col := NullPos.Col + UInt32(FTokStart) - FDocPos.Col;
   if (FFileName <> '') then
     Result.FileName := FFileName
   else
@@ -1293,7 +1299,7 @@ begin
   if (FPos < 0) or (FPos >= FLen) or (FPos + KeyLen - 1 >= FLen) then
     Exit(False);
 
- Result := AnsiSameText(Key, Copy(FDoc, FPos + 1, KeyLen));
+ Result := SameText(Key, Copy(FDoc, FPos + 1, KeyLen));
  if Result then
    FPos := FPos + KeyLen - 1
 end;
@@ -1337,17 +1343,22 @@ begin
     Result := FDoc[FPos + Offset + 1];
 end;
 
-constructor TLapeTokenizerFile.Create(AFileName: lpString = '');
+constructor TLapeTokenizerFile.Create(AFileName: UnicodeString = '');
 var
   StrList: TStringList;
 begin
   StrList := TStringList.Create();
   try
-    StrList.LoadFromFile(AFileName);
-    inherited Create(StrList.Text, AFileName);
+    StrList.LoadFromFile(string(AFileName));
+    inherited Create(lpString(StrList.Text), lpString(AFileName));
   finally
     StrList.Free();
   end;
+end;
+
+constructor TLapeTokenizerFile.Create(AFileName: AnsiString = '');
+begin
+  Create(UnicodeString(AFileName));
 end;
 
 initialization

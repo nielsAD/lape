@@ -1,0 +1,8 @@
+{$assertions on}
+
+var
+  x: array of Integer = [1..3];
+begin
+  Assert(SizeOf(Low(x)) = SizeOf(High(x)));
+end;
+

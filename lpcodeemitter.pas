@@ -257,7 +257,7 @@ var
   i: Integer;
 begin
   for i := 0 to FCodePointers.Count - 1 do
-    if (FCodePointers[i]^ > Pos) then
+    if (Integer(FCodePointers[i]^) > Pos) then
       Inc(FCodePointers[i]^, Offset);
 end;
 
@@ -486,7 +486,7 @@ function TLapeCodeEmitterBase._InitStackLen(Len: TStackOffset; var Offset: Integ
 begin
   Result := _op(ocInitStackLen, Offset, Pos);
   _StackOffset(Len, Offset);
-  IncStack(Len - FStackPos);
+  IncStack(Integer(Len) - FStackPos);
 end;
 
 function TLapeCodeEmitterBase._InitVarLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
@@ -541,7 +541,7 @@ begin
     _StackOffset(ASize, @Size);
     _VarStackOffset(VarStackOffset, @VOffset);
   end;
-  IncStack(-ASize);
+  DecStack(ASize);
   Inc(Offset, SizeOf(TOC_PopStackToVar));
 end;
 

@@ -94,7 +94,7 @@ begin
   with POC_Invoke_Stk_Stk(PtrUInt(Code) + ocSize)^ do
   begin
     _WriteLn('InvokeImportedFunc Stack[StackPos - '+IntToStr(SOffset)+'] Stack[StackPos - '+IntToStr(SOffset)+'] '+IntToStr(ParamSize));
-    _WriteLn('StackInc '+IntToStr(ParamSize - SOffset + StackInc));
+    _WriteLn('StackInc '+IntToStr(ParamSize - SOffset + UInt32(StackInc)));
   end;
   Inc(Code, SizeOf(TOC_Invoke_Stk_Stk) + ocSize);
 end;

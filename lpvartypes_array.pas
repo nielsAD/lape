@@ -31,8 +31,8 @@ type
     procedure VarSetLength(var AVar: Pointer; ALen: Integer); overload; virtual;
     procedure VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
-    procedure RangeCheck(AVar, AIndex: TLapeGlobalVar); virtual;
-    procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil); virtual;
+    procedure RangeCheck(AVar, AIndex: TLapeGlobalVar); overload; virtual;
+    procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
     function EvalRes(Op: EOperator; ARight: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
@@ -147,7 +147,7 @@ begin
   if (Index < 0) then
     Exit;
 
-  Result :=
+  Result := lpString(
     '  function _ElementToString(p: System.Pointer): System.string;'                        + LineEnding +
     '  begin'                                                                               + LineEnding +
     '    Result := System.ToString['+IntToStr(Index)+'](p^);'                               + LineEnding +
@@ -164,7 +164,7 @@ begin
     '    Result := TArrayToString(System._ArrayToString)('                                  + LineEnding +
     '      Param0['+IntToStr(VarLo().AsInteger)+'],'                                        + LineEnding +
     '      _ElementToString, Len, System.SizeOf(Param0[0]));'                               + LineEnding +
-    'end;';
+    'end;');
 end;
 
 function TLapeType_DynArray.VarToString(AVar: Pointer): lpString;
@@ -778,7 +778,7 @@ function TLapeType_StaticArray.getAsString: lpString;
 begin
   if (FAsString = '') and (FBaseType = ltStaticArray) then
   begin
-    FAsString := 'array [' + IntToStr(FRange.Lo) + '..' + IntToStr(FRange.Hi) + ']';
+    FAsString := 'array [' + lpString(IntToStr(FRange.Lo)) + '..' + lpString(IntToStr(FRange.Hi)) + ']';
     if HasType() then
       FAsString := FAsString + ' of ' + FPType.AsString;
   end;
@@ -1045,8 +1045,8 @@ begin
   if UseCompiler and (FCompiler <> nil) then
   begin
     Counter := FCompiler.getTempVar(DetermineIntType(FRange.Lo, FRange.Hi, ltNativeInt), BigLock);
-    LowIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(IntToStr(FRange.Lo)));
-    HighIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(IntToStr(FRange.Hi)));
+    LowIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(lpString(IntToStr(FRange.Lo))));
+    HighIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(lpString(IntToStr(FRange.Hi))));
     IndexVar := Counter.VarType.Eval(op_Assign, IndexVar, _ResVar.New(Counter), _ResVar.New(LowIndex), [], Offset, Pos);
     LoopOffset := Offset;
     FCompiler.FinalizeVar(Eval(op_Index, tmpVar, AVar, IndexVar, [], Offset, Pos), Offset, Pos);
@@ -1071,13 +1071,13 @@ end;
 function TLapeType_String.VarToString(AVar: Pointer): lpString;
 begin
   if (FBaseType = ltAnsiString) then
-    Result := '"'+PAnsiString(AVar)^+'"'
+    Result := lpString('"'+PAnsiString(AVar)^+'"')
   else if (FBaseType = ltWideString) then
-    Result := '" '+PWideString(AVar)^+'"'
+    Result := lpString('" '+PWideString(AVar)^+'"')
   else if (FBaseType = ltUnicodeString) then
-    Result := '"'+PUnicodeString(AVar)^+'"'
+    Result := lpString('"'+PUnicodeString(AVar)^+'"')
   else
-    Result := '"'+PlpString(AVar)^+'"';
+    Result := lpString('"'+PlpString(AVar)^+'"');
 end;
 
 procedure TLapeType_String.VarUnique(var AVar: Pointer);
@@ -1202,7 +1202,7 @@ begin
   if (FAsString = '') then
   begin
     FAsString := inherited;
-    FAsString := FAsString + '[' + IntToStr(FRange.Hi) + ']';
+    FAsString := FAsString + '[' + lpString(IntToStr(FRange.Hi)) + ']';
   end;
   Result := inherited;
 end;
@@ -1220,7 +1220,7 @@ end;
 
 function TLapeType_ShortString.VarToString(AVar: Pointer): lpString;
 begin
-  Result := '"'+PShortString(AVar)^+'"';
+  Result := '"'+lpString(PShortString(AVar)^)+'"';
 end;
 
 function TLapeType_ShortString.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
@@ -1236,7 +1236,7 @@ begin
   Result := NewGlobalVarP(nil, AName, ADocPos);
   if (Length(Str) >= FRange.Hi) then
     Delete(Str, FRange.Hi, Length(Str) - FRange.Hi + 1);
-  PShortString(Result.Ptr)^ := Str;
+  PShortString(Result.Ptr)^ := ShortString(Str);
 end;
 
 function TLapeType_ShortString.NewGlobalVar(Str: ShortString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;

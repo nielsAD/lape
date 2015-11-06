@@ -60,7 +60,7 @@ addGlobalFunc('function VarIsNumeric(const V: Variant): EvalBool;', @_LapeVarIsN
 addGlobalFunc('function VarIsStr(const V: Variant): EvalBool;', @_LapeVarIsStr);
 addGlobalFunc('function VarIsArray(const A: Variant; AResolveByRef: EvalBool = True): EvalBool;', @_LapeVarIsArray);
 
-addGlobalFunc('function VarToStr(const V: Variant): AnsiString;', @_LapeVarToStr);
+addGlobalFunc('function VarToStr(const V: Variant): string;', @_LapeVarToStr);
 addGlobalFunc('function VarToStrDef(const V: Variant; ADefault: string): string;', @_LapeVarToStrDef);
 addGlobalFunc('function VarToWideStr(const V: Variant): WideString;', @_LapeVarToWideStr);
 addGlobalFunc('function VarToWideStrDef(const V: Variant; ADefault: WideString): WideString;', @_LapeVarToWideStrDef);

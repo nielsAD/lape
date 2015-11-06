@@ -62,7 +62,7 @@ type
   lpChar = WideChar;
   lpCharInt = UInt16;
   {$ELSE}
-  lpString = ansistring;
+  lpString = AnsiString;
   lpChar = AnsiChar;
   lpCharInt = UInt8;
   {$ENDIF}
@@ -110,10 +110,10 @@ type
     Lo, Hi: Int64;
   end;
 
-  TCodePos = NativeUInt;
+  TCodePos = SizeUInt;
   PCodePos = ^TCodePos;
 
-  TCodeOffset = NativeInt;
+  TCodeOffset = SizeInt;
   PCodeOffset = ^TCodeOffset;
 
   {$IFDEF Lape_SmallCode}
@@ -572,7 +572,7 @@ const
   LapePointerTypes = [ltPointer] + LapeProcTypes + LapeRefTypes;
   LapeStackTypes = LapeOrdinalTypes + LapeRealTypes + LapeSetTypes;
   LapeIfTypes = LapeOrdinalTypes + LapeStringTypes + LapePointerTypes + LapeRealTypes + [ltVariant];
-  LapeNoInitTypes = LapeOrdinalTypes + LapeRealTypes + [ltPointer, ltScriptMethod, ltImportedMethod, ltShortString];
+  LapeNoInitTypes = LapeOrdinalTypes + LapeRealTypes + [ltUnknown, ltPointer, ltScriptMethod, ltImportedMethod, ltShortString];
 
   NullDocPos: TDocPos = (Line: 0; Col: 0; FileName: '');
   NullRange: TLapeRange = (Lo: 0; Hi: -1);
@@ -584,12 +584,14 @@ const
   LabelOperators = CompareOperators;
   EnumOperators = [op_Plus, op_Minus, op_Assign] + CompareOperators;
 
+  OverloadableOperators = [op_Assign, op_Plus, op_Minus, op_Multiply, op_Divide, op_DIV, op_Power, op_MOD, op_IN, op_SHL, op_SHR] + CompareOperators + BinaryOperators; 
+  
   op_str: array[EOperator] of lpString = ('',
     '=', '>', '>=', '<', '<=', '<>', '@', 'and', ':=', '^', 'div', '/', '.' , 'in',
     '[', '-', 'mod', '*', 'not', 'or', '+', '**', 'shl', 'shr', 'xor', '-', '+');
   op_name: array[EOperator] of lpString = ('',
-    'EQ', 'GT', 'GTEQ', 'LT', 'LTEQ', 'NEQ', {'ADDR'}'', 'AND', 'ASGN', {'DREF'}'', 'IDIV', 'DIV', {'dot'}'', 'IN',
-    {'index'}'', 'SUB', 'MOD', 'MUL', 'NOT', 'OR', 'ADD', {'power'}'', 'SHL', 'SHR', 'XOR', 'UMIN', {'UPOS'}'');
+    'EQ', 'GT', 'GTEQ', 'LT', 'LTEQ', 'NEQ', 'ADDR', 'AND', 'ASGN', 'DEREF', 'IDIV', 'DIV', 'DOT',
+    'IN', 'IDX', 'SUB', 'MOD', 'MUL', 'NOT', 'OR', 'ADD', 'POW', 'SHL', 'SHR', 'XOR', 'UMIN', 'UPOS');
 
 var
   lowUInt8: UInt8 = Low(UInt8);    highUInt8: UInt8 = High(UInt8);
@@ -652,6 +654,7 @@ implementation
 
 uses
   typinfo, variants,
+  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpexceptions;
 
 function LapeCase(const Str: lpString): lpString;
@@ -708,13 +711,13 @@ end;
 
 function LapeTypeToString(Token: ELapeBaseType): lpString;
 begin
-  Result := getEnumName(TypeInfo(ELapeBaseType), Ord(Token));
+  Result := lpString(getEnumName(TypeInfo(ELapeBaseType), Ord(Token)));
   Delete(Result, 1, 2);
 end;
 
 function LapeOperatorToString(Token: EOperator): lpString;
 begin
-  Result := getEnumName(TypeInfo(EOperator), Ord(Token));
+  Result := lpString(getEnumName(TypeInfo(EOperator), Ord(Token)));
   Delete(Result, 1, 3);
 end;
 
@@ -723,18 +726,18 @@ begin
   if ((p = nil) or (PPointer(p)^ = nil)) then
     Result := 'nil'
   else
-    Result := '0x'+IntToHex(PtrUInt(p^), 1);
+    Result := lpString('0x'+IntToHex(PtrUInt(p^), 1));
 end;
 
 {$IFDEF DoUIntToStr}
 function UIntToStr(i: UInt32): lpString; inline; overload;
 begin
-  Result := IntToStr(i);
+  Result := lpString(IntToStr(i));
 end;
 
 function UIntToStr(i: UInt64): lpString; inline; overload;
 begin
-  Result := IntToStr(i);
+  Result := lpString(IntToStr(i));
 end;
 {$ENDIF}
 
@@ -795,28 +798,28 @@ begin
   case Result.VType of
     vtExtended:
       begin
-        Container.CExtended := Container.CVar;
+        Container.CExtended := Extended(Container.CVar);
         Result.VExtended := @Container.CExtended;
       end;
     vtString:
       begin
-        Container.CShortString := Container.CVar;
+        Container.CShortString := ShortString(Container.CVar);
         Result.VString := @Container.CShortString;
       end;
     vtCurrency:
       begin
-        Container.CCurrency := Container.CVar;
+        Container.CCurrency := Currency(Container.CVar);
         Result.VCurrency := @Container.CCurrency;
       end;
     vtInt64:
       begin
-        Container.CInt64 := Container.CVar;
+        Container.CInt64 := Int64(Container.CVar);
         Result.VInt64 := @Container.CInt64;
       end;
     {$IFDEF FPC}
     vtQWord:
       begin
-        Container.CQWord := Container.CVar;
+        Container.CQWord := QWord(Container.CVar);
         Result.VQWord := @Container.CQWord;
       end;
     {$ENDIF}
@@ -1267,7 +1270,7 @@ begin
     end;
   end
   else
-    LapeExceptionFmt(lpeInvalidIndex, [IntToStr(Index)]);
+    LapeExceptionFmt(lpeInvalidIndex, [lpString(IntToStr(Index))]);
 end;
 
 constructor TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.Create(InvalidValue: _T; ADuplicates: TDuplicates; ASort: Boolean);
@@ -1348,7 +1351,7 @@ begin
     end;
   end
   else
-    LapeExceptionFmt(lpeInvalidIndex, [IntToStr(Index)]);
+    LapeExceptionFmt(lpeInvalidIndex, [lpString(IntToStr(Index))]);
 end;
 
 function TLapeList{$IFNDEF FPC}<_T>{$ENDIF}.DeleteItem(Item: _T): _T;
@@ -1892,16 +1895,21 @@ begin
 end;
 
 procedure TLapeDeclarationList.Clear;
+var
+  i: Integer;
 begin
   if (FList <> nil) then
   begin
     if FreeDecls then
+    begin
       ClearSubDeclarations();
-    while (FList.Count > 0) do
-      if (FList[0] = nil) or (not FreeDecls) then
-        FList.Delete(0)
-      else
-        FList[0].Free();
+      for i := FList.Count - 1 downto 0 do
+        if (FList[i] <> nil) then
+        begin
+          FList[i].FList := nil;
+          FList[i].Free();
+        end;
+    end;
     FList.Clear();
   end;
 end;

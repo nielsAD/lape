@@ -24,8 +24,10 @@ type
 
   TLapeType_Record = class(TLapeType)
   protected
+    FAlignment: UInt16;
     FFieldMap: TRecordFieldMap;
     function getAsString: lpString; override;
+    function getSize: Integer; override;
   public
     FreeFieldMap: Boolean;
 
@@ -35,7 +37,7 @@ type
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
     procedure ClearCache; override;
-    procedure addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1); virtual;
+    procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -50,6 +52,7 @@ type
     procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); override;
 
     property FieldMap: TRecordFieldMap read FFieldMap;
+    property Alignment: UInt16 read FAlignment;
   end;
 
   TLapeType_Union = class(TLapeType_Record)
@@ -57,27 +60,14 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); override;
-    procedure addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1); override;
-  end;
-
-  TLapeType_SetterMethod = class(TLapeType)
-  protected
-    FMethod: TLapeType_Method;
-    FVarType: TLapeType;
-  public
-    constructor Create(AMethod: TLapeType_Method; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
-
-    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
-
-    property Method: TLapeType_Method read FMethod;
+    procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); override;
   end;
 
 implementation
 
 uses
-  lpparser, lpeval, lpexceptions;
+  Math,
+  lpvartypes_array, lpparser, lpeval, lpexceptions;
 
 function TLapeType_Record.getAsString: lpString;
 var
@@ -87,10 +77,15 @@ begin
   begin
     FAsString := 'record ';
     for i := 0 to FFieldMap.Count - 1 do
-      FAsString := FAsString + '[' + IntToStr(FFieldMap.ItemsI[i].Offset) + ']' + FFieldMap.ItemsI[i].FieldType.AsString + '; ';
+      FAsString := FAsString + '[' + lpString(IntToStr(FFieldMap.ItemsI[i].Offset)) + ']' + FFieldMap.ItemsI[i].FieldType.AsString + '; ';
     FAsString := FAsString + 'end';
   end;
   Result := inherited;
+end;
+
+function TLapeType_Record.getSize: Integer;
+begin
+  Result := (inherited + (FAlignment - 1)) and not (FAlignment - 1);
 end;
 
 constructor TLapeType_Record.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil);
@@ -104,6 +99,7 @@ begin
   if (AFieldMap = nil) then
     AFieldMap := TRecordFieldMap.Create(InvalidRec, dupError, False);
   FFieldMap := AFieldMap;
+  FAlignment := 1;
 end;
 
 destructor TLapeType_Record.Destroy;
@@ -118,21 +114,59 @@ begin
   FAsString := '';
 end;
 
-procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1);
+procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1);
+
+  //http://docwiki.embarcadero.com/RADStudio/en/Internal_Data_Formats#Record_Types
+  function AlignmentMask(Typ: TLapeType): UInt16;
+  begin
+    if (Typ = nil) then
+      Exit(AAlignment);
+
+    if Typ.IsOrdinal() or (Typ.BaseType in LapePointerTypes) then
+      Result := Typ.Size
+    else
+    case Typ.BaseType of
+      ltLargeSet:    Result := SizeOf(UInt8);
+      ltExtended:    Result := SizeOf(Extended) and (SizeOf(Double) or (2*SizeOf(Double)));
+      ltShortString,
+      ltStaticArray: Result := AlignmentMask(TLapeType_StaticArray(Typ).PType);
+      ltRecord:      Result := TLapeType_Record(Typ).Alignment;
+      ltSingle,
+      ltDouble,
+      ltSmallSet:    Result := Typ.Size;
+      else
+        Result := AAlignment;
+    end;
+
+    if (Result < 1) then
+      Result := 1;
+  end;
+
 var
   Field: TRecordField;
+  FieldSize: Integer;
 begin
   if (FSize < 0) or (FFieldMap.Count < 1) then
     FSize := 0;
   if (FInit = bUnknown) or (FFieldMap.Count < 1) then
     FInit := bFalse;
-
-  Field.Offset := FSize;
-  Field.FieldType := FieldType;
   if FFieldMap.ExistsKey(AName) then
     LapeExceptionFmt(lpeDuplicateDeclaration, [AName]);
 
-  FSize := FSize + FieldType.Size + (FieldType.Size mod Alignment);
+  FieldSize := FieldType.Size;
+  if (FSize > 0) and (AAlignment > 1) then
+  begin
+    AAlignment := Min(AAlignment, AlignmentMask(FieldType));
+    FAlignment := Max(FAlignment, AAlignment);
+
+    Dec(AAlignment);
+    FSize := (FSize + AAlignment) and not AAlignment;
+  end;
+
+  Field.Offset := FSize;
+  Field.FieldType := FieldType;
+
+  FSize := FSize + FieldSize;
   if (FInit <> bTrue) and FieldType.NeedInitialization then
     FInit := bTrue;
   FFieldMap[AName] := Field;
@@ -165,7 +199,7 @@ begin
     begin
       if (i > 0) then
         Result := Result + ' + ' + #39', '#39;
-      if (ToStr <> nil) and (ToStr.getMethod(getTypeArray(FieldType)) <> nil) then
+      if (ToStr <> nil) and (ToStr.getMethod(getTypeArray([FieldType])) <> nil) then
         Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(Param0.' + FFieldMap.Key[i] + ')';
     end;
   Result := Result + ' + '#39'}'#39'; end;';
@@ -203,6 +237,7 @@ begin
     TypeID := Self.TypeID;
     FInit := Self.FInit;
     FSize := Self.FSize;
+    FAlignment := Self.FAlignment;
   end;
 end;
 
@@ -320,6 +355,7 @@ begin
       begin
         Right.VarType := Left.VarType;
         Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, [], Offset, Pos);
+        Result.VarType := Self;
       end
       else
       begin
@@ -416,24 +452,25 @@ constructor TLapeType_Union.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRec
 begin
   inherited;
   FBaseType := ltUnion;
+  FInit := bFalse;
 end;
 
-procedure TLapeType_Union.addField(FieldType: TLapeType; AName: lpString; Alignment: Byte = 1);
+procedure TLapeType_Union.addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1);
 var
   Field: TRecordField;
   FieldSize: Integer;
 begin
   if (FSize < 0) or (FFieldMap.Count < 1) then
     FSize := 0;
-  if (FInit = bUnknown) or (FFieldMap.Count < 1) then
-    FInit := bFalse;
+  if (FieldType = nil) or FieldType.NeedInitialization or FieldType.NeedFinalization then
+    LapeException(lpeInvalidUnionType);
 
   Field.Offset := 0;
   Field.FieldType := FieldType;
   if FFieldMap.ExistsKey(AName) then
     LapeExceptionFmt(lpeDuplicateDeclaration, [AName]);
 
-  FieldSize := FieldType.Size + (FieldType.Size mod Alignment);
+  FieldSize := FieldType.Size;
   if (FieldSize > FSize) then
     FSize := FieldSize;
   if (FInit <> bTrue) and FieldType.NeedInitialization then
@@ -441,52 +478,6 @@ begin
   FFieldMap[AName] := Field;
 
   ClearCache();
-end;
-
-constructor TLapeType_SetterMethod.Create(AMethod: TLapeType_Method; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
-begin
-  Assert(AMethod <> nil);
-  inherited Create(ltUnknown, ACompiler, AName, ADocPos);
-
-  FMethod := AMethod;
-  FVarType := AMethod.Params[0].VarType;
-end;
-
-function TLapeType_SetterMethod.CreateCopy(DeepCopy: Boolean = False): TLapeType;
-type
-  TLapeClassType = class of TLapeType_SetterMethod;
-begin
-  Result := TLapeClassType(Self.ClassType).Create(FMethod, FCompiler, Name, @_DocPos);
-  Result.inheritManagedDecls(Self, not DeepCopy);
-  Result.TypeID := TypeID;
-end;
-
-function TLapeType_SetterMethod.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
-begin
-  if (op = op_Assign) and (Right <> nil) and (FVarType <> nil) and FVarType.CompatibleWith(Right) then
-    Result := FVarType
-  else
-    Result := inherited;
-end;
-
-function TLapeType_SetterMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
-begin
-  if (op = op_Assign) then
-  begin
-    Dest := NullResVar;
-    if (Left.VarType = Self) then
-      Left.VarType := FMethod;
-
-    with TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Left.IncLock(), FCompiler, @_DocPos), FCompiler, @_DocPos) do
-    try
-      addParam(TLapeTree_ResVar.Create(Right.IncLock(), FCompiler, @_DocPos));
-      Compile(Offset).Spill(1);
-    finally
-      Free();
-    end;
-  end
-  else
-    Result := inherited;
 end;
 
 end.

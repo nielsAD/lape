@@ -1,0 +1,17 @@
+function FuncA(a: UInt8): AnsiChar;
+begin
+  Result := AnsiChar(a);
+end;
+
+function FuncB(b: string): string;
+begin
+  Result := 'funcB: ' + b;
+end;
+
+var
+  s: string := FuncA(95);
+begin
+  FuncB(s);
+  FuncB(string(FuncA(95)));
+  FuncB(FuncA(95));
+end;

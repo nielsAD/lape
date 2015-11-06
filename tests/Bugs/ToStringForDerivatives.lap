@@ -1,0 +1,32 @@
+type
+  TAliasedDouble = double;
+  TCustomDouble  = type double;
+  TCustomDouble2 = type double;
+
+function ToString(constref d: TAliasedDouble): string; override;
+begin
+  Result := 'a' + inherited();
+end;
+
+function ToString(constref d: TCustomDouble): string; override;
+begin
+  Result := 'c' + inherited();
+end;
+
+function ToString(constref d: TCustomDouble2): string; override;
+begin
+  Result := 'd' + inherited();
+end;
+
+var
+  a: Double = 12;
+  b: TAliasedDouble = 34;
+  c: TCustomDouble  = 56;
+  d: TCustomDouble2 = 78;
+begin
+  WriteLn(a);
+  WriteLn(b);
+  WriteLn(c);
+  WriteLn(d);
+end;
+

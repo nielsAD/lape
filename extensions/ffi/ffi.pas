@@ -21,14 +21,21 @@
 
 (*
   Features:
-      - Experimental support for ffi_call, ffi_prep_cif, ffi_prep_closure,
-        ffi_prep_closure_loc.
-      - All the requires types have been ported to their FPC equivalent;
+      - Supporting ffi_call, ffi_prep_cif, ffi_prep_closure, ffi_prep_closure_loc.
+      - All the requires types have been ported to their Pascal equivalent;
         TFFIClosure however requires some extra additions per architecture.
 *)
 unit ffi;
 
-{$mode objfpc}{$H+}
+{$IFDEF FPC}
+  {$MODE objfpc}{$H+}
+{$ELSE}
+  {$IFDEF WIN64}
+    {$DEFINE CPU64}
+  {$ELSE}
+    {$DEFINE CPU32}
+  {$ENDIF}
+{$ENDIF}
 
 {.$DEFINE StaticFFI}  //Link at compile time into the executable
 {$DEFINE DynamicFFI}  //Load library dynamically, use AssertFFILoaded() to check
@@ -42,7 +49,7 @@ interface
   {$LINKLIB libffi}
   {$UNDEF DynamicFFI}
 
-  {$IFDEF WINDOWS}
+  {$IFDEF MSWINDOWS}
     {$LINKLIB libgcc}
     {$LINKLIB libmsvcrt}
     {$LINKLIB libkernel32}
@@ -50,7 +57,11 @@ interface
 {$ENDIF}
 
 uses
-  ctypes, dynlibs;
+{$IFDEF FPC}
+  ctypes, dynlibs
+{$ELSE}
+  Windows
+{$ENDIF};
 
 (*
 TODO:
@@ -58,6 +69,35 @@ TODO:
   -  Mac compat.
   -  Test architectures.
 *)
+
+{$IFNDEF FPC}
+type
+  PtrInt  = NativeInt;
+  PtrUInt = NativeUInt;
+
+  cuint8      = Byte;
+  cint8       = SmallInt;
+  cuint16     = Word;
+  cint16      = ShortInt;
+  cuint32     = LongWord;
+  cint32      = LongInt;
+  cuint64     = UInt64;
+  cint64      = Int64;
+  cfloat      = Single;
+  cdouble     = Double;
+  clongdouble = Extended;
+  cchar       = cuint8;
+  cushort     = cuint16;
+  cuint       = cuint32;
+  csize_t     = NativeInt;
+  cunsigned   = NativeUInt;
+
+  TLibHandle  = THandle;
+
+const
+  NilHandle    = 0;
+  SharedSuffix = {$IFDEF MSWINDOWS}'dll'{$ELSE}'so'{$ENDIF};
+{$ENDIF}
 
 const
   LibFFI = 'libffi.' + SharedSuffix;
@@ -78,13 +118,8 @@ type
       FFI_THISCALL,
       FFI_FASTCALL,
       FFI_STDCALL,
-      FFI_LAST_ABI,
-
-      {$IFDEF CPU32}
-        FFI_DEFAULT_ABI := FFI_FASTCALL
-      {$ELSE}
-        FFI_DEFAULT_ABI := FFI_UNIX64
-      {$ENDIF}
+      FFI_PASCAL,
+      FFI_REGISTER
     {$ENDIF}
 
     {$IFDEF MSWINDOWS}
@@ -94,16 +129,18 @@ type
         FFI_THISCALL,
         FFI_FASTCALL,
         FFI_MS_CDECL,
-        FFI_LAST_ABI,
-        FFI_DEFAULT_ABI := FFI_FASTCALL
+        FFI_PASCAL,
+        FFI_REGISTER
       {$ELSE}
-        FFI_WIN64,
-        FFI_LAST_ABI,
-        FFI_DEFAULT_ABI := FFI_WIN64
+        FFI_WIN64
       {$ENDIF}
     {$ENDIF}
   );
 
+const
+  FFI_DEFAULT_ABI = {$IFDEF CPU32}FFI_REGISTER{$ELSE}{$IFDEF LINUX}FFI_UNIX64{$ELSE}FFI_WIN64{$ENDIF}{$ENDIF};
+
+type
   TFFI_CTYPE = (
     FFI_CTYPE_VOID = 0,
     FFI_CTYPE_INT,
@@ -119,8 +156,7 @@ type
     FFI_CTYPE_UINT64,
     FFI_CTYPE_SINT64,
     FFI_CTYPE_STRUCT,
-    FFI_CTYPE_POINTER,
-    FFI_CTYPE_LAST := FFI_CTYPE_POINTER
+    FFI_CTYPE_POINTER
   );
 
   PFFIType = ^TFFIType;
@@ -142,14 +178,11 @@ type
     rtype: PFFIType;
     bytes: cunsigned;
     flags: cunsigned;
-    {$IFDEF FFI_EXTRA_FIELDS}
-    // TODO
-    {$ENDIF}
   end;
 
 const
   FFI_TRAMPOLINE_SIZE =
-    {$IFDEF WINDOWS}{$IFDEF CPU32}52{$ELSE}29{$ENDIF}{$ENDIF}
+    {$IFDEF MSWINDOWS}{$IFDEF CPU32}52{$ELSE}29{$ENDIF}{$ENDIF}
     {$IFDEF LINUX}{$IFDEF CPU32}10{$ELSE}24{$ENDIF}{$ENDIF};
 
 type
@@ -236,7 +269,7 @@ procedure UnloadFFI;
 implementation
 
 uses
-  sysutils;
+  SysUtils;
 
 function FFILoaded: Boolean;
 begin
@@ -263,7 +296,7 @@ end;
 
 {$IFNDEF StaticFFI}
 type
-  generic TFFIBaseType<_T> = class
+  {$IFDEF FPC}generic{$ENDIF} TFFIBaseType<_T> = class
   public type
     TAlignStruct = record
       c: cchar;
@@ -274,27 +307,27 @@ type
     class function getFFIType(FFI_CType: TFFI_CTYPE = FFI_CTYPE_VOID): TFFIType;
   end;
 
-  TFFIBaseType_UInt8      = specialize TFFIBaseType<cuint8>;
-  TFFIBaseType_SInt8      = specialize TFFIBaseType<cint8>;
-  TFFIBaseType_UInt16     = specialize TFFIBaseType<cuint16>;
-  TFFIBaseType_SInt16     = specialize TFFIBaseType<cint16>;
-  TFFIBaseType_UInt32     = specialize TFFIBaseType<cuint32>;
-  TFFIBaseType_SInt32     = specialize TFFIBaseType<cint32>;
-  TFFIBaseType_UInt64     = specialize TFFIBaseType<cuint64>;
-  TFFIBaseType_SInt64     = specialize TFFIBaseType<cint64>;
-  TFFIBaseType_Float      = specialize TFFIBaseType<cfloat>;
-  TFFIBaseType_Double     = specialize TFFIBaseType<cdouble>;
-  TFFIBaseType_LongDouble = specialize TFFIBaseType<clongdouble>;
-  TFFIBaseType_Pointer    = specialize TFFIBaseType<Pointer>;
+  TFFIBaseType_UInt8      = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cuint8>;
+  TFFIBaseType_SInt8      = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cint8>;
+  TFFIBaseType_UInt16     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cuint16>;
+  TFFIBaseType_SInt16     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cint16>;
+  TFFIBaseType_UInt32     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cuint32>;
+  TFFIBaseType_SInt32     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cint32>;
+  TFFIBaseType_UInt64     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cuint64>;
+  TFFIBaseType_SInt64     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cint64>;
+  TFFIBaseType_Float      = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cfloat>;
+  TFFIBaseType_Double     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cdouble>;
+  TFFIBaseType_LongDouble = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<clongdouble>;
+  TFFIBaseType_Pointer    = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<Pointer>;
 
-class function TFFIBaseType.getOffset: Integer;
+class function TFFIBaseType{$IFNDEF FPC}<_T>{$ENDIF}.getOffset: Integer;
 var
   t: TAlignStruct;
 begin
   Result := PtrUInt(@t.x) - PtrUInt(@t.c);
 end;
 
-class function TFFIBaseType.getFFIType(FFI_CType: TFFI_CTYPE = FFI_CTYPE_VOID): TFFIType;
+class function TFFIBaseType{$IFNDEF FPC}<_T>{$ENDIF}.getFFIType(FFI_CType: TFFI_CTYPE = FFI_CTYPE_VOID): TFFIType;
 begin
   with Result do
   begin
@@ -307,20 +340,34 @@ end;
 {$ENDIF}
 
 {$IFDEF DynamicFFI}
+{$IF NOT(DECLARED(GetProcedureAddress)) AND DECLARED(GetProcAddress)}
+function GetProcedureAddress(Handle: TLibHandle; Name: PWideChar): FARPROC;
+begin
+  Result := GetProcAddress(Handle, Name);
+end;
+{$IFEND}
+
+{$IF NOT(DECLARED(UnloadLibrary)) AND DECLARED(FreeLibrary)}
+function UnloadLibrary(Handle: TLibHandle): LongBool;
+begin
+  Result := FreeLibrary(Handle);
+end;
+{$IFEND}
+
 procedure LoadFFI(LibPath: string = ''; LibName: string = LibFFI);
 begin
   UnloadFFI();
   if (LibPath <> '') then
     LibPath := IncludeTrailingPathDelimiter(LibPath);
-  ffi_libhandle := LoadLibrary(LibPath + LibName);
+  ffi_libhandle := LoadLibrary(PChar(LibPath + LibName));
 
   if FFILoaded() then
   begin
-    Pointer(ffi_prep_cif) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_cif');
-    Pointer(ffi_call) := GetProcedureAddress(ffi_libhandle, 'ffi_call');
-    Pointer(ffi_closure_alloc) := GetProcedureAddress(ffi_libhandle, 'ffi_closure_alloc');
-    Pointer(ffi_closure_free) := GetProcedureAddress(ffi_libhandle, 'ffi_closure_free');
-    Pointer(ffi_prep_closure_loc) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_closure_loc');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_cif)         := GetProcedureAddress(ffi_libhandle, 'ffi_prep_cif');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_call)             := GetProcedureAddress(ffi_libhandle, 'ffi_call');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_alloc)    := GetProcedureAddress(ffi_libhandle, 'ffi_closure_alloc');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_free)     := GetProcedureAddress(ffi_libhandle, 'ffi_closure_free');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_closure_loc) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_closure_loc');
   end;
 end;
 
@@ -331,11 +378,11 @@ begin
     begin
       ffi_libhandle := NilHandle;
 
-      Pointer(ffi_prep_cif) := nil;
-      Pointer(ffi_call) := nil;
-      Pointer(ffi_closure_alloc) := nil;
-      Pointer(ffi_closure_free) := nil;
-      Pointer(ffi_prep_closure_loc) := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_cif)         := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_call)             := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_alloc)    := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_free)     := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_closure_loc) := nil;
     end;
 end;
 {$ENDIF}
@@ -344,10 +391,10 @@ initialization
   {$IFDEF DynamicFFI}
   LoadFFI();
   {$ELSE}
-  ffi_prep_cif := @_ffi_prep_cif;
-  ffi_call := @_ffi_call;
-  ffi_closure_alloc := @_ffi_closure_alloc;
-  ffi_closure_free := @_ffi_closure_free;
+  ffi_prep_cif         := @_ffi_prep_cif;
+  ffi_call             := @_ffi_call;
+  ffi_closure_alloc    := @_ffi_closure_alloc;
+  ffi_closure_free     := @_ffi_closure_free;
   ffi_prep_closure_loc := @_ffi_prep_closure_loc;
   {$ENDIF}
 
