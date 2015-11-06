@@ -2708,7 +2708,6 @@ begin
   Result := TLapeTree_For.Create(Self, getPDocPos());
 
   try
-
     if (lcoLooseSyntax in FOptions) and isNext([tk_kw_Var]) then
       with ParseVarBlock(True, [tk_kw_To, tk_kw_DownTo]) do
       try
@@ -2731,12 +2730,16 @@ begin
       end
     else
     begin
-      Result.Counter := ParseExpression();
-      Expect([tk_kw_To, tk_kw_DownTo], False, True);
+      Result.Counter := ParseExpression([tk_op_In]);
+      Expect([tk_op_In, tk_kw_To, tk_kw_DownTo], False, True);
     end;
-
-    if (Tokenizer.LastTok = tk_kw_DownTo) then
-      Result.WalkDown := True;
+    
+    case Tokenizer.LastTok of
+      tk_kw_DownTo: Result.LoopType := lptypes.loopDown;
+      tk_kw_To    : Result.LoopType := lptypes.loopUp;
+      tk_op_In    : Result.LoopType := lptypes.loopOver;
+    end;
+    
     Result.Limit := ParseExpression([], False);
 
     Expect([tk_kw_With, tk_kw_Do], False, False);

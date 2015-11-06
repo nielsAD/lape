@@ -1,0 +1,90 @@
+program new;
+{$assertions ON}
+{$define SILENT}
+
+procedure SilentWrite(str:String);
+begin
+  {$ifndef SILENT}
+  WriteLn(str);
+  {$ENDIF}
+end;
+
+
+var item:Int32;
+
+
+//============================================================================\\
+const staticArr: Array [3..7] of Int32 = [0,1,2,3,4];
+begin
+  SilentWrite('-----| static array |-----------------');
+  for item in staticArr do
+    SilentWrite('>>> ' + ToString(item));
+  Assert(item = staticArr[High(staticArr)]);
+end;
+
+
+//============================================================================\\
+var dynArr:Array of Int32 = [5..9];
+begin
+  SilentWrite('-----| dynamic array |----------------');
+  for item in dynArr do
+    SilentWrite('>>> ' + ToString(item));
+  Assert(item = dynArr[High(dynArr)]);
+end;
+
+
+//============================================================================\\
+begin
+  SilentWrite('-----| const static array |-----------');
+  for item in [1,2,3,4,5] do
+    SilentWrite('>>> '+ ToString(item));
+  Assert(item = 5);
+end;
+
+
+//============================================================================\\
+var
+  c:Char;
+  sstr:ShortString = 'shortstr';
+begin
+  SilentWrite('-----| shortstr  |---------------------');
+  for c in sstr do
+    SilentWrite('>>> ' + c);
+  Assert(c = 'r');
+end;
+
+
+//============================================================================\\
+var
+  ch:Char;
+  str:String = 'string';
+begin
+  SilentWrite('-----| string  |----------------------');
+  for ch in str do
+    SilentWrite('>>> ' + ch);
+  Assert(ch = 'g');
+end;
+
+
+//============================================================================\\
+var evalCount:Int32=0;
+function SideEffect(): Array of Int32;
+begin
+  Inc(evalCount);
+  Result := [5,4,3,2,1,0];
+end;
+
+begin
+  SilentWrite('-----| side effect |-----------');
+  for item in SideEffect() do
+    SilentWrite('>>> ' + ToString(item));
+  SilentWrite('SideEffect: ' + ToString(evalCount));
+  Assert(evalCount = 1);
+end;
+
+
+
+
+
+
+
