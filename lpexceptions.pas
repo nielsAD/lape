@@ -31,6 +31,7 @@ const
   lpeCannotEvalRunTime = 'Cannot be evaluated at runtime';
   lpeCannotInvoke = 'Cannot invoke identifier';
   lpeCannotOverload = 'Cannot overload function';
+  lpeCannotOverloadOperator = 'Cannot overload operator "%s"';
   lpeClosingParenthesisExpected = 'Closing parenthesis expected';
   lpeConditionalNotClosed = 'Conditional statement not properly closed';
   lpeConstantExpected = 'Constant expression expected';
@@ -57,6 +58,7 @@ const
   lpeInvalidIndex = 'Invalid index "%s"';
   lpeInvalidIterator = 'Variable cannot be used for iteration';
   lpeInvalidJump = 'Invalid jump';
+  lpeInvalidOperator = 'Operator "%s" expects %d parameters';
   lpeInvalidRange = 'Expression is not a valid range';
   lpeInvalidUnionType = 'Invalid union type';
   lpeInvalidValueForType = 'Invalid value for type "%s"';

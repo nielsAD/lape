@@ -222,6 +222,11 @@ type
   public
     function Compile(var Offset: Integer): TResVar; override;
   end;
+  
+  TLapeTree_InternalMethod_Operator = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce;
+  end;
 
   TLapeTree_InternalMethod_Exit = class(TLapeTree_InternalMethod)
   public
@@ -238,7 +243,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
-
+  
   TLapeTree_InternalMethod_Dispose = class(TLapeTree_InternalMethod)
   public
     FunctionOnly: Boolean;
@@ -2616,6 +2621,11 @@ begin
       LapeException(lpeCannotContinue, DocPos);
 end;
 
+constructor TLapeTree_InternalMethod_Operator.Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited Create('!op_'+op_name[AOperator], ACompiler, ADocPos);
+end;
+
 function TLapeTree_InternalMethod_Exit.Compile(var Offset: Integer): TResVar;
 var
   Node: TLapeTree_Base;
@@ -4215,9 +4225,9 @@ end;
 
 function TLapeTree_Operator.resType(Restructure: Boolean): TLapeType;
 var
-  LeftType, RightType: TLapeType;
+  LeftType, RightType, tmpRes: TLapeType;
   tmpLeft: TLapeTree_ExprBase;
-  ResVar: TResVar;
+  tmpVar, ResVar: TResVar;
 begin
   if (FResType = nil) then
     try
@@ -4253,7 +4263,7 @@ begin
         FRestructure := bTrue;
         if (Result = nil) then
           Result := FCompiler.getBaseType(ltEvalBool);
-      end
+      end 
       else
         FRestructure := bFalse;
     finally
@@ -4262,6 +4272,24 @@ begin
 
   Result := inherited resType();
 
+  if (FResType = nil) and (FLeft <> nil) and (FRight <> nil) and (LeftType.BaseType <> ltUnknown) and
+     (FOperatorType in OverloadableOperators) then
+  begin
+    with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, nil) do
+    try
+      tmpVar := NullResVar;
+      tmpVar.VarType := LeftType;
+      addParam(TLapeTree_ResVar.Create(tmpVar, FCompiler, nil));
+      tmpVar.VarType := RightType;
+      addParam(TLapeTree_ResVar.Create(tmpVar, FCompiler, nil));
+      tmpRes := resType();
+      if tmpRes <> nil then Result := tmpRes;
+    finally
+      Free();
+      FResType := Result;
+    end;
+  end;
+  
   if Restructure and (FRestructure = bTrue) then
   begin
     FRestructure := bFalse;

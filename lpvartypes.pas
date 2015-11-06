@@ -341,7 +341,8 @@ type
     FreeParams: Boolean;
     ImplicitParams: Integer;
     Res: TLapeType;
-
+    IsOperator: Boolean;
+    
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
@@ -688,7 +689,7 @@ implementation
 uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_array,
-  lpexceptions, lpeval, lpinterpreter;
+  lpexceptions, lpeval, lpinterpreter, lptree;
 
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 var
@@ -1776,6 +1777,20 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
     end;
   end;
 
+  function TryOperatorOverload(): TResVar;
+  begin
+    Result := NullResVar;
+    if (op in OverloadableOperators) and Right.HasType() and Left.HasType() and (not(op in UnaryOperators)) then
+      with TLapeTree_InternalMethod_Operator.Create(op, FCompiler, Pos) do
+      try
+        addParam(TLapeTree_ResVar.Create(Left, FCompiler, Pos));
+        addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
+        Result := Compile(Offset);
+      finally 
+        Free();
+      end;
+  end;
+  
 var
   EvalProc: TLapeEvalProc;
 begin
@@ -1808,6 +1823,7 @@ begin
       EvalProc := nil;
 
     if (not Result.HasType()) or (not ValidEvalFunction(EvalProc)) then
+    try
       if (op = op_Dot) and ValidFieldName(Right) then
         Exit(EvalDot(PlpString(Right.VarPos.GlobalVar.Ptr)^))
       else if (op = op_Assign) and Right.HasType() then
@@ -1827,7 +1843,18 @@ begin
         LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
       else
         LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
-
+    except
+      on e: Exception do
+      begin
+        Dest := NullResVar;
+        Result := TryOperatorOverload();
+        if not Result.HasType() then
+          LapeException(e.Message)
+        else 
+          Exit;
+      end;
+    end;
+    
     FCompiler.getDestVar(Dest, Result, op);
 
     if (op = op_Assign) then

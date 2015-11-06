@@ -584,6 +584,8 @@ const
   LabelOperators = CompareOperators;
   EnumOperators = [op_Plus, op_Minus, op_Assign] + CompareOperators;
 
+  OverloadableOperators = [op_Assign, op_Plus, op_Minus, op_Multiply, op_Divide, op_DIV, op_Power, op_MOD, op_IN, op_SHL, op_SHR] + CompareOperators + BinaryOperators; 
+  
   op_str: array[EOperator] of lpString = ('',
     '=', '>', '>=', '<', '<=', '<>', '@', 'and', ':=', '^', 'div', '/', '.' , 'in',
     '[', '-', 'mod', '*', 'not', 'or', '+', '**', 'shl', 'shr', 'xor', '-', '+');
