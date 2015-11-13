@@ -432,6 +432,8 @@ begin
     Result := Self
   else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(ARight) then
     Result := Self
+  else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and (ARight <> nil) and (ARight is ClassType) and FPType.Equals(TLapeType_DynArray(ARight).FPType) then
+    Result := Self
   else
     Result := inherited;
 end;
@@ -758,6 +760,38 @@ begin
     IndexVar.Spill(1);
     if wasConstant then
       Result.Writeable := False;
+  end
+  else if (op = op_Plus) and (BaseType = ltDynArray) and CompatibleWith(ARight.VarType) then
+  begin
+    Result := NullResVar;
+    Result.VarType := Self;
+    FCompiler.getDestVar(Dest, Result, op);
+
+    if (Result.VarPos.MemPos = mpStack) then
+    begin
+      tmpVar := FCompiler.getTempVar(Self);
+      Result := _ResVar.New(tmpVar);
+    end;
+
+    wasConstant := not Result.Writeable;
+    if wasConstant then Result.Writeable := True;
+
+    Result := Eval(op_Assign, tmpResVar, Result, ALeft, [], Offset, Pos);
+    with TLapeTree_InternalMethod_Insert.Create(FCompiler, Pos) do
+    try
+      addParam(TLapeTree_ResVar.Create(ARight, FCompiler, Pos));
+      addParam(TLapeTree_ResVar.Create(Result.IncLock(), FCompiler, Pos));
+      Node := TLapeTree_InternalMethod_Length.Create(FCompiler, Pos);
+      TLapeTree_InternalMethod_Length(Node).addParam(
+        TLapeTree_ResVar.Create(Result.IncLock(), FCompiler)
+      );
+      addParam(Node as TLapeTree_ExprBase);
+
+      Compile(Offset);
+    finally
+      Free();
+    end;
+    if wasConstant then Result.Writeable := False;
   end
   else
     Result := inherited;

@@ -1736,7 +1736,6 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
         else
           Res := CastVar.VarType.Eval(op, Dest, CastVar.VarType.Eval(op_Assign, tmpVar, CastVar, Left, [], Offset, Pos), Right, Flags, Offset, Pos);
 
-        Res.CopyFlags(Left);
         Result := True;
       finally
         CastVar.Spill(1);
