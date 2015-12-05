@@ -1179,7 +1179,7 @@ begin
           tk_kw_Label: ParseLabelBlock();
           {$ENDIF}
 
-          else if (lcoLooseSyntax in FOptions) and (not StopAfterBeginEnd) then
+          else if (lcoLooseSyntax in FOptions) and (not StopAfterBeginEnd) and (not (Tokenizer.Tok in ParserToken_BlockEnd)) then
             Statement := ParseStatement(False)
           else
             LapeException(lpeBlockExpected, Tokenizer.DocPos);
