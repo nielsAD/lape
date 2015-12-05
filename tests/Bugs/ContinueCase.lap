@@ -1,0 +1,22 @@
+// Issue SRL/16
+{$assertions on}
+{$continuecase off}
+
+begin
+  for 0 to 0 do
+  begin
+    for 0 to 1 do
+    begin
+      Assert(True);
+      WriteLn('should be called only once');
+      case 1 of
+        1: Continue(2);
+        2: Assert(False);
+        else Assert(False);
+      end;
+      Assert(False);
+    end;
+    Assert(False);
+  end;
+  Assert(True);
+end.

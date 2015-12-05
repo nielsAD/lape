@@ -31,16 +31,19 @@ type
 
   ILapeTree_CanBreak = interface(IInterface)
     ['{F63EF9FB-2DD0-4C2C-B564-1333995EE9AF}']
-    function addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean;
+    function canBreak: Boolean;
+    procedure addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
   end;
 
   ILapeTree_CanContinue = interface(IInterface)
     ['{411AF7EA-9D38-48DE-90E9-362E2D0D09E9}']
-    function addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean;
+    function canContinue: Boolean;
+    procedure addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
   end;
 
   ILapeTree_CanExit = interface(IInterface)
     ['{D1963640-31F9-4BB3-B03E-0F1DB314D98E}']
+    function canExit: Boolean;
     procedure addExitStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
   end;
 
@@ -567,6 +570,8 @@ type
     destructor Destroy; override;
 
     function Compile(var Offset: Integer): TResVar; override;
+
+    function canExit: Boolean; virtual;
     procedure addExitStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
 
     property StackInfo: TLapeStackInfo read FStackInfo;
@@ -677,7 +682,8 @@ type
     function addField(p: TLapeTree_MultiIf): Integer; virtual;
     function Compile(var Offset: Integer): TResVar; override;
 
-    function addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean; virtual;
+    function canContinue: Boolean; virtual;
+    procedure addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
 
     property Condition: TLapeTree_ExprBase read FCondition write setCondition;
     property ElseBody: TLapeTree_Base read FElse write setElse;
@@ -695,8 +701,10 @@ type
     destructor Destroy; override;
     function Compile(var Offset: Integer): TResVar; override;
 
-    function addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean; virtual;
-    function addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean; virtual;
+    function canBreak: Boolean; virtual;
+    function canContinue: Boolean; virtual;
+    procedure addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
+    procedure addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
   end;
 
   TLapeTree_For = class(TLapeTree_While)
@@ -736,8 +744,10 @@ type
     destructor Destroy; override;
     function Compile(var Offset: Integer): TResVar; override;
 
-    function addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean; virtual;
-    function addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean; virtual;
+    function canBreak: Boolean; virtual;
+    function canContinue: Boolean; virtual;
+    procedure addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
+    procedure addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
 
     property Condition: TLapeTree_ExprBase read FCondition write setCondition;
     property Body: TLapeTree_Base read FBody write setBody;
@@ -2525,7 +2535,6 @@ var
 begin
   Result := NullResVar;
   Dest := NullResVar;
-  Node := FParent;
 
   if (not (FParams.Count in [0, 1])) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
@@ -2535,35 +2544,36 @@ begin
   else
     with FParams[0].Evaluate() do
     begin
-      BreakDepth := AsInteger;
       if (not isConstant) then
         LapeException(lpeConstantExpected, FParams[0].DocPos)
       else if (BreakDepth < 1) then
         LapeException(lpeOutOfTypeRange, FParams[0].DocPos);
+      BreakDepth := AsInteger;
     end;
 
-  BreakCount := 1;
+  Node := FParent;
+  FoundNode := nil;
+
+  BreakCount := 0;
   JumpSafe := False;
-  while (Node <> nil) do
+
+  while (Node <> nil) and (BreakCount < BreakDepth) do
   begin
-    if (Node.QueryInterface(ILapeTree_CanBreak, FoundNode) = 0) then
-      if (BreakCount < BreakDepth) or (not FoundNode.addBreakStatement(JumpSafe, Offset, @_DocPos)) then
-        Inc(BreakCount)
-      else
-      begin
-        FoundNode := nil;
-        Break;
-      end
-    else if (Node is TLapeTree_Try) then
+    if (Node.QueryInterface(ILapeTree_CanBreak, FoundNode) = 0) and FoundNode.canBreak() then
+      Inc(BreakCount)
+    else
+      FoundNode := nil;
+    if (Node is TLapeTree_Try) then
       JumpSafe := True;
     Node := Node.Parent;
   end;
 
-  if (Node = nil) then
-    if (BreakCount < BreakDepth) then
-      LapeException(lpeOutOfTypeRange, FParams[0].DocPos)
-    else
-      LapeException(lpeCannotBreak, DocPos);
+  if (BreakCount < BreakDepth) then
+    LapeException(lpeOutOfTypeRange, FParams[0].DocPos)
+  else if (FoundNode = nil) then
+    LapeException(lpeCannotBreak, DocPos)
+  else
+    FoundNode.addBreakStatement(JumpSafe, Offset, @_DocPos);
 end;
 
 function TLapeTree_InternalMethod_Continue.Compile(var Offset: Integer): TResVar;
@@ -2575,7 +2585,6 @@ var
 begin
   Result := NullResVar;
   Dest := NullResVar;
-  Node := FParent;
 
   if (not (FParams.Count in [0, 1])) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
@@ -2585,35 +2594,36 @@ begin
   else
     with FParams[0].Evaluate() do
     begin
-      ContinueDepth := AsInteger;
       if (not isConstant) then
         LapeException(lpeConstantExpected, FParams[0]._DocPos)
       else if (ContinueDepth < 1) then
         LapeException(lpeOutOfTypeRange, FParams[0]._DocPos);
+      ContinueDepth := AsInteger;
     end;
 
-  ContinueCount := 1;
+  Node := FParent;
+  FoundNode := nil;
+
+  ContinueCount := 0;
   JumpSafe := False;
-  while (Node <> nil) do
+
+  while (Node <> nil) and (ContinueCount < ContinueDepth) do
   begin
-    if (Node.QueryInterface(ILapeTree_CanContinue, FoundNode) = 0) then
-      if (ContinueCount < ContinueDepth) or (not FoundNode.addContinueStatement(JumpSafe, Offset, @_DocPos)) then
-        Inc(ContinueCount)
-      else
-      begin
-        FoundNode := nil;
-        Break;
-      end
-    else if (Node is TLapeTree_Try) then
+    if (Node.QueryInterface(ILapeTree_CanContinue, FoundNode) = 0) and FoundNode.canContinue() then
+      Inc(ContinueCount)
+    else
+      FoundNode := nil;
+    if (Node is TLapeTree_Try) then
       JumpSafe := True;
     Node := Node.Parent;
   end;
 
-  if (Node = nil) then
-    if (ContinueCount < ContinueDepth) then
-      LapeException(lpeOutOfTypeRange, FParams[0].DocPos)
-    else
-      LapeException(lpeCannotContinue, DocPos);
+  if (ContinueCount < ContinueDepth) then
+    LapeException(lpeOutOfTypeRange, FParams[0].DocPos)
+  else if (FoundNode = nil) then
+    LapeException(lpeCannotContinue, DocPos)
+  else
+      FoundNode.addContinueStatement(JumpSafe, Offset, @_DocPos);
 end;
 
 function TLapeTree_InternalMethod_Exit.Compile(var Offset: Integer): TResVar;
@@ -2624,7 +2634,6 @@ var
 begin
   Result := NullResVar;
   Dest := NullResVar;
-  Node := FParent;
 
   if (FParams.Count <> 0) then
     if (FParams.Count <> 1) then
@@ -2645,18 +2654,20 @@ begin
       Free();
     end;
 
-  while (Node <> nil) do
+  Node := FParent;
+  FoundNode := nil;
+
+  while (Node <> nil) and (FoundNode = nil) do
   begin
     if (Node.QueryInterface(ILapeTree_CanExit, FoundNode) = 0) then
-    begin
-      FoundNode.addExitStatement(True, Offset, @_DocPos);
-      FoundNode := nil;
-      Break;
-    end;
+      if FoundNode.canExit() then
+        FoundNode.addExitStatement(True, Offset, @_DocPos)
+      else
+        FoundNode := nil;
     Node := Node.Parent;
   end;
 
-  if (Node = nil) then
+  if (FoundNode = nil) then
     FCompiler.Emitter._JmpSafe(EndJump, Offset, @_DocPos);
 end;
 
@@ -4966,6 +4977,11 @@ begin
   end;
 end;
 
+function TLapeTree_method.canExit: Boolean;
+begin
+  Result := True;
+end;
+
 procedure TLapeTree_Method.addExitStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
 begin
   FExitStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset, Pos), Pos, JumpSafe));
@@ -5514,14 +5530,18 @@ begin
   CompileContinue(nil);
 end;
 
-function TLapeTree_Case.addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean;
+function TLapeTree_Case.canContinue: Boolean;
 begin
   Result := lcoContinueCase in CompilerOptions;
-  if Result then
-    if JumpSafe then
-      FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset, Pos), Pos, JumpSafe))
-    else
-      FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset, Pos), Pos, JumpSafe));
+end;
+
+procedure TLapeTree_Case.addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
+begin
+  Assert(lcoContinueCase in CompilerOptions);
+  if JumpSafe then
+    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset, Pos), Pos, JumpSafe))
+  else
+    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset, Pos), Pos, JumpSafe));
 end;
 
 function TLapeTree_While.CompileBody(var Offset: Integer): TResVar;
@@ -5589,22 +5609,30 @@ begin
     end;
 end;
 
-function TLapeTree_While.addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean;
+function TLapeTree_While.canBreak: Boolean;
+begin
+  Result := True;
+end;
+
+function TLapeTree_While.canContinue: Boolean;
+begin
+  Result := True;
+end;
+
+procedure TLapeTree_While.addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
 begin
   if JumpSafe then
     FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset, Pos), Pos, JumpSafe))
   else
     FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset, Pos), Pos, JumpSafe));
-  Result := True;
 end;
 
-function TLapeTree_While.addContinueStatement(JumpSafe: Boolean;var Offset: Integer; Pos: PDocPos = nil): Boolean;
+procedure TLapeTree_While.addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
 begin
   if JumpSafe then
     FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset, Pos), Pos, JumpSafe))
   else
     FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset, Pos), Pos, JumpSafe));
-  Result := True;
 end;
 
 procedure TLapeTree_For.setCounter(Node: TLapeTree_ExprBase);
@@ -5844,22 +5872,30 @@ begin
   ConditionVar.Spill(1);
 end;
 
-function TLapeTree_Repeat.addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean;
+function TLapeTree_Repeat.canBreak: Boolean;
+begin
+  Result := True;
+end;
+
+function TLapeTree_Repeat.canContinue: Boolean;
+begin
+  Result := True;
+end;
+
+procedure TLapeTree_Repeat.addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
 begin
   if JumpSafe then
     FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset, Pos), Pos, JumpSafe))
   else
     FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset, Pos), Pos, JumpSafe));
-  Result := True;
 end;
 
-function TLapeTree_Repeat.addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil): Boolean;
+procedure TLapeTree_Repeat.addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
 begin
   if JumpSafe then
     FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset, Pos), Pos, JumpSafe))
   else
     FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset, Pos), Pos, JumpSafe));
-  Result := True;
 end;
 
 procedure TLapeTree_Try.setBody(Node: TLapeTree_Base);
