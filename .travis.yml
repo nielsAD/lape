@@ -18,6 +18,8 @@ env:
     - LAZ_VER=1.4.4
 
 matrix:
+  allow_failures:
+    - env: LAZ_PKG=true
   include:
     - os: linux
       env: LAZ_VER=1.0.14 LAZ_WINE=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
