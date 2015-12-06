@@ -1544,16 +1544,17 @@ begin
           begin
             if (not TLapeGlobalVar(OldDeclaration).VarType.Equals(Result.Method.VarType, False)) then
               LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
-            Result.FreeStackInfo := False;
-            Result.Free();
 
-            Result := TLapeTree_Method.Create(TLapeGlobalVar(OldDeclaration), FStackInfo, Self, @Pos);
+            Result.Method.Free();
+            Result.Method := TLapeGlobalVar(OldDeclaration);
           end
           else
             LapeExceptionFmt(lpeDuplicateDeclaration, [FuncName], Tokenizer.DocPos);
 
         Result.Method.Name := FuncName;
       end;
+
+      Result.Method.setReadWrite(False, False);
 
       if (Tokenizer.Tok = tk_kw_Forward) then
       begin
@@ -1570,7 +1571,6 @@ begin
         Exit;
       end;
 
-      Result.Method.setReadWrite(False, False);
       if isExternal then
         Exit;
 
