@@ -1,0 +1,3 @@
+[submodule "tests/RunTests/travis-lazarus"]
+	path = tests/RunTests/travis-lazarus
+	url = https://github.com/nielsAD/travis-lazarus.git
