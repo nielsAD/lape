@@ -567,8 +567,13 @@ function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
   var
     i: Integer;
   begin
-    for i := 0 to Size - 1 do
-      Result.addElem(FFIType, i = 0);
+    case Size * FFIType.FTyp.size of
+      SizeOf(UInt8) : Result.Typ := ffi_type_uint8;
+      SizeOf(UInt16): Result.Typ := ffi_type_uint16;
+      SizeOf(UInt32): Result.Typ := ffi_type_uint32;
+      else for i := 0 to Size - 1 do
+        Result.addElem(FFIType, i = 0);
+    end;
   end;
 
   procedure FFIStaticArray(VarType: TLapeType_StaticArray);
@@ -641,20 +646,14 @@ end;
 
 function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
 const
-  PointerIfLarge = [ltStaticArray, ltLargeEnum];
+  PointerIfLarge = [ltStaticArray, ltLargeSet, ltVariant];
 begin
   //http://docwiki.embarcadero.com/RADStudio/en/Program_Control#Register_Convention
   Result :=
     (Param.ParType in Lape_RefParams) or
     (Param.VarType = nil) or
     (Param.VarType.BaseType = ltShortString) or
-    ((Param.VarType.BaseType in PointerIfLarge) and (Param.VarType.Size > SizeOf(Pointer)))
-{$IF DECLARED(FFI_PASCAL) AND DECLARED(FFI_REGISTER)}
-    or ((ABI in [FFI_PASCAL, FFI_REGISTER]) and (
-      (Param.VarType.BaseType = ltVariant) or
-      ((Param.VarType.BaseType in LapeStructTypes) and (Param.VarType.Size > SizeOf(Pointer)))
-    ))
-{$IFEND};
+    ((Param.VarType.BaseType in PointerIfLarge) {and (Param.VarType.Size > SizeOf(Pointer))});
 end;
 
 function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;

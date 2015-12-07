@@ -31,9 +31,9 @@ unit ffi;
   {$MODE objfpc}{$H+}
 {$ELSE}
   {$IFDEF WIN64}
-    {$DEFINE CPU64}
+    {$DEFINE CPUX86_64}
   {$ELSE}
-    {$DEFINE CPU32}
+    {$DEFINE CPU86}
   {$ENDIF}
 {$ENDIF}
 
@@ -62,13 +62,6 @@ uses
 {$ELSE}
   Windows
 {$ENDIF};
-
-(*
-TODO:
-  -  Add ARM compat. Replace cpu32 ifdef's with better ifdefs.
-  -  Mac compat.
-  -  Test architectures.
-*)
 
 {$IFNDEF FPC}
 type
@@ -112,33 +105,52 @@ type
   TFFIABI = (
     FFI_FIRST_ABI = 0,
 
-    {$IFDEF LINUX}
+    {$IFDEF CPU86}
+      {$IFDEF LINUX}
       FFI_SYSV,
-      FFI_UNIX64,
       FFI_THISCALL,
       FFI_FASTCALL,
       FFI_STDCALL,
       FFI_PASCAL,
+      FFI_REGISTER,
+      FFI_MS_CDECL,
+      {$ENDIF}
+      {$IFDEF MSWINDOWS}
+      FFI_SYSV,
+      FFI_STDCALL,
+      FFI_THISCALL,
+      FFI_FASTCALL,
+      FFI_MS_CDECL,
+      FFI_PASCAL,
       FFI_REGISTER
+      {$ENDIF}
     {$ENDIF}
 
-    {$IFDEF MSWINDOWS}
-      {$IFDEF CPU32}
-        FFI_SYSV,
-        FFI_STDCALL,
-        FFI_THISCALL,
-        FFI_FASTCALL,
-        FFI_MS_CDECL,
-        FFI_PASCAL,
-        FFI_REGISTER
-      {$ELSE}
-        FFI_WIN64
+    {$IFDEF CPUX86_64}
+      {$IFDEF LINUX}
+      FFI_UNIX64
       {$ENDIF}
+      {$IFDEF MSWINDOWS}
+      FFI_WIN64
+      {$ENDIF}
+    {$ENDIF}
+
+    {$IFDEF CPUARM}
+      FFI_SYSV,
+      FFI_VFP
     {$ENDIF}
   );
 
 const
-  FFI_DEFAULT_ABI = {$IFDEF CPU32}FFI_REGISTER{$ELSE}{$IFDEF LINUX}FFI_UNIX64{$ELSE}FFI_WIN64{$ENDIF}{$ENDIF};
+  FFI_DEFAULT_ABI =
+    {$IFDEF CPU86}FFI_REGISTER{$ENDIF}
+    {$IFDEF CPUX86_64}{$IFDEF LINUX}FFI_UNIX64{$ELSE}FFI_WIN64{$ENDIF}{$ENDIF}
+    {$IFDEF CPUARM}{$IFDEF FPUVFP}FFI_VFP{$ELSE}FFI_SYSV{$ENDIF}{$ENDIF};
+
+  FFI_TRAMPOLINE_SIZE =
+    {$IFDEF CPU86}12{$ENDIF}
+    {$IFDEF CPUX86_64}24{$ENDIF}
+    {$IFDEF CPUARM}12{$ENDIF};
 
 type
   TFFI_CTYPE = (
@@ -179,11 +191,6 @@ type
     bytes: cunsigned;
     flags: cunsigned;
   end;
-
-const
-  FFI_TRAMPOLINE_SIZE =
-    {$IFDEF MSWINDOWS}{$IFDEF CPU32}52{$ELSE}29{$ENDIF}{$ENDIF}
-    {$IFDEF LINUX}{$IFDEF CPU32}10{$ELSE}24{$ENDIF}{$ENDIF};
 
 type
   TClosureBindingFunction = procedure(
