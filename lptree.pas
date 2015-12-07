@@ -2544,11 +2544,11 @@ begin
   else
     with FParams[0].Evaluate() do
     begin
+      BreakDepth := AsInteger;
       if (not isConstant) then
         LapeException(lpeConstantExpected, FParams[0].DocPos)
       else if (BreakDepth < 1) then
         LapeException(lpeOutOfTypeRange, FParams[0].DocPos);
-      BreakDepth := AsInteger;
     end;
 
   Node := FParent;
@@ -2594,11 +2594,11 @@ begin
   else
     with FParams[0].Evaluate() do
     begin
+      ContinueDepth := AsInteger;
       if (not isConstant) then
         LapeException(lpeConstantExpected, FParams[0]._DocPos)
       else if (ContinueDepth < 1) then
         LapeException(lpeOutOfTypeRange, FParams[0]._DocPos);
-      ContinueDepth := AsInteger;
     end;
 
   Node := FParent;

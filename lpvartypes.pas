@@ -2100,10 +2100,15 @@ begin
     Result := FPType
   else if (op = op_Index) then
     Result := Self
+  else if (op = op_Assign) and (Right <> nil) and (Right is TLapeType_Pointer) and (BaseType = Right.BaseType) then
+    if (not HasType()) or (not TLapeType_Pointer(Right).HasType()) or FPType.Equals(TLapeType_Pointer(Right).FPType) then
+      Result := Self
+    else
+      Result := nil
   else
   begin
     Result := inherited;
-    if (Result <> nil) and (Result.BaseType = ltPointer) and (not TLapeType_Pointer(Result).HasType()) and (FCompiler <> nil) then
+    if (Result <> nil) and (Result <> Self) and (Result.BaseType = ltPointer) and (not TLapeType_Pointer(Result).HasType()) and (FCompiler <> nil) then
       Result := FCompiler.getPointerType(FPType);
   end;
 end;
@@ -2461,11 +2466,19 @@ begin
       Right := m.VarType;
   end;
 
-  if (Op = op_Assign) and (Right <> nil) and (Right is TLapeType_Method) then
-    if Equals(Right) and (FBaseType in [ltPointer, Right.BaseType]) then
-      Result := Self
+  if (Op = op_Assign) and (Right <> nil) then
+    if (Right is TLapeType_Method) then
+      if Equals(Right) and (FBaseType in [ltPointer, Right.BaseType]) then
+        Result := Self
+      else
+        Result := nil
+    else if (Right is TLapeType_Pointer) then
+      if (TLapeType_Pointer(Right).HasType()) then
+        Result := nil
+      else
+        Result := Self
     else
-      Result := nil
+      {nothing}
   else
     Result := inherited;
 end;
@@ -2626,6 +2639,8 @@ begin
     if CompatibleWith(Right.VarType) then
       Right.VarType := FMethodRecord;
     Result := FMethodRecord.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
+    if (Result.VarType = FMethodRecord) then
+      Result.VarType := Self;
   end;
 end;
 

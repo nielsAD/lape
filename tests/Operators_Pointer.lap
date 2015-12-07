@@ -15,7 +15,7 @@ begin
   WriteLn('Basics   :: Passed');
 
   c := High(c);
-  b := @c;
+  b := Pointer(@c);
   b^ := 0;
   b := b + SizeOf(Int32);
   b^ := 0;

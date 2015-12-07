@@ -552,11 +552,6 @@ const
   LapeIntegerTypes = [Low(LapeIntegerTypeRange)..High(LapeIntegerTypeRange)];
   LapeSignedIntegerTypes = [ltInt8, ltInt16, ltInt32, ltInt64];
   LapeUnsignedIntegerTypes = [ltUInt8, ltUInt16, ltUInt32, ltUInt64];
-  _LapeIntegerTypes = LapeSignedIntegerTypes + LapeUnsignedIntegerTypes;
-
-  {$IF _LapeIntegerTypes <> LapeIntegerTypes}
-    {$MESSAGE Fatal 'Integer types aren''t correctly split'}
-  {$IFEND}
 
   LapeRealTypes = [ltSingle..ltExtended];
   LapeBoolTypes = [ltBoolean..ltLongBool];
