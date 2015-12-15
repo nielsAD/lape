@@ -390,7 +390,7 @@ type
     FLeft: TLapeTree_Base;
     FRight: TLapeTree_ExprBase;
     FAssigning: TInitBool;
-
+    FOverloadOp: Boolean;
     function getLeft: TLapeTree_ExprBase; virtual;
     procedure setLeft(Node: TLapeTree_ExprBase); virtual;
     procedure setRight(Node: TLapeTree_ExprBase); virtual;
@@ -4094,6 +4094,7 @@ begin
   FLeft := nil;
   FRight := nil;
   FOperatorType := AOperatorType;
+  FOverloadOp := False;
 end;
 
 constructor TLapeTree_Operator.Create(AOperatorType: EOperator; ASource: TLapeTree_Base);
@@ -4272,7 +4273,7 @@ begin
 
   Result := inherited resType();
 
-  if (FResType = nil) and (FLeft <> nil) and (FRight <> nil) and (LeftType.BaseType <> ltUnknown) and
+  if (FResType = nil) and (LeftType <> nil) and (RightType <> nil) and (LeftType.BaseType <> ltUnknown) and
      (FOperatorType in OverloadableOperators) then
   begin
     with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, nil) do
@@ -4283,7 +4284,11 @@ begin
       tmpVar.VarType := RightType;
       addParam(TLapeTree_ResVar.Create(tmpVar, FCompiler, nil));
       tmpRes := resType();
-      if tmpRes <> nil then Result := tmpRes;
+      if tmpRes <> nil then
+      begin
+        Result := tmpRes;
+        FOverloadOp := True;
+      end;
     finally
       Free();
       FResType := Result;
@@ -4434,8 +4439,7 @@ var
   function TryOperatorOverload(): TResVar;
   begin
     Result := NullResVar;
-    if (FOperatorType in OverloadableOperators) and RightVar.HasType() and
-       RightVar.HasType() and (not (FOperatorType in UnaryOperators)) then
+    if (FOperatorType in OverloadableOperators) and LeftVar.HasType() and RightVar.HasType() then
       with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, @_DocPos) do
       try
         addParam(TLapeTree_ResVar.Create(LeftVar, FCompiler, @_DocPos));
@@ -4443,7 +4447,9 @@ var
         Result := Compile(Offset);
       finally 
         Free();
-      end;
+      end
+    else
+      LapeExceptionFmt(lpeIncompatibleOperator2,[LapeOperatorToString(FOperatorType), LeftVar.VarType.AsString, RightVar.VarType.AsString]);
   end;
   
 begin
@@ -4491,7 +4497,9 @@ begin
       TLapeTree_DestExprBase(FRight).Dest := NullResVar;
     end else
     try
-      if LeftVar.HasType() then
+      if FOverloadOp then
+        Result := TryOperatorOverload()
+      else if LeftVar.HasType() then
         Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, EvalFlags(), Offset, @_DocPos)
       else with TLapeType.Create(ltUnknown, FCompiler) do
       try
@@ -4499,16 +4507,8 @@ begin
       finally
         Free();
       end;
-    except
-      on E: lpException do
-      begin
-        Dest := NullResVar;
-        Result := TryOperatorOverload();
-        if not Result.HasType() then
-          LapeException(lpString(E.Message), DocPos)
-        else
-          Exit;
-      end;
+    except on E: lpException do
+      LapeException(lpString(E.Message), DocPos)
     end;
   finally
     LeftVar.Spill(1);

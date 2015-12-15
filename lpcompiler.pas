@@ -1244,17 +1244,14 @@ begin
       if not Result.isOperator then
         Name := Tokenizer.TokString
       else begin
-        for op in OverloadableOperators do
-          if ParserTokenToOperator(Tokenizer.Tok) = op then
-          begin
-            Name := '!op_'+op_name[op];
-            break;
-          end;
-        if Length(Name) = 0 then 
+        op := ParserTokenToOperator(Tokenizer.Tok);
+        if (op in OverloadableOperators) then
+          Name := '!op_'+op_name[op]
+        else
           LapeExceptionFmt(lpeCannotOverloadOperator, [Tokenizer.TokString], Tokenizer.DocPos);
       end;
-        
-      if isNext([tk_sym_Dot, tk_sym_ParenthesisOpen], Token) and (Token = tk_sym_Dot) and (not Result.isOperator) then
+
+      if isNext([tk_sym_Dot, tk_sym_ParenthesisOpen], Token) and (Token = tk_sym_Dot) then
       begin
         Expect(tk_Identifier, True, False);
         Token := tk_NULL;
@@ -1331,7 +1328,7 @@ begin
         LapeExceptionFmt(lpeInvalidOperator, [op_name[op], 2], Pos);
       ltyp := Result.Params[0].VarType;
       rtyp := Result.Params[1].VarType;
-      if ValidEvalFunction(GetEvalProc(op, ltyp.BaseType, rtyp.BaseType)) then
+      if ltyp.EvalRes(op, rtyp) <> nil then
         LapeExceptionFmt(lpeCannotOverrideOperator, [op_name[op], ltyp.AsString, rtyp.AsString], Pos);
     end;
 
