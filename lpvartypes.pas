@@ -689,7 +689,7 @@ implementation
 uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_array,
-  lpexceptions, lpeval, lpinterpreter, lptree;
+  lpexceptions, lpeval, lpinterpreter;
 
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 var
@@ -1775,20 +1775,6 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
       FCompiler.Emitter._Eval(getEvalProc(op_Dot, ltUnknown, ltPointer), Res, Result, Left, Offset, Pos);
       Result := Res;
     end;
-  end;
-
-  function TryOperatorOverload(): TResVar;
-  begin
-    Result := NullResVar;
-    if (op in OverloadableOperators) and Right.HasType() and Left.HasType() and (not(op in UnaryOperators)) then
-      with TLapeTree_InternalMethod_Operator.Create(op, FCompiler, Pos) do
-      try
-        addParam(TLapeTree_ResVar.Create(Left, FCompiler, Pos));
-        addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
-        Result := Compile(Offset);
-      finally 
-        Free();
-      end;
   end;
   
 var
