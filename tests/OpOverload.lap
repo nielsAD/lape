@@ -30,7 +30,7 @@ begin
   a := [9,9];
   b := [2,2];
   Assert((a = b) = False);
-  Assert(UInt64(a + b)   = UInt64([11,11]));
-  Assert(UInt64(a - b)   = UInt64([7,7]));
-  Assert(UInt64(a xor b) = UInt64([11,11]));
-end; 
+  Assert(UInt64(a + b)   = UInt64(TPoint([11,11])));
+  Assert(UInt64(a - b)   = UInt64(TPoint([7,7])));
+  Assert(UInt64(a xor b) = UInt64(TPoint([11,11])));
+end;
