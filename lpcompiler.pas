@@ -1230,6 +1230,7 @@ var
   Token: EParserToken;
   Default: TLapeTree_ExprBase;
   op: EOperator;
+  ltyp,rtyp:TLapeType;
 begin
   Pos := Tokenizer.DocPos;
   Result := TLapeType_Method.Create(Self, nil, nil, '', @Pos);
@@ -1244,7 +1245,7 @@ begin
         Name := Tokenizer.TokString
       else begin
         for op in OverloadableOperators do
-          if op_str[op] = Tokenizer.TokString then
+          if ParserTokenToOperator(Tokenizer.Tok) = op then
           begin
             Name := '!op_'+op_name[op];
             break;
@@ -1324,8 +1325,15 @@ begin
         end;
       until (Tokenizer.Tok = tk_sym_ParenthesisClose);
 
-    if Result.isOperator and (Result.Params.Count <> 2) then
-      LapeExceptionFmt(lpeInvalidOperator, [op_name[op], 2], Pos);
+    if Result.isOperator then
+    begin
+      if (Result.Params.Count <> 2) then
+        LapeExceptionFmt(lpeInvalidOperator, [op_name[op], 2], Pos);
+      ltyp := Result.Params[0].VarType;
+      rtyp := Result.Params[1].VarType;
+      if ValidEvalFunction(GetEvalProc(op, ltyp.BaseType, rtyp.BaseType)) then
+        LapeExceptionFmt(lpeCannotOverrideOperator, [op_name[op], ltyp.AsString, rtyp.AsString], Pos);
+    end;
 
     if isFunction or Result.isOperator then
     begin
@@ -1832,7 +1840,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       else if (Tokenizer.Tok = tk_kw_Private) then
         BaseType := ltScriptMethod;
 
-      Expect([tk_kw_Function, tk_kw_Procedure, tk_kw_Operator], True, False);
+      Expect([tk_kw_Function, tk_kw_Procedure], True, False);
     end;
 
     Result := ParseMethodHeader(Name, False);

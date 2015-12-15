@@ -1823,7 +1823,6 @@ begin
       EvalProc := nil;
 
     if (not Result.HasType()) or (not ValidEvalFunction(EvalProc)) then
-    try
       if (op = op_Dot) and ValidFieldName(Right) then
         Exit(EvalDot(PlpString(Right.VarPos.GlobalVar.Ptr)^))
       else if (op = op_Assign) and Right.HasType() then
@@ -1843,18 +1842,7 @@ begin
         LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
       else
         LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
-    except
-      on e: Exception do
-      begin
-        Dest := NullResVar;
-        Result := TryOperatorOverload();
-        if not Result.HasType() then
-          LapeException(e.Message)
-        else 
-          Exit;
-      end;
-    end;
-    
+
     FCompiler.getDestVar(Dest, Result, op);
 
     if (op = op_Assign) then

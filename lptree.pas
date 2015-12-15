@@ -4431,6 +4431,21 @@ var
     end;
   end;
 
+  function TryOperatorOverload(): TResVar;
+  begin
+    Result := NullResVar;
+    if (FOperatorType in OverloadableOperators) and RightVar.HasType() and
+       RightVar.HasType() and (not (FOperatorType in UnaryOperators)) then
+      with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, @_DocPos) do
+      try
+        addParam(TLapeTree_ResVar.Create(LeftVar, FCompiler, @_DocPos));
+        addParam(TLapeTree_ResVar.Create(RightVar, FCompiler, @_DocPos));
+        Result := Compile(Offset);
+      finally 
+        Free();
+      end;
+  end;
+  
 begin
   Result := NullResVar;
   DoneAssignment := False;
@@ -4474,8 +4489,7 @@ begin
       Result := LeftVar;
       Dest := NullResVar;
       TLapeTree_DestExprBase(FRight).Dest := NullResVar;
-    end
-    else
+    end else
     try
       if LeftVar.HasType() then
         Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, EvalFlags(), Offset, @_DocPos)
@@ -4485,8 +4499,16 @@ begin
       finally
         Free();
       end;
-    except on E: lpException do
-      LapeException(lpString(E.Message), DocPos);
+    except
+      on E: lpException do
+      begin
+        Dest := NullResVar;
+        Result := TryOperatorOverload();
+        if not Result.HasType() then
+          LapeException(lpString(E.Message), DocPos)
+        else
+          Exit;
+      end;
     end;
   finally
     LeftVar.Spill(1);

@@ -32,6 +32,7 @@ const
   lpeCannotInvoke = 'Cannot invoke identifier';
   lpeCannotOverload = 'Cannot overload function';
   lpeCannotOverloadOperator = 'Cannot overload operator "%s"';
+  lpeCannotOverrideOperator = 'Cannot override operator "%s" with types "%s" and "%s"';
   lpeClosingParenthesisExpected = 'Closing parenthesis expected';
   lpeConditionalNotClosed = 'Conditional statement not properly closed';
   lpeConstantExpected = 'Constant expression expected';
