@@ -1,8 +1,9 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <Package Version="4">
     <PathDelim Value="\"/>
     <Name Value="lape"/>
+    <Type Value="RunTimeOnly"/>
     <Author Value="Niels A.D."/>
     <CompilerOptions>
       <Version Value="11"/>
@@ -15,8 +16,8 @@
       <CodeGeneration>
         <SmartLinkUnit Value="True"/>
         <Optimizations>
-          <UncertainOptimizations Value="True"/>
           <OptimizationLevel Value="3"/>
+          <UncertainOptimizations Value="True"/>
         </Optimizations>
       </CodeGeneration>
       <Linking>
@@ -25,16 +26,13 @@
         </Debugging>
       </Linking>
       <Other>
-        <CompilerMessages>
-          <MsgFileName Value=""/>
-        </CompilerMessages>
-        <CompilerPath Value="$(CompPath)"/>
+        <CustomOptions Value="-Ur"/>
       </Other>
     </CompilerOptions>
     <Description Value="Scripting engine for Lazarus/Delphi with a Pascal derived syntax.
-http://code.google.com/p/la-pe/"/>
+https://github.com/nielsAD/lape"/>
     <License Value="GNU Lesser GPL"/>
-    <Version Minor="1"/>
+    <Version Minor="2"/>
     <Files Count="53">
       <Item1>
         <Filename Value="..\lape.inc"/>
@@ -249,7 +247,6 @@ http://code.google.com/p/la-pe/"/>
         <UnitName Value="lputils"/>
       </Item53>
     </Files>
-    <Type Value="RunTimeOnly"/>
     <RequiredPkgs Count="1">
       <Item1>
         <PackageName Value="LCLBase"/>
