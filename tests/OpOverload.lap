@@ -1,0 +1,36 @@
+{$assertions ON}
+type
+  TPoint = record x,y:Int32; end;
+
+operator = (Left,Right:TPoint): Boolean;
+begin
+  Result := (Left.x = Right.x) and (Left.y = Right.y);
+end;
+
+operator + (Left,Right:TPoint): TPoint;
+begin
+  Result.x := (Left.x + Right.x);
+  Result.y := (Left.y + Right.y);
+end;
+
+operator - (Left,Right:TPoint): TPoint;
+begin
+  Result.x := (Left.x - Right.x);
+  Result.y := (Left.y - Right.y);
+end;
+
+operator xor (Left,Right:TPoint): TPoint;
+begin
+  Result.x := (Left.x xor Right.x);
+  Result.y := (Left.y xor Right.y);
+end;
+
+var a,b:TPoint;
+begin
+  a := [9,9];
+  b := [2,2];
+  Assert((a = b) = False);
+  Assert(UInt64(a + b)   = UInt64(TPoint([11,11])));
+  Assert(UInt64(a - b)   = UInt64(TPoint([7,7])));
+  Assert(UInt64(a xor b) = UInt64(TPoint([11,11])));
+end;

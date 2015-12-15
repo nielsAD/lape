@@ -341,7 +341,8 @@ type
     FreeParams: Boolean;
     ImplicitParams: Integer;
     Res: TLapeType;
-
+    IsOperator: Boolean;
+    
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
@@ -1774,7 +1775,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
       Result := Res;
     end;
   end;
-
+  
 var
   EvalProc: TLapeEvalProc;
 begin

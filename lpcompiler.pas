@@ -1172,7 +1172,8 @@ begin
               DoBreak := (Tokenizer.LastTok = tk_sym_Dot) or StopAfterBeginEnd;
             end;
           tk_kw_Const, tk_kw_Var: Statement := ParseVarBlock();
-          tk_kw_Function, tk_kw_Procedure: addDelayedExpression(ParseMethod(FuncForwards));
+          tk_kw_Function, tk_kw_Procedure, tk_kw_Operator: 
+            addDelayedExpression(ParseMethod(FuncForwards));
           tk_kw_Type: ParseTypeBlock();
 
           {$IFDEF Lape_PascalLabels}
@@ -1228,16 +1229,27 @@ var
   Param: TLapeParameter;
   Token: EParserToken;
   Default: TLapeTree_ExprBase;
+  op: EOperator;
+  ltyp,rtyp:TLapeType;
 begin
   Pos := Tokenizer.DocPos;
-  isFunction := (Tokenizer.Tok = tk_kw_Function);
   Result := TLapeType_Method.Create(Self, nil, nil, '', @Pos);
-
+  Result.isOperator := (Tokenizer.Tok = tk_kw_Operator);
+  isFunction := (Tokenizer.Tok = tk_kw_Function);
+  
   try
-
-    if isNext([tk_Identifier, tk_sym_ParenthesisOpen], Token) and (Token = tk_Identifier) then
+    if (isNext([tk_Identifier, tk_sym_ParenthesisOpen], Token) and (Token = tk_Identifier)) or
+       (Result.isOperator and isNext(ParserToken_Operators, Token)) then
     begin
-      Name := Tokenizer.TokString;
+      if not Result.isOperator then
+        Name := Tokenizer.TokString
+      else begin
+        op := ParserTokenToOperator(Tokenizer.Tok);
+        if (op in OverloadableOperators) then
+          Name := '!op_'+op_name[op]
+        else
+          LapeExceptionFmt(lpeCannotOverloadOperator, [Tokenizer.TokString], Tokenizer.DocPos);
+      end;
 
       if isNext([tk_sym_Dot, tk_sym_ParenthesisOpen], Token) and (Token = tk_sym_Dot) then
       begin
@@ -1310,7 +1322,17 @@ begin
         end;
       until (Tokenizer.Tok = tk_sym_ParenthesisClose);
 
-    if isFunction then
+    if Result.isOperator then
+    begin
+      if (Result.Params.Count <> 2) then
+        LapeExceptionFmt(lpeInvalidOperator, [op_name[op], 2], Pos);
+      ltyp := Result.Params[0].VarType;
+      rtyp := Result.Params[1].VarType;
+      if ltyp.EvalRes(op, rtyp) <> nil then
+        LapeExceptionFmt(lpeCannotOverrideOperator, [op_name[op], ltyp.AsString, rtyp.AsString], Pos);
+    end;
+
+    if isFunction or Result.isOperator then
     begin
       Expect(tk_sym_Colon, True, False);
       Result.Res := ParseType(nil);
@@ -1433,9 +1455,10 @@ begin
     end;
 
     try
-      if (Tokenizer.Tok = tk_kw_Overload) then
+      if (Tokenizer.Tok = tk_kw_Overload) or FuncHeader.isOperator then
       begin
-        ParseExpressionEnd(tk_sym_SemiColon, True, False);
+        if not FuncHeader.isOperator then
+          ParseExpressionEnd(tk_sym_SemiColon, True, False);
 
         if (OldDeclaration = nil) or (not LocalDecl) or ((OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
           with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
@@ -1921,7 +1944,7 @@ begin
         end;
       tk_sym_Caret: ParsePointer();
       tk_sym_ParenthesisOpen: ParseEnum();
-      tk_kw_Function, tk_kw_Procedure,
+      tk_kw_Function, tk_kw_Procedure, tk_kw_Operator,
       tk_kw_External, {tk_kw_Export,} tk_kw_Private: ParseMethodType();
       tk_kw_Type: ParseTypeType();
       else ParseDef();
@@ -3552,7 +3575,7 @@ begin
   OldState := getTempTokenizerState(AHeader + ';', '!addGlobalFuncHdr');
 
   try
-    Expect([tk_kw_Function, tk_kw_Procedure]);
+    Expect([tk_kw_Function, tk_kw_Procedure, tk_kw_Operator]);
     Method := ParseMethod(nil, True);
     CheckAfterCompile();
 
