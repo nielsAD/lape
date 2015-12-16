@@ -1861,7 +1861,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     Range: TLapeRange;
     RangeType: TLapeType;
   begin
-    TypeExpr := ParseTypeExpression([tk_sym_Equals, tk_op_Assign, tk_sym_ParenthesisClose, tk_sym_SemiColon], False);
+    TypeExpr := ParseTypeExpression([tk_sym_Equals, tk_op_Assign, tk_op_In, tk_sym_ParenthesisClose, tk_sym_SemiColon], False);
     try
       if (TypeExpr <> nil) and (TypeExpr is TLapeTree_Range) then
       begin
@@ -2000,9 +2000,8 @@ var
   isConst, wasShortCircuit: Boolean;
   Identifiers: TStringArray;
   VarType: TLapeType;
-  Default: TLapeTree_ExprBase;
-  DefVal: TLapeVar;
-  DefConstVal: TLapeGlobalVar;
+  DefExpr: TLapeTree_ExprBase;
+  DefConst: TLapeGlobalVar;
   VarDecl: TLapeVarDecl;
 begin
   Result := TLapeTree_VarList.Create(Self, getPDocPos());
@@ -2016,8 +2015,8 @@ begin
     Next();
     repeat
       VarType := nil;
-      Default := nil;
-      DefConstVal := nil;
+      DefExpr := nil;
+      DefConst := nil;
 
       Identifiers := ParseIdentifierList();
       Expect([tk_sym_Colon, tk_op_Assign, tk_sym_Equals], False, False);
@@ -2033,16 +2032,16 @@ begin
 
       if (Tokenizer.Tok = tk_sym_Equals) then
       begin
-        Default := ParseExpression([], True, False).setExpectedType(VarType) as TLapeTree_ExprBase;
-        if (Default <> nil) and (not Default.isConstant()) then
-          LapeException(lpeConstantExpected, Default.DocPos);
+        DefExpr := ParseExpression(ValidEnd, True, False).setExpectedType(VarType) as TLapeTree_ExprBase;
+        if (DefExpr <> nil) and (not DefExpr.isConstant()) then
+          LapeException(lpeConstantExpected, DefExpr.DocPos);
 
         try
           Expect(ValidEnd, False, False);
-          DefConstVal := Default.Evaluate();
+          DefConst := DefExpr.Evaluate();
         finally
-          if (Default <> nil) then
-            FreeAndNil(Default);
+          if (DefExpr <> nil) then
+            FreeAndNil(DefExpr);
         end;
       end
       else if (Tokenizer.Tok = tk_op_Assign) then
@@ -2050,15 +2049,15 @@ begin
         if (Length(Identifiers) <> 1) then
           LapeException(lpeDefaultToMoreThanOne, Tokenizer.DocPos);
 
-        Default := ParseExpression();
+        DefExpr := ParseExpression();
         Expect(ValidEnd, False, False);
       end;
 
       if (VarType = nil) then
-        if (DefConstVal <> nil) then
-          VarType := DefConstVal.VarType
-        else if (Default <> nil) then
-          VarType := Default.resType()
+        if (DefConst <> nil) then
+          VarType := DefConst.VarType
+        else if (DefExpr <> nil) then
+          VarType := DefExpr.resType()
         else
           LapeException(lpeCannotAssign, Tokenizer.DocPos);
       if (VarType = nil) or (VarType.Size < 1) then
@@ -2070,29 +2069,26 @@ begin
           LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], Tokenizer.DocPos);
 
         if isConst or VarType.IsStatic then
-          DefVal := TLapeVar(addLocalDecl(VarType.NewGlobalVarP(nil, Identifiers[i])))
+          VarDecl.VarDecl := TLapeVar(addLocalDecl(VarType.NewGlobalVarP(nil, Identifiers[i])))
         else
-          DefVal := addLocalVar(VarType, Identifiers[i]);
+          VarDecl.VarDecl := addLocalVar(VarType, Identifiers[i]);
 
-        if (DefConstVal <> nil) then
-          if (not (DefVal is TLapeGlobalVar)) or (VarType is TLapeType_Method) then
-          begin
-            VarDecl.VarDecl := DefVal;
-            VarDecl.Default := TLapeTree_GlobalVar.Create(DefConstVal, Self, GetPDocPos());
-            Result.addVar(VarDecl);
-          end
+        VarDecl.Default := nil;
+        if (DefConst <> nil) then
+          if (not (VarDecl.VarDecl is TLapeGlobalVar)) or (VarType is TLapeType_Method) then
+            VarDecl.Default := TLapeTree_GlobalVar.Create(DefConst, Self, GetPDocPos())
           else
-            DefVal.VarType.EvalConst(op_Assign, TLapeGlobalVar(DefVal), DefConstVal, [])
-        else if (Default <> nil) then
+            VarDecl.VarDecl.VarType.EvalConst(op_Assign, TLapeGlobalVar(VarDecl.VarDecl), DefConst, [])
+        else if (DefExpr <> nil) then
         begin
-          VarDecl.VarDecl := DefVal;
-          VarDecl.Default := Default;
-          Result.addVar(VarDecl);
-          Default := nil;
+          VarDecl.Default := DefExpr;
+          DefExpr := nil;
         end;
 
-        if (DefVal is TLapeVar) then
-          TLapeVar(DefVal).setReadWrite(isConst and (DefConstVal <> nil), not isConst);
+        if (VarDecl.VarDecl is TLapeVar) then
+          TLapeVar(VarDecl.VarDecl).setReadWrite(isConst and (DefConst <> nil), not isConst);
+
+        Result.addVar(VarDecl);
       end;
     until (Next() <> tk_Identifier) or OneOnly;
 
@@ -2100,8 +2096,8 @@ begin
       FOptions := FOptions + [lcoShortCircuit];
   except
     Result.Free();
-    if (Default <> nil) then
-      Default.Free();
+    if (DefExpr <> nil) then
+      DefExpr.Free();
     raise;
   end;
 end;
@@ -2704,12 +2700,14 @@ begin
 end;
 
 function TLapeCompiler.ParseFor(ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_For;
+var
+  LimitType: TLapeType;
 begin
   Result := TLapeTree_For.Create(Self, getPDocPos());
 
   try
     if (lcoLooseSyntax in FOptions) and isNext([tk_kw_Var]) then
-      with ParseVarBlock(True, [tk_kw_To, tk_kw_DownTo]) do
+      with ParseVarBlock(True, [tk_op_In, tk_kw_To, tk_kw_DownTo]) do
       try
         if (Vars.Count <> 1) then
           LapeException(lpeVariableExpected, DocPos);
@@ -2739,8 +2737,12 @@ begin
       tk_kw_To    : Result.LoopType := lptypes.loopUp;
       tk_op_In    : Result.LoopType := lptypes.loopOver;
     end;
-    
-    Result.Limit := ParseExpression([], False);
+
+    LimitType := Result.Counter.resType();
+    if (Result.LoopType = lptypes.loopOver) then
+      LimitType := addManagedType(TLapeType_DynArray.Create(LimitType, Self, '', getPDocPos()));
+
+    Result.Limit := TLapeTree_ExprBase(ParseExpression([], False).setExpectedType(LimitType));
 
     Expect([tk_kw_With, tk_kw_Do], False, False);
     if (Tokenizer.Tok = tk_kw_With) then
