@@ -2710,6 +2710,7 @@ begin
   try
     if (lcoLooseSyntax in FOptions) and isNext([tk_kw_Var]) then
     begin
+      // TODO: make ParseExpression work with var/const decls so this can be handled more generally
       with ParseVarBlock(True, [tk_op_In, tk_kw_To, tk_kw_DownTo]) do
       try
         if (Vars.Count <> 1) then
@@ -2742,15 +2743,17 @@ begin
         Result.Counter := TLapeTree_Operator(tmpExpr).Left;
         Result.LoopType := lptypes.loopOver;
         basicLoopOver := True;
-      end else
+      end
+      else
         LapeException(lpeVariableExpected, DocPos);
     end;
 
-    if not basicLoopOver then
+    if (not basicLoopOver) then
       case Tokenizer.LastTok of
         tk_kw_DownTo: Result.LoopType := lptypes.loopDown;
         tk_kw_To    : Result.LoopType := lptypes.loopUp;
         tk_op_In    : Result.LoopType := lptypes.loopOver;
+        else LapeException(lpeImpossible, DocPos);
       end;
 
     LimitType := Result.Counter.resType();
@@ -2758,13 +2761,15 @@ begin
     begin
       LimitType := addManagedType(TLapeType_DynArray.Create(LimitType, Self, '', getPDocPos()));
       if basicLoopOver then
-      begin
-        Result.Limit := TLapeTree_ExprBase(TLapeTree_Operator(tmpExpr).Right.setExpectedType(LimitType));
-        //tmpExpr.Free();  {CASUES SIGSEGV}
-      end;
+        with TLapeTree_Operator(tmpExpr).Right do
+        begin
+          Parent := Result;
+          Result.Limit := TLapeTree_ExprBase(setExpectedType(LimitType));
+        end;
+      tmpExpr.Free();
     end;
 
-    if not basicLoopOver then //whenever it's not the basic: "for item in array do"
+    if (not basicLoopOver) then //whenever it's not the basic: "for item in array do"
       Result.Limit := TLapeTree_ExprBase(ParseExpression([], False).setExpectedType(LimitType));
 
     Expect([tk_kw_With, tk_kw_Do], False, False);
