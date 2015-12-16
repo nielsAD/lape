@@ -2702,11 +2702,14 @@ end;
 function TLapeCompiler.ParseFor(ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_For;
 var
   LimitType: TLapeType;
+  tmpExpr:TLapeTree_ExprBase = nil;
+  basicLoopOver:Boolean = False;
 begin
   Result := TLapeTree_For.Create(Self, getPDocPos());
 
   try
     if (lcoLooseSyntax in FOptions) and isNext([tk_kw_Var]) then
+    begin
       with ParseVarBlock(True, [tk_op_In, tk_kw_To, tk_kw_DownTo]) do
       try
         if (Vars.Count <> 1) then
@@ -2725,24 +2728,44 @@ begin
           Result.Counter := TLapeTree_ResVar.Create(_ResVar.New(Vars[0].VarDecl), Compiler, @_DocPos);
       finally
         Free();
-      end
-    else
+      end;
+    end else
     begin
-      Result.Counter := ParseExpression([tk_op_In]);
-      Expect([tk_op_In, tk_kw_To, tk_kw_DownTo], False, True);
+      tmpExpr := ParseExpression();
+      if Tokenizer.Tok in [tk_kw_To, tk_kw_DownTo] then
+      begin
+        Next;
+        Result.Counter := tmpExpr;
+      end
+      else if (tmpExpr is TLapeTree_Operator) and (TLapeTree_Operator(tmpExpr).OperatorType = op_In) then
+      begin
+        Result.Counter := TLapeTree_Operator(tmpExpr).Left;
+        Result.LoopType := lptypes.loopOver;
+        basicLoopOver := True;
+      end else
+        LapeException(lpeVariableExpected, DocPos);
     end;
-    
-    case Tokenizer.LastTok of
-      tk_kw_DownTo: Result.LoopType := lptypes.loopDown;
-      tk_kw_To    : Result.LoopType := lptypes.loopUp;
-      tk_op_In    : Result.LoopType := lptypes.loopOver;
-    end;
+
+    if not basicLoopOver then
+      case Tokenizer.LastTok of
+        tk_kw_DownTo: Result.LoopType := lptypes.loopDown;
+        tk_kw_To    : Result.LoopType := lptypes.loopUp;
+        tk_op_In    : Result.LoopType := lptypes.loopOver;
+      end;
 
     LimitType := Result.Counter.resType();
     if (Result.LoopType = lptypes.loopOver) then
+    begin
       LimitType := addManagedType(TLapeType_DynArray.Create(LimitType, Self, '', getPDocPos()));
+      if basicLoopOver then
+      begin
+        Result.Limit := TLapeTree_ExprBase(TLapeTree_Operator(tmpExpr).Right.setExpectedType(LimitType));
+        //tmpExpr.Free();  {CASUES SIGSEGV}
+      end;
+    end;
 
-    Result.Limit := TLapeTree_ExprBase(ParseExpression([], False).setExpectedType(LimitType));
+    if not basicLoopOver then //whenever it's not the basic: "for item in array do"
+      Result.Limit := TLapeTree_ExprBase(ParseExpression([], False).setExpectedType(LimitType));
 
     Expect([tk_kw_With, tk_kw_Do], False, False);
     if (Tokenizer.Tok = tk_kw_With) then
