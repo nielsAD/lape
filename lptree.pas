@@ -3057,6 +3057,8 @@ begin
         ParamType := TLapeType_Type(ParamType).TType;
       if (ParamType <> nil) and (ParamType.BaseType in LapeOrdinalTypes) then
         FResType := ParamType
+      else if (ParamType <> nil) and (ParamType.BaseType = ltShortString) then
+        FResType := FCompiler.getBaseType(ltUInt8)
       else if (ParamType <> nil) and (ParamType.BaseType in LapeArrayTypes) then
         FResType := FCompiler.getBaseType(ltInt32);
     end;
@@ -5685,9 +5687,10 @@ begin
       Right := TLapeTree_Operator.Create(op_Index, FCompiler);
       with TLapeTree_Operator(Right) do
       begin
+        CompilerOptions := CompilerOptions - [lcoRangeCheck];
         Left := TLapeTree_ResVar.Create(Container.IncLock(), FLimit);
         Right := TLapeTree_ResVar.Create(
-          TLapeTree_Operator(FCondition).Left.Compile(Offset).IncLock(), FCondition
+          TLapeTree_Operator(FCondition).Left.Compile(Offset).IncLock(2), FCondition
         );
       end;
       Compile(Offset);
@@ -5809,7 +5812,7 @@ end;
 function TLapeTree_For.CompileForIn(var Offset: Integer): TResVar;
 var
   upper, lower: TResVar;
-  tmpExpr, method: TLapeTree_ExprBase;
+  method: TLapeTree_ExprBase;
 begin
   Result := NullResVar;
   Container := NullResVar;
@@ -5820,38 +5823,28 @@ begin
   if (not FLimit.CompileToTempVar(Offset, Container)) or (not Container.HasType()) then
     LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
+  lower := _ResVar.New(FCompiler.getTempVar(ltInt32)).IncLock();
+  method := TLapeTree_InternalMethod_Low.Create(FCompiler);
+  TLapeTree_InternalMethod_Low(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FCompiler));
+  with TLapeTree_Operator.Create(op_Assign, Self) do
   try
-    lower := _ResVar.New(FCompiler.getTempVar(ltInt32));
-    tmpExpr := TLapeTree_ResVar.Create(lower.IncLock(1), FCompiler);
-    method := TLapeTree_InternalMethod_Low.Create(tmpExpr);
-    TLapeTree_InternalMethod_Low(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), tmpExpr));
-    with TLapeTree_Operator.Create(op_Assign, Self) do
-    try
-      Left :=  TLapeTree_ResVar.Create(lower.IncLock(), FCompiler);
-      Right := method.FoldConstants() as TLapeTree_ExprBase;
-      Compile(Offset);
-    finally
-      Free();
-    end;
+    Left :=  TLapeTree_ResVar.Create(lower.IncLock(), FCompiler);
+    Right := method.FoldConstants() as TLapeTree_ExprBase;
+    Compile(Offset);
   finally
-    tmpExpr.Free();
+    Free();
   end;
 
+  upper := _ResVar.New(FCompiler.getTempVar(ltInt32)).IncLock();
+  method := TLapeTree_InternalMethod_High.Create(FCompiler);
+  TLapeTree_InternalMethod_High(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FCompiler));
+  with TLapeTree_Operator.Create(op_Assign, Self) do
   try
-    upper := _ResVar.New(FCompiler.getTempVar(ltInt32));
-    tmpExpr := TLapeTree_ResVar.Create(upper.IncLock(2), FCompiler);
-    method := TLapeTree_InternalMethod_High.Create(tmpExpr);
-    TLapeTree_InternalMethod_High(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), tmpExpr));
-    with TLapeTree_Operator.Create(op_Assign, Self) do
-    try
-      Left :=  TLapeTree_ResVar.Create(upper.IncLock(), FCompiler);
-      Right := method.FoldConstants() as TLapeTree_ExprBase;
-      Compile(Offset).Spill(1);
-    finally
-      Free();
-    end;
+    Left := TLapeTree_ResVar.Create(upper.IncLock(), FCompiler);
+    Right := method.FoldConstants() as TLapeTree_ExprBase;
+    Compile(Offset);
   finally
-    tmpExpr.Free();
+    Free();
   end;
 
   try

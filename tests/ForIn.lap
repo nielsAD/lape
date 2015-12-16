@@ -1,72 +1,64 @@
-program new;
+program TestForIn;
 {$assertions ON}
-{$define SILENT}
 
-procedure SilentWrite(str:String);
-begin
-  {$ifndef SILENT}
-  WriteLn(str);
-  {$ENDIF}
-end;
+var
+  item:Int32;
+  resStr:String;
 
-
-var item:Int32;
-
-
-//============================================================================\\
+//=================================================\\
 const staticArr: Array [3..7] of Int32 = [0,1,2,3,4];
 begin
-  SilentWrite('-----| static array |-----------------');
+  resStr := '';
   for item in staticArr do
-    SilentWrite('>>> ' + ToString(item));
-  Assert(item = staticArr[High(staticArr)]);
+    resStr := resStr + ToString(item);
+  Assert(resstr = '01234');
 end;
 
 
-//============================================================================\\
-var dynArr:Array of Int32 = [5..9];
+//=================================================\\
+var dynArr:Array of Int32 = [0..4];
 begin
-  SilentWrite('-----| dynamic array |----------------');
+  resStr := '';
   for item in dynArr do
-    SilentWrite('>>> ' + ToString(item));
-  Assert(item = dynArr[High(dynArr)]);
+    resStr := resStr + ToString(item);
+  Assert(resstr = '01234');
 end;
 
 
-//============================================================================\\
+//=================================================\\
 begin
-  SilentWrite('-----| const static array |-----------');
-  for item in [1,2,3,4,5] do
-    SilentWrite('>>> '+ ToString(item));
-  Assert(item = 5);
+  resStr := '';
+  for item in [0,1,2,3,4] do
+    resStr := resStr + ToString(item);
+  Assert(resStr = '01234');
 end;
 
 
-//============================================================================\\
+//=================================================\\
 var
   c:Char;
   sstr:ShortString = 'shortstr';
 begin
-  SilentWrite('-----| shortstr  |---------------------');
+  resStr := '';
   for c in sstr do
-    SilentWrite('>>> ' + c);
-  Assert(c = 'r');
+    resStr := resStr + c;
+  Assert(resStr = sstr);
 end;
 
 
-//============================================================================\\
+//=================================================\\
 var
   ch:Char;
   str:String = 'string';
 begin
-  SilentWrite('-----| string  |----------------------');
+  resStr := '';
   for ch in str do
-    SilentWrite('>>> ' + ch);
-  Assert(ch = 'g');
+    resStr := resStr + ch;
+  Assert(resStr = str);
 end;
 
 
-//============================================================================\\
+//===| Special tests |============================\\
 var evalCount:Int32=0;
 function SideEffect(): Array of Int32;
 begin
@@ -75,16 +67,18 @@ begin
 end;
 
 begin
-  SilentWrite('-----| side effect |-----------');
   for item in SideEffect() do
-    SilentWrite('>>> ' + ToString(item));
-  SilentWrite('SideEffect: ' + ToString(evalCount));
+    continue;
   Assert(evalCount = 1);
 end;
 
-
-
-
-
-
-
+//---| make sure locks are working |---\
+var
+  c1,c2,c3:Char;
+  text:string = 'abcdefg';
+begin
+  for c1 in str do
+    for c2 in str do
+      for c3 in str do ;
+  Assert((c1 = 'g') and (c2 = 'g') and (c3 = 'g'));
+end;
