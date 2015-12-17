@@ -145,6 +145,8 @@ type
   TLapeImportedProc = procedure(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
   TLapeImportedFunc = procedure(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
+  ELoopType = (loopUp, loopDown, loopOver);
+  
   ELapeBaseType = (
     ltUnknown,
     ltUInt8, ltInt8, ltUInt16, ltInt16, ltUInt32, ltInt32, ltUInt64, ltInt64, //Integer
@@ -160,7 +162,7 @@ type
     ltScriptMethod, ltImportedMethod                                          //Methods
   );
   LapeIntegerTypeRange = ltUInt8..ltInt64;
-
+  
   EOperatorAssociative = (assocNone, assocLeft, assocRight);
   EOperator = (
     op_Unknown,
