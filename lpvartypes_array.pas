@@ -1119,7 +1119,7 @@ begin
   if (FCompiler = nil) or (AVar = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(Length(PString(AVar)^) - 1);
+    Result := FCompiler.getConstant(Length(PString(AVar)^));
 end;
 
 function TLapeType_String.NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
