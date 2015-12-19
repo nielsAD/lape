@@ -633,7 +633,7 @@ end;
 
 function TLapeType_Enum.EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean;
 const
-  BoolOperators = BinaryOperators + EnumOperators - [op_cmp_Equal, op_cmp_NotEqual];
+  BoolOperators = EnumOperators - CompareOperators - [op_Assign];
 begin
   if (Right = nil) or (not Right.IsOrdinal()) then
     Result := False
