@@ -2437,15 +2437,33 @@ Arr[op_Assign][ltVariant][ltWideString] := ltVariant;
 Arr[op_Assign][ltVariant][ltUnicodeString] := ltVariant;
 
 //Boolean
-Arr[op_NOT][ltBoolean][ltUnknown] := ltBoolean;
 Arr[op_NOT][ltByteBool][ltUnknown] := ltByteBool;
 Arr[op_NOT][ltWordBool][ltUnknown] := ltWordBool;
 Arr[op_NOT][ltLongBool][ltUnknown] := ltLongBool;
+Arr[op_NOT][ltBoolean][ltUnknown]  := ltBoolean;
 
-Arr[op_Assign][ltBoolean][ltVariant] := ltBoolean;
+Arr[op_Assign][ltBoolean][ltVariant]  := ltBoolean;
 Arr[op_Assign][ltByteBool][ltVariant] := ltByteBool;
 Arr[op_Assign][ltWordBool][ltVariant] := ltWordBool;
 Arr[op_Assign][ltLongBool][ltVariant] := ltLongBool;
+
+Arr[op_Assign][ltByteBool][ltByteBool] := ltByteBool;
+Arr[op_Assign][ltByteBool][ltWordBool] := ltByteBool;
+Arr[op_Assign][ltByteBool][ltLongBool] := ltByteBool;
+Arr[op_Assign][ltWordBool][ltByteBool] := ltWordBool;
+Arr[op_Assign][ltWordBool][ltWordBool] := ltWordBool;
+Arr[op_Assign][ltWordBool][ltLongBool] := ltWordBool;
+Arr[op_Assign][ltLongBool][ltByteBool] := ltLongBool;
+Arr[op_Assign][ltLongBool][ltWordBool] := ltLongBool;
+Arr[op_Assign][ltLongBool][ltLongBool] := ltLongBool;
+
+Arr[op_Assign][ltBoolean][ltByteBool] := ltBoolean;
+Arr[op_Assign][ltBoolean][ltWordBool] := ltBoolean;
+Arr[op_Assign][ltBoolean][ltLongBool] := ltBoolean;
+Arr[op_Assign][ltBoolean][ltBoolean]  := ltBoolean;
+Arr[op_Assign][ltByteBool][ltBoolean] := Arr[op_Assign][ltByteBool][ltByteBool];
+Arr[op_Assign][ltWordBool][ltBoolean] := Arr[op_Assign][ltWordBool][ltByteBool];
+Arr[op_Assign][ltLongBool][ltBoolean] := Arr[op_Assign][ltLongBool][ltByteBool];
 
 Arr[op_cmp_Equal][ltByteBool][ltByteBool] := ltEvalBool;
 Arr[op_cmp_Equal][ltByteBool][ltWordBool] := ltEvalBool;
@@ -2457,7 +2475,7 @@ Arr[op_cmp_Equal][ltLongBool][ltByteBool] := ltEvalBool;
 Arr[op_cmp_Equal][ltLongBool][ltWordBool] := ltEvalBool;
 Arr[op_cmp_Equal][ltLongBool][ltLongBool] := ltEvalBool;
 
-Arr[op_cmp_Equal][ltBoolean][ltBoolean] := Arr[op_cmp_Equal][ltByteBool][ltByteBool];
+Arr[op_cmp_Equal][ltBoolean][ltBoolean]  := Arr[op_cmp_Equal][ltByteBool][ltByteBool];
 Arr[op_cmp_Equal][ltBoolean][ltByteBool] := Arr[op_cmp_Equal][ltByteBool][ltByteBool];
 Arr[op_cmp_Equal][ltBoolean][ltWordBool] := Arr[op_cmp_Equal][ltByteBool][ltWordBool];
 Arr[op_cmp_Equal][ltBoolean][ltLongBool] := Arr[op_cmp_Equal][ltByteBool][ltLongBool];
@@ -2475,7 +2493,7 @@ Arr[op_cmp_NotEqual][ltLongBool][ltByteBool] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltLongBool][ltWordBool] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltLongBool][ltLongBool] := ltEvalBool;
 
-Arr[op_cmp_NotEqual][ltBoolean][ltBoolean] := Arr[op_cmp_NotEqual][ltByteBool][ltByteBool];
+Arr[op_cmp_NotEqual][ltBoolean][ltBoolean]  := Arr[op_cmp_NotEqual][ltByteBool][ltByteBool];
 Arr[op_cmp_NotEqual][ltBoolean][ltByteBool] := Arr[op_cmp_NotEqual][ltByteBool][ltByteBool];
 Arr[op_cmp_NotEqual][ltBoolean][ltWordBool] := Arr[op_cmp_NotEqual][ltByteBool][ltWordBool];
 Arr[op_cmp_NotEqual][ltBoolean][ltLongBool] := Arr[op_cmp_NotEqual][ltByteBool][ltLongBool];
