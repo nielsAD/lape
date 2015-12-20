@@ -2725,9 +2725,10 @@ end;
 function TLapeCompiler.ParseFor(ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_For;
 var
   LimitType: TLapeType;
-  tmpExpr:TLapeTree_ExprBase = nil;
-  basicLoopOver:Boolean = False;
+  tmpExpr:TLapeTree_ExprBase;
+  basicLoopOver:Boolean;
 begin
+  basicLoopOver := False;
   Result := TLapeTree_For.Create(Self, getPDocPos());
 
   try

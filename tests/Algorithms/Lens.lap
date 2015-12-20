@@ -97,20 +97,6 @@ var
 	sp: Surface_Property;
 	p: Axial_Incidence;
 
-{  The arcsin function defined in terms of arctan and sqrt  }
-
-function arcsin(x: Double) : Double;
-begin
-	Result := arctan(x / sqrt(1 - sqr(x)));
-end;
-
-{  The tan function defined in terms of sin and cos  }
-
-function tan(x: Double) : Double;
-begin
-	Result := sin(x) / cos(x);
-end;
-
 {  The cot function defined in terms of tan  }
 
 function cot(x: Double) : Double;
