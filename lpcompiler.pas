@@ -3368,6 +3368,12 @@ begin
 end;
 
 function TLapeCompiler.getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase;
+
+  function WithVarInScope(WithVar: PResVar): Boolean;
+  begin
+    Result := (WithVar = nil) or (WithVar^.VarPos.MemPos <> mpVar) or (WithVar^.VarPos.StackVar.Stack = AStackInfo.VarStack);
+  end;
+
 var
   Decl: TLapeDeclaration;
 begin
@@ -3378,6 +3384,12 @@ begin
     if (Decl is TLapeWithDeclaration) then
       with TLapeWithDeclaration(Decl) do
       try
+        if (not WithVarInScope(WithDeclRec.WithVar)) then
+          if (Pos = nil) then
+            LapeExceptionFmt(lpeDeclarationOutOfScope, [AName])
+          else
+            LapeExceptionFmt(lpeDeclarationOutOfScope, [AName], Pos^);
+
         Result := TLapeTree_Operator.Create(op_Dot, Self, Pos);
         TLapeTree_Operator(Result).Left := TLapeTree_WithVar.Create(WithDeclRec, Self, Pos);
         TLapeTree_Operator(Result).Right := TLapeTree_Field.Create(AName, Self, Pos);

@@ -4233,8 +4233,7 @@ begin
       Result := Stack.getDeclaration(AName, bTrue, CheckWith);
 
     if (Result is TLapeStackVar) and (TLapeStackVar(Result).Stack <> AStackInfo.VarStack) then
-      //LapeExceptionFmt(lpeDeclarationOutOfScope, [AName]);
-      Exit(nil);
+      LapeExceptionFmt(lpeDeclarationOutOfScope, [AName]);
     if (Result <> nil) or LocalOnly then
       Exit;
     Stack := Stack.Owner;
