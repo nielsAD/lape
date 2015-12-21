@@ -4465,16 +4465,18 @@ var
     end;
   end;
 
-  function TryOperatorOverload(): TResVar;
+  function DoOperatorOverload(): TResVar;
   begin
     Result := NullResVar;
     if (FOperatorType in OverloadableOperators) and LeftVar.HasType() and RightVar.HasType() then
       with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, @_DocPos) do
       try
-        addParam(TLapeTree_ResVar.Create(LeftVar, FCompiler, @_DocPos));
-        addParam(TLapeTree_ResVar.Create(RightVar, FCompiler, @_DocPos));
+        addParam(Left);
+        addParam(Right);
         Result := Compile(Offset);
-      finally 
+      finally
+        Right := Params[1];
+        Left := Params[0];
         Free();
       end
     else
@@ -4488,6 +4490,8 @@ begin
   if (FLeft <> nil) then
     if (resType(True) <> nil) and (FLeft is TLapeTree_If) then
       Exit(doIf())
+    else if FOverloadOp then
+      Exit(DoOperatorOverload())
     else
       LeftVar := TLapeTree_ExprBase(FLeft).Compile(Offset)
   else
@@ -4526,9 +4530,7 @@ begin
       TLapeTree_DestExprBase(FRight).Dest := NullResVar;
     end else
     try
-      if FOverloadOp then
-        Result := TryOperatorOverload()
-      else if LeftVar.HasType() then
+      if LeftVar.HasType() then
         Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, EvalFlags(), Offset, @_DocPos)
       else with TLapeType.Create(ltUnknown, FCompiler) do
       try
