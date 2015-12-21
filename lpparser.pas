@@ -352,13 +352,13 @@ const
     4,                                  //op_NOT
     6,                                  //op_OR
     6,                                  //op_Plus
-    3,                                  //op_Power
+    4,                                  //op_Power
     5,                                  //op_SHL
     5,                                  //op_SHR
     6,                                  //op_XOR
 
-    4,                                  //op_UnaryMinus
-    4                                   //op_UnaryPlus
+    3,                                  //op_UnaryMinus
+    3                                   //op_UnaryPlus
   );
 
 var
