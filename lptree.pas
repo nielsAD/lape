@@ -4467,20 +4467,16 @@ var
 
   function DoOperatorOverload(): TResVar;
   begin
-    Result := NullResVar;
-    if (FOperatorType in OverloadableOperators) and LeftVar.HasType() and RightVar.HasType() then
-      with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, @_DocPos) do
-      try
-        addParam(Left);
-        addParam(Right);
-        Result := Compile(Offset);
-      finally
-        Right := Params[1];
-        Left := Params[0];
-        Free();
-      end
-    else
-      LapeExceptionFmt(lpeIncompatibleOperator2,[LapeOperatorToString(FOperatorType), LeftVar.VarType.AsString, RightVar.VarType.AsString]);
+    with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, @_DocPos) do
+    try
+      addParam(Left);
+      addParam(Right);
+      Result := Compile(Offset);
+    finally
+      Right := Params[1];
+      Left := Params[0];
+      Free();
+    end;
   end;
   
 begin
