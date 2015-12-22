@@ -349,7 +349,7 @@ const
     6,                                  //op_Minus
     5,                                  //op_MOD
     5,                                  //op_Multiply
-    4,                                  //op_NOT
+    3,                                  //op_NOT
     6,                                  //op_OR
     6,                                  //op_Plus
     4,                                  //op_Power
