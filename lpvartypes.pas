@@ -26,13 +26,14 @@ type
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
-    lcoContinueCase                    //      {$CONTINUECASE}
+    lcoContinueCase,                   //      {$CONTINUECASE}
+    lcoCOperators                      //      {$COPERATORS}
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoRangeCheck, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke];
+  Lape_OptionsDef = [lcoCOperators, lcoRangeCheck, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke];
   Lape_PackRecordsDef = 2;
 
 type
@@ -652,6 +653,8 @@ type
     property Options_PackRecords: UInt8 read FOptions_PackRecords write FBaseOptions_PackRecords default Lape_PackRecordsDef;
   end;
 
+
+function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
@@ -691,6 +694,21 @@ uses
   lpvartypes_ord, lpvartypes_array,
   lpexceptions, lpeval, lpinterpreter;
 
+  
+function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
+begin
+  case op of
+    op_AssignDiv:
+      if (typ.BaseType in LapeRealTypes) then
+        Result := op_divide
+      else
+        Result := op_DIV;
+    op_AssignMinus: Result := op_Minus;
+    op_AssignMul: Result := op_Multiply;
+    op_AssignPlus: Result := op_Plus;
+  end;
+end;
+  
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 var
   i: Integer;
@@ -1470,6 +1488,9 @@ function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEv
 begin
   Assert(FCompiler <> nil);
 
+  if (op in CompoundOperators) then
+    Exit(EvalRes(op_Assign, EvalRes(ResolveCompoundOp(op, Self), Right, flags), flags));
+
   if (Op = op_Addr) then
     Result := FCompiler.getPointerType(Self)
   else if (Op = op_Assign) and (Right <> nil) and (getEvalRes(Op, FBaseType, Right.BaseType) <> ltUnknown) then
@@ -1778,6 +1799,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
   
 var
   EvalProc: TLapeEvalProc;
+  tmpRes: TResVar;
 begin
   Result := NullResVar;
   Assert(FCompiler <> nil);
@@ -1793,6 +1815,13 @@ begin
   begin
     Dest := NullResVar;
     Exit(Left);
+  end 
+  else if (op in CompoundOperators) and (lcoCOperators in Compiler.FOptions) then 
+  begin
+    if (not Left.Writeable) then
+      LapeException(lpeCannotAssign, _DocPos);
+    tmpRes := Eval(ResolveCompoundOp(op, Left.VarType), NullResVar, Left, Right, Flags, Offset, Pos);
+    Exit(Eval(op_Assign, Dest, Left, tmpRes, Flags, Offset, Pos));
   end;
 
   Result.VarType := EvalRes(Op, Right.VarType, Flags);
