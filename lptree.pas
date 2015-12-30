@@ -4392,7 +4392,7 @@ begin
       else
         LeftVar := nil;
 
-      if (FOperatorType = op_Assign) and ((LeftVar = nil) or (not LeftVar.Writeable)) then
+      if (FOperatorType in [op_Assign]+CompoundOperators) and ((LeftVar = nil) or (not LeftVar.Writeable)) then
         LapeException(lpeCannotAssign, [FLeft, Self]);
 
       if (LeftVar <> nil) and (not isEmpty(FRight)) then
@@ -4493,7 +4493,7 @@ begin
   else
     LeftVar := NullResVar;
 
-  if (FOperatorType = op_Assign) and (not LeftVar.Writeable) then
+  if (FOperatorType in [op_Assign]+CompoundOperators) and (not LeftVar.Writeable) then
     LapeException(lpeCannotAssign, [FLeft, Self]);
 
   if (FRight <> nil) then
@@ -4502,10 +4502,10 @@ begin
     if (FOperatorType = op_Index) then
       FRight := FRight.setExpectedType(FCompiler.getBaseType(ltInt32)) as TLapeTree_ExprBase;
 
-    if (FOperatorType = op_Assign) and
-      (FLeft <> nil) and LeftVar.Writeable and
-      (FRight is TLapeTree_DestExprBase) and
-      (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos = NullResVar.VarPos.MemPos)
+    if (FOperatorType in [op_Assign]+CompoundOperators) and
+       (FLeft <> nil) and LeftVar.Writeable and
+       (FRight is TLapeTree_DestExprBase) and
+       (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos = NullResVar.VarPos.MemPos)
     then
     begin
       TLapeTree_DestExprBase(FRight).Dest := LeftVar;
