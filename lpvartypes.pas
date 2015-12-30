@@ -26,13 +26,14 @@ type
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
-    lcoContinueCase                    //      {$CONTINUECASE}
+    lcoContinueCase,                   //      {$CONTINUECASE}
+    lcoCOperators                      //      {$COPERATORS}
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoRangeCheck, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke];
+  Lape_OptionsDef = [lcoCOperators, lcoRangeCheck, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke];
   Lape_PackRecordsDef = 2;
 
 type
@@ -342,7 +343,7 @@ type
     ImplicitParams: Integer;
     Res: TLapeType;
     IsOperator: Boolean;
-    
+
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
@@ -652,6 +653,8 @@ type
     property Options_PackRecords: UInt8 read FOptions_PackRecords write FBaseOptions_PackRecords default Lape_PackRecordsDef;
   end;
 
+
+function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
@@ -690,6 +693,21 @@ uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_array,
   lpexceptions, lpeval, lpinterpreter;
+
+
+function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
+begin
+  case op of
+    op_AssignDiv:
+      if (typ.BaseType in LapeRealTypes) then
+        Result := op_divide
+      else
+        Result := op_DIV;
+    op_AssignMinus: Result := op_Minus;
+    op_AssignMul: Result := op_Multiply;
+    op_AssignPlus: Result := op_Plus;
+  end;
+end;
 
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 var
@@ -1271,7 +1289,7 @@ begin
     Result := ltUnknown
   else if (FBaseType in LapeIntegerTypes) then
     Result := FBaseType
-  else 
+  else
     Result := DetermineIntType(Size, False);
 end;
 
@@ -1470,6 +1488,9 @@ function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEv
 begin
   Assert(FCompiler <> nil);
 
+  if (op in CompoundOperators) and (lcoCOperators in Compiler.FOptions) then
+    Exit(EvalRes(op_Assign, EvalRes(ResolveCompoundOp(op, Self), Right, flags), flags));
+
   if (Op = op_Addr) then
     Result := FCompiler.getPointerType(Self)
   else if (Op = op_Assign) and (Right <> nil) and (getEvalRes(Op, FBaseType, Right.BaseType) <> ltUnknown) then
@@ -1620,7 +1641,9 @@ begin
     //Right := nil;
   end;
   if (Op = op_UnaryPlus) then
-    Exit(Left);
+    Exit(Left)
+  else if (op in CompoundOperators) and (lcoCOperators in Compiler.FOptions) then
+    Exit(EvalConst(op_Assign, Left, EvalConst(ResolveCompoundOp(op, Left.VarType), Left, Right, Flags), Flags));
 
   try
     if (Right = nil) then
@@ -1775,7 +1798,7 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
       Result := Res;
     end;
   end;
-  
+
 var
   EvalProc: TLapeEvalProc;
 begin
@@ -1793,7 +1816,9 @@ begin
   begin
     Dest := NullResVar;
     Exit(Left);
-  end;
+  end
+  else if (op in CompoundOperators) and (lcoCOperators in Compiler.FOptions) then
+    Exit(Eval(op_Assign, Dest, Left, Eval(ResolveCompoundOp(op, Left.VarType), NullResVar, Left, Right, Flags, Offset, Pos), Flags, Offset, Pos));
 
   Result.VarType := EvalRes(Op, Right.VarType, Flags);
   if (not Result.HasType()) and (op = op_Deref) and ((not Left.HasType()) or (Left.VarType.BaseType = ltPointer)) then
@@ -4308,4 +4333,5 @@ initialization
 finalization
   EmptyStackInfo.Free();
 end.
+
 

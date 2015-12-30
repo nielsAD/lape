@@ -79,6 +79,10 @@ type
     tk_op_Addr,
     tk_op_AND,
     tk_op_Assign,
+    tk_op_AssignDiv,
+    tk_op_AssignMinus,
+    tk_op_AssignMul,
+    tk_op_AssignPlus,
     tk_op_Deref,
     tk_op_DIV,
     tk_op_Divide,
@@ -306,6 +310,10 @@ const
     assocRight,                         //op_Addr
     assocLeft,                          //op_AND
     assocRight,                         //op_Assign
+    assocRight,                         //op_AssignDiv
+    assocRight,                         //op_AssignMinus
+    assocRight,                         //op_AssignMul
+    assocRight,                         //op_AssignPlus
     assocLeft,                          //op_Deref
     assocLeft,                          //op_DIV
     assocLeft,                          //op_Divide
@@ -340,6 +348,10 @@ const
     2,                                  //op_Addr
     5,                                  //op_AND
     8,                                  //op_Assign
+    8,                                  //op_AssignDiv
+    8,                                  //op_AssignMinus
+    8,                                  //op_AssignMul
+    8,                                  //op_AssignPlus
     1,                                  //op_Deref
     5,                                  //op_DIV
     5,                                  //op_Divide
@@ -834,29 +846,58 @@ begin
         else
           Result := setTok(tk_sym_Colon);
       end;
+    
+    {Divide, Comment, AssignDiv}
     '/':
-      begin
-        if (getChar(1) = '/') then
-        begin
-          Inc(FPos);
-          while (not (getChar(1) in [#13, #10, #0])) do Inc(FPos);
-          Result := setTok(tk_Comment);
-        end
+      case getChar(1) of
+        '/': 
+          begin
+            Inc(FPos);
+            while (not (getChar(1) in [#13, #10, #0])) do Inc(FPos);
+            Result := setTok(tk_Comment);
+          end;
+        '=':
+          begin
+            Result := setTok(tk_op_AssignDiv);
+            Inc(FPos);
+          end;
         else
           Result := setTok(tk_op_Divide);
       end;
-    '-': Result := setTok(tk_op_Minus);
-    '*':
-      begin
-        if (getChar(1) = '*') then
-        begin
-          Result := setTok(tk_op_Power);
+          
+ 
+    {Minus, AssignMinus} 
+    '-':if (getChar(1) = '=') then begin
+          Result := setTok(tk_op_AssignMinus);
           Inc(FPos);
-        end
+        end else 
+          Result := setTok(tk_op_Minus);
+    
+    {Multiply, Power, AssignMul}      
+    '*':
+      case getChar(1) of
+        '*':
+          begin
+            Inc(FPos);
+            Result := setTok(tk_op_Power);
+          end;
+        '=': 
+          begin
+            Result := setTok(tk_op_AssignMul);
+            Inc(FPos);
+          end;
         else
           Result := setTok(tk_op_Multiply);
       end;
-    '+': Result := setTok(tk_op_Plus);
+      
+    
+    {Plus, AssignPlus}
+    '+':if (getChar(1) = '=') then begin
+          Result := setTok(tk_op_AssignPlus);
+          Inc(FPos);
+        end else 
+          Result := setTok(tk_op_Plus);
+    
     '@': Result := setTok(tk_op_Addr);
     '^': Result := setTok(tk_sym_Caret);
 

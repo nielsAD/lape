@@ -877,6 +877,8 @@ var
         Result := (lcoScopedEnums in FOptions)
       else if (Def = 'continuecase') then
         Result := (lcoContinueCase in FOptions)
+      else if (Def = 'coperators') then
+        Result := (lcoCOperators in FOptions)
       else
         Result := False;
     end;
@@ -1022,6 +1024,8 @@ begin
     setOption(lcoScopedEnums)
   else if (Directive = 'continuecase') then
     setOption(lcoContinueCase)
+  else if (Directive = 'coperators') then
+    setOption(lcoCOperators)
   else
     Result := False;
 end;
