@@ -4197,7 +4197,7 @@ begin
     Result := (not isEmpty(FParent)) and (FParent is TLapeTree_Operator) and (
       (
         (TLapeTree_Operator(FParent).FLeft = Self) and
-        (TLapeTree_Operator(FParent).OperatorType = op_Assign)
+        (TLapeTree_Operator(FParent).OperatorType in [op_Assign]+CompoundOperators)
       ) or (
         (TLapeTree_Operator(FParent).FLeft <> Self) and
         TLapeTree_Operator(FParent).isAssigning()
