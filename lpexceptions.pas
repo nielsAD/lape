@@ -39,6 +39,7 @@ const
   lpeDeclarationOutOfScope = 'Declaration "%s" out of scope';
   lpeDefaultToMoreThanOne = 'Runtime default value can only be assigned to one variable';
   lpeDuplicateDeclaration = 'Duplicate declaration "%s"';
+  lpeErrorScanningString = '%s while scanning string literal';
   lpeExceptionAt = '%s at line %d, column %d';
   lpeExceptionIn = '%s in file "%s"';
   lpeExpected = '%s expected';
