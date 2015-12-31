@@ -1459,7 +1459,7 @@ begin
     end;
 
     try
-      if (Tokenizer.Tok = tk_kw_Overload) or FuncHeader.isOperator then
+      if (Tokenizer.Tok = tk_kw_Overload) or (FuncHeader.isOperator and (Tokenizer.Tok <> tk_kw_Override)) then
       begin
         if not FuncHeader.isOperator then
           ParseExpressionEnd(tk_sym_SemiColon, True, False);
