@@ -146,7 +146,7 @@ type
   TLapeImportedFunc = procedure(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
   ELoopType = (loopUp, loopDown, loopOver);
-  
+
   ELapeBaseType = (
     ltUnknown,
     ltUInt8, ltInt8, ltUInt16, ltInt16, ltUInt32, ltInt32, ltUInt64, ltInt64, //Integer
@@ -162,7 +162,7 @@ type
     ltScriptMethod, ltImportedMethod                                          //Methods
   );
   LapeIntegerTypeRange = ltUInt8..ltInt64;
-  
+
   EOperatorAssociative = (assocNone, assocLeft, assocRight);
   EOperator = (
     op_Unknown,
@@ -187,6 +187,7 @@ type
     op_Divide,
     op_Dot,
     op_IN,
+    op_IS,
     op_Index,
     op_Minus,
     op_MOD,
@@ -586,17 +587,17 @@ const
   EnumOperators = [op_Plus, op_Minus, op_Assign] + CompareOperators;
 
   CompoundOperators = [op_AssignPlus, op_AssignMinus, op_AssignDiv, op_AssignMul];
-  OverloadableOperators = [op_Assign, op_Plus, op_Minus, op_Multiply, op_Divide, op_DIV, op_Power, op_MOD, op_IN, op_SHL, op_SHR] + CompareOperators + BinaryOperators + CompoundOperators; 
+  OverloadableOperators = [op_Assign, op_Plus, op_Minus, op_Multiply, op_Divide, op_DIV, op_Power, op_MOD, op_IN, op_IS, op_SHL, op_SHR] + CompareOperators + BinaryOperators + CompoundOperators;
 
   op_str: array[EOperator] of lpString = ('',
-    '=', '>', '>=', '<', '<=', '<>', '@', 'and', ':=', '/=', '-=', '*=', '+=', 
-    '^', 'div', '/', '.' , 'in', '[', '-', 'mod', '*', 'not', 'or', '+', '**', 
-    'shl', 'shr', 'xor', '-', '+'
+    '=', '>', '>=', '<', '<=', '<>', '@', 'and', ':=', '/=', '-=', '*=', '+=',
+    '^', 'div', '/', '.' , 'in', 'is', '[', '-', 'mod', '*', 'not', 'or', '+',
+    '**', 'shl', 'shr', 'xor', '-', '+'
   );
   op_name: array[EOperator] of lpString = ('',
-    'EQ', 'GT', 'GTEQ', 'LT', 'LTEQ', 'NEQ', 'ADDR', 'AND', 'ASGN', 'DIVASGN', 'SUBASGN', 'MULASGN', 'ADDASGN', 
-    'DEREF', 'IDIV', 'DIV', 'DOT', 'IN', 'IDX', 'SUB', 'MOD', 'MUL', 'NOT', 'OR', 'ADD', 'POW', 
-    'SHL', 'SHR', 'XOR', 'UMIN', 'UPOS'
+    'EQ', 'GT', 'GTEQ', 'LT', 'LTEQ', 'NEQ', 'ADDR', 'AND', 'ASGN', 'DIVASGN', 'SUBASGN', 'MULASGN', 'ADDASGN',
+    'DEREF', 'IDIV', 'DIV', 'DOT', 'IN', 'IS', 'IDX', 'SUB', 'MOD', 'MUL', 'NOT', 'OR', 'ADD',
+    'POW', 'SHL', 'SHR', 'XOR', 'UMIN', 'UPOS'
   );
 
 var

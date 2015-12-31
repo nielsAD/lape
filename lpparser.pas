@@ -88,6 +88,7 @@ type
     tk_op_Divide,
     tk_op_Dot,
     tk_op_IN,
+    tk_op_IS,
     tk_op_Index,
     tk_op_Minus,
     tk_op_MOD,
@@ -244,10 +245,11 @@ const
   ParserToken_Symbols = [tk_sym_BracketClose..tk_sym_SemiColon];
   ParserToken_Types = [tk_typ_Float..tk_typ_Char];
 
-  Lape_Keywords: array[0..46 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
+  Lape_Keywords: array[0..47 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
       (Keyword: 'AND';          Token: tk_op_AND),
       (Keyword: 'DIV';          Token: tk_op_DIV),
       (Keyword: 'IN';           Token: tk_op_IN),
+      (Keyword: 'IS';           Token: tk_op_IS),
       (Keyword: 'MOD';          Token: tk_op_MOD),
       (Keyword: 'NOT';          Token: tk_op_NOT),
       (Keyword: 'OR';           Token: tk_op_OR),
@@ -320,6 +322,7 @@ const
     assocLeft,                          //op_Divide
     assocLeft,                          //op_Dot
     assocLeft,                          //op_IN
+    assocLeft,                          //op_IS
     assocLeft,                          //op_Index
     assocLeft,                          //op_Minus
     assocLeft,                          //op_MOD
@@ -358,6 +361,7 @@ const
     5,                                  //op_Divide
     1,                                  //op_Dot
     7,                                  //op_IN
+    7,                                  //op_IS
     1,                                  //op_Index
     6,                                  //op_Minus
     5,                                  //op_MOD
