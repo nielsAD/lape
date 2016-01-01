@@ -2504,7 +2504,7 @@ begin
       else
         Result := Self
     else
-      {nothing}
+      Result := inherited
   else
     Result := inherited;
 end;
