@@ -1302,6 +1302,7 @@ begin
       EvalProc := getEvalProc(op_Assign, ltShortString, ltUInt8);
       Assert(ValidEvalFunction(EvalProc));
       EvalProc(Left.Ptr, Right.Ptr, @FRange.Hi);
+      Result := Left;
     end
     else
     begin
