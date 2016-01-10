@@ -1,0 +1,37 @@
+{$assertions on}
+{$autoproperties on}
+
+type
+  TRecordWithMadProps = record
+    _Prop: Int32;
+  end;
+
+function TRecordWithMadProps.Prop: Int32; overload;
+begin
+  Result := _Prop;
+end;
+
+function TRecordWithMadProps.Prop(i: Int32): Int32; overload;
+begin
+  Result := _Prop := i;
+end;
+
+var
+  Rec: TRecordWithMadProps;
+  x, y: function(i: Int32): Int32 of object;
+begin
+  Rec.Prop := 111;
+  Assert(Rec.Prop = 111);
+
+  @x := @Rec.Prop;
+   x := 222;
+
+  Assert(Rec.Prop = 222);
+
+  {$autoproperties off}
+   y := @Rec.Prop; // @ not explicitly needed
+  @y := @Rec.Prop;
+
+  Assert(@x = @y);
+end;
+

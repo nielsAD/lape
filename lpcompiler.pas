@@ -873,6 +873,8 @@ var
         Result := (lcoLooseSyntax in FOptions)
       else if (Def = 'autoinvoke') then
         Result := (lcoAutoInvoke in FOptions)
+      else if (Def = 'autoproperties') then
+        Result := (lcoAutoProperties in FOptions)
       else if (Def = 'scopedenums') then
         Result := (lcoScopedEnums in FOptions)
       else if (Def = 'continuecase') then
@@ -1020,6 +1022,8 @@ begin
     setOption(lcoLooseSyntax)
   else if (Directive = 'f') or (Directive = 'autoinvoke') then
     setOption(lcoAutoInvoke)
+  else if (Directive = 'p') or (Directive = 'autoproperties') then
+    setOption(lcoAutoProperties)
   else if (Directive = 's') or (Directive = 'scopedenums') then
     setOption(lcoScopedEnums)
   else if (Directive = 'continuecase') then
@@ -2201,7 +2205,7 @@ var
   function PushOpStack(Item: TLapeTree_Operator): Integer;
   begin
     try
-      if (Item = TLapeTree_Operator(ParenthesisOpen)) or (Item.OperatorType = op_Assign) then
+      if (Item = TLapeTree_Operator(ParenthesisOpen)) or (Item.OperatorType in AssignOperators) then
         _LastNode := _None
       else if (_LastNode <> _Var) and (not (Item.OperatorType in UnaryOperators)) then
         LapeException(lpeExpressionExpected, Tokenizer.DocPos)
@@ -2354,6 +2358,7 @@ var
   end;
 
   function ResolveMethods(Node: TLapeTree_Base): TLapeTree_Base;
+
     function Resolve(Node: TLapeTree_Base; Recurse: Boolean; out HasChanged: Boolean): TLapeTree_Base;
 
       function MethodType(Typ: TLapeType): Boolean;
@@ -2370,12 +2375,20 @@ var
         else
           Op := op_Unknown;
 
-        if (Op <> op_Assign) and MethodType(Node.resType()) then
+        if (not (Op in AssignOperators)) and MethodType(Node.resType()) then
           Result := TLapeTree_Invoke.Create(Node, Node)
+        else if (Op = op_Assign) and (lcoAutoProperties in Node.CompilerOptions) and MethodType(TLapeTree_Operator(Node).Left.resType()) then
+        begin
+          Result := TLapeTree_Invoke.Create(TLapeTree_Operator(Node).Left, Node);
+          TLapeTree_Invoke(Result).addParam(TLapeTree_Operator(Node).Right);
+          Node.Free();
+        end
         else if (Op = op_Addr) and MethodType(TLapeTree_Operator(Node).Left.resType()) then
         begin
           Result := TLapeTree_Operator(Node).Left;
           Result.Parent := nil;
+          if (Node.Parent <> nil) then
+            Node.Parent.CompilerOptions := Node.Parent.CompilerOptions - [lcoAutoProperties];
           Node.Free();
         end
         else
@@ -2388,19 +2401,20 @@ var
       Result := Node;
       HasChanged := False;
 
-      if TLapeTree_Base.isEmpty(Node) or (not (lcoAutoInvoke in Node.CompilerOptions)) or
+      if TLapeTree_Base.isEmpty(Node) or
+        (([lcoAutoInvoke, lcoAutoProperties] * Node.CompilerOptions) = []) or
         (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke)
       then
         Exit;
 
       Result := ResolveMethod(TLapeTree_ExprBase(Node));
       if (Result <> Node) then
-        HasChanged := True
+        HasChanged := Recurse
       else if (Node is TLapeTree_Operator) then
         with TLapeTree_Operator(Node) do
         begin
-          if (OperatorType <> op_Assign) or (not MethodType(Left.resType())) then
-            Left := TLapeTree_ExprBase(Resolve(Left, OperatorType <> op_Addr, LeftChanged))
+          if (not (OperatorType in AssignOperators)) or (not MethodType(Left.resType())) then
+            Left := TLapeTree_ExprBase(Resolve(Left, not (OperatorType in [op_Addr, op_Assign]), LeftChanged))
           else
             LeftChanged := False;
           Right := TLapeTree_ExprBase(Resolve(Right, True, RightChanged));
@@ -2410,6 +2424,7 @@ var
             Result := ResolveMethod(TLapeTree_ExprBase(Node));
         end;
     end;
+
   var
     HasChanged: Boolean;
   begin

@@ -25,6 +25,7 @@ type
     lcoLooseSemicolon,                 // {$L} {$LOOSESEMICOLON}
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
+    lcoAutoProperties,                 // {$P} {$AUTOPROPERTIES}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
     lcoContinueCase,                   //      {$CONTINUECASE}
     lcoCOperators                      //      {$COPERATORS}
@@ -1493,7 +1494,7 @@ begin
 
   if (Op = op_Addr) then
     Result := FCompiler.getPointerType(Self)
-  else if (Op = op_Assign) and (Right <> nil) and (getEvalRes(Op, FBaseType, Right.BaseType) <> ltUnknown) then
+  else if (Op in AssignOperators) and (Right <> nil) and (getEvalRes(Op, FBaseType, Right.BaseType) <> ltUnknown) then
     Result := Self
   else if (Right = nil) then
     Result := FCompiler.getBaseType(getEvalRes(Op, FBaseType, ltUnknown))
@@ -1689,7 +1690,7 @@ begin
       else
         LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
 
-    if (Op = op_Assign) then
+    if (Op in AssignOperators) then
     begin
       if (Right = nil) then
         LapeException(lpeInvalidAssignment);
@@ -1705,7 +1706,7 @@ begin
         EvalProc(Result.Ptr, Left.Ptr, Right.Ptr);
     end;
   finally
-    if (not (op in [op_Assign, op_Dot])) and (Result <> nil) and (Left <> nil) then
+    if (not (op in AssignOperators + [op_Dot])) and (Result <> nil) and (Left <> nil) then
     begin
       Result.Readable := (op <> op_Deref) and Left.Readable and ((Right = nil) or Right.Readable);
       Result.Writeable := (op = op_Deref);
@@ -1855,7 +1856,7 @@ begin
 
     FCompiler.getDestVar(Dest, Result, op);
 
-    if (op = op_Assign) then
+    if (op in AssignOperators) then
     begin
       if (not Left.HasType()) or (not Right.HasType()) or (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
         LapeException(lpeInvalidAssignment);
@@ -1872,7 +1873,7 @@ begin
 
     if (op = op_Deref) then
       Result.VarPos.isPointer := (Result.VarPos.MemPos = mpVar);
-    if (op <> op_Assign) then
+    if (not (op in AssignOperators)) then
     begin
       Result.Readable := (op <> op_Deref) and Result.Readable;
       Result.Writeable := (op = op_Deref) or Result.Writeable;
