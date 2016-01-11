@@ -604,7 +604,7 @@ begin
         end;
         TLapeTree_StatementList(Body).addStatement(Node);
 
-        ALeft.VarType := FCompiler.getPointerType(ltNativeInt);
+        ALeft.VarType := FCompiler.getPointerType(ltSizeInt);
         ARight.VarType := ALeft.VarType;
 
         Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Body);
@@ -832,7 +832,7 @@ end;
 
 function TLapeType_StaticArray.VarToString(AVar: Pointer): lpString;
 var
-  i: Int64;
+  i: SizeInt;
 begin
   Result := '[';
   if (AVar <> nil) and HasType() then
@@ -892,7 +892,7 @@ end;
 
 function TLapeType_StaticArray.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
-  i: Int64;
+  i: SizeInt;
   LeftVar, RightVar: TLapeGlobalVar;
 begin
   Assert(FCompiler <> nil);
@@ -1067,7 +1067,7 @@ end;
 
 procedure TLapeType_StaticArray.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
 var
-  i: Int64;
+  i: SizeInt;
   LoopOffset: Integer;
   tmpVar, IndexVar: TResVar;
   Counter, LowIndex, HighIndex: TLapeVar;

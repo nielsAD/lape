@@ -893,7 +893,7 @@ end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;
 var
-  i: Int64;
+  i: SizeInt;
 begin
   Result := '[';
   for i := FRange.Range.Lo to FRange.Range.Hi do
