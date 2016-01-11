@@ -165,7 +165,7 @@ function LapeImportWrapper(Func: Pointer; NativeCif: TFFICifManager): TImportClo
 function LapeImportWrapper(Func: Pointer; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
 function LapeImportWrapper(Func: Pointer; Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
 
-function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamSizes: array of Integer): TExportClosure; overload;
+function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamSizes: array of SizeInt): TExportClosure; overload;
 function LapeExportWrapper(Code: PByte; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
 function LapeExportWrapper(Func: TLapeGlobalVar; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
 
@@ -563,9 +563,9 @@ function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
     end;
   end;
 
-  procedure FFIArray(Size: Integer; FFIType: TFFITypeManager);
+  procedure FFIArray(Size: SizeInt; FFIType: TFFITypeManager);
   var
-    i: Integer;
+    i: SizeInt;
   begin
     for i := 0 to Size - 1 do
       Result.addElem(FFIType, i = 0);
@@ -830,7 +830,7 @@ begin
   end;
 end;
 
-function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamSizes: array of Integer): TExportClosure;
+function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamSizes: array of SizeInt): TExportClosure;
 var
   i: Integer;
 begin
@@ -860,7 +860,7 @@ end;
 function LapeExportWrapper(Code: PByte; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
 var
   i, c: Integer;
-  ParSizes: array of Integer;
+  ParSizes: array of SizeInt;
 begin
   if (Header = nil) or (Header.BaseType <> ltScriptMethod) then
     Exit(nil);

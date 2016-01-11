@@ -64,10 +64,14 @@ end;
 
 procedure _LapeGetTickCount(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  {$IF DECLARED(GetTickCount)}
-  PUInt32(Result)^ := GetTickCount();
+  {$IF DECLARED(GetTickCount64)}
+  PUInt64(Result)^ := GetTickCount64();
   {$ELSE}
-  PUInt32(Result)^ := Trunc(Now() * 24 * 60 * 60 * 1000);
+    {$IF DECLARED(GetTickCount)}
+    PUInt64(Result)^ := GetTickCount();
+    {$ELSE}
+    PUInt64(Result)^ := Trunc(Now() * 24 * 60 * 60 * 1000);
+    {$IFEND}
   {$IFEND}
 end;
 

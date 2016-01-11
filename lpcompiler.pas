@@ -602,7 +602,7 @@ procedure TLapeCompiler.InitBaseDefinitions;
     a := getBaseType(ltAnsiString);
     w := getBaseType(ltWideString);
     u := getBaseType(ltUnicodeString);
-    i := getBaseType(ltInt32);
+    i := getBaseType(ltSizeInt);
 
     n := nil;
     gn := nil;
@@ -675,32 +675,34 @@ begin
 
   addGlobalFunc('procedure _Assert(Expr: EvalBool); overload;', @_LapeAssert);
   addGlobalFunc('procedure _Assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
-  addGlobalFunc('procedure _RangeCheck(Idx, Lo, Hi: Int32);', @_LapeRangeCheck);
+  addGlobalFunc('procedure _RangeCheck(Idx, Lo, Hi: SizeInt);', @_LapeRangeCheck);
 
-  addGlobalFunc('procedure _AStr_SetLen(s: AnsiString; l: Int32);', @_LapeAStr_SetLen);
-  addGlobalFunc('procedure _WStr_SetLen(s: WideString; l: Int32);', @_LapeWStr_SetLen);
-  addGlobalFunc('procedure _UStr_SetLen(s: UnicodeString; l: Int32);', @_LapeUStr_SetLen);
+  addGlobalFunc('procedure _SStr_SetLen(var s; l, m: UInt8);', @_LapeSStr_SetLen);
+  addGlobalFunc('procedure _AStr_SetLen(var s: AnsiString; l: SizeInt);', @_LapeAStr_SetLen);
+  addGlobalFunc('procedure _WStr_SetLen(var s: WideString; l: SizeInt);', @_LapeWStr_SetLen);
+  addGlobalFunc('procedure _UStr_SetLen(var s: UnicodeString; l: SizeInt);', @_LapeUStr_SetLen);
 
-  addGlobalFunc('procedure _SStr_Copy(s: ShortString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: AnsiString);', @_LapeSStr_Copy);
-  addGlobalFunc('procedure _AStr_Copy(s: AnsiString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: AnsiString);', @_LapeAStr_Copy);
-  addGlobalFunc('procedure _WStr_Copy(s: WideString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: WideString);', @_LapeWStr_Copy);
-  addGlobalFunc('procedure _UStr_Copy(s: UnicodeString; Start: Int32 = 1; Count: Int32 = High(Int32); out Result: UnicodeString);', @_LapeUStr_Copy);
+  addGlobalFunc('procedure _SStr_Copy(s: ShortString; Start: SizeInt = 1; Count: SizeInt = High(SizeInt); out Result: AnsiString);', @_LapeSStr_Copy);
+  addGlobalFunc('procedure _AStr_Copy(s: AnsiString; Start: SizeInt = 1; Count: SizeInt = High(SizeInt); out Result: AnsiString);', @_LapeAStr_Copy);
+  addGlobalFunc('procedure _WStr_Copy(s: WideString; Start: SizeInt = 1; Count: SizeInt = High(SizeInt); out Result: WideString);', @_LapeWStr_Copy);
+  addGlobalFunc('procedure _UStr_Copy(s: UnicodeString; Start: SizeInt = 1; Count: SizeInt = High(SizeInt); out Result: UnicodeString);', @_LapeUStr_Copy);
 
-  addGlobalFunc('procedure _AStr_Delete(var s: AnsiString; Start: Int32; Count: Int32 = High(Int32));', @_LapeAStr_Delete);
-  addGlobalFunc('procedure _WStr_Delete(var s: WideString; Start: Int32; Count: Int32 = High(Int32));', @_LapeWStr_Delete);
-  addGlobalFunc('procedure _UStr_Delete(var s: UnicodeString; Start: Int32; Count: Int32 = High(Int32));', @_LapeUStr_Delete);
+  addGlobalFunc('procedure _SStr_Delete(var s; Start: UInt8; Count: UInt8 = High(UInt8));', @_LapeSStr_Delete);
+  addGlobalFunc('procedure _AStr_Delete(var s: AnsiString; Start: SizeInt; Count: SizeInt = High(SizeInt));', @_LapeAStr_Delete);
+  addGlobalFunc('procedure _WStr_Delete(var s: WideString; Start: SizeInt; Count: SizeInt = High(SizeInt));', @_LapeWStr_Delete);
+  addGlobalFunc('procedure _UStr_Delete(var s: UnicodeString; Start: SizeInt; Count: SizeInt = High(SizeInt));', @_LapeUStr_Delete);
 
-  addGlobalFunc('procedure _AStr_Insert(Src: AnsiString; var Dst: AnsiString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeAStr_Insert);
-  addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: WideString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeWStr_Insert);
-  addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: UnicodeString; Pos: Int32 = 1; Count: Int32 = 0);', @_LapeUStr_Insert);
+  addGlobalFunc('procedure _AStr_Insert(Src: AnsiString; var Dst: AnsiString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeAStr_Insert);
+  addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: WideString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeWStr_Insert);
+  addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: UnicodeString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeUStr_Insert);
 
-  addGlobalFunc('function GetMem(i: Int32): Pointer;', @_LapeGetMem);
-  addGlobalFunc('function AllocMem(i: Int32): Pointer;', @_LapeAllocMem);
+  addGlobalFunc('function GetMem(i: SizeInt): Pointer;', @_LapeGetMem);
+  addGlobalFunc('function AllocMem(i: SizeInt): Pointer;', @_LapeAllocMem);
   addGlobalFunc('procedure FreeMem(p: Pointer);', @_LapeFreeMem);
 
-  addGlobalFunc('procedure ReallocMem(var p: Pointer; s: Int32);', @_LapeReallocMem);
-  addGlobalFunc('procedure FillMem(var p; s: Int32; b: UInt8 = 0);', @_LapeFillMem);
-  addGlobalFunc('procedure Move(constref Src; var Dst; s: Int32);', @_LapeMove);
+  addGlobalFunc('procedure ReallocMem(var p: Pointer; s: SizeInt);', @_LapeReallocMem);
+  addGlobalFunc('procedure FillMem(var p; s: SizeInt; b: UInt8 = 0);', @_LapeFillMem);
+  addGlobalFunc('procedure Move(constref Src; var Dst; s: SizeInt);', @_LapeMove);
 
   addGlobalFunc('function Assigned(constref p): EvalBool;', @_LapeAssigned);
   //addGlobalFunc('procedure RaiseException(Ex: TExceptionObject); overload;', @_LapeRaise);
@@ -2357,9 +2359,9 @@ var
     end;
   end;
 
-  function ResolveMethods(Node: TLapeTree_Base): TLapeTree_Base;
+  function ResolveMethods(Node: TLapeTree_Base; SkipTop: Boolean): TLapeTree_Base;
 
-    function Resolve(Node: TLapeTree_Base; Recurse: Boolean; out HasChanged: Boolean): TLapeTree_Base;
+    function Resolve(Node: TLapeTree_Base; Top, Recurse: Boolean; out HasChanged: Boolean): TLapeTree_Base;
 
       function MethodType(Typ: TLapeType): Boolean;
       begin
@@ -2407,17 +2409,21 @@ var
       then
         Exit;
 
-      Result := ResolveMethod(TLapeTree_ExprBase(Node));
+      if Top then
+        Result := ResolveMethod(TLapeTree_ExprBase(Node))
+      else
+        Result := Node;
+
       if (Result <> Node) then
         HasChanged := Recurse
       else if (Node is TLapeTree_Operator) then
         with TLapeTree_Operator(Node) do
         begin
           if (not (OperatorType in AssignOperators)) or (not MethodType(Left.resType())) then
-            Left := TLapeTree_ExprBase(Resolve(Left, not (OperatorType in [op_Addr, op_Assign]), LeftChanged))
+            Left := TLapeTree_ExprBase(Resolve(Left, True, not (OperatorType in [op_Addr, op_Assign]), LeftChanged))
           else
             LeftChanged := False;
-          Right := TLapeTree_ExprBase(Resolve(Right, True, RightChanged));
+          Right := TLapeTree_ExprBase(Resolve(Right, True, True, RightChanged));
 
           HasChanged := LeftChanged or RightChanged;
           if HasChanged and Recurse then
@@ -2428,7 +2434,7 @@ var
   var
     HasChanged: Boolean;
   begin
-    Result := Resolve(Node, True, HasChanged);
+    Result := Resolve(Node, not SkipTop, not SkipTop, HasChanged);
   end;
 
 begin
@@ -2490,9 +2496,9 @@ begin
               PopOpStack(op_Invoke);
               if (Method = nil) then
               begin
-                Expr := ResolveMethods(VarStack.Pop().FoldConstants()) as TLapeTree_ExprBase;
-                if (Expr is TLapeTree_Invoke) and (TLapeTree_Invoke(Expr).Params.Count < 1) then
-                  Method := Expr as TLapeTree_Invoke
+                Expr := ResolveMethods(VarStack.Pop().FoldConstants(), True) as TLapeTree_ExprBase;
+                if (Expr is TLapeTree_InternalMethod) then
+                  Method := TLapeTree_Invoke(Expr)
                 else
                   Method := TLapeTree_Invoke.Create(Expr, Self, getPDocPos());
               end;
@@ -2565,7 +2571,7 @@ begin
       else
         LapeException(lpeInvalidEvaluation, Tokenizer.DocPos);
 
-    Result := TLapeTree_ExprBase(ResolveMethods(VarStack.Pop()));
+    Result := TLapeTree_ExprBase(ResolveMethods(VarStack.Pop(), False));
     if DoFold and (not TLapeTree_Base.isEmpty(Result)) then
       Result := TLapeTree_ExprBase(Result.FoldConstants());
   finally

@@ -1,8 +1,17 @@
 {$assertions on}
 
-function Test: Boolean;
+type
+  TFunc1 = function: Boolean;
+  TFunc2 = function: TFunc1;
+
+function Func1: Boolean;
 begin
   Result := True;
+end;
+
+function Func2: TFunc1;
+begin
+  Result := @Func1;
 end;
 
 var
@@ -13,10 +22,14 @@ begin
   Assert(f = nil, 'f <> nil');
   Assert((f = nil) or f(), 'not f');
 
-  f := Test;
-  Assert(f = Test, 'f <> Test');
-  Assert(f(), 'Test');
-  Assert((f <> nil) and f(), 'not Test');
+  f := Func1;
+  Assert(f = Func1, 'f <> Func1');
+  Assert(f(), 'Func1');
+  Assert((f <> nil) and f(), 'not Func1');
+
+  Assert(Pointer(Func2) <> Pointer(f), 'Func2 = f');
+  Assert(Func2() = f, 'Func2() <> f');
+  Assert(Func2()() = True, 'Func2()()');
 
   WriteLn('Autoinvoke off :: Passed');
 
@@ -25,10 +38,20 @@ begin
   Assert(@f = nil, 'f <> nil');
   Assert((@f = nil) or f, 'not f');
 
-  f := @Test;
-  Assert(@f = @Test, 'f <> Test');
-  Assert(f, 'Test');
-  Assert((@f <> nil) and f, 'not Test');
+  f := @Func1;
+  Assert(@f = @Func1, 'f <> Func1');
+  Assert(f, 'Func1');
+  Assert((@f <> nil) and f, 'not Func1');
+
+  @f := @Func1;
+  Assert(@f = @Func1, 'f <> Func1');
+  Assert(f and f(), 'Func1');
+  Assert((@f <> nil) and f() and f, 'not Func1');
+
+  Assert(Pointer(@Func2) <> Pointer(@f), 'Func2 = f');
+  Assert(Func2 = @f, 'Func2 <> f');
+  Assert(Func2() = @f, 'Func2() <> f');
+  Assert(Func2()() = True, 'Func2()()');
 
   WriteLn('Autoinvoke on  :: Passed');
 end;

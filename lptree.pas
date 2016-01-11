@@ -1319,7 +1319,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
 
   procedure doSetOrDynArray;
   var
-    i, ii: Integer;
+    i, ii: SizeInt;
     FieldVar, tmpVar: TLapeGlobalVar;
   begin
     FieldVar := nil;
@@ -1336,7 +1336,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
       end
       else if (FValues[i] is TLapeTree_Range) then
       try
-        FieldVar := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@ii);
+        FieldVar := FCompiler.getBaseType(ltSizeInt).NewGlobalVarP(@ii);
         for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
         begin
           tmpVar := Result;
@@ -1352,15 +1352,14 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
 
   procedure doStaticArray;
   var
-    i, ii: Integer;
+    i, ii, CounterInt: SizeInt;
     FieldVar, tmpVar, Counter: TLapeGlobalVar;
-    CounterInt: Integer;
   begin
     FieldVar := nil;
     tmpVar := nil;
     try
       CounterInt := TLapeType_StaticArray(FType).Range.Lo;
-      Counter := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@CounterInt);
+      Counter := FCompiler.getBaseType(ltSizeInt).NewGlobalVarP(@CounterInt);
 
       for i := 0 to FValues.Count - 1 do
       begin
@@ -1380,7 +1379,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         end
         else if (FValues[i] is TLapeTree_Range) then
         try
-          tmpVar := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@ii);
+          tmpVar := FCompiler.getBaseType(ltSizeInt).NewGlobalVarP(@ii);
           for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
           try
             try
@@ -1497,7 +1496,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         if (FType is TLapeType_Set) then
           Counter := FCompiler.getTempVar(TLapeType_Set(FType).Range)
         else
-          Counter := FCompiler.getTempVar(ltInt32);
+          Counter := FCompiler.getTempVar(ltSizeInt);
         tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), TLapeTree_Range(FValues[i]).Lo.Compile(Offset), [], Offset, @FValues[i]._DocPos);
 
         with TLapeTree_For.Create(FValues[i]) do
@@ -1536,6 +1535,8 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         with TLapeTree_Operator.Create(op_Assign, FValues[i]) do
         try
           Left := TLapeTree_Operator.Create(op_Index, FValues[i]);
+          CompilerOptions := CompilerOptions - [lcoRangeCheck];
+
           with TLapeTree_Operator(Left) do
           begin
             Left := TLapeTree_ResVar.Create(Result.IncLock(), FValues[i]);
@@ -2873,7 +2874,7 @@ end;
 
 constructor TLapeTree_InternalMethod_Swap.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  inherited Create('_swap', ACompiler, ADocPos);
+  inherited Create('_Swap', ACompiler, ADocPos);
 end;
 
 function TLapeTree_InternalMethod_Swap.Compile(var Offset: Integer): TResVar;
@@ -2907,7 +2908,7 @@ constructor TLapeTree_InternalMethod_SizeOf.Create(ACompiler: TLapeCompilerBase;
 begin
   inherited;
   FConstant := bTrue;
-  FResType := ACompiler.getBaseType(ltInt32);
+  FResType := ACompiler.getBaseType(ltSizeInt);
 end;
 
 function TLapeTree_InternalMethod_SizeOf.Evaluate: TLapeGlobalVar;
@@ -2925,7 +2926,7 @@ begin
     if (ParamType = nil) then
       LapeException(lpeInvalidEvaluation, DocPos);
 
-    FRes := FCompiler.getConstant(ParamType.Size, ltInt32, False, True);
+    FRes := FCompiler.getConstant(ParamType.Size, ltSizeInt, False, True);
   end;
   Result := inherited;
 end;
@@ -3006,7 +3007,7 @@ begin
       if (ParamType <> nil) and (ParamType.BaseType in LapeOrdinalTypes) then
         FResType := ParamType
       else if (ParamType <> nil) and (ParamType.BaseType in LapeArrayTypes) then
-        FResType := FCompiler.getBaseType(ltInt32);
+        FResType := FCompiler.getBaseType(ltSizeInt);
     end;
   Result := inherited;
 end;
@@ -3081,7 +3082,7 @@ begin
       else if (ParamType <> nil) and (ParamType.BaseType = ltShortString) then
         FResType := FCompiler.getBaseType(ltUInt8)
       else if (ParamType <> nil) and (ParamType.BaseType in LapeArrayTypes) then
-        FResType := FCompiler.getBaseType(ltInt32);
+        FResType := FCompiler.getBaseType(ltSizeInt);
     end;
   Result := inherited;
 end;
@@ -3134,7 +3135,7 @@ begin
     FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Result, Param, NullResVar, Offset, @Self._DocPos);
 
     Result := NullResVar;
-    Result.VarType := FCompiler.getBaseType(ltInt32);
+    Result.VarType := FCompiler.getBaseType(ltSizeInt);
     if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
       FDest := VarResVar;
     FCompiler.getDestVar(FDest, Result, op_Unknown);
@@ -3180,7 +3181,7 @@ var
 begin
   if (FResType = nil) then
   begin
-    FResType := FCompiler.getBaseType(ltInt32);
+    FResType := FCompiler.getBaseType(ltSizeInt);
     if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
     begin
       ParamType := FParams[0].resType();
@@ -3212,7 +3213,7 @@ begin
       LapeException(lpeInvalidEvaluation, DocPos);
 
     with TLapeType_StaticArray(ParamType) do
-      FRes := FCompiler.getConstant(Range.Hi - Range.Lo + 1, ltInt32, False, True);
+      FRes := FCompiler.getConstant(Range.Hi - Range.Lo + 1, ltSizeInt, False, True);
   end;
 
   Result := inherited;
@@ -3243,7 +3244,7 @@ begin
     FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Result, Param, NullResVar, Offset, @Self._DocPos);
 
     Result := NullResVar;
-    Result.VarType := FCompiler.getBaseType(ltInt32);
+    Result.VarType := FCompiler.getBaseType(ltSizeInt);
     if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
       FDest := VarResVar;
     FCompiler.getDestVar(FDest, Result, op_Unknown);
@@ -3278,7 +3279,7 @@ begin
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
 
   if (not FParams[0].CompileToTempVar(Offset, Param)) or (not Param.HasType()) or
-     (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray, ltShortString]))
+     (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray]))
   then
     LapeException(lpeInvalidEvaluation, DocPos);
 
@@ -3291,9 +3292,10 @@ begin
     LapeException(lpeInvalidEvaluation, DocPos);
 
   case Param.VarType.BaseType of
-    ltAnsiString:    _ArraySetLength := FCompiler['_Astr_Setlen'];
-    ltWideString:    _ArraySetLength := FCompiler['_Wstr_Setlen'];
-    ltUnicodeString: _ArraySetLength := FCompiler['_Ustr_Setlen'];
+    ltShortString:   _ArraySetLength := FCompiler['_SStr_SetLen'];
+    ltAnsiString:    _ArraySetLength := FCompiler['_AStr_SetLen'];
+    ltWideString:    _ArraySetLength := FCompiler['_WStr_SetLen'];
+    ltUnicodeString: _ArraySetLength := FCompiler['_UStr_SetLen'];
     else
     begin
       _ArraySetLength := FCompiler['_ArraySetLength'];
@@ -3306,7 +3308,9 @@ begin
     try
       addParam(TLapeTree_ResVar.Create(Param.IncLock(), Self.FParams[0]));
       addParam(TLapeTree_ResVar.Create(Len.IncLock(), Self.FParams[1]));
-      if (not (Param.VarType.BaseType in LapeStringTypes)) then
+      if (Param.VarType.BaseType = ltShortString) then
+        addParam(TLapeTree_GlobalVar.Create(Param.VarType.VarHi(), Self.FParams[0]))
+      else if (not (Param.VarType.BaseType in LapeStringTypes)) then
       begin
         addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
         addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
@@ -3320,7 +3324,7 @@ begin
     if (FParams.Count > 2) then
     begin
       Param.VarType := tmpType;
-      Counter := FCompiler.getTempVar(ltInt32);
+      Counter := FCompiler.getTempVar(ltSizeInt);
       tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), _ResVar.New(FCompiler.getConstant(0)), [], Offset, @_DocPos);
 
       with TLapeTree_For.Create(Self) do
@@ -3509,13 +3513,14 @@ begin
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
 
   if (not FParams[0].CompileToTempVar(Offset, Param)) or (not Param.HasType()) or
-     (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray, ltShortString]))
+     (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray]))
   then
     LapeException(lpeInvalidEvaluation, DocPos);
 
   ArrayType := TLapeType_DynArray(Param.VarType).PType;
   case Param.VarType.BaseType of
-    ltAnsiString:    _ArrayDelete := FCompiler['_Astr_Delete'];
+    ltShortString:   _ArrayDelete := FCompiler['_SStr_Delete'];
+    ltAnsiString:    _ArrayDelete := FCompiler['_AStr_Delete'];
     ltWideString:    _ArrayDelete := FCompiler['_WStr_Delete'];
     ltUnicodeString: _ArrayDelete := FCompiler['_UStr_Delete'];
     else
@@ -4399,7 +4404,7 @@ begin
       begin
         FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
         if (FOperatorType = op_Index) then
-          FRight := FRight.setExpectedType(FCompiler.getBaseType(ltInt32)) as TLapeTree_ExprBase;
+          FRight := FRight.setExpectedType(FCompiler.getBaseType(ltSizeInt)) as TLapeTree_ExprBase;
       end;
 
       Short := (FOperatorType in [op_AND, op_OR]) and (LeftVar <> nil) and (FRight <> nil) and canShort(LeftVar.VarType) and canShort(FRight.resType());
@@ -4500,7 +4505,7 @@ begin
   begin
     FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
     if (FOperatorType = op_Index) then
-      FRight := FRight.setExpectedType(FCompiler.getBaseType(ltInt32)) as TLapeTree_ExprBase;
+      FRight := FRight.setExpectedType(FCompiler.getBaseType(ltSizeInt)) as TLapeTree_ExprBase;
 
     if (FOperatorType in AssignOperators) and
        (FLeft <> nil) and LeftVar.Writeable and
@@ -5899,7 +5904,7 @@ begin
   if (not FLimit.CompileToTempVar(Offset, Container)) or (not Container.HasType()) then
     LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
-  lower := _ResVar.New(FCompiler.getTempVar(ltInt32)).IncLock();
+  lower := _ResVar.New(FCompiler.getTempVar(ltSizeInt)).IncLock();
   method := TLapeTree_InternalMethod_Low.Create(FCompiler);
   TLapeTree_InternalMethod_Low(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FCompiler));
   with TLapeTree_Operator.Create(op_Assign, Self) do
@@ -5911,7 +5916,7 @@ begin
     Free();
   end;
 
-  upper := _ResVar.New(FCompiler.getTempVar(ltInt32)).IncLock();
+  upper := _ResVar.New(FCompiler.getTempVar(ltSizeInt)).IncLock();
   method := TLapeTree_InternalMethod_High.Create(FCompiler);
   TLapeTree_InternalMethod_High(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FCompiler));
   with TLapeTree_Operator.Create(op_Assign, Self) do

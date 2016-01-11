@@ -28,7 +28,7 @@ type
     function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
     function VarHi(AVar: Pointer = nil): TLapeGlobalVar; override;
 
-    procedure VarSetLength(var AVar: Pointer; ALen: Integer); overload; virtual;
+    procedure VarSetLength(var AVar: Pointer; ALen: SizeInt); overload; virtual;
     procedure VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
     procedure RangeCheck(AVar, AIndex: TLapeGlobalVar); overload; virtual;
@@ -43,7 +43,7 @@ type
   protected
     FRange: TLapeRange;
 
-    function getSize: Integer; override;
+    function getSize: SizeInt; override;
     function getAsString: lpString; override;
   public
     constructor Create(ARange: TLapeRange; ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
@@ -94,6 +94,7 @@ type
 
     function VarToString(AVar: Pointer): lpString; override;
     function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
+    function VarHi(AVar: Pointer = nil): TLapeGlobalVar; override;
 
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
     function NewGlobalVar(Str: ShortString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; reintroduce; overload; virtual;
@@ -154,9 +155,9 @@ begin
     '    Result := System.ToString['+IntToStr(Index)+'](p^);'                               + LineEnding +
     '  end;'                                                                                + LineEnding +
     'type'                                                                                  + LineEnding +
-    '  TArrayToString = private function(constref Arr; AToString: System.Pointer; Len, Size: System.Int32): System.string;' + LineEnding +
+    '  TArrayToString = private function(constref Arr; AToString: System.Pointer; Len, Size: System.SizeInt): System.string;' + LineEnding +
     'var'                                                                                   + LineEnding +
-    '  Len: System.Int32;'                                                                  + LineEnding +
+    '  Len: System.SizeInt;'                                                                + LineEnding +
     'begin'                                                                                 + LineEnding +
     '  Len := System.Length(Param0);'                                                       + LineEnding +
     '  if (Len <= 0) then'                                                                  + LineEnding +
@@ -181,7 +182,7 @@ begin
     begin
       if (i > 0) then
         Result := Result + ', ';
-      Result := Result + FPType.VarToString(Pointer(PtrUInt(p) + UInt32(FPType.Size * i)));
+      Result := Result + FPType.VarToString(Pointer(PtrUInt(p) + PtrUInt(FPType.Size * i)));
     end;
   end;
   Result := Result + ']';
@@ -192,7 +193,7 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(0);
+    Result := FCompiler.getConstant(0, ltSizeInt, False, True);
 end;
 
 function TLapeType_DynArray.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
@@ -200,17 +201,17 @@ begin
   if (FCompiler = nil) or (AVar = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(High(PCodeArray(AVar)^));
+    Result := FCompiler.getConstant(High(PCodeArray(AVar)^), ltSizeInt, False, True);
 end;
 
-procedure TLapeType_DynArray.VarSetLength(var AVar: Pointer; ALen: Integer);
+procedure TLapeType_DynArray.VarSetLength(var AVar: Pointer; ALen: SizeInt);
 var
   i, OldLen, NewSize: SizeInt;
   NewP: Pointer;
   DoFree: Boolean;
   tmpLeft, tmpRight: TLapeGlobalVar;
 begin
-  if (not (BaseType in LapeArrayTypes - [ltStaticArray, ltShortString])) then
+  if (not (BaseType in LapeArrayTypes - [ltStaticArray])) then
     LapeException(lpeInvalidEvaluation);
   if (not HasType()) then
     Exit;
@@ -221,6 +222,14 @@ begin
       ltAnsiString:    SetLength(AnsiString(AVar), ALen);
       ltWideString:    SetLength(WideString(AVar), ALen);
       ltUnicodeString: SetLength(UnicodeString(AVar), ALen);
+      ltShortString:
+        begin
+          tmpRight := VarHi();
+          if (ALen < 0) or (tmpRight = nil) or (ALen > tmpRight.AsInteger) then
+            LapeException(lpeOutOfTypeRange)
+          else
+            SetLength(PShortString(AVar)^, ALen);
+        end
       else LapeException(lpeImpossible);
     end;
     Exit;
@@ -333,7 +342,7 @@ end;
 
 procedure TLapeType_DynArray.RangeCheck(AVar, AIndex: TLapeGlobalVar);
 var
-  Idx: Integer;
+  Idx: SizeInt;
   Lo, Hi: TLapeGlobalVar;
 begin
   if (AVar = nil) or (not AIndex.HasType()) then
@@ -342,6 +351,9 @@ begin
     LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString]);
 
   Idx := AIndex.AsInteger;
+  if (FBaseType in LapeStringTypes) then
+    Inc(Idx);
+
   Lo := VarLo(AVar.Ptr);
   Hi := VarHi(Avar.Ptr);
   if ((Lo <> nil) and (Idx < Lo.AsInteger)) or ((Hi <> nil) and (Idx > Hi.AsInteger)) then
@@ -350,7 +362,7 @@ end;
 
 procedure TLapeType_DynArray.RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil);
 var
-  Idx: Integer;
+  Idx: SizeInt;
   Lo, Hi: TLapeGlobalVar;
   Check, Len: TLapeTree_Invoke;
 begin
@@ -370,19 +382,16 @@ begin
     Hi := VarHi();
   end;
 
-  if AIndex.isConstant and (AIndex.VarPos.MemPos = mpMem) then
+  if AVar.HasType() and (AVar.VarType.BaseType in LapeArrayTypes) and
+     AIndex.isConstant and (AIndex.VarPos.MemPos = mpMem)
+  then
   begin
     Idx := AIndex.VarPos.GlobalVar.AsInteger;
-    if (FBaseType in LapeStringTypes) then
-      Dec(Idx);
 
-    if (Idx < 0) then
+    if ((Lo <> nil) and (Idx < Lo.AsInteger)) or ((Hi <> nil) and (Idx > Hi.AsInteger)) then
       LapeException(lpeOutOfTypeRange)
     else if (Lo <> nil) and (Hi <> nil) then
-      if (Idx > Hi.AsInteger - Lo.AsInteger) then
-        LapeException(lpeOutOfTypeRange)
-      else
-        Exit;
+      Exit;
   end;
 
   if (not (lefRangeCheck in Flags)) then
@@ -398,26 +407,15 @@ begin
   Check := TLapeTree_Invoke.Create('_RangeCheck', FCompiler, Pos) ;
   with Check do
   try
-    if (FBaseType in LapeStringTypes) then
-      Idx := 1
-    else
-      Idx := 0;
-
     addParam(TLapeTree_ResVar.Create(AIndex.IncLock(), Check));
-    addParam(TLapeTree_Integer.Create(Idx, Check));
 
-    if (Lo <> nil) and (Hi <> nil) then
-      addParam(TLapeTree_Integer.Create(Hi.AsInteger - Lo.AsInteger + Idx, Check))
-    else
-    begin
-      if (FBaseType in LapeStringTypes) then
-        Len := TLapeTree_InternalMethod_Length.Create(FCompiler, Pos)
-      else
-        Len := TLapeTree_InternalMethod_High.Create(FCompiler, Pos);
+    Len := TLapeTree_InternalMethod_Low.Create(FCompiler, Pos);
+    Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Check));
+    addParam(TLapeTree_ExprBase(Len.FoldConstants()));
 
-      Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Len));
-      addParam(Len);
-    end;
+    Len := TLapeTree_InternalMethod_High.Create(FCompiler, Pos);
+    Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Check));
+    addParam(TLapeTree_ExprBase(Len.FoldConstants()));
 
     Compile(Offset).Spill(1);
   finally
@@ -724,7 +722,7 @@ begin
       'Result[System.High(Result)] := Right;'
     , ['Result', 'Right'], [], [Result, ARight], Offset, Pos);}
 
-    IndexVar := _ResVar.New(FCompiler.getTempVar(ltInt32));
+    IndexVar := _ResVar.New(FCompiler.getTempVar(ltSizeInt));
     with TLapeTree_Operator.Create(op_Plus, FCompiler, Pos) do
     try
       Left := TLapeTree_Operator.Create(op_Assign, FCompiler, Pos);
@@ -798,7 +796,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_StaticArray.getSize: Integer;
+function TLapeType_StaticArray.getSize: SizeInt;
 begin
   if (FSize = 0) then
   begin
@@ -834,7 +832,7 @@ end;
 
 function TLapeType_StaticArray.VarToString(AVar: Pointer): lpString;
 var
-  i: Integer;
+  i: Int64;
 begin
   Result := '[';
   if (AVar <> nil) and HasType() then
@@ -852,7 +850,7 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(FRange.Lo);
+    Result := FCompiler.getConstant(FRange.Lo, ltSizeInt, False, True);
 end;
 
 function TLapeType_StaticArray.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
@@ -860,7 +858,7 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(FRange.Hi);
+    Result := FCompiler.getConstant(FRange.Hi, ltSizeInt, False, True);
 end;
 
 function TLapeType_StaticArray.CreateCopy(DeepCopy: Boolean = False): TLapeType;
@@ -894,7 +892,7 @@ end;
 
 function TLapeType_StaticArray.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
-  i: Integer;
+  i: Int64;
   LeftVar, RightVar: TLapeGlobalVar;
 begin
   Assert(FCompiler <> nil);
@@ -944,6 +942,8 @@ begin
 
   if (op = op_Index) then
   try
+    RangeCheck(Left, Right, Flags, Offset, Pos);
+
     wasConstant := not Left.Writeable;
     if wasConstant then
       Left.Writeable := True;
@@ -958,7 +958,7 @@ begin
     end;
 
     if (FRange.Lo = 0) then
-      Result := inherited Eval(Op, Dest, LeftVar, Right, Flags, Offset, Pos)
+      Result := inherited Eval(Op, Dest, LeftVar, Right, Flags - [lefRangeCheck], Offset, Pos)
     else
     begin
       if Right.isConstant and (Right.VarPos.MemPos = mpMem) then
@@ -968,7 +968,7 @@ begin
         if Right.HasType() and Right.VarType.IsOrdinal() then
           Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
 
-        IndexLow := FCompiler.getConstant(FRange.Lo, DetermineIntType(FRange.Lo, Right.VarType.BaseType, False));
+        IndexLow := FCompiler.getConstant(FRange.Lo, ltSizeInt);
         tmpVar := Right.VarType.Eval(op_Minus, tmpVar, Right, _ResVar.New(IndexLow), [], Offset, Pos);
       end;
 
@@ -978,7 +978,7 @@ begin
           Dest,
           LeftVar,
           tmpVar,
-          Flags,
+          Flags - [lefRangeCheck],
           Offset,
           Pos
         );
@@ -1017,7 +1017,7 @@ begin
         else
           wasConstant := False;
 
-        IndexHigh := FCompiler.getConstant(Size);
+        IndexHigh := FCompiler.getConstant(Size, ltSizeInt, False, True);
         tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, Pos);
         if wasConstant then
@@ -1047,7 +1047,7 @@ begin
       else
         wasConstant := False;
 
-      CounterVar := FCompiler.getTempVar(DetermineIntType(FRange.Lo, FRange.Hi, ltNativeInt), BigLock);
+      CounterVar := FCompiler.getTempVar(ltSizeInt, BigLock);
       IndexLow := FCompiler.getConstant(FRange.Lo, CounterVar.VarType.BaseType, False, True);
       IndexHigh := FCompiler.getConstant(FRange.Hi, CounterVar.VarType.BaseType, False, True);
       LeftVar := CounterVar.VarType.Eval(op_Assign, LeftVar, _ResVar.New(CounterVar), _ResVar.New(IndexLow), [], Offset, Pos);
@@ -1067,7 +1067,8 @@ end;
 
 procedure TLapeType_StaticArray.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
 var
-  i, LoopOffset: Integer;
+  i: Int64;
+  LoopOffset: Integer;
   tmpVar, IndexVar: TResVar;
   Counter, LowIndex, HighIndex: TLapeVar;
 begin
@@ -1079,7 +1080,7 @@ begin
   tmpVar := NullResVar;
   if UseCompiler and (FCompiler <> nil) then
   begin
-    Counter := FCompiler.getTempVar(DetermineIntType(FRange.Lo, FRange.Hi, ltNativeInt), BigLock);
+    Counter := FCompiler.getTempVar(ltSizeInt, BigLock);
     LowIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(lpString(IntToStr(FRange.Lo))));
     HighIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(lpString(IntToStr(FRange.Hi))));
     IndexVar := Counter.VarType.Eval(op_Assign, IndexVar, _ResVar.New(Counter), _ResVar.New(LowIndex), [], Offset, Pos);
@@ -1145,7 +1146,7 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(1);
+    Result := FCompiler.getConstant(1, ltSizeInt, False, True);
 end;
 
 function TLapeType_String.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
@@ -1153,7 +1154,7 @@ begin
   if (FCompiler = nil) or (AVar = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(Length(PString(AVar)^));
+    Result := FCompiler.getConstant(Length(PString(AVar)^), ltSizeInt, False, True);
 end;
 
 function TLapeType_String.NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -1271,7 +1272,15 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(1);
+    Result := FCompiler.getConstant(1, ltUInt8, False, True);
+end;
+
+function TLapeType_ShortString.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
+begin
+  if (FCompiler = nil) then
+    Result := FCompiler.getConstant(Length(PShortString(AVar)^), ltUInt8, False, True)
+  else
+    Result := FCompiler.getConstant(FRange.Hi, ltUInt8, False, True);
 end;
 
 function TLapeType_ShortString.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -1339,7 +1348,7 @@ begin
     begin
       EvalProc := getEvalProc(op_Assign, ltShortString, ltUInt8);
       Assert(ValidEvalFunction(EvalProc));
-      FCompiler.Emitter._Eval(EvalProc, Left, Right, _ResVar.New(FCompiler.getConstant(FRange.Hi, ltUInt8, False, True)), Offset, Pos);
+      FCompiler.Emitter._Eval(EvalProc, Left, Right, _ResVar.New(VarHi()), Offset, Pos);
       Result := Left;
     end
     else

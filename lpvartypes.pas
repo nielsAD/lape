@@ -111,7 +111,7 @@ type
     FVarFlags: ELapeVarFlags;
 
     function getBaseType: ELapeBaseType; virtual;
-    function getSize: Integer; virtual;
+    function getSize: SizeInt; virtual;
     function getLo: TLapeGlobalVar; virtual;
     function getHi: TLapeGlobalVar; virtual;
     function getInitialization: Boolean; virtual;
@@ -133,7 +133,7 @@ type
     procedure CopyFlags(Other: TLapeVar);
 
     property BaseType: ELapeBaseType read getBaseType;
-    property Size: Integer read getSize;
+    property Size: SizeInt read getSize;
     property Lo: TLapeGlobalVar read getLo;
     property Hi: TLapeGlobalVar read getHi;
     property NeedInitialization: Boolean read getInitialization;
@@ -172,7 +172,7 @@ type
   TLapeParameterVar = class(TLapeStackVar)
   protected
     FParType: ELapeParameterType;
-    function getSize: Integer; override;
+    function getSize: SizeInt; override;
     function getInitialization: Boolean; override;
     function getFinalization: Boolean; override;
   public
@@ -210,7 +210,7 @@ type
   protected
     FBaseType: ELapeBaseType;
     FCompiler: TLapeCompilerBase;
-    FSize: Integer;
+    FSize: SizeInt;
     FInit: TInitBool;
     FStatic: Boolean;
 
@@ -223,7 +223,7 @@ type
 
     procedure setBaseType(ABaseType: ELapeBaseType); virtual;
     function getBaseIntType: ELapeBaseType; virtual;
-    function getSize: Integer; virtual;
+    function getSize: SizeInt; virtual;
     function getInitialization: Boolean; virtual;
     function getFinalization: Boolean; virtual;
     function getAsString: lpString; virtual;
@@ -270,7 +270,7 @@ type
     property Compiler: TLapeCompilerBase read FCompiler;
     property BaseType: ELapeBaseType read FBaseType write setBaseType;
     property BaseIntType: ELapeBaseType read getBaseIntType;
-    property Size: Integer read getSize;
+    property Size: SizeInt read getSize;
     property IsStatic: Boolean read FStatic;
     property NeedInitialization: Boolean read getInitialization;
     property NeedFinalization: Boolean read getFinalization;
@@ -335,9 +335,9 @@ type
   protected
     FParams: TLapeParameterList;
     procedure setBaseType(ABaseType: ELapeBaseType); override;
-    function getSize: Integer; override;
+    function getSize: SizeInt; override;
     function getAsString: lpString; override;
-    function getParamSize: Integer; virtual;
+    function getParamSize: SizeInt; virtual;
     function getParamInitialization: Boolean; virtual;
   public
     FreeParams: Boolean;
@@ -365,16 +365,16 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     property Params: TLapeParameterList read FParams;
-    property ParamSize: Integer read getParamSize;
+    property ParamSize: SizeInt read getParamSize;
     property ParamInitialization: Boolean read getParamInitialization;
   end;
 
   TLapeType_MethodOfObject = class(TLapeType_Method)
   protected
     FMethodRecord: TLapeType;
-    function getSize: Integer; override;
+    function getSize: SizeInt; override;
     function getAsString: lpString; override;
-    function getParamSize: Integer; override;
+    function getParamSize: SizeInt; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); override;
     constructor Create(AMethod: TLapeType_Method); overload; virtual;
@@ -490,9 +490,9 @@ type
 
     function getVar(Index: Integer): TLapeStackVar; virtual;
     function getVarCount: Integer; virtual;
-    function getTotalSize: Integer; virtual;
-    function getTotalParamSize: Integer; virtual;
-    function getTotalNoParamSize: Integer; virtual;
+    function getTotalSize: SizeInt; virtual;
+    function getTotalParamSize: SizeInt; virtual;
+    function getTotalNoParamSize: SizeInt; virtual;
     function getInitialization: Boolean; virtual;
     function getFinalization: Boolean; virtual;
   public
@@ -523,9 +523,9 @@ type
     property WithStack: TLapeWithDeclarationList read FWithStack;
     property Vars[Index: Integer]: TLapeStackVar read getVar; default;
     property VarCount: Integer read getVarCount;
-    property TotalSize: Integer read getTotalSize;
-    property TotalParamSize: Integer read getTotalParamSize;
-    property TotalNoParamSize: Integer read getTotalNoParamSize;
+    property TotalSize: SizeInt read getTotalSize;
+    property TotalParamSize: SizeInt read getTotalParamSize;
+    property TotalNoParamSize: SizeInt read getTotalNoParamSize;
     property NeedInitialization: Boolean read getInitialization;
     property NeedFinalization: Boolean read getFinalization;
     property OldStackPos: Integer read FOldStackPos;
@@ -932,7 +932,7 @@ begin
     Result := ltUnknown;
 end;
 
-function TLapeVar.getSize: Integer;
+function TLapeVar.getSize: SizeInt;
 begin
   if HasType() then
     Result := VarType.Size
@@ -1113,7 +1113,7 @@ begin
   Result := FLock;
 end;
 
-function TLapeParameterVar.getSize: Integer;
+function TLapeParameterVar.getSize: SizeInt;
 begin
   if (FParType in Lape_RefParams) then
     Result := SizeOf(Pointer)
@@ -1267,7 +1267,7 @@ begin
   Result := lpeval.getEvalProc(Op, Left, Right);
 end;
 
-function TLapeType.getSize: Integer;
+function TLapeType.getSize: SizeInt;
 begin
   if (FSize = 0) then
   begin
@@ -2279,7 +2279,7 @@ begin
   FBaseType := ABaseType;
 end;
 
-function TLapeType_Method.getSize: Integer;
+function TLapeType_Method.getSize: SizeInt;
 begin
   if (FSize = 0) then
     FSize := LapeTypeSize[ltImportedMethod];
@@ -2322,7 +2322,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeType_Method.getParamSize: Integer;
+function TLapeType_Method.getParamSize: SizeInt;
 var
   i: Integer;
 begin
@@ -2536,7 +2536,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeType_MethodOfObject.getSize: Integer;
+function TLapeType_MethodOfObject.getSize: SizeInt;
 begin
   Result := inherited;
   Result := Result + SizeOf(Pointer);
@@ -2549,7 +2549,7 @@ begin
   Result := Result + ' of object';
 end;
 
-function TLapeType_MethodOfObject.getParamSize: Integer;
+function TLapeType_MethodOfObject.getParamSize: SizeInt;
 begin
   Result := inherited;
   Result := Result + SizeOf(Pointer);
@@ -2845,7 +2845,7 @@ end;
 
 function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType = nil): Integer;
 
-  function SizeWeight(a, b: TLapeType): Integer; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  function SizeWeight(a, b: TLapeType): SizeInt; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     Result := Abs(a.Size - b.Size) * 4;
     if (a.BaseType <> b.BaseType) then
@@ -2863,7 +2863,8 @@ function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; ARes
   end;
 
 var
-  MethodIndex, i, Weight, MinWeight: Integer;
+  MethodIndex, i: Integer;
+  Weight, MinWeight: SizeInt;
   Match: Boolean;
 begin
   Result := -1;
@@ -3154,7 +3155,7 @@ begin
   Result := FVarStack.Count;
 end;
 
-function TLapeStackInfo.getTotalSize: Integer;
+function TLapeStackInfo.getTotalSize: SizeInt;
 var
   i: Integer;
 begin
@@ -3163,7 +3164,7 @@ begin
     Result := Result + FVarStack[i].Size;
 end;
 
-function TLapeStackInfo.getTotalParamSize: Integer;
+function TLapeStackInfo.getTotalParamSize: SizeInt;
 var
   i: Integer;
 begin
@@ -3173,7 +3174,7 @@ begin
       Result := Result + FVarStack[i].Size;
 end;
 
-function TLapeStackInfo.getTotalNoParamSize: Integer;
+function TLapeStackInfo.getTotalNoParamSize: SizeInt;
 var
   i: Integer;
 begin

@@ -529,6 +529,8 @@ const
   ltNativeUInt = ltUInt32;
   {$IFEND}
 
+  ltSizeInt = ltNativeInt;
+  ltSizeUInt = ltNativeUInt;
 
   {$IFDEF Lape_SmallCode}
   ltEvalBool = ltBoolean;

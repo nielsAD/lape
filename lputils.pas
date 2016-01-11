@@ -329,7 +329,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
     Result := 'function VariantInvoke(Name: string; Params: array of Variant = []): Variant;';
     if DoOverride then
       Result := Result + 'override;';
-    Result := Result + 'var ParamsLen: Integer := Length(Params);';
+    Result := Result + 'var ParamsLen: SizeInt := Length(Params);';
     Result := Result + 'begin Result := Unassigned;';
     if (not HeaderOnly) then
     begin

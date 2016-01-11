@@ -44,7 +44,7 @@ addGlobalFunc('function Date: TDateTime;', @_LapeDate);
 addGlobalFunc('function Time: TDateTime;', @_LapeTime);
 addGlobalFunc('function Now: TDateTime;', @_LapeNow);
 
-addGlobalFunc('function GetTickCount: UInt32;', @_LapeGetTickCount);
+addGlobalFunc('function GetTickCount: UInt64;', @_LapeGetTickCount);
 addGlobalFunc('procedure Sleep(MilliSeconds: UInt32);', @_LapeSleep);
 
 addGlobalFunc('procedure ReplaceTime(var DateTime: TDateTime; NewTime: TDateTime);', @_LapeReplaceTime);

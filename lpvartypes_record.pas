@@ -27,7 +27,7 @@ type
     FAlignment: UInt16;
     FFieldMap: TRecordFieldMap;
     function getAsString: lpString; override;
-    function getSize: Integer; override;
+    function getSize: SizeInt; override;
   public
     FreeFieldMap: Boolean;
 
@@ -83,7 +83,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeType_Record.getSize: Integer;
+function TLapeType_Record.getSize: SizeInt;
 begin
   Result := (inherited + (FAlignment - 1)) and not (FAlignment - 1);
 end;
@@ -144,7 +144,7 @@ procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; AAlig
 
 var
   Field: TRecordField;
-  FieldSize: Integer;
+  FieldSize: SizeInt;
 begin
   if (FSize < 0) or (FFieldMap.Count < 1) then
     FSize := 0;
@@ -325,7 +325,8 @@ end;
 
 function TLapeType_Record.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
-  i, FieldOffset: Integer;
+  i: Integer;
+  FieldOffset: SizeInt;
   tmpVar, LeftVar, RightVar, LeftFieldName, RightFieldName: TResVar;
 begin
   Assert(FCompiler <> nil);
@@ -359,7 +360,7 @@ begin
       end
       else
       begin
-        RightVar := _ResVar.New(FCompiler.getConstant(Size));
+        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt, False, True));
         tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
@@ -458,7 +459,7 @@ end;
 procedure TLapeType_Union.addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1);
 var
   Field: TRecordField;
-  FieldSize: Integer;
+  FieldSize: SizeInt;
 begin
   if (FSize < 0) or (FFieldMap.Count < 1) then
     FSize := 0;

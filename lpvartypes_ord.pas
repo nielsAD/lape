@@ -557,7 +557,7 @@ begin
     Result := Result + #39 + lpString(FMemberMap[i]) + #39;
   end;
   Result := Format(lpString(
-    'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.Int32): System.string;' + LineEnding +
+    'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.SizeInt): System.string;' + LineEnding +
     'begin Result := TEnumToString(System._EnumToString)([%s], System.Ord(Param0), %d, %d); end;'),
     [Result, FRange.Lo, FRange.Hi]
   );
@@ -883,7 +883,7 @@ begin
   if (Index < 0) then
     Exit;
 
-  Result := 'type TSetToString = private function(constref ASet; AToString: System.Pointer; Lo, Hi: System.Int32): System.string;' + LineEnding + 'begin ';
+  Result := 'type TSetToString = private function(constref ASet; AToString: System.Pointer; Lo, Hi: System.SizeInt): System.string;' + LineEnding + 'begin ';
   if FSmall then
     Result := Result + 'Result := TSetToString(System._SmallSetToString)'
   else
@@ -893,7 +893,7 @@ end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;
 var
-  i: Integer;
+  i: Int64;
 begin
   Result := '[';
   for i := FRange.Range.Lo to FRange.Range.Hi do
