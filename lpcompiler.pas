@@ -1545,7 +1545,6 @@ begin
           if (not isExternal) then
           begin
             FStackInfo.addVar(Lape_SelfParam, getBaseType(ltPointer), 'Self');
-            //FStackInfo.Items.MoveItem(FStackInfo.Items.Count - 1, 0);
             FStackInfo.VarStack.MoveItem(FStackInfo.VarStack.Count - 1, 0);
           end;
         end;
