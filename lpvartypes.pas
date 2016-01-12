@@ -347,6 +347,7 @@ type
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
+    constructor Create(ACompiler: TLapeCompilerBase; AMethod: TLapeType_Method; AName: lpString = ''; ADocPos: PDocPos = nil); overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
 
@@ -2373,6 +2374,19 @@ begin
     Param.Default := AParDefaults[i];
     FParams.Add(Param);
   end;
+end;
+
+constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; AMethod: TLapeType_Method; AName: lpString = ''; ADocPos: PDocPos = nil);
+begin
+  Assert(AMethod <> nil);
+  Create(ACompiler, nil, AMethod.Res, AName, ADocPos);
+  Params.ImportFromArray(AMethod.Params.ExportToArray());
+
+  ImplicitParams := AMethod.ImplicitParams;
+
+  inheritManagedDecls(AMethod);
+  TypeID := AMethod.TypeID;
+  FBaseType := AMethod.FBaseType;
 end;
 
 function TLapeType_Method.CreateCopy(DeepCopy: Boolean = False): TLapeType;

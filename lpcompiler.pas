@@ -1365,7 +1365,7 @@ var
   Pos: TDocPos;
   SelfWith: TLapeWithDeclRec;
   OldDeclaration: TLapeDeclaration;
-  LocalDecl: Boolean;
+  LocalDecl, ResetStack: Boolean;
 
   procedure swapMethodTree(varFrom, varTo: TLapeGlobalVar);
   var
@@ -1442,12 +1442,29 @@ begin
     LapeException(lpeParentOutOfScope, Tokenizer.DocPos);
 
   if (FuncHeader is TLapeType_MethodOfType) then
+  begin
     SetStackOwner(TLapeDeclStack.Create(TLapeType_MethodOfType(FuncHeader).ObjectType));
+    ResetStack := True;
+  end
+  else
+    ResetStack := False;
 
   try
-    isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
+    isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
     OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
     LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
+
+    if (Tokenizer.Tok = tk_kw_Static) then
+    begin
+      ParseExpressionEnd(tk_sym_SemiColon, True, False);
+      if (FuncHeader is TLapeType_MethodOfType) then
+      begin
+        Assert(FStackInfo.Vars[0].Name = 'Self');
+        FStackInfo.Vars[0].Free();
+        FuncHeader := TLapeType_Method(addManagedType(TLapeType_Method.Create(Self, FuncHeader, FuncHeader.Name, @Pos)));
+      end;
+      isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
+    end;
 
     if isExternal then
       Result := TLapeTree_Method.Create(TLapeGlobalVar(addLocalDecl(FuncHeader.NewGlobalVar(nil), FStackInfo.Owner)), FStackInfo, Self, @Pos)
@@ -1624,7 +1641,7 @@ begin
     end;
 
   finally
-    if (FuncHeader is TLapeType_MethodOfType) then
+    if ResetStack then
       SetStackOwner(nil).Free();
   end;
 end;
