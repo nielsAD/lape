@@ -525,63 +525,63 @@ end;
 
 procedure _LapeSStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PAnsiString(Params^[3])^ := Copy(PShortString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
+  PAnsiString(Params^[3])^ := Copy(PShortString(Params^[0])^, PUInt8(Params^[1])^, Min(Length(PShortString(Params^[0])^), PUInt8(Params^[2])^));
 end;
 
 procedure _LapeAStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PAnsiString(Params^[3])^ := Copy(PAnsiString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
+  PAnsiString(Params^[3])^ := Copy(PAnsiString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PAnsiString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeWStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PWideString(Params^[3])^ := Copy(PWideString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
+  PWideString(Params^[3])^ := Copy(PWideString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PWideString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeUStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PUnicodeString(Params^[3])^ := Copy(PUnicodeString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
+  PUnicodeString(Params^[3])^ := Copy(PUnicodeString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PUnicodeString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeSStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  Delete(PShortString(Params^[0])^, PUInt8(Params^[1])^, PUInt8(Params^[2])^);
+  Delete(PShortString(Params^[0])^, PUInt8(Params^[1])^, Min(Length(PShortString(Params^[0])^), PUInt8(Params^[2])^));
 end;
 
 procedure _LapeAStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  Delete(PAnsiString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
+  Delete(PAnsiString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PAnsiString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeWStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  Delete(PWideString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
+  Delete(PWideString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PWideString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeUStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  Delete(PUnicodeString(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
+  Delete(PUnicodeString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PUnicodeString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeAStr_Insert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (PSizeInt(Params^[3])^ > 0) then
-    Delete(PAnsiString(Params^[1])^, PSizeInt(Params^[2])^, PSizeInt(Params^[3])^);
-  Insert(PAnsiString(Params^[0])^, PAnsiString(Params^[1])^, PSizeInt(Params^[2])^);
+    Delete(PAnsiString(Params^[1])^, PSizeInt(Params^[2])^, Min(Length(PAnsiString(Params^[1])^), PSizeInt(Params^[3])^));
+  Insert(PAnsiString(Params^[0])^, PAnsiString(Params^[1])^, Min(Length(PAnsiString(Params^[1])^)+1, PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeWStr_Insert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (PSizeInt(Params^[3])^ > 0) then
-    Delete(PWideString(Params^[1])^, PSizeInt(Params^[2])^, PSizeInt(Params^[3])^);
-  Insert(PWideString(Params^[0])^, PWideString(Params^[1])^, PSizeInt(Params^[2])^);
+    Delete(PWideString(Params^[1])^, PSizeInt(Params^[2])^, Min(Length(PWideString(Params^[1])^), PSizeInt(Params^[3])^));
+  Insert(PWideString(Params^[0])^, PWideString(Params^[1])^, Min(Length(PWideString(Params^[1])^)+1, PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeUStr_Insert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (PSizeInt(Params^[3])^ > 0) then
-    Delete(PUnicodeString(Params^[1])^, PSizeInt(Params^[2])^, PSizeInt(Params^[3])^);
-  Insert(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, PSizeInt(Params^[2])^);
+    Delete(PUnicodeString(Params^[1])^, PSizeInt(Params^[2])^, Min(Length(PUnicodeString(Params^[1])^), PSizeInt(Params^[3])^));
+  Insert(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, Min(Length(PUnicodeString(Params^[1])^)+1, PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeAStr_Unique(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

@@ -682,7 +682,7 @@ begin
   addGlobalFunc('procedure _WStr_SetLen(var s: WideString; l: SizeInt);', @_LapeWStr_SetLen);
   addGlobalFunc('procedure _UStr_SetLen(var s: UnicodeString; l: SizeInt);', @_LapeUStr_SetLen);
 
-  addGlobalFunc('procedure _SStr_Copy(s: ShortString; Start: SizeInt = 1; Count: SizeInt = High(SizeInt); out Result: AnsiString);', @_LapeSStr_Copy);
+  addGlobalFunc('procedure _SStr_Copy(s: ShortString; Start: UInt8 = 1; Count: UInt8 = High(UInt8); out Result: AnsiString);', @_LapeSStr_Copy);
   addGlobalFunc('procedure _AStr_Copy(s: AnsiString; Start: SizeInt = 1; Count: SizeInt = High(SizeInt); out Result: AnsiString);', @_LapeAStr_Copy);
   addGlobalFunc('procedure _WStr_Copy(s: WideString; Start: SizeInt = 1; Count: SizeInt = High(SizeInt); out Result: WideString);', @_LapeWStr_Copy);
   addGlobalFunc('procedure _UStr_Copy(s: UnicodeString; Start: SizeInt = 1; Count: SizeInt = High(SizeInt); out Result: UnicodeString);', @_LapeUStr_Copy);

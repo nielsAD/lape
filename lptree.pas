@@ -1319,7 +1319,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
 
   procedure doSetOrDynArray;
   var
-    i, ii: SizeInt;
+    i, ii: Integer;
     FieldVar, tmpVar: TLapeGlobalVar;
   begin
     FieldVar := nil;
@@ -1336,7 +1336,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
       end
       else if (FValues[i] is TLapeTree_Range) then
       try
-        FieldVar := FCompiler.getBaseType(ltSizeInt).NewGlobalVarP(@ii);
+        FieldVar := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@ii);
         for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
         begin
           tmpVar := Result;
@@ -1352,14 +1352,14 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
 
   procedure doStaticArray;
   var
-    i, ii, CounterInt: SizeInt;
+    i, ii, CounterInt: Integer;
     FieldVar, tmpVar, Counter: TLapeGlobalVar;
   begin
     FieldVar := nil;
     tmpVar := nil;
     try
       CounterInt := TLapeType_StaticArray(FType).Range.Lo;
-      Counter := FCompiler.getBaseType(ltSizeInt).NewGlobalVarP(@CounterInt);
+      Counter := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@CounterInt);
 
       for i := 0 to FValues.Count - 1 do
       begin
@@ -1379,7 +1379,7 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         end
         else if (FValues[i] is TLapeTree_Range) then
         try
-          tmpVar := FCompiler.getBaseType(ltSizeInt).NewGlobalVarP(@ii);
+          tmpVar := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@ii);
           for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
           try
             try

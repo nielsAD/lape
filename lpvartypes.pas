@@ -1820,7 +1820,12 @@ begin
     Exit(Left);
   end
   else if (op in CompoundOperators) and (lcoCOperators in Compiler.FOptions) then
-    Exit(Eval(op_Assign, Dest, Left, Eval(ResolveCompoundOp(op, Left.VarType), NullResVar, Left, Right, Flags, Offset, Pos), Flags, Offset, Pos));
+  begin
+    Dest := NullResVar;
+    Result := Eval(ResolveCompoundOp(op, Left.VarType), Dest, Left, Right, Flags, Offset, Pos);
+    Result := Eval(op_Assign, Dest, Left, Result, Flags, Offset, Pos);
+    Exit;
+  end;
 
   Result.VarType := EvalRes(Op, Right.VarType, Flags);
   if (not Result.HasType()) and (op = op_Deref) and ((not Left.HasType()) or (Left.VarType.BaseType = ltPointer)) then
@@ -2861,19 +2866,42 @@ function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; ARes
 
   function SizeWeight(a, b: TLapeType): SizeInt; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    Result := Abs(a.Size - b.Size) * 4;
+    Result := Abs(a.Size - b.Size);
     if (a.BaseType <> b.BaseType) then
       Result := Result + 1;
 
-    if (a.Size < b.Size) then
-      Result := Result * 4
-    else if (a.BaseType in LapeIntegerTypes) and (b.BaseType in LapeIntegerTypes) and
-       ((a.VarLo().AsInteger <= b.VarLo().AsInteger) and (UInt64(a.VarHi().AsInteger) >= UInt64(b.VarHi().AsInteger)))
-    then
-      if ((a.BaseIntType in LapeSignedIntegerTypes) = (b.BaseIntType in LapeSignedIntegerTypes)) then
-        Result := Result - 2
+    if (a.BaseType in LapeRealTypes) and (b.BaseType in LapeRealTypes+LapeIntegerTypes) then
+      if (a.BaseType >= b.BaseType) then
+        if (b.BaseType in LapeIntegerTypes) then
+          Result := (Ord(a.BaseType) - Ord(b.BaseType)) + 12
+        else
+          Result := Ord(a.BaseType) - Ord(b.BaseType)
       else
+        Result := (Ord(b.BaseType) - Ord(a.BaseType)) + 4
+    else if (a.BaseType in LapeBoolTypes) and (b.BaseType in LapeBoolTypes) then
+      {nothing}
+    else if (a.BaseType in LapeStringTypes) and (b.BaseType in LapeStringTypes) then
+      if (a.BaseType >= b.BaseType) then
+        Result := Ord(a.BaseType) - Ord(b.BaseType)
+      else
+        Result := (Ord(b.BaseType) - Ord(a.BaseType)) * 4
+    else if (a.BaseType in LapeArrayTypes) and (b.BaseType in LapeArrayTypes) then
+      {nothing}
+    else if (a.BaseType in LapeOrdinalTypes) and (b.BaseType in LapeOrdinalTypes) then
+    begin
+      if (a.VarLo().AsInteger <= b.VarLo().AsInteger) and (UInt64(a.VarHi().AsInteger) >= UInt64(b.VarHi().AsInteger)) then
+          Result := Result - 1
+      else if (a.Size < b.Size) then
+        Result := Result + 24;
+      if ((a.BaseIntType in LapeSignedIntegerTypes) = (b.BaseIntType in LapeSignedIntegerTypes)) then
         Result := Result - 1;
+    end
+    else
+    begin
+      Result := Result * 2;
+      if (a.Size < b.Size) then
+        Result := Result * 2;
+    end;
   end;
 
 var
@@ -2890,12 +2918,14 @@ begin
       if (Length(AParams) > Params.Count) or ((AResult <> nil) and (Res = nil)) then
         Continue;
 
-      if (AResult = nil) or AResult.Equals(Res) then
-        Weight := Params.Count * 4
+      if (AResult = nil) or AResult.Equals(Res, False) then
+        Weight := (Params.Count * 4)
+      else if AResult.Equals(Res) then
+        Weight := (Params.Count * 4) + 3
       else if (not AResult.CompatibleWith(Res)) then
         Continue
       else
-        Weight := SizeWeight(Res, AResult) + (Params.Count + 1) * 4;
+        Weight := SizeWeight(AResult, Res) + (Params.Count + 1) * 4;
 
       Match := True;
       for i := 0 to Params.Count - 1 do
@@ -4158,7 +4188,7 @@ end;
 
 procedure TLapeCompilerBase.getDestVar(var Dest, Res: TResVar; Op: EOperator);
 begin
-  if (op = op_Assign) then
+  if (op in AssignOperators) then
     Dest := NullResVar
   else if (op <> op_Deref) and (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and
     Res.HasType() and Res.VarType.Equals(Dest.VarType)

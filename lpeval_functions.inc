@@ -2630,9 +2630,10 @@ procedure lpeWBool_NOT(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cde
 procedure lpeLBool_NOT(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLongBool(Dest)^ := PLongBool(Left)^ = LongBool(False); end;
 procedure lpeEBool_NOT(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PBoolean(Dest)^  := PBoolean(Left)^  = Boolean(False);  end;
 
-procedure lpeBBool_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PBoolean(Dest)^ := PVariant(Left)^; end;
+procedure lpeBBool_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PByteBool(Dest)^ := Boolean(PVariant(Left)^); end;
 procedure lpeWBool_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PWordBool(Dest)^ := PVariant(Left)^; end;
 procedure lpeLBool_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLongBool(Dest)^ := PVariant(Left)^; end;
+procedure lpeEBool_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PBoolean(Dest)^ := PVariant(Left)^; end;
 
 procedure lpeBBool_ASGN_BBool(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PByteBool(Dest)^ := PUInt8(Left)^  <> 0; end;
 procedure lpeBBool_ASGN_WBool(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PByteBool(Dest)^ := PUInt16(Left)^ <> 0; end;

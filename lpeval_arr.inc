@@ -2634,7 +2634,7 @@ Arr[op_NOT][ltBoolean][ltUnknown]  := @lpeEBool_NOT;
 Arr[op_Assign][ltByteBool][ltVariant] := @lpeBBool_ASGN_Variant;
 Arr[op_Assign][ltWordBool][ltVariant] := @lpeWBool_ASGN_Variant;
 Arr[op_Assign][ltLongBool][ltVariant] := @lpeLBool_ASGN_Variant;
-Arr[op_Assign][ltBoolean][ltVariant]  := Arr[op_Assign][ltByteBool][ltVariant];
+Arr[op_Assign][ltBoolean][ltVariant]  := @lpeEBool_ASGN_Variant;
 
 Arr[op_Assign][ltByteBool][ltByteBool] := @lpeBBool_ASGN_BBool;
 Arr[op_Assign][ltByteBool][ltWordBool] := @lpeBBool_ASGN_WBool;

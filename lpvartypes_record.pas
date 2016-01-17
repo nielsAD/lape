@@ -34,7 +34,6 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
-    function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
     procedure ClearCache; override;
     procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); virtual;
@@ -77,7 +76,7 @@ begin
   begin
     FAsString := 'record ';
     for i := 0 to FFieldMap.Count - 1 do
-      FAsString := FAsString + '[' + lpString(IntToStr(FFieldMap.ItemsI[i].Offset)) + ']' + FFieldMap.ItemsI[i].FieldType.AsString + '; ';
+      FAsString := FAsString + '[' + lpString(IntToStr(FFieldMap.ItemsI[i].Offset)) + ']' + FFieldMap.Key[i] + ': ' + FFieldMap.ItemsI[i].FieldType.AsString + '; ';
     FAsString := FAsString + 'end';
   end;
   Result := inherited;
@@ -174,21 +173,6 @@ begin
   ClearCache();
 end;
 
-function TLapeType_Record.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
-var
-  i: Integer;
-begin
-  Result := inherited;
-  if Result and (not ContextOnly) and (Other <> Self) and (Other is TLapeType_Record) then
-  try
-    for i := 0 to FFieldMap.Count - 1 do
-      if (LapeCase(FFieldMap.Key[i]) <> LapeCase(TLapeType_Record(Other).FieldMap.Key[i])) then
-        Exit(False);
-  except
-    Result := False;
-  end;
-end;
-
 function TLapeType_Record.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
   i: Integer;
@@ -259,7 +243,9 @@ begin
      (TLapeType_Record(Right).FieldMap.Count = FFieldMap.Count) then
   begin
     for i := 0 to FFieldMap.Count - 1 do
-      if (not FFieldMap.ItemsI[i].FieldType.CompatibleWith(TLapeType_Record(Right).FieldMap.ItemsI[i].FieldType)) then
+      if (FFieldMap.Key[i] <> TLapeType_Record(Right).FieldMap.Key[i]) or
+         (not FFieldMap.ItemsI[i].FieldType.CompatibleWith(TLapeType_Record(Right).FieldMap.ItemsI[i].FieldType))
+      then
       begin
         Result := inherited;
         Exit;
@@ -443,7 +429,7 @@ begin
   begin
     FAsString := 'union ';
     for i := 0 to FFieldMap.Count - 1 do
-      FAsString := FAsString + FFieldMap.ItemsI[i].FieldType.AsString + '; ';
+      FAsString := FAsString + FFieldMap.Key[i] + ': ' + FFieldMap.ItemsI[i].FieldType.AsString + '; ';
     FAsString := FAsString + 'end';
   end;
   Result := inherited;
