@@ -2436,15 +2436,26 @@ function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Bool
 
   function _EqualTypes(const Left, Right: TLapeType): Boolean;
   begin
-    Result := (Left = Right) or ((Left <> nil) and Left.Equals(Right, ContextOnly));
+    Result := (Left = Right) or ((Left <> nil) and Left.Equals(Right, False));
+  end;
+
+  function _EqualVals(const Left, Right: TLapeVar): Boolean;
+  begin
+    if ContextOnly or (Left = nil) or (Right = nil) or (Left = Right) then
+      Result := (Left <> nil) = (Right <> nil)
+    else
+      Result := Left.isConstant and Right.isConstant and
+        (Left is TLapeGlobalVar) and (Right is TLapeGlobalVar) and
+        (TLapeGlobalVar(Left).AsString = TLapeGlobalVar(Right).AsString);
   end;
 
   function _EqualParams(const Left, Right: TLapeParameter): Boolean;
   begin
-    Result := ((Left.ParType in Lape_RefParams) = (Right.ParType in Lape_RefParams)) and
+    Result := (ContextOnly or (Left.ParType = Right.ParType)) and
+      ((Left.ParType in Lape_RefParams) = (Right.ParType in Lape_RefParams)) and
       ((Left.ParType in Lape_ValParams) = (Right.ParType in Lape_ValParams)) and
-      ((Left.Default <> nil) = (Right.Default <> nil)) and
-      _EqualTypes(Left.VarType, Right.VarType);
+      _EqualTypes(Left.VarType, Right.VarType) and
+      _EqualVals(Left.Default, Right.Default)
   end;
 
 var
@@ -2810,7 +2821,7 @@ begin
   else
   begin
     for i := 0 to FManagedDecls.Count - 1 do
-      if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
+      if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method) then
         LapeExceptionFmt(lpeDuplicateDeclaration, [AMethod.VarType.AsString]);
 
     AMethod.Name := Name;
