@@ -586,7 +586,6 @@ const
   CompareOperators = [op_cmp_Equal, op_cmp_GreaterThan, op_cmp_GreaterThanOrEqual, op_cmp_LessThan, op_cmp_LessThanOrEqual, op_cmp_NotEqual];
 
   LabelOperators = CompareOperators;
-  EnumOperators = [op_Plus, op_Minus, op_Assign] + CompareOperators;
 
   CompoundOperators = [op_AssignPlus, op_AssignMinus, op_AssignDiv, op_AssignMul];
   AssignOperators = [op_Assign] + CompoundOperators;
