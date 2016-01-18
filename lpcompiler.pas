@@ -3037,8 +3037,10 @@ begin
   FInternalMethodMap['Inc'] := TLapeTree_InternalMethod_Inc;
   FInternalMethodMap['Dec'] := TLapeTree_InternalMethod_Dec;
 
-  FInternalMethodMap['Label'] := TLapeTree_InternalMethod_Label;
-  FInternalMethodMap['GoTo'] := TLapeTree_InternalMethod_GoTo;
+  FInternalMethodMap['label'] := TLapeTree_InternalMethod_Label;
+  FInternalMethodMap['goto'] := TLapeTree_InternalMethod_GoTo;
+
+  FInternalMethodMap['raise'] := TLapeTree_InternalMethod_Raise;
 
   setTokenizer(ATokenizer);
   Reset();
