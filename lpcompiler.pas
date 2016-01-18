@@ -1245,7 +1245,7 @@ begin
   Pos := Tokenizer.DocPos;
   Result := TLapeType_Method.Create(Self, nil, nil, '', @Pos);
   Result.isOperator := (Tokenizer.Tok = tk_kw_Operator);
-  isFunction := (Tokenizer.Tok = tk_kw_Function);
+  isFunction := (Tokenizer.Tok = tk_kw_Function) or Result.isOperator;
   
   try
     if (isNext([tk_Identifier, tk_sym_ParenthesisOpen], Token) and (Token = tk_Identifier)) or
@@ -1342,7 +1342,7 @@ begin
         LapeExceptionFmt(lpeCannotOverrideOperator, [op_name[op], ltyp.AsString, rtyp.AsString], Pos);
     end;
 
-    if isFunction or Result.isOperator then
+    if isFunction then
     begin
       Expect(tk_sym_Colon, True, False);
       Result.Res := ParseType(nil);
@@ -1453,6 +1453,9 @@ begin
     isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
     OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
     LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
+
+    if (OldDeclaration <> nil) and (FuncHeader is TLapeType_MethodOfType) and (not LocalDecl) and (not TLapeType_MethodOfType(FuncHeader).ObjectType.HasSubDeclaration(OldDeclaration, bTrue)) then
+      OldDeclaration := nil;
 
     if (Tokenizer.Tok = tk_kw_Static) then
     begin

@@ -1678,12 +1678,12 @@ begin
         end;
       end;
     end;
-
-    if (FRealIdent = nil) and (ExpectType = nil) then
-      FRealIdent := FExpr;
   end;
 
-  Result := FRealIdent;
+  if (FRealIdent = nil) and (ExpectType = nil) then
+    Result := FExpr
+  else
+    Result := FRealIdent;
 end;
 
 function TLapeTree_Invoke.getRealIdent: TLapeTree_ExprBase;

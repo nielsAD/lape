@@ -2879,7 +2879,7 @@ function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; ARes
       else
         Result := (Ord(b.BaseType) - Ord(a.BaseType)) + 4
     else if (a.BaseType in LapeBoolTypes) and (b.BaseType in LapeBoolTypes) then
-      {nothing}
+      Result := Ord(a.BaseType) - Ord(b.BaseType)
     else if (a.BaseType in LapeStringTypes) and (b.BaseType in LapeStringTypes) then
       if (a.BaseType >= b.BaseType) then
         Result := Ord(a.BaseType) - Ord(b.BaseType)
