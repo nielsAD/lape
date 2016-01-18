@@ -1852,6 +1852,9 @@ var
   IdentVar: TLapeGlobalVar;
 
   function DoCast: TLapeGlobalVar;
+  var
+    tmpRes: TLapeGlobalVar;
+    tmpTyp: TLapeType;
   begin
     Result := nil;
     Assert(IdentExpr is TLapeTree_VarType);
@@ -1867,6 +1870,21 @@ var
         Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.NewGlobalVarP(Result.Ptr), Result.Name <> ''))
       else if VarType.CompatibleWith(Result.VarType) then
         Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.EvalConst(op_Assign, VarType.NewGlobalVarP(), Result, [])))
+      else if VarType.IsOrdinal() and Result.VarType.IsOrdinal() then
+      try
+        tmpRes := Result;
+        tmpTyp := tmpRes.VarType;
+        Result := VarType.NewGlobalVarP();
+
+        tmpRes.VarType := FCompiler.getBaseType(tmpTyp.BaseIntType);
+        Result.VarType := FCompiler.getBaseType(VarType.BaseIntType);
+
+        Result := Result.VarType.EvalConst(op_Assign, Result, tmpRes, []);
+        Result.VarType := VarType;
+      finally
+        tmpRes.VarType := tmpTyp;
+        FreeAndNil(tmpRes);
+      end
       else
         LapeException(lpeInvalidCast);
     except on E: lpException do
@@ -2000,7 +2018,7 @@ var
           Dest := NullResVar;
         Result.VarType := VarType;
       end
-      else if VarType.CompatibleWith(Result.VarType) then
+      else if VarType.CompatibleWith(Result.VarType) or (VarType.IsOrdinal() and Result.VarType.IsOrdinal()) then
       begin
         if (FDest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and FDest.HasType() and VarType.Equals(FDest.VarType) then
           DestVar := FDest
@@ -2010,10 +2028,17 @@ var
           DestVar := _ResVar.New(Compiler.getTempVar(VarType));
         end;
 
+        if (not VarType.CompatibleWith(Result.VarType)) then
+        begin
+          Result.VarType := FCompiler.getBaseType(Result.VarType.BaseIntType);
+          DestVar.VarType := FCompiler.getBaseType(DestVar.VarType.BaseIntType);
+        end;
+
         tmpRes := Result;
         Result := DestVar.VarType.Eval(op_Assign, tmpVar, DestVar, Result, [], Offset, @Self._DocPos);
         tmpRes.Spill(1);
 
+        Result.VarType := VarType;
         if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
           Result.isConstant := True;
       end

@@ -738,7 +738,9 @@ end;
 
 function TLapeType_Boolean.NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
-  Result := inherited NewGlobalVar(Ord(Boolean(Value)), AName, ADocPos);
+  if (Value <> 0) then
+    Value := FRange.Hi;
+  Result := inherited;
 end;
 
 function TLapeType_Boolean.EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean;
