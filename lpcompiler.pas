@@ -1382,39 +1382,29 @@ var
 
   procedure setMethodDefaults(AVar: TLapeGlobalVar; AMethod: TLapeType_Method);
   var
-    i, Len: Integer;
-    Params: TLapeParameterList.TTArray;
+    i: Integer;
+    Param: TLapeParameter;
     NewMethod: TLapeType_Method;
   begin
     if (AMethod = nil) or (FStackInfo = nil) or (AMethod.ParamSize <= 0) or (FStackInfo.TotalParamSize <> AMethod.ParamSize) then
       Exit;
 
-    NewMethod := TLapeType_Method.Create(Self, nil, AMethod.Res, AMethod.Name, @AMethod._DocPos);
-    NewMethod.TypeID := AMethod.TypeID;
-    NewMethod.BaseType := AMethod.BaseType;
-    NewMethod.ImplicitParams := AMethod.ImplicitParams;
-
-    Params := AMethod.Params.ExportToArray();
-    Len := Length(Params);
+    NewMethod := TLapeType_Method.Create(AMethod);
 
     if MethodOfObject(AMethod) then
     begin
-      SetLength(Params, Len + 1);
-      if (Len > 0) then
-        Move(Params[0], Params[1], Len * SizeOf(Params[0]));
-
-      Params[0] := NullParameter;
-      Params[0].ParType := Lape_SelfParam;
-      Params[0].VarType := FStackInfo.VarStack[0].VarType;
-      Inc(Len);
-
+      Param := NullParameter;
+      Param.ParType := Lape_SelfParam;
+      Param.VarType := FStackInfo[0].VarType;
+      NewMethod.Params.Insert(Param, 0);
       Inc(NewMethod.ImplicitParams);
     end;
 
-    for i := 0 to Len - 1 do
+    for i := 0 to NewMethod.Params.Count - 1 do
     begin
-      Params[i].Default := FStackInfo[i];
-      NewMethod.addParam(Params[i]);
+      Param := NewMethod.Params[i];
+      Param.Default := FStackInfo[i];
+      NewMethod.Params[i] := Param;
     end;
 
     AVar.VarType := addManagedType(NewMethod);
@@ -1460,14 +1450,16 @@ begin
     if (Tokenizer.Tok = tk_kw_Static) then
     begin
       ParseExpressionEnd(tk_sym_SemiColon, True, False);
-      if (FuncHeader is TLapeType_MethodOfType) then
+      if (not isExternal) and MethodOfObject(FuncHeader) then
       begin
         Assert(FStackInfo.Vars[0].Name = 'Self');
         FStackInfo.Vars[0].Free();
-        FuncHeader := TLapeType_Method(addManagedType(TLapeType_Method.Create(Self, FuncHeader, FuncHeader.Name, @Pos)));
+        FuncHeader := TLapeType_Method(addManagedType(TLapeType_Method.Create(FuncHeader)));
       end;
       isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
     end;
+    //else if (not isExternal) and (not MethodOfObject(FuncHeader)) and (FStackInfo.Owner <> nil) then
+    //  FuncHeader := inheritVarStack(FuncHeader, FStackInfo.Owner);
 
     if isExternal then
       Result := TLapeTree_Method.Create(TLapeGlobalVar(addLocalDecl(FuncHeader.NewGlobalVar(nil), FStackInfo.Owner)), FStackInfo, Self, @Pos)
@@ -1547,7 +1539,7 @@ begin
           Result.Method.VarType := addManagedType(TLapeType_MethodOfObject.Create(Result.Method.VarType as TLapeType_Method));
           if (not isExternal) then
           begin
-            FStackInfo.addVar(Lape_SelfParam, getBaseType(ltPointer), 'Self');
+            FStackInfo.addVar(lptConstRef, getBaseType(ltPointer), 'Self');
             FStackInfo.VarStack.MoveItem(FStackInfo.VarStack.Count - 1, 0);
           end;
         end;
@@ -1661,7 +1653,9 @@ begin
       for i := 0 to FuncHeader.Params.Count - 1 do
         FStackInfo.addVar(FuncHeader.Params[i].ParType, FuncHeader.Params[i].VarType, lpString('Param'+IntToStr(i)));
       if (FuncHeader is TLapeType_MethodOfType) then
-        FStackInfo.addVar(Lape_SelfParam, TLapeType_MethodOfType(FuncHeader).ObjectType, 'Self');
+        FStackInfo.addVar(Lape_SelfParam, TLapeType_MethodOfType(FuncHeader).ObjectType, 'Self')
+      else if (FuncHeader is TLapeType_MethodOfObject) then
+        FStackInfo.addVar(lptConstRef, getBaseType(ltPointer), 'Self');
       if (FuncHeader.Res <> nil) then
         FStackInfo.addVar(lptOut, FuncHeader.Res, 'Result');
     end;
@@ -3425,7 +3419,7 @@ function TLapeCompiler.getExpression(AName: lpString; AStackInfo: TLapeStackInfo
 
   function WithVarInScope(WithVar: PResVar): Boolean;
   begin
-    Result := (WithVar = nil) or (WithVar^.VarPos.MemPos <> mpVar) or (WithVar^.VarPos.StackVar.Stack = AStackInfo.VarStack);
+    Result := (WithVar = nil) or (WithVar^.VarPos.MemPos <> mpVar) or ((AStackInfo <> nil) and (WithVar^.VarPos.StackVar.Stack = AStackInfo.VarStack));
   end;
 
 var

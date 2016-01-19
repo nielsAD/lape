@@ -347,14 +347,14 @@ type
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
-    constructor Create(ACompiler: TLapeCompilerBase; AMethod: TLapeType_Method; AName: lpString = ''; ADocPos: PDocPos = nil); overload; virtual;
+    constructor Create(AMethod: TLapeType_Method); overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
 
-    function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean; virtual;
+    function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True; IgnoreDefault: Boolean = False): Boolean; virtual;
     procedure addParam(Param: TLapeParameter); virtual;
     procedure setImported(AVar: TLapeGlobalVar; isImported: Boolean); virtual;
 
@@ -378,7 +378,6 @@ type
     function getParamSize: SizeInt; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); override;
-    constructor Create(AMethod: TLapeType_Method); overload; virtual;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
@@ -396,7 +395,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
-    constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); reintroduce; overload; virtual;
+    constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
@@ -2381,10 +2380,10 @@ begin
   end;
 end;
 
-constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; AMethod: TLapeType_Method; AName: lpString = ''; ADocPos: PDocPos = nil);
+constructor TLapeType_Method.Create(AMethod: TLapeType_Method);
 begin
   Assert(AMethod <> nil);
-  Create(ACompiler, nil, AMethod.Res, AName, ADocPos);
+  Create(AMethod.Compiler, nil, AMethod.Res, AMethod.Name, @AMethod._DocPos);
   Params.ImportFromArray(AMethod.Params.ExportToArray());
 
   ImplicitParams := AMethod.ImplicitParams;
@@ -2422,7 +2421,7 @@ end;
 
 function TLapeType_Method.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
 begin
-  Result := (Other <> nil) and (Other.TypeID = TypeID) and (Size = Other.Size) and (Other is TLapeType_Method) and EqualParams(Other as TLapeType_Method, ContextOnly);
+  Result := (Other <> nil) and (Other.TypeID = TypeID) and (Size = Other.Size) and (Other is TLapeType_Method) and EqualParams(Other as TLapeType_Method, False, ContextOnly);
   if Result and (not ContextOnly) then
     Result := (Other.BaseType = BaseType);
 end;
@@ -2432,7 +2431,7 @@ begin
   Result := 'begin Result := '#39 + AsString + ' ('#39' + System.ToString(Pointer(Param0)) + '#39')'#39'; end;';
 end;
 
-function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean;
+function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True; IgnoreDefault: Boolean = False): Boolean;
 
   function _EqualTypes(const Left, Right: TLapeType): Boolean;
   begin
@@ -2441,7 +2440,9 @@ function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Bool
 
   function _EqualVals(const Left, Right: TLapeVar): Boolean;
   begin
-    if ContextOnly or (Left = nil) or (Right = nil) or (Left = Right) then
+    if IgnoreDefault then
+      Result := True
+    else if ContextOnly or (Left = nil) or (Right = nil) or (Left = Right) then
       Result := (Left <> nil) = (Right <> nil)
     else
       Result := Left.isConstant and Right.isConstant and
@@ -2459,17 +2460,30 @@ function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Bool
   end;
 
 var
-  i: Integer;
+  i, ImplicitLeft, ImplicitRight: Integer;
 begin
   Result := False;
-  if (Other = nil) or
-     (TLapeType_Method(Other).Params.Count <> Params.Count) or
-     (not _EqualTypes(Res, TLapeType_Method(Other).Res))
-  then
-    Exit
-  else for i := 0 to Params.Count - 1 do
-    if (not _EqualParams(Params[i], TLapeType_Method(Other).Params[i])) then
+  if (Other = nil) or (not _EqualTypes(Res, Other.Res)) then
+    Exit;
+
+  if ContextOnly then
+  begin
+    ImplicitLeft  := ImplicitParams;
+    ImplicitRight := Other.ImplicitParams;
+  end
+  else
+  begin
+    ImplicitLeft := 0;
+    ImplicitRight := 0;
+  end;
+
+  if (Params.Count - ImplicitLeft <> Other.Params.Count - ImplicitRight) then
+    Exit;
+
+  for i := 0 to Params.Count - ImplicitLeft - 1 do
+    if (not _EqualParams(Params[ImplicitLeft + i], Other.Params[ImplicitRight + i])) then
       Exit;
+
   Result := True;
 end;
 
@@ -2590,13 +2604,6 @@ begin
   inherited;
   FMethodRecord := FCompiler.getGlobalType('TMethod');
   Assert(FMethodRecord <> nil);
-end;
-
-constructor TLapeType_MethodOfObject.Create(AMethod: TLapeType_Method);
-begin
-  Assert(AMethod <> nil);
-  Create(AMethod.Compiler, AMethod.Params, AMethod.Res, AMethod.Name, @AMethod._DocPos);
-  FBaseType := AMethod.BaseType;
 end;
 
 function TLapeType_MethodOfObject.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
@@ -2845,7 +2852,7 @@ begin
   for i := 0 to FManagedDecls.Count - 1 do
   begin
     OldMethod := TLapeGlobalVar(FManagedDecls[i]);
-    if TLapeType_Method(OldMethod.VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
+    if TLapeType_Method(OldMethod.VarType).EqualParams(AMethod.VarType as TLapeType_Method) then
     begin
       Result := OldMethod;
       FManagedDecls.Delete(i);
@@ -2864,7 +2871,7 @@ begin
     Exit(-1);
 
   for i := 0 to FManagedDecls.Count - 1 do
-    if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AType, False) then
+    if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AType) then
       Exit(i);
 
   if ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
@@ -2916,7 +2923,7 @@ function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; ARes
   end;
 
 var
-  MethodIndex, i: Integer;
+  MethodIndex, ParamsCount, i: Integer;
   Weight, MinWeight: SizeInt;
   Match: Boolean;
 begin
@@ -2926,20 +2933,21 @@ begin
   for MethodIndex := 0 to FManagedDecls.Count - 1 do
     with TLapeType_Method(TLapeGlobalVar(FManagedDecls[MethodIndex]).VarType) do
     begin
-      if (Length(AParams) > Params.Count) or ((AResult <> nil) and (Res = nil)) then
+      ParamsCount := Params.Count - ImplicitParams;
+      if (Length(AParams) > ParamsCount) or ((AResult <> nil) and (Res = nil)) then
         Continue;
 
       if (AResult = nil) or AResult.Equals(Res, False) then
-        Weight := (Params.Count * 4)
+        Weight := (ParamsCount * 4)
       else if AResult.Equals(Res) then
-        Weight := (Params.Count * 4) + 3
+        Weight := (ParamsCount * 4) + 3
       else if (not AResult.CompatibleWith(Res)) then
         Continue
       else
-        Weight := SizeWeight(AResult, Res) + (Params.Count + 1) * 4;
+        Weight := SizeWeight(AResult, Res) + (ParamsCount + 1) * 4;
 
       Match := True;
-      for i := 0 to Params.Count - 1 do
+      for i := ImplicitParams to Params.Count - 1 do
       begin
         Match := False;
         if ((i >= Length(AParams)) or (AParams[i] = nil)) and (Params[i].Default = nil) then

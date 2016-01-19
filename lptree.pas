@@ -2345,7 +2345,9 @@ begin
           begin
             ParamVars[i] := _ResVar.New(Params[i].Default);
             if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].Writeable) then
-              LapeException(lpeVariableExpected, [FParams[i], Self]);
+              LapeException(lpeVariableExpected, [FParams[i], Self])
+            else if (ParamVars[i].VarPos.MemPos = mpVar) and ((FCompiler.StackInfo = nil) or (ParamVars[i].VarPos.StackVar.Stack <> FCompiler.StackInfo.VarStack)) then
+              LapeException(lpeParentOutOfScope, [FParams[i], Self])
           end
           else
             LapeExceptionFmt(lpeNoDefaultForParam, [i + 1 - ImplicitParams], [FParams[i], Self])
