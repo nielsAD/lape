@@ -347,13 +347,14 @@ type
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
+    constructor Create(AMethod: TLapeType_Method); overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
 
-    function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean; virtual;
+    function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True; IgnoreDefault: Boolean = False): Boolean; virtual;
     procedure addParam(Param: TLapeParameter); virtual;
     procedure setImported(AVar: TLapeGlobalVar; isImported: Boolean); virtual;
 
@@ -377,7 +378,6 @@ type
     function getParamSize: SizeInt; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); override;
-    constructor Create(AMethod: TLapeType_Method); overload; virtual;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
@@ -395,7 +395,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
-    constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); reintroduce; overload; virtual;
+    constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
@@ -1819,7 +1819,12 @@ begin
     Exit(Left);
   end
   else if (op in CompoundOperators) and (lcoCOperators in Compiler.FOptions) then
-    Exit(Eval(op_Assign, Dest, Left, Eval(ResolveCompoundOp(op, Left.VarType), NullResVar, Left, Right, Flags, Offset, Pos), Flags, Offset, Pos));
+  begin
+    Dest := NullResVar;
+    Result := Eval(ResolveCompoundOp(op, Left.VarType), Dest, Left, Right, Flags, Offset, Pos);
+    Result := Eval(op_Assign, Dest, Left, Result, Flags, Offset, Pos);
+    Exit;
+  end;
 
   Result.VarType := EvalRes(Op, Right.VarType, Flags);
   if (not Result.HasType()) and (op = op_Deref) and ((not Left.HasType()) or (Left.VarType.BaseType = ltPointer)) then
@@ -2375,6 +2380,19 @@ begin
   end;
 end;
 
+constructor TLapeType_Method.Create(AMethod: TLapeType_Method);
+begin
+  Assert(AMethod <> nil);
+  Create(AMethod.Compiler, nil, AMethod.Res, AMethod.Name, @AMethod._DocPos);
+  Params.ImportFromArray(AMethod.Params.ExportToArray());
+
+  ImplicitParams := AMethod.ImplicitParams;
+
+  inheritManagedDecls(AMethod);
+  TypeID := AMethod.TypeID;
+  FBaseType := AMethod.FBaseType;
+end;
+
 function TLapeType_Method.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_Method;
@@ -2403,7 +2421,7 @@ end;
 
 function TLapeType_Method.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
 begin
-  Result := (Other <> nil) and (Other.TypeID = TypeID) and (Size = Other.Size) and (Other is TLapeType_Method) and EqualParams(Other as TLapeType_Method, ContextOnly);
+  Result := (Other <> nil) and (Other.TypeID = TypeID) and (Size = Other.Size) and (Other is TLapeType_Method) and EqualParams(Other as TLapeType_Method, False, ContextOnly);
   if Result and (not ContextOnly) then
     Result := (Other.BaseType = BaseType);
 end;
@@ -2413,33 +2431,59 @@ begin
   Result := 'begin Result := '#39 + AsString + ' ('#39' + System.ToString(Pointer(Param0)) + '#39')'#39'; end;';
 end;
 
-function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True): Boolean;
+function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True; IgnoreDefault: Boolean = False): Boolean;
 
   function _EqualTypes(const Left, Right: TLapeType): Boolean;
   begin
-    Result := (Left = Right) or ((Left <> nil) and Left.Equals(Right, ContextOnly));
+    Result := (Left = Right) or ((Left <> nil) and Left.Equals(Right, False));
+  end;
+
+  function _EqualVals(const Left, Right: TLapeVar): Boolean;
+  begin
+    if IgnoreDefault then
+      Result := True
+    else if ContextOnly or (Left = nil) or (Right = nil) or (Left = Right) then
+      Result := (Left <> nil) = (Right <> nil)
+    else
+      Result := Left.isConstant and Right.isConstant and
+        (Left is TLapeGlobalVar) and (Right is TLapeGlobalVar) and
+        (TLapeGlobalVar(Left).AsString = TLapeGlobalVar(Right).AsString);
   end;
 
   function _EqualParams(const Left, Right: TLapeParameter): Boolean;
   begin
-    Result := ((Left.ParType in Lape_RefParams) = (Right.ParType in Lape_RefParams)) and
+    Result := (ContextOnly or (Left.ParType = Right.ParType)) and
+      ((Left.ParType in Lape_RefParams) = (Right.ParType in Lape_RefParams)) and
       ((Left.ParType in Lape_ValParams) = (Right.ParType in Lape_ValParams)) and
-      ((Left.Default <> nil) = (Right.Default <> nil)) and
-      _EqualTypes(Left.VarType, Right.VarType);
+      _EqualTypes(Left.VarType, Right.VarType) and
+      _EqualVals(Left.Default, Right.Default)
   end;
 
 var
-  i: Integer;
+  i, ImplicitLeft, ImplicitRight: Integer;
 begin
   Result := False;
-  if (Other = nil) or
-     (TLapeType_Method(Other).Params.Count <> Params.Count) or
-     (not _EqualTypes(Res, TLapeType_Method(Other).Res))
-  then
-    Exit
-  else for i := 0 to Params.Count - 1 do
-    if (not _EqualParams(Params[i], TLapeType_Method(Other).Params[i])) then
+  if (Other = nil) or (not _EqualTypes(Res, Other.Res)) then
+    Exit;
+
+  if ContextOnly then
+  begin
+    ImplicitLeft  := ImplicitParams;
+    ImplicitRight := Other.ImplicitParams;
+  end
+  else
+  begin
+    ImplicitLeft := 0;
+    ImplicitRight := 0;
+  end;
+
+  if (Params.Count - ImplicitLeft <> Other.Params.Count - ImplicitRight) then
+    Exit;
+
+  for i := 0 to Params.Count - ImplicitLeft - 1 do
+    if (not _EqualParams(Params[ImplicitLeft + i], Other.Params[ImplicitRight + i])) then
       Exit;
+
   Result := True;
 end;
 
@@ -2560,13 +2604,6 @@ begin
   inherited;
   FMethodRecord := FCompiler.getGlobalType('TMethod');
   Assert(FMethodRecord <> nil);
-end;
-
-constructor TLapeType_MethodOfObject.Create(AMethod: TLapeType_Method);
-begin
-  Assert(AMethod <> nil);
-  Create(AMethod.Compiler, AMethod.Params, AMethod.Res, AMethod.Name, @AMethod._DocPos);
-  FBaseType := AMethod.BaseType;
 end;
 
 function TLapeType_MethodOfObject.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
@@ -2791,7 +2828,7 @@ begin
   else
   begin
     for i := 0 to FManagedDecls.Count - 1 do
-      if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
+      if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AMethod.VarType as TLapeType_Method) then
         LapeExceptionFmt(lpeDuplicateDeclaration, [AMethod.VarType.AsString]);
 
     AMethod.Name := Name;
@@ -2815,7 +2852,7 @@ begin
   for i := 0 to FManagedDecls.Count - 1 do
   begin
     OldMethod := TLapeGlobalVar(FManagedDecls[i]);
-    if TLapeType_Method(OldMethod.VarType).EqualParams(AMethod.VarType as TLapeType_Method, False) then
+    if TLapeType_Method(OldMethod.VarType).EqualParams(AMethod.VarType as TLapeType_Method) then
     begin
       Result := OldMethod;
       FManagedDecls.Delete(i);
@@ -2834,7 +2871,7 @@ begin
     Exit(-1);
 
   for i := 0 to FManagedDecls.Count - 1 do
-    if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AType, False) then
+    if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AType) then
       Exit(i);
 
   if ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
@@ -2847,23 +2884,46 @@ function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; ARes
 
   function SizeWeight(a, b: TLapeType): SizeInt; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    Result := Abs(a.Size - b.Size) * 4;
+    Result := Abs(a.Size - b.Size);
     if (a.BaseType <> b.BaseType) then
       Result := Result + 1;
 
-    if (a.Size < b.Size) then
-      Result := Result * 4
-    else if (a.BaseType in LapeIntegerTypes) and (b.BaseType in LapeIntegerTypes) and
-       ((a.VarLo().AsInteger <= b.VarLo().AsInteger) and (UInt64(a.VarHi().AsInteger) >= UInt64(b.VarHi().AsInteger)))
-    then
-      if ((a.BaseIntType in LapeSignedIntegerTypes) = (b.BaseIntType in LapeSignedIntegerTypes)) then
-        Result := Result - 2
+    if (a.BaseType in LapeRealTypes) and (b.BaseType in LapeRealTypes+LapeIntegerTypes) then
+      if (a.BaseType >= b.BaseType) then
+        if (b.BaseType in LapeIntegerTypes) then
+          Result := (Ord(a.BaseType) - Ord(b.BaseType)) + 12
+        else
+          Result := Ord(a.BaseType) - Ord(b.BaseType)
       else
+        Result := (Ord(b.BaseType) - Ord(a.BaseType)) + 4
+    else if (a.BaseType in LapeBoolTypes) and (b.BaseType in LapeBoolTypes) then
+      Result := Ord(a.BaseType) - Ord(b.BaseType)
+    else if (a.BaseType in LapeStringTypes) and (b.BaseType in LapeStringTypes) then
+      if (a.BaseType >= b.BaseType) then
+        Result := Ord(a.BaseType) - Ord(b.BaseType)
+      else
+        Result := (Ord(b.BaseType) - Ord(a.BaseType)) * 4
+    else if (a.BaseType in LapeArrayTypes) and (b.BaseType in LapeArrayTypes) then
+      {nothing}
+    else if (a.BaseType in LapeOrdinalTypes) and (b.BaseType in LapeOrdinalTypes) then
+    begin
+      if (a.VarLo().AsInteger <= b.VarLo().AsInteger) and (UInt64(a.VarHi().AsInteger) >= UInt64(b.VarHi().AsInteger)) then
+          Result := Result - 1
+      else if (a.Size < b.Size) then
+        Result := Result + 24;
+      if ((a.BaseIntType in LapeSignedIntegerTypes) = (b.BaseIntType in LapeSignedIntegerTypes)) then
         Result := Result - 1;
+    end
+    else
+    begin
+      Result := Result * 2;
+      if (a.Size < b.Size) then
+        Result := Result * 2;
+    end;
   end;
 
 var
-  MethodIndex, i: Integer;
+  MethodIndex, ParamsCount, i: Integer;
   Weight, MinWeight: SizeInt;
   Match: Boolean;
 begin
@@ -2873,18 +2933,21 @@ begin
   for MethodIndex := 0 to FManagedDecls.Count - 1 do
     with TLapeType_Method(TLapeGlobalVar(FManagedDecls[MethodIndex]).VarType) do
     begin
-      if (Length(AParams) > Params.Count) or ((AResult <> nil) and (Res = nil)) then
+      ParamsCount := Params.Count - ImplicitParams;
+      if (Length(AParams) > ParamsCount) or ((AResult <> nil) and (Res = nil)) then
         Continue;
 
-      if (AResult = nil) or AResult.Equals(Res) then
-        Weight := Params.Count * 4
+      if (AResult = nil) or AResult.Equals(Res, False) then
+        Weight := (ParamsCount * 4)
+      else if AResult.Equals(Res) then
+        Weight := (ParamsCount * 4) + 3
       else if (not AResult.CompatibleWith(Res)) then
         Continue
       else
-        Weight := SizeWeight(Res, AResult) + (Params.Count + 1) * 4;
+        Weight := SizeWeight(AResult, Res) + (ParamsCount + 1) * 4;
 
       Match := True;
-      for i := 0 to Params.Count - 1 do
+      for i := ImplicitParams to Params.Count - 1 do
       begin
         Match := False;
         if ((i >= Length(AParams)) or (AParams[i] = nil)) and (Params[i].Default = nil) then
@@ -4144,7 +4207,7 @@ end;
 
 procedure TLapeCompilerBase.getDestVar(var Dest, Res: TResVar; Op: EOperator);
 begin
-  if (op = op_Assign) then
+  if (op in AssignOperators) then
     Dest := NullResVar
   else if (op <> op_Deref) and (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and
     Res.HasType() and Res.VarType.Equals(Dest.VarType)

@@ -150,7 +150,7 @@ type
   ELapeBaseType = (
     ltUnknown,
     ltUInt8, ltInt8, ltUInt16, ltInt16, ltUInt32, ltInt32, ltUInt64, ltInt64, //Integer
-    ltSingle, ltDouble, ltCurrency, ltExtended,                               //Real
+    ltCurrency, ltSingle, ltDouble, ltExtended,                               //Real
     ltBoolean, ltByteBool, ltWordBool, ltLongBool,                            //Boolean
     ltAnsiChar, ltWideChar,                                                   //Char
     ltShortString, ltAnsiString, ltWideString, ltUnicodeString,               //String
@@ -542,7 +542,7 @@ const
     -1,
     SizeOf(UInt8), SizeOf(Int8), SizeOf(UInt16), SizeOf(Int16), SizeOf(UInt32),
     SizeOf(Int32), SizeOf(UInt64), SizeOf(Int64),
-    SizeOf(Single), SizeOf(Double), SizeOf(Currency), SizeOf(Extended),
+    SizeOf(Currency), SizeOf(Single), SizeOf(Double), SizeOf(Extended),
     SizeOf(Boolean), SizeOf(ByteBool), SizeOf(WordBool), SizeOf(LongBool),
     SizeOf(AnsiChar), SizeOf(WideChar),
     SizeOf(ShortString), SizeOf(AnsiString), SizeOf(WideString), SizeOf(UnicodeString),
@@ -562,7 +562,7 @@ const
   LapeSignedIntegerTypes = [ltInt8, ltInt16, ltInt32, ltInt64];
   LapeUnsignedIntegerTypes = [ltUInt8, ltUInt16, ltUInt32, ltUInt64];
 
-  LapeRealTypes = [ltSingle..ltExtended];
+  LapeRealTypes = [ltCurrency..ltExtended];
   LapeBoolTypes = [ltBoolean..ltLongBool];
   LapeStringTypes = [ltShortString..ltUnicodeString];
   LapeCharTypes = [ltAnsiChar..ltWideChar];
@@ -586,7 +586,6 @@ const
   CompareOperators = [op_cmp_Equal, op_cmp_GreaterThan, op_cmp_GreaterThanOrEqual, op_cmp_LessThan, op_cmp_LessThanOrEqual, op_cmp_NotEqual];
 
   LabelOperators = CompareOperators;
-  EnumOperators = [op_Plus, op_Minus, op_Assign] + CompareOperators;
 
   CompoundOperators = [op_AssignPlus, op_AssignMinus, op_AssignDiv, op_AssignMul];
   AssignOperators = [op_Assign] + CompoundOperators;
