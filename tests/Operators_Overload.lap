@@ -2,6 +2,13 @@
 type
   TPoint = record x,y:Int32; end;
 
+operator * (Left:String; Right:Int32): String;
+begin
+  Result := '';
+  for 1 to Right do
+    Result := Result + Left;
+end;
+  
 operator = (Left,Right:TPoint): Boolean;
 begin
   Result := (Left.x = Right.x) and (Left.y = Right.y);
@@ -25,7 +32,9 @@ begin
   Result.y := (Left.y xor Right.y);
 end;
 
-var a,b:TPoint;
+var
+  a,b:TPoint;
+  str:String;
 begin
   a := [9,9];
   b := [2,2];
@@ -33,4 +42,7 @@ begin
   Assert(UInt64(a + b)   = UInt64(TPoint([11,11])));
   Assert(UInt64(a - b)   = UInt64(TPoint([7,7])));
   Assert(UInt64(a xor b) = UInt64(TPoint([11,11])));
+
+  str := 'xx' * 3;
+  Assert(str = 'xx'+'xx'+'xx');
 end;
