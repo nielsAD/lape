@@ -4472,6 +4472,7 @@ var
 
   function DoOperatorOverload(): TResVar;
   begin
+    Dest := NullResVar;
     with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, @_DocPos) do
     try
       addParam(Left);
