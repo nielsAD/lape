@@ -2343,11 +2343,9 @@ begin
         if (i >= FParams.Count) or isEmpty(FParams[i]) then
           if (Params[i].Default <> nil) then
           begin
-            ParamVars[i] := _ResVar.New(Params[i].Default);
+            ParamVars[i] := _ResVar.New(Params[i].Default).InScope(FCompiler.StackInfo, @Self._DocPos);
             if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].Writeable) then
-              LapeException(lpeVariableExpected, [FParams[i], Self])
-            else if (ParamVars[i].VarPos.MemPos = mpVar) and ((FCompiler.StackInfo = nil) or (ParamVars[i].VarPos.StackVar.Stack <> FCompiler.StackInfo.VarStack)) then
-              LapeException(lpeParentOutOfScope, [FParams[i], Self])
+              LapeException(lpeVariableExpected, [FParams[i], Self]);
           end
           else
             LapeExceptionFmt(lpeNoDefaultForParam, [i + 1 - ImplicitParams], [FParams[i], Self])
@@ -4718,7 +4716,7 @@ function TLapeTree_WithVar.Compile(var Offset: Integer): TResVar;
 begin
   if (FWithDeclRec.WithVar = nil) or (FWithDeclRec.WithVar^.VarPos.MemPos = NullResVar.VarPos.MemPos) then
     LapeException(lpeInvalidWithReference, DocPos);
-  Result := FWithDeclRec.WithVar^.IncLock();
+  Result := FWithDeclRec.WithVar^.InScope(FCompiler.StackInfo, @_DocPos).IncLock();
 end;
 
 constructor TLapeTree_VarType.Create(AVarType: TLapeType; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

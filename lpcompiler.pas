@@ -1367,7 +1367,7 @@ var
   OldDeclaration: TLapeDeclaration;
   LocalDecl, ResetStack: Boolean;
 
-  procedure swapMethodTree(varFrom, varTo: TLapeGlobalVar);
+  procedure SwapMethodTree(varFrom, varTo: TLapeGlobalVar);
   var
     Method: TLapeTree_Method;
   begin
@@ -1380,7 +1380,52 @@ var
     end;
   end;
 
-  procedure setMethodDefaults(AVar: TLapeGlobalVar; AMethod: TLapeType_Method);
+  procedure InheritVarStack(AMethod: TLapeType_Method; AStackInfo: TLapeStackInfo; Count: Integer; addToScope: Boolean);
+  var
+    i: Integer;
+    Param: TLapeParameter;
+    SVar: TLapeStackVar;
+  begin
+    if (AMethod = nil) or (AStackInfo = nil) or (AStackInfo.VarCount < Count) then
+      Exit;
+
+    for i := 0 to Count - 1 do
+    begin
+      SVar := AStackInfo[i];
+      if (SVar is TLapeStackTempVar) or (SVar.Name = '') then
+        Continue;
+
+      Param := NullParameter;
+      Param.VarType := SVar.VarType;
+      Param.Default := SVar;
+
+      if SVar.isConstant then
+        Param.ParType := lptConstRef
+      else
+        Param.ParType := lptVar;
+
+      AMethod.Params.Insert(Param, i);
+      Inc(AMethod.ImplicitParams);
+
+      if addToScope then
+      begin
+        FStackInfo.inheritVar(SVar);
+        FStackInfo.VarStack.MoveItem(FStackInfo.VarStack.Count - 1, i);
+      end;
+    end;
+  end;
+
+  function InheritMethodStack(AMethod: TLapeType_Method; AStackInfo: TLapeStackInfo): TLapeType_Method;
+  begin
+    if (AMethod = nil) or (AStackInfo = nil) or (AStackInfo.VarCount < 1) then
+      Exit(AMethod);
+
+    AMethod := TLapeType_Method.Create(AMethod);
+    InheritVarStack(AMethod, AStackInfo, AStackInfo.VarCount, True);
+    Result := TLapeType_Method(addManagedType(AMethod));
+  end;
+
+  procedure InheritMethodDefaults(AVar: TLapeGlobalVar; AMethod: TLapeType_Method);
   var
     i: Integer;
     Param: TLapeParameter;
@@ -1392,13 +1437,7 @@ var
     NewMethod := TLapeType_Method.Create(AMethod);
 
     if MethodOfObject(AMethod) then
-    begin
-      Param := NullParameter;
-      Param.ParType := Lape_SelfParam;
-      Param.VarType := FStackInfo[0].VarType;
-      NewMethod.Params.Insert(Param, 0);
-      Inc(NewMethod.ImplicitParams);
-    end;
+      InheritVarStack(NewMethod, FStackInfo, 1, False);
 
     for i := 0 to NewMethod.Params.Count - 1 do
     begin
@@ -1457,9 +1496,9 @@ begin
         FuncHeader := TLapeType_Method(addManagedType(TLapeType_Method.Create(FuncHeader)));
       end;
       isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
-    end;
-    //else if (not isExternal) and (not MethodOfObject(FuncHeader)) and (FStackInfo.Owner <> nil) then
-    //  FuncHeader := inheritVarStack(FuncHeader, FStackInfo.Owner);
+    end
+    else if (not isExternal) and (not MethodOfObject(FuncHeader)) then
+      FuncHeader := InheritMethodStack(FuncHeader, FStackInfo.Owner);
 
     if isExternal then
       Result := TLapeTree_Method.Create(TLapeGlobalVar(addLocalDecl(FuncHeader.NewGlobalVar(nil), FStackInfo.Owner)), FStackInfo, Self, @Pos)
@@ -1547,14 +1586,14 @@ begin
         if LocalDecl then
         begin
           if (TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).BaseType = ltScriptMethod) then
-            swapMethodTree(TLapeGlobalVar(OldDeclaration), Result.Method);
+            SwapMethodTree(TLapeGlobalVar(OldDeclaration), Result.Method);
 
           TLapeType_Method(Result.Method.VarType).setImported(Result.Method, TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).BaseType = ltImportedMethod);
           Move(TLapeGlobalVar(OldDeclaration).Ptr^, Result.Method.Ptr^, FuncHeader.Size);
 
           Result.Method.Name := 'inherited';
           Result.Method.DeclarationList := nil;
-          setMethodDefaults(Result.Method, Result.Method.VarType as TLapeType_Method);
+          InheritMethodDefaults(Result.Method, Result.Method.VarType as TLapeType_Method);
           addLocalDecl(Result.Method, FStackInfo);
 
           Result.Method := OldDeclaration as TLapeGlobalVar;
@@ -1568,7 +1607,7 @@ begin
           end;
 
           OldDeclaration.Name := 'inherited';
-          setMethodDefaults(OldDeclaration as TLapeGlobalVar, TLapeGlobalVar(OldDeclaration).VarType as TLapeType_Method);
+          InheritMethodDefaults(OldDeclaration as TLapeGlobalVar, TLapeGlobalVar(OldDeclaration).VarType as TLapeType_Method);
           OldDeclaration := addLocalDecl(OldDeclaration);
         end;
 
@@ -3416,28 +3455,24 @@ begin
 end;
 
 function TLapeCompiler.getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase;
-
-  function WithVarInScope(WithVar: PResVar): Boolean;
-  begin
-    Result := (WithVar = nil) or (WithVar^.VarPos.MemPos <> mpVar) or ((AStackInfo <> nil) and (WithVar^.VarPos.StackVar.Stack = AStackInfo.VarStack));
-  end;
-
 var
   Decl: TLapeDeclaration;
 begin
   Result := nil;
-  Decl := getDeclaration(AName, AStackInfo, LocalOnly);
+
+  try
+     Decl := getDeclaration(AName, AStackInfo, LocalOnly);
+  except on E: lpException do
+    if (Pos = nil) then
+      LapeException(lpString(E.Message))
+    else
+      LapeException(lpString(E.Message), Pos^)
+  end;
 
   if (Decl <> nil) then
     if (Decl is TLapeWithDeclaration) then
       with TLapeWithDeclaration(Decl) do
       try
-        if (not WithVarInScope(WithDeclRec.WithVar)) then
-          if (Pos = nil) then
-            LapeExceptionFmt(lpeDeclarationOutOfScope, [AName])
-          else
-            LapeExceptionFmt(lpeDeclarationOutOfScope, [AName], Pos^);
-
         Result := TLapeTree_Operator.Create(op_Dot, Self, Pos);
         TLapeTree_Operator(Result).Left := TLapeTree_WithVar.Create(WithDeclRec, Self, Pos);
         TLapeTree_Operator(Result).Right := TLapeTree_Field.Create(AName, Self, Pos);

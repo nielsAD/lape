@@ -41,6 +41,7 @@ type
   TLapeType = class;
   TLapeVar = class;
   TLapeStackVar = class;
+  TLapeStackInfo = class;
   TLapeGlobalVar = class;
   TLapeType_OverloadedMethod = class;
   TLapeCompilerBase = class;
@@ -75,6 +76,8 @@ type
     procedure Spill(Unlock: Integer = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
     function IncLock(Count: Integer = 1): TResVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
     function DecLock(Count: Integer = 1): TResVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
+
+    function InScope(AStack: TLapeStackInfo; Pos: PDocPos = nil): TResVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
     procedure IncOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
     procedure DecOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -178,6 +181,14 @@ type
   public
     constructor Create(AParType: ELapeParameterType; AVarType: TLapeType; AStack: TLapeVarStack; AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil); reintroduce; virtual;
     property ParType: ELapeParameterType read FParType;
+  end;
+
+  TLapeStackInheritedVar = class(TLapeParameterVar)
+  protected
+    FParent: TLapeStackVar;
+  public
+    constructor Create(AParent: TLapeStackVar; AStack: TLapeVarStack; AList: TLapeDeclarationList = nil); reintroduce; virtual;
+    property Parent: TLapeStackVar read FParent;
   end;
 
   TLapeGlobalVar = class(TLapeVar)
@@ -516,6 +527,10 @@ type
     function addVar(StackVar: TLapeStackVar): TLapeStackVar; overload; virtual;
     function addVar(VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
     function addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
+
+    function inheritVar(StackVar: TLapeStackVar): TLapeStackVar; virtual;
+    function getInheritedVar(StackVar: TLapeStackVar): TLapeStackVar; virtual;
+
     function addWith(AWith: TLapeWithDeclRec): Integer; virtual;
     procedure delWith(ACount: Integer); virtual;
 
@@ -850,6 +865,21 @@ begin
     TLapeStackTempVar(VarPos.StackVar).DecLock(Count);
 end;
 
+function TResVar.InScope(AStack: TLapeStackInfo; Pos: PDocPos = nil): TResVar;
+begin
+  Result := Self;
+  if (VarPos.MemPos = mpVar) and (AStack <> nil) and (VarPos.StackVar.Stack <> AStack.VarStack) then
+  begin
+    Result.VarPos.StackVar := AStack.getInheritedVar(VarPos.StackVar);
+    Result.VarPos.isPointer := True;
+    if (Result.VarPos.StackVar = nil) then
+      if (Pos <> nil) then
+        LapeException(lpeParentOutOfScope, Pos^)
+      else
+        LapeException(lpeParentOutOfScope, VarPos.StackVar.DocPos);
+  end;
+end;
+
 procedure TResVar.IncOffset(Offset: Integer);
 begin
   if VarPos.isPointer or ((VarPos.MemPos = mpVar) and (VarPos.StackVar <> nil)) then
@@ -1136,6 +1166,25 @@ begin
   inherited Create(AVarType, AStack, AName, ADocPos, AList);
   FParType := AParType;
   isConstant := (FParType in Lape_ConstParams);
+end;
+
+constructor TLapeStackInheritedVar.Create(AParent: TLapeStackVar; AStack: TLapeVarStack; AList: TLapeDeclarationList = nil);
+begin
+  Assert(AParent <> nil);
+  Assert(not (AParent is TLapeStackTempVar));
+
+  if (AParent is TLapeStackInheritedVar) then
+  begin
+    Create(TLapeStackInheritedVar(AParent).Parent, AStack, AList);
+    FName := '!' + FName;
+    Exit;
+  end
+  else if AParent.isConstant then
+    inherited Create(lptConstRef, AParent.VarType, AStack, '!' + AParent.Name, @AParent._DocPos, AList)
+  else
+    inherited Create(lptVar, AParent.VarType, AStack, '!' + AParent.Name, @AParent._DocPos, AList);
+
+  FParent := AParent;
 end;
 
 function TLapeGlobalVar.getAsString: lpString;
@@ -2923,7 +2972,7 @@ function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; ARes
   end;
 
 var
-  MethodIndex, ParamsCount, i: Integer;
+  MethodIndex, ParamsCount, AIndx, i: Integer;
   Weight, MinWeight: SizeInt;
   Match: Boolean;
 begin
@@ -2949,11 +2998,13 @@ begin
       Match := True;
       for i := ImplicitParams to Params.Count - 1 do
       begin
+        AIndx := i - ImplicitParams;
         Match := False;
-        if ((i >= Length(AParams)) or (AParams[i] = nil)) and (Params[i].Default = nil) then
+
+        if ((AIndx >= Length(AParams)) or (AParams[AIndx] = nil)) and (Params[i].Default = nil) then
           Break
-        else if (i >= Length(AParams)) or (AParams[i] = nil) or (Params[i].VarType = nil) or Params[i].VarType.Equals(AParams[i]) then
-          if (i >= Length(AParams)) or (AParams[i] = nil) or ((Params[i].VarType <> nil) and Params[i].VarType.Equals(AParams[i], False)) then
+        else if (AIndx >= Length(AParams)) or (AParams[AIndx] = nil) or (Params[i].VarType = nil) or Params[i].VarType.Equals(AParams[AIndx]) then
+          if (AIndx >= Length(AParams)) or (AParams[AIndx] = nil) or ((Params[i].VarType <> nil) and Params[i].VarType.Equals(AParams[AIndx], False)) then
             Weight := Weight - 4
           else if NeedFullMatch then
             if (Params[i].VarType = nil) then
@@ -2964,10 +3015,10 @@ begin
             Weight := Weight - 3
         else if (not (Params[i].ParType in Lape_ValParams)) or NeedFullMatch then
           Break
-        else if (not Params[i].VarType.CompatibleWith(AParams[i])) then
+        else if (not Params[i].VarType.CompatibleWith(AParams[AIndx])) then
           Break
         else
-          Weight := Weight + SizeWeight(Params[i].VarType, AParams[i]);
+          Weight := Weight + SizeWeight(Params[i].VarType, AParams[AIndx]);
         Match := True;
       end;
 
@@ -3406,6 +3457,29 @@ end;
 function TLapeStackInfo.addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString = ''): TLapeStackVar;
 begin
   Result := addVar(TLapeParameterVar.Create(ParType, VarType, nil, Name));
+end;
+
+function TLapeStackInfo.inheritVar(StackVar: TLapeStackVar): TLapeStackVar;
+begin
+  Assert(StackVar <> nil);
+  Assert(StackVar.Stack <> VarStack);
+  Result := addVar(TLapeStackInheritedVar.Create(StackVar, nil));
+end;
+
+function TLapeStackInfo.getInheritedVar(StackVar: TLapeStackVar): TLapeStackVar;
+var
+  i: Integer;
+begin
+  if (StackVar = nil) then
+    Exit(nil)
+  else if (StackVar.Stack = VarStack) then
+    Exit(StackVar);
+
+  for i := 0 to FVarStack.Count - 1 do
+    if (FVarStack[i] is TLapeStackInheritedVar) and (TLapeStackInheritedVar(FVarStack[i]).Parent = StackVar) then
+      Exit(FVarStack[i]);
+
+  Result := nil;
 end;
 
 function TLapeStackInfo.addWith(AWith: TLapeWithDeclRec): Integer;
@@ -4323,7 +4397,12 @@ begin
       Result := Stack.getDeclaration(AName, bTrue, CheckWith);
 
     if (Result is TLapeStackVar) and (TLapeStackVar(Result).Stack <> AStackInfo.VarStack) then
-      LapeExceptionFmt(lpeDeclarationOutOfScope, [AName]);
+    begin
+      Result := AStackInfo.getInheritedVar(TLapeStackVar(Result));
+      if (Result = nil) then
+        LapeExceptionFmt(lpeDeclarationOutOfScope, [AName]);
+    end;
+
     if (Result <> nil) or LocalOnly then
       Exit;
     Stack := Stack.Owner;
