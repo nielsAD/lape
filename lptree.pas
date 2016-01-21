@@ -4426,54 +4426,52 @@ var
 
 begin
   if (FRes = nil) then
-    try
-      if (FLeft <> nil) then
-        if (FLeft is TLapeTree_ExprBase) then
-          LeftVar := TLapeTree_ExprBase(FLeft).Evaluate()
-        else
-          LapeException(lpeInvalidEvaluation, DocPos)
+  begin
+    if (FLeft <> nil) then
+      if (FLeft is TLapeTree_ExprBase) then
+        LeftVar := TLapeTree_ExprBase(FLeft).Evaluate()
       else
-        LeftVar := nil;
+        LapeException(lpeInvalidEvaluation, DocPos)
+    else
+      LeftVar := nil;
 
-      if (FOperatorType in AssignOperators) and ((LeftVar = nil) or (not LeftVar.Writeable)) then
-        LapeException(lpeCannotAssign, [FLeft, Self]);
+    if (FOperatorType in AssignOperators) and ((LeftVar = nil) or (not LeftVar.Writeable)) then
+      LapeException(lpeCannotAssign, [FLeft, Self]);
 
-      if (LeftVar <> nil) and (not isEmpty(FRight)) then
-      begin
-        FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
-        if (FOperatorType = op_Index) then
-          FRight := FRight.setExpectedType(FCompiler.getBaseType(ltSizeInt)) as TLapeTree_ExprBase;
-      end;
-
-      Short := (FOperatorType in [op_AND, op_OR]) and (LeftVar <> nil) and (FRight <> nil) and canShort(LeftVar.VarType) and canShort(FRight.resType());
-      if Short and ((FOperatorType = op_AND) xor (LeftVar.AsInteger <> 0)) then
-        Exit(LeftVar);
-
-      if (FRight <> nil) then
-        RightVar := FRight.Evaluate()
-      else
-        RightVar := nil;
-
-      if Short and (RightVar <> nil) then
-        Exit(RightVar);
-
-      try
-        if (LeftVar <> nil) and LeftVar.HasType() then
-          Result := LeftVar.VarType.EvalConst(FOperatorType, LeftVar, RightVar, EvalFlags())
-        else with TLapeType.Create(ltUnknown, FCompiler) do
-        try
-          Result := EvalConst(FOperatorType, LeftVar, RightVar, EvalFlags());
-        finally
-          Free();
-        end;
-
-        Result := FCompiler.addManagedVar(Result) as TLapeGlobalVar;
-      except on E: lpException do
-        LapeException(lpString(E.Message), DocPos);
-      end;
-    finally
-      FRes := Result;
+    if (LeftVar <> nil) and (not isEmpty(FRight)) then
+    begin
+      FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
+      if (FOperatorType = op_Index) then
+        FRight := FRight.setExpectedType(FCompiler.getBaseType(ltSizeInt)) as TLapeTree_ExprBase;
     end;
+
+    Short := (FOperatorType in [op_AND, op_OR]) and (LeftVar <> nil) and (FRight <> nil) and canShort(LeftVar.VarType) and canShort(FRight.resType());
+    if Short and ((FOperatorType = op_AND) xor (LeftVar.AsInteger <> 0)) then
+      Exit(LeftVar);
+
+    if (FRight <> nil) then
+      RightVar := FRight.Evaluate()
+    else
+      RightVar := nil;
+
+    if Short and (RightVar <> nil) then
+      Exit(RightVar);
+
+    try
+      if (LeftVar <> nil) and LeftVar.HasType() then
+        FRes := LeftVar.VarType.EvalConst(FOperatorType, LeftVar, RightVar, EvalFlags())
+      else with TLapeType.Create(ltUnknown, FCompiler) do
+      try
+        FRes := EvalConst(FOperatorType, LeftVar, RightVar, EvalFlags());
+      finally
+        Free();
+      end;
+
+      FRes := FCompiler.addManagedVar(FRes) as TLapeGlobalVar;
+    except on E: lpException do
+      LapeException(lpString(E.Message), DocPos);
+    end;
+  end;
   Result := inherited;
 end;
 
