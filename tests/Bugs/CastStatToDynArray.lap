@@ -1,0 +1,11 @@
+// Issue #67
+{$assertions on}
+type
+  TTestArray = Array of NativeInt;
+var
+  static_arr: Array [0..0] of NativeInt;
+  arr: TTestArray;
+begin
+  arr := TTestArray(static_arr);
+  Assert(Length(arr) = 1);
+end.

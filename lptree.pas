@@ -1871,7 +1871,10 @@ var
       FParams[0] := FParams[0].setExpectedType(VarType) as TLapeTree_ExprBase;
 
       Result := FParams[0].Evaluate();
-      if VarType.Equals(Result.VarType) or (not Result.HasType()) or (VarType.Size = Result.VarType.Size) then
+      if (not Result.HasType()) or
+         ((VarType.Equals(Result.VarType) or (VarType.Size = Result.VarType.Size)) and
+         ((not (VarType.BaseType in LapeRefTypes)) or (not VarType.CompatibleWith(Result.VarType))))
+      then
         Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.NewGlobalVarP(Result.Ptr), Result.Name <> ''))
       else if VarType.CompatibleWith(Result.VarType) then
         Result := TLapeGlobalVar(FCompiler.addManagedVar(VarType.EvalConst(op_Assign, VarType.NewGlobalVarP(), Result, [])))
@@ -2017,7 +2020,10 @@ var
       FParams[0] := FParams[0].setExpectedType(VarType) as TLapeTree_ExprBase;
 
       Result := FParams[0].Compile(Offset);
-      if VarType.Equals(Result.VarType) or (not Result.HasType()) or (VarType.Size = Result.VarType.Size) then
+      if (not Result.HasType()) or
+         ((VarType.Equals(Result.VarType) or (VarType.Size = Result.VarType.Size)) and
+         ((not (VarType.BaseType in LapeRefTypes)) or (not VarType.CompatibleWith(Result.VarType))))
+      then
       begin
         if (not (FParams[0] is TLapeTree_DestExprBase)) or (TLapeTree_DestExprBase(FParams[0]).Dest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
           Dest := NullResVar;
