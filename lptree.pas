@@ -66,7 +66,7 @@ type
     FCompilerOptions: ECompilerOptionsSet;
 
     function getDocPos: TDocPos; override;
-    procedure setParent(Parent: TLapeTree_Base); virtual;
+    procedure setParent(Node: TLapeTree_Base); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); virtual;
   public
     _DocPos: TDocPos;
@@ -398,10 +398,12 @@ type
     FLeft: TLapeTree_Base;
     FRight: TLapeTree_ExprBase;
     FAssigning: TInitBool;
+    FInvoking: TInitBool;
     FOverloadOp: Boolean;
     function getLeft: TLapeTree_ExprBase; virtual;
     procedure setLeft(Node: TLapeTree_ExprBase); virtual;
     procedure setRight(Node: TLapeTree_ExprBase); virtual;
+    procedure setParent(Node: TLapeTree_Base); override;
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
     constructor Create(AOperatorType: EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -413,6 +415,7 @@ type
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; override;
 
     function isAssigning: Boolean; virtual;
+    function isInvoking: Boolean; virtual;
     function isConstant: Boolean; override;
 
     function EvalFlags: ELapeEvalFlags; virtual;
@@ -876,12 +879,12 @@ begin
   Result := _DocPos;
 end;
 
-procedure TLapeTree_Base.setParent(Parent: TLapeTree_Base);
+procedure TLapeTree_Base.setParent(Node: TLapeTree_Base);
 begin
-  Assert((Parent = nil) or (Parent.Compiler = FCompiler));
-  if (FParent <> nil) and (FParent <> Parent) then
+  Assert((Node = nil) or (Node.Compiler = FCompiler));
+  if (FParent <> nil) and (FParent <> Node) then
     FParent.DeleteChild(Self);
-  FParent := Parent;
+  FParent := Node;
 end;
 
 procedure TLapeTree_Base.DeleteChild(Node: TLapeTree_Base);
@@ -995,6 +998,7 @@ begin
       t := Evaluate();
     except
       t := nil;
+      ClearCache();
     end;
 
     if (t <> nil) then
@@ -1672,8 +1676,11 @@ begin
         Result := TLapeTree_Operator.Create(op_Index, FExpr);
         TLapeTree_Operator(Result).Left := FExpr;
         TLapeTree_Operator(Result).Right := TLapeTree_Integer.Create(Index, Result);
+        TLapeTree_Operator(Result).FInvoking := bTrue;
 
         FRealIdent := TLapeTree_ExprBase(Result.FoldConstants(False));
+        FRealIdent.Parent := Self;
+
         FExpr := TLapeTree_Operator(Result).Left;
 
         if (FRealIdent <> Result) then
@@ -1986,6 +1993,12 @@ begin
           LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], IdentExpr.DocPos)
         else
           LapeException(lpeCannotInvoke, DocPos);
+
+      if (IdentVar.VarType is TLapeType_MethodOfType) and
+         (not (TLapeType_MethodOfType(IdentVar.VarType).SelfParam in Lape_ValParams)) and
+         (not IdentVar.Readable)
+      then
+        LapeException(lpeVariableExpected, IdentExpr.DocPos);
 
       FRes := DoImportedMethod(IdentVar);
     end;
@@ -2318,6 +2331,12 @@ begin
         LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], IdentExpr.DocPos)
       else
         LapeException(lpeCannotInvoke, IdentExpr.DocPos);
+
+    if (IdentVar.VarType is TLapeType_MethodOfType) and
+       (not (TLapeType_MethodOfType(IdentVar.VarType).SelfParam in Lape_ValParams)) and
+       (not IdentVar.Readable)
+    then
+      LapeException(lpeVariableExpected, IdentExpr.DocPos);
 
     {$IFDEF Lape_InitExternalFuncResult}
     Dest := NullResVar;
@@ -4154,6 +4173,13 @@ begin
     Node.Parent := Self;
 end;
 
+procedure TLapeTree_Operator.setParent(Node: TLapeTree_Base);
+begin
+  if (Node <> FParent) then
+    ClearCache();
+  inherited;
+end;
+
 procedure TLapeTree_Operator.DeleteChild(Node: TLapeTree_Base);
 begin
   if (Left = Node) then
@@ -4191,6 +4217,7 @@ procedure TLapeTree_Operator.ClearCache;
 begin
   FRestructure := bUnknown;
   FAssigning := bUnknown;
+  FInvoking := bUnknown;
   inherited;
 end;
 
@@ -4260,6 +4287,24 @@ begin
   Result := (FAssigning = bTrue);
 end;
 
+function TLapeTree_Operator.isInvoking: Boolean;
+begin
+  if (FInvoking = bUnknown) and (not isEmpty(FParent)) then
+  begin
+    Result := (
+      ((FParent is TLapeTree_Invoke) and ((TLapeTree_Invoke(FParent).FExpr = Self) or (TLapeTree_Invoke(FParent).FRealIdent = Self))) or
+      ((FParent is TLapeTree_Operator) and TLapeTree_Operator(FParent).isInvoking())
+    );
+
+    if Result then
+      FInvoking := bTrue
+    else
+      FInvoking := bFalse;
+  end;
+
+  Result := (FInvoking = bTrue);
+end;
+
 function TLapeTree_Operator.isConstant: Boolean;
 begin
   if (FConstant = bUnknown) then
@@ -4293,11 +4338,13 @@ end;
 
 function TLapeTree_Operator.EvalFlags: ELapeEvalFlags;
 begin
-  Result := [];
+  Result := [lefConstRangeCheck];
   if (lcoRangeCheck in FCompilerOptions) then
     Include(Result, lefRangeCheck);
   if isAssigning() then
     Include(Result, lefAssigning);
+  if isInvoking() then
+    Include(Result, lefInvoking);
 end;
 
 function TLapeTree_Operator.resType(Restructure: Boolean): TLapeType;
@@ -5044,6 +5091,8 @@ end;
 function TLapeTree_Method.Compile(var Offset: Integer): TResVar;
 var
   i, fo, mo, co: Integer;
+  s: TResVar;
+  wasConstant: Boolean;
 begin
   Assert(Method <> nil);
   FExitStatements.Clear();
@@ -5060,17 +5109,26 @@ begin
     if MethodOfObject(Method.VarType) then
       with TLapeTree_InternalMethod_Assert.Create(Self) do
       try
+        s := _ResVar.New(FStackInfo.Vars[0]);
+
+        wasConstant := not s.Writeable;
+        if wasConstant then
+          s.Writeable := True;
+
         addParam(TLapeTree_Operator.Create(op_cmp_NotEqual, Self));
         addParam(TLapeTree_String.Create(lpeVariableExpected, Self));
 
         with TLapeTree_Operator(Params[0]) do
         begin
           Left := TLapeTree_Operator.Create(op_Addr, Self);
-          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.Vars[0]), Self);
+          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(s, Self);
           Right := TLapeTree_GlobalVar.Create('nil', ltPointer, Self);
         end;
 
         Compile(Offset).Spill(1);
+
+        if wasConstant then
+          s.Writeable := False;
       finally
         Free();
       end;

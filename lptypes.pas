@@ -346,6 +346,8 @@ type
     function IndexOf(Item: lpString; Lo, Hi: Integer): Integer; override;
     procedure ImportFromArray(Arr: TLapeList_String.TTArray); override;
 
+    function Implode(ASep: lpString): lpString; virtual;
+
     property CaseSensitive: Boolean read FCaseSensitive;
   end;
 
@@ -1622,6 +1624,36 @@ begin
   Clear();
   for i := 0 to High(Arr) do
     Add(Arr[i]);
+end;
+
+function TLapeStringList.Implode(ASep: lpString): lpString;
+var
+  i, Len: Integer;
+begin
+  Result := '';
+  if (FCount < 1) then
+    Exit;
+
+  Len := Length(ASep) * (FCount - 1);
+  for i := 0 to FCount - 1 do
+    Len := Len + Length(FItems[i]);
+
+  SetLength(Result, Len);
+  Len := 1;
+
+  for i := 0 to FCount - 1 do
+  begin
+    if (i > 0) and (ASep <> '') then
+    begin
+      Move(ASep[1], Result[Len], Length(ASep) * SizeOf(ASep[1]));
+      Len := Len + Length(ASep);
+    end;
+    if (FItems[i] <> '') then
+    begin
+      Move(FItems[i][1], Result[Len], Length(FItems[i]) * SizeOf(FItems[i][1]));
+      Len := Len + Length(FItems[i]);
+    end;
+  end;
 end;
 
 function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.getItem(Key: lpString): _T;

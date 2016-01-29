@@ -4,15 +4,15 @@
 type
   TBar = type Integer;
   TFoo = type Integer;
-  TGetBarFunc = function: TBar of object;
+  TGetBarFunc = function: TBar;
   TGetFooFunc = function: TFoo of object;
 
-function TFoo.getBar: TBar; overload;
+function TFoo.getBar: TBar; static; overload;
 begin
   WriteLn('getBar[1]');
 end;
 
-function TFoo.getBar(AParam: TBar): TBar; overload;
+function TFoo.getBar(AParam: TBar): TBar; static; overload;
 begin
   WriteLn('getBar[2]');
 end;

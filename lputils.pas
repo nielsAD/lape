@@ -28,7 +28,7 @@ implementation
 
 uses
   lpparser, lpeval,
-  SysUtils;
+  SysUtils, Classes;
 
 procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);
 begin
@@ -120,7 +120,7 @@ begin
     Exit;
 
   AName := LapeCase(AName);
-  lpString(Arg) := lpString(Arg) + (#39 + AName + #39': Result := ' + Temp + AName + ';' + LineEnding);
+  TLapeStringList(Arg).Add(#39 + AName + #39': Result := ' + Temp + AName);
 end;
 
 procedure ExposeGlobals__GetName(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
@@ -138,7 +138,7 @@ begin
   else
     Exit;
 
-  lpString(Arg) := lpString(Arg) + (Temp + ': Result := '#39 + AName + #39';' + LineEnding);
+  TLapeStringList(Arg).Add(Temp + ': Result := '#39 + AName + #39);
 end;
 
 procedure ExposeGlobals__GetVal(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
@@ -149,7 +149,7 @@ begin
     Exit;
 
   AName := LapeCase(AName);
-  lpString(Arg) := lpString(Arg) + (#39 + AName + #39': Result := ' + AName + ';' + LineEnding);
+  TLapeStringList(Arg).Add(#39 + AName + #39': Result := ' + AName);
 end;
 
 procedure ExposeGlobals__Invoke(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
@@ -187,10 +187,9 @@ begin
       Exit;
 
     Temp := #39 + AName + #39': begin ' +
-      'Assert(ParamsLen = ' + lpString(IntToStr(Params.Count)) + ');' +
-      'Result := ';
-    if (Res = nil) or (not VariantType.CompatibleWith(Res)) then
-      Temp := Temp + 'Unassigned; ';
+      'Assert(ParamsLen = ' + lpString(IntToStr(Params.Count)) + '); ';
+    if (Res <> nil) and VariantType.CompatibleWith(Res) then
+      Temp := Temp + 'Result := ';
     Temp := Temp + AName + '(';
 
     for i := 0 to Params.Count - 1 do
@@ -200,10 +199,10 @@ begin
       Temp := Temp + 'Params[' + lpString(IntToStr(i)) + ']';
     end;
 
-    Temp := Temp + '); end;' + LineEnding;
+    Temp := Temp + '); end';
   end;
 
-  lpString(Arg) := lpString(Arg) + Temp;
+  TLapeStringList(Arg).Add(Temp);
 end;
 
 procedure TraverseGlobals(Compiler: TLapeCompilerBase; Callback: TTraverseCallback; var Arg; BaseName: lpString = ''; Decls: TLapeDeclarationList = nil);
@@ -269,6 +268,20 @@ end;
 
 procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean);
 
+  function TraverseGlobals_String(Callback: TTraverseCallback): lpString;
+  var
+    Builder: TLapeStringList;
+  begin
+    Builder := TLapeStringList.Create('', dupIgnore, False, False);
+    try
+      TraverseGlobals(Compiler, Callback, Builder);
+      Builder.Add('');
+      Result := Builder.Implode(';' + LineEnding);
+    finally
+      Builder.Free();
+    end;
+  end;
+
   function GetGlobalPtr: lpString;
   begin
     Result := 'function GetGlobalPtr(Name: string): Pointer;';
@@ -283,7 +296,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
       Result := Result + 'case LowerCase(Name) of ' + LineEnding;
       {$ENDIF}
 
-      TraverseGlobals(Compiler, @ExposeGlobals__GetPtr, Result);
+      Result := Result + TraverseGlobals_String(@ExposeGlobals__GetPtr);
       Result := Result + 'end;';
     end;
     Result := Result + 'end;';
@@ -298,7 +311,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
     if (not HeaderOnly) then
     begin
       Result := Result + 'case Ptr of ' + LineEnding;
-      TraverseGlobals(Compiler, @ExposeGlobals__GetName, Result);
+      Result := Result + TraverseGlobals_String(@ExposeGlobals__GetName);
       Result := Result + 'end;';
     end;
     Result := Result + 'end;';
@@ -318,7 +331,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
       Result := Result + 'case LowerCase(Name) of ' + LineEnding;
       {$ENDIF}
 
-      TraverseGlobals(Compiler, @ExposeGlobals__GetVal, Result);
+      Result := Result + TraverseGlobals_String(@ExposeGlobals__GetVal);
       Result := Result + 'end;';
     end;
     Result := Result + 'end;';
@@ -339,7 +352,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
       Result := Result + 'case LowerCase(Name) of ' + LineEnding;
       {$ENDIF}
 
-      TraverseGlobals(Compiler, @ExposeGlobals__Invoke, Result);
+      Result := Result + TraverseGlobals_String(@ExposeGlobals__Invoke);
       Result := Result + 'end;';
     end;
     Result := Result + 'end;';

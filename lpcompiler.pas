@@ -1367,6 +1367,24 @@ var
   OldDeclaration: TLapeDeclaration;
   LocalDecl, ResetStack: Boolean;
 
+  procedure RemoveSelfVar;
+  begin
+    if (not isExternal) then
+    begin
+      Assert(FStackInfo.Vars[0].Name = 'Self');
+      FStackInfo.Delete(FStackInfo.Vars[0], True);
+    end;
+  end;
+
+  procedure AddSelfVar(Param: ELapeParameterType; VarType: TLapeType);
+  begin
+    if (not isExternal) then
+    begin
+      FStackInfo.addVar(Param, VarType, 'Self');
+      FStackInfo.VarStack.MoveItem(FStackInfo.VarStack.Count - 1, 0);
+    end;
+  end;
+
   procedure SwapMethodTree(varFrom, varTo: TLapeGlobalVar);
   var
     Method: TLapeTree_Method;
@@ -1479,20 +1497,31 @@ begin
     ResetStack := False;
 
   try
-    isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
+    isNext([tk_kw_ConstRef, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
     OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
     LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
 
     if (OldDeclaration <> nil) and (FuncHeader is TLapeType_MethodOfType) and (not LocalDecl) and (not TLapeType_MethodOfType(FuncHeader).ObjectType.HasSubDeclaration(OldDeclaration, bTrue)) then
       OldDeclaration := nil;
 
-    if (Tokenizer.Tok = tk_kw_Static) then
+    if (Tokenizer.Tok = tk_kw_ConstRef) then
     begin
       ParseExpressionEnd(tk_sym_SemiColon, True, False);
-      if (not isExternal) and MethodOfObject(FuncHeader) then
+      if (not (FuncHeader is TLapeType_MethodOfType)) then
+        LapeException(lpeMethodOfObjectExpected, Tokenizer.DocPos);
+
+      RemoveSelfVar();
+      TLapeType_MethodOfType(FuncHeader).SelfParam := lptConstRef;
+      AddSelfVar(lptConstRef, TLapeType_MethodOfType(FuncHeader).ObjectType);
+
+      isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
+    end
+    else if (Tokenizer.Tok = tk_kw_Static) then
+    begin
+      ParseExpressionEnd(tk_sym_SemiColon, True, False);
+      if MethodOfObject(FuncHeader) then
       begin
-        Assert(FStackInfo.Vars[0].Name = 'Self');
-        FStackInfo.Vars[0].Free();
+        RemoveSelfVar();
         FuncHeader := TLapeType_Method(addManagedType(TLapeType_Method.Create(FuncHeader)));
       end;
       isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
@@ -1576,11 +1605,7 @@ begin
         then
         begin
           Result.Method.VarType := addManagedType(TLapeType_MethodOfObject.Create(Result.Method.VarType as TLapeType_Method));
-          if (not isExternal) then
-          begin
-            FStackInfo.addVar(lptConstRef, getBaseType(ltPointer), 'Self');
-            FStackInfo.VarStack.MoveItem(FStackInfo.VarStack.Count - 1, 0);
-          end;
+          AddSelfVar(lptConstRef, getBaseType(ltPointer));
         end;
 
         if LocalDecl then

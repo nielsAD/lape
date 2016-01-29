@@ -713,9 +713,13 @@ begin
       {$IFEND}
 
       SelfParam := NullParameter;
-      SelfParam.ParType := Lape_SelfParam;
       if (Header is TLapeType_MethodOfType) then
+      begin
+        SelfParam.ParType := TLapeType_MethodOfType(Header).SelfParam;
         SelfParam.VarType := TLapeType_MethodOfType(Header).ObjectType;
+      end
+      else
+        SelfParam.ParType := Lape_SelfParam;
       Result.addArg(LapeParamToFFIType(SelfParam, ABI), True, LapeFFIPointerParam(SelfParam, ABI))
     end;
 

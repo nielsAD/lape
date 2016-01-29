@@ -503,7 +503,7 @@ end;
 
 procedure _LapeSStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PUInt8(Params^[1])^ < 0) or (PUInt8(Params^[1])^ > PUInt8(Params^[2])^) then
+  if (PUInt8(Params^[1])^ > PUInt8(Params^[2])^) then
     LapeException(lpeOutOfTypeRange);
   SetLength(PShortString(Params^[0])^, PUInt8(Params^[1])^);
 end;

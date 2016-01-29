@@ -30,6 +30,7 @@ const
   lpeCannotEvalConstProc = 'Procedures cannot be used for constant evaluation';
   lpeCannotEvalRunTime = 'Cannot be evaluated at runtime';
   lpeCannotInvoke = 'Cannot invoke identifier';
+  lpeCannotMixStaticOverload = 'Cannot mix static with non-static method overload';
   lpeCannotOverload = 'Cannot overload function';
   lpeCannotOverloadOperator = 'Cannot overload operator "%s"';
   lpeCannotOverrideOperator = 'Cannot override operator "%s" with types "%s" and "%s"';
@@ -67,6 +68,7 @@ const
   lpeInvalidWithReference = 'Invalid with-reference';
   lpeLostClosingParenthesis = 'Found closing parenthesis without matching opening parenthesis';
   lpeLostConditional = 'Found conditional without matching opening statement';
+  lpeMethodOfObjectExpected = 'Expected method of object';
   lpeNoDefaultForParam = 'No default value for parameter %d found';
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';
   lpeNoOverloadedMethod = 'Don''t know which overloaded method to call with params (%s)';

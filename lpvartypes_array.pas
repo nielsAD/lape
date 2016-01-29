@@ -31,7 +31,7 @@ type
     procedure VarSetLength(var AVar: Pointer; ALen: SizeInt); overload; virtual;
     procedure VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
-    procedure RangeCheck(AVar, AIndex: TLapeGlobalVar); overload; virtual;
+    procedure RangeCheck(AVar, AIndex: TLapeGlobalVar; Flags: ELapeEvalFlags); overload; virtual;
     procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
 
     function EvalRes(Op: EOperator; ARight: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
@@ -173,17 +173,18 @@ function TLapeType_DynArray.VarToString(AVar: Pointer): lpString;
 var
   i: Integer;
   p: Pointer;
+  Builder: TLapeStringList;
 begin
   Result := '[';
   if (AVar <> nil) and HasType() then
-  begin
+  try
     p := PPointer(AVar)^;
+    Builder := TLapeStringList.Create('', dupAccept, False, False);
     for i := 0 to Length(PCodeArray(AVar)^) - 1 do
-    begin
-      if (i > 0) then
-        Result := Result + ', ';
-      Result := Result + FPType.VarToString(Pointer(PtrUInt(p) + PtrUInt(FPType.Size * i)));
-    end;
+      Builder.Add(FPType.VarToString(Pointer(PtrUInt(p) + PtrUInt(FPType.Size * i))));
+    Result := Result + Builder.Implode(', ');
+  finally
+    Builder.Free();
   end;
   Result := Result + ']';
 end;
@@ -340,7 +341,7 @@ begin
   end;
 end;
 
-procedure TLapeType_DynArray.RangeCheck(AVar, AIndex: TLapeGlobalVar);
+procedure TLapeType_DynArray.RangeCheck(AVar, AIndex: TLapeGlobalVar; Flags: ELapeEvalFlags);
 var
   Idx: SizeInt;
   Lo, Hi: TLapeGlobalVar;
@@ -348,7 +349,9 @@ begin
   if (AVar = nil) or (not AIndex.HasType()) then
     LapeException(lpeInvalidEvaluation)
   else if (not AIndex.VarType.IsOrdinal()) then
-    LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString]);
+    LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString])
+  else if (not (lefConstRangeCheck in Flags)) then
+    Exit;
 
   Idx := AIndex.AsInteger;
   if (FBaseType in LapeStringTypes) then
@@ -369,7 +372,9 @@ begin
   if (not AIndex.HasType()) then
     LapeException(lpeInvalidEvaluation)
   else if (not AIndex.VarType.IsOrdinal()) then
-    LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString]);
+    LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString])
+  else if (([lefRangeCheck, lefConstRangeCheck]) * Flags = []) then
+    Exit;
 
   if AVar.isConstant and (AVar.VarPos.MemPos = mpMem) then
   begin
@@ -382,7 +387,8 @@ begin
     Hi := VarHi();
   end;
 
-  if AVar.HasType() and (AVar.VarType.BaseType in LapeArrayTypes) and
+  if (lefConstRangeCheck in Flags) and
+     AVar.HasType() and (AVar.VarType.BaseType in LapeArrayTypes) and
      AIndex.isConstant and (AIndex.VarPos.MemPos = mpMem)
   then
   begin
@@ -449,7 +455,7 @@ begin
   begin
     //Cache AsString before changing FBaseType
     GetAsString();
-    RangeCheck(ALeft, ARight);
+    RangeCheck(ALeft, ARight, Flags);
 
     tmpType := FBaseType;
     FBaseType := ltPointer;
@@ -833,14 +839,17 @@ end;
 function TLapeType_StaticArray.VarToString(AVar: Pointer): lpString;
 var
   i: Integer;
+  Builder: TLapeStringList;
 begin
   Result := '[';
   if (AVar <> nil) and HasType() then
-    for i := 0 to FRange.Hi - FRange.Lo do
-    begin
-      if (i > 0) then
-        Result := Result + ', ';
-      Result := Result + FPType.VarToString(Pointer(PtrInt(AVar) + (FPType.Size * i)));
+    try
+      Builder := TLapeStringList.Create('', dupAccept, False, False);
+      for i := 0 to FRange.Hi - FRange.Lo do
+        Builder.Add(FPType.VarToString(Pointer(PtrInt(AVar) + (FPType.Size * i))));
+      Result := Result + Builder.Implode(', ');
+    finally
+      Builder.Free();
     end;
   Result := Result + ']';
 end;
@@ -901,7 +910,7 @@ begin
   if (op = op_Index) and (Left <> nil) and (Right <> nil) then
   begin
     Assert(HasType());
-    RangeCheck(Left, Right);
+    RangeCheck(Left, Right, Flags);
 
     Result := FPType.NewGlobalVarP(Pointer(PtrInt(Left.Ptr) + (FPType.Size * (Right.AsInteger - FRange.Lo))));
     Result.CopyFlags(Left);
