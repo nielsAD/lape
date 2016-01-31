@@ -460,10 +460,8 @@ begin
   FieldSize := FieldType.Size;
   if (FieldSize > FSize) then
     FSize := FieldSize;
-  if (FInit <> bTrue) and FieldType.NeedInitialization then
-    FInit := bTrue;
-  FFieldMap[AName] := Field;
 
+  FFieldMap[AName] := Field;
   ClearCache();
 end;
 

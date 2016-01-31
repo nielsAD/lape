@@ -565,7 +565,7 @@ function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
 
   procedure FFIArray(Size: SizeInt; FFIType: TFFITypeManager);
   var
-    i: SizeInt;
+    i: Integer;
   begin
     for i := 0 to Size - 1 do
       Result.addElem(FFIType, i = 0);
