@@ -596,17 +596,19 @@ procedure TLapeCompiler.InitBaseDefinitions;
     pn = lptNormal;
     pv = lptVar;
   var
-    a, w, u, i, n: TLapeType;
+    a, w, u, i, b, n: TLapeType;
     gn: TlapeGlobalVar;
   begin
     a := getBaseType(ltAnsiString);
     w := getBaseType(ltWideString);
     u := getBaseType(ltUnicodeString);
     i := getBaseType(ltSizeInt);
+    b := getBaseType(ltEvalBool);
 
     n := nil;
     gn := nil;
 
+    addGlobalFunc([n, n, i], [pv, pv, pn], [gn, gn, gn], b, @_LapeCompareMem, '!cmp');
     addGlobalFunc([n, n, i], [pv, pv, pn], [gn, gn, gn], @_LapeMove, '!move');
     addGlobalFunc([n], [pn], [gn], i, @_LapeHigh, '!high');
     addGlobalFunc([n], [pn], [gn], i, @_LapeLength, '!length');
@@ -699,10 +701,11 @@ begin
   addGlobalFunc('function GetMem(i: SizeInt): Pointer;', @_LapeGetMem);
   addGlobalFunc('function AllocMem(i: SizeInt): Pointer;', @_LapeAllocMem);
   addGlobalFunc('procedure FreeMem(p: Pointer);', @_LapeFreeMem);
-
   addGlobalFunc('procedure ReallocMem(var p: Pointer; s: SizeInt);', @_LapeReallocMem);
+
   addGlobalFunc('procedure FillMem(var p; s: SizeInt; b: UInt8 = 0);', @_LapeFillMem);
   addGlobalFunc('procedure Move(constref Src; var Dst; s: SizeInt);', @_LapeMove);
+  addGlobalFunc('function CompareMem(constref p1, p2; Length: SizeInt): EvalBool;', @_LapeCompareMem);
 
   addGlobalFunc('function Assigned(constref p): EvalBool;', @_LapeAssigned);
   //addGlobalFunc('procedure RaiseException(Ex: TExceptionObject); overload;', @_LapeRaise);

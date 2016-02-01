@@ -43,6 +43,7 @@ type
   protected
     FRange: TLapeRange;
 
+    function getPadding: SizeInt; override;
     function getSize: SizeInt; override;
     function getAsString: lpString; override;
   public
@@ -798,6 +799,14 @@ begin
     end;
     if wasConstant then Result.Writeable := False;
   end
+  else
+    Result := inherited;
+end;
+
+function TLapeType_StaticArray.getPadding: SizeInt;
+begin
+  if HasType() then
+    Result := (FRange.Hi - FRange.Lo + 1) * FPType.Padding
   else
     Result := inherited;
 end;

@@ -27,6 +27,7 @@ type
     FAlignment: UInt16;
     FFieldMap: TRecordFieldMap;
     function getAsString: lpString; override;
+    function getPadding: SizeInt; override;
     function getSize: SizeInt; override;
   public
     FreeFieldMap: Boolean;
@@ -85,6 +86,22 @@ end;
 function TLapeType_Record.getSize: SizeInt;
 begin
   Result := (inherited + (FAlignment - 1)) and not (FAlignment - 1);
+end;
+
+function TLapeType_Record.getPadding: SizeInt;
+var
+  i: Integer;
+  Offset: SizeInt;
+begin
+  Result := 0;
+  Offset := Size;
+
+  for i := FFieldMap.Count - 1 downto 0 do
+  begin
+    Inc(Result, Offset - (FFieldMap.ItemsI[i].Offset + FFieldMap.ItemsI[i].FieldType.Size));
+    Inc(Result, FFieldMap.ItemsI[i].FieldType.Padding);
+    Offset := FFieldMap.ItemsI[i].Offset;
+  end;
 end;
 
 constructor TLapeType_Record.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil);
@@ -239,19 +256,33 @@ function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: 
 var
   i: Integer;
 begin
-  if (op = op_Assign) and (Right <> nil) and (Right is TLapeType_Record) and
-     (TLapeType_Record(Right).FieldMap.Count = FFieldMap.Count) then
-  begin
-    for i := 0 to FFieldMap.Count - 1 do
-      if (FFieldMap.Key[i] <> TLapeType_Record(Right).FieldMap.Key[i]) or
-         (not FFieldMap.ItemsI[i].FieldType.CompatibleWith(TLapeType_Record(Right).FieldMap.ItemsI[i].FieldType))
-      then
-      begin
-        Result := inherited;
-        Exit;
-      end;
-    Result := Self;
-  end
+  if (Right <> nil) and (Right is TLapeType_Record) and  (TLapeType_Record(Right).FieldMap.Count = FFieldMap.Count) then
+    if (op = op_Assign) then
+    begin
+      for i := 0 to FFieldMap.Count - 1 do
+        if (FFieldMap.Key[i] <> TLapeType_Record(Right).FieldMap.Key[i]) or
+           (not FFieldMap.ItemsI[i].FieldType.CompatibleWith(TLapeType_Record(Right).FieldMap.ItemsI[i].FieldType))
+        then
+        begin
+          Result := inherited;
+          Exit;
+        end;
+      Result := Self;
+    end
+    else if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
+    begin
+      for i := 0 to FFieldMap.Count - 1 do
+        if (FFieldMap.Key[i] <> TLapeType_Record(Right).FieldMap.Key[i]) or
+           (FFieldMap.ItemsI[i].FieldType.EvalRes(Op, TLapeType_Record(Right).FieldMap.ItemsI[i].FieldType, Flags) = nil)
+        then
+        begin
+          Result := inherited;
+          Exit;
+        end;
+      Result := FCompiler.getBaseType(ltEvalBool);
+    end
+    else
+      Result := inherited
   else
     Result := inherited;
 end;
@@ -292,7 +323,7 @@ begin
 
       LeftVar := EvalConst(op_Dot, Left, LeftFieldName, []);
       RightVar := Right.VarType.EvalConst(op_Dot, Right, RightFieldName, []);
-      LeftVar.VarType.EvalConst(op_Assign, LeftVar, RightVar, []);
+      LeftVar.VarType.EvalConst(op, LeftVar, RightVar, []);
     finally
       if (LeftFieldName <> nil) then
         FreeAndNil(LeftFieldName);
@@ -303,7 +334,39 @@ begin
       if (RightVar <> nil) then
         FreeAndNil(RightVar);
     end;
+
     Result := Left;
+  end
+  else if (op in [op_cmp_Equal, op_cmp_NotEqual]) and (Right <> nil) and Right.HasType() and (EvalRes(op, Right, Flags) <> nil) then
+  begin
+    LeftFieldName := nil;
+    RightFieldName := nil;
+    LeftVar := nil;
+    RightVar := nil;
+
+    for i := 0 to FFieldMap.Count - 1 do
+    try
+      LeftFieldName := FCompiler.getBaseType(ltString).NewGlobalVarStr(FFieldMap.Key[i]);
+      RightFieldName := FCompiler.getBaseType(ltString).NewGlobalVarStr(TLapeType_Record(Right.VarType).FieldMap.Key[i]);
+
+      LeftVar := EvalConst(op_Dot, Left, LeftFieldName, []);
+      RightVar := Right.VarType.EvalConst(op_Dot, Right, RightFieldName, []);
+      Result := LeftVar.VarType.EvalConst(op, LeftVar, RightVar, []);
+
+      if (not Result.HasType()) or (not (Result.VarType.BaseType in LapeBoolTypes)) then
+        LapeException(lpeImpossible);
+      if (Result.AsInteger <> Ord(False)) xor (op = op_cmp_Equal) then
+        Exit;
+    finally
+      if (LeftFieldName <> nil) then
+        FreeAndNil(LeftFieldName);
+      if (RightFieldName <> nil) then
+        FreeAndNil(RightFieldName);
+      if (LeftVar <> nil) then
+        FreeAndNil(LeftVar);
+      if (RightVar <> nil) then
+        FreeAndNil(RightVar);
+    end;
   end
   else
     Result := inherited;
@@ -312,6 +375,7 @@ end;
 function TLapeType_Record.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   i: Integer;
+  LoopOffset: array of Integer;
   FieldOffset: SizeInt;
   tmpVar, LeftVar, RightVar, LeftFieldName, RightFieldName: TResVar;
 begin
@@ -382,6 +446,65 @@ begin
         RightVar.Spill(1);
       end;
       Result := Left;
+    end
+  else if (op in [op_cmp_Equal, op_cmp_NotEqual]) and Right.HasType() and (EvalRes(Op, Right.VarType, Flags) <> nil) then
+    if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and (Padding = 0) then
+    begin
+      Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
+
+      if Left.HasType() then
+      begin
+        Right.VarType := Left.VarType;
+        Result := Left.VarType.Eval(op, Dest, Left, Right, [], Offset, Pos);
+      end
+      else
+      begin
+        Assert(op in [op_cmp_Equal, op_cmp_NotEqual]);
+
+        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt, False, True));
+        tmpVar := Compiler.getTempStackVar(ltPointer);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar, Offset, @Self._DocPos);
+
+        Result := NullResVar;
+        Result.VarType := Compiler.getBaseType(ltEvalBool);
+
+        Compiler.getDestVar(Dest, Result, op);
+        FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!cmp']), Result, SizeOf(Pointer) * 3, Offset, @Self._DocPos);
+        if (op = op_cmp_NotEqual) then
+          FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar, Offset, @Self._DocPos);
+      end;
+    end
+    else
+    begin
+      Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
+      Dest := NullResVar;
+
+      SetLength(LoopOffset, FFieldMap.Count);
+      for i := 0 to FFieldMap.Count - 1 do
+      begin
+        LeftFieldName := _ResVar.New(FCompiler.getConstant(FFieldMap.Key[i]));
+        RightFieldName := _ResVar.New(FCompiler.getConstant(TLapeType_Record(Right.VarType).FieldMap.Key[i]));
+        Dest := NullResVar;
+
+        LeftVar := Eval(op_Dot, tmpVar, Left, LeftFieldName, [], Offset, Pos);
+        RightVar := Right.VarType.Eval(op_Dot, tmpVar, Right, RightFieldName, [], Offset, Pos);
+
+        tmpVar := LeftVar.VarType.Eval(op_cmp_Equal, Result, LeftVar, RightVar, [], Offset, Pos);
+        if (tmpVar.VarPos.MemPos <> Result.VarPos.MemPos) or (tmpVar.VarPos.StackVar <> Result.VarPos.StackVar) then
+          Result.VarType.Eval(op_Assign, Dest, Result, tmpVar, [], Offset, Pos);
+        LoopOffset[i] := FCompiler.Emitter._JmpRIfNot(0, Result, Offset, Pos);
+
+        LeftVar.Spill(1);
+        RightVar.Spill(1);
+      end;
+
+      for i := 0 to FFieldMap.Count - 1 do
+        FCompiler.Emitter._JmpRIfNot(Offset - LoopOffset[i], Result, LoopOffset[i], Pos);
+
+      if (op = op_cmp_NotEqual) then
+        FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar, Offset, @Self._DocPos);
     end
   else
     Result := inherited;

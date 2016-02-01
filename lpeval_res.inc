@@ -3177,8 +3177,6 @@ Arr[op_cmp_LessThan][ltPointer][ltPointer] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltPointer][ltPointer] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltPointer][ltPointer] := ltEvalBool;
 Arr[op_Assign][ltPointer][ltPointer] := ltPointer;
-Arr[op_Assign][ltPointer][ltImportedMethod] := ltPointer;
-Arr[op_Assign][ltPointer][ltScriptMethod] := ltPointer;
 
 Arr[op_Plus][ltPointer][ltUInt8] := ltPointer;
 Arr[op_Plus][ltPointer][ltInt8] := ltPointer;
@@ -3199,14 +3197,34 @@ Arr[op_Minus][ltPointer][ltUInt64] := ltPointer;
 Arr[op_Minus][ltPointer][ltInt64] := ltPointer;
 
 //Array
+Arr[op_cmp_Equal][ltPointer][ltDynArray] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_Equal][ltDynArray][ltPointer] := Arr[op_cmp_Equal][ltPointer][ltPointer];
 Arr[op_cmp_Equal][ltDynArray][ltDynArray] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltPointer][ltDynArray] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltDynArray][ltPointer] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
 Arr[op_cmp_NotEqual][ltDynArray][ltDynArray] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
 
 //Method
+Arr[op_Assign][ltPointer][ltImportedMethod] := ltPointer;
 Arr[op_Assign][ltImportedMethod][ltPointer] := ltImportedMethod;
 Arr[op_Assign][ltImportedMethod][ltImportedMethod] := ltImportedMethod;
+Arr[op_Assign][ltPointer][ltScriptMethod] := ltPointer;
 Arr[op_Assign][ltScriptMethod][ltPointer] := ltScriptMethod;
 Arr[op_Assign][ltScriptMethod][ltScriptMethod] := ltScriptMethod;
+
+Arr[op_cmp_Equal][ltPointer][ltScriptMethod] := ltEvalBool;
+Arr[op_cmp_Equal][ltPointer][ltImportedMethod] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_Equal][ltImportedMethod][ltPointer] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_Equal][ltImportedMethod][ltImportedMethod] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_Equal][ltScriptMethod][ltPointer] := ltEvalBool;
+Arr[op_cmp_Equal][ltScriptMethod][ltScriptMethod] := ltEvalBool;
+
+Arr[op_cmp_NotEqual][ltPointer][ltScriptMethod] := ltEvalBool;
+Arr[op_cmp_NotEqual][ltPointer][ltImportedMethod] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltImportedMethod][ltPointer] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltImportedMethod][ltImportedMethod] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltScriptMethod][ltPointer] := ltEvalBool;
+Arr[op_cmp_NotEqual][ltScriptMethod][ltScriptMethod] := ltEvalBool;
 
 //Set
 //Small

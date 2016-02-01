@@ -3070,7 +3070,6 @@ procedure lpePointer_LT_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpePointer_LTEQ_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PtrUInt(PPointer(Left)^) <= PtrUInt(PPointer(Right)^); end;
 procedure lpePointer_NEQ_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PPointer(Left)^ <> PPointer(Right)^; end;
 procedure lpePointer_ASGN_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := PPointer(Left)^; end;
-procedure lpePointer_ASGN_SMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCodePos(Dest)^ := PtrUInt(PPointer(Left)^); end;
 
 procedure lpePointer_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) + PUInt8(Right)^); end;
 procedure lpePointer_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) + PInt8(Right)^); end;
@@ -3093,8 +3092,18 @@ procedure lpePointer_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 //Method
 procedure lpeTMethod_DOT(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Data := Right;               if (Left <> nil)  then TMethod(Dest^).Code := PPointer(Left)^      else TMethod(Dest^).Code := nil; end;
 procedure lpeTMethod_IDX(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Code := TMethod(Left^).Code; if (Right <> nil) then TMethod(Dest^).Data := TMethod(Right^).Data else TMethod(Dest^).Data := TMethod(Left^).Data; end;
+
+procedure lpePointer_ASGN_SMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCodePos(Dest)^ := PtrUInt(PPointer(Left)^); end;
 procedure lpeSMethod_ASGN_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCodePos(Dest)^ := PtrUInt(PPointer(Left)^); end;
 procedure lpeSMethod_ASGN_SMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCodePos(Dest)^ := PCodePos(Left)^; end;
+
+procedure lpePointer_EQ_SMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PtrUInt(PPointer(Left)^) = PCodePos(Right)^; end;
+procedure lpeSMethod_EQ_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCodePos(Left)^ = PtrUInt(PPointer(Right)^); end;
+procedure lpeSMethod_EQ_SMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCodePos(Left)^ = PCodePos(Right)^; end;
+
+procedure lpePointer_NEQ_SMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PtrUInt(PPointer(Left)^) <> PCodePos(Right)^; end;
+procedure lpeSMethod_NEQ_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCodePos(Left)^ <> PtrUInt(PPointer(Right)^); end;
+procedure lpeSMethod_NEQ_SMethod(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCodePos(Left)^ <> PCodePos(Right)^; end;
 
 //Set
 //small set

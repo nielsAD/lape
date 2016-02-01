@@ -32,11 +32,6 @@ begin
   PInt32(Result)^ := CompareStr(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
-procedure _LapeCompareMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PEvalBool(Result)^ := CompareMem(PPointer(Params^[0])^, PPointer(Params^[1])^, PPtrUInt(Params^[2])^);
-end;
-
 procedure _LapeCompareText(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt32(Result)^ := CompareText(PlpString(Params^[0])^, PlpString(Params^[1])^);

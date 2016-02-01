@@ -234,6 +234,7 @@ type
 
     procedure setBaseType(ABaseType: ELapeBaseType); virtual;
     function getBaseIntType: ELapeBaseType; virtual;
+    function getPadding: SizeInt; virtual;
     function getSize: SizeInt; virtual;
     function getInitialization: Boolean; virtual;
     function getFinalization: Boolean; virtual;
@@ -281,6 +282,7 @@ type
     property Compiler: TLapeCompilerBase read FCompiler;
     property BaseType: ELapeBaseType read FBaseType write setBaseType;
     property BaseIntType: ELapeBaseType read getBaseIntType;
+    property Padding: SizeInt read getPadding;
     property Size: SizeInt read getSize;
     property IsStatic: Boolean read FStatic;
     property NeedInitialization: Boolean read getInitialization;
@@ -1319,6 +1321,11 @@ end;
 function TLapeType.getEvalProc(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc;
 begin
   Result := lpeval.getEvalProc(Op, Left, Right);
+end;
+
+function TLapeType.getPadding: SizeInt;
+begin
+  Result := 0;
 end;
 
 function TLapeType.getSize: SizeInt;
@@ -2699,7 +2706,7 @@ begin
       Right := m.VarType;
   end;
 
-  if (Op in [op_cmp_Equal, op_cmp_NotEqual, op_Assign]) then
+  if (Op in CompareOperators + [op_Assign]) then
     Result := inherited
   else if CompatibleWith(Right) then
     Result := FMethodRecord.EvalRes(Op, FMethodRecord, Flags)
@@ -2726,18 +2733,23 @@ begin
   end;
 
   try
-    if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
+    if (Op in CompareOperators) then
       Result := inherited
-    else if CompatibleWith(Right.VarType) then
-    try
-      VarType := Right.VarType;
-      Right.VarType := FMethodRecord;
-      Result := FMethodRecord.EvalConst(Op, Left, Right, Flags);
-    finally
-      Right.VarType := VarType;
-    end
     else
-      Result := FMethodRecord.EvalConst(Op, Left, Right, Flags);
+    try
+      if CompatibleWith(Right.VarType) then
+      try
+        VarType := Right.VarType;
+        Right.VarType := FMethodRecord;
+        Result := FMethodRecord.EvalConst(Op, Left, Right, Flags);
+      finally
+        Right.VarType := VarType;
+      end
+      else
+        Result := FMethodRecord.EvalConst(Op, Left, Right, Flags);
+    except
+      Result := inherited;
+    end;
   finally
     if (Left <> nil) then
       Left.VarType := Self;
@@ -2762,15 +2774,17 @@ begin
     end;
   end;
 
-  if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
+  if (Op in CompareOperators) then
     Result := inherited
   else
-  begin
+  try
     if CompatibleWith(Right.VarType) then
       Right.VarType := FMethodRecord;
     Result := FMethodRecord.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
     if (Result.VarType = FMethodRecord) then
       Result.VarType := Self;
+  except
+    Result := inherited;
   end;
 end;
 

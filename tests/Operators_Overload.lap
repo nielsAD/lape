@@ -9,11 +9,6 @@ begin
     Result := Result + Left;
 end;
   
-operator = (Left,Right:TPoint): Boolean;
-begin
-  Result := (Left.x = Right.x) and (Left.y = Right.y);
-end;
-
 operator + (Left,Right:TPoint): TPoint;
 begin
   Result.x := (Left.x + Right.x);

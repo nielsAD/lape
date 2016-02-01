@@ -3180,8 +3180,6 @@ Arr[op_cmp_LessThan][ltPointer][ltPointer] := @lpePointer_LT_Pointer;
 Arr[op_cmp_LessThanOrEqual][ltPointer][ltPointer] := @lpePointer_LTEQ_Pointer;
 Arr[op_cmp_NotEqual][ltPointer][ltPointer] := @lpePointer_NEQ_Pointer;
 Arr[op_Assign][ltPointer][ltPointer] := @lpePointer_ASGN_Pointer;
-Arr[op_Assign][ltPointer][ltImportedMethod] := Arr[op_Assign][ltPointer][ltPointer];
-Arr[op_Assign][ltPointer][ltScriptMethod] := @lpePointer_ASGN_SMethod;
 
 Arr[op_Plus][ltPointer][ltUInt8] := @lpePointer_ADD_UInt8;
 Arr[op_Plus][ltPointer][ltInt8] := @lpePointer_ADD_Int8;
@@ -3202,17 +3200,39 @@ Arr[op_Minus][ltPointer][ltUInt64] := @lpePointer_SUB_UInt64;
 Arr[op_Minus][ltPointer][ltInt64] := @lpePointer_SUB_Int64;
 
 //Array
-Arr[op_cmp_Equal][ltDynArray][ltDynArray] := Arr[op_cmp_Equal][ltPointer][ltPointer];
-Arr[op_cmp_NotEqual][ltDynArray][ltDynArray] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
 Arr[op_Assign][ltDynArray][ltDynArray] := Arr[op_Assign][ltPointer][ltPointer];
+
+Arr[op_cmp_Equal][ltPointer][ltDynArray] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_Equal][ltDynArray][ltPointer] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_Equal][ltDynArray][ltDynArray] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltPointer][ltDynArray] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltDynArray][ltPointer] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltDynArray][ltDynArray] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
 
 //Method
 Arr[op_Dot][ltUnknown][ltPointer] := @lpeTMethod_DOT;
 Arr[op_Index][ltUnknown][ltPointer] := @lpeTMethod_IDX;
+
+Arr[op_Assign][ltPointer][ltScriptMethod]   := @lpePointer_ASGN_SMethod;
+Arr[op_Assign][ltPointer][ltImportedMethod] := Arr[op_Assign][ltPointer][ltPointer];
 Arr[op_Assign][ltImportedMethod][ltPointer] := Arr[op_Assign][ltPointer][ltPointer];
 Arr[op_Assign][ltImportedMethod][ltImportedMethod] := Arr[op_Assign][ltPointer][ltPointer];
 Arr[op_Assign][ltScriptMethod][ltPointer] := @lpeSMethod_ASGN_Pointer;
 Arr[op_Assign][ltScriptMethod][ltScriptMethod] := @lpeSMethod_ASGN_SMethod;
+
+Arr[op_cmp_Equal][ltPointer][ltScriptMethod] := @lpePointer_EQ_SMethod;
+Arr[op_cmp_Equal][ltPointer][ltImportedMethod] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_Equal][ltImportedMethod][ltPointer] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_Equal][ltImportedMethod][ltImportedMethod] := Arr[op_cmp_Equal][ltPointer][ltPointer];
+Arr[op_cmp_Equal][ltScriptMethod][ltPointer] := @lpeSMethod_EQ_Pointer;
+Arr[op_cmp_Equal][ltScriptMethod][ltScriptMethod] := @lpeSMethod_EQ_SMethod;
+
+Arr[op_cmp_NotEqual][ltPointer][ltScriptMethod] := @lpePointer_NEQ_SMethod;
+Arr[op_cmp_NotEqual][ltPointer][ltImportedMethod] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltImportedMethod][ltPointer] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltImportedMethod][ltImportedMethod] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
+Arr[op_cmp_NotEqual][ltScriptMethod][ltPointer] := @lpeSMethod_NEQ_Pointer;
+Arr[op_cmp_NotEqual][ltScriptMethod][ltScriptMethod] := @lpeSMethod_NEQ_SMethod;
 
 //Set
 //small set

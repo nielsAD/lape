@@ -12,10 +12,12 @@ begin
   Assert(r.a = vr.a, 'r.a <> vr.a');
   Assert(r.b = vr.b, 'r.b <> vr.b');
   Assert(r.c = vr.c, 'r.c <> vr.c');
+  Assert(r = vr, 'r <> vr');
 
   Assert(r.a = 1,   'r.a <> 1');
   Assert(r.b = 2,   'r.b <> 2');
   Assert(r.c = '3', 'r.c <> 3');
+  Assert(r = [1, 2, '3'], 'r <> [1, 2, "3"]');
 
   vr := [,, '4'];
 end;
@@ -27,9 +29,11 @@ begin
 
   TestRec(r, r);
   Assert(r.c = '4', 'r.c <> 4');
+  WriteLn(r);
+  Assert(r = [,,'4'], 'r <> [,,"4"]');
   WriteLn('Initialization :: Passed');
 
   r.c := '5';
   Assert(r.c = '5', 'r.c <> 5');
   WriteLn('Accessing      :: Passed');
-end;       
+end;

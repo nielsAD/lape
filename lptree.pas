@@ -1825,10 +1825,14 @@ function TLapeTree_Invoke.isConstant: Boolean;
 begin
   if (FConstant = bUnknown) then
     if (RealIdent is TLapeTree_VarType) then
+    begin
+      if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+        Params[0] := FParams[0].setExpectedType(TLapeTree_VarType(RealIdent).VarType) as TLapeTree_ExprBase;
       if (FParams.Count = 1) and (not isEmpty(FParams[0])) and FParams[0].isConstant() then
         FConstant := bTrue
       else
         FConstant := bFalse
+    end
     else
       FConstant := bFalse;
 
@@ -4242,7 +4246,7 @@ begin
   if (not isEmpty(Self)) and (ExpectType <> nil) then
   begin
     if (not isEmpty(Left)) then
-      if(OperatorType = op_Deref) then
+      if (OperatorType = op_Deref) then
       begin
         Typ := Left.resType();
         if (Typ <> nil) and (Typ is TLapeType_Pointer) and (not TLapeType_Pointer(Typ).HasType()) then
