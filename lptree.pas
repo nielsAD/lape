@@ -1900,9 +1900,10 @@ var
 
         Result := Result.VarType.EvalConst(op_Assign, Result, tmpRes, []);
         Result.VarType := VarType;
+
+        Result := TLapeGlobalVar(FCompiler.addManagedVar(Result));
       finally
         tmpRes.VarType := tmpTyp;
-        FreeAndNil(tmpRes);
       end
       else
         LapeException(lpeInvalidCast);
