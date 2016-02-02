@@ -4351,6 +4351,8 @@ begin
   Result := [lefConstRangeCheck];
   if (lcoRangeCheck in FCompilerOptions) then
     Include(Result, lefRangeCheck);
+  if (lcoConstAddress in FCompilerOptions) then
+    Include(Result, lefConstAddress);
   if isAssigning() then
     Include(Result, lefAssigning);
   if isInvoking() then

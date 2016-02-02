@@ -27,6 +27,7 @@ type
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
     lcoAutoProperties,                 // {$P} {$AUTOPROPERTIES}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
+    lcoConstAddress,                   // {$J} {$CONSTADDRESS}
     lcoContinueCase,                   //      {$CONTINUECASE}
     lcoCOperators                      //      {$COPERATORS}
   );
@@ -34,7 +35,7 @@ type
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoCOperators, lcoRangeCheck, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke];
+  Lape_OptionsDef = [lcoCOperators, lcoRangeCheck, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
   Lape_PackRecordsDef = 2;
 
 type
@@ -214,7 +215,7 @@ type
     property AsInteger: Int64 read getAsInt;
   end;
 
-  ELapeEvalFlag = (lefAssigning, lefInvoking, lefConstRangeCheck, lefRangeCheck);
+  ELapeEvalFlag = (lefAssigning, lefInvoking, lefConstAddress, lefConstRangeCheck, lefRangeCheck);
   ELapeEvalFlags = set of ELapeEvalFlag;
 
   TLapeType = class(TLapeManagingDeclaration)
@@ -1720,7 +1721,7 @@ begin
     begin
       ResType := EvalRes(Op, TLapeType(nil), Flags);
       if (op = op_Addr) and (not Left.Writeable) then
-        if (Left.Name <> '') then
+        if (lefConstAddress in Flags) and (Left.Name <> '') then
           ResType := FCompiler.getPointerType(Self, True)
         else
           LapeException(lpeVariableExpected);
@@ -1901,8 +1902,9 @@ begin
 
   Result.VarType := EvalRes(Op, Right.VarType, Flags);
   if (op = op_Addr) and (not Left.Writeable) then
-    if ((Left.VarPos.MemPos = mpVar) and (not (Left.VarPos.StackVar is TLapeStackTempVar))) or
-       ((Left.VarPos.MemPos = mpMem) and (Left.VarPos.GlobalVar.Name <> ''))
+    if (lefConstAddress in Flags) and (
+       ((Left.VarPos.MemPos = mpVar) and (not (Left.VarPos.StackVar is TLapeStackTempVar))) or
+       ((Left.VarPos.MemPos = mpMem) and (Left.VarPos.GlobalVar.Name <> '')))
     then
       Result.VarType := FCompiler.getPointerType(Self, True)
     else

@@ -899,6 +899,8 @@ var
         Result := (lcoAutoProperties in FOptions)
       else if (Def = 'scopedenums') then
         Result := (lcoScopedEnums in FOptions)
+      else if (Def = 'constaddress') then
+        Result := (lcoConstAddress in FOptions)
       else if (Def = 'continuecase') then
         Result := (lcoContinueCase in FOptions)
       else if (Def = 'coperators') then
@@ -1048,6 +1050,8 @@ begin
     setOption(lcoAutoProperties)
   else if (Directive = 's') or (Directive = 'scopedenums') then
     setOption(lcoScopedEnums)
+  else if (Directive = 'j') or (Directive = 'constaddress') then
+    setOption(lcoConstAddress)
   else if (Directive = 'continuecase') then
     setOption(lcoContinueCase)
   else if (Directive = 'coperators') then
