@@ -121,7 +121,7 @@ end;
 
 constructor TLapeType_DynArray.Create(ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
-  inherited Create(ACompiler, ArrayType, AName, ADocPos);
+  inherited Create(ACompiler, ArrayType, False, AName, ADocPos);
   FBaseType := ltDynArray;
 end;
 
@@ -151,12 +151,12 @@ begin
     Exit;
 
   Result := lpString(
-    '  function _ElementToString(p: System.Pointer): System.string; static;'                + LineEnding +
+    '  function _ElementToString(p: System.ConstPointer): System.string; static;'           + LineEnding +
     '  begin'                                                                               + LineEnding +
     '    Result := System.ToString['+IntToStr(Index)+'](p^);'                               + LineEnding +
     '  end;'                                                                                + LineEnding +
     'type'                                                                                  + LineEnding +
-    '  TArrayToString = private function(constref Arr; AToString: System.Pointer; Len, Size: System.SizeInt): System.string;' + LineEnding +
+    '  TArrayToString = private function(constref Arr; AToString: System.ConstPointer; Len, Size: System.SizeInt): System.string;' + LineEnding +
     'var'                                                                                   + LineEnding +
     '  Len: System.SizeInt;'                                                                + LineEnding +
     'begin'                                                                                 + LineEnding +
@@ -611,7 +611,7 @@ begin
         end;
         TLapeTree_StatementList(Body).addStatement(Node);
 
-        ALeft.VarType := FCompiler.getPointerType(ltSizeInt);
+        ALeft.VarType := FCompiler.getPointerType(ltSizeInt, False);
         ARight.VarType := ALeft.VarType;
 
         Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Body);
@@ -972,7 +972,7 @@ begin
     begin
       LeftVar := Left.IncLock();
       LeftVar.VarPos.isPointer := False;
-      LeftVar.VarType := FCompiler.getPointerType(PType);
+      LeftVar.VarType := FCompiler.getPointerType(PType, PConst);
     end;
 
     if (FRange.Lo = 0) then

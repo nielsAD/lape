@@ -654,10 +654,27 @@ begin
   addBaseDefine('Lape');
   addBaseDefine('Sesquipedalian');
 
+  {$IFDEF Lape_CaseSensitive}
+  addBaseDefine('Lape_CaseSensitive');
+  {$ELSE}
+  addBaseDefine('Lape_CaseInsensitive');
+  {$ENDIF}
+  {$IFDEF Lape_PascalLabels}
+  addBaseDefine('Lape_PascalLabels');
+  {$ELSE}
+  addBaseDefine('Lape_LapeLabels');
+  {$ENDIF}
+  {$IFDEF Lape_Unicode}
+  addBaseDefine('Lape_Unicode');
+  {$ELSE}
+  addBaseDefine('Lape_Ansi');
+  {$ENDIF}
+
   addCompilerFuncs();
   addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System').isConstant := True;
 
   addGlobalType(TLapeType_Label.Create(Self), '!label');
+  addGlobalType(TLapeType_Pointer.Create(Self, nil, True), 'ConstPointer');
   addGlobalType(getBaseType(ltString).createCopy(), 'string');
   addGlobalType(getBaseType(ltChar).createCopy(), 'Char');
   addGlobalType(getBaseType(ltEvalBool).createCopy(), 'EvalBool');
@@ -1608,8 +1625,11 @@ begin
         then
         begin
           Result.Method.VarType := addManagedType(TLapeType_MethodOfObject.Create(Result.Method.VarType as TLapeType_Method));
-          AddSelfVar(lptConstRef, getBaseType(ltPointer));
+          AddSelfVar(lptConstRef, getGlobalType('ConstPointer'));
         end;
+
+        if (MethodOfObject(TLapeGlobalVar(OldDeclaration).VarType) <> MethodOfObject(Result.Method.VarType)) then
+          LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
 
         if LocalDecl then
         begin
@@ -1722,7 +1742,7 @@ begin
       if (FuncHeader is TLapeType_MethodOfType) then
         FStackInfo.addVar(Lape_SelfParam, TLapeType_MethodOfType(FuncHeader).ObjectType, 'Self')
       else if (FuncHeader is TLapeType_MethodOfObject) then
-        FStackInfo.addVar(lptConstRef, getBaseType(ltPointer), 'Self');
+        FStackInfo.addVar(lptConstRef, getGlobalType('ConstPointer'), 'Self');
       if (FuncHeader.Res <> nil) then
         FStackInfo.addVar(lptOut, FuncHeader.Res, 'Result');
     end;
@@ -1836,20 +1856,30 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
   procedure ParsePointer;
   var
     PointerType: TLapeType;
+    ConstPointer: Boolean;
     DocPos: TDocPos;
   begin
     DocPos := Tokenizer.DocPos;
 
-    Expect(tk_Identifier, True, False);
+    Expect([tk_kw_Const, tk_Identifier], True, False);
+
+    if (Tokenizer.Tok = tk_kw_Const) then
+    begin
+      ConstPointer := True;
+      Expect(tk_Identifier, True, False);
+    end
+    else
+      ConstPointer := False;
+
     PointerType := TLapeType(getDeclarationNoWith(Tokenizer.TokString));
     if ((PointerType = nil) and (TypeForwards = nil)) or ((PointerType <> nil) and (not (PointerType is TLapeType))) then
       LapeException(lpeTypeExpected, Tokenizer.DocPos);
 
     if (PointerType <> nil) then
-      Result := addManagedType(TLapeType_Pointer.Create(Self, PointerType, '', @DocPos))
+      Result := addManagedType(TLapeType_Pointer.Create(Self, PointerType, ConstPointer, '', @DocPos))
     else
     begin
-      Result := TLapeType_Pointer.Create(Self, PointerType, '', @DocPos);
+      Result := TLapeType_Pointer.Create(Self, PointerType, ConstPointer, '', @DocPos);
       TypeForwards.Add(Tokenizer.TokString, Result);
     end;
   end;

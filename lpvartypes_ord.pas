@@ -919,7 +919,7 @@ begin
   if (Index < 0) then
     Exit;
 
-  Result := 'type TSetToString = private function(constref ASet; AToString: System.Pointer; Lo, Hi: System.SizeInt): System.string;' + LineEnding + 'begin ';
+  Result := 'type TSetToString = private function(constref ASet; AToString: System.ConstPointer; Lo, Hi: System.SizeInt): System.string;' + LineEnding + 'begin ';
   if FSmall then
     Result := Result + 'Result := TSetToString(System._SmallSetToString)'
   else

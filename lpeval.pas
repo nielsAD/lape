@@ -123,7 +123,7 @@ var
   LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$RANGECHECKS OFF}{$AUTOINVOKE OFF}{$AUTOPROPERTIES OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}' + LineEnding;
 
   _LapeToString_Enum: lpString =
-    'function _EnumToString(s: ^string; Index, Lo, Hi: SizeInt): string;'                + LineEnding +
+    'function _EnumToString(s: ^const string; Index, Lo, Hi: SizeInt): string;'          + LineEnding +
     'begin'                                                                              + LineEnding +
     '  if (Index >= Lo) and (Index <= Hi) then'                                          + LineEnding +
     '    Result := s[Index]^'                                                            + LineEnding +
@@ -134,7 +134,7 @@ var
     'end;';
 
   _LapeToString_Set: lpString =
-    'function _%sSetToString(ASet: Pointer;'                                             + LineEnding +
+    'function _%sSetToString(ASet: ConstPointer;'                                        + LineEnding +
     '  AToString: function(constref Enum): string;'                                      + LineEnding +
     '  Lo, Hi: SizeInt): string;'                                                        + LineEnding +
     'type'                                                                               + LineEnding +
@@ -157,7 +157,7 @@ var
 
   _LapeToString_Array: lpString =
     'function _ArrayToString(Arr: Pointer;'                                              + LineEnding +
-    '  AToString: private function(p: Pointer): string;'                                 + LineEnding +
+    '  AToString: private function(p: ConstPointer): string;'                            + LineEnding +
     '  Len, Size: SizeInt): string;'                                                     + LineEnding +
     'var'                                                                                + LineEnding +
     '  i: SizeInt;'                                                                      + LineEnding +
@@ -191,7 +191,7 @@ var
   _LapeSetLength: lpString =
     'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: SizeInt;'                 + LineEnding +
     '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
-    '  Copy: private procedure(Src, Dst: Pointer));'                                     + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer));'                       + LineEnding +
     'const'                                                                              + LineEnding +
     '  HeaderSize = SizeOf(PtrInt) + SizeOf(SizeInt);'                                   + LineEnding +
     'var'                                                                                + LineEnding +
@@ -274,10 +274,10 @@ var
     'end;';
 
   _LapeCopy: lpString =
-    'procedure _ArrayCopy(p: Pointer;'                                                   + LineEnding +
+    'procedure _ArrayCopy(p: ConstPointer;'                                              + LineEnding +
     '  Start: SizeInt = 0; Count: SizeInt = High(SizeInt);'                              + LineEnding +
     '  Len, ElSize: SizeInt;'                                                            + LineEnding +
-    '  Copy: private procedure(Src, Dst: Pointer);'                                      + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer);'                        + LineEnding +
     '  out Result: Pointer);'                                                            + LineEnding +
     'var'                                                                                + LineEnding +
     '  i: SizeInt;'                                                                      + LineEnding +
@@ -306,7 +306,7 @@ var
     '  Start: SizeInt; Count: SizeInt = High(SizeInt);'                                  + LineEnding +
     '  ElSize: SizeInt;'                                                                 + LineEnding +
     '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
-    '  Copy: private procedure(Src, Dst: Pointer));'                                     + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer));'                       + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -338,10 +338,10 @@ var
     'end;';
 
   _LapeInsert: lpString =
-    'procedure _ArrayInsert(Src: Pointer; var Dst: Pointer;'                             + LineEnding +
+    'procedure _ArrayInsert(Src: ConstPointer; var Dst: Pointer;'                        + LineEnding +
     '  Start: SizeInt = 0; Count: SizeInt = 0; LenSrc, ElSize: SizeInt;'                 + LineEnding +
     '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
-    '  Copy: private procedure(Src, Dst: Pointer));'                                     + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer));'                       + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +

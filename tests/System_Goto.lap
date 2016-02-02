@@ -1,0 +1,36 @@
+{$IFDEF Lape_PascalLabels}
+label
+  a, b, c, d;
+{$ELSE}
+var
+  a, b, c, d: label;
+{$ENDIF}
+begin
+  WriteLn(1);
+  goto c;
+  WriteLn(2);
+
+  {$IFDEF Lape_PascalLabels}a:{$ELSE}label(a){$ENDIF};
+    while True do
+    begin
+      WriteLn(3);
+      goto b;
+      WriteLn(4);
+    end;
+    WriteLn(5);
+  {$IFDEF Lape_PascalLabels}b:{$ELSE}label(b){$ENDIF};
+    try
+      WriteLn(6);
+      goto d;
+      WriteLn(7);
+    finally
+      WriteLn(8);
+    end;
+    WriteLn(9);
+  {$IFDEF Lape_PascalLabels}c:{$ELSE}label(c){$ENDIF};
+    WriteLn(10);
+    goto a;
+    WriteLn(11);
+  {$IFDEF Lape_PascalLabels}d:{$ELSE}label(d){$ENDIF};
+    WriteLn(12);
+end;

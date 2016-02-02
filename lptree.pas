@@ -4112,7 +4112,7 @@ begin
   if (not Param.HasType()) or (not (Param.VarType.BaseType in [ltPointer] + LapeProcTypes)) then
     LapeException(lpeInvalidLabel, [FParams[0]]);
 
-  ResVar := FCompiler.getTempStackVar(ltPointer);
+  ResVar := FCompiler.getTempStackVar(FCompiler.getGlobalType('ConstPointer'));
   ResVar := ResVar.VarType.Eval(op_Assign, tmpVar, ResVar, Param, [], Offset, @_DocPos);
   FCompiler.Emitter._JmpVar(Offset, @_DocPos);
 
@@ -4251,7 +4251,7 @@ begin
         Typ := Left.resType();
         if (Typ <> nil) and (Typ is TLapeType_Pointer) and (not TLapeType_Pointer(Typ).HasType()) then
         begin
-          Cast := TLapeTree_Invoke.Create(FCompiler.getPointerType(ExpectType), Self);
+          Cast := TLapeTree_Invoke.Create(FCompiler.getPointerType(ExpectType, False), Self);
           Cast.addParam(Left);
           Left := Cast;
         end;
@@ -5095,8 +5095,6 @@ end;
 function TLapeTree_Method.Compile(var Offset: Integer): TResVar;
 var
   i, fo, mo, co: Integer;
-  s: TResVar;
-  wasConstant: Boolean;
 begin
   Assert(Method <> nil);
   FExitStatements.Clear();
@@ -5113,26 +5111,17 @@ begin
     if MethodOfObject(Method.VarType) then
       with TLapeTree_InternalMethod_Assert.Create(Self) do
       try
-        s := _ResVar.New(FStackInfo.Vars[0]);
-
-        wasConstant := not s.Writeable;
-        if wasConstant then
-          s.Writeable := True;
-
         addParam(TLapeTree_Operator.Create(op_cmp_NotEqual, Self));
         addParam(TLapeTree_String.Create(lpeVariableExpected, Self));
 
         with TLapeTree_Operator(Params[0]) do
         begin
           Left := TLapeTree_Operator.Create(op_Addr, Self);
-          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(s, Self);
+          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.Vars[0]), Self);
           Right := TLapeTree_GlobalVar.Create('nil', ltPointer, Self);
         end;
 
         Compile(Offset).Spill(1);
-
-        if wasConstant then
-          s.Writeable := False;
       finally
         Free();
       end;

@@ -56,7 +56,7 @@ begin
       addGlobalType(getBaseType(DetermineIntType(SizeOf(LongInt), True)).createCopy(), 'LongInt');
       addGlobalType(getBaseType(DetermineIntType(SizeOf(Cardinal), False)).createCopy(), 'Cardinal');
       addGlobalType(getBaseType(DetermineIntType(SizeOf(Integer), True)).createCopy(), 'Integer');
-      addGlobalType(getPointerType(ltChar).createCopy(), 'PChar');
+      addGlobalType(getPointerType(ltChar, False).createCopy(), 'PChar');
     end;
 
     if (psiUselessTypes in Initialize) then
@@ -110,13 +110,13 @@ procedure ExposeGlobals__GetPtr(v: TLapeGlobalVar; AName: lpString; Compiler: TL
 var
   Temp: lpString;
 begin
-  Temp := '';
-
   if (AName = '') or (AName[1] = '!') or (not v.HasType()) then
     Exit
-  else if v.Writeable and (v.VarType.EvalRes(op_Addr) <> nil) then
+  else if (v.VarType is TLapeType_Method) then
+    Temp := ''
+  else if (v.VarType.EvalRes(op_Addr) <> nil) then
     Temp := '@'
-  else if (not (v.VarType is TLapeType_Method)) then
+  else
     Exit;
 
   AName := LapeCase(AName);
@@ -127,14 +127,12 @@ procedure ExposeGlobals__GetName(v: TLapeGlobalVar; AName: lpString; Compiler: T
 var
   Temp: lpString;
 begin
-  Temp := '';
-
   if (AName = '') or (AName[1] = '!') or (not v.HasType()) then
     Exit
-  else if v.Writeable and (v.VarType.EvalRes(op_Addr) <> nil) then
-    Temp := '@' + AName
   else if (v.VarType is TLapeType_Method) then
-    Temp := 'Pointer(' + AName + ')'
+    Temp := 'ConstPointer(' + AName + ')'
+  else if (v.VarType.EvalRes(op_Addr) <> nil) then
+    Temp := '@' + AName
   else
     Exit;
 
@@ -284,7 +282,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
 
   function GetGlobalPtr: lpString;
   begin
-    Result := 'function GetGlobalPtr(Name: string): Pointer;';
+    Result := 'function GetGlobalPtr(Name: string): ConstPointer;';
     if DoOverride then
       Result := Result + 'override;';
     Result := Result + 'begin Result := nil;';
@@ -304,7 +302,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
 
   function GetGlobalName: lpString;
   begin
-    Result := 'function GetGlobalName(Ptr: Pointer): string;';
+    Result := 'function GetGlobalName(Ptr: ConstPointer): string;';
     if DoOverride then
       Result := Result + 'override;';
     Result := Result + 'begin Result := '#39#39';';
