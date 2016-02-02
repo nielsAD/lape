@@ -2776,7 +2776,10 @@ begin
 
   if IsPointer then
     if (VarType is TLapeType_Pointer) then
-      VarType := TLapeType_Pointer(VarType).PType
+      if TLapeType_Pointer(VarType).PConst then
+        LapeException(lpeVariableExpected, [FParams[0], Self])
+      else
+        VarType := TLapeType_Pointer(VarType).PType
     else
       LapeException(lpeImpossible, _DocPos);
 
@@ -2828,7 +2831,10 @@ begin
 
   if IsPointer then
     if (VarType is TLapeType_Pointer) then
-      VarType := TLapeType_Pointer(VarType).PType
+      if TLapeType_Pointer(VarType).PConst then
+        LapeException(lpeVariableExpected, [FParams[0], Self])
+      else
+        VarType := TLapeType_Pointer(VarType).PType
     else
       LapeException(lpeImpossible, _DocPos);
 
