@@ -2935,7 +2935,14 @@ begin
   else if (not Result.Writeable) then
     LapeException(lpeVariableExpected, DocPos);
 
-  FCompiler.VarToDefault(Result, Offset, @_DocPos);
+  with TLapeTree_Operator.Create(op_Assign, Self) do
+  try
+    Left := TLapeTree_ResVar.Create(Result.IncLock(), Self.FParams[0]);
+    Right := TLapeTree_GlobalVar.Create(Result.VarType.NewGlobalVarP(), Self);
+    Compile(Offset);
+  finally
+    Free();
+  end;
 end;
 
 constructor TLapeTree_InternalMethod_Swap.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

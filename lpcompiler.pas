@@ -503,7 +503,7 @@ begin
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Self);
-    Method.Statements.addStatement(TLapeTree_FinalizeVar.Create(FStackInfo.addVar(lptVar, AParams[0]), Self));
+    Method.Statements.addStatement(TLapeTree_FinalizeVar.Create(FStackInfo.addVar(lptVar, AParams[0], 'AVar'), Self));
     addDelayedExpression(Method);
   finally
     DecStackInfo(True, False, Method = nil);
@@ -520,11 +520,11 @@ begin
   GetMethod_FixupParams(AType, AParams, AResult, True);
   if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult <> nil) or (not AParams[0].CompatibleWith(AParams[1])) then
     Exit;
-  if (not (lcoFullDisposal in FOptions)) and (not AParams[0].NeedFinalization) and (not AParams[1].NeedFinalization) then
+  if (not AParams[0].NeedFinalization) and (not AParams[1].NeedInitialization) then
     Exit;
 
   if (AType = nil) then
-    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptOut, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptOut], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
   IncStackInfo();
   try
@@ -532,8 +532,8 @@ begin
     Sender.addMethod(Result);
 
     Assignment := TLapeTree_Operator.Create(op_Assign, Self);
-    Assignment.Right := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptConstRef, AParams[1])), Self);
-    Assignment.Left := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptOut, AParams[0])), Self);
+    Assignment.Right := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptConstRef, AParams[0], 'Src')), Self);
+    Assignment.Left  := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptOut, AParams[1], 'Dst')), Self);
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Self);
@@ -3434,12 +3434,12 @@ end;
 
 procedure TLapeCompiler.VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
 begin
-  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() and AVar.Writeable then
-    with TLapeTree_Operator.Create(op_Assign, Self, Pos) do
+  Assert(AVar.Writeable);
+  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() then
+    with TLapeTree_InternalMethod_Default.Create(Self, Pos) do
     try
-      Left := TLapeTree_ResVar.Create(AVar.IncLock(), Self, Pos);
-      Right := TLapeTree_GlobalVar.Create(AVar.VarType.NewGlobalVarP(), Self, Pos);
-      Compile(Offset);
+      addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Self, Pos));
+      Compile(Offset).Spill(1);
     finally
       Free();
     end;
