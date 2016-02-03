@@ -2279,7 +2279,7 @@ begin
     if (not (op in AssignOperators)) and (Result <> nil) then
     begin
       Result.Readable := (op <> op_Deref) and Result.Readable;
-      Result.Writeable := (op = op_Deref) or Result.Writeable;
+      Result.Writeable := ((op = op_Deref) and (not PConst)) or Result.Writeable;
     end;
   end;
 end;
