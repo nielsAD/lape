@@ -132,19 +132,25 @@ type
   end;
   TImportClosure = {$IFDEF FPC}specialize{$ENDIF} TFFIClosureManager<TImportClosureData>;
 
+  TExportClosureParamInfo = record
+    Size: SizeInt;
+    Eval: TLapeEvalProc;
+  end;
+
   PExportClosureData = ^TExportClosureData;
   TExportClosureData = record
     CodeBase: PByte;
     CodePos: TCodePos;
     NativeCif: TFFICifManager;
-    ParamSizes: array of Integer;
+    ParamInfo: array of TExportClosureParamInfo;
     TotalParamSize: Integer;
   end;
   TExportClosure = {$IFDEF FPC}specialize{$ENDIF} TFFIClosureManager<TExportClosureData>;
 
 const
-  lpeAlterPrepared = 'Cannot alter an already prepared object';
-  lpeCannotPrepare = 'Cannot prepare object';
+  lpeAlterPrepared   = 'Cannot alter an already prepared object';
+  lpeCannotPrepare   = 'Cannot prepare object';
+  lpeUnsupportedType = 'Type "%s" cannot be used in this FFI context';
 
   FFI_LAPE_ABI = {$IF DEFINED(Lape_CDECL) AND DECLARED(FFI_SYSV)}FFI_SYSV{$ELSE}FFI_DEFAULT_ABI{$IFEND};
 
@@ -165,7 +171,7 @@ function LapeImportWrapper(Func: Pointer; NativeCif: TFFICifManager): TImportClo
 function LapeImportWrapper(Func: Pointer; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
 function LapeImportWrapper(Func: Pointer; Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
 
-function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamSizes: array of SizeInt): TExportClosure; overload;
+function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure; overload;
 function LapeExportWrapper(Code: PByte; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
 function LapeExportWrapper(Func: TLapeGlobalVar; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
 
@@ -811,19 +817,25 @@ begin
     SetLength(VarStack, TotalParamSize);
 
     Pointers := NativeCif.TakePointers(Args, False);
-    Assert(Length(ParamSizes) - Length(Pointers) <= 1);
+    Assert(Length(ParamInfo) - Length(Pointers) <= 1);
 
     b := 0;
     for i := 0 to High(Pointers) do
-      if (ParamSizes[i] < 0) then
+      if (ParamInfo[i].Size < 0) then
       begin
         PPointer(@VarStack[b])^ := Pointers[i];
         Inc(b, SizeOf(Pointer));
       end
       else
       begin
-        Move(Pointers[i]^, VarStack[b], ParamSizes[i]);
-        Inc(b, ParamSizes[i]);
+        if ValidEvalFunction({$IFNDEF FPC}@{$ENDIF}ParamInfo[i].Eval) then
+        begin
+          FillChar(VarStack[b], ParamInfo[i].Size, 0);
+          ParamInfo[i].Eval(@VarStack[b], Pointers[i], nil)
+        end
+        else
+          Move(Pointers[i]^, VarStack[b], ParamInfo[i].Size);
+        Inc(b, ParamInfo[i].Size);
       end;
 
     if (NativeCif.Res <> nil) then
@@ -833,7 +845,7 @@ begin
   end;
 end;
 
-function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamSizes: array of SizeInt): TExportClosure;
+function LapeExportWrapper(Code: PByte; Func: TCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure;
 var
   i: Integer;
 begin
@@ -846,14 +858,14 @@ begin
     Result.UserData.NativeCif := NativeCif;
     Result.UserData.TotalParamSize := 0;
 
-    SetLength(Result.UserData.ParamSizes, Length(ParamSizes));
-    for i := 0 to High(ParamSizes) do
+    SetLength(Result.UserData.ParamInfo, Length(ParamInfo));
+    for i := 0 to High(ParamInfo) do
     begin
-      Result.UserData.ParamSizes[i] := ParamSizes[i];
-      if (ParamSizes[i] < 0) then
+      Result.UserData.ParamInfo[i] := ParamInfo[i];
+      if (ParamInfo[i].Size < 0) then
         Inc(Result.UserData.TotalParamSize, SizeOf(Pointer))
       else
-        Inc(Result.UserData.TotalParamSize, ParamSizes[i]);
+        Inc(Result.UserData.TotalParamSize, ParamInfo[i].Size);
     end;
   except
     FreeAndNil(Result);
@@ -861,43 +873,56 @@ begin
 end;
 
 function LapeExportWrapper(Code: PByte; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
+const
+  RefPar: TExportClosureParamInfo = (Size: -1; Eval: nil);
 var
   i, c: Integer;
-  ParSizes: array of SizeInt;
+  ParInfo: array of TExportClosureParamInfo;
 begin
   if (Header = nil) or (Header.BaseType <> ltScriptMethod) then
     Exit(nil);
 
   c := 0;
-  SetLength(ParSizes, Header.Params.Count);
+  SetLength(ParInfo, Header.Params.Count);
+
   if MethodOfObject(Header) then
   begin
-    {$IF DEFINED(FFI_PASCAL)}
+    {$IF DECLARED(FFI_PASCAL)}
     if (ABI = FFI_PASCAL) then
       LapeException(lpeImpossible);
     {$IFEND}
 
-    SetLength(ParSizes, Length(ParSizes) + 1);
-    ParSizes[0] := -1;
+    SetLength(ParInfo, Length(ParInfo) + 1);
+    ParInfo[0] := RefPar;
     Inc(c);
   end;
 
-  for i := 0 to High(ParSizes) do
+  for i := 0 to High(ParInfo) do
   begin
     if (Header.Params[i].ParType in Lape_RefParams) or (Header.Params[i].VarType = nil) then
-      ParSizes[c] := -1
+      ParInfo[c] := RefPar
     else
-      ParSizes[c] := Header.Params[i].VarType.Size;
+    begin
+      ParInfo[c].Size := Header.Params[i].VarType.Size;
+
+      if (ParInfo[c].Size = LapeTypeSize[Header.Params[i].VarType.BaseType]) then
+        ParInfo[c].Eval := getEvalProc(op_Assign, Header.Params[i].VarType.BaseType, Header.Params[i].VarType.BaseType)
+      else
+        ParInfo[c].Eval := nil;
+
+      if (not ValidEvalFunction(ParInfo[c].Eval)) and Header.Params[i].VarType.NeedFinalization then
+        LapeExceptionFmt(lpeUnsupportedType, [Header.Params[i].VarType.AsString]);
+    end;
     Inc(c);
   end;
 
   if (Header.Res <> nil) then
   begin
-    SetLength(ParSizes, c + 1);
-    ParSizes[c] := -1;
+    SetLength(ParInfo, c + 1);
+    ParInfo[c] := RefPar;
   end;
 
-  Result := LapeExportWrapper(Code, Func, LapeHeaderToFFICif(Header, ABI), ParSizes);
+  Result := LapeExportWrapper(Code, Func, LapeHeaderToFFICif(Header, ABI), ParInfo);
 end;
 
 function LapeExportWrapper(Func: TLapeGlobalVar; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;

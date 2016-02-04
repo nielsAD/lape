@@ -3200,7 +3200,7 @@ Arr[op_Minus][ltPointer][ltUInt64] := @lpePointer_SUB_UInt64;
 Arr[op_Minus][ltPointer][ltInt64] := @lpePointer_SUB_Int64;
 
 //Array
-Arr[op_Assign][ltDynArray][ltDynArray] := Arr[op_Assign][ltPointer][ltPointer];
+Arr[op_Assign][ltDynArray][ltDynArray] := @lpeDynArray_ASGN_DynArray;
 
 Arr[op_cmp_Equal][ltPointer][ltDynArray] := Arr[op_cmp_Equal][ltPointer][ltPointer];
 Arr[op_cmp_Equal][ltDynArray][ltPointer] := Arr[op_cmp_Equal][ltPointer][ltPointer];

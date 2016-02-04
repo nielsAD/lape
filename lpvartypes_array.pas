@@ -486,8 +486,6 @@ begin
 
       VarSetLength(PPointer(ALeft.Ptr)^, 0);
       Result := inherited;
-      if (Result <> nil) and (Result.Ptr <> nil) and (PPointer(Result.Ptr)^ <> nil) then
-        Inc(PtrInt(Pointer(PtrInt(Result.Ptr^) - SizeOf(SizeInt) - SizeOf(PtrInt))^));
     end
     else if (ARight.VarType is TLapeType_StaticArray) then
     begin
@@ -600,67 +598,26 @@ begin
 
       with TLapeTree_If.Create(FCompiler, Pos) do
       try
-        Body := TLapeTree_StatementList.Create(Self.FCompiler, Pos);
-        Body.CompilerOptions := Body.CompilerOptions - [lcoRangeCheck];
-
-        Node := TLapeTree_InternalMethod_SetLength.Create(Body);
-        with TLapeTree_InternalMethod_SetLength(Node) do
-        begin
-          addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), Body));
-          addParam(TLapeTree_Integer.Create(0, Body));
-        end;
-        TLapeTree_StatementList(Body).addStatement(Node);
-
-        ALeft.VarType := FCompiler.getPointerType(ltSizeInt, False);
-        ARight.VarType := ALeft.VarType;
-
-        Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Body);
+        Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler, Pos);
         with TLapeTree_Operator(Condition) do
         begin
           Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
           Right := TLapeTree_ResVar.Create(ARight.IncLock(), Condition);
         end;
 
-        with TLapeTree_StatementList(Body) do
+        Body := TLapeTree_InternalMethod_SetLength.Create(Condition);
+        with TLapeTree_InternalMethod_SetLength(Body) do
         begin
-          Node := TLapeTree_Operator.Create(op_Assign, Condition);
-          with TLapeTree_Operator(Node) do
-          begin
-            Left := TLapeTree_ResVar.Create(ALeft.IncLock(2), Condition);
-            Right := TLapeTree_ResVar.Create(ARight.IncLock(), Condition);
-          end;
-          addStatement(Node);
-
-          Node := TLapeTree_If.Create(Condition);
-          with TLapeTree_If(Node) do
-          begin
-            Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Node);
-            with TLapeTree_Operator(Condition) do
-            begin
-              Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
-              Right := TLapeTree_GlobalVar.Create('nil', ltPointer, Condition);
-            end;
-
-            Body := TLapeTree_InternalMethod_Inc.Create(Condition);
-            with TLapeTree_InternalMethod(Body) do
-              with TLapeTree_Operator.Create(op_Deref, Condition) do
-              begin
-                Left := TLapeTree_Operator.Create(op_Index, Condition);
-                with TLapeTree_Operator(Left) do
-                begin
-                  Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
-                  Right := TLapeTree_Integer.Create(-2, Condition);
-                end;
-                addParam(Left.Parent as TLapeTree_ExprBase);
-              end;
-          end;
-          addStatement(Node);
+          addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), Body));
+          addParam(TLapeTree_Integer.Create(0, Body));
         end;
 
         Compile(Offset).Spill(1);
       finally
         Free();
       end;
+
+      inherited;
     end
     else if (ARight.VarType is TLapeType_StaticArray) then
     begin

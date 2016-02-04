@@ -3089,6 +3089,18 @@ procedure lpePointer_SUB_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpePointer_SUB_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) - PUInt64(Right)^); end;
 procedure lpePointer_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) - PInt64(Right)^); end;
 
+//Array
+procedure lpeDynArray_ASGN_DynArray(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Dest)^ <> PPointer(Left)^) then
+  begin
+    Assert(PPointer(Dest)^ = nil);
+    PPointer(Dest)^ := PPointer(Left)^;
+    if (PPointer(Dest)^ <> nil) then
+      Inc(PtrInt(Pointer(PtrInt(PPointer(Dest)^) - SizeOf(SizeInt) - SizeOf(PtrInt))^));
+  end;
+end;
+
 //Method
 procedure lpeTMethod_DOT(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Data := Right;               if (Left <> nil)  then TMethod(Dest^).Code := PPointer(Left)^      else TMethod(Dest^).Code := nil; end;
 procedure lpeTMethod_IDX(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin TMethod(Dest^).Code := TMethod(Left^).Code; if (Right <> nil) then TMethod(Dest^).Data := TMethod(Right^).Data else TMethod(Dest^).Data := TMethod(Left^).Data; end;

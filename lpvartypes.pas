@@ -29,7 +29,7 @@ type
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
     lcoConstAddress,                   // {$J} {$CONSTADDRESS}
     lcoContinueCase,                   //      {$CONTINUECASE}
-    lcoCOperators                      //      {$COPERATORS}
+    lcoCOperators,                     //      {$COPERATORS}
     lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)
   );
   ECompilerOptionsSet = set of ECompilerOption;
