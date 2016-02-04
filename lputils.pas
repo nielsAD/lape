@@ -270,7 +270,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
   var
     Builder: TLapeStringList;
   begin
-    Builder := TLapeStringList.Create('', dupIgnore, False, False);
+    Builder := TLapeStringList.Create('', dupIgnore, True, False);
     try
       TraverseGlobals(Compiler, Callback, Builder);
       Builder.Add('');
