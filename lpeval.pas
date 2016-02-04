@@ -126,7 +126,7 @@ var
     'function _EnumToString(s: ^const string; Index, Lo, Hi: SizeInt): string;'          + LineEnding +
     'begin'                                                                              + LineEnding +
     '  if (Index >= Lo) and (Index <= Hi) then'                                          + LineEnding +
-    '    Result := s[Index]^'                                                            + LineEnding +
+    '    Result := s[Index-Lo]^'                                                         + LineEnding +
     '  else '                                                                            + LineEnding +
     '    Result := '#39#39';'                                                            + LineEnding +
     '  if (Result = '#39#39') then'                                                      + LineEnding +
@@ -135,7 +135,7 @@ var
 
   _LapeToString_Set: lpString =
     'function _%sSetToString(ASet: ConstPointer;'                                        + LineEnding +
-    '  AToString: function(constref Enum): string;'                                      + LineEnding +
+    '  AToString: private function(constref Enum): string;'                              + LineEnding +
     '  Lo, Hi: SizeInt): string;'                                                        + LineEnding +
     'type'                                                                               + LineEnding +
     '  TEnum = (se0, se1 = %d);'                                                         + LineEnding +

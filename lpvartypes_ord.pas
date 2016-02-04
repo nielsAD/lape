@@ -474,7 +474,7 @@ begin
         Continue;
       if (FAsString <> '(') then
         FAsString := FAsString + ', ';
-      FAsString := FAsString + lpString(FMemberMap[i]) + '=' + lpString(IntToStr(i));
+      FAsString := FAsString + lpString(FMemberMap[i]) + '=' + lpString(IntToStr(i+FRange.Lo));
     end;
     FAsString := FAsString + ')';
   end;
@@ -496,13 +496,8 @@ begin
   FMemberMap := AMemberMap;
 
   FRange.Hi := Int64(FMemberMap.Count) - 1;
-  while (FMemberMap.Count > 0) and (FMemberMap[0] = '') do
-  begin
-    FMemberMap.Delete(0);
-    Inc(FRange.Lo);
-  end;
-
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
+
   if FSmall then
     FBaseType := ltSmallEnum;
 end;
@@ -531,9 +526,8 @@ begin
   Result:= Value;
   FRange.Hi := Value;
   if (FMemberMap.Count = 0) then
-    FRange.Lo := Value;
-
-  for i := FMemberMap.Count to Value - 1 do
+    FRange.Lo := Value
+  else for i := FMemberMap.Count to Value - FRange.Lo - 1 do
     FMemberMap.Add('');
   FMemberMap.Add(string(AName));
 
@@ -616,6 +610,8 @@ begin
     inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
+    FRange := Self.Range;
+    FSmall := Self.Small;
   end;
 end;
 
@@ -909,22 +905,36 @@ end;
 
 function TLapeType_Set.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
+  IntType: ELapeBaseType;
   Index: Integer;
 begin
   Result := '';
-  if (ToStr = nil) or (FCompiler = nil) or (FRange = nil) then
+  if (ToStr = nil) or (FCompiler = nil) or (FRange = nil) or (FRange.BaseIntType = ltUnknown) then
     Exit;
 
   Index := ToStr.getMethodIndex(getTypeArray([FRange]), FCompiler.getBaseType(ltString));
   if (Index < 0) then
     Exit;
 
-  Result := 'type TSetToString = private function(constref ASet; AToString: System.ConstPointer; Lo, Hi: System.SizeInt): System.string;' + LineEnding + 'begin ';
   if FSmall then
-    Result := Result + 'Result := TSetToString(System._SmallSetToString)'
+    Result := '_SmallSetToString'
   else
-    Result := Result + 'Result := TSetToString(System._LargeSetToString)';
-  Result := Format(Result + '(Param0, System.ToString[%d], %d, %d); end;', [Index, FRange.Range.Lo, FRange.Range.Hi]);
+    Result := '_LargeSetToString';
+
+  Result := Format(lpString(
+    '  function _ElementToString(p: System.ConstPointer): System.string; static;'           + LineEnding +
+    '  type'                                                                                + LineEnding +
+    '    TEnum = (se0, se1 = %d);'                                                          + LineEnding +
+    '    TRangeToString = function(constref r: System.%s): string;'                         + LineEnding +
+    '  begin'                                                                               + LineEnding +
+    '    Result := TRangeToString(System.ToString[%d])(Ord(TEnum(p^)));'                    + LineEnding +
+    '  end;'                                                                                + LineEnding +
+    'type'                                                                                  + LineEnding +
+    '  TSetToString = private function(constref ASet; AToString: System.ConstPointer; Lo, Hi: System.SizeInt): System.string;' + LineEnding +
+    'begin'                                                                                 + LineEnding +
+    '  Result := TSetToString(System.%s)(Param0, _ElementToString, %d, %d);'                + LineEnding +
+    'end;'
+  ), [FRange.Range.Hi, LapeTypeToString(FRange.BaseIntType), Index, Result, FRange.Range.Lo, FRange.Range.Hi]);
 end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;

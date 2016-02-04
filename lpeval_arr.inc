@@ -3298,7 +3298,7 @@ Arr[op_Plus][ltLargeSet][ltInt32] := @lpeLSet_ADD_Int32;
 Arr[op_Plus][ltLargeSet][ltUInt32] := @lpeLSet_ADD_UInt32;
 Arr[op_Plus][ltLargeSet][ltInt64] := @lpeLSet_ADD_Int64;
 Arr[op_Plus][ltLargeSet][ltUInt64] := @lpeLSet_ADD_UInt64;
-Arr[op_Plus][ltLargeSet][ltSmallEnum] := @lpeLSet_ADD_LEnum;
+Arr[op_Plus][ltLargeSet][ltLargeEnum] := @lpeLSet_ADD_LEnum;
 Arr[op_Plus][ltLargeSet][ltAnsiChar] := Arr[op_Plus][ltLargeSet][ltUInt8];
 Arr[op_Plus][ltLargeSet][ltWideChar] := Arr[op_Plus][ltLargeSet][ltUInt16];
 
