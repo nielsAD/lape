@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpvartypes, lptree;
+  lptypes, lpvartypes;
 
 type
   TRecordField = record

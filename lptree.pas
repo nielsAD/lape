@@ -2544,7 +2544,7 @@ end;
 function TLapeTree_InternalMethod_Assert.Compile(var Offset: Integer): TResVar;
 begin
   if (not (lcoAssertions in FCompilerOptions)) then
-    Exit;
+    Exit(NullResVar);
   Result := inherited;
 end;
 

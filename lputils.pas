@@ -85,7 +85,7 @@ begin
 
     if (psiExceptions in Initialize) then
     begin
-      addGlobalType('('+
+      addGlobalType('(' +
         'erNoError, erCannotImport, erInvalidType, erInternalError,' +
         'erInvalidHeader, erInvalidOpcode, erInvalidOpcodeParameter,' +
         'erNoMainProc, erOutOfGlobalVarsRange, erOutOfProcRange, erOutOfRange,' +
@@ -185,7 +185,7 @@ begin
       Exit;
 
     Temp := #39 + AName + #39': begin ' +
-      'Assert(ParamsLen = ' + lpString(IntToStr(Params.Count)) + '); ';
+      'Assert(ParamsLen = ' + lpString(IntToStr(Params.Count)) + ', ErrParamCount); ';
     if (Res <> nil) and VariantType.CompatibleWith(Res) then
       Temp := Temp + 'Result := ';
     Temp := Temp + AName + '(';
@@ -330,6 +330,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
       {$ENDIF}
 
       Result := Result + TraverseGlobals_String(@ExposeGlobals__GetVal);
+      Result := Result + 'else raise '#39'Cannot get value of "'#39' + Name + '#39'" using GetGlobal'#39';';
       Result := Result + 'end;';
     end;
     Result := Result + 'end;';
@@ -340,6 +341,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
     Result := 'function VariantInvoke(Name: string; Params: array of Variant = []): Variant;';
     if DoOverride then
       Result := Result + 'override;';
+    Result := Result + 'const ErrParamCount = '#39'Parameter count mismatch'#39';';
     Result := Result + 'var ParamsLen: SizeInt := Length(Params);';
     Result := Result + 'begin Result := Unassigned;';
     if (not HeaderOnly) then
@@ -351,6 +353,7 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
       {$ENDIF}
 
       Result := Result + TraverseGlobals_String(@ExposeGlobals__Invoke);
+      Result := Result + 'else raise '#39'Cannot invoke "'#39' + Name + '#39'" using VariantInvoke'#39';';
       Result := Result + 'end;';
     end;
     Result := Result + 'end;';

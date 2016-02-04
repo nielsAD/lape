@@ -730,8 +730,9 @@ begin
       else
         Result := op_DIV;
     op_AssignMinus: Result := op_Minus;
-    op_AssignMul: Result := op_Multiply;
-    op_AssignPlus: Result := op_Plus;
+    op_AssignMul:   Result := op_Multiply;
+    op_AssignPlus:  Result := op_Plus;
+    else            Result := op_Unknown;
   end;
 end;
 
@@ -3104,7 +3105,6 @@ begin
   if (Result < 0) and ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
     Result := FManagedDecls.IndexOf(OnFunctionNotFound(Self, nil, AParams, AResult));
 end;
-
 
 function TLapeType_OverloadedMethod.getMethod(AType: TLapeType_Method): TLapeGlobalVar;
 begin
