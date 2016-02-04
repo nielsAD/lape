@@ -1,0 +1,15 @@
+type
+  TIntegerRange = 30..50;
+  TIntegerSet   = set of TIntegerRange;
+  TEnumSet      = set of (First = 2, Middle = 6, Last = 10);
+var
+  i: TIntegerSet = [40..43];
+  e = [Middle, Last];
+begin
+  WriteLn([Boolean.False..Boolean.True]);
+  WriteLn([31 in i, 42 in i]);
+  WriteLn([First in e, Last in e]);
+  WriteLn(i * [42]);
+  WriteLn(e * [First, Middle]);
+end;
+
