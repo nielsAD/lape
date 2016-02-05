@@ -113,7 +113,7 @@ type
       FFI_STDCALL  = 5,
       FFI_PASCAL   = 6,
       FFI_REGISTER = 7,
-      FFI_MS_CDECL = 8
+      FFI_MS_CDECL = 8,
       {$ENDIF}
       {$IFDEF MSWINDOWS}
       FFI_SYSV     = 1,
