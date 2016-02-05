@@ -643,7 +643,9 @@ begin
     );
   {$IFEND}
 
+  Assert(FFILoaded());
   ExitCode := 0;
+
   for t := Low(BiDiTests) to High(BiDiTests) do
     if (not TestBiDiFFI(BiDiTests[t].Str, BiDiTests[t].Fun, BiDiTests[t].Run, BiDiTests[t].Arg)) then
     begin

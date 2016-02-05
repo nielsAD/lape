@@ -573,7 +573,7 @@ function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
   var
     i: Integer;
   begin
-    case Size * FFIType.FTyp.size of
+    case Size * SizeInt(FFIType.FTyp.size) of
       SizeOf(UInt8) : Result.Typ := ffi_type_uint8;
       SizeOf(UInt16): Result.Typ := ffi_type_uint16;
       SizeOf(UInt32): Result.Typ := ffi_type_uint32;
