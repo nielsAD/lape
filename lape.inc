@@ -21,6 +21,12 @@
 {$ELSE}
   {$DEFINE Delphi}
   {$POINTERMATH ON}
+
+  {$IFDEF WIN64}
+    {$DEFINE CPUX86_64}
+  {$ELSE}
+    {$DEFINE CPU86}
+  {$ENDIF}
 {$ENDIF}
 
 {$IF DEFINED(UNICODE) and not DEFINED(Lape_Unicode)}

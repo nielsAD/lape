@@ -16,7 +16,7 @@ type
   TSmallRec = record b: Int16; end;
   TStrRec   = record c: lpString; end;
   TIntRec   = record d: TStatIntArr; end;
-  TLargeRec = record a: UInt8; b,c,d: UInt64; end;
+  TLargeRec = record a: UInt8; b,c: UInt64; d: UInt8; end;
 
 var
   Success: Boolean = False;
@@ -534,11 +534,11 @@ begin
       addGlobalType('array[1..2] of Int16',  'TStatIntArr');
       addGlobalType('array[1..5] of string', 'TStatStrArr');
 
-      addGlobalType('record a: Int8;   end', 'TShortRec');
-      addGlobalType('record b: Int16;  end', 'TSmallRec');
-      addGlobalType('record c: string; end', 'TStrRec');
-      addGlobalType('record d: TStatIntArr; end',            'TIntRec');
-      addGlobalType('record a: UInt8; b, c, d: UInt64; end', 'TLargeRec');
+      addGlobalType('record a: Int8;        end', 'TShortRec');
+      addGlobalType('record b: Int16;       end', 'TSmallRec');
+      addGlobalType('record c: string;      end', 'TStrRec');
+      addGlobalType('record d: TStatIntArr; end', 'TIntRec');
+      addGlobalType('record a: UInt8; b,c: UInt64; d: UInt8; end', 'TLargeRec');
 
       i := LapeImportWrapper(ImportFun, TLapeCompiler(GetSelf()), Header, ImportABI);
       v := addGlobalFunc(Header, i.Func);
@@ -580,7 +580,7 @@ begin
   except
     on E: Exception do
     begin
-      WriteLn('TestFFI Expception: ', e.Message);
+      WriteLn('TestFFI Exception: ', e.Message);
       Result := False;
     end
   end;

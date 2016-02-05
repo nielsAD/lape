@@ -37,7 +37,7 @@ type
 
 const
   Lape_OptionsDef = [lcoCOperators, lcoRangeCheck, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
-  Lape_PackRecordsDef = SizeOf(Pointer);
+  Lape_PackRecordsDef = 8;
 
 type
   TLapeType = class;

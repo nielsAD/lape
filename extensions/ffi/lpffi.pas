@@ -573,13 +573,8 @@ function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
   var
     i: Integer;
   begin
-    case Size * SizeInt(FFIType.FTyp.size) of
-      SizeOf(UInt8) : Result.Typ := ffi_type_uint8;
-      SizeOf(UInt16): Result.Typ := ffi_type_uint16;
-      SizeOf(UInt32): Result.Typ := ffi_type_uint32;
-      else for i := 0 to Size - 1 do
-        Result.addElem(FFIType, i = 0);
-    end;
+    for i := 0 to Size - 1 do
+      Result.addElem(FFIType, i = 0);
   end;
 
   procedure FFIStaticArray(VarType: TLapeType_StaticArray);
@@ -652,21 +647,33 @@ end;
 
 function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
 const
-  PointerParams      = [ltVariant, ltShortString, ltStaticArray, ltLargeSet];
-  ConstPointerParams = [ltRecord];
+  ConstPointerParams = LapeStructTypes;
 begin
   //http://docwiki.embarcadero.com/RADStudio/en/Program_Control#Register_Convention
   Result :=
     (Param.ParType in Lape_RefParams) or
     (Param.VarType = nil) or
-    (Param.VarType.BaseType in PointerParams) or
     ((Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType in ConstPointerParams) and (Param.VarType.Size > SizeOf(Pointer)))
+
+    {$IFDEF CPU86}
+        or (Param.VarType.BaseType in [ltVariant, ltShortString, ltLargeSet])
+        or ((Param.VarType.BaseType in [ltRecord, ltStaticArray]) and (Param.VarType.Size > SizeOf(Pointer)))
+    {$ENDIF}
+
+    {$IFDEF CPUX86_64}
+        or (Param.VarType.BaseType in [ltVariant, ltShortString, ltStaticArray, ltLargeSet])
+    {$ENDIF}
+  ;
 end;
 
 function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;
 begin
   if LapeFFIPointerParam(Param, ABI) then
     Result := TFFITypeManager.Create(ffi_type_pointer)
+{$IFDEF CPU86}
+  else if (ABI in [FFI_REGISTER, FFI_PASCAL]) and (Param.VarType <> nil) and (Param.VarType.BaseType = ltDynArray) then
+    Result := TFFITypeManager.Create(ffi_type_float) // Force on stack
+{$ENDIF}
   else
     Result := LapeTypeToFFIType(Param.VarType);
 end;

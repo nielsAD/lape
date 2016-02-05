@@ -107,38 +107,40 @@ type
 
     {$IFDEF CPU86}
       {$IFDEF UNIX}
-      FFI_SYSV,
-      FFI_THISCALL,
-      FFI_FASTCALL,
-      FFI_STDCALL,
-      FFI_PASCAL,
-      FFI_REGISTER,
-      FFI_MS_CDECL
+      FFI_SYSV     = 1,
+      FFI_THISCALL = 3,
+      FFI_FASTCALL = 4,
+      FFI_STDCALL  = 5,
+      FFI_PASCAL   = 6,
+      FFI_REGISTER = 7,
+      FFI_MS_CDECL = 8
       {$ENDIF}
       {$IFDEF MSWINDOWS}
-      FFI_SYSV,
-      FFI_STDCALL,
-      FFI_THISCALL,
-      FFI_FASTCALL,
-      FFI_MS_CDECL,
-      FFI_PASCAL,
-      FFI_REGISTER
+      FFI_SYSV     = 1,
+      FFI_STDCALL  = 2,
+      FFI_THISCALL = 3,
+      FFI_FASTCALL = 4,
+      FFI_MS_CDECL = 5,
+      FFI_PASCAL   = 6,
+      FFI_REGISTER = 7,
       {$ENDIF}
     {$ENDIF}
 
     {$IFDEF CPUX86_64}
       {$IFDEF UNIX}
-      FFI_UNIX64
+      FFI_UNIX64 = 2,
       {$ENDIF}
       {$IFDEF MSWINDOWS}
-      FFI_WIN64
+      FFI_WIN64  = 1,
       {$ENDIF}
     {$ENDIF}
 
     {$IFDEF CPUARM}
-      FFI_SYSV,
-      FFI_VFP
+      FFI_SYSV = 1,
+      FFI_VFP  = 2,
     {$ENDIF}
+
+    FFI_LAST_ABI
   );
 
 const
@@ -202,10 +204,14 @@ type
 
   PFFIClosure = ^TFFIClosure;
   TFFIClosure = record
-    tramp: array [0..FFI_TRAMPOLINE_SIZE - 1] of cchar; // Let's hope FFI_EXEC_TRAMPOLINE_TABLE is not defined/true
-    cif: PFFICif;
-    fun: TClosureBindingFunction;
-    user_data: Pointer;
+    //tramp: array [0..FFI_TRAMPOLINE_SIZE - 1] of cchar;
+    //cif: PFFICif;
+    //fun: TClosureBindingFunction;
+    //user_data: Pointer;
+
+    // DO NOT RELY ON THIS LAYOUT, JUST MAKE SURE IT IS LARGE ENOUGH
+    _tramp: array [0..55] of cchar;
+    _ptrs: array[0..2] of Pointer;
   end;
 
   TFFIPrepCif = function(
