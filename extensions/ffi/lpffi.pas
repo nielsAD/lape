@@ -652,14 +652,15 @@ end;
 
 function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
 const
-  PointerIfLarge = [ltStaticArray, ltLargeSet, ltVariant];
+  PointerParams      = [ltVariant, ltShortString, ltStaticArray, ltLargeSet];
+  ConstPointerParams = [ltRecord];
 begin
   //http://docwiki.embarcadero.com/RADStudio/en/Program_Control#Register_Convention
   Result :=
     (Param.ParType in Lape_RefParams) or
     (Param.VarType = nil) or
-    (Param.VarType.BaseType = ltShortString) or
-    ((Param.VarType.BaseType in PointerIfLarge) {and (Param.VarType.Size > SizeOf(Pointer))});
+    (Param.VarType.BaseType in PointerParams) or
+    ((Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType in ConstPointerParams) and (Param.VarType.Size > SizeOf(Pointer)))
 end;
 
 function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;
@@ -672,7 +673,7 @@ end;
 
 function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
 begin
-  Result := (VarType <> nil) and (VarType.BaseType in LapeStringTypes + [ltVariant]);
+  Result := (VarType <> nil) and ((VarType.BaseType in LapeArrayTypes) or VarType.NeedFinalization);
 end;
 
 function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;

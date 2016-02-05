@@ -325,6 +325,9 @@ begin
   inherited;
   EndImporting();
 
+  FOptions := FBaseOptions;
+  FOptions_PackRecords := FBaseOptions_PackRecords;
+
   FTokenizer := High(FTokenizers);
   while hasMoreTokenizers() do
     popTokenizer();
