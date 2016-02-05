@@ -76,8 +76,8 @@ type
 
     procedure addArg(Arg: TFFITypeManager; DoManage: Boolean = True; TakePtr: Boolean = False); overload;
     procedure addArg(Arg: TFFIType; TakePtr: Boolean = False); overload;
-    procedure setRes(ARes: TFFITypeManager; DoManage: Boolean = True); overload;
-    procedure setRes(ARes: TFFIType); overload;
+    procedure setRes(ARes: TFFITypeManager; DoManage: Boolean = True; EvalProc: TLapeEvalProc = nil); overload;
+    procedure setRes(ARes: TFFIType; EvalProc: TLapeEvalProc = nil); overload;
 
     function TakePointers(Args: PPointerArray; TakeAddr: Boolean = True): TArrayOfPointer;
     procedure Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True); overload;
@@ -162,7 +162,7 @@ function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean
 function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;
 function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
 function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;
-function LapeResultEvalProc(const Res: TFFIType): TLapeEvalProc;
+function LapeResultEvalProc(const Res: TLapeType; ABI: TFFIABI): TLapeEvalProc;
 
 function LapeHeaderToFFICif(Header: TLapeType_Method; ABI: TFFIABI = FFI_LAPE_ABI): TFFICifManager; overload;
 function LapeHeaderToFFICif(Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_LAPE_ABI): TFFICifManager; overload;
@@ -179,6 +179,31 @@ implementation
 
 uses
   lpexceptions, lpparser, lpeval, lpinterpreter;
+
+{$IF DEFINED(CurrencyImportExport) or DEFINED(CPU86) or DEFINED(CPUX86_64)}
+{$DEFINE CurrencyImportExport}
+{$ASMMODE intel}
+
+procedure _CurrencyImport(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+var
+  Res: Currency;
+begin
+  asm
+      fistp Res
+  end;
+  PCurrency(Dest)^ := Res;
+end;
+
+procedure _CurrencyExport(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+var
+  Res: Currency;
+begin
+  Res := PCurrency(Left)^;
+  asm
+      fild Res
+  end;
+end;
+{$ENDIF}
 
 procedure TFFITypeManager.TryAlter;
 begin
@@ -383,7 +408,7 @@ begin
   addArg(TFFITypeManager.Create(Arg), True, TakePtr);
 end;
 
-procedure TFFICifManager.setRes(ARes: TFFITypeManager; DoManage: Boolean = True);
+procedure TFFICifManager.setRes(ARes: TFFITypeManager; DoManage: Boolean = True; EvalProc: TLapeEvalProc = nil);
 begin
   TryAlter();
 
@@ -394,17 +419,13 @@ begin
 
     Typ := ARes;
     DoFree := DoManage;
-
-    if (ARes <> nil) then
-      Eval := LapeResultEvalProc(ARes.Typ)
-    else
-      Eval := nil;
+    Eval := EvalProc;
   end;
 end;
 
-procedure TFFICifManager.setRes(ARes: TFFIType);
+procedure TFFICifManager.setRes(ARes: TFFIType; EvalProc: TLapeEvalProc = nil);
 begin
-  setRes(TFFITypeManager.Create(ARes), True);
+  setRes(TFFITypeManager.Create(ARes), True, EvalProc);
 end;
 
 function TFFICifManager.TakePointers(Args: PPointerArray; TakeAddr: Boolean = True): TArrayOfPointer;
@@ -433,7 +454,7 @@ end;
 procedure TFFICifManager.Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True);
 var
   p: TArrayOfPointer;
-  r: NativeUInt;
+  r: UInt64;
 begin
   PrepareCif();
   if ATakePointers then
@@ -450,6 +471,7 @@ begin
   else
   begin
     //Workaround for libffi quirk that integers are always returned in full size
+    r := 0;
     ffi_call(FCif, Func, @r, Args);
     FRes.Eval(Res, @r, nil);
   end;
@@ -671,7 +693,7 @@ begin
   if LapeFFIPointerParam(Param, ABI) then
     Result := TFFITypeManager.Create(ffi_type_pointer)
 {$IFDEF CPU86}
-  else if (ABI in [FFI_REGISTER, FFI_PASCAL]) and (Param.VarType <> nil) and (Param.VarType.BaseType = ltDynArray) then
+  else if (Param.VarType <> nil) and (Param.VarType.BaseType = ltDynArray) then
     Result := TFFITypeManager.Create(ffi_type_float) // Force on stack
 {$ENDIF}
   else
@@ -687,20 +709,28 @@ function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManage
 begin
   if LapeFFIComplexReturn(Res, ABI) then
     Result := TFFITypeManager.Create(ffi_type_complex)
+  {$IFDEF CurrencyImportExport}
+  else if (Res <> nil) and (Res.BaseType = ltCurrency) then
+    Result := TFFITypeManager.Create(ffi_type_void)
+  {$ENDIF}
   else
     Result := LapeTypeToFFIType(Res);
 end;
 
-function LapeResultEvalProc(const Res: TFFIType): TLapeEvalProc;
-const
-  FFI_IntegerTypes = [FFI_CTYPE_INT, FFI_CTYPE_UINT8..FFI_CTYPE_SINT64];
+function LapeResultEvalProc(const Res: TLapeType; ABI: TFFIABI): TLapeEvalProc;
 begin
-  if (Res.size < SizeOf(NativeInt)) and (TFFI_CTYPE(Res._type) in FFI_IntegerTypes) then
+  if (Res = nil) then
+    Exit(nil);
+  if (Res.BaseType in LapeIntegerTypes) and (Res.Size < SizeOf(NativeInt)) then
   begin
     Result := LapeEval_GetProc(op_Assign, DetermineIntType(Res.size, False), ltNativeUInt);
     if (not ValidEvalFunction(Result)) then
       Result := nil;
   end
+  {$IFDEF CurrencyImportExport}
+  else if (Res.BaseType = ltCurrency) then
+    Result := @_CurrencyImport
+  {$ENDIF}
   else
     Result := nil;
 end;
@@ -715,7 +745,7 @@ begin
 
   Result := TFFICifManager.Create(ABI);
   if (Header.Res <> nil) then
-    Result.setRes(LapeResultToFFIType(Header.Res, ABI));
+    Result.setRes(LapeResultToFFIType(Header.Res, ABI), True, LapeResultEvalProc(Header.Res, ABI));
 
   try
     if MethodOfObject(Header) then
@@ -817,6 +847,7 @@ end;
 procedure LapeExportBinder(var Cif: TFFICif; Res: Pointer; Args: PPointerArray; UserData: Pointer); cdecl;
 var
   i, b: Integer;
+  r: UInt64;
   VarStack: TByteArray;
   Pointers: TArrayOfPointer;
 begin
@@ -836,7 +867,7 @@ begin
       end
       else
       begin
-        if ValidEvalFunction({$IFNDEF FPC}@{$ENDIF}ParamInfo[i].Eval) then
+        if ({$IFNDEF FPC}@{$ENDIF}ParamInfo[i].Eval <> nil) then
         begin
           FillChar(VarStack[b], ParamInfo[i].Size, 0);
           ParamInfo[i].Eval(@VarStack[b], Pointers[i], nil)
@@ -847,9 +878,18 @@ begin
       end;
 
     if (NativeCif.Res <> nil) then
-      PPointer(@VarStack[b])^ := Res;
+      if ({$IFNDEF FPC}@{$ENDIF}ParamInfo[High(ParamInfo)].Eval <> nil) then
+      begin
+        r := 0;
+        PPointer(@VarStack[b])^ := @r;
+      end
+      else
+        PPointer(@VarStack[b])^ := Res;
 
     RunCode(CodeBase, VarStack, CodePos);
+
+    if (NativeCif.Res <> nil) and ({$IFNDEF FPC}@{$ENDIF}ParamInfo[High(ParamInfo)].Eval <> nil) then
+      ParamInfo[High(ParamInfo)].Eval(Res, @r, nil);
   end;
 end;
 
@@ -914,11 +954,15 @@ begin
       ParInfo[c].Size := Header.Params[i].VarType.Size;
 
       if (ParInfo[c].Size = LapeTypeSize[Header.Params[i].VarType.BaseType]) then
-        ParInfo[c].Eval := getEvalProc(op_Assign, Header.Params[i].VarType.BaseType, Header.Params[i].VarType.BaseType)
+      begin
+        ParInfo[c].Eval := getEvalProc(op_Assign, Header.Params[i].VarType.BaseType, Header.Params[i].VarType.BaseType);
+        if (not ValidEvalFunction({$IFNDEF FPC}@{$ENDIF}ParInfo[c].Eval)) then
+          ParInfo[c].Eval := nil;
+      end
       else
         ParInfo[c].Eval := nil;
 
-      if (not ValidEvalFunction(ParInfo[c].Eval)) and Header.Params[i].VarType.NeedFinalization then
+      if ({$IFNDEF FPC}@{$ENDIF}ParInfo[c].Eval = nil) and Header.Params[i].VarType.NeedFinalization then
         LapeExceptionFmt(lpeUnsupportedType, [Header.Params[i].VarType.AsString]);
     end;
     Inc(c);
@@ -928,6 +972,11 @@ begin
   begin
     SetLength(ParInfo, c + 1);
     ParInfo[c] := RefPar;
+
+    {$IFDEF CurrencyImportExport}
+    if (Header.Res.BaseType = ltCurrency) then
+      ParInfo[c].Eval := @_CurrencyExport;
+    {$ENDIF}
   end;
 
   Result := LapeExportWrapper(Code, Func, LapeHeaderToFFICif(Header, ABI), ParInfo);
