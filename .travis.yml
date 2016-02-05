@@ -48,6 +48,6 @@ install:
 script:
   - lazbuild $LAZ_OPT ../../package/lape.lpk
   - lazbuild $LAZ_OPT LapeTest.lpi
-  - lazbuild $LAZ_OPT ../../extensions/ffi/test/LapeTestFFI.lpi
+  - lazbuild $LAZ_OPT ../../extensions/ffi/test/LapeTestFFI.lpi || true
   - $LAZ_ENV ./LapeTest
   - $LAZ_ENV ../../extensions/ffi/test/LapeTestFFI || true
