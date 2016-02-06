@@ -61,6 +61,7 @@ type
     FRes: record
       Typ: TFFITypeManager;
       DoFree: Boolean;
+      Complex: Boolean;
       Eval: TLapeEvalProc;
     end;
 
@@ -78,8 +79,9 @@ type
     procedure addArg(Arg: TFFIType; TakePtr: Boolean = False); overload;
     procedure setRes(ARes: TFFITypeManager; DoManage: Boolean = True; EvalProc: TLapeEvalProc = nil); overload;
     procedure setRes(ARes: TFFIType; EvalProc: TLapeEvalProc = nil); overload;
+    procedure setComplexRes(Complex: Boolean);
 
-    function TakePointers(Args: PPointerArray; TakeAddr: Boolean = True): TArrayOfPointer;
+    function TakePointers(Args: PPointerArray; var Res: Pointer; TakeAddr: Boolean = True): TArrayOfPointer;
     procedure Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True); overload;
     procedure Call(Func, Res: Pointer); overload;
     procedure Call(Func, Res: Pointer; Args: array of Pointer; ATakePointers: Boolean = True); overload;
@@ -87,6 +89,8 @@ type
 
     property ABI: TFFIABI read FABI write setABI;
     property Res: TFFITypeManager read FRes.Typ;
+    property ComplexRes: Boolean read FRes.Complex write setComplexRes;
+
     property Cif: TFFICif read getCif;
     property PCif: PFFICif read getPCif;
   end;
@@ -153,9 +157,6 @@ const
   lpeUnsupportedType = 'Type "%s" cannot be used in this FFI context';
 
   FFI_LAPE_ABI = {$IF DEFINED(Lape_CDECL) AND DECLARED(FFI_SYSV)}FFI_SYSV{$ELSE}FFI_DEFAULT_ABI{$IFEND};
-
-var
-  ffi_type_complex: TFFIType;
 
 function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
 function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
@@ -324,19 +325,25 @@ begin
   for i := 0 to High(FArgs) do
     PArgs[i] := FArgs[i].Typ.PTyp;
 
+  if FRes.Complex then
+  begin
+    SetLength(PArgs, Length(PArgs) + 1);
+    PArgs[High(PArgs)] := @ffi_type_pointer;
+  end;
+
   if (FRes.Typ <> nil) then
     r := FRes.Typ.PTyp
   else
     r := @ffi_type_void;
 
-  if (Length(FArgs) > 0) then
+  if (Length(PArgs) > 0) then
     a := @PArgs[0]
   else
     a := @ffi_type_void;
 
   Assert(FFILoaded());
 
-  if (ffi_prep_cif(FCif, FABI, Length(FArgs), r, a) <> FFI_OK) then
+  if (ffi_prep_cif(FCif, FABI, Length(PArgs), r, a) <> FFI_OK) then
     LapeException(lpeCannotPrepare);
 
   Prepared := True;
@@ -419,6 +426,7 @@ begin
 
     Typ := ARes;
     DoFree := DoManage;
+    Complex := False;
     Eval := EvalProc;
   end;
 end;
@@ -428,23 +436,49 @@ begin
   setRes(TFFITypeManager.Create(ARes), True, EvalProc);
 end;
 
-function TFFICifManager.TakePointers(Args: PPointerArray; TakeAddr: Boolean = True): TArrayOfPointer;
+procedure TFFICifManager.setComplexRes(Complex: Boolean);
+begin
+  if (Complex <> FRes.Complex) then
+  begin
+    setRes(nil);
+    FRes.Complex := Complex;
+  end;
+end;
+
+function TFFICifManager.TakePointers(Args: PPointerArray; var Res: Pointer; TakeAddr: Boolean = True): TArrayOfPointer;
 var
-  i: Integer;
+  i, l: Integer;
 begin
   Result := nil;
-  if (Args = nil) or (Length(FArgs) <= 0) then
+
+  l := Length(FArgs);
+  if FRes.Complex then
+    Inc(l);
+
+  if (Args = nil) or (l <= 0) then
     Exit;
 
-  SetLength(Result, Length(FArgs));
+  SetLength(Result, l);
+  if FRes.Complex then
+  begin
+    Dec(l);
+    if TakeAddr then
+      Result[l] := @Res
+    else
+    begin
+      Res := Args^[l];
+      Result[l] := PPointer(Res)^;
+    end;
+  end;
+
   if TakeAddr then
-    for i := 0 to High(Result) do
+    for i := 0 to l-1 do
       if FArgs[i].TakePointer then
         Result[i] := @Args^[i]
       else
         Result[i] := Args^[i]
   else
-    for i := 0 to High(Result) do
+    for i := 0 to l-1 do
       if FArgs[i].TakePointer then
         Result[i] := PPointer(Args^[i])^
       else
@@ -459,7 +493,7 @@ begin
   PrepareCif();
   if ATakePointers then
   begin
-    p := TakePointers(Args);
+    p := TakePointers(Args, Res);
     if (Length(p) > 0) then
       Args := @p[0]
     else
@@ -702,18 +736,16 @@ end;
 
 function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
 begin
-  Result := (VarType <> nil) and ((VarType.BaseType in LapeArrayTypes) or VarType.NeedFinalization);
+  Result := (VarType <> nil) and ((VarType.BaseType in LapeArrayTypes + [ltLargeSet]) or VarType.NeedFinalization);
 end;
 
 function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;
 begin
-  if LapeFFIComplexReturn(Res, ABI) then
-    Result := TFFITypeManager.Create(ffi_type_complex)
   {$IFDEF CurrencyImportExport}
-  else if (Res <> nil) and (Res.BaseType = ltCurrency) then
+  if (Res <> nil) and (Res.BaseType = ltCurrency) then
     Result := TFFITypeManager.Create(ffi_type_void)
-  {$ENDIF}
   else
+  {$ENDIF}
     Result := LapeTypeToFFIType(Res);
 end;
 
@@ -745,7 +777,10 @@ begin
 
   Result := TFFICifManager.Create(ABI);
   if (Header.Res <> nil) then
-    Result.setRes(LapeResultToFFIType(Header.Res, ABI), True, LapeResultEvalProc(Header.Res, ABI));
+    if LapeFFIComplexReturn(Header.Res, ABI) then
+      Result.setComplexRes(True)
+    else
+      Result.setRes(LapeResultToFFIType(Header.Res, ABI), True, LapeResultEvalProc(Header.Res, ABI));
 
   try
     if MethodOfObject(Header) then
@@ -808,7 +843,7 @@ end;
 procedure LapeImportBinder(var Cif: TFFICif; Res: Pointer; Args: PPointerArray; UserData: Pointer); cdecl;
 begin
   with PImportClosureData(UserData)^ do
-    if (NativeCif.Res <> nil) then
+    if (NativeCif.Res <> nil) or NativeCif.ComplexRes then
       NativeCif.Call(NativeFunc, Pointer(args^[1]^), PPointerArray(Args^[0]^))
     else
       NativeCif.Call(NativeFunc, nil, PPointerArray(Args^[0]^));
@@ -827,7 +862,7 @@ begin
     Result.UserData.FreeCif := True;
 
     Result.Cif.addArg(ffi_type_pointer);
-    if (Result.UserData.NativeCif.Res <> nil) then
+    if (Result.UserData.NativeCif.Res <> nil) or Result.UserData.NativeCif.ComplexRes then
       Result.Cif.addArg(ffi_type_pointer);
   except
     FreeAndNil(Result);
@@ -855,7 +890,7 @@ begin
   begin
     SetLength(VarStack, TotalParamSize);
 
-    Pointers := NativeCif.TakePointers(Args, False);
+    Pointers := NativeCif.TakePointers(Args, Res, False);
     Assert(Length(ParamInfo) - Length(Pointers) <= 1);
 
     b := 0;
@@ -997,17 +1032,5 @@ begin
     ABI);
 end;
 
-var
-  ffi_type_complex_manager: TFFITypeManager;
-initialization
-  ffi_type_complex_manager := TFFITypeManager.Create(ffi_type_void);
-  ffi_type_complex_manager.addElem(ffi_type_pointer);
-  ffi_type_complex_manager.addElem(ffi_type_pointer);
-  ffi_type_complex_manager.addElem(ffi_type_pointer);
-
-  ffi_type_complex := ffi_type_complex_manager.Typ;
-
-finalization
-  ffi_type_complex_manager.Free();
 end.
 
