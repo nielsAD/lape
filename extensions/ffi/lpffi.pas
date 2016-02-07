@@ -44,7 +44,9 @@ type
     property PTyp: PFFIType read getPTyp;
   end;
 
+  TFFIComplexReturn = (fcrNone, fcrFirstParam, fcrLastParam);
   TArrayOfPointer = array of Pointer;
+
   TFFICifManager = class(TLapeBaseClass)
   private
     PArgs: array of PFFIType;
@@ -61,11 +63,12 @@ type
     FRes: record
       Typ: TFFITypeManager;
       DoFree: Boolean;
-      Complex: Boolean;
+      Complex: TFFIComplexReturn;
       Eval: TLapeEvalProc;
     end;
 
     procedure setABI(AABI: TFFIABI);
+    function getComplexRes: Boolean;
     function getCif: TFFICif;
     function getPCif: PFFICif;
     procedure PrepareCif;
@@ -79,7 +82,8 @@ type
     procedure addArg(Arg: TFFIType; TakePtr: Boolean = False); overload;
     procedure setRes(ARes: TFFITypeManager; DoManage: Boolean = True; EvalProc: TLapeEvalProc = nil); overload;
     procedure setRes(ARes: TFFIType; EvalProc: TLapeEvalProc = nil); overload;
-    procedure setComplexRes(Complex: Boolean);
+    procedure setComplexRes(Complex: TFFIComplexReturn); overload;
+    procedure setComplexRes(Complex: Boolean); overload;
 
     function TakePointers(Args: PPointerArray; var Res: Pointer; TakeAddr: Boolean = True): TArrayOfPointer;
     procedure Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True); overload;
@@ -89,7 +93,7 @@ type
 
     property ABI: TFFIABI read FABI write setABI;
     property Res: TFFITypeManager read FRes.Typ;
-    property ComplexRes: Boolean read FRes.Complex write setComplexRes;
+    property ComplexRes: Boolean read getComplexRes write setComplexRes;
 
     property Cif: TFFICif read getCif;
     property PCif: PFFICif read getPCif;
@@ -181,30 +185,31 @@ implementation
 uses
   lpexceptions, lpparser, lpeval, lpinterpreter;
 
-{$IF DEFINED(CurrencyImportExport) or DEFINED(CPU86) or DEFINED(CPUX86_64)}
-{$DEFINE CurrencyImportExport}
-{$ASMMODE intel}
-
-procedure _CurrencyImport(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-var
-  Res: Currency;
-begin
-  asm
-      fistp Res
+{$IF DEFINED(CurrencyImportExport)
+  or DEFINED(CPU86)
+  or (DEFINED(CPUX86_64) and DEFINED(FPC) and (not DEFINED(MSWINDOWS)))
+}
+  {$DEFINE CurrencyImportExport}
+  procedure _CurrencyImport(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+  var
+    Res: Currency;
+  begin
+    asm
+        fistp Res
+    end;
+    PCurrency(Dest)^ := Res;
   end;
-  PCurrency(Dest)^ := Res;
-end;
 
-procedure _CurrencyExport(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-var
-  Res: Currency;
-begin
-  Res := PCurrency(Left)^;
-  asm
-      fild Res
+  procedure _CurrencyExport(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+  var
+    Res: Currency;
+  begin
+    Res := PCurrency(Left)^;
+    asm
+        fild Res
+    end;
   end;
-end;
-{$ENDIF}
+{$IFEND}
 
 procedure TFFITypeManager.TryAlter;
 begin
@@ -301,6 +306,11 @@ begin
   FABI := AABI;
 end;
 
+function TFFICifManager.getComplexRes: Boolean;
+begin
+  Result := FRes.Complex <> fcrNone;
+end;
+
 function TFFICifManager.getCif: TFFICif;
 begin
   PrepareCif();
@@ -325,7 +335,13 @@ begin
   for i := 0 to High(FArgs) do
     PArgs[i] := FArgs[i].Typ.PTyp;
 
-  if FRes.Complex then
+  if (FRes.Complex = fcrFirstParam) then
+  begin
+    SetLength(PArgs, Length(PArgs) + 1);
+    Move(PArgs[0], PArgs[1], SizeOf(PArgs[0]) * High(FArgs));
+    PArgs[0] := @ffi_type_pointer;
+  end
+  else if (FRes.Complex = fcrLastParam) then
   begin
     SetLength(PArgs, Length(PArgs) + 1);
     PArgs[High(PArgs)] := @ffi_type_pointer;
@@ -426,7 +442,7 @@ begin
 
     Typ := ARes;
     DoFree := DoManage;
-    Complex := False;
+    Complex := fcrNone;
     Eval := EvalProc;
   end;
 end;
@@ -436,7 +452,7 @@ begin
   setRes(TFFITypeManager.Create(ARes), True, EvalProc);
 end;
 
-procedure TFFICifManager.setComplexRes(Complex: Boolean);
+procedure TFFICifManager.setComplexRes(Complex: TFFIComplexReturn);
 begin
   if (Complex <> FRes.Complex) then
   begin
@@ -445,21 +461,47 @@ begin
   end;
 end;
 
+procedure TFFICifManager.setComplexRes(Complex: Boolean);
+begin
+  if (not Complex) then
+    setComplexRes(fcrNone)
+  else
+  {$IF DECLARED(FFI_REGISTER)}
+  if (ABI = FFI_REGISTER) then
+    setComplexRes(fcrLastParam)
+  else
+  {$IFEND}
+    setComplexRes(fcrFirstParam);
+end;
+
 function TFFICifManager.TakePointers(Args: PPointerArray; var Res: Pointer; TakeAddr: Boolean = True): TArrayOfPointer;
 var
-  i, l: Integer;
+  i, l, o: Integer;
 begin
   Result := nil;
 
+  o := 0;
   l := Length(FArgs);
-  if FRes.Complex then
+  if (FRes.Complex <> fcrNone) then
     Inc(l);
 
   if (Args = nil) or (l <= 0) then
     Exit;
 
   SetLength(Result, l);
-  if FRes.Complex then
+  if (FRes.Complex = fcrFirstParam) then
+  begin
+    Dec(l);
+    if TakeAddr then
+      Result[o] := @Res
+    else
+    begin
+      Res := Args^[o];
+      Result[o] := PPointer(Res)^;
+    end;
+    Inc(o);
+  end
+  else if (FRes.Complex = fcrLastParam) then
   begin
     Dec(l);
     if TakeAddr then
@@ -471,18 +513,19 @@ begin
     end;
   end;
 
+  Dec(l);
   if TakeAddr then
-    for i := 0 to l-1 do
+    for i := 0 to l do
       if FArgs[i].TakePointer then
-        Result[i] := @Args^[i]
+        Result[i+o] := @Args^[i+o]
       else
-        Result[i] := Args^[i]
+        Result[i+o] := Args^[i+o]
   else
-    for i := 0 to l-1 do
+    for i := 0 to l do
       if FArgs[i].TakePointer then
-        Result[i] := PPointer(Args^[i])^
+        Result[i+o] := PPointer(Args^[i+o])^
       else
-        Result[i] := Args^[i];
+        Result[i+o] := Args^[i+o];
 end;
 
 procedure TFFICifManager.Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True);
@@ -736,7 +779,7 @@ end;
 
 function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
 begin
-  Result := (VarType <> nil) and ((VarType.BaseType in LapeArrayTypes + [ltLargeSet]) or VarType.NeedFinalization);
+  Result := (VarType <> nil) and ((VarType.BaseType in (LapeArrayTypes + [ltLargeSet, ltVariant, ltRecord]) - [ltDynArray]){ or VarType.NeedFinalization});
 end;
 
 function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;
@@ -892,6 +935,12 @@ begin
 
     Pointers := NativeCif.TakePointers(Args, Res, False);
     Assert(Length(ParamInfo) - Length(Pointers) <= 1);
+
+    if (NativeCif.FRes.Complex = fcrFirstParam) then
+    begin
+      Move(Pointers[1], Pointers[0], SizeOf(Pointers[0]) * High(Pointers));
+      Pointers[High(Pointers)] := PPointer(Res)^;
+    end;
 
     b := 0;
     for i := 0 to High(Pointers) do

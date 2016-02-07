@@ -12,11 +12,10 @@ type
   TStatStrArr = array[1..5] of lpString;
   TStatIntArr = array[1..2] of Int16;
 
-  TShortRec = record a: Int8; end;
-  TSmallRec = record b: Int16; end;
-  TStrRec   = record c: lpString; end;
-  TIntRec   = record d: TStatIntArr; end;
-  TLargeRec = record a: UInt8; b,c: UInt64; d: UInt8; end;
+  TShortRec =        record a: Int8; end;
+  TPackRec  = packed record b: Int16; x: Int8; end;
+  TStrRec   =        record c: lpString; end;
+  TLargeRec =        record a: UInt8; b,c: UInt64; d: UInt8; end;
 
 var
   Success: Boolean = False;
@@ -191,7 +190,7 @@ begin
   Result := Success;
 end;
 
-procedure Proc10(a: TShortRec; b: TSmallRec; constref c: TStrRec; d: TLargeRec);
+procedure Proc10(a: TShortRec; b: TPackRec; constref c: TStrRec; d: TLargeRec);
 begin
   Success := (a.a = 1) and (b.b = 2) and (c.c = '03')
          and (d.a = 4) and (d.b = 5) and (d.c = 6) and (d.d = 7);
@@ -200,11 +199,11 @@ end;
 
 function RunProc10(p: Pointer): Boolean;
 type
-  TP = procedure(a: TShortRec; b: TSmallRec; constref c: TStrRec; d: TLargeRec);
+  TP = procedure(a: TShortRec; b: TPackRec; constref c: TStrRec; d: TLargeRec);
 var
   a: TShortRec  = (a: 1);
-  b: TSmallRec  = (b: 2);
-  c: TStrRec = (c: '0');
+  b: TPackRec   = (b: 2; x: 22);
+  c: TStrRec    = (c: '0');
   d: TLargeRec  = (a: 4; b: 5; c: 6; d: 7);
 begin
   Success := False;
@@ -456,20 +455,22 @@ begin
   Result := r.a = 50;
 end;
 
-function Func18(const a: TIntRec): TIntRec;
+function Func18(const a: TPackRec): TPackRec;
 begin
-  Result.d := Func15(a.d);
+  Result.b := a.b + a.x;
+  Result.x := a.x;
 end;
 
 function RunFunc18(f: Pointer): Boolean;
 type
-  TF = function(const a: TIntRec): TIntRec;
+  TF = function(const a: TPackRec): TPackRec;
 var
-  r: TIntRec;
+  r: TPackRec;
 begin
-  r.d[1] := 1; r.d[2] := 2;
+  r.b := 1;
+  r.x := 10;
   r := TF(f)(r);
-  Result := (r.d[1] = 3) and (r.d[2] = 4);
+  Result := (r.b = 11) and (r.x = 10);
 end;
 
 function Func19(constref a: TStrRec): TStrRec;
@@ -534,11 +535,10 @@ begin
       addGlobalType('array[1..2] of Int16',  'TStatIntArr');
       addGlobalType('array[1..5] of string', 'TStatStrArr');
 
-      addGlobalType('record a: Int8;        end', 'TShortRec');
-      addGlobalType('record b: Int16;       end', 'TSmallRec');
-      addGlobalType('record c: string;      end', 'TStrRec');
-      addGlobalType('record d: TStatIntArr; end', 'TIntRec');
-      addGlobalType('record a: UInt8; b,c: UInt64; d: UInt8; end', 'TLargeRec');
+      addGlobalType('       record a: Int8;           end', 'TShortRec');
+      addGlobalType('packed record b: Int16; x: Int8; end', 'TPackRec');
+      addGlobalType('       record c: string;         end', 'TStrRec');
+      addGlobalType('       record a: UInt8; b,c: UInt64; d: UInt8; end', 'TLargeRec');
 
       i := LapeImportWrapper(ImportFun, TLapeCompiler(GetSelf()), Header, ImportABI);
       v := addGlobalFunc(Header, i.Func);
@@ -605,7 +605,7 @@ const
     (Fun: @Proc7;  Run: @RunProc7;  Str: 'procedure Proc7(a: TSmallEnum; b: TSmallSet; c: TLargeEnum; d: TLargeSet)';                                              Arg: 'TestMe(TSmallEnum(2), [ESmallFirst, ESmallLast], TLargeEnum(4), [ELargeFirst, ELargeLast]);'),
     (Fun: @Proc8;  Run: @RunProc8;  Str: 'procedure Proc8(a: Pointer; b: AnsiChar; c: Variant; d: WideChar)';                                                      Arg: 'TestMe(nil, "1", "234", "5");'),
     (Fun: @Proc9;  Run: @RunProc9;  Str: 'procedure Proc9(a: TStrArr; constref b: TStatStrArr; c: TIntArr; d: TStatIntArr)';                                       Arg: 'TestMe(["string0", "string1"], ["string2", "","","", "string3"], [0, 1], [2, 3]);'),
-    (Fun: @Proc10; Run: @RunProc10; Str: 'procedure Proc10(a: TShortRec; b: TSmallRec; constref c: TStrRec; d: TLargeRec)';                                        Arg: 'TestMe([1], [2], ["03"], [4, 5, 6, 7]);'),
+    (Fun: @Proc10; Run: @RunProc10; Str: 'procedure Proc10(a: TShortRec; b: TPackRec; constref c: TStrRec; d: TLargeRec)';                                         Arg: 'TestMe([1], [2, 22], ["03"], [4, 5, 6, 7]);'),
 
     (Fun: @Func1;  Run: @RunFunc1;  Str: 'function Func1(const a: NativeInt): NativeInt';         Arg: 'Assert(TestMe(10) = 11);'),
     (Fun: @Func2;  Run: @RunFunc2;  Str: 'function Func2(const a, b, c: Int8): UInt8';            Arg: 'Assert(TestMe(15, 14, 13) = 42);'),
@@ -624,7 +624,7 @@ const
     (Fun: @Func15; Run: @RunFunc15; Str: 'function Func15(const a: TStatIntArr): TStatIntArr';    Arg: 'Assert(TestMe([1..2])[2] = 4);'),
     (Fun: @Func16; Run: @RunFunc16; Str: 'function Func16(constref a: TStatStrArr): TStatStrArr'; Arg: 'Assert(TestMe(["1", "","","", "2"])[5] = "2!");'),
     (Fun: @Func17; Run: @RunFunc17; Str: 'function Func17(const a: TShortRec): TShortRec';        Arg: 'Assert(TestMe([100]) = [50]);'),
-    (Fun: @Func18; Run: @RunFunc18; Str: 'function Func18(const a: TIntRec): TIntRec';            Arg: 'Assert(TestMe([[1..2]]).d[2] = 4);'),
+    (Fun: @Func18; Run: @RunFunc18; Str: 'function Func18(const a: TPackRec): TPackRec';          Arg: 'Assert(TestMe([1, 10]) = [11, 10]);'),
     (Fun: @Func19; Run: @RunFunc19; Str: 'function Func19(constref a: TStrRec): TStrRec';         Arg: 'Assert(TestMe(["123"]) = ["0123"]);'),
     (Fun: @Func20; Run: @RunFunc20; Str: 'function Func20(const a: TLargeRec): TLargeRec';        Arg: 'Assert(TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);')
   );
