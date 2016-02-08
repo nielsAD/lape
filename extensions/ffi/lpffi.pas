@@ -783,13 +783,13 @@ begin
   Result := (VarType <> nil) and (
     (VarType.BaseType in (LapeStringTypes + [ltStaticArray, ltLargeSet, ltVariant]))
 
-    {$IFDEF CPU86}
-        or (VarType.BaseType in [ltRecord])
-    {$ENDIF}
-
-    {$IFDEF CPUX86_64}
+    {$IF FPC_VERSION >= 3}
         or (VarType.BaseType in [ltDynArray])
         or VarType.NeedFinalization
+    {$IFEND}
+
+    {$IFDEF CPU86}
+        or (VarType.BaseType in [ltRecord])
     {$ENDIF}
   );
 end;
