@@ -972,7 +972,10 @@ begin
         PPointer(@VarStack[b])^ := @r;
       end
       else
+      begin
+        FillChar(Res^, NativeCif.Res.Typ.size, 0);
         PPointer(@VarStack[b])^ := Res;
+      end;
 
     RunCode(CodeBase, VarStack, CodePos);
 
