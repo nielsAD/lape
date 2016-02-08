@@ -18,7 +18,6 @@
 
 {$IFDEF FPC}
   {$MODE objfpc}{$H+}
-  {$ASMMODE intel}
 {$ELSE}
   {$DEFINE Delphi}
   {$POINTERMATH ON}

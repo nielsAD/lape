@@ -190,6 +190,8 @@ uses
   or (DEFINED(CPUX86_64) and DEFINED(FPC) and (not DEFINED(MSWINDOWS)))
 }
   {$DEFINE CurrencyImportExport}
+  {$ASMMODE intel}
+
   procedure _CurrencyImport(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
   var
     Res: Currency;
