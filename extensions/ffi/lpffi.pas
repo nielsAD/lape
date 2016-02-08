@@ -338,7 +338,7 @@ begin
   if (FRes.Complex = fcrFirstParam) then
   begin
     SetLength(PArgs, Length(PArgs) + 1);
-    Move(PArgs[0], PArgs[1], SizeOf(PArgs[0]) * High(FArgs));
+    Move(PArgs[0], PArgs[1], SizeOf(PArgs[0]) * Length(FArgs));
     PArgs[0] := @ffi_type_pointer;
   end
   else if (FRes.Complex = fcrLastParam) then
@@ -497,7 +497,7 @@ begin
     else
     begin
       Res := Args^[o];
-      Result[o] := PPointer(Res)^;
+      Result[l] := PPointer(Res)^;
     end;
     Inc(o);
   end
@@ -517,15 +517,15 @@ begin
   if TakeAddr then
     for i := 0 to l do
       if FArgs[i].TakePointer then
-        Result[i+o] := @Args^[i+o]
+        Result[i+o] := @Args^[i]
       else
-        Result[i+o] := Args^[i+o]
+        Result[i+o] := Args^[i]
   else
     for i := 0 to l do
       if FArgs[i].TakePointer then
-        Result[i+o] := PPointer(Args^[i+o])^
+        Result[i] := PPointer(Args^[i+o])^
       else
-        Result[i+o] := Args^[i+o];
+        Result[i] := Args^[i+o];
 end;
 
 procedure TFFICifManager.Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True);
@@ -749,18 +749,17 @@ const
   ConstPointerParams = LapeStructTypes;
 begin
   //http://docwiki.embarcadero.com/RADStudio/en/Program_Control#Register_Convention
-  Result :=
-    (Param.ParType in Lape_RefParams) or
-    (Param.VarType = nil) or
-    ((Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType in ConstPointerParams) and (Param.VarType.Size > SizeOf(Pointer)))
+  Result := (Param.ParType in Lape_RefParams) or (Param.VarType = nil)
+
+    or ((Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType in ConstPointerParams) and (Param.VarType.Size > SizeOf(Pointer)))
+    or (Param.VarType.BaseType in [ltVariant, ltShortString, ltLargeSet])
 
     {$IFDEF CPU86}
-        or (Param.VarType.BaseType in [ltVariant, ltShortString, ltLargeSet])
         or ((Param.VarType.BaseType in [ltRecord, ltStaticArray]) and (Param.VarType.Size > SizeOf(Pointer)))
     {$ENDIF}
 
     {$IFDEF CPUX86_64}
-        or (Param.VarType.BaseType in [ltVariant, ltShortString, ltStaticArray, ltLargeSet])
+        or (Param.VarType.BaseType in [ltStaticArray])
     {$ENDIF}
   ;
 end;
@@ -779,7 +778,18 @@ end;
 
 function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
 begin
-  Result := (VarType <> nil) and ((VarType.BaseType in (LapeArrayTypes + [ltLargeSet, ltVariant, ltRecord]) - [ltDynArray]){ or VarType.NeedFinalization});
+  Result := (VarType <> nil) and (
+    (VarType.BaseType in (LapeStringTypes + [ltStaticArray, ltLargeSet, ltVariant]))
+
+    {$IFDEF CPU86}
+        or (VarType.BaseType in [ltRecord])
+    {$ENDIF}
+
+    {$IFDEF CPUX86_64}
+        or (VarType.BaseType in [ltDynArray])
+        or VarType.NeedFinalization
+    {$ENDIF}
+  );
 end;
 
 function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;
@@ -887,7 +897,7 @@ procedure LapeImportBinder(var Cif: TFFICif; Res: Pointer; Args: PPointerArray; 
 begin
   with PImportClosureData(UserData)^ do
     if (NativeCif.Res <> nil) or NativeCif.ComplexRes then
-      NativeCif.Call(NativeFunc, Pointer(args^[1]^), PPointerArray(Args^[0]^))
+      NativeCif.Call(NativeFunc, Pointer(Args^[1]^), PPointerArray(Args^[0]^))
     else
       NativeCif.Call(NativeFunc, nil, PPointerArray(Args^[0]^));
 end;
@@ -935,12 +945,6 @@ begin
 
     Pointers := NativeCif.TakePointers(Args, Res, False);
     Assert(Length(ParamInfo) - Length(Pointers) <= 1);
-
-    if (NativeCif.FRes.Complex = fcrFirstParam) then
-    begin
-      Move(Pointers[1], Pointers[0], SizeOf(Pointers[0]) * High(Pointers));
-      Pointers[High(Pointers)] := PPointer(Res)^;
-    end;
 
     b := 0;
     for i := 0 to High(Pointers) do
