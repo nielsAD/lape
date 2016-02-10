@@ -1,7 +1,7 @@
 program LapeTestFFI;
 
 uses
-  sysutils,
+  SysUtils, {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
   lptypes, lpvartypes, lpcompiler, lpparser, lpinterpreter, lpexceptions, lpffi, ffi;
 
 type
@@ -9,32 +9,55 @@ type
 
   TStrArr = array of lpString;
   TIntArr = array of Int16;
-  TStatStrArr = array[1..5] of lpString;
-  TStatIntArr = array[1..2] of Int16;
+  TStatPackArr = array[0..2] of Int8;
+  TStatStrArr  = array[1..5] of lpString;
+  TStatIntArr  = array[1..2] of Int16;
 
   TShortRec =        record a: Int8; end;
   TPackRec  = packed record b: Int16; x: Int8; end;
   TStrRec   =        record c: lpString; end;
   TLargeRec =        record a: UInt8; b,c: UInt64; d: UInt8; end;
 
+const
+{$IF DEFINED(FFITest_REGISTER) AND DECLARED(FFI_REGISTER)}
+  TEST_ABI = FFI_REGISTER;
+{$ELSE}{$IF DEFINED(FFITest_PASCAL) AND DECLARED(FFI_PASCAL)}
+  TEST_ABI = FFI_PASCAL;
+{$ELSE}{$IF DEFINED(FFITest_CDECL) AND DECLARED(FFI_SYSV)}
+  TEST_ABI = FFI_SYSV;
+{$ELSE}{$IF DEFINED(FFITest_STDCALL) AND DECLARED(FFI_STDCALL)}
+  TEST_ABI = FFI_STDCALL;
+{$ELSE}
+  TEST_ABI = FFI_DEFAULT_ABI;
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+
+{$IFNDEF FPC} //Internal error workaround
+{$IF NOT DECLARED(GetTickCount)}
+function GetTickCount: UInt32;
+begin
+  Result := Trunc(Now() * 24 * 60 * 60 * 1000);
+end;
+{$IFEND}
+{$ENDIF}
+
 var
   Success: Boolean = False;
 
-procedure Proc1;
+procedure Proc1; {$I cconv.inc}
 begin
   Success := True;
 end;
 
 function RunProc1(p: Pointer): Boolean;
 type
-  TP = procedure;
+  TP = procedure; {$I cconv.inc}
 begin
   Success := False;
   TP(p)();
   Result := Success;
 end;
 
-procedure Proc2(a, b, c, d, e, f, g, h, i, j: NativeInt);
+procedure Proc2(a, b, c, d, e, f, g, h, i, j: NativeInt); {$I cconv.inc}
 begin
   Success := (a = 1) and (b =- 2) and (c = 3) and (d = -4) and (e = 5) and (f = -6)
          and (g = 7) and (h = -8) and (i = 9) and (j = -10);
@@ -43,14 +66,14 @@ end;
 
 function RunProc2(p: Pointer): Boolean;
 type
-  TP = procedure(a, b, c, d, e, f, g, h, i, j: NativeInt);
+  TP = procedure(a, b, c, d, e, f, g, h, i, j: NativeInt); {$I cconv.inc}
 begin
   Success := False;
   TP(p)(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);
   Result := Success;
 end;
 
-procedure Proc3(a: UInt8; b: Int64; c: UInt32; d: Int16; e: UInt16; f: Int32; g: UInt64; h: Int8);
+procedure Proc3(a: UInt8; b: Int64; c: UInt32; d: Int16; e: UInt16; f: Int32; g: UInt64; h: Int8); {$I cconv.inc}
 begin
   Success := (a = 1) and (b = -2) and (c = 3) and (d = -4)
          and (e = 5) and (f = -6) and (g = 7) and (h = -8);
@@ -59,14 +82,14 @@ end;
 
 function RunProc3(p: Pointer): Boolean;
 type
-  TP = procedure(a: UInt8; b: Int64; c: UInt32; d: Int16; e: UInt16; f: Int32; g: UInt64; h: Int8);
+  TP = procedure(a: UInt8; b: Int64; c: UInt32; d: Int16; e: UInt16; f: Int32; g: UInt64; h: Int8); {$I cconv.inc}
 begin
   Success := False;
   TP(p)(1, -2, 3, -4, 5, -6, 7, -8);
   Result := Success;
 end;
 
-procedure Proc4(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: Extended; h: UInt64);
+procedure Proc4(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: Extended; h: UInt64); {$I cconv.inc}
 begin
   Success := (a = 1.5) and (b = 2) and (c = 3.5) and (d = 4)
          and (e = 5.5) and (f = 6) and (g = 7.5) and (h = 8);
@@ -75,14 +98,14 @@ end;
 
 function RunProc4(p: Pointer): Boolean;
 type
-  TP = procedure(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: Extended; h: UInt64);
+  TP = procedure(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: Extended; h: UInt64); {$I cconv.inc}
 begin
   Success := False;
   TP(p)(1.5, 2, 3.5, 4, 5.5, 6, 7.5, 8);
   Result := Success;
 end;
 
-procedure Proc5(a: ShortString; b: Int8; c: AnsiString; d: Int16; e: WideString; f: Int32; g: UnicodeString; h: Int64);
+procedure Proc5(a: ShortString; b: Int8; c: AnsiString; d: Int16; e: WideString; f: Int32; g: UnicodeString; h: Int64); {$I cconv.inc}
 begin
   Success := (a = '01') and (b = -2) and (c = '03') and (d = -4)
          and (e = '05') and (f = -6) and (g = '07') and (h = -8);
@@ -91,7 +114,7 @@ end;
 
 function RunProc5(p: Pointer): Boolean;
 type
-  TP = procedure(a: ShortString; b: Int8; c: AnsiString; d: Int16; e: WideString; f: Int32; g: UnicodeString; h: Int64);
+  TP = procedure(a: ShortString; b: Int8; c: AnsiString; d: Int16; e: WideString; f: Int32; g: UnicodeString; h: Int64); {$I cconv.inc}
 var
   Str1: shortstring   = '0';
   Str3: AnsiString    = '0';
@@ -108,7 +131,7 @@ begin
   Result := Success;
 end;
 
-procedure Proc6(a: LongBool; b: UInt8; c: WordBool; d: UInt16; e: ByteBool; f: UInt32; g: Boolean; h: UInt64);
+procedure Proc6(a: LongBool; b: UInt8; c: WordBool; d: UInt16; e: ByteBool; f: UInt32; g: Boolean; h: UInt64); {$I cconv.inc}
 begin
   Success := a and (b = 2) and (not c) and (d = 4)
          and e and (f = 6) and (not g) and (h = 8);
@@ -117,14 +140,14 @@ end;
 
 function RunProc6(p: Pointer): Boolean;
 type
-  TP = procedure(a: LongBool; b: UInt8; c: WordBool; d: UInt16; e: ByteBool; f: UInt32; g: Boolean; h: UInt64);
+  TP = procedure(a: LongBool; b: UInt8; c: WordBool; d: UInt16; e: ByteBool; f: UInt32; g: Boolean; h: UInt64); {$I cconv.inc}
 begin
   Success := False;
   TP(p)(True, 2, False, 4, True, 6, False, 8);
   Result := Success;
 end;
 
-procedure Proc7(a: ELapeSmallEnum; b: TLapeSmallSet; c: ELapeLargeEnum; d: TLapeLargeSet);
+procedure Proc7(a: ELapeSmallEnum; b: TLapeSmallSet; c: ELapeLargeEnum; d: TLapeLargeSet); {$I cconv.inc}
 begin
   Success := (a = __LapeSmallEnum3) and (b = [__LapeSmallEnum1, __LapeSmallEnum32])
          and (c = __LapeLargeEnum5) and (d = [__LapeLargeEnum1, __LapeLargeEnum256]);
@@ -133,7 +156,7 @@ end;
 
 function RunProc7(p: Pointer): Boolean;
 type
-  TP = procedure(a: ELapeSmallEnum; b: TLapeSmallSet; c: ELapeLargeEnum; d: TLapeLargeSet);
+  TP = procedure(a: ELapeSmallEnum; b: TLapeSmallSet; c: ELapeLargeEnum; d: TLapeLargeSet); {$I cconv.inc}
 begin
   Success := False;
   TP(p)(__LapeSmallEnum3, [__LapeSmallEnum1, __LapeSmallEnum32],
@@ -141,7 +164,7 @@ begin
   Result := Success;
 end;
 
-procedure Proc8(a: Pointer; b: AnsiChar; c: Variant; d: WideChar);
+procedure Proc8(a: Pointer; b: AnsiChar; c: Variant; d: WideChar); {$I cconv.inc}
 begin
   Success := (a = nil) and (b = '1') and (c = '234') and (d = '5');
   Assert(Success);
@@ -149,7 +172,7 @@ end;
 
 function RunProc8(p: Pointer): Boolean;
 type
-  TP = procedure(a: Pointer; b: AnsiChar; c: Variant; d: WideChar);
+  TP = procedure(a: Pointer; b: AnsiChar; c: Variant; d: WideChar); {$I cconv.inc}
 var
   c: Variant;
 begin
@@ -160,37 +183,39 @@ begin
   Result := Success;
 end;
 
-procedure Proc9(a: TStrArr; constref b: TStatStrArr; c: TIntArr; d: TStatIntArr);
+procedure Proc9(a: TStatPackArr; b: TStrArr; constref c: TStatStrArr; d: TIntArr; e: TStatIntArr); {$I cconv.inc}
 begin
-  Success := (Length(a) = 2) and (Length(c) = 2)
-         and (a[0] = 'string0') and (a[1] = 'string1')
-         and (b[1] = 'string2') and (b[5] = 'string3')
-         and (c[0] = 0) and (c[1] = 1)
-         and (d[1] = 2) and (d[2] = 3);
+  Success := (Length(b) = 2) and (Length(d) = 2)
+         and (a[0] = 1) and (a[2] = 3)
+         and (b[0] = 'string0') and (b[1] = 'string1')
+         and (c[1] = 'string2') and (c[5] = 'string3')
+         and (d[0] = 0) and (d[1] = 1)
+         and (e[1] = 2) and (e[2] = 3);
   Assert(Success);
 end;
 
 function RunProc9(p: Pointer): Boolean;
 type
-  TP = procedure(a: TStrArr; b: TStatStrArr; c: TIntArr; d: TStatIntArr);
+  TP = procedure(a: TStatPackArr; b: TStrArr; constref c: TStatStrArr; d: TIntArr; e: TStatIntArr); {$I cconv.inc}
 var
-  a: TStrArr;
-  b: TStatStrArr = ('string', '', '', '', 'string');
-  c: TIntArr;
-  d: TStatIntArr = (2, 3);
+  a: TStatPackArr = (1, 2, 3);
+  b: TStrArr;
+  c: TStatStrArr = ('string', '', '', '', 'string');
+  d: TIntArr;
+  e: TStatIntArr = (2, 3);
 begin
   Success := False;
-  SetLength(a, 2);
-  SetLength(c, 2);
-  a[0] := b[1] + IntToStr(0); a[1] := b[5] + IntToStr(1);
-  b[1] := b[1] + IntToStr(2); b[5] := b[5] + IntToStr(3);
-  c[0] := 0; c[1] := 1;
-  TP(p)(a, b, c, d);
-  Proc9(a, b, c, d);
+  SetLength(b, 2);
+  SetLength(d, 2);
+  b[0] := c[1] + IntToStr(0); b[1] := c[5] + IntToStr(1);
+  c[1] := c[1] + IntToStr(2); c[5] := c[5] + IntToStr(3);
+  d[0] := 0; d[1] := 1;
+  TP(p)(a, b, c, d, e);
+  Proc9(a, b, c, d, e);
   Result := Success;
 end;
 
-procedure Proc10(a: TShortRec; b: TPackRec; constref c: TStrRec; d: TLargeRec);
+procedure Proc10(a: TShortRec; b: TPackRec; constref c: TStrRec; d: TLargeRec); {$I cconv.inc}
 begin
   Success := (a.a = 1) and (b.b = 2) and (c.c = '03')
          and (d.a = 4) and (d.b = 5) and (d.c = 6) and (d.d = 7);
@@ -199,7 +224,7 @@ end;
 
 function RunProc10(p: Pointer): Boolean;
 type
-  TP = procedure(a: TShortRec; b: TPackRec; constref c: TStrRec; d: TLargeRec);
+  TP = procedure(a: TShortRec; b: TPackRec; constref c: TStrRec; d: TLargeRec); {$I cconv.inc}
 var
   a: TShortRec  = (a: 1);
   b: TPackRec   = (b: 2; x: 22);
@@ -213,127 +238,127 @@ begin
   Result := Success;
 end;
 
-function Func1(const a: NativeInt): NativeInt;
+function Func1(const a: NativeInt): NativeInt; {$I cconv.inc}
 begin
   Result := a + 1;
 end;
 
 function RunFunc1(f: Pointer): Boolean;
 type
-  TF = function(const a: NativeInt): NativeInt;
+  TF = function(const a: NativeInt): NativeInt; {$I cconv.inc}
 begin
   Result := TF(f)(10) = 11;
 end;
 
-function Func2(const a, b, c: Int8): UInt8;
+function Func2(const a, b, c: Int8): UInt8; {$I cconv.inc}
 begin
   Result := a + b + c;
 end;
 
 function RunFunc2(f: Pointer): Boolean;
 type
-  TF = function(const a, b, c: Int8): UInt8;
+  TF = function(const a, b, c: Int8): UInt8; {$I cconv.inc}
 begin
   Result := TF(f)(15, 14, 13) = 42;
 end;
 
-function Func3(const a: Single): Single;
+function Func3(const a: Single): Single; {$I cconv.inc}
 begin
   Result := a * 2.0;
 end;
 
 function RunFunc3(f: Pointer): Boolean;
 type
-  TF = function(const a: Single): Single;
+  TF = function(const a: Single): Single; {$I cconv.inc}
 begin
   Result := TF(f)(2.5) = 5.0;
 end;
 
-function Func4(const a: Double): Double;
+function Func4(const a: Double): Double; {$I cconv.inc}
 begin
   Result := a * 3.0;
 end;
 
 function RunFunc4(f: Pointer): Boolean;
 type
-  TF = function(const a: Double): Double;
+  TF = function(const a: Double): Double; {$I cconv.inc}
 begin
   Result := TF(f)(5) = 15.0;
 end;
 
-function Func5(const a: Extended): Extended;
+function Func5(const a: Extended): Extended; {$I cconv.inc}
 begin
   Result := a * 10.0;
 end;
 
 function RunFunc5(f: Pointer): Boolean;
 type
-  TF = function(const a: Extended): Extended;
+  TF = function(const a: Extended): Extended; {$I cconv.inc}
 begin
   Result := TF(f)(10) = 100.0;
 end;
 
-function Func6(const a: Currency): Currency;
+function Func6(const a: Currency): Currency; {$I cconv.inc}
 begin
   Result := a / 2.0;
 end;
 
 function RunFunc6(f: Pointer): Boolean;
 type
-  TF = function(const a: Currency): Currency;
+  TF = function(const a: Currency): Currency; {$I cconv.inc}
 begin
   Result := TF(f)(8.4) = 4.2;
 end;
 
-function Func7(const a: Boolean): Boolean;
+function Func7(const a: Boolean): Boolean; {$I cconv.inc}
 begin
   Result := not a;
 end;
 
 function RunFunc7(f: Pointer): Boolean;
 type
-  TF = function(const a: Boolean): Boolean;
+  TF = function(const a: Boolean): Boolean; {$I cconv.inc}
 begin
   Result := not TF(f)(True);
 end;
 
-function Func8(const a: shortstring): shortstring;
+function Func8(const a: shortstring): shortstring; {$I cconv.inc}
 begin
   Result := a + a;
 end;
 
 function RunFunc8(f: Pointer): Boolean;
 type
-  TF = function(const a: shortstring): shortstring;
+  TF = function(const a: shortstring): shortstring; {$I cconv.inc}
 begin
   Result := TF(f)('11') = '1111';
 end;
 
-function Func9(const a: lpString): lpString;
+function Func9(const a: lpString): lpString; {$I cconv.inc}
 begin
   Result := a + a;
 end;
 
 function RunFunc9(f: Pointer): Boolean;
 type
-  TF = function(const a: lpString): lpString;
+  TF = function(const a: lpString): lpString; {$I cconv.inc}
 begin
   Result := TF(f)('22') = '2222';
 end;
 
-function Func10(const a: Variant): Variant;
+function Func10(const a: Variant): Variant; {$I cconv.inc}
 begin
   Result := StrToInt(a) + 1;
 end;
 
 function RunFunc10(f: Pointer): Boolean;
 type
-  TF = function(const a: Variant): Variant;
+  TF = function(const a: Variant): Variant; {$I cconv.inc}
 begin
   Result := TF(f)('42') = 43;
 end;
 
-function Func11(const a: TLapeSmallSet): TLapeSmallSet;
+function Func11(const a: TLapeSmallSet): TLapeSmallSet; {$I cconv.inc}
 begin
   Assert(a = [Low(ELapeSmallEnum)]);
   Result := [High(ELapeSmallEnum)];
@@ -341,12 +366,12 @@ end;
 
 function RunFunc11(f: Pointer): Boolean;
 type
-  TF = function(const a: TLapeSmallSet): TLapeSmallSet;
+  TF = function(const a: TLapeSmallSet): TLapeSmallSet; {$I cconv.inc}
 begin
   Result := TF(f)([Low(ELapeSmallEnum)]) = [High(ELapeSmallEnum)];
 end;
 
-function Func12(const a: TLapeLargeSet): TLapeLargeSet;
+function Func12(const a: TLapeLargeSet): TLapeLargeSet; {$I cconv.inc}
 begin
   Assert(a = [High(ELapeLargeEnum)]);
   Result := [Low(ELapeLargeEnum)];
@@ -354,12 +379,12 @@ end;
 
 function RunFunc12(f: Pointer): Boolean;
 type
-  TF = function(const a: TLapeLargeSet): TLapeLargeSet;
+  TF = function(const a: TLapeLargeSet): TLapeLargeSet; {$I cconv.inc}
 begin
   Result := TF(f)([High(ELapeLargeEnum)]) = [Low(ELapeLargeEnum)];
 end;
 
-function Func13(const a: TIntArr): TIntArr;
+function Func13(const a: TIntArr): TIntArr; {$I cconv.inc}
 var
   i: Integer;
 begin
@@ -370,7 +395,7 @@ end;
 
 function RunFunc13(f: Pointer): Boolean;
 type
-  TF = function(const a: TIntArr): TIntArr;
+  TF = function(const a: TIntArr): TIntArr; {$I cconv.inc}
 var
   a: TIntArr;
 begin
@@ -379,7 +404,7 @@ begin
   Result := (a[0] = 100) and (a[1] = 200) and (a[2] = 300);
 end;
 
-function Func14(const a: TStrArr): TStrArr;
+function Func14(const a: TStrArr): TStrArr; {$I cconv.inc}
 begin
   Assert(Length(a) = 2);
   Result := a;
@@ -389,7 +414,7 @@ end;
 
 function RunFunc14(f: Pointer): Boolean;
 type
-  TF = function(const a: TStrArr): TStrArr;
+  TF = function(const a: TStrArr): TStrArr; {$I cconv.inc}
 var
   a: TStrArr;
 begin
@@ -398,7 +423,28 @@ begin
   Result := (a[0] = 'hello') and (a[1] = 'world');
 end;
 
-function Func15(const a: TStatIntArr): TStatIntArr;
+function Func15(const a: TStatPackArr): TStatPackArr; {$I cconv.inc}
+var
+  i: Integer;
+begin
+  Result[0] := a[0];
+  for i := Low(Result)+1 to High(Result) do
+    Result[i] := Result[i-1] + a[i];
+end;
+
+function RunFunc15(f: Pointer): Boolean;
+type
+  TF = function(const a: TStatPackArr): TStatPackArr; {$I cconv.inc}
+const
+  a: TStatPackArr = (1, 2, 3);
+var
+  b: TStatPackArr;
+begin
+  b := TF(f)(a);
+  Result := (b[2] = 6);
+end;
+
+function Func16(const a: TStatIntArr): TStatIntArr; {$I cconv.inc}
 var
   i: Integer;
 begin
@@ -406,9 +452,9 @@ begin
     Result[i] := a[i] + 2;
 end;
 
-function RunFunc15(f: Pointer): Boolean;
+function RunFunc16(f: Pointer): Boolean;
 type
-  TF = function(const a: TStatIntArr): TStatIntArr;
+  TF = function(const a: TStatIntArr): TStatIntArr; {$I cconv.inc}
 const
   a: TStatIntArr = (1, 2);
 var
@@ -418,7 +464,7 @@ begin
   Result := (b[1] = 3) and (b[2] = 4);
 end;
 
-function Func16(const a: TStatStrArr): TStatStrArr;
+function Func17(const a: TStatStrArr): TStatStrArr; {$I cconv.inc}
 var
   i: Integer;
 begin
@@ -427,9 +473,9 @@ begin
       Result[i] := a[i] + '!';
 end;
 
-function RunFunc16(f: Pointer): Boolean;
+function RunFunc17(f: Pointer): Boolean;
 type
-  TF = function(const a: TStatStrArr): TStatStrArr;
+  TF = function(const a: TStatStrArr): TStatStrArr; {$I cconv.inc}
 const
   a: TStatStrArr = ('1', '', '', '', '2');
 var
@@ -439,14 +485,14 @@ begin
   Result := (b[1] = '1!') and (b[5] = '2!');
 end;
 
-function Func17(const a: TShortRec): TShortRec;
+function Func18(const a: TShortRec): TShortRec; {$I cconv.inc}
 begin
   Result.a := a.a div 2;
 end;
 
-function RunFunc17(f: Pointer): Boolean;
+function RunFunc18(f: Pointer): Boolean;
 type
-  TF = function(const a: TShortRec): TShortRec;
+  TF = function(const a: TShortRec): TShortRec; {$I cconv.inc}
 var
   r: TShortRec;
 begin
@@ -455,15 +501,15 @@ begin
   Result := r.a = 50;
 end;
 
-function Func18(const a: TPackRec): TPackRec;
+function Func19(const a: TPackRec): TPackRec; {$I cconv.inc}
 begin
   Result.b := a.b + a.x;
   Result.x := a.x;
 end;
 
-function RunFunc18(f: Pointer): Boolean;
+function RunFunc19(f: Pointer): Boolean;
 type
-  TF = function(const a: TPackRec): TPackRec;
+  TF = function(const a: TPackRec): TPackRec; {$I cconv.inc}
 var
   r: TPackRec;
 begin
@@ -473,14 +519,14 @@ begin
   Result := (r.b = 11) and (r.x = 10);
 end;
 
-function Func19(constref a: TStrRec): TStrRec;
+function Func20(constref a: TStrRec): TStrRec; {$I cconv.inc}
 begin
   Result.c := '0' + a.c;
 end;
 
-function RunFunc19(f: Pointer): Boolean;
+function RunFunc20(f: Pointer): Boolean;
 type
-  TF = function(constref a: TStrRec): TStrRec;
+  TF = function(constref a: TStrRec): TStrRec; {$I cconv.inc}
 var
   r: TStrRec;
 begin
@@ -489,7 +535,7 @@ begin
   Result := (r.c = '0123');
 end;
 
-function Func20(const a: TLargeRec): TLargeRec;
+function Func21(const a: TLargeRec): TLargeRec; {$I cconv.inc}
 begin
   Result.a := a.d;
   Result.b := a.c;
@@ -497,9 +543,9 @@ begin
   Result.d := a.a;
 end;
 
-function RunFunc20(f: Pointer): Boolean;
+function RunFunc21(f: Pointer): Boolean;
 type
-  TF = function(const a: TLargeRec): TLargeRec;
+  TF = function(const a: TLargeRec): TLargeRec; {$I cconv.inc}
 var
   r: TLargeRec;
 begin
@@ -518,6 +564,7 @@ var
 begin
   i := nil;
   e := nil;
+  s := '';
   Result := False;
 
   try
@@ -532,6 +579,7 @@ begin
 
       addGlobalType('array of Int16',  'TIntArr');
       addGlobalType('array of string', 'TStrArr');
+      addGlobalType('array[0..2] of Int8',   'TStatPackArr');
       addGlobalType('array[1..2] of Int16',  'TStatIntArr');
       addGlobalType('array[1..5] of string', 'TStatStrArr');
 
@@ -543,11 +591,6 @@ begin
       i := LapeImportWrapper(ImportFun, TLapeCompiler(GetSelf()), Header, ImportABI);
       v := addGlobalFunc(Header, i.Func);
       Assert(v.VarType is TLapeType_Method);
-
-      if MethodOfObject(v.VarType) then
-        s := 'Self'
-      else
-        s := '';
 
       for p := 0 to TLapeType_Method(v.VarType).Params.Count - 1 do
       begin
@@ -568,8 +611,14 @@ begin
 
       e := LapeExportWrapper(Globals['TestMe'], ExportABI);
 
+      Write(Format('Testing  %-6s :: %8s <-> %-8s :: ', [v.Name, CallConvToStr(ImportABI), CallConvToStr(ExportABI)]));
       RunCode(Emitter.Code);
       Result := RunFun(e.Func);
+
+      if Result then
+        WriteLn('Passed')
+      else
+        WriteLn('Failed');
     finally
       Free();
       if (i <> nil) then
@@ -580,7 +629,7 @@ begin
   except
     on E: Exception do
     begin
-      WriteLn('TestFFI Exception: ', e.Message);
+      WriteLn('Failed :: ', e.Message);
       Result := False;
     end
   end;
@@ -595,7 +644,7 @@ type
   end;
 
 const
-  BiDiTests: array[1..30] of TRunProc = (
+  BiDiTests: array[1..31] of TRunProc = (
     (Fun: @Proc1;  Run: @RunProc1;  Str: 'procedure Proc1';                                                                                                        Arg: 'TestMe();'),
     (Fun: @Proc2;  Run: @RunProc2;  Str: 'procedure Proc2(a, b, c, d, e, f, g, h, i, j: NativeInt)';                                                               Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);'),
     (Fun: @Proc3;  Run: @RunProc3;  Str: 'procedure Proc3(a: UInt8; b: Int64; c: UInt32; d: Int16; e: UInt16; f: Int32; g: UInt64; h: Int8)';                      Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8);'),
@@ -604,7 +653,7 @@ const
     (Fun: @Proc6;  Run: @RunProc6;  Str: 'procedure Proc6(a: LongBool; b: UInt8; c: WordBool; d: UInt16; e: ByteBool; f: UInt32; g: Boolean; h: UInt64)';          Arg: 'TestMe(True, 2, False, 4, True, 6, False, 8);'),
     (Fun: @Proc7;  Run: @RunProc7;  Str: 'procedure Proc7(a: TSmallEnum; b: TSmallSet; c: TLargeEnum; d: TLargeSet)';                                              Arg: 'TestMe(TSmallEnum(2), [ESmallFirst, ESmallLast], TLargeEnum(4), [ELargeFirst, ELargeLast]);'),
     (Fun: @Proc8;  Run: @RunProc8;  Str: 'procedure Proc8(a: Pointer; b: AnsiChar; c: Variant; d: WideChar)';                                                      Arg: 'TestMe(nil, "1", "234", "5");'),
-    (Fun: @Proc9;  Run: @RunProc9;  Str: 'procedure Proc9(a: TStrArr; constref b: TStatStrArr; c: TIntArr; d: TStatIntArr)';                                       Arg: 'TestMe(["string0", "string1"], ["string2", "","","", "string3"], [0, 1], [2, 3]);'),
+    (Fun: @Proc9;  Run: @RunProc9;  Str: 'procedure Proc9(a: TStatPackArr; b: TStrArr; constref c: TStatStrArr; d: TIntArr; e: TStatIntArr)';                      Arg: 'TestMe([1..3], ["string0", "string1"], ["string2", "","","", "string3"], [0, 1], [2, 3]);'),
     (Fun: @Proc10; Run: @RunProc10; Str: 'procedure Proc10(a: TShortRec; b: TPackRec; constref c: TStrRec; d: TLargeRec)';                                         Arg: 'TestMe([1], [2, 22], ["03"], [4, 5, 6, 7]);'),
 
     (Fun: @Func1;  Run: @RunFunc1;  Str: 'function Func1(const a: NativeInt): NativeInt';         Arg: 'Assert(TestMe(10) = 11);'),
@@ -621,16 +670,18 @@ const
     (Fun: @Func12; Run: @RunFunc12; Str: 'function Func12(const a: TLargeSet): TLargeSet';        Arg: 'Assert(TestMe([ELargeLast]) = [ELargeFirst]);'),
     (Fun: @Func13; Run: @RunFunc13; Str: 'function Func13(const a: TIntArr): TIntArr';            Arg: 'Assert(TestMe([10, 20, 30])[2] = 300);'),
     (Fun: @Func14; Run: @RunFunc14; Str: 'function Func14(const a: TStrArr): TStrArr';            Arg: 'Assert(TestMe(["hll", "wrld"])[1] = "world");'),
-    (Fun: @Func15; Run: @RunFunc15; Str: 'function Func15(const a: TStatIntArr): TStatIntArr';    Arg: 'Assert(TestMe([1..2])[2] = 4);'),
-    (Fun: @Func16; Run: @RunFunc16; Str: 'function Func16(constref a: TStatStrArr): TStatStrArr'; Arg: 'Assert(TestMe(["1", "","","", "2"])[5] = "2!");'),
-    (Fun: @Func17; Run: @RunFunc17; Str: 'function Func17(const a: TShortRec): TShortRec';        Arg: 'Assert(TestMe([100]) = [50]);'),
-    (Fun: @Func18; Run: @RunFunc18; Str: 'function Func18(const a: TPackRec): TPackRec';          Arg: 'Assert(TestMe([1, 10]) = [11, 10]);'),
-    (Fun: @Func19; Run: @RunFunc19; Str: 'function Func19(constref a: TStrRec): TStrRec';         Arg: 'Assert(TestMe(["123"]) = ["0123"]);'),
-    (Fun: @Func20; Run: @RunFunc20; Str: 'function Func20(const a: TLargeRec): TLargeRec';        Arg: 'Assert(TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);')
+    (Fun: @Func15; Run: @RunFunc15; Str: 'function Func15(const a: TStatPackArr): TStatPackArr';  Arg: 'Assert(TestMe([1..3])[2] = 6);'),
+    (Fun: @Func16; Run: @RunFunc16; Str: 'function Func16(const a: TStatIntArr): TStatIntArr';    Arg: 'Assert(TestMe([1..2])[2] = 4);'),
+    (Fun: @Func17; Run: @RunFunc17; Str: 'function Func17(constref a: TStatStrArr): TStatStrArr'; Arg: 'Assert(TestMe(["1", "","","", "2"])[5] = "2!");'),
+    (Fun: @Func18; Run: @RunFunc18; Str: 'function Func18(const a: TShortRec): TShortRec';        Arg: 'Assert(TestMe([100]) = [50]);'),
+    (Fun: @Func19; Run: @RunFunc19; Str: 'function Func19(const a: TPackRec): TPackRec';          Arg: 'Assert(TestMe([1, 10]) = [11, 10]);'),
+    (Fun: @Func20; Run: @RunFunc20; Str: 'function Func20(constref a: TStrRec): TStrRec';         Arg: 'Assert(TestMe(["123"]) = ["0123"]);'),
+    (Fun: @Func21; Run: @RunFunc21; Str: 'function Func21(const a: TLargeRec): TLargeRec';        Arg: 'Assert(TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);')
   );
 
 var
   t: Integer;
+  StartTime: UInt64;
 begin
   {$IF DEFINED(MSWINDOWS) AND DECLARED(LoadFFI)}
   if (not FFILoaded()) then
@@ -646,13 +697,20 @@ begin
   Assert(FFILoaded());
   ExitCode := 0;
 
+  StartTime := GetTickCount();
+
   for t := Low(BiDiTests) to High(BiDiTests) do
-    if (not TestBiDiFFI(BiDiTests[t].Str, BiDiTests[t].Fun, BiDiTests[t].Run, BiDiTests[t].Arg)) then
+    if (not TestBiDiFFI(BiDiTests[t].Str, BiDiTests[t].Fun, BiDiTests[t].Run, BiDiTests[t].Arg, TEST_ABI, TEST_ABI)) then
     begin
-      WriteLn('"', BiDiTests[t].Str, '" failed');
+      WriteLn('  Header : "', BiDiTests[t].Str, '"');
+      WriteLn('    Call : "', BiDiTests[t].Arg, '"');
+      WriteLn();
       Inc(ExitCode);
     end;
 
-  WriteLn('Ran ', Length(BiDiTests) - ExitCode, '/', Length(BiDiTests), ' tests successfully');
+  WriteLn();
+  WriteLn(Format('Ran %d tests in %.2f seconds', [Length(BiDiTests), ((GetTickCount() - StartTime) / 1000)]));
+  WriteLn(Format('%3d / %d tests failed', [ExitCode,                     Length(BiDiTests)]));
+  WriteLn(Format('%3d / %d tests passed', [Length(BiDiTests) - ExitCode, Length(BiDiTests)]));
 end.
 

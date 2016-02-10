@@ -160,7 +160,7 @@ const
   lpeCannotPrepare   = 'Cannot prepare object';
   lpeUnsupportedType = 'Type "%s" cannot be used in this FFI context';
 
-  FFI_LAPE_ABI = {$IF DEFINED(Lape_CDECL) AND DECLARED(FFI_SYSV)}FFI_SYSV{$ELSE}FFI_DEFAULT_ABI{$IFEND};
+  FFI_LAPE_ABI = {$IF DEFINED(Lape_CDECL) AND DECLARED(FFI_CDECL)}FFI_CDECL{$ELSE}FFI_DEFAULT_ABI{$IFEND};
 
 function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
 function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
@@ -185,9 +185,12 @@ implementation
 uses
   lpexceptions, lpparser, lpeval, lpinterpreter;
 
+const
+  PowerTwoRegs = [SizeOf(UInt8), SizeOf(UInt16), SizeOf(UInt32), SizeOf(UInt64)];
+
 {$IF DEFINED(CurrencyImportExport)
-  or DEFINED(CPU86)
-  or (DEFINED(CPUX86_64) and DEFINED(FPC) and (not DEFINED(MSWINDOWS)))
+  OR DEFINED(CPU86)
+  OR (DEFINED(CPUX86_64) AND DEFINED(FPC) AND (NOT DEFINED(MSWINDOWS)))
 }
   {$DEFINE CurrencyImportExport}
   {$ASMMODE intel}
@@ -549,7 +552,7 @@ begin
     ffi_call(FCif, Func, Res, Args)
   else
   begin
-    //Workaround for libffi quirk that integers are always returned in full size
+    //Workaround for libffi quirk that causes integers to always be returned in "full" size
     r := 0;
     ffi_call(FCif, Func, @r, Args);
     FRes.Eval(Res, @r, nil);
@@ -686,14 +689,15 @@ function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
   end;
 
   procedure FFIRecord(VarType: TLapeType_Record);
-  var
-    i: Integer;
   begin
     if (VarType = nil) or (VarType.FieldMap.Count < 1) then
       LapeException(lpeInvalidCast);
 
-    for i := 0 to VarType.FieldMap.Count - 1 do
-      Result.addElem(LapeTypeToFFIType(VarType.FieldMap.ItemsI[i].FieldType));
+    // Treat records as blobs
+    FFIArray(VarType.Size, TFFITypeManager.Create(ffi_type_uint8));
+
+    //for i := 0 to VarType.FieldMap.Count - 1 do
+    //  Result.addElem(LapeTypeToFFIType(VarType.FieldMap.ItemsI[i].FieldType));
   end;
 
   procedure FFIUnion(VarType: TLapeType_Union);
@@ -710,7 +714,7 @@ function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
         if (ItemsI[i].FieldType.Size > ItemsI[m].FieldType.Size) then
           m := i;
 
-      Result := LapeTypeToFFIType(ItemsI[m].FieldType);
+      Result.addElem(LapeTypeToFFIType(ItemsI[m].FieldType));
     end;
   end;
 
@@ -748,13 +752,14 @@ end;
 
 function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
 const
-  ConstPointerParams = LapeStructTypes;
+       PointerParams = [ltVariant, ltShortString, ltLargeSet];
+  ConstPointerParams = [ltRecord];
 begin
   //http://docwiki.embarcadero.com/RADStudio/en/Program_Control#Register_Convention
   Result := (Param.ParType in Lape_RefParams) or (Param.VarType = nil)
 
+    or (Param.VarType.BaseType in PointerParams)
     or ((Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType in ConstPointerParams) and (Param.VarType.Size > SizeOf(Pointer)))
-    or (Param.VarType.BaseType in [ltVariant, ltShortString, ltLargeSet])
 
     {$IFDEF CPU86}
         or ((Param.VarType.BaseType in [ltRecord, ltStaticArray]) and (Param.VarType.Size > SizeOf(Pointer)))
@@ -763,6 +768,11 @@ begin
     {$IFDEF CPUX86_64}
         or (Param.VarType.BaseType in [ltStaticArray])
     {$ENDIF}
+
+    {$IF DECLARED(FFI_WIN64)}
+        or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (not (UInt8(Param.VarType.Size) in PowerTwoRegs)))
+        or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (Param.ParType in Lape_ConstParams) and (Param.VarType.Size = SizeOf(UInt8)))
+    {$IFEND}
   ;
 end;
 
@@ -779,18 +789,23 @@ begin
 end;
 
 function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
+const
+  ComplexTypes = LapeStringTypes + [ltStaticArray, ltLargeSet, ltVariant];
 begin
   Result := (VarType <> nil) and (
-    (VarType.BaseType in (LapeStringTypes + [ltStaticArray, ltLargeSet, ltVariant]))
+    (VarType.BaseType in ComplexTypes)
 
     {$IF FPC_VERSION >= 3}
-        or (VarType.BaseType in [ltDynArray])
         or VarType.NeedFinalization
     {$IFEND}
 
     {$IFDEF CPU86}
         or (VarType.BaseType in [ltRecord])
     {$ENDIF}
+
+    {$IF DECLARED(FFI_WIN64)}
+        or ((ABI = FFI_WIN64) and (VarType.BaseType = ltRecord) and (not (UInt8(VarType.Size) in PowerTwoRegs)))
+    {$IFEND}
   );
 end;
 

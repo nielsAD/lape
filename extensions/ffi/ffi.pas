@@ -29,11 +29,15 @@ unit ffi;
 
 {$IFDEF FPC}
   {$MODE objfpc}{$H+}
+  {$IFDEF FPC_HAS_TYPE_EXTENDED}
+    {$DEFINE HasExtended}
+  {$ENDIF}
 {$ELSE}
   {$IFDEF WIN64}
     {$DEFINE CPUX86_64}
   {$ELSE}
     {$DEFINE CPU86}
+    {$DEFINE HasExtended}
   {$ENDIF}
 {$ENDIF}
 
@@ -103,11 +107,11 @@ type
   );
 
   TFFIABI = (
-    FFI_FIRST_ABI = 0,
+    FFI_UNKNOWN_ABI = 0,
 
     {$IFDEF CPU86}
       {$IFDEF UNIX}
-      FFI_SYSV     = 1,
+      FFI_CDECL    = 1,
       FFI_THISCALL = 3,
       FFI_FASTCALL = 4,
       FFI_STDCALL  = 5,
@@ -116,7 +120,7 @@ type
       FFI_MS_CDECL = 8,
       {$ENDIF}
       {$IFDEF MSWINDOWS}
-      FFI_SYSV     = 1,
+      FFI_CDECL    = 1,
       FFI_STDCALL  = 2,
       FFI_THISCALL = 3,
       FFI_FASTCALL = 4,
@@ -136,8 +140,8 @@ type
     {$ENDIF}
 
     {$IFDEF CPUARM}
-      FFI_SYSV = 1,
-      FFI_VFP  = 2,
+      FFI_CDECL = 1,
+      FFI_VFP   = 2,
     {$ENDIF}
 
     FFI_LAST_ABI
@@ -147,30 +151,36 @@ const
   FFI_DEFAULT_ABI =
     {$IFDEF CPU86}FFI_REGISTER{$ENDIF}
     {$IFDEF CPUX86_64}{$IFDEF MSWINDOWS}FFI_WIN64{$ELSE}FFI_UNIX64{$ENDIF}{$ENDIF}
-    {$IFDEF CPUARM}{$IFDEF FPUVFP}FFI_VFP{$ELSE}FFI_SYSV{$ENDIF}{$ENDIF};
+    {$IFDEF CPUARM}{$IFDEF FPUVFP}FFI_VFP{$ELSE}FFI_CDECL{$ENDIF}{$ENDIF};
 
   FFI_TRAMPOLINE_SIZE =
     {$IFDEF CPU86}12{$ENDIF}
     {$IFDEF CPUX86_64}24{$ENDIF}
     {$IFDEF CPUARM}12{$ENDIF};
 
+  {$IF DECLARED(FFI_CDECL)}
+  FFI_SYSV = FFI_CDECL;
+  {$IFEND}
+
 type
   TFFI_CTYPE = (
-    FFI_CTYPE_VOID = 0,
-    FFI_CTYPE_INT,
-    FFI_CTYPE_FLOAT,
-    FFI_CTYPE_DOUBLE,
-    FFI_CTYPE_LONGDOUBLE,
-    FFI_CTYPE_UINT8,
-    FFI_CTYPE_SINT8,
-    FFI_CTYPE_UINT16,
-    FFI_CTYPE_SINT16,
-    FFI_CTYPE_UINT32,
-    FFI_CTYPE_SINT32,
-    FFI_CTYPE_UINT64,
-    FFI_CTYPE_SINT64,
-    FFI_CTYPE_STRUCT,
-    FFI_CTYPE_POINTER
+    FFI_CTYPE_VOID       = 0,
+    FFI_CTYPE_INT        = 1,
+    FFI_CTYPE_FLOAT      = 2,
+    FFI_CTYPE_DOUBLE     = 3,
+    {$IFDEF HasExtended}
+    FFI_CTYPE_LONGDOUBLE = 4,
+    {$IFEND}
+    FFI_CTYPE_UINT8      = 5,
+    FFI_CTYPE_SINT8      = 6,
+    FFI_CTYPE_UINT16     = 7,
+    FFI_CTYPE_SINT16     = 8,
+    FFI_CTYPE_UINT32     = 9,
+    FFI_CTYPE_SINT32     = 10,
+    FFI_CTYPE_UINT64     = 11,
+    FFI_CTYPE_SINT64     = 12,
+    FFI_CTYPE_STRUCT     = 13,
+    FFI_CTYPE_POINTER    = 14
   );
 
   PFFIType = ^TFFIType;
@@ -268,11 +278,14 @@ var
   ffi_type_sint64: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
   ffi_type_float: TFFIType;      {$IFDEF StaticFFI}cvar; external;{$ENDIF}
   ffi_type_double: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
-  ffi_type_longdouble: TFFIType; {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_longdouble: TFFIType; {$IF DEFINED(HasExtended) AND DEFINED(StaticFFI)}cvar; external;{$IFEND}
   ffi_type_pointer: TFFIType;    {$IFDEF StaticFFI}cvar; external;{$ENDIF}
 
 function FFILoaded: Boolean;
 procedure AssertFFILoaded;
+
+function CallConvToStr(c: TFFIABI): string;
+function StrToCallConv(c: string): TFFIABI;
 
 {$IFDEF DynamicFFI}
 procedure LoadFFI(LibPath: string = ''; LibName: string = LibFFI);
@@ -282,7 +295,24 @@ procedure UnloadFFI;
 implementation
 
 uses
-  SysUtils;
+  SysUtils, TypInfo;
+
+function CallConvToStr(c: TFFIABI): string;
+begin
+  Result := LowerCase(getEnumName(TypeInfo(TFFIABI), Ord(c)));
+  if (Result <> '') then
+    Delete(Result, 1, 4);
+end;
+
+function StrToCallConv(c: string): TFFIABI;
+begin
+  c := LowerCase(c);
+  if (Length(c) < 5) or (c[1] <> 'f') or (c[2] <> 'f') or (c[3] <> 'i') or (c[4] <> '_') then
+    c := 'ffi_' + c;
+  Result := TFFIABI(GetEnumValue(TypeInfo(TFFIABI), c));
+  if (Result = TFFIABI(-1)) then
+    Result := FFI_UNKNOWN_ABI;
+end;
 
 function FFILoaded: Boolean;
 begin
@@ -330,7 +360,9 @@ type
   TFFIBaseType_SInt64     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cint64>;
   TFFIBaseType_Float      = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cfloat>;
   TFFIBaseType_Double     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cdouble>;
+  {$IFDEF HasExtended}
   TFFIBaseType_LongDouble = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<clongdouble>;
+  {$ENDIF}
   TFFIBaseType_Pointer    = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<Pointer>;
 
 class function TFFIBaseType{$IFNDEF FPC}<_T>{$ENDIF}.getOffset: Integer;
@@ -430,7 +462,11 @@ initialization
   ffi_type_sint64     := TFFIBaseType_SInt64.getFFIType(FFI_CTYPE_SINT64);
   ffi_type_float      := TFFIBaseType_Float.getFFIType(FFI_CTYPE_FLOAT);
   ffi_type_double     := TFFIBaseType_Double.getFFIType(FFI_CTYPE_DOUBLE);
+  {$IFDEF HasExtended}
   ffi_type_longdouble := TFFIBaseType_LongDouble.getFFIType(FFI_CTYPE_LONGDOUBLE);
+  {$ELSE}
+  ffi_type_longdouble := ffi_type_double;
+  {$ENDIF}
   ffi_type_pointer    := TFFIBaseType_Pointer.getFFIType(FFI_CTYPE_POINTER);
   {$ENDIF}
 
