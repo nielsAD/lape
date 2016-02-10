@@ -702,7 +702,13 @@ begin
     );
   {$IFEND}
 
-  Assert(FFILoaded());
+  if (not FFILoaded()) then
+  begin
+    WriteLn('Cannot find libffi.');
+    ExitCode := 221;
+    Exit;
+  end;
+
   ExitCode := 0;
 
   WriteLn('Running ', Length(BiDiTests), ' tests with ', CallConvToStr(TEST_ABI), ' calling convention.');
