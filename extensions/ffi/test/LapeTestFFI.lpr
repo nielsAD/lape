@@ -502,9 +502,11 @@ end;
 
 {$IF DEFINED(FPC) AND DEFINED(FFITest_CDECL) AND (FPC_VERSION = 2)}
 // Work around FPC internal error
+type TFunc19 = function(const a: TPackRec): TStatPackArr; cdecl;
 function Func19(const a: TPackRec): TStatPackArr; cdecl;
 {$ELSE}
 // Actual header
+type TFunc19 = function(const a: TPackRec): TPackRec; {$I cconv.inc}
 function Func19(const a: TPackRec): TPackRec; {$I cconv.inc}
 {$IFEND}
 begin
@@ -514,13 +516,13 @@ end;
 
 function RunFunc19(f: Pointer): Boolean;
 type
-  TF = function(const a: TPackRec): TPackRec; {$I cconv.inc}
+  TF = TFunc19;
 var
   r: TPackRec;
 begin
   r.b := 1;
   r.x := 10;
-  r := TF(f)(r);
+  r := TPackRec(TF(f)(r));
   Result := (r.b = 11) and (r.x = 10);
 end;
 
@@ -725,7 +727,7 @@ begin
 {$ELSE}
 begin
   WriteLn('Invalid calling convention for platform.');
-  ExitCode := -1;
+  ExitCode := 222;
 {$ENDIF}
 end.
 
