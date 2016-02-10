@@ -18,17 +18,16 @@ type
   TStrRec   =        record c: lpString; end;
   TLargeRec =        record a: UInt8; b,c: UInt64; d: UInt8; end;
 
-const
-{$IF DEFINED(FFITest_REGISTER) AND DECLARED(FFI_REGISTER)}
-  TEST_ABI = FFI_REGISTER;
-{$ELSE}{$IF DEFINED(FFITest_PASCAL) AND DECLARED(FFI_PASCAL)}
-  TEST_ABI = FFI_PASCAL;
-{$ELSE}{$IF DEFINED(FFITest_CDECL) AND DECLARED(FFI_SYSV)}
-  TEST_ABI = FFI_SYSV;
-{$ELSE}{$IF DEFINED(FFITest_STDCALL) AND DECLARED(FFI_STDCALL)}
-  TEST_ABI = FFI_STDCALL;
+{$IFDEF FFITest_REGISTER}
+  {$IF DECLARED(FFI_REGISTER)} const TEST_ABI = FFI_REGISTER; {$IFEND}
+{$ELSE}{$IFDEF FFITest_PASCAL}
+  {$IF DECLARED(FFI_PASCAL)}   const TEST_ABI = FFI_PASCAL;   {$IFEND}
+{$ELSE}{$IFDEF FFITest_CDECL}
+  {$IF DECLARED(FFI_CDECL)}    const TEST_ABI = FFI_CDECL;    {$IFEND}
+{$ELSE}{$IFDEF FFITest_STDCALL}
+  {$IF DECLARED(FFI_STDCALL)}  const TEST_ABI = FFI_STDCALL;  {$IFEND}
 {$ELSE}
-  TEST_ABI = FFI_DEFAULT_ABI;
+                               const TEST_ABI = FFI_DEFAULT_ABI;
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 
 {$IFNDEF FPC} //Internal error workaround
@@ -501,7 +500,7 @@ begin
   Result := r.a = 50;
 end;
 
-{$IF DEFINED(FPC) AND DEFINED(FFITest_CDECL)}
+{$IF DEFINED(FPC) AND DEFINED(FFITest_CDECL) AND (FPC_VERSION = 2)}
 // Work around FPC internal error
 function Func19(const a: TPackRec): TStatPackArr; cdecl;
 {$ELSE}
@@ -685,6 +684,7 @@ const
     (Fun: @Func21; Run: @RunFunc21; Str: 'function Func21(const a: TLargeRec): TLargeRec';        Arg: 'Assert(TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);')
   );
 
+{$IF DECLARED(TEST_ABI)}
 var
   t: Integer;
   StartTime: UInt64;
@@ -703,6 +703,9 @@ begin
   Assert(FFILoaded());
   ExitCode := 0;
 
+  WriteLn('Running ', Length(BiDiTests), ' tests with ', CallConvToStr(TEST_ABI), ' calling convention.');
+  WriteLn();
+
   StartTime := GetTickCount();
 
   for t := Low(BiDiTests) to High(BiDiTests) do
@@ -718,5 +721,11 @@ begin
   WriteLn(Format('Ran %d tests in %.2f seconds', [Length(BiDiTests), ((GetTickCount() - StartTime) / 1000)]));
   WriteLn(Format('%3d / %d tests failed', [ExitCode,                     Length(BiDiTests)]));
   WriteLn(Format('%3d / %d tests passed', [Length(BiDiTests) - ExitCode, Length(BiDiTests)]));
+  WriteLn();
+{$ELSE}
+begin
+  WriteLn('Invalid calling convention for platform.');
+  ExitCode := -1;
+{$ENDIF}
 end.
 
