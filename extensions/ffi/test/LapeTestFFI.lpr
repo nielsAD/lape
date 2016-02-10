@@ -501,10 +501,16 @@ begin
   Result := r.a = 50;
 end;
 
+{$IF DEFINED(FPC) AND DEFINED(FFITest_CDECL)}
+// Work around FPC internal error
+function Func19(const a: TPackRec): TStatPackArr; cdecl;
+{$ELSE}
+// Actual header
 function Func19(const a: TPackRec): TPackRec; {$I cconv.inc}
+{$IFEND}
 begin
-  Result.b := a.b + a.x;
-  Result.x := a.x;
+  TPackRec(Result).b := a.b + a.x;
+  TPackRec(Result).x := a.x;
 end;
 
 function RunFunc19(f: Pointer): Boolean;

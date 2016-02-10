@@ -112,6 +112,7 @@ type
     {$IFDEF CPU86}
       {$IFDEF UNIX}
       FFI_CDECL    = 1,
+      __FFI_DEPRECATED_2 = 2, //Prevent gaps to make sure typeinfo is generated
       FFI_THISCALL = 3,
       FFI_FASTCALL = 4,
       FFI_STDCALL  = 5,
@@ -132,6 +133,7 @@ type
 
     {$IFDEF CPUX86_64}
       {$IFDEF UNIX}
+      __FFI_DEPRECATED_1 = 1, //Prevent gaps to make sure typeinfo is generated
       FFI_UNIX64 = 2,
       {$ENDIF}
       {$IFDEF MSWINDOWS}

@@ -471,8 +471,8 @@ begin
   if (not Complex) then
     setComplexRes(fcrNone)
   else
-  {$IF DECLARED(FFI_REGISTER)}
-  if (ABI = FFI_REGISTER) then
+  {$IF DECLARED(FFI_REGISTER) AND DECLARED(FFI_REGISTER) AND DECLARED(FFI_FASTCALL)}
+  if (ABI in [FFI_REGISTER, FFI_PASCAL, FFI_FASTCALL]) then
     setComplexRes(fcrLastParam)
   else
   {$IFEND}
@@ -693,7 +693,7 @@ function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
     if (VarType = nil) or (VarType.FieldMap.Count < 1) then
       LapeException(lpeInvalidCast);
 
-    // Treat records as blobs
+    // Treat records as blobs to enforce record alignment
     FFIArray(VarType.Size, TFFITypeManager.Create(ffi_type_uint8));
 
     //for i := 0 to VarType.FieldMap.Count - 1 do
@@ -751,28 +751,36 @@ begin
 end;
 
 function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
-const
-       PointerParams = [ltVariant, ltShortString, ltLargeSet];
-  ConstPointerParams = [ltRecord];
 begin
   //http://docwiki.embarcadero.com/RADStudio/en/Program_Control#Register_Convention
-  Result := (Param.ParType in Lape_RefParams) or (Param.VarType = nil)
+  if (Param.VarType = nil) or (Param.ParType in Lape_RefParams) then
+    Exit(True);
 
-    or (Param.VarType.BaseType in PointerParams)
-    or ((Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType in ConstPointerParams) and (Param.VarType.Size > SizeOf(Pointer)))
+  {$IF DEFINED(CPU86) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)}
+    if (ABI in [FFI_CDECL, FFI_MS_CDECL]) then
+      Exit(Param.VarType.BaseType in [ltShortString, ltStaticArray]);
+  {$IFEND}
 
-    {$IFDEF CPU86}
-        or ((Param.VarType.BaseType in [ltRecord, ltStaticArray]) and (Param.VarType.Size > SizeOf(Pointer)))
-    {$ENDIF}
+  Result := (Param.VarType.BaseType in [ltShortString, ltLargeSet])
+      or   ((Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType = ltRecord) and (Param.VarType.Size > SizeOf(Pointer)))
 
-    {$IFDEF CPUX86_64}
-        or (Param.VarType.BaseType in [ltStaticArray])
-    {$ENDIF}
+  {$IF DECLARED(FFI_REGISTER) AND DECLARED(FFI_PASCAL) AND DECLARED(FFI_FASTCALL)}
+      or ((ABI  =  FFI_REGISTER)                            and (Param.VarType.BaseType in [ltVariant]))
+      or ((ABI in [FFI_REGISTER, FFI_PASCAL, FFI_FASTCALL]) and (Param.VarType.BaseType in [ltRecord, ltStaticArray]) and (Param.VarType.Size > SizeOf(Pointer)))
+  {$IFEND}
 
-    {$IF DECLARED(FFI_WIN64)}
-        or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (not (UInt8(Param.VarType.Size) in PowerTwoRegs)))
-        or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (Param.ParType in Lape_ConstParams) and (Param.VarType.Size = SizeOf(UInt8)))
-    {$IFEND}
+  {$IF DECLARED(FFI_STDCALL)}
+      or ((ABI = FFI_STDCALL) and (Param.VarType.BaseType in [ltVariant]) and (Param.ParType in Lape_ConstParams))
+  {$IFEND}
+
+  {$IFDEF CPUX86_64}
+      or (Param.VarType.BaseType in [ltStaticArray, ltVariant])
+  {$ENDIF}
+
+  {$IF DECLARED(FFI_WIN64)}
+      or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (not (UInt8(Param.VarType.Size) in PowerTwoRegs)))
+      or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (Param.ParType in Lape_ConstParams) and (Param.VarType.Size = SizeOf(UInt8)))
+  {$IFEND}
   ;
 end;
 
@@ -792,21 +800,23 @@ function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
 const
   ComplexTypes = LapeStringTypes + [ltStaticArray, ltLargeSet, ltVariant];
 begin
-  Result := (VarType <> nil) and (
-    (VarType.BaseType in ComplexTypes)
+  Result := False;
 
-    {$IF FPC_VERSION >= 3}
-        or VarType.NeedFinalization
-    {$IFEND}
+  if (VarType = nil) or (VarType.BaseType in ComplexTypes) {$IF FPC_VERSION >= 3}or VarType.NeedFinalization{$IFEND} then
+    Exit(True);
 
-    {$IFDEF CPU86}
-        or (VarType.BaseType in [ltRecord])
-    {$ENDIF}
+  {$IF DEFINED(CPU86) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)}
+    if (ABI in [FFI_CDECL, FFI_MS_CDECL]) then
+      Exit;
+  {$IFEND}
 
-    {$IF DECLARED(FFI_WIN64)}
-        or ((ABI = FFI_WIN64) and (VarType.BaseType = ltRecord) and (not (UInt8(VarType.Size) in PowerTwoRegs)))
-    {$IFEND}
-  );
+  {$IFDEF CPU86}
+    Result := VarType.BaseType in [ltRecord];
+  {$ENDIF}
+
+  {$IF DECLARED(FFI_WIN64)}
+    Result := (ABI = FFI_WIN64)and (VarType.BaseType = ltRecord) and (not (UInt8(VarType.Size) in PowerTwoRegs));
+  {$IFEND}
 end;
 
 function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;
