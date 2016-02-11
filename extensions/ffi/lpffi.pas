@@ -44,7 +44,7 @@ type
     property PTyp: PFFIType read getPTyp;
   end;
 
-  TFFIComplexReturn = (fcrNone, fcrFirstParam, fcrLastParam);
+  TFFIComplexReturn = (fcrNone, fcrFirstParam, fcrSecondParam, fcrLastParam);
   TArrayOfPointer = array of Pointer;
 
   TFFICifManager = class(TLapeBaseClass)
@@ -83,7 +83,7 @@ type
     procedure setRes(ARes: TFFITypeManager; DoManage: Boolean = True; EvalProc: TLapeEvalProc = nil); overload;
     procedure setRes(ARes: TFFIType; EvalProc: TLapeEvalProc = nil); overload;
     procedure setComplexRes(Complex: TFFIComplexReturn); overload;
-    procedure setComplexRes(Complex: Boolean); overload;
+    procedure setComplexRes(Complex: Boolean; ImplicitSelf: Boolean); overload;
 
     function TakePointers(Args: PPointerArray; var Res: Pointer; TakeAddr: Boolean = True): TArrayOfPointer;
     procedure Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True); overload;
@@ -93,7 +93,7 @@ type
 
     property ABI: TFFIABI read FABI write setABI;
     property Res: TFFITypeManager read FRes.Typ;
-    property ComplexRes: Boolean read getComplexRes write setComplexRes;
+    property ComplexRes: Boolean read getComplexRes;
 
     property Cif: TFFICif read getCif;
     property PCif: PFFICif read getPCif;
@@ -340,16 +340,25 @@ begin
   for i := 0 to High(FArgs) do
     PArgs[i] := FArgs[i].Typ.PTyp;
 
-  if (FRes.Complex = fcrFirstParam) then
-  begin
-    SetLength(PArgs, Length(PArgs) + 1);
-    Move(PArgs[0], PArgs[1], SizeOf(PArgs[0]) * Length(FArgs));
-    PArgs[0] := @ffi_type_pointer;
-  end
-  else if (FRes.Complex = fcrLastParam) then
-  begin
-    SetLength(PArgs, Length(PArgs) + 1);
-    PArgs[High(PArgs)] := @ffi_type_pointer;
+  case FRes.Complex of
+    fcrFirstParam, fcrSecondParam:
+      begin
+        SetLength(PArgs, Length(PArgs) + 1);
+        Move(PArgs[0], PArgs[1], SizeOf(PArgs[0]) * Length(FArgs));
+        PArgs[0] := @ffi_type_pointer;
+
+        if (FRes.Complex = fcrSecondParam) then
+        begin
+          Assert(Length(FArgs) > 0);
+          Assert(FArgs[0].TakePointer);
+          Swap(PArgs[0], PArgs[1]);
+        end;
+      end;
+    fcrLastParam:
+      begin
+        SetLength(PArgs, Length(PArgs) + 1);
+        PArgs[High(PArgs)] := @ffi_type_pointer;
+      end;
   end;
 
   if (FRes.Typ <> nil) then
@@ -466,7 +475,7 @@ begin
   end;
 end;
 
-procedure TFFICifManager.setComplexRes(Complex: Boolean);
+procedure TFFICifManager.setComplexRes(Complex: Boolean; ImplicitSelf: Boolean);
 begin
   if (not Complex) then
     setComplexRes(fcrNone)
@@ -476,6 +485,9 @@ begin
     setComplexRes(fcrLastParam)
   else
   {$IFEND}
+  if ImplicitSelf then
+    setComplexRes(fcrSecondParam)
+  else
     setComplexRes(fcrFirstParam);
 end;
 
@@ -494,43 +506,39 @@ begin
     Exit;
 
   SetLength(Result, l);
-  if (FRes.Complex = fcrFirstParam) then
-  begin
-    Dec(l);
-    if TakeAddr then
-      Result[o] := @Res
-    else
-    begin
-      Res := Args^[o];
-      Result[l] := PPointer(Res)^;
-    end;
-    Inc(o);
-  end
-  else if (FRes.Complex = fcrLastParam) then
-  begin
-    Dec(l);
-    if TakeAddr then
-      Result[l] := @Res
-    else
-    begin
-      Res := Args^[l];
-      Result[l] := PPointer(Res)^;
-    end;
+  case FRes.Complex of
+    fcrFirstParam,
+    fcrSecondParam: begin Dec(l); Inc(o); end;
+    fcrLastParam:   begin Dec(l);         end;
   end;
 
-  Dec(l);
   if TakeAddr then
-    for i := 0 to l do
+    for i := 0 to l-1 do
       if FArgs[i].TakePointer then
         Result[i+o] := @Args^[i]
       else
         Result[i+o] := Args^[i]
   else
-    for i := 0 to l do
+    for i := 0 to l-1 do
       if FArgs[i].TakePointer then
         Result[i] := PPointer(Args^[i+o])^
       else
         Result[i] := Args^[i+o];
+
+  if TakeAddr then
+    case FRes.Complex of
+      fcrFirstParam:  begin Result[0] := @Res;                             end;
+      fcrSecondParam: begin Result[0] := @Res; Swap(Result[0], Result[1]); end;
+      fcrLastParam:   begin Result[l] := @Res;                             end;
+    end
+  else
+  begin
+    case FRes.Complex of
+      fcrFirstParam:  begin Res := Args^[0]; Result[l] := PPointer(Res)^; end;
+      fcrSecondParam: begin Res := Args^[0]; Result[l] := PPointer(Res)^; Swap(Result[0], Result[l]); end;
+      fcrLastParam:   begin Res := Args^[l]; Result[l] := PPointer(Res)^; end;
+    end;
+  end;
 end;
 
 procedure TFFICifManager.Call(Func, Res: Pointer; Args: PPointerArray; ATakePointers: Boolean = True);
@@ -805,17 +813,20 @@ begin
   if (VarType = nil) or (VarType.BaseType in ComplexTypes) {$IF FPC_VERSION >= 3}or VarType.NeedFinalization{$IFEND} then
     Exit(True);
 
-  {$IF DEFINED(CPU86) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)}
-    if (ABI in [FFI_CDECL, FFI_MS_CDECL]) then
-      Exit;
-  {$IFEND}
-
   {$IFDEF CPU86}
-    Result := VarType.BaseType in [ltRecord];
+    Result := (VarType.BaseType = ltRecord)
+      {$IF DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)}
+        and ((not (ABI in [FFI_CDECL, FFI_MS_CDECL])) or (not (UInt8(VarType.Size) in PowerTwoRegs)))
+      {$IFEND}
+    ;
   {$ENDIF}
 
+  {$IF DECLARED(FFI_UNIX64)}
+    Result := (ABI = FFI_UNIX64) and (VarType.BaseType = ltRecord) and (VarType.Size > SizeOf(Pointer));
+  {$IFEND}
+
   {$IF DECLARED(FFI_WIN64)}
-    Result := (ABI = FFI_WIN64)and (VarType.BaseType = ltRecord) and (not (UInt8(VarType.Size) in PowerTwoRegs));
+    Result := (ABI = FFI_WIN64)  and (VarType.BaseType = ltRecord) and (not (UInt8(VarType.Size) in PowerTwoRegs));
   {$IFEND}
 end;
 
@@ -858,18 +869,13 @@ begin
   Result := TFFICifManager.Create(ABI);
   if (Header.Res <> nil) then
     if LapeFFIComplexReturn(Header.Res, ABI) then
-      Result.setComplexRes(True)
+      Result.setComplexRes(True, MethodOfObject(Header))
     else
       Result.setRes(LapeResultToFFIType(Header.Res, ABI), True, LapeResultEvalProc(Header.Res, ABI));
 
   try
     if MethodOfObject(Header) then
     begin
-      {$IF DEFINED(FFI_PASCAL)}
-      if (ABI = FFI_PASCAL) then
-        LapeException(lpeImpossible);
-      {$IFEND}
-
       SelfParam := NullParameter;
       if (Header is TLapeType_MethodOfType) then
       begin
@@ -1053,17 +1059,12 @@ begin
 
   if MethodOfObject(Header) then
   begin
-    {$IF DECLARED(FFI_PASCAL)}
-    if (ABI = FFI_PASCAL) then
-      LapeException(lpeImpossible);
-    {$IFEND}
-
     SetLength(ParInfo, Length(ParInfo) + 1);
     ParInfo[0] := RefPar;
     Inc(c);
   end;
 
-  for i := 0 to High(ParInfo) do
+  for i := 0 to Header.Params.Count - 1 do
   begin
     if (Header.Params[i].ParType in Lape_RefParams) or (Header.Params[i].VarType = nil) then
       ParInfo[c] := RefPar

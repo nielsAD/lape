@@ -170,7 +170,7 @@ begin
     LapeExceptionFmt(lpeDuplicateDeclaration, [AName]);
 
   FieldSize := FieldType.Size;
-  if (FSize > 0) and (AAlignment > 1) then
+  if (AAlignment > 1) then
   begin
     AAlignment := Min(AAlignment, AlignmentMask(FieldType));
     FAlignment := Max(FAlignment, AAlignment);

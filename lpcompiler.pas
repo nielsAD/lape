@@ -1744,12 +1744,12 @@ begin
   try
     if (FuncHeader <> nil) then
     begin
-      for i := 0 to FuncHeader.Params.Count - 1 do
-        FStackInfo.addVar(FuncHeader.Params[i].ParType, FuncHeader.Params[i].VarType, lpString('Param'+IntToStr(i)));
       if (FuncHeader is TLapeType_MethodOfType) then
-        FStackInfo.addVar(Lape_SelfParam, TLapeType_MethodOfType(FuncHeader).ObjectType, 'Self')
+        FStackInfo.addVar(TLapeType_MethodOfType(FuncHeader).SelfParam, TLapeType_MethodOfType(FuncHeader).ObjectType, 'Self')
       else if (FuncHeader is TLapeType_MethodOfObject) then
         FStackInfo.addVar(lptConstRef, getGlobalType('ConstPointer'), 'Self');
+      for i := 0 to FuncHeader.Params.Count - 1 do
+        FStackInfo.addVar(FuncHeader.Params[i].ParType, FuncHeader.Params[i].VarType, lpString('Param'+IntToStr(i)));
       if (FuncHeader.Res <> nil) then
         FStackInfo.addVar(lptOut, FuncHeader.Res, 'Result');
     end;

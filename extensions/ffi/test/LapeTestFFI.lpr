@@ -2,7 +2,7 @@ program LapeTestFFI;
 
 uses
   SysUtils, {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
-  lptypes, lpvartypes, lpcompiler, lpparser, lpinterpreter, lpexceptions, lpffi, ffi;
+  lptypes, lpvartypes, lpcompiler, lptree, lpparser, lpinterpreter, lpexceptions, lpffi, ffi;
 
 type
   TRunFun = function(p: Pointer): Boolean;
@@ -561,6 +561,175 @@ begin
   Result := (r.a = 4) and (r.b = 3) and (r.c = 2) and (r.d = 1);
 end;
 
+type
+  TTestObject = object
+    MagicToken: NativeInt;
+    Success: Boolean;
+
+    procedure Meth1; {$I cconv.inc}
+    procedure Meth2(a, b, c, d, e, f, g, h, i, j: NativeInt); {$I cconv.inc}
+    function Meth3(const a: NativeInt): NativeInt; {$I cconv.inc}
+    function Meth4(const a, b, c: Int8): UInt8; {$I cconv.inc}
+    function Meth5(const a: TStatPackArr): TStatPackArr; {$I cconv.inc}
+    function Meth6(constref a: TStrRec): TStrRec; {$I cconv.inc}
+    function Meth7(const a: TLargeRec): TLargeRec; {$I cconv.inc}
+  end;
+
+const
+  NullTestObject: TTestObject = (MagicToken: 12345; Success: False);
+
+procedure TTestObject.Meth1; {$I cconv.inc}
+begin
+  Assert(MagicToken = NullTestObject.MagicToken);
+  Success := True;
+end;
+
+function RunMeth1(p: Pointer): Boolean;
+type
+  TM = procedure of object; {$I cconv.inc}
+var
+  m: TM;
+  o: TTestObject;
+begin
+  o := NullTestObject;
+  TMethod(m).Code := p;
+  TMethod(m).Data := @o;
+  TM(m)();
+  Result := o.Success;
+end;
+
+procedure TTestObject.Meth2(a, b, c, d, e, f, g, h, i, j: NativeInt); {$I cconv.inc}
+begin
+  Assert(MagicToken = NullTestObject.MagicToken);
+  Success := (a = 1) and (b =- 2) and (c = 3) and (d = -4) and (e = 5) and (f = -6)
+         and (g = 7) and (h = -8) and (i = 9) and (j = -10);
+  Assert(Success);
+end;
+
+function RunMeth2(p: Pointer): Boolean;
+type
+  TM = procedure(a, b, c, d, e, f, g, h, i, j: NativeInt) of object; {$I cconv.inc}
+var
+  m: TM;
+  o: TTestObject;
+begin
+  o := NullTestObject;
+  TMethod(m).Code := p;
+  TMethod(m).Data := @o;
+  TM(m)(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);
+  Result := o.Success;
+end;
+
+function TTestObject.Meth3(const a: NativeInt): NativeInt; {$I cconv.inc}
+begin
+  Assert(MagicToken = NullTestObject.MagicToken);
+  Result := a + 1;
+end;
+
+function RunMeth3(f: Pointer): Boolean;
+type
+  TM = function(const a: NativeInt): NativeInt of object; {$I cconv.inc}
+var
+  m: TM;
+  o: TTestObject;
+begin
+  o := NullTestObject;
+  TMethod(m).Code := f;
+  TMethod(m).Data := @o;
+  Result := TM(m)(10) = 11;
+end;
+
+function TTestObject.Meth4(const a, b, c: Int8): UInt8; {$I cconv.inc}
+begin
+  Assert(MagicToken = NullTestObject.MagicToken);
+  Result := a + b + c;
+end;
+
+function RunMeth4(f: Pointer): Boolean;
+type
+  TM = function(const a, b, c: Int8): UInt8 of object; {$I cconv.inc}
+var
+  m: TM;
+  o: TTestObject;
+begin
+  o := NullTestObject;
+  TMethod(m).Code := f;
+  TMethod(m).Data := @o;
+  Result := TM(m)(15, 14, 13) = 42;
+end;
+
+function TTestObject.Meth5(const a: TStatPackArr): TStatPackArr; {$I cconv.inc}
+var
+  i: Integer;
+begin
+  Result[0] := a[0];
+  for i := Low(Result)+1 to High(Result) do
+    Result[i] := Result[i-1] + a[i];
+end;
+
+function RunMeth5(f: Pointer): Boolean;
+type
+  TM = function(const a: TStatPackArr): TStatPackArr of object; {$I cconv.inc}
+const
+  a: TStatPackArr = (1, 2, 3);
+var
+  m: TM;
+  o: TTestObject;
+  b: TStatPackArr;
+begin
+  o := NullTestObject;
+  TMethod(m).Code := f;
+  TMethod(m).Data := @o;
+  b := TM(m)(a);
+  Result := (b[2] = 6);
+end;
+
+function TTestObject.Meth6(constref a: TStrRec): TStrRec; {$I cconv.inc}
+begin
+  Result.c := '0' + a.c;
+end;
+
+function RunMeth6(f: Pointer): Boolean;
+type
+  TM = function(constref a: TStrRec): TStrRec of object; {$I cconv.inc}
+var
+  m: TM;
+  o: TTestObject;
+  r: TStrRec;
+begin
+  o := NullTestObject;
+  r.c := '123';
+  TMethod(m).Code := f;
+  TMethod(m).Data := @o;
+  r := TM(m)(r);
+  Result := (r.c = '0123');
+end;
+
+function TTestObject.Meth7(const a: TLargeRec): TLargeRec; {$I cconv.inc}
+begin
+  Assert(MagicToken = NullTestObject.MagicToken);
+  Result.a := a.d;
+  Result.b := a.c;
+  Result.c := a.b;
+  Result.d := a.a;
+end;
+
+function RunMeth7(f: Pointer): Boolean;
+type
+  TM = function(const a: TLargeRec): TLargeRec of object; {$I cconv.inc}
+var
+  m: TM;
+  o: TTestObject;
+  r: TLargeRec;
+begin
+  o := NullTestObject;
+  r.a := 1; r.b := 2; r.c := 3; r.d := 4;
+  TMethod(m).Code := f;
+  TMethod(m).Data := @o;
+  r := TM(m)(r);
+  Result := (r.a = 4) and (r.b = 3) and (r.c = 2) and (r.d = 1);
+end;
+
 function TestBiDiFFI(Header: lpString; ImportFun: Pointer; RunFun: TRunFun; RunStr: lpString = ''; ImportABI: TFFIABI = FFI_DEFAULT_ABI; ExportABI: TFFIABI = FFI_DEFAULT_ABI): Boolean;
 var
   i: TImportClosure;
@@ -568,16 +737,25 @@ var
   v: TLapeGlobalVar;
   s: lpString;
   p: Integer;
+  m: TLapeTree_Method;
+  t: TTestObject;
 begin
   i := nil;
   e := nil;
   s := '';
+  t := NullTestObject;
   Result := False;
 
   try
     with TLapeCompiler.Create(TLapeTokenizerString.Create('begin ' + RunStr + ' end.')) do
     try
       Options := Options + [lcoAssertions, lcoInitExternalResult];
+
+      addGlobalVar(
+        addGlobalType('record MagicToken: NativeInt; Success: Boolean; end', 'TTest'),
+        @t,
+        'Test'
+      );
 
       addGlobalType('(ESmallFirst = ' + IntToStr(Ord(Low(ELapeSmallEnum))) + ', ESmallLast = ' + IntToStr(Ord(High(ELapeSmallEnum))) + ')', 'TSmallEnum');
       addGlobalType('(ELargeFirst = ' + IntToStr(Ord(Low(ELapeSmallEnum))) + ', ELargeLast = ' + IntToStr(Ord(High(ELapeLargeEnum))) + ')', 'TLargeEnum');
@@ -611,12 +789,12 @@ begin
       else
         s := 'begin '           + v.Name + '(' + s + '); end;';
 
-      addGlobalFunc(v.VarType as TLapeType_Method, 'TestMe', s);
+      m := addGlobalFunc(v.VarType as TLapeType_Method, 'TestMe', s);
 
-      if (not Compile()) then
+      if (m = nil) or (m.Method = nil) or (not Compile()) then
         LapeException('Could not compile ' + Header);
 
-      e := LapeExportWrapper(Globals['TestMe'], ExportABI);
+      e := LapeExportWrapper(m.Method, ExportABI);
 
       Write(Format('Testing  %-6s :: %8s <-> %-8s :: ', [v.Name, CallConvToStr(ImportABI), CallConvToStr(ExportABI)]));
       RunCode(Emitter.Code);
@@ -651,7 +829,7 @@ type
   end;
 
 const
-  BiDiTests: array[1..31] of TRunProc = (
+  BiDiTests: array[1..38] of TRunProc = (
     (Fun: @Proc1;  Run: @RunProc1;  Str: 'procedure Proc1';                                                                                                        Arg: 'TestMe();'),
     (Fun: @Proc2;  Run: @RunProc2;  Str: 'procedure Proc2(a, b, c, d, e, f, g, h, i, j: NativeInt)';                                                               Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);'),
     (Fun: @Proc3;  Run: @RunProc3;  Str: 'procedure Proc3(a: UInt8; b: Int64; c: UInt32; d: Int16; e: UInt16; f: Int32; g: UInt64; h: Int8)';                      Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8);'),
@@ -683,7 +861,16 @@ const
     (Fun: @Func18; Run: @RunFunc18; Str: 'function Func18(const a: TShortRec): TShortRec';        Arg: 'Assert(TestMe([100]) = [50]);'),
     (Fun: @Func19; Run: @RunFunc19; Str: 'function Func19(const a: TPackRec): TPackRec';          Arg: 'Assert(TestMe([1, 10]) = [11, 10]);'),
     (Fun: @Func20; Run: @RunFunc20; Str: 'function Func20(constref a: TStrRec): TStrRec';         Arg: 'Assert(TestMe(["123"]) = ["0123"]);'),
-    (Fun: @Func21; Run: @RunFunc21; Str: 'function Func21(const a: TLargeRec): TLargeRec';        Arg: 'Assert(TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);')
+    (Fun: @Func21; Run: @RunFunc21; Str: 'function Func21(const a: TLargeRec): TLargeRec';        Arg: 'Assert(TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);'),
+
+    (Fun: @TTestObject.Meth1; Run: @RunMeth1; Str: 'procedure TTest.Meth1';                                          Arg: 'Test.TestMe();'),
+    (Fun: @TTestObject.Meth2; Run: @RunMeth2; Str: 'procedure TTest.Meth2(a, b, c, d, e, f, g, h, i, j: NativeInt)'; Arg: 'Test.TestMe(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);'),
+    (Fun: @TTestObject.Meth3; Run: @RunMeth3; Str: 'function TTest.Meth3(const a: NativeInt): NativeInt';            Arg: 'Assert(Test.TestMe(10) = 11);'),
+    (Fun: @TTestObject.Meth4; Run: @RunMeth4; Str: 'function TTest.Meth4(const a, b, c: Int8): UInt8';               Arg: 'Assert(Test.TestMe(15, 14, 13) = 42);'),
+    (Fun: @TTestObject.Meth5; Run: @RunMeth5; Str: 'function TTest.Meth5(const a: TStatPackArr): TStatPackArr';      Arg: 'Assert(Test.TestMe([1..3])[2] = 6);'),
+    (Fun: @TTestObject.Meth6; Run: @RunMeth6; Str: 'function TTest.Meth6(constref a: TStrRec): TStrRec';             Arg: 'Assert(Test.TestMe(["123"]) = ["0123"]);'),
+    (Fun: @TTestObject.Meth7; Run: @RunMeth7; Str: 'function TTest.Meth7(const a: TLargeRec): TLargeRec';            Arg: 'Assert(Test.TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);')
+
   );
 
 {$IF DECLARED(TEST_ABI)}
