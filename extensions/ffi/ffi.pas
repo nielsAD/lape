@@ -21,14 +21,25 @@
 
 (*
   Features:
-      - Experimental support for ffi_call, ffi_prep_cif, ffi_prep_closure,
-        ffi_prep_closure_loc.
-      - All the requires types have been ported to their FPC equivalent;
+      - Supporting ffi_call, ffi_prep_cif, ffi_prep_closure, ffi_prep_closure_loc.
+      - All the requires types have been ported to their Pascal equivalent;
         TFFIClosure however requires some extra additions per architecture.
 *)
 unit ffi;
 
-{$mode objfpc}{$H+}
+{$IFDEF FPC}
+  {$MODE objfpc}{$H+}
+  {$IFDEF FPC_HAS_TYPE_EXTENDED}
+    {$DEFINE HasExtended}
+  {$ENDIF}
+{$ELSE}
+  {$IFDEF WIN64}
+    {$DEFINE CPUX86_64}
+  {$ELSE}
+    {$DEFINE CPU86}
+    {$DEFINE HasExtended}
+  {$ENDIF}
+{$ENDIF}
 
 {.$DEFINE StaticFFI}  //Link at compile time into the executable
 {$DEFINE DynamicFFI}  //Load library dynamically, use AssertFFILoaded() to check
@@ -42,7 +53,7 @@ interface
   {$LINKLIB libffi}
   {$UNDEF DynamicFFI}
 
-  {$IFDEF WINDOWS}
+  {$IFDEF MSWINDOWS}
     {$LINKLIB libgcc}
     {$LINKLIB libmsvcrt}
     {$LINKLIB libkernel32}
@@ -50,14 +61,40 @@ interface
 {$ENDIF}
 
 uses
-  ctypes, dynlibs;
+{$IFDEF FPC}
+  ctypes, dynlibs
+{$ELSE}
+  Windows
+{$ENDIF};
 
-(*
-TODO:
-  -  Add ARM compat. Replace cpu32 ifdef's with better ifdefs.
-  -  Mac compat.
-  -  Test architectures.
-*)
+{$IFNDEF FPC}
+type
+  PtrInt  = NativeInt;
+  PtrUInt = NativeUInt;
+
+  cuint8      = Byte;
+  cint8       = SmallInt;
+  cuint16     = Word;
+  cint16      = ShortInt;
+  cuint32     = LongWord;
+  cint32      = LongInt;
+  cuint64     = UInt64;
+  cint64      = Int64;
+  cfloat      = Single;
+  cdouble     = Double;
+  clongdouble = Extended;
+  cchar       = cuint8;
+  cushort     = cuint16;
+  cuint       = cuint32;
+  csize_t     = NativeInt;
+  cunsigned   = NativeUInt;
+
+  TLibHandle  = THandle;
+
+const
+  NilHandle    = 0;
+  SharedSuffix = {$IFDEF MSWINDOWS}'dll'{$ELSE}'so'{$ENDIF};
+{$ENDIF}
 
 const
   LibFFI = 'libffi.' + SharedSuffix;
@@ -70,57 +107,82 @@ type
   );
 
   TFFIABI = (
-    FFI_FIRST_ABI = 0,
+    FFI_UNKNOWN_ABI = 0,
 
-    {$IFDEF LINUX}
-      FFI_SYSV,
-      FFI_UNIX64,
-      FFI_THISCALL,
-      FFI_FASTCALL,
-      FFI_STDCALL,
-      FFI_LAST_ABI,
-
-      {$IFDEF CPU32}
-        FFI_DEFAULT_ABI := FFI_FASTCALL
-      {$ELSE}
-        FFI_DEFAULT_ABI := FFI_UNIX64
+    {$IFDEF CPU86}
+      {$IFDEF UNIX}
+      FFI_CDECL    = 1,
+      __FFI_DEPRECATED_2 = 2, //Prevent gaps to make sure typeinfo is generated
+      FFI_THISCALL = 3,
+      FFI_FASTCALL = 4,
+      FFI_STDCALL  = 5,
+      FFI_PASCAL   = 6,
+      FFI_REGISTER = 7,
+      FFI_MS_CDECL = 8,
+      {$ENDIF}
+      {$IFDEF MSWINDOWS}
+      FFI_CDECL    = 1,
+      FFI_STDCALL  = 2,
+      FFI_THISCALL = 3,
+      FFI_FASTCALL = 4,
+      FFI_MS_CDECL = 5,
+      FFI_PASCAL   = 6,
+      FFI_REGISTER = 7,
       {$ENDIF}
     {$ENDIF}
 
-    {$IFDEF MSWINDOWS}
-      {$IFDEF CPU32}
-        FFI_SYSV,
-        FFI_STDCALL,
-        FFI_THISCALL,
-        FFI_FASTCALL,
-        FFI_MS_CDECL,
-        FFI_LAST_ABI,
-        FFI_DEFAULT_ABI := FFI_FASTCALL
-      {$ELSE}
-        FFI_WIN64,
-        FFI_LAST_ABI,
-        FFI_DEFAULT_ABI := FFI_WIN64
+    {$IFDEF CPUX86_64}
+      {$IFDEF UNIX}
+      __FFI_DEPRECATED_1 = 1, //Prevent gaps to make sure typeinfo is generated
+      FFI_UNIX64 = 2,
+      {$ENDIF}
+      {$IFDEF MSWINDOWS}
+      FFI_WIN64  = 1,
       {$ENDIF}
     {$ENDIF}
+
+    {$IFDEF CPUARM}
+      FFI_CDECL = 1,
+      FFI_VFP   = 2,
+    {$ENDIF}
+
+    FFI_LAST_ABI
   );
 
+const
+  FFI_DEFAULT_ABI =
+    {$IFDEF CPU86}FFI_REGISTER{$ENDIF}
+    {$IFDEF CPUX86_64}{$IFDEF MSWINDOWS}FFI_WIN64{$ELSE}FFI_UNIX64{$ENDIF}{$ENDIF}
+    {$IFDEF CPUARM}{$IFDEF FPUVFP}FFI_VFP{$ELSE}FFI_CDECL{$ENDIF}{$ENDIF};
+
+  FFI_TRAMPOLINE_SIZE =
+    {$IFDEF CPU86}12{$ENDIF}
+    {$IFDEF CPUX86_64}24{$ENDIF}
+    {$IFDEF CPUARM}12{$ENDIF};
+
+  {$IF DECLARED(FFI_CDECL)}
+  FFI_SYSV = FFI_CDECL;
+  {$IFEND}
+
+type
   TFFI_CTYPE = (
-    FFI_CTYPE_VOID = 0,
-    FFI_CTYPE_INT,
-    FFI_CTYPE_FLOAT,
-    FFI_CTYPE_DOUBLE,
-    FFI_CTYPE_LONGDOUBLE,
-    FFI_CTYPE_UINT8,
-    FFI_CTYPE_SINT8,
-    FFI_CTYPE_UINT16,
-    FFI_CTYPE_SINT16,
-    FFI_CTYPE_UINT32,
-    FFI_CTYPE_SINT32,
-    FFI_CTYPE_UINT64,
-    FFI_CTYPE_SINT64,
-    FFI_CTYPE_STRUCT,
-    FFI_CTYPE_POINTER,
-    FFI_CTYPE_LAST := FFI_CTYPE_POINTER
+    FFI_CTYPE_VOID       = 0,
+    FFI_CTYPE_INT        = 1,
+    FFI_CTYPE_FLOAT      = 2,
+    FFI_CTYPE_DOUBLE     = 3,
+    {$IFDEF HasExtended}
+    FFI_CTYPE_LONGDOUBLE = 4,
+    {$IFEND}
+    FFI_CTYPE_UINT8      = 5,
+    FFI_CTYPE_SINT8      = 6,
+    FFI_CTYPE_UINT16     = 7,
+    FFI_CTYPE_SINT16     = 8,
+    FFI_CTYPE_UINT32     = 9,
+    FFI_CTYPE_SINT32     = 10,
+    FFI_CTYPE_UINT64     = 11,
+    FFI_CTYPE_SINT64     = 12,
+    FFI_CTYPE_STRUCT     = 13,
+    FFI_CTYPE_POINTER    = 14
   );
 
   PFFIType = ^TFFIType;
@@ -142,15 +204,7 @@ type
     rtype: PFFIType;
     bytes: cunsigned;
     flags: cunsigned;
-    {$IFDEF FFI_EXTRA_FIELDS}
-    // TODO
-    {$ENDIF}
   end;
-
-const
-  FFI_TRAMPOLINE_SIZE =
-    {$IFDEF WINDOWS}{$IFDEF CPU32}52{$ELSE}29{$ENDIF}{$ENDIF}
-    {$IFDEF LINUX}{$IFDEF CPU32}10{$ELSE}24{$ENDIF}{$ENDIF};
 
 type
   TClosureBindingFunction = procedure(
@@ -162,10 +216,14 @@ type
 
   PFFIClosure = ^TFFIClosure;
   TFFIClosure = record
-    tramp: array [0..FFI_TRAMPOLINE_SIZE - 1] of cchar; // Let's hope FFI_EXEC_TRAMPOLINE_TABLE is not defined/true
-    cif: PFFICif;
-    fun: TClosureBindingFunction;
-    user_data: Pointer;
+    //tramp: array [0..FFI_TRAMPOLINE_SIZE - 1] of cchar;
+    //cif: PFFICif;
+    //fun: TClosureBindingFunction;
+    //user_data: Pointer;
+
+    // DO NOT RELY ON THIS LAYOUT, JUST MAKE SURE IT IS LARGE ENOUGH
+    _tramp: array [0..55] of cchar;
+    _ptrs: array[0..2] of Pointer;
   end;
 
   TFFIPrepCif = function(
@@ -222,11 +280,14 @@ var
   ffi_type_sint64: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
   ffi_type_float: TFFIType;      {$IFDEF StaticFFI}cvar; external;{$ENDIF}
   ffi_type_double: TFFIType;     {$IFDEF StaticFFI}cvar; external;{$ENDIF}
-  ffi_type_longdouble: TFFIType; {$IFDEF StaticFFI}cvar; external;{$ENDIF}
+  ffi_type_longdouble: TFFIType; {$IF DEFINED(HasExtended) AND DEFINED(StaticFFI)}cvar; external;{$IFEND}
   ffi_type_pointer: TFFIType;    {$IFDEF StaticFFI}cvar; external;{$ENDIF}
 
 function FFILoaded: Boolean;
 procedure AssertFFILoaded;
+
+function CallConvToStr(c: TFFIABI): string;
+function StrToCallConv(c: string): TFFIABI;
 
 {$IFDEF DynamicFFI}
 procedure LoadFFI(LibPath: string = ''; LibName: string = LibFFI);
@@ -236,7 +297,24 @@ procedure UnloadFFI;
 implementation
 
 uses
-  sysutils;
+  SysUtils, TypInfo;
+
+function CallConvToStr(c: TFFIABI): string;
+begin
+  Result := LowerCase(getEnumName(TypeInfo(TFFIABI), Ord(c)));
+  if (Result <> '') then
+    Delete(Result, 1, 4);
+end;
+
+function StrToCallConv(c: string): TFFIABI;
+begin
+  c := LowerCase(c);
+  if (Length(c) < 5) or (c[1] <> 'f') or (c[2] <> 'f') or (c[3] <> 'i') or (c[4] <> '_') then
+    c := 'ffi_' + c;
+  Result := TFFIABI(GetEnumValue(TypeInfo(TFFIABI), c));
+  if (Result = TFFIABI(-1)) then
+    Result := FFI_UNKNOWN_ABI;
+end;
 
 function FFILoaded: Boolean;
 begin
@@ -263,7 +341,7 @@ end;
 
 {$IFNDEF StaticFFI}
 type
-  generic TFFIBaseType<_T> = class
+  {$IFDEF FPC}generic{$ENDIF} TFFIBaseType<_T> = class
   public type
     TAlignStruct = record
       c: cchar;
@@ -274,27 +352,29 @@ type
     class function getFFIType(FFI_CType: TFFI_CTYPE = FFI_CTYPE_VOID): TFFIType;
   end;
 
-  TFFIBaseType_UInt8      = specialize TFFIBaseType<cuint8>;
-  TFFIBaseType_SInt8      = specialize TFFIBaseType<cint8>;
-  TFFIBaseType_UInt16     = specialize TFFIBaseType<cuint16>;
-  TFFIBaseType_SInt16     = specialize TFFIBaseType<cint16>;
-  TFFIBaseType_UInt32     = specialize TFFIBaseType<cuint32>;
-  TFFIBaseType_SInt32     = specialize TFFIBaseType<cint32>;
-  TFFIBaseType_UInt64     = specialize TFFIBaseType<cuint64>;
-  TFFIBaseType_SInt64     = specialize TFFIBaseType<cint64>;
-  TFFIBaseType_Float      = specialize TFFIBaseType<cfloat>;
-  TFFIBaseType_Double     = specialize TFFIBaseType<cdouble>;
-  TFFIBaseType_LongDouble = specialize TFFIBaseType<clongdouble>;
-  TFFIBaseType_Pointer    = specialize TFFIBaseType<Pointer>;
+  TFFIBaseType_UInt8      = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cuint8>;
+  TFFIBaseType_SInt8      = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cint8>;
+  TFFIBaseType_UInt16     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cuint16>;
+  TFFIBaseType_SInt16     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cint16>;
+  TFFIBaseType_UInt32     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cuint32>;
+  TFFIBaseType_SInt32     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cint32>;
+  TFFIBaseType_UInt64     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cuint64>;
+  TFFIBaseType_SInt64     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cint64>;
+  TFFIBaseType_Float      = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cfloat>;
+  TFFIBaseType_Double     = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<cdouble>;
+  {$IFDEF HasExtended}
+  TFFIBaseType_LongDouble = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<clongdouble>;
+  {$ENDIF}
+  TFFIBaseType_Pointer    = {$IFDEF FPC}specialize{$ENDIF} TFFIBaseType<Pointer>;
 
-class function TFFIBaseType.getOffset: Integer;
+class function TFFIBaseType{$IFNDEF FPC}<_T>{$ENDIF}.getOffset: Integer;
 var
   t: TAlignStruct;
 begin
   Result := PtrUInt(@t.x) - PtrUInt(@t.c);
 end;
 
-class function TFFIBaseType.getFFIType(FFI_CType: TFFI_CTYPE = FFI_CTYPE_VOID): TFFIType;
+class function TFFIBaseType{$IFNDEF FPC}<_T>{$ENDIF}.getFFIType(FFI_CType: TFFI_CTYPE = FFI_CTYPE_VOID): TFFIType;
 begin
   with Result do
   begin
@@ -307,20 +387,34 @@ end;
 {$ENDIF}
 
 {$IFDEF DynamicFFI}
+{$IF NOT(DECLARED(GetProcedureAddress)) AND DECLARED(GetProcAddress)}
+function GetProcedureAddress(Handle: TLibHandle; Name: PWideChar): FARPROC;
+begin
+  Result := GetProcAddress(Handle, Name);
+end;
+{$IFEND}
+
+{$IF NOT(DECLARED(UnloadLibrary)) AND DECLARED(FreeLibrary)}
+function UnloadLibrary(Handle: TLibHandle): LongBool;
+begin
+  Result := FreeLibrary(Handle);
+end;
+{$IFEND}
+
 procedure LoadFFI(LibPath: string = ''; LibName: string = LibFFI);
 begin
   UnloadFFI();
   if (LibPath <> '') then
     LibPath := IncludeTrailingPathDelimiter(LibPath);
-  ffi_libhandle := LoadLibrary(LibPath + LibName);
+  ffi_libhandle := LoadLibrary(PChar(LibPath + LibName));
 
   if FFILoaded() then
   begin
-    Pointer(ffi_prep_cif) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_cif');
-    Pointer(ffi_call) := GetProcedureAddress(ffi_libhandle, 'ffi_call');
-    Pointer(ffi_closure_alloc) := GetProcedureAddress(ffi_libhandle, 'ffi_closure_alloc');
-    Pointer(ffi_closure_free) := GetProcedureAddress(ffi_libhandle, 'ffi_closure_free');
-    Pointer(ffi_prep_closure_loc) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_closure_loc');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_cif)         := GetProcedureAddress(ffi_libhandle, 'ffi_prep_cif');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_call)             := GetProcedureAddress(ffi_libhandle, 'ffi_call');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_alloc)    := GetProcedureAddress(ffi_libhandle, 'ffi_closure_alloc');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_free)     := GetProcedureAddress(ffi_libhandle, 'ffi_closure_free');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_closure_loc) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_closure_loc');
   end;
 end;
 
@@ -331,11 +425,11 @@ begin
     begin
       ffi_libhandle := NilHandle;
 
-      Pointer(ffi_prep_cif) := nil;
-      Pointer(ffi_call) := nil;
-      Pointer(ffi_closure_alloc) := nil;
-      Pointer(ffi_closure_free) := nil;
-      Pointer(ffi_prep_closure_loc) := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_cif)         := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_call)             := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_alloc)    := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_free)     := nil;
+      Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_closure_loc) := nil;
     end;
 end;
 {$ENDIF}
@@ -344,10 +438,10 @@ initialization
   {$IFDEF DynamicFFI}
   LoadFFI();
   {$ELSE}
-  ffi_prep_cif := @_ffi_prep_cif;
-  ffi_call := @_ffi_call;
-  ffi_closure_alloc := @_ffi_closure_alloc;
-  ffi_closure_free := @_ffi_closure_free;
+  ffi_prep_cif         := @_ffi_prep_cif;
+  ffi_call             := @_ffi_call;
+  ffi_closure_alloc    := @_ffi_closure_alloc;
+  ffi_closure_free     := @_ffi_closure_free;
   ffi_prep_closure_loc := @_ffi_prep_closure_loc;
   {$ENDIF}
 
@@ -370,7 +464,11 @@ initialization
   ffi_type_sint64     := TFFIBaseType_SInt64.getFFIType(FFI_CTYPE_SINT64);
   ffi_type_float      := TFFIBaseType_Float.getFFIType(FFI_CTYPE_FLOAT);
   ffi_type_double     := TFFIBaseType_Double.getFFIType(FFI_CTYPE_DOUBLE);
+  {$IFDEF HasExtended}
   ffi_type_longdouble := TFFIBaseType_LongDouble.getFFIType(FFI_CTYPE_LONGDOUBLE);
+  {$ELSE}
+  ffi_type_longdouble := ffi_type_double;
+  {$ENDIF}
   ffi_type_pointer    := TFFIBaseType_Pointer.getFFIType(FFI_CTYPE_POINTER);
   {$ENDIF}
 

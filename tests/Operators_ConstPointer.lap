@@ -1,0 +1,90 @@
+{$assertions on}
+
+procedure TestProc;
+const Imm: Int32 = 555;
+var   Mut: Int32 = 666;
+var
+  a: Pointer;
+  b: ConstPointer;
+begin
+  //a := @Imm;
+  a := @Mut;
+
+  b := @Mut;
+  b := @Imm;
+
+  Assert(Int32(a^) = 666);
+  Assert(Int32(b^) = 555);
+end;
+
+const Imm: Int32 = 123;
+var   Mut: Int32 = 456;
+
+var
+  x: ^Int32;
+  y: ^const Int32;
+  a: Pointer;
+  b: ConstPointer;
+begin
+  //x := @Imm;
+  y := @Imm;
+  //a := @Imm;
+  b := @Imm;
+
+  x := @Mut;
+  y := @Mut;
+  a := @Mut;
+  b := @Mut;
+
+  x := x;
+  //x := y;
+  x := a;
+  //x := b;
+
+  y := x;
+  y := y;
+  y := a;
+  y := b;
+
+  a := x;
+  //a := y;
+  a := a;
+  //a := b;
+
+  b := x;
+  b := y;
+  b := a;
+  b := b;
+
+  Assert(x^ = 456);
+  Assert(y^ = 456);
+  //WriteLn(a^);
+  //WriteLn(b^);
+
+  x^ := 12;
+  //y^ := 34;
+  //a^ := 56;
+  //b^ := 78;
+
+  Assert(Int32(x^) = 12);
+  Assert(Int32(y^) = 12);
+  Assert(Int32(a^) = 12);
+  Assert(Int32(b^) = 12);
+
+  Int32(x^) := 111;
+  //Int32(y^) := 222;
+  Int32(a^) := 333;
+  Int32(b^) := 444;
+
+  a := @x;
+  a := @y;
+  a := @a;
+  a := @b;
+
+  b := @x;
+  b := @y;
+  b := @a;
+  b := @a;
+
+  TestProc();
+end;

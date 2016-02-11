@@ -1,0 +1,61 @@
+{$MEMORYINIT ON}
+
+type
+  TRec = record x ,y: Integer; end;
+  TSArr = array[1..2] of Integer;
+  TDArr = array of Integer;
+
+function Rec(x, y: Integer): TRec;
+begin
+  Result := [x, y];
+end;
+
+function SArr(x, y: Integer): TSArr;
+begin
+  Result := [x, y];
+end;
+
+function DArr(x, y: Integer): TDArr;
+begin
+  Result := [x, y];
+end;
+
+function TestRec(constref r: TRec): TRec;
+begin
+  Write('IN:', r, ' OUT:');
+  Result := [r.y, r.x];
+end;
+
+function TestSArr(constref a: TSArr): TSArr;
+begin
+  Write('IN:', a, ' OUT:');
+  Result := [a[2], a[1]];
+end;
+
+function TestDArr(constref a: TDArr): TDArr;
+begin
+  Write('IN:', a, ' OUT:');
+  Result := [a[0]..a[1]];
+end;
+
+var
+  r: TRec;
+  s: TSArr;
+  d: TDArr;
+begin
+  r := [10, 20];
+  s := [30, 40];
+  d := [50, 60];
+
+  WriteLn('OPEN ', TestRec([r.x,r.y]));
+  WriteLn('CONST ', TestRec([10, 20]));
+  WriteLn('FUNC ', TestRec(Rec(r.x,r.y)));
+
+  WriteLn('OPEN ', TestSArr([s[1],s[2]]));
+  WriteLn('CONST ', TestSArr([30, 40]));
+  WriteLn('FUNC ', TestSArr(SArr(s[1],s[2])));
+
+  WriteLn('OPEN ', TestDArr([d[0],d[1]]));
+  WriteLn('CONST ', TestDArr([50, 60]));
+  WriteLn('FUNC ', TestDArr(DArr(d[0],d[1])));
+end.

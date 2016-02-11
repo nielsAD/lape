@@ -67,8 +67,8 @@ begin
   TestShortString(-1, 'hi', True);
   TestShortString(00, 'hi', True);
   TestShortString(01, 'hi', False);
-  TestShortString(03, 'hi', False);
-  TestShortString(04, 'hi', True);
+  TestShortString(02, 'hi', False);
+  TestShortString(03, 'hi', True);
 
   TestDynArray(-1, [6, 7, 8], True);
   TestDynArray(00, [6, 7, 8], False);

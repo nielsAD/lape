@@ -8,7 +8,6 @@
 
 {.$DEFINE Lape_CaseSensitive}            //Case sentive in script
 {.$DEFINE Lape_CDECL}                    //CDECL function headers for callbacks/evaluations (useful for plugins/ffi)
-{.$DEFINE Lape_InitExternalFuncResult}   //Ensure an empty result variable for external functions (useful for plugins/ffi)
 {$DEFINE Lape_DoubleKeywordsCache}      //Create a double cache for keywords to speed up parsing (more memory, faster)
 {$DEFINE Lape_EmitPos}                  //Emit source position when compiling (more memory)
 {$DEFINE Lape_Inline}                   //Compile with function inlining where it could be benefitial (faster, harder debugging)
@@ -22,4 +21,14 @@
 {$ELSE}
   {$DEFINE Delphi}
   {$POINTERMATH ON}
+
+  {$IFDEF WIN64}
+    {$DEFINE CPUX86_64}
+  {$ELSE}
+    {$DEFINE CPU86}
+  {$ENDIF}
 {$ENDIF}
+
+{$IF DEFINED(UNICODE) and not DEFINED(Lape_Unicode)}
+  {$DEFINE Lape_NeedAnsiStringsUnit}
+{$IFEND}

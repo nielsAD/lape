@@ -113,13 +113,12 @@ type
     destructor Destroy; override;
 
     function hasMember(AName: lpString): Boolean; virtual;
-    function addMember(Value: Int16; AName: lpString): Int16; overload; virtual;
-    function addMember(AName: lpString): Int16; overload; virtual;
+    function addMember(Value: Int64; AName: lpString): Int16; overload; virtual;
+    function addMember(AName: lpString): Int64; overload; virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
 
-    function NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
 
     function EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean; virtual;
@@ -132,13 +131,19 @@ type
   end;
 
   TLapeType_Boolean = class(TLapeType_Enum)
-    public constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual; end;
+    public constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
+
+    function NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
+    function EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean; override;
+  end;
 
   TLapeType_Bool = class(TLapeType_SubRange)
   public
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
+
+    function NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
@@ -183,6 +188,7 @@ implementation
 
 uses
   Variants,
+  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpparser, lpeval, lpexceptions;
 
 function TLapeType_Integer{$IFNDEF FPC}<_Type>{$ENDIF}.NewGlobalVar(Val: _Type; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -202,18 +208,18 @@ begin
   if {(Length(Str) > 1) and (Str[1] <> '-')} (BaseType in LapeUnsignedIntegerTypes) then
   begin
     {$IFDEF FPC}
-    Result := NewGlobalVar(StrToUInt64(Str), AName, ADocPos);
+    Result := NewGlobalVar(StrToUInt64(string(Str)), AName, ADocPos);
     {$ELSE}
-    ui64 := StrToUInt64(Str); t := @ui64;
+    ui64 := StrToUInt64(string(Str)); t := @ui64;
     Result := NewGlobalVar(t^ , AName, ADocPos);
     {$ENDIF}
   end
   else
   begin
     {$IFDEF FPC}
-    Result := NewGlobalVar(StrToInt64(Str), AName, ADocPos);
+    Result := NewGlobalVar(StrToInt64(string(Str)), AName, ADocPos);
     {$ELSE}
-    i64 := StrToInt64(Str); t := @i64;
+    i64 := StrToInt64(string(Str)); t := @i64;
     Result := NewGlobalVar(t^ , AName, ADocPos);
     {$ENDIF}
   end;
@@ -229,9 +235,9 @@ function TLapeType_Float{$IFNDEF FPC}<_Type>{$ENDIF}.NewGlobalVarStr(Str: Unicod
 {$IFNDEF FPC}var a: Extended; b: PType;{$ENDIF}
 begin
   {$IFDEF FPC}
-  Result := NewGlobalVar(StrToFloatDot(Str), AName, ADocPos);
+  Result := NewGlobalVar(StrToFloatDot(string(Str)), AName, ADocPos);
   {$ELSE}
-  a := StrToFloatDot(Str); b := @a;
+  a := StrToFloatDot(string(Str)); b := @a;
   Result := NewGlobalVar(b^ , AName, ADocPos);
   {$ENDIF}
 end;
@@ -251,7 +257,7 @@ begin
     try
       if (Str[1] = '#') then
         Delete(Str, 1, 1);
-      c := StrToInt(Str);
+      c := StrToInt(string(Str));
       Result := NewGlobalVarP(nil, AName, ADocPos);
       case Size of
         SizeOf(UInt8):  PUInt8(Result.Ptr)^ := c;
@@ -363,7 +369,7 @@ begin
     if (FVarType <> nil) then
       FAsString := FVarType.VarToString(@FRange.Lo) + '..' + FVarType.VarToString(@FRange.Hi)
     else
-      FAsString := IntToStr(FRange.Lo) + '..' + IntToStr(FRange.Hi);
+      FAsString := lpString(IntToStr(FRange.Lo)) + '..' + lpString(IntToStr(FRange.Hi));
   Result := inherited;
 end;
 
@@ -390,7 +396,7 @@ begin
   if (Index < 0) then
     Exit;
 
-  Result := 'begin Result := System.ToString['+IntToStr(Index)+'](Param0); end;';
+  Result := 'begin Result := System.ToString['+lpString(IntToStr(Index))+'](Param0); end;';
 end;
 
 function TLapeType_SubRange.VarToString(AVar: Pointer): lpString;
@@ -398,20 +404,20 @@ begin
   if (FVarType <> nil) then
     Result := FVarType.VarToString(AVar)
   else
-    Result := IntToStr(VarToInt(AVar));
+    Result := lpString(IntToStr(VarToInt(AVar)));
 end;
 
 function TLapeType_SubRange.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FLo = nil) and (FCompiler <> nil) and IsOrdinal() then
-    FLo := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Lo))) as TLapeGlobalVar;
+    FLo := FCompiler.addManagedVar(NewGlobalVarStr(lpString(IntToStr(Range.Lo)))) as TLapeGlobalVar;
   Result := FLo;
 end;
 
 function TLapeType_SubRange.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FHi = nil) and (FCompiler <> nil) and IsOrdinal() then
-    FHi := FCompiler.addManagedVar(NewGlobalVarStr(IntToStr(Range.Hi))) as TLapeGlobalVar;
+    FHi := FCompiler.addManagedVar(NewGlobalVarStr(lpString(IntToStr(Range.Hi)))) as TLapeGlobalVar;
   Result := FHi;
 end;
 
@@ -468,7 +474,7 @@ begin
         Continue;
       if (FAsString <> '(') then
         FAsString := FAsString + ', ';
-      FAsString := FAsString + FMemberMap[i] + '=' + IntToStr(i);
+      FAsString := FAsString + lpString(FMemberMap[i]) + '=' + lpString(IntToStr(i+FRange.Lo));
     end;
     FAsString := FAsString + ')';
   end;
@@ -489,9 +495,9 @@ begin
   end;
   FMemberMap := AMemberMap;
 
-  while (FRange.Lo < FMemberMap.Count) and (FMemberMap[FRange.Lo] = '') do Inc(FRange.Lo);
   FRange.Hi := Int64(FMemberMap.Count) - 1;
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
+
   if FSmall then
     FBaseType := ltSmallEnum;
 end;
@@ -505,10 +511,10 @@ end;
 
 function TLapeType_Enum.hasMember(AName: lpString): Boolean;
 begin
-  Result := FMemberMap.IndexOf(AName) > -1;
+  Result := FMemberMap.IndexOf(string(AName)) > -1;
 end;
 
-function TLapeType_Enum.addMember(Value: Int16; AName: lpString): Int16;
+function TLapeType_Enum.addMember(Value: Int64; AName: lpString): Int16;
 var
   i: Integer;
 begin
@@ -520,11 +526,10 @@ begin
   Result:= Value;
   FRange.Hi := Value;
   if (FMemberMap.Count = 0) then
-    FRange.Lo := Value;
-
-  for i := FMemberMap.Count to Value - 1 do
+    FRange.Lo := Value
+  else for i := FMemberMap.Count to Value - FRange.Lo - 1 do
     FMemberMap.Add('');
-  FMemberMap.Add(AName);
+  FMemberMap.Add(string(AName));
 
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
   if (not FSmall) then
@@ -533,7 +538,7 @@ begin
   ClearCache();
 end;
 
-function TLapeType_Enum.addMember(AName: lpString): Int16;
+function TLapeType_Enum.addMember(AName: lpString): Int64;
 begin
   Result := addMember(FMemberMap.Count, AName);
 end;
@@ -545,15 +550,14 @@ begin
   Result := '';
 
   for i := 0 to FMemberMap.Count - 1 do
-    if (FMemberMap[i] <> '') then
-    begin
-      if (Result <> '') then
-        Result := Result + ', ';
-      Result := Result + #39 + FMemberMap[i] + #39;
-    end;
-  Result := Format(
-    'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.Int32): System.string;' + LineEnding +
-    'begin Result := TEnumToString(System._EnumToString)([%s], System.Ord(Param0), %d, %d); end;',
+  begin
+    if (Result <> '') then
+      Result := Result + ', ';
+    Result := Result + #39 + lpString(FMemberMap[i]) + #39;
+  end;
+  Result := Format(lpString(
+    'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.SizeInt): System.string;' + LineEnding +
+    'begin Result := TEnumToString(System._EnumToString)([%s], System.Ord(Param0), %d, %d); end;'),
     [Result, FRange.Lo, FRange.Hi]
   );
 end;
@@ -570,17 +574,17 @@ begin
       if (i = 0) then
         Result := 'False'
       else if (Abs(i) > 1) then
-        Result := 'True('+IntToStr(i)+')'
+        Result := 'True(' + lpString(IntToStr(i)) + ')'
       else
         Result := 'True'
     else
     begin
       if (i > -1) and (i < FMemberMap.Count) then
-        Result := FMemberMap[i];
+        Result := lpString(FMemberMap[i]);
 
       if (Result = '') then
         if (Name <> '') then
-          Result := Name + '(' + IntToStr(i) + ')'
+          Result := Name + '(' + lpString(IntToStr(i)) + ')'
         else
           Result := 'InvalidEnum';
     end;
@@ -606,36 +610,29 @@ begin
     inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
+    FRange := Self.Range;
+    FSmall := Self.Small;
   end;
-end;
-
-function TLapeType_Enum.NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
-begin
-  Result := NewGlobalVarP(nil, AName);
-  if FSmall then
-    PLapeSmallEnum(Result.Ptr)^ := ELapeSmallEnum(Value)
-  else
-    PLapeLargeEnum(Result.Ptr)^ := ELapeLargeEnum(Value);
 end;
 
 function TLapeType_Enum.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
-  if (Str <> '') and (Str[1] in ['-', '0'..'9']) then
-    Result := NewGlobalVar(StrToInt64(Str), AName, ADocPos)
+  if (Str <> '') and (AnsiChar(Str[1]) in ['-', '0'..'9']) then
+    Result := NewGlobalVar(StrToInt64(string(Str)), AName, ADocPos)
   else
     Result := NewGlobalVar(FMemberMap.IndexOf(Str), AName, ADocPos);
 end;
 
 function TLapeType_Enum.EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean;
-const
-  BoolOperators = BinaryOperators + EnumOperators - [op_cmp_Equal, op_cmp_NotEqual];
 begin
-  if (Right = nil) or (not Right.IsOrdinal()) then
+  if (Right = nil) then
     Result := False
-  else if (BaseType in LapeBoolTypes) then
-    Result := (op in BoolOperators) and ((not (Right.BaseType in LapeEnumTypes)) or (Right.BaseType in LapeBoolTypes))
+  else if (op in CompareOperators + [op_Assign]) then
+    Result := Equals(Right)
+  else if (op in [op_Plus, op_Minus]) then
+    Result := Right.BaseType in LapeIntegerTypes
   else
-    Result := (op in EnumOperators) and ((not (Right.BaseType in LapeEnumTypes)) or Equals(Right));
+    Result := False;
 end;
 
 function TLapeType_Enum.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
@@ -646,10 +643,7 @@ begin
   begin
     Result := FCompiler.getBaseType(BaseIntType).EvalRes(Op, FCompiler.getBaseType(Right.BaseIntType), Flags);
     if (Result <> nil) and (not (op in CompareOperators)) then
-      if (Result.BaseIntType = BaseIntType) then
-        Result := Self
-      else
-        Result := nil;
+      Result := Self;
   end
   else
     Result := inherited;
@@ -658,6 +652,7 @@ end;
 function TLapeType_Enum.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
   tmpType: TLapeType;
+  tmpRes: TLapeGlobalVar;
 begin
   Assert(FCompiler <> nil);
   Assert((Left = nil) or (Left.VarType = Self));
@@ -673,10 +668,16 @@ begin
 
     Result := Left.VarType.EvalConst(Op, Left, Right, Flags);
     if Result.HasType() and (not (op in CompareOperators)) then
-      if (Result.VarType.BaseIntType = BaseIntType) then
-        Result.VarType := Self
-      else
-        LapeException(lpeImpossible);
+    begin
+      if (Result.VarType.BaseIntType <> BaseIntType) then
+      try
+        tmpRes := Result;
+        Result := Left.VarType.EvalConst(op_Assign, Left.VarType.NewGlobalVarP(), tmpRes, []);
+      finally
+        FreeAndNil(tmpRes);
+      end;
+      Result.VarType := Self
+    end;
   finally
     Left.VarType := Self;
     Right.VarType := tmpType;
@@ -686,6 +687,8 @@ begin
 end;
 
 function TLapeType_Enum.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+var
+  tmpRes: TResVar;
 begin
   Assert(FCompiler <> nil);
   Assert(Left.VarType = Self);
@@ -698,12 +701,24 @@ begin
     Left.VarType := FCompiler.getBaseType(BaseIntType);
     Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
 
+    if Dest.HasType() and Equals(Dest.VarType) then
+      Dest.VarType := Left.VarType;
     Result := Left.VarType.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
     if Result.HasType() and (not (op in CompareOperators)) then
-      if (Result.VarType.BaseIntType = BaseIntType) then
-        Result.VarType := Self
-      else
-        LapeException(lpeImpossible);
+    begin
+      if (Result.VarType.BaseIntType <> BaseIntType) then
+      begin
+        tmpRes := Result;
+
+        Result := NullResVar;
+        Result.VarType := Left.VarType;
+        FCompiler.getDestVar(Dest, Result, Op);
+
+        Result := Left.VarType.Eval(op_Assign, Dest, Result, tmpRes, [], Offset, Pos);
+        tmpRes.Spill(1);
+      end;
+      Result.VarType := Self;
+    end;
   end
   else
     Result := inherited;
@@ -715,6 +730,21 @@ begin
   addMember('False');
   addMember('True');
   FBaseType := ltBoolean;
+end;
+
+function TLapeType_Boolean.NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
+begin
+  if (Value <> 0) then
+    Value := FRange.Hi;
+  Result := inherited;
+end;
+
+function TLapeType_Boolean.EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean;
+begin
+  if (op in [op_Plus, op_Minus]) then
+    Result := inherited
+  else
+    Result := False;
 end;
 
 constructor TLapeType_Bool.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
@@ -743,6 +773,13 @@ begin
     FRange := Self.Range;
     TLapeType_Boolean(FVarType).FSize := Self.VarType.Size;
   end;
+end;
+
+function TLapeType_Bool.NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
+begin
+  if (Value <> 0) then
+    Value := FRange.Hi;
+  Result := inherited;
 end;
 
 function TLapeType_Bool.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
@@ -868,22 +905,36 @@ end;
 
 function TLapeType_Set.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
+  IntType: ELapeBaseType;
   Index: Integer;
 begin
   Result := '';
-  if (ToStr = nil) or (FCompiler = nil) or (FRange = nil) then
+  if (ToStr = nil) or (FCompiler = nil) or (FRange = nil) or (FRange.BaseIntType = ltUnknown) then
     Exit;
 
   Index := ToStr.getMethodIndex(getTypeArray([FRange]), FCompiler.getBaseType(ltString));
   if (Index < 0) then
     Exit;
 
-  Result := 'type TSetToString = private function(constref ASet; AToString: System.Pointer; Lo, Hi: System.Int32): System.string;' + LineEnding + 'begin ';
   if FSmall then
-    Result := Result + 'Result := TSetToString(System._SmallSetToString)'
+    Result := '_SmallSetToString'
   else
-    Result := Result + 'Result := TSetToString(System._LargeSetToString)';
-  Result := Format(Result + '(Param0, System.ToString[%d], %d, %d); end;', [Index, FRange.Range.Lo, FRange.Range.Hi]);
+    Result := '_LargeSetToString';
+
+  Result := Format(lpString(
+    '  function _ElementToString(p: System.ConstPointer): System.string; static;'           + LineEnding +
+    '  type'                                                                                + LineEnding +
+    '    TEnum = (se0, se1 = %d);'                                                          + LineEnding +
+    '    TRangeToString = function(constref r: System.%s): string;'                         + LineEnding +
+    '  begin'                                                                               + LineEnding +
+    '    Result := TRangeToString(System.ToString[%d])(Ord(TEnum(p^)));'                    + LineEnding +
+    '  end;'                                                                                + LineEnding +
+    'type'                                                                                  + LineEnding +
+    '  TSetToString = private function(constref ASet; AToString: System.ConstPointer; Lo, Hi: System.SizeInt): System.string;' + LineEnding +
+    'begin'                                                                                 + LineEnding +
+    '  Result := TSetToString(System.%s)(Param0, _ElementToString, %d, %d);'                + LineEnding +
+    'end;'
+  ), [FRange.Range.Hi, LapeTypeToString(FRange.BaseIntType), Index, Result, FRange.Range.Lo, FRange.Range.Hi]);
 end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;

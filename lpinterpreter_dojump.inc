@@ -165,7 +165,7 @@ end;
 procedure DoJmpRIf8_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_JmpR_PVar(PtrUInt(Code) + ocSize)^ do
-    if (PUInt8(PtrUInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ <> 0) then
+    if (PUInt8(PtrInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ <> 0) then
       JumpToRelative(Offset)
     else
       Inc(Code, SizeOf(TOC_JmpR_PVar) + ocSize);
@@ -174,7 +174,7 @@ end;
 procedure DoJmpRIf16_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_JmpR_PVar(PtrUInt(Code) + ocSize)^ do
-    if (PUInt16(PtrUInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ <> 0) then
+    if (PUInt16(PtrInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ <> 0) then
       JumpToRelative(Offset)
     else
       Inc(Code, SizeOf(TOC_JmpR_PVar) + ocSize);
@@ -183,7 +183,7 @@ end;
 procedure DoJmpRIf32_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_JmpR_PVar(PtrUInt(Code) + ocSize)^ do
-    if (PUInt32(PtrUInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ <> 0) then
+    if (PUInt32(PtrInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ <> 0) then
       JumpToRelative(Offset)
     else
       Inc(Code, SizeOf(TOC_JmpR_PVar) + ocSize);
@@ -192,7 +192,7 @@ end;
 procedure DoJmpRIf64_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_JmpR_PVar(PtrUInt(Code) + ocSize)^ do
-    if (PUInt64(PtrUInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ <> 0) then
+    if (PUInt64(PtrInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ <> 0) then
       JumpToRelative(Offset)
     else
       Inc(Code, SizeOf(TOC_JmpR_PVar) + ocSize);
@@ -346,7 +346,7 @@ end;
 procedure DoJmpRIfNot8_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_JmpR_PVar(PtrUInt(Code) + ocSize)^ do
-    if (PUInt8(PtrUInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ = 0) then
+    if (PUInt8(PtrInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ = 0) then
       JumpToRelative(Offset)
     else
       Inc(Code, SizeOf(TOC_JmpR_PVar) + ocSize);
@@ -355,7 +355,7 @@ end;
 procedure DoJmpRIfNot16_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_JmpR_PVar(PtrUInt(Code) + ocSize)^ do
-    if (PUInt16(PtrUInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ = 0) then
+    if (PUInt16(PtrInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ = 0) then
       JumpToRelative(Offset)
     else
       Inc(Code, SizeOf(TOC_JmpR_PVar) + ocSize);
@@ -364,7 +364,7 @@ end;
 procedure DoJmpRIfNot32_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_JmpR_PVar(PtrUInt(Code) + ocSize)^ do
-    if (PUInt32(PtrUInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ = 0) then
+    if (PUInt32(PtrInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ = 0) then
       JumpToRelative(Offset)
     else
       Inc(Code, SizeOf(TOC_JmpR_PVar) + ocSize);
@@ -373,7 +373,7 @@ end;
 procedure DoJmpRIfNot64_PVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   with POC_JmpR_PVar(PtrUInt(Code) + ocSize)^ do
-    if (PUInt64(PtrUInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ = 0) then
+    if (PUInt64(PtrInt(PPointer(@VarStack[VarStackPos + VarStackOffset])^) + PointerOffset)^ = 0) then
       JumpToRelative(Offset)
     else
       Inc(Code, SizeOf(TOC_JmpR_PVar) + ocSize);

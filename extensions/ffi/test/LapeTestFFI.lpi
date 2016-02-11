@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="9"/>
+    <General>
+      <Flags>
+        <MainUnitHasCreateFormStatements Value="False"/>
+        <MainUnitHasTitleStatement Value="False"/>
+      </Flags>
+      <SessionStorage Value="InProjectDir"/>
+      <MainUnit Value="0"/>
+      <Title Value="LapeTestFFI"/>
+      <UseAppBundle Value="False"/>
+      <ResourceType Value="res"/>
+    </General>
+    <i18n>
+      <EnableI18N LFM="False"/>
+    </i18n>
+    <VersionInfo>
+      <StringTable ProductVersion=""/>
+    </VersionInfo>
+    <BuildModes Count="5">
+      <Item1 Name="default" Default="True"/>
+      <Item2 Name="register">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="LapeTestFFI"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+            <Libraries Value="../bin/$(TargetOS)"/>
+            <OtherUnitFiles Value=".."/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+        </CompilerOptions>
+      </Item2>
+      <Item3 Name="pascal">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="LapeTestFFI"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+            <Libraries Value="../bin/$(TargetOS)"/>
+            <OtherUnitFiles Value=".."/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+        </CompilerOptions>
+      </Item3>
+      <Item4 Name="cdecl">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="LapeTestFFI"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+            <Libraries Value="../bin/$(TargetOS)"/>
+            <OtherUnitFiles Value=".."/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+        </CompilerOptions>
+      </Item4>
+      <Item5 Name="stdcall">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="LapeTestFFI"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+            <Libraries Value="../bin/$(TargetOS)"/>
+            <OtherUnitFiles Value=".."/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+        </CompilerOptions>
+      </Item5>
+      <SharedMatrixOptions Count="4">
+        <Item1 ID="438870483490" Targets="#project" Modes="register" Value="-dFFITest_REGISTER"/>
+        <Item2 ID="034699903166" Targets="#project" Modes="pascal" Value="-dFFITest_PASCAL"/>
+        <Item3 ID="895036950427" Targets="#project" Modes="cdecl" Value="-dFFITest_CDECL"/>
+        <Item4 ID="385979714954" Targets="#project" Modes="stdcall" Value="-dFFITest_STDCALL"/>
+      </SharedMatrixOptions>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+      </local>
+    </RunParams>
+    <RequiredPackages Count="2">
+      <Item1>
+        <PackageName Value="LCLBase"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="lape"/>
+      </Item2>
+    </RequiredPackages>
+    <Units Count="2">
+      <Unit0>
+        <Filename Value="LapeTestFFI.lpr"/>
+        <IsPartOfProject Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="cconv.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit1>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <Target>
+      <Filename Value="LapeTestFFI"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+      <Libraries Value="../bin/$(TargetOS)"/>
+      <OtherUnitFiles Value=".."/>
+      <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+    </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <IncludeAssertionCode Value="True"/>
+      </SyntaxOptions>
+    </Parsing>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions Count="3">
+      <Item1>
+        <Name Value="EAbort"/>
+      </Item1>
+      <Item2>
+        <Name Value="ECodetoolError"/>
+      </Item2>
+      <Item3>
+        <Name Value="EFOpenError"/>
+      </Item3>
+    </Exceptions>
+  </Debugging>
+</CONFIG>

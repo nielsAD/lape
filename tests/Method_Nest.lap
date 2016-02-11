@@ -1,0 +1,84 @@
+procedure nest(a: Integer = 0);
+begin
+  WriteLn(a);
+end;
+
+procedure nest(a: Integer = 0); override;
+var
+  b: Integer;
+  z: Integer = 1;
+
+  procedure innerNest(c: Integer); overload;
+  var
+    d: Integer;
+    z: Integer = 1;
+
+    procedure innerInnerNest(e: Integer);
+    var
+      z: Integer = 1;
+    begin
+      z := z + 1;
+      b := c;
+      d := e;
+      inherited(e+1);
+    end;
+
+  begin
+    z := z + 1;
+    innerInnerNest(c+1);
+    WriteLn(b, ' ', d);
+    b := c;
+  end;
+
+  procedure innerNest(c: Integer); override;
+  var
+    z: Integer = 1;
+  begin
+    z := z + 1;
+    inherited(c+1);
+  end;
+
+  procedure innerNest(s: string); overload;
+  begin
+    WriteLn(s);
+  end;
+
+begin
+  z := z + 1;
+  innerNest(a);
+  innerNest(ToStr(a, ' ', b, ' ', z));
+end;
+
+type
+  TNest = record
+    a, b: Integer;
+  end;
+
+procedure TNest.nest(c: TNest);
+begin
+  WriteLn(c.a + a, ' ', b + c.b);
+end;
+
+procedure TNest.nest(c: TNest); override;
+  procedure innerNest(d: TNest);
+  var
+    Self: string = 'Fool me once';
+  begin
+    Inc(a, d.a);
+    Inc(b, d.b);
+    inherited;
+    Inc(c.a, d.a);
+    Inc(c.b, d.b);
+  end;
+begin
+  innerNest([21, 12]);
+  inherited;
+end;
+
+var
+  n: TNest = [-100, 100];
+begin
+  nest();
+  n.nest([n.b, n.a]);
+end;
+

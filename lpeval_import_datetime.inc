@@ -17,7 +17,6 @@ addGlobalVar(MSecsPerDay, 'MSecsPerDay').isConstant := True;
 addGlobalVar(DateDelta, 'DateDelta').isConstant := True;
 
 addGlobalType(getBaseType(ltDouble).createCopy(True), 'TDateTime', False);
-addGlobalType(getBaseType(ltDouble).createCopy(True), 'TTime', False);
 
 addGlobalFunc('function EncodeDate(Year, Month, Day: UInt16): TDateTime;', @_LapeEncodeDate);
 addGlobalFunc('function EncodeTime(Hour, Min, Sec, MSec: UInt16): TDateTime;', @_LapeEncodeTime);
@@ -25,11 +24,27 @@ addGlobalFunc('procedure DecodeDate(DateTime: TDateTime; var Year, Month, Day: U
 addGlobalFunc('function DecodeDateFully(DateTime: TDateTime; var Year, Month, Day, DOW: UInt16): Boolean;', @_LapeDecodeDateFully);
 addGlobalFunc('procedure DecodeTime(DateTime: TDateTime; var Hour, Min, Sec, MSec: UInt16);', @_LapeDecodeTime);
 
+addGlobalFunc('function DateTimeToStr(const DateTime: TDateTime): string;', @_LapeDateTimeToStr);
+addGlobalFunc('function DateToStr(const DateTime: TDateTime): string;', @_LapeDateToStr);
+addGlobalFunc('function TimeToStr(const DateTime: TDateTime): string;', @_LapeTimeToStr);
+
+TLapeType_OverloadedMethod(Globals['ToString'].VarType).addMethod(
+  TLapeType_Method(addManagedType(
+    TLapeType_Method.Create(
+      Self,
+      [getGlobalType('TDateTime')],
+      [lptConstRef],
+      [TLapeGlobalVar(nil)],
+      getBaseType(ltString)
+    )
+  )).NewGlobalVar(@_LapeDateTimeToStr)
+);
+
 addGlobalFunc('function Date: TDateTime;', @_LapeDate);
 addGlobalFunc('function Time: TDateTime;', @_LapeTime);
 addGlobalFunc('function Now: TDateTime;', @_LapeNow);
 
-addGlobalFunc('function GetTickCount: UInt32;', @_LapeGetTickCount);
+addGlobalFunc('function GetTickCount: UInt64;', @_LapeGetTickCount);
 addGlobalFunc('procedure Sleep(MilliSeconds: UInt32);', @_LapeSleep);
 
 addGlobalFunc('procedure ReplaceTime(var DateTime: TDateTime; NewTime: TDateTime);', @_LapeReplaceTime);

@@ -18,7 +18,7 @@ uses
 type
   lpException = class(Exception);
 
-resourcestring
+const
   lpeArrayLengthsDontMatch = 'Length of arrays (%s) don''t match';
   lpeAssertionFailure = 'Assertion failure';
   lpeAssertionFailureMsg = 'Assertion failure: %s';
@@ -30,13 +30,17 @@ resourcestring
   lpeCannotEvalConstProc = 'Procedures cannot be used for constant evaluation';
   lpeCannotEvalRunTime = 'Cannot be evaluated at runtime';
   lpeCannotInvoke = 'Cannot invoke identifier';
+  lpeCannotMixStaticOverload = 'Cannot mix static with non-static method overload';
   lpeCannotOverload = 'Cannot overload function';
+  lpeCannotOverloadOperator = 'Cannot overload operator "%s"';
+  lpeCannotOverrideOperator = 'Cannot override operator "%s" with types "%s" and "%s"';
   lpeClosingParenthesisExpected = 'Closing parenthesis expected';
   lpeConditionalNotClosed = 'Conditional statement not properly closed';
   lpeConstantExpected = 'Constant expression expected';
-  //lpeDeclarationOutOfScope = 'Declaration "%s" out of scope';
+  lpeDeclarationOutOfScope = 'Declaration "%s" out of scope';
   lpeDefaultToMoreThanOne = 'Runtime default value can only be assigned to one variable';
   lpeDuplicateDeclaration = 'Duplicate declaration "%s"';
+  lpeErrorScanningString = '%s while scanning string literal';
   lpeExceptionAt = '%s at line %d, column %d';
   lpeExceptionIn = '%s in file "%s"';
   lpeExpected = '%s expected';
@@ -45,7 +49,7 @@ resourcestring
   lpeFileNotFound = 'File "%s" not found';
   lpeImpossible = 'It''s impossible!';
   lpeIncompatibleAssignment = 'Can''t assign "%s" to "%s"';
-  lpeIncompatibleOperator = 'Operator "%s" not compatible with types';
+  lpeIncompatibleOperator = 'Operator "%s" is not supported for type';
   lpeIncompatibleOperator1 = 'Operator "%s" not compatible with "%s"';
   lpeIncompatibleOperator2 = 'Operator "%s" not compatible with types "%s" and "%s"';
   lpeInvalidAssignment = 'Invalid assignment';
@@ -57,11 +61,14 @@ resourcestring
   lpeInvalidIndex = 'Invalid index "%s"';
   lpeInvalidIterator = 'Variable cannot be used for iteration';
   lpeInvalidJump = 'Invalid jump';
+  lpeInvalidOperator = 'Operator "%s" expects %d parameters';
   lpeInvalidRange = 'Expression is not a valid range';
+  lpeInvalidUnionType = 'Invalid union type';
   lpeInvalidValueForType = 'Invalid value for type "%s"';
   lpeInvalidWithReference = 'Invalid with-reference';
   lpeLostClosingParenthesis = 'Found closing parenthesis without matching opening parenthesis';
   lpeLostConditional = 'Found conditional without matching opening statement';
+  lpeMethodOfObjectExpected = 'Expected method of object';
   lpeNoDefaultForParam = 'No default value for parameter %d found';
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';
   lpeNoOverloadedMethod = 'Don''t know which overloaded method to call with params (%s)';
@@ -91,6 +98,11 @@ procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of
 
 implementation
 
+{$IFDEF Lape_NeedAnsiStringsUnit}
+uses
+  AnsiStrings;
+{$ENDIF}
+
 {$IF DEFINED(Delphi) AND (CompilerVersion <= 21.00)}
 function ReturnAddress: Pointer;
 asm
@@ -101,11 +113,11 @@ end;
 procedure _LapeException(Msg: lpString); inline;
 {$IFDEF FPC}
 begin
-  raise lpException.Create(Msg) at get_caller_addr(get_frame);
+  raise lpException.Create(string(Msg)) at get_caller_addr(get_frame);
 end;
 {$ELSE}
 begin
-  raise lpException.Create(Msg) at ReturnAddress;
+  raise lpException.Create(string(Msg)) at ReturnAddress;
 end;
 {$ENDIF}
 
@@ -113,9 +125,9 @@ function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString; {inline;}
 begin
   Result := Msg;
   if (DocPos.Line > 0) and (DocPos.Col > 0) then
-    Result := Format(lpeExceptionAt, [Result, DocPos.Line, DocPos.Col]);
+    Result := Format(lpString(lpeExceptionAt), [Result, DocPos.Line, DocPos.Col]);
   if (DocPos.FileName <> '') then
-    Result := Format(lpeExceptionIn, [Result, DocPos.FileName]);
+    Result := Format(lpString(lpeExceptionIn), [Result, DocPos.FileName]);
 end;
 
 procedure LapeException(Msg: lpString);

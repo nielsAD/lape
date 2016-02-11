@@ -36,8 +36,10 @@ procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer); {$IFDEF
 procedure _LapeAllocMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeFreeMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeReallocMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
 procedure _LapeFillMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeMove(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeCompareMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
 procedure _LapeHigh(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeLength(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -45,6 +47,7 @@ procedure _LapeLength(const Params: PParamArray; const Result: Pointer); {$IFDEF
 procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeSStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeWStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeUStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -52,6 +55,7 @@ procedure _LapeSStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$
 procedure _LapeAStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeWStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeUStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeSStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeWStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeUStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -107,9 +111,6 @@ procedure LoadEvalArr(var Arr: TLapeEvalArr);
 function LapeEval_GetRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType;
 function LapeEval_GetProc(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc;
 
-const
-  LapeDelayedFlags = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$RANGECHECKS OFF}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}';
-
 var
   LapeEvalErrorProc: TLapeEvalProc = {$IFDEF FPC}@{$ENDIF}LapeEval_Error;
   getEvalRes: TGetEvalRes = {$IFDEF FPC}@{$ENDIF}LapeEval_GetRes;
@@ -119,11 +120,13 @@ var
   LapeEvalRes: TLapeEvalRes;
   LapeEvalArr: TLapeEvalArr;
 
+  LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$AUTOINVOKE OFF}{$AUTOPROPERTIES OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}' + LineEnding;
+
   _LapeToString_Enum: lpString =
-    'function _EnumToString(s: ^string; Index, Lo, Hi: Int32): string;'                  + LineEnding +
+    'function _EnumToString(s: ^const string; Index, Lo, Hi: SizeInt): string;'          + LineEnding +
     'begin'                                                                              + LineEnding +
     '  if (Index >= Lo) and (Index <= Hi) then'                                          + LineEnding +
-    '    Result := s[Index]^'                                                            + LineEnding +
+    '    Result := s[Index-Lo]^'                                                         + LineEnding +
     '  else '                                                                            + LineEnding +
     '    Result := '#39#39';'                                                            + LineEnding +
     '  if (Result = '#39#39') then'                                                      + LineEnding +
@@ -131,9 +134,9 @@ var
     'end;';
 
   _LapeToString_Set: lpString =
-    'function _%sSetToString(ASet: Pointer;'                                             + LineEnding +
-    '  AToString: function(constref Enum): string;'                                      + LineEnding +
-    '  Lo, Hi: Int32): string;'                                                          + LineEnding +
+    'function _%sSetToString(ASet: ConstPointer;'                                        + LineEnding +
+    '  AToString: private function(constref Enum): string;'                              + LineEnding +
+    '  Lo, Hi: SizeInt): string;'                                                        + LineEnding +
     'type'                                                                               + LineEnding +
     '  TEnum = (se0, se1 = %d);'                                                         + LineEnding +
     '  TSet = set of TEnum;'                                                             + LineEnding +
@@ -154,10 +157,10 @@ var
 
   _LapeToString_Array: lpString =
     'function _ArrayToString(Arr: Pointer;'                                              + LineEnding +
-    '  AToString: private function(p: Pointer): string;'                                 + LineEnding +
-    '  Len, Size: Int32): string;'                                                       + LineEnding +
+    '  AToString: private function(p: ConstPointer): string;'                            + LineEnding +
+    '  Len, Size: SizeInt): string;'                                                     + LineEnding +
     'var'                                                                                + LineEnding +
-    '  i: Int32;'                                                                        + LineEnding +
+    '  i: SizeInt;'                                                                      + LineEnding +
     'begin'                                                                              + LineEnding +
     '  Result := '#39#39';'                                                              + LineEnding +
     '  for i := 1 to Len do'                                                             + LineEnding +
@@ -171,7 +174,7 @@ var
     'end;';
 
   _LapeSwap: lpString =
-    'procedure _Swap(var a, b; Size: Int32);'                                            + LineEnding +
+    'procedure _Swap(var a, b; Size: SizeInt);'                                          + LineEnding +
     'var'                                                                                + LineEnding +
     '  c: Pointer;'                                                                      + LineEnding +
     'begin'                                                                              + LineEnding +
@@ -186,9 +189,9 @@ var
     'end;';
 
   _LapeSetLength: lpString =
-    'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: Int32;'                   + LineEnding +
+    'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: SizeInt;'                 + LineEnding +
     '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
-    '  Copy: private procedure(Src, Dst: Pointer));'                                     + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer));'                       + LineEnding +
     'const'                                                                              + LineEnding +
     '  HeaderSize = SizeOf(PtrInt) + SizeOf(SizeInt);'                                   + LineEnding +
     'var'                                                                                + LineEnding +
@@ -271,12 +274,13 @@ var
     'end;';
 
   _LapeCopy: lpString =
-    'procedure _ArrayCopy(p: Pointer; Start: Int32 = 0; Count: Int32 = High(Int32);'     + LineEnding +
-    '  Len, ElSize: Int32;'                                                              + LineEnding +
-    '  Copy: private procedure(Src, Dst: Pointer);'                                      + LineEnding +
+    'procedure _ArrayCopy(p: ConstPointer;'                                              + LineEnding +
+    '  Start: SizeInt = 0; Count: SizeInt = High(SizeInt);'                              + LineEnding +
+    '  Len, ElSize: SizeInt;'                                                            + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer);'                        + LineEnding +
     '  out Result: Pointer);'                                                            + LineEnding +
     'var'                                                                                + LineEnding +
-    '  i: Int32;'                                                                        + LineEnding +
+    '  i: SizeInt;'                                                                      + LineEnding +
     'begin'                                                                              + LineEnding +
     '  Result := nil;'                                                                   + LineEnding +
     '  if (p = nil) or (Start >= Len) or (Count <= 0) then'                              + LineEnding +
@@ -284,7 +288,7 @@ var
     ''                                                                                   + LineEnding +
     '  if (Start < 0) then'                                                              + LineEnding +
     '    Start := 0'                                                                     + LineEnding +
-    '  else if (Start + Int64(Count) > Len) then'                                        + LineEnding +
+    '  else if (Len - Count < Start) then'                                               + LineEnding +
     '    Count := Len - Start;'                                                          + LineEnding +
     ''                                                                                   + LineEnding +
     '  _ArraySetLength(Result, Count, ElSize, nil, nil);'                                + LineEnding +
@@ -298,10 +302,11 @@ var
     'end;';
 
   _LapeDelete: lpString =
-    'procedure _ArrayDelete(var p: Pointer; Start: Int32; Count: Int32 = High(Int32);'   + LineEnding +
-    '  ElSize: Int32;'                                                                   + LineEnding +
+    'procedure _ArrayDelete(var p: Pointer;'                                             + LineEnding +
+    '  Start: SizeInt; Count: SizeInt = High(SizeInt);'                                  + LineEnding +
+    '  ElSize: SizeInt;'                                                                 + LineEnding +
     '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
-    '  Copy: private procedure(Src, Dst: Pointer));'                                     + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer));'                       + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -315,7 +320,7 @@ var
     '    Start := 0'                                                                     + LineEnding +
     '  else if (Start >= Len) then'                                                      + LineEnding +
     '    Exit'                                                                           + LineEnding +
-    '  else if (Start + Int64(Count) > Len) then'                                        + LineEnding +
+    '  else if (Len - Count < Start) then'                                               + LineEnding +
     '    Count := Len - Start;'                                                          + LineEnding +
     ''                                                                                   + LineEnding +
     '  _ArraySetLength(p, Len, ElSize, Dispose, Copy);'                                  + LineEnding +
@@ -333,10 +338,10 @@ var
     'end;';
 
   _LapeInsert: lpString =
-    'procedure _ArrayInsert(Src: Pointer; var Dst: Pointer;'                             + LineEnding +
-    '  Start: Int32 = 0; Count: Int32 = 0; LenSrc, ElSize: Int32;'                       + LineEnding +
+    'procedure _ArrayInsert(Src: ConstPointer; var Dst: Pointer;'                        + LineEnding +
+    '  Start: SizeInt = 0; Count: SizeInt = 0; LenSrc, ElSize: SizeInt;'                 + LineEnding +
     '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
-    '  Copy: private procedure(Src, Dst: Pointer));'                                     + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer));'                       + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -354,7 +359,7 @@ var
     '    Start := 0'                                                                     + LineEnding +
     '  else if (Start > LenDst) then'                                                    + LineEnding +
     '    Start := LenDst'                                                                + LineEnding +
-    '  else if (Start + Int64(Count) > LenDst) then'                                     + LineEnding +
+    '  else if (LenDst - Count < Start) then'                                            + LineEnding +
     '    Count := LenDst - Start;'                                                       + LineEnding +
     ''                                                                                   + LineEnding +
     '  _ArraySetLength(Dst, LenDst + LenSrc, ElSize, Dispose, Copy);'                    + LineEnding +
@@ -377,7 +382,7 @@ var
     '  end;'                                                                             + LineEnding +
     ''                                                                                   + LineEnding +
     '  if (LenSrc > 0) then'                                                             + LineEnding +
-    '    if (Pointer(Copy) = nil) then'                                                 + LineEnding +
+    '    if (Pointer(Copy) = nil) then'                                                  + LineEnding +
     '      Move(Src^, Dst^, LenSrc * ElSize)'                                            + LineEnding +
     '    else for i := 0 to (LenSrc - 1) * ElSize with ElSize do'                        + LineEnding +
     '      Copy(Src[i], Dst[i]);'                                                        + LineEnding +
@@ -390,6 +395,7 @@ implementation
 
 uses
   Variants, Math,
+  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
   lpexceptions, lpparser;
 
@@ -438,18 +444,18 @@ end;
 
 procedure _LapeRangeCheck(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PInt32(Params^[0])^ < PInt32(Params^[1])^) or (PInt32(Params^[0])^ > PInt32(Params^[2])^) then
+  if (PSizeInt(Params^[0])^ < PSizeInt(Params^[1])^) or (PSizeInt(Params^[0])^ > PSizeInt(Params^[2])^) then
     LapeException(lpeOutOfTypeRange);
 end;
 
 procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  GetMem(PPointer(Result)^, PInt32(Params^[0])^);
+  GetMem(PPointer(Result)^, PSizeInt(Params^[0])^);
 end;
 
 procedure _LapeAllocMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PPointer(Result)^ := AllocMem(PInt32(Params^[0])^);
+  PPointer(Result)^ := AllocMem(PSizeInt(Params^[0])^);
 end;
 
 procedure _LapeFreeMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -459,113 +465,130 @@ end;
 
 procedure _LapeReallocMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  ReallocMem(PPointer(Params^[0])^, PInt32(Params^[1])^);
+  ReallocMem(PPointer(Params^[0])^, PSizeInt(Params^[1])^);
 end;
 
 procedure _LapeFillMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  FillChar(Params^[0]^, PInt32(Params^[1])^, PUInt8(Params^[2])^);
+  FillChar(Params^[0]^, PSizeInt(Params^[1])^, PUInt8(Params^[2])^);
 end;
 
 procedure _LapeMove(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  Move(Params^[0]^, Params^[1]^, PInt32(Params^[2])^);
+  Move(Params^[0]^, Params^[1]^, PSizeInt(Params^[2])^);
+end;
+
+procedure _LapeCompareMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PEvalBool(Result)^ := CompareMem(Params^[0], Params^[1], PSizeInt(Params^[2])^);
 end;
 
 procedure _LapeHigh(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt32(Result)^ := High(PCodeArray(Params^[0])^);
+  PSizeInt(Result)^ := High(PCodeArray(Params^[0])^);
 end;
 
 procedure _LapeLength(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt32(Result)^ := Length(PCodeArray(Params^[0])^);
+  PSizeInt(Result)^ := Length(PCodeArray(Params^[0])^);
 end;
 
 procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt32(Result)^ := Length(PAnsiString(Params^[0])^);
+  PSizeInt(Result)^ := Length(PAnsiString(Params^[0])^);
 end;
 
 procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt32(Result)^ := Length(PWideString(Params^[0])^);
+  PSizeInt(Result)^ := Length(PWideString(Params^[0])^);
 end;
 
 procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt32(Result)^ := Length(PUnicodeString(Params^[0])^);
+  PSizeInt(Result)^ := Length(PUnicodeString(Params^[0])^);
+end;
+
+procedure _LapeSStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PUInt8(Params^[1])^ > PUInt8(Params^[2])^) then
+    LapeException(lpeOutOfTypeRange);
+  SetLength(PShortString(Params^[0])^, PUInt8(Params^[1])^);
 end;
 
 procedure _LapeAStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  SetLength(PAnsiString(Params^[0])^, PInt32(Params^[1])^);
+  SetLength(PAnsiString(Params^[0])^, PSizeInt(Params^[1])^);
 end;
 
 procedure _LapeWStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  SetLength(PWideString(Params^[0])^, PInt32(Params^[1])^);
+  SetLength(PWideString(Params^[0])^, PSizeInt(Params^[1])^);
 end;
 
 procedure _LapeUStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  SetLength(PUnicodeString(Params^[0])^, PInt32(Params^[1])^);
+  SetLength(PUnicodeString(Params^[0])^, PSizeInt(Params^[1])^);
 end;
 
 procedure _LapeSStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PAnsiString(Params^[3])^ := Copy(PShortString(Params^[0])^, PInt32(Params^[1])^, PInt32(Params^[2])^);
+  PAnsiString(Params^[3])^ := Copy(PShortString(Params^[0])^, PUInt8(Params^[1])^, Min(Length(PShortString(Params^[0])^), PUInt8(Params^[2])^));
 end;
 
 procedure _LapeAStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PAnsiString(Params^[3])^ := Copy(PAnsiString(Params^[0])^, PInt32(Params^[1])^, PInt32(Params^[2])^);
+  PAnsiString(Params^[3])^ := Copy(PAnsiString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PAnsiString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeWStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PWideString(Params^[3])^ := Copy(PWideString(Params^[0])^, PInt32(Params^[1])^, PInt32(Params^[2])^);
+  PWideString(Params^[3])^ := Copy(PWideString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PWideString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeUStr_Copy(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PUnicodeString(Params^[3])^ := Copy(PUnicodeString(Params^[0])^, PInt32(Params^[1])^, PInt32(Params^[2])^);
+  PUnicodeString(Params^[3])^ := Copy(PUnicodeString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PUnicodeString(Params^[0])^), PSizeInt(Params^[2])^));
+end;
+
+procedure _LapeSStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  Delete(PShortString(Params^[0])^, PUInt8(Params^[1])^, Min(Length(PShortString(Params^[0])^), PUInt8(Params^[2])^));
 end;
 
 procedure _LapeAStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  Delete(PAnsiString(Params^[0])^, PInt32(Params^[1])^, PInt32(Params^[2])^);
+  Delete(PAnsiString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PAnsiString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeWStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  Delete(PWideString(Params^[0])^, PInt32(Params^[1])^, PInt32(Params^[2])^);
+  Delete(PWideString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PWideString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeUStr_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  Delete(PUnicodeString(Params^[0])^, PInt32(Params^[1])^, PInt32(Params^[2])^);
+  Delete(PUnicodeString(Params^[0])^, PSizeInt(Params^[1])^, Min(Length(PUnicodeString(Params^[0])^), PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeAStr_Insert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PInt32(Params^[3])^ > 0) then
-    Delete(PAnsiString(Params^[1])^, PInt32(Params^[2])^, PInt32(Params^[3])^);
-  Insert(PAnsiString(Params^[0])^, PAnsiString(Params^[1])^, PInt32(Params^[2])^);
+  if (PSizeInt(Params^[3])^ > 0) then
+    Delete(PAnsiString(Params^[1])^, PSizeInt(Params^[2])^, Min(Length(PAnsiString(Params^[1])^), PSizeInt(Params^[3])^));
+  Insert(PAnsiString(Params^[0])^, PAnsiString(Params^[1])^, Min(Length(PAnsiString(Params^[1])^)+1, PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeWStr_Insert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PInt32(Params^[3])^ > 0) then
-    Delete(PWideString(Params^[1])^, PInt32(Params^[2])^, PInt32(Params^[3])^);
-  Insert(PWideString(Params^[0])^, PWideString(Params^[1])^, PInt32(Params^[2])^);
+  if (PSizeInt(Params^[3])^ > 0) then
+    Delete(PWideString(Params^[1])^, PSizeInt(Params^[2])^, Min(Length(PWideString(Params^[1])^), PSizeInt(Params^[3])^));
+  Insert(PWideString(Params^[0])^, PWideString(Params^[1])^, Min(Length(PWideString(Params^[1])^)+1, PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeUStr_Insert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PInt32(Params^[3])^ > 0) then
-    Delete(PUnicodeString(Params^[1])^, PInt32(Params^[2])^, PInt32(Params^[3])^);
-  Insert(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, PInt32(Params^[2])^);
+  if (PSizeInt(Params^[3])^ > 0) then
+    Delete(PUnicodeString(Params^[1])^, PSizeInt(Params^[2])^, Min(Length(PUnicodeString(Params^[1])^), PSizeInt(Params^[3])^));
+  Insert(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, Min(Length(PUnicodeString(Params^[1])^)+1, PSizeInt(Params^[2])^));
 end;
 
 procedure _LapeAStr_Unique(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -590,129 +613,130 @@ end;
 
 procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := UIntToStr(PUInt8(Params^[0])^);
+  PlpString(Result)^ := lpString(UIntToStr(PUInt8(Params^[0])^));
 end;
 
 procedure _LapeToString_Int8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToStr(PInt8(Params^[0])^);
+  PlpString(Result)^ := lpString(IntToStr(PInt8(Params^[0])^));
 end;
 
 procedure _LapeToString_UInt16(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := UIntToStr(PUInt16(Params^[0])^);
+  PlpString(Result)^ := lpString(UIntToStr(PUInt16(Params^[0])^));
 end;
 
 procedure _LapeToString_Int16(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToStr(PInt16(Params^[0])^);
+  PlpString(Result)^ := lpString(IntToStr(PInt16(Params^[0])^));
 end;
 
 procedure _LapeToString_UInt32(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := UIntToStr(PUInt32(Params^[0])^);
+  PlpString(Result)^ := lpString(UIntToStr(PUInt32(Params^[0])^));
 end;
 
 procedure _LapeToString_Int32(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToStr(PInt32(Params^[0])^);
+  PlpString(Result)^ := lpString(IntToStr(PInt32(Params^[0])^));
 end;
 
 procedure _LapeToString_UInt64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := UIntToStr(PUInt64(Params^[0])^);
+  PlpString(Result)^ := lpString(UIntToStr(PUInt64(Params^[0])^));
 end;
 
 procedure _LapeToString_Int64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToStr(PInt64(Params^[0])^);
+  PlpString(Result)^ := lpString(IntToStr(PInt64(Params^[0])^));
 end;
 
 procedure _LapeToString_Single(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := FloatToStr(PSingle(Params^[0])^);
+  PlpString(Result)^ := lpString(FloatToStr(PSingle(Params^[0])^));
 end;
 
 procedure _LapeToString_Double(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := FloatToStr(PDouble(Params^[0])^);
+  PlpString(Result)^ := lpString(FloatToStr(PDouble(Params^[0])^));
 end;
 
 procedure _LapeToString_Currency(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := FloatToStr(PCurrency(Params^[0])^);
+  PlpString(Result)^ := lpString(FloatToStr(PCurrency(Params^[0])^));
 end;
 
 procedure _LapeToString_Extended(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := FloatToStr(PExtended(Params^[0])^);
+  PlpString(Result)^ := lpString(FloatToStr(PExtended(Params^[0])^));
 end;
 
 procedure _LapeToString_Boolean(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := BoolToStr(PBoolean(Params^[0])^, True);
+  PlpString(Result)^ := lpString(BoolToStr(PBoolean(Params^[0])^, True));
 end;
 
 procedure _LapeToString_ByteBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := BoolToStr(PBoolean(Params^[0])^, True);
+  PlpString(Result)^ := lpString(BoolToStr(PByteBool(Params^[0])^, True));
 end;
 
 procedure _LapeToString_WordBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := BoolToStr(PWordBool(Params^[0])^, True);
+  PlpString(Result)^ := lpString(BoolToStr(PWordBool(Params^[0])^, True));
 end;
 
 procedure _LapeToString_LongBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := BoolToStr(PLongBool(Params^[0])^, True);
+  PlpString(Result)^ := lpString(BoolToStr(PLongBool(Params^[0])^, True));
 end;
 
 procedure _LapeToString_AnsiChar(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := PAnsiChar(Params^[0])^;
+  PlpString(Result)^ := lpString(PAnsiChar(Params^[0])^);
 end;
 
 procedure _LapeToString_WideChar(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := PWideChar(Params^[0])^;
+  PlpString(Result)^ := lpString(PWideChar(Params^[0])^);
 end;
 
 procedure _LapeToString_ShortString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := PShortString(Params^[0])^;
+  PlpString(Result)^ := lpString(PShortString(Params^[0])^);
 end;
 
 procedure _LapeToString_AnsiString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := PAnsiString(Params^[0])^;
+  PlpString(Result)^ := lpString(PAnsiString(Params^[0])^);
 end;
 
 procedure _LapeToString_WideString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := PWideString(Params^[0])^;
+  PlpString(Result)^ := lpString(PWideString(Params^[0])^);
 end;
 
 procedure _LapeToString_UnicodeString(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := PUnicodeString(Params^[0])^;
+  PlpString(Result)^ := lpString(PUnicodeString(Params^[0])^);
 end;
 
 procedure _LapeToString_Variant(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   try
-    PlpString(Result)^ := VarToStr(PVariant(Params^[0])^);
+    {$IF DEFINED(Lape_Unicode) and DEFINED(FPC)}
+    PlpString(Result)^ := lpString(VarToUnicodeStr(PVariant(Params^[0])^));
+    {$ELSE}
+    PlpString(Result)^ := lpString(VarToStr(PVariant(Params^[0])^));
+    {$IFEND}
   except
-    PlpString(Result)^ := VarTypeAsText(VarType(PVariant(Params^[0])^));
+    PlpString(Result)^ := lpString(VarTypeAsText(VarType(PVariant(Params^[0])^)));
   end;
 end;
 
 procedure _LapeToString_Pointer(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PPointer(Params^[0])^ = nil) then
-    PlpString(Result)^ := 'nil'
-  else
-    PlpString(Result)^ := '0x'+IntToHex(PtrUInt(PPointer(Params^[0])^), 1);
+  PlpString(Result)^ := PointerToString(Params^[0]);
 end;
 
 type
@@ -802,6 +826,9 @@ begin
   {$I lpeval_res.inc}
 end;
 
+{$WARN COMPARING_SIGNED_UNSIGNED OFF}
+{$WARN IMPLICIT_STRING_CAST OFF}
+{$WARN IMPLICIT_STRING_CAST_LOSS OFF}
 {$I lpeval_functions.inc}
 
 procedure LoadEvalArr(var Arr: TLapeEvalArr);

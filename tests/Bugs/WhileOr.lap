@@ -1,13 +1,5 @@
 {$assertions on}
 
-function max(a, b: Integer): Integer;
-begin
-  if (a > b) then
-    Result := a
-  else
-    Result := b;
-end;
-
 var 
   a, b,c : integer;
 begin

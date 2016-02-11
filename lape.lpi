@@ -26,6 +26,7 @@
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
             <Libraries Value="extensions\ffi\bin\$(TargetOS)"/>
+            <OtherUnitFiles Value="extensions\ffi"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <CodeGeneration>
@@ -91,6 +92,9 @@
         </CompilerOptions>
       </Item3>
       <Item4 Name="WinCE">
+        <MacroValues Count="1">
+          <Macro1 Name="LCLWidgetType" Value="wince"/>
+        </MacroValues>
         <CompilerOptions>
           <Version Value="11"/>
           <PathDelim Value="\"/>
@@ -129,6 +133,9 @@
           </Other>
         </CompilerOptions>
       </Item4>
+      <SharedMatrixOptions Count="1">
+        <Item1 ID="753552765520" Modes="WinCE" Type="IDEMacro" MacroName="LCLWidgetType" Value="wince"/>
+      </SharedMatrixOptions>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
@@ -417,7 +424,6 @@
     <Linking>
       <Debugging>
         <UseHeaptrc Value="True"/>
-        <GenGProfCode Value="True"/>
       </Debugging>
       <LinkSmart Value="True"/>
     </Linking>

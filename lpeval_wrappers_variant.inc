@@ -83,12 +83,12 @@ end;
 
 procedure _LapeVarToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PAnsiString(Result)^ := VarToStr(PVariant(Params^[0])^);
+  PlpString(Result)^ := lpString(VarToStr(PVariant(Params^[0])^));
 end;
 
 procedure _LapeVarToStrDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PAnsiString(Result)^ := VarToStrDef(PVariant(Params^[0])^, PAnsiString(Params^[1])^);
+  PlpString(Result)^ := lpString(VarToStrDef(PVariant(Params^[0])^, string(PlpString(Params^[1])^)));
 end;
 
 procedure _LapeVarToWideStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

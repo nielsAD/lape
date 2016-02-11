@@ -1,0 +1,44 @@
+procedure wop;
+begin
+  System.wap();
+end;
+
+procedure string.wop; static;
+begin
+  string.wap();
+end;
+
+procedure wap; overload;
+begin
+  WriteLn('wap');
+  System.wip();
+end;
+
+procedure string.wap; static; overload;
+begin
+  WriteLn('wap');
+  string.wip();
+end;
+
+procedure wip;
+begin
+  WriteLn('wip');
+end;
+
+procedure string.wip; static;
+begin
+  WriteLn('wip');
+end;
+
+type string123 = type string;
+
+procedure string123.wap(a: Integer); static; overload;
+begin
+  wap;
+end;
+
+begin
+  string.wop();
+  system.wop();
+  string123.wap(123);
+end;

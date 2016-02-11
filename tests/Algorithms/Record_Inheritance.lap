@@ -43,7 +43,7 @@ begin
   end;
 end;
 
-function TPoint.Create(ax: Int32 = 1; ay: Int32 = 2): PPoint;
+function TPoint.Create(ax: Int32 = 1; ay: Int32 = 2): PPoint; static;
 begin
   New(Result);
   with Result^ do
@@ -79,7 +79,7 @@ begin
   end;
 end;
 
-function T3DPoint.Create(ax: Int32 = 4; ay: Int32 = 5; az: Int32 = 6): P3DPoint; overload;
+function T3DPoint.Create(ax: Int32 = 4; ay: Int32 = 5; az: Int32 = 6): P3DPoint; static; overload;
 begin
   New(Result);
   with Result^ do

@@ -16,7 +16,6 @@ addGlobalFunc('function UpCase(c: AnsiChar): AnsiChar; overload;', @_LapeUpCaseA
 addGlobalFunc('function UpCase(c: WideChar): WideChar; overload;', @_LapeUpCaseW);
 
 addGlobalFunc('function CompareStr(s1, s2: string): Int32;', @_LapeCompareStr);
-addGlobalFunc('function CompareMem(p1, p2: Pointer; Length: PtrUInt): EvalBool;', @_LapeCompareMem);
 addGlobalFunc('function CompareText(s1, s2: string): Int32;', @_LapeCompareText);
 addGlobalFunc('function SameText(s1, s2: string): EvalBool;', @_LapeSameText);
 
@@ -69,3 +68,9 @@ addGlobalFunc('Function IsDelimiter(Delimiters, s: string; Index: SizeInt): Eval
 
 addGlobalFunc('function Pos(Substr: string; Source: string): SizeInt;', @_LapePos);
 addGlobalFunc('function StringOfChar(c: Char; l: SizeInt): string;', @_LapeStringOfChar);
+
+addDelayedCode(LapeDelayedFlags +
+  'function Chr(IntValue: UInt8):  AnsiChar; overload; begin Result := AnsiChar(IntValue); end;' + LineEnding +
+  'function Chr(IntValue: UInt16): WideChar; overload; begin Result := WideChar(IntValue); end;'
+,  '!addDelayedString');
+

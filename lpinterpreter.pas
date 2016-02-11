@@ -112,7 +112,6 @@ begin
   if (Merge.JumpException.Obj <> nil) then
   begin
     if (AJump.JumpException.Obj <> nil) and (AJump.JumpException.Obj <> Merge.JumpException.Obj) then
-      //FreeAndNil(AJump.JumpException.Obj);
       Merge.JumpException.Obj.Free()
     else
       AJump.JumpException := Merge.JumpException;
@@ -158,7 +157,7 @@ var
       VarStackStack[VarStackIndex].Pos := VarStackLen;
 
       Inc(VarStackIndex);
-      if (VarStackIndex >= Length(VarStackStack)) then
+      if (VarStackIndex >= UInt32(Length(VarStackStack))) then
         SetLength(VarStackStack, VarStackIndex + (VarStackStackSize div 2));
 
       VarStackPos := 0;
@@ -403,7 +402,7 @@ var
 
   procedure DoIncTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (TryStackPos >= Length(TryStack)) then
+    if (TryStackPos >= UInt32(Length(TryStack))) then
       SetLength(TryStack, TryStackPos + (TryStackSize div 2));
 
     with POC_IncTry(PtrUInt(Code) + ocSize)^ do
@@ -445,7 +444,7 @@ var
 
   procedure DoIncCall(RecSize: Integer; Jmp: TCodePos; ParamSize: TParamSize; StackPosOffset: TStackInc = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (CallStackPos >= Length(CallStack)) then
+    if (CallStackPos >= UInt32(Length(CallStack))) then
       SetLength(CallStack, CallStackPos + (CallStackSize div 2));
 
     with CallStack[CallStackPos] do
@@ -453,7 +452,7 @@ var
       CalledFrom := PByte(PtrInt(Code) + ocSize + RecSize);
       VarStackP := VarStackPos;
       PushToVar(ParamSize);
-      StackP := StackPos + StackPosOffset;
+      StackP := StackPos + UInt32(StackPosOffset);
 
       Jump := InJump;
       InJump := InEmptyJump;

@@ -32,11 +32,6 @@ begin
   PInt32(Result)^ := CompareStr(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
-procedure _LapeCompareMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PEvalBool(Result)^ := CompareMem(PPointer(Params^[0])^, PPointer(Params^[1])^, PPtrUInt(Params^[2])^);
-end;
-
 procedure _LapeCompareText(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt32(Result)^ := CompareText(PlpString(Params^[0])^, PlpString(Params^[1])^);
@@ -94,12 +89,12 @@ end;
 
 procedure _LapePadL(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := StringOfChar(PlpChar(Params^[2])^, PUInt32(Params^[1])^ - Length(PlpString(Params^[0])^)) + PlpString(Params^[0])^;
+  PlpString(Result)^ := StringOfChar(PlpChar(Params^[2])^, PUInt32(Params^[1])^ - UInt32(Length(PlpString(Params^[0])^))) + PlpString(Params^[0])^;
 end;
 
 procedure _LapePadR(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := PlpString(Params^[0])^ + StringOfChar(PlpChar(Params^[2])^, PUInt32(Params^[1])^ - Length(PlpString(Params^[0])^));
+  PlpString(Result)^ := PlpString(Params^[0])^ + StringOfChar(PlpChar(Params^[2])^, PUInt32(Params^[1])^ - UInt32(Length(PlpString(Params^[0])^)));
 end;
 
 procedure _LapeQuotedStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -109,12 +104,12 @@ end;
 
 procedure _LapeAnsiQuotedStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := AnsiQuotedStr(PlpString(Params^[0])^, Char(PlpChar(Params^[1])^));
+  PlpString(Result)^ := AnsiQuotedStr(PlpString(Params^[0])^, lpChar(PlpChar(Params^[1])^));
 end;
 
 procedure _LapeAnsiDequotedStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := AnsiDequotedStr(PlpString(Params^[0])^, Char(PlpChar(Params^[1])^));
+  PlpString(Result)^ := AnsiDequotedStr(PlpString(Params^[0])^, lpChar(PlpChar(Params^[1])^));
 end;
 
 type
@@ -123,77 +118,77 @@ type
 
 procedure _LapeWrapText(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := WrapText(PlpString(Params^[0])^, PlpString(Params^[1])^, PAnsiCharSet(Params^[2])^, PInt32(Params^[3])^);
+  PlpString(Result)^ := lpString(WrapText(string(PlpString(Params^[0])^), string(PlpString(Params^[1])^), PAnsiCharSet(Params^[2])^, PInt32(Params^[3])^));
 end;
 
 procedure _LapeAdjustLineBreaks(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := AdjustLineBreaks(PlpString(Params^[0])^, TTextLineBreakStyle(PLapeSmallEnum(Params^[1])^));
+  PlpString(Result)^ := lpString(AdjustLineBreaks(string(PlpString(Params^[0])^), TTextLineBreakStyle(PLapeSmallEnum(Params^[1])^)));
 end;
 
 procedure _LapeIntToHex(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToHex(PInt64(Params^[0])^, PInt32(Params^[1])^);
+  PlpString(Result)^ := lpString(IntToHex(PInt64(Params^[0])^, PInt32(Params^[1])^));
 end;
 
 procedure _LapeUIntToHex(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := IntToHex(PUInt64(Params^[0])^, PInt32(Params^[1])^);
+  PlpString(Result)^ := lpString(IntToHex(PUInt64(Params^[0])^, PInt32(Params^[1])^));
 end;
 
 procedure _LapeStrToInt(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt32(Result)^ := StrToInt(PlpString(Params^[0])^);
+  PInt32(Result)^ := StrToInt(string(PlpString(Params^[0])^));
 end;
 
 procedure _LapeStrToIntDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt32(Result)^ := StrToIntDef(PlpString(Params^[0])^, PInt32(Params^[1])^);
+  PInt32(Result)^ := StrToIntDef(string(PlpString(Params^[0])^), PInt32(Params^[1])^);
 end;
 
 procedure _LapeStrToInt64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt64(Result)^ := StrToInt64(PlpString(Params^[0])^);
+  PInt64(Result)^ := StrToInt64(string(PlpString(Params^[0])^));
 end;
 
 procedure _LapeStrToInt64Def(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt64(Result)^ := StrToInt64Def(PlpString(Params^[0])^, PInt64(Params^[1])^);
+  PInt64(Result)^ := StrToInt64Def(string(PlpString(Params^[0])^), PInt64(Params^[1])^);
 end;
 
 procedure _LapeStrToUInt64(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PUInt64(Result)^ := StrToUInt64(PlpString(Params^[0])^);
+  PUInt64(Result)^ := StrToUInt64(string(PlpString(Params^[0])^));
 end;
 
 procedure _LapeStrToUInt64Def(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PUInt64(Result)^ := StrToUInt64Def(PlpString(Params^[0])^, PUInt64(Params^[1])^);
+  PUInt64(Result)^ := StrToUInt64Def(string(PlpString(Params^[0])^), PUInt64(Params^[1])^);
 end;
 
 procedure _LapeStrToFloat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := StrToFloat(PlpString(Params^[0])^);
+  PExtended(Result)^ := StrToFloat(string(PlpString(Params^[0])^));
 end;
 
 procedure _LapeStrToFloatDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := StrToFloatDef(PlpString(Params^[0])^, PExtended(Params^[1])^);
+  PExtended(Result)^ := StrToFloatDef(string(PlpString(Params^[0])^), PExtended(Params^[1])^);
 end;
 
 procedure _LapeStrToCurr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PCurrency(Result)^ := StrToCurr(PlpString(Params^[0])^);
+  PCurrency(Result)^ := StrToCurr(string(PlpString(Params^[0])^));
 end;
 
 procedure _LapeStrToCurrDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PCurrency(Result)^ := StrToCurrDef(PlpString(Params^[0])^, PCurrency(Params^[1])^);
+  PCurrency(Result)^ := StrToCurrDef(string(PlpString(Params^[0])^), PCurrency(Params^[1])^);
 end;
 
 procedure _LapeStrToBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := StrToBool(PlpString(Params^[0])^);
+  PEvalBool(Result)^ := StrToBool(string(PlpString(Params^[0])^));
 end;
 
 procedure _LapeBoolToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -206,7 +201,7 @@ end;
 
 procedure _LapeStrToBoolDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := StrToBoolDef(PlpString(Params^[0])^, PEvalBool(Params^[1])^);
+  PEvalBool(Result)^ := StrToBoolDef(string(PlpString(Params^[0])^), PEvalBool(Params^[1])^);
 end;
 
 procedure _LapeFormat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -219,12 +214,12 @@ end;
 
 procedure _LapeFormatFloat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := FormatFloat(PlpString(Params^[0])^, PExtended(Params^[1])^);
+  PlpString(Result)^ := lpString(FormatFloat(string(PlpString(Params^[0])^), PExtended(Params^[1])^));
 end;
 
 procedure _LapeFormatCurr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := FormatCurr(PlpString(Params^[0])^, PCurrency(Params^[1])^);
+  PlpString(Result)^ := lpString(FormatCurr(string(PlpString(Params^[0])^), PCurrency(Params^[1])^));
 end;
 
 procedure _LapeLastDelimiter(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

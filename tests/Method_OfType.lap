@@ -1,0 +1,42 @@
+{$assertions on}
+
+function NativeInt.Create(s: string): NativeInt; static;
+begin
+  Result := StrToInt(s);
+end;
+
+function NativeInt.Create(s: string; Def: NativeInt): NativeInt; static; overload;
+begin
+  Result := StrToIntDef(s, Def);
+end;
+
+function NativeInt.Next(i: NativeInt): NativeInt; constref;
+begin
+  Result := Self + i;
+end;
+
+function NativeInt.Next(s: string): NativeInt; constref; overload;
+begin
+  Result := Next(Self.Create(s));
+end;
+
+procedure NativeInt.Inc(i: NativeInt = 1);
+begin
+  Self := Self.Next(i);
+end;
+
+procedure NativeInt.Next(); overload;
+begin
+  Inc();
+end;
+
+const i: NativeInt := NativeInt.Create('1');
+var   j: NativeInt := NativeInt.Create('crash', 2);
+begin
+  j := NativeInt.Create(IntToStr(1.Next(i).Next(j).Next('1')));
+  Assert(j = 5);
+  j.Inc(4);
+  j.Next();
+  Assert(j = 10);
+  Assert(j.Next('2').Next(3) = j.Next(5));
+end;

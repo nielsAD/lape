@@ -26,6 +26,9 @@
         </Debugging>
       </Linking>
       <Other>
+        <CompilerMessages>
+          <IgnoredMessages idx5024="True" idx4055="True"/>
+        </CompilerMessages>
         <CustomOptions Value="-Ur"/>
       </Other>
     </CompilerOptions>

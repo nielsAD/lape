@@ -11,15 +11,15 @@ uses
 type
   TLapeTester = class(TLapeBaseClass)
   private
-    FFolder: lpString;
+    FFolder: string;
     FDebug: Boolean;
   public
-    constructor Create(AFolder: lpString = '..'; ADebug: Boolean = False); reintroduce;
+    constructor Create(AFolder: string = '..'; ADebug: Boolean = False); reintroduce;
 
-    class procedure TestFile(FileName: lpString; out Output: lpString; ExpectFile: lpString = '');
+    class procedure TestFile(FileName: string; out Output: lpString; ExpectFile: string = '');
     function TestFiles: Boolean;
 
-    property Folder: lpString read FFolder;
+    property Folder: string read FFolder;
     property Debug: Boolean read FDebug;
   end;
 
@@ -27,6 +27,7 @@ implementation
 
 uses
   {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF} strutils,
+  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpcompiler, lpparser, lpexceptions, lpinterpreter, lputils;
 
 {$IFNDEF FPC} //Internal error workaround
@@ -38,14 +39,14 @@ end;
 {$IFEND}
 {$ENDIF}
 
-constructor TLapeTester.Create(AFolder: lpString = '..'; ADebug: Boolean = False);
+constructor TLapeTester.Create(AFolder: string = '..'; ADebug: Boolean = False);
 begin
   inherited Create();
 
   FDebug := ADebug;
   FFolder := IncludeTrailingPathDelimiter(ExpandFileName(AFolder));
   if (not DirectoryExists(FFolder)) then
-    LapeException('Cannot find folder ' + FFolder);
+    LapeException(lpString('Cannot find folder ' + FFolder));
 end;
 
 procedure _Write(var Output: lpString; s: lpString);
@@ -69,7 +70,7 @@ begin
   _WriteLn(PlpString(Params^[0])^);
 end;
 
-class procedure TLapeTester.TestFile(FileName: lpString; out Output: lpString; ExpectFile: lpString = '');
+class procedure TLapeTester.TestFile(FileName: string; out Output: lpString; ExpectFile: string = '');
 var
   Expect: lpString;
 begin
@@ -79,12 +80,12 @@ begin
     with TStringList.Create() do
     try
       LoadFromFile(ExpectFile);
-      Expect := Trim(Text);
+      Expect := Trim(lpString(Text));
     finally
       Free();
     end;
 
-  with TLapeCompiler.Create(TLapeTokenizerFile.Create(FileName)) do
+  with TLapeCompiler.Create(TLapeTokenizerFile.Create(lpString(FileName))) do
   try
     InitializePascalScriptBasics(GetSelf() as TLapeCompiler, [psiTypeAlias]);
     addGlobalMethod('procedure _Write(s: string); override;', @_WriteWrap, @Output);
@@ -102,9 +103,9 @@ begin
           raise
         else
         begin
-          if (Output <> '') and (not AnsiEndsStr(LineEnding, Output)) then
+          if (Output <> '') and (not AnsiEndsStr(lpString(LineEnding), Output)) then
             _WriteLn(Output);
-          _WriteLn(Output, StringReplace(E.Message, '"' + ExtractFilePath(FileName), '"', [rfReplaceAll]));
+          _WriteLn(Output, lpString(StringReplace(E.Message, '"' + ExtractFilePath(FileName), '"', [rfReplaceAll])));
         end;
       end;
     end;
@@ -124,7 +125,7 @@ var
   Fail, Pass: Integer;
   StartTime: UInt64;
 
-  function TestFolder(Folder: lpString): Integer;
+  function TestFolder(Folder: string): Integer;
   var
     Res: TSearchRec;
     StartTime: UInt64;
@@ -134,7 +135,7 @@ var
     if (FindFirst(Folder + '*.lap', faAnyFile - faDirectory, Res) = 0) then
     try
       repeat
-        Write(Format('Testing %27s :: ', [ExtractFileName(Res.Name)]));
+        Write(Format('Testing %30s :: ', [ExtractFileName(Res.Name)]));
         Inc(Result);
 
         Output := '';

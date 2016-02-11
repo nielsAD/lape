@@ -1,0 +1,17 @@
+// Issue 42
+{$assertions on}
+
+function MuchWTF(): Int32;
+begin
+  Result := {--}system.wtf;                  //uncomment `--` for it to work
+  Assert(Result = 1024);
+
+  system.wtf := 9999;  //works
+end;
+
+var
+  wtf: Int32 = 1024;
+begin
+  Assert(MuchWTF() = 1024);
+  Assert(wtf = 9999);
+end;

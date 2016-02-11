@@ -1,0 +1,59 @@
+{$autoinvoke on}
+{$assertions off}
+
+type
+  TBar = type Integer;
+  TFoo = type Integer;
+  TGetBarFunc = function: TBar;
+  TGetFooFunc = function: TFoo of object;
+
+function TFoo.getBar: TBar; static; overload;
+begin
+  WriteLn('getBar[1]');
+end;
+
+function TFoo.getBar(AParam: TBar): TBar; static; overload;
+begin
+  WriteLn('getBar[2]');
+end;
+
+function TFoo.getFoo: TFoo; overload;
+begin
+  WriteLn(Self, '.getFoo[1]');
+end;
+
+function TFoo.getFoo(AParam: TFoo): TFoo; overload;
+begin
+  WriteLn('getFoo[2]');
+end;
+
+function TFoo.getFoo: TFoo; override;
+begin
+  WriteLn('getFoo[2] OVERRIDE');
+  Result := inherited();
+end;
+
+var
+  foo: TFoo;
+  b: TGetBarFunc;
+  f: TGetFooFunc;
+begin
+  foo := 123;
+  foo.getFoo.getBar;
+  foo.getFoo().getBar;
+  foo.getFoo().getBar();
+  foo.getFoo.getBar();
+
+  TFoo(456).getBar;
+
+  f := @foo.getFoo;
+  f.getBar;
+
+  f := @f;
+
+  b := @f.getBar;
+  b;
+
+  b := @foo.getFoo.getBar;
+  b;
+end.

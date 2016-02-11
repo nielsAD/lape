@@ -15,7 +15,7 @@ begin
 end;
 
 const
-  DoIt = True;
+  DoIt:Boolean = True;
 begin
   if DoIt then
     if (not DoIt) then
