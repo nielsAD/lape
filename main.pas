@@ -41,7 +41,7 @@ implementation
 
 uses
   lpparser, lpcompiler, lputils, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
-  LCLIntf, typinfo, lpffi, ffi;
+  LCLIntf, typinfo, lpffi, lpffiwrappers;
 
 {$R *.lfm}
 
@@ -96,7 +96,6 @@ var
   t: Cardinal;
   Parser: TLapeTokenizerBase;
   Compiler: TLapeCompiler;
-  c: TImportClosure;
 begin
   Parser := nil;
   Compiler := nil;
@@ -105,15 +104,13 @@ begin
       Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND});
       Compiler := TLapeCompiler.Create(Parser);
 
+      InitializeFFI(Compiler);
       InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
       ExposeGlobals(Compiler);
 
       Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
       Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
       Compiler.addGlobalFunc('function MyStupidProc: array of integer', @MyStupidProc);
-
-      c := LapeImportWrapper(@StupidProc, Compiler, 'function(abc: array of integer): array of integer', FFI_SYSV);
-      Compiler.addGlobalFunc('function StupidProc(abc: array of integer): array of integer', c.Func);
 
       try
         t := getTickCount;
@@ -149,7 +146,6 @@ begin
         Compiler.Free()
       else if (Parser <> nil) then
         Parser.Free();
-      c.Free();
     end;
 end;
 

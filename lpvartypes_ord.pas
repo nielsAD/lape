@@ -905,7 +905,6 @@ end;
 
 function TLapeType_Set.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
-  IntType: ELapeBaseType;
   Index: Integer;
 begin
   Result := '';

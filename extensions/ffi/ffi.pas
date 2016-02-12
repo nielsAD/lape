@@ -286,8 +286,8 @@ var
 function FFILoaded: Boolean;
 procedure AssertFFILoaded;
 
-function CallConvToStr(c: TFFIABI): string;
-function StrToCallConv(c: string): TFFIABI;
+function ABIToStr(c: TFFIABI): string;
+function StrToABI(c: string): TFFIABI;
 
 {$IFDEF DynamicFFI}
 procedure LoadFFI(LibPath: string = ''; LibName: string = LibFFI);
@@ -299,14 +299,17 @@ implementation
 uses
   SysUtils, TypInfo;
 
-function CallConvToStr(c: TFFIABI): string;
+function ABIToStr(c: TFFIABI): string;
 begin
   Result := LowerCase(getEnumName(TypeInfo(TFFIABI), Ord(c)));
   if (Result <> '') then
-    Delete(Result, 1, 4);
+    if (Result[1] = '_') then
+      Result := ''
+    else
+      Delete(Result, 1, 4);
 end;
 
-function StrToCallConv(c: string): TFFIABI;
+function StrToABI(c: string): TFFIABI;
 begin
   c := LowerCase(c);
   if (Length(c) < 5) or (c[1] <> 'f') or (c[2] <> 'f') or (c[3] <> 'i') or (c[4] <> '_') then

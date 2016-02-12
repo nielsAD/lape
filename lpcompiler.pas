@@ -2613,8 +2613,8 @@ begin
               PopOpStack(op_Invoke);
               if (Method = nil) then
               begin
-                Expr := ResolveMethods(VarStack.Pop().FoldConstants(), True) as TLapeTree_ExprBase;
-                if (Expr is TLapeTree_InternalMethod) then
+                Expr := ResolveMethods(VarStack.Top.FoldConstants(), True) as TLapeTree_ExprBase;
+                if (Expr <> VarStack.Pop()) and (Expr is TLapeTree_InternalMethod) then
                   Method := TLapeTree_Invoke(Expr)
                 else
                   Method := TLapeTree_Invoke.Create(Expr, Self, getPDocPos());

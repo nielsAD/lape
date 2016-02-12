@@ -2,7 +2,8 @@ program LapeTestFFI;
 
 uses
   SysUtils, {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
-  lptypes, lpvartypes, lpcompiler, lptree, lpparser, lpinterpreter, lpexceptions, lpffi, ffi;
+  lptypes, lpvartypes, lpcompiler, lptree, lpparser, lpinterpreter, lpexceptions,
+  lpffiwrappers, ffi;
 
 type
   TRunFun = function(p: Pointer): Boolean;
@@ -796,7 +797,7 @@ begin
 
       e := LapeExportWrapper(m.Method, ExportABI);
 
-      Write(Format('Testing  %-6s :: %8s <-> %-8s :: ', [v.Name, CallConvToStr(ImportABI), CallConvToStr(ExportABI)]));
+      Write(Format('Testing  %-6s :: %8s <-> %-8s :: ', [v.Name, ABIToStr(ImportABI), ABIToStr(ExportABI)]));
       RunCode(Emitter.Code);
       Result := RunFun(e.Func);
 
@@ -898,7 +899,7 @@ begin
 
   ExitCode := 0;
 
-  WriteLn('Running ', Length(BiDiTests), ' tests with ', CallConvToStr(TEST_ABI), ' calling convention.');
+  WriteLn('Running ', Length(BiDiTests), ' tests with ', ABIToStr(TEST_ABI), ' calling convention.');
   WriteLn();
 
   StartTime := GetTickCount();
