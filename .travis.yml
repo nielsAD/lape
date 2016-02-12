@@ -52,4 +52,4 @@ script:
   - lazbuild $LAZ_OPT "$LAPE_PKG/lape.lpk"
   - lazbuild $LAZ_OPT "LapeTest.lpi"
   - $LAZ_ENV ./LapeTest
-  - cd "$LAPE_FFI" && runall.sh || true
+  - cd "$LAPE_FFI" && ./runall.sh || true
