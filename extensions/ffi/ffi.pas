@@ -286,8 +286,8 @@ var
 function FFILoaded: Boolean;
 procedure AssertFFILoaded;
 
-function CallConvToStr(c: TFFIABI): string;
-function StrToCallConv(c: string): TFFIABI;
+function ABIToStr(c: TFFIABI): string;
+function StrToABI(c: string): TFFIABI;
 
 {$IFDEF DynamicFFI}
 procedure LoadFFI(LibPath: string = ''; LibName: string = LibFFI);
@@ -299,14 +299,17 @@ implementation
 uses
   SysUtils, TypInfo;
 
-function CallConvToStr(c: TFFIABI): string;
+function ABIToStr(c: TFFIABI): string;
 begin
   Result := LowerCase(getEnumName(TypeInfo(TFFIABI), Ord(c)));
   if (Result <> '') then
-    Delete(Result, 1, 4);
+    if (Result[1] = '_') then
+      Result := ''
+    else
+      Delete(Result, 1, 4);
 end;
 
-function StrToCallConv(c: string): TFFIABI;
+function StrToABI(c: string): TFFIABI;
 begin
   c := LowerCase(c);
   if (Length(c) < 5) or (c[1] <> 'f') or (c[2] <> 'f') or (c[3] <> 'i') or (c[4] <> '_') then
@@ -387,20 +390,6 @@ end;
 {$ENDIF}
 
 {$IFDEF DynamicFFI}
-{$IF NOT(DECLARED(GetProcedureAddress)) AND DECLARED(GetProcAddress)}
-function GetProcedureAddress(Handle: TLibHandle; Name: PWideChar): FARPROC;
-begin
-  Result := GetProcAddress(Handle, Name);
-end;
-{$IFEND}
-
-{$IF NOT(DECLARED(UnloadLibrary)) AND DECLARED(FreeLibrary)}
-function UnloadLibrary(Handle: TLibHandle): LongBool;
-begin
-  Result := FreeLibrary(Handle);
-end;
-{$IFEND}
-
 procedure LoadFFI(LibPath: string = ''; LibName: string = LibFFI);
 begin
   UnloadFFI();
@@ -410,18 +399,18 @@ begin
 
   if FFILoaded() then
   begin
-    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_cif)         := GetProcedureAddress(ffi_libhandle, 'ffi_prep_cif');
-    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_call)             := GetProcedureAddress(ffi_libhandle, 'ffi_call');
-    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_alloc)    := GetProcedureAddress(ffi_libhandle, 'ffi_closure_alloc');
-    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_free)     := GetProcedureAddress(ffi_libhandle, 'ffi_closure_free');
-    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_closure_loc) := GetProcedureAddress(ffi_libhandle, 'ffi_prep_closure_loc');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_cif)         := GetProcAddress(ffi_libhandle, 'ffi_prep_cif');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_call)             := GetProcAddress(ffi_libhandle, 'ffi_call');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_alloc)    := GetProcAddress(ffi_libhandle, 'ffi_closure_alloc');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_free)     := GetProcAddress(ffi_libhandle, 'ffi_closure_free');
+    Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_closure_loc) := GetProcAddress(ffi_libhandle, 'ffi_prep_closure_loc');
   end;
 end;
 
 procedure UnloadFFI;
 begin
   if FFILoaded() then
-    if UnloadLibrary(ffi_libhandle) then
+    if FreeLibrary(ffi_libhandle) then
     begin
       ffi_libhandle := NilHandle;
 

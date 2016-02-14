@@ -162,7 +162,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="57">
+    <Units Count="58">
       <Unit0>
         <Filename Value="lape.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -395,6 +395,10 @@
         <Filename Value="extensions\ffi\ffi.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit56>
+      <Unit57>
+        <Filename Value="extensions\ffi\lpffiwrappers.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit57>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

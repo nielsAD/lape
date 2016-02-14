@@ -90,7 +90,7 @@ type
   end;
 
   TLapeTree_ExprBase = class(TLapeTree_Base)
-  private
+  protected
     FConstant: TInitBool;
     FResType: TLapeType;
     FRes: TLapeGlobalVar;
@@ -181,7 +181,7 @@ type
 
   TLapeTree_InternalMethodClass = class of TLapeTree_InternalMethod;
   TLapeTree_InternalMethod = class(TLapeTree_Invoke)
-  private
+  protected
     FForceParam: Boolean;
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
@@ -982,7 +982,7 @@ function TLapeTree_ExprBase.Evaluate: TLapeGlobalVar;
 begin
   Result := FRes;
   if (Result = nil) then
-    LapeException(lpeImpossible);
+    LapeException(lpeCannotEvalConst, DocPos);
 end;
 
 function TLapeTree_ExprBase.FoldConstants(DoFree: Boolean = True): TLapeTree_Base;
@@ -1009,6 +1009,8 @@ begin
         FreeAndNil(t.VarType);
         FreeAndNil(t);
       end
+      else if (t.VarType is TLapeType_Type) then
+        Replacement := TLapeTree_VarType.Create(TLapeType_Type(t.VarType).TType, Self)
       else
         Replacement := TLapeTree_GlobalVar.Create(t, Self);
       Replacement.Parent := FParent;
@@ -3103,8 +3105,6 @@ begin
     end;
 
   Result := inherited;
-  if (Result = nil) then
-    LapeException(lpeCannotEvalConst, DocPos);
 end;
 
 function TLapeTree_InternalMethod_Low.Compile(var Offset: Integer): TResVar;
@@ -3178,8 +3178,6 @@ begin
     end;
 
   Result := inherited;
-  if (Result = nil) then
-    LapeException(lpeCannotEvalConst, DocPos);
 end;
 
 function TLapeTree_InternalMethod_High.Compile(var Offset: Integer): TResVar;

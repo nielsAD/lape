@@ -6,5 +6,5 @@ LOG="{}.ffi.log"
 BLD="lazbuild $LAZ_OPT LapeTestFFI.lpr --bm={} > $LOG"
 RUN="$LAZ_ENV ./LapeTestFFI || [ \$? -eq 221 -o \$? -eq 222  ]"
 
-echo -n "$CON" | xargs -d: -L1 -I {} bash -c "(($BLD) && ($RUN) && rm $LOG) || cat $LOG"
+echo "$CON" | tr ":" "\n" | xargs -L1 -I {} bash -c "(($BLD) && ($RUN) && rm $LOG) || cat $LOG"
 exit $(ls -1 | grep .ffi.log | wc -l)

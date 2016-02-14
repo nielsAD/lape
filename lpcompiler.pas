@@ -29,6 +29,7 @@ type
 
   TLapeCompiler = class;
   TLapeHandleDirective = function(Sender: TLapeCompiler; Directive, Argument: lpString; InPeek, InIgnore: Boolean): Boolean of object;
+  TLapeHandleExternal = function(Sender: TLapeCompiler; Header: TLapeGlobalVar): Boolean of object;
   TLapeFindFile = function(Sender: TLapeCompiler; var FileName: lpString): TLapeTokenizerBase of object;
   TLapeCompilerNotification = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifier<TLapeCompiler>;
   TLapeTokenizerArray = array of TLapeTokenizerBase;
@@ -85,6 +86,7 @@ type
     FConditionalStack: TLapeConditionalStack;
 
     FOnHandleDirective: TLapeHandleDirective;
+    FOnHandleExternal: TLapeHandleExternal;
     FOnFindFile: TLapeFindFile;
     FAfterParsing: TLapeCompilerNotification;
 
@@ -242,6 +244,7 @@ type
     property Tokenizer: TLapeTokenizerBase read getTokenizer write setTokenizer;
     property Defines: TStringList read FDefines write setBaseDefines;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
+    property OnHandleExternal: TLapeHandleExternal read FOnHandleExternal write FOnHandleExternal;
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
     property AfterParsing: TLapeCompilerNotification read FAfterParsing;
   end;
@@ -1524,7 +1527,7 @@ begin
     ResetStack := False;
 
   try
-    isNext([tk_kw_ConstRef, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
+    isNext([tk_kw_ConstRef, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
     OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
     LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
 
@@ -1541,7 +1544,7 @@ begin
       TLapeType_MethodOfType(FuncHeader).SelfParam := lptConstRef;
       AddSelfVar(lptConstRef, TLapeType_MethodOfType(FuncHeader).ObjectType);
 
-      isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
+      isNext([tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
     end
     else if (Tokenizer.Tok = tk_kw_Static) then
     begin
@@ -1551,7 +1554,7 @@ begin
         RemoveSelfVar();
         FuncHeader := TLapeType_Method(addManagedType(TLapeType_Method.Create(FuncHeader)));
       end;
-      isNext([tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
+      isNext([tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
     end
     else if (not isExternal) and (not MethodOfObject(FuncHeader)) then
       FuncHeader := InheritMethodStack(FuncHeader, FStackInfo.Owner);
@@ -1599,7 +1602,7 @@ begin
           LapeException(lpString(E.Message), Tokenizer.DocPos);
         end;
 
-        isNext([tk_kw_Forward]);
+        isNext([tk_kw_External, tk_kw_Forward]);
       end
       else if (Tokenizer.Tok = tk_kw_Override) then
       begin
@@ -1693,6 +1696,21 @@ begin
       end;
 
       Result.Method.setReadWrite(False, False);
+
+      if (Tokenizer.Tok = tk_kw_External) then
+        if ({$IFNDEF FPC}@{$ENDIF}FOnHandleExternal = nil) then
+          LapeException(lpeBlockExpected, Tokenizer.DocPos)
+        else
+        begin
+          if (not FOnHandleExternal(Self, Result.Method)) then
+            LapeException(lpeUnknownParent, Tokenizer.DocPos);
+
+          ParseExpressionEnd(tk_sym_SemiColon, False, True);
+
+          Result.FreeStackInfo := False;
+          FreeAndNil(Result);
+          Exit;
+        end;
 
       if (Tokenizer.Tok = tk_kw_Forward) then
       begin
@@ -2613,8 +2631,8 @@ begin
               PopOpStack(op_Invoke);
               if (Method = nil) then
               begin
-                Expr := ResolveMethods(VarStack.Pop().FoldConstants(), True) as TLapeTree_ExprBase;
-                if (Expr is TLapeTree_InternalMethod) then
+                Expr := ResolveMethods(VarStack.Top.FoldConstants(), True) as TLapeTree_ExprBase;
+                if (Expr <> VarStack.Pop()) and (Expr is TLapeTree_InternalMethod) then
                   Method := TLapeTree_Invoke(Expr)
                 else
                   Method := TLapeTree_Invoke.Create(Expr, Self, getPDocPos());
@@ -3093,6 +3111,7 @@ begin
   FConditionalStack := TLapeConditionalStack.Create(0);
 
   FOnHandleDirective := nil;
+  FOnHandleExternal := nil;
   FOnFindFile := nil;
   FAfterParsing := TLapeCompilerNotification.Create();
 
