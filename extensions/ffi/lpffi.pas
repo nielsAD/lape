@@ -81,13 +81,13 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
-  FFIInit = (fsiNative, fsiNatify, fsiLapify, fsiDynLibs);
+  FFIInit = (fsiNative, fsiNatify, fsiLapify, fsiDynLibs, fsiExternal);
   FFIInitSet = set of FFIInit;
 
   TFFINatifyClosures = array of TExportClosure;
   TFFILapifyClosures = array of TImportClosure;
 
-procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNative, fsiNatify, fsiLapify, fsiDynLibs]);
+procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNative, fsiNatify, fsiLapify, fsiDynLibs, fsiExternal]);
 
 implementation
 
@@ -190,7 +190,84 @@ begin
   PEvalBool(Result)^ := FreeLibrary(TLibHandle(Params^[0]^));
 end;
 
-procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNative, fsiNatify, fsiLapify, fsiDynLibs]);
+type
+  TExternalCompiler = class(TLapeCompiler) // TODO: class helper
+    function HandleExternal(Sender: TLapeCompiler; Header: TLapeGlobalVar): Boolean;
+  end;
+
+function TExternalCompiler.HandleExternal(Sender: TLapeCompiler; Header: TLapeGlobalVar): Boolean;
+var
+  Arg: TLapeTree_ExprBase;
+  ArgStr, LibName, FuncName: lpString;
+  Closure: TImportClosure;
+  Func: Pointer;
+  Lib: TLibHandle;
+  ABI: TFFIABI;
+  p: SizeInt;
+begin
+  Arg := ParseExpression();
+  if (Arg = nil) then
+    ArgStr := ''
+  else if (Arg.resType() = nil) or (not (Arg.resType().BaseType in LapeStringTypes)) then
+    LapeExceptionFmt(lpeExpected, [LapeTypeToString(ltString)], DocPos)
+  else
+  begin
+    ArgStr := Arg.Evaluate().AsString;
+    Assert(Length(ArgStr) >= 2);
+    ArgStr := Copy(ArgStr, 2, Length(ArgStr) - 2);
+  end;
+
+  if (Header = nil) or (not (Header.HasType())) or (not (Header.VarType is TLapeType_Method)) then
+    Exit(False);
+
+  p := LastDelimiter(' @', ArgStr);
+  if (p > 0) and (ArgStr[p] = ' ') then
+  begin
+    ABI := StrToABI(Copy(ArgStr, p + 1, Length(ArgStr) - p));
+    if (ABI = FFI_UNKNOWN_ABI) then
+      LapeException(lpeInvalidCast, DocPos);
+
+    Delete(ArgStr, p, Length(ArgStr) - p + 1);
+    p := LastDelimiter('@', ArgStr);
+  end
+  else
+    ABI := FFI_DEFAULT_ABI;
+
+  if (p > 0) and (ArgStr[p] = '@') then
+  begin
+    LibName := Copy(ArgStr, p + 1, Length(ArgStr) - p);
+    FuncName := Copy(ArgStr, 1, p - 1);
+  end
+  else
+  begin
+    LibName := ArgStr;
+    FuncName := Header.Name;
+  end;
+
+  Lib := LoadLibrary(LibName);
+  if (Lib <> NilHandle) then
+    Func := GetProcAddress(Lib, FuncName)
+  else
+    Func := nil;
+
+  if (Func = nil) then
+    Exit(False);
+
+  Closure := LapeImportWrapper(Func, TLapeType_Method(Header.VarType), ABI);
+
+  if (Closure = nil) then
+    Exit(False);
+
+  Assert(Globals['!ffi_lapify_closures'] <> nil);
+  AddLapifyClosure(TFFILapifyClosures(Globals['!ffi_lapify_closures'].Ptr^), Closure);
+
+  TLapeType_Method(Header.VarType).setImported(Header, True);
+  PPointer(Header.Ptr)^ := Closure.Func;
+
+  Result := (Closure.Func <> nil);
+end;
+
+procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNative, fsiNatify, fsiLapify, fsiDynLibs, fsiExternal]);
 var
   f: TFFIABI;
   s, a: string;
@@ -219,39 +296,39 @@ begin
     Compiler.addGlobalVar('TFFI_ABI', 'TFFI_ABI('+IntToStr(Ord(FFI_DEFAULT_ABI))+')', 'FFI_DEFAULT_ABI').isConstant := True;
 
     Compiler.InternalMethodMap['native'] := TLapeTree_InternalMethod_Native;
+  end;
 
-    if (fsiNatify in Initialize) or (fsiLapify in Initialize) then
-    begin
-      t := Compiler.addManagedType(TLapeType_ClosureDisposer.Create(Compiler));
-      t := Compiler.addManagedType(TLapeType_DynArray.Create(t, Compiler));
-      Compiler.addGlobalFunc([TLapeType(nil)], [lptVar], [TLapeGlobalVar(nil)], @_ClosureDisposer, '!closuredisposer');
-    end;
+  if (fsiNatify in Initialize) or (fsiLapify in Initialize) or (fsiExternal in Initialize) then
+  begin
+    t := Compiler.addManagedType(TLapeType_ClosureDisposer.Create(Compiler));
+    t := Compiler.addManagedType(TLapeType_DynArray.Create(t, Compiler));
+    Compiler.addGlobalFunc([TLapeType(nil)], [lptVar], [TLapeGlobalVar(nil)], @_ClosureDisposer, '!closuredisposer');
+    Compiler.addGlobalVar(TLapeType_DynArray(t).NewGlobalVar(nil), '!ffi_natify_closures'); //TFFINatifyClosures
+    Compiler.addGlobalVar(TLapeType_DynArray(t).NewGlobalVar(nil), '!ffi_lapify_closures'); //TFFILapifyClosures
+  end;
 
-    if (fsiLapify in Initialize) then
-    begin
-      Compiler.addGlobalVar(TLapeType_DynArray(t).NewGlobalVar(nil), '!ffi_natify_closures'); //TFFINatifyClosures
-      Compiler.addGlobalFunc(
-        [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
-        [lptConstRef,         lptVar,              lptNormal],
-        [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
-        Compiler.getBaseType(ltPointer),
-        @_Natify, '!ffi_natify'
-      );
-      Compiler.InternalMethodMap['Natify'] := TLapeTree_InternalMethod_Natify;
-    end;
+  if (fsiLapify in Initialize) then
+  begin
+    Compiler.addGlobalFunc(
+      [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
+      [lptConstRef,         lptVar,              lptNormal],
+      [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
+      Compiler.getBaseType(ltPointer),
+      @_Natify, '!ffi_natify'
+    );
+    Compiler.InternalMethodMap['Natify'] := TLapeTree_InternalMethod_Natify;
+  end;
 
-    if (fsiLapify in Initialize) then
-    begin
-      Compiler.addGlobalVar(TLapeType_DynArray(t).NewGlobalVar(nil), '!ffi_lapify_closures'); //TFFILapifyClosures
-      Compiler.addGlobalFunc(
-        [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
-        [lptConstRef,         lptVar,              lptNormal],
-        [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
-        Compiler.getBaseType(ltPointer),
-        @_Lapify, '!ffi_lapify'
-      );
-      Compiler.InternalMethodMap['Lapify'] := TLapeTree_InternalMethod_Lapify;
-    end;
+  if (fsiLapify in Initialize) then
+  begin
+    Compiler.addGlobalFunc(
+      [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
+      [lptConstRef,         lptVar,              lptNormal],
+      [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
+      Compiler.getBaseType(ltPointer),
+      @_Lapify, '!ffi_lapify'
+    );
+    Compiler.InternalMethodMap['Lapify'] := TLapeTree_InternalMethod_Lapify;
   end;
 
   if (fsiDynLibs in Initialize) then
@@ -260,9 +337,12 @@ begin
     Compiler.addGlobalVar(SharedSuffix, 'SharedSuffix').isConstant := True;
 
     Compiler.addGlobalFunc('function LoadLibrary(const Name: string): TLibHandle', @_LapeLoadLibrary);
-    Compiler.addGlobalFunc('function GetProcAddress(Lib: TlibHandle; const ProcName: string): Pointer', @_LapeGetProcAddress);
+    Compiler.addGlobalFunc('function GetProcAddress(Lib: TlibHandle; const ProcName: string): ConstPointer', @_LapeGetProcAddress);
     Compiler.addGlobalFunc('function FreeLibrary(Lib: TLibHandle): EvalBool', @_LapeFreeLibrary);
   end;
+
+  if (fsiExternal in Initialize) then
+    Compiler.OnHandleExternal := @TExternalCompiler(Compiler).HandleExternal;
 end;
 
 function TLapeType_NativeMethod.getAsString: lpString;
