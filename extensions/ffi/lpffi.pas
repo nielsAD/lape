@@ -81,18 +81,26 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
-  FFIInit = (fsiNative, fsiNatify, fsiLapify);
+  FFIInit = (fsiNative, fsiNatify, fsiLapify, fsiDynLibs);
   FFIInitSet = set of FFIInit;
 
   TFFINatifyClosures = array of TExportClosure;
   TFFILapifyClosures = array of TImportClosure;
 
-procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNative, fsiNatify, fsiLapify]);
+procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNative, fsiNatify, fsiLapify, fsiDynLibs]);
 
 implementation
 
 uses
+  {$IFDEF FPC}dynlibs{$ELSE}Windows{$ENDIF},
   lpexceptions;
+
+{$IFNDEF FPC}
+type
+  TLibHandle  = THandle;
+const
+  SharedSuffix = {$IFDEF MSWINDOWS}'dll'{$ELSE}'so'{$ENDIF};
+{$ENDIF}
 
 procedure _ClosureDisposer(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
@@ -167,7 +175,22 @@ begin
   Lapify(Pointer(Params^[0]^), TFFILapifyClosures(Params^[1]^), SizeInt(Params^[2]^), PPointer(Result)^);
 end;
 
-procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNative, fsiNatify, fsiLapify]);
+procedure _LapeLoadLibrary(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  TLibHandle(Result^) := LoadLibrary(PlpString(Params^[0])^);
+end;
+
+procedure _LapeGetProcAddress(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PPointer(Result)^ := GetProcAddress(TLibHandle(Params^[0]^), PlpString(Params^[1])^);
+end;
+
+procedure _LapeFreeLibrary(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PEvalBool(Result)^ := FreeLibrary(TLibHandle(Params^[0]^));
+end;
+
+procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNative, fsiNatify, fsiLapify, fsiDynLibs]);
 var
   f: TFFIABI;
   s, a: string;
@@ -229,6 +252,16 @@ begin
       );
       Compiler.InternalMethodMap['Lapify'] := TLapeTree_InternalMethod_Lapify;
     end;
+  end;
+
+  if (fsiDynLibs in Initialize) then
+  begin
+    Compiler.addGlobalType(Compiler.getBaseType(ltSizeInt).CreateCopy(True), 'TLibHandle');
+    Compiler.addGlobalVar(SharedSuffix, 'SharedSuffix').isConstant := True;
+
+    Compiler.addGlobalFunc('function LoadLibrary(const Name: string): TLibHandle', @_LapeLoadLibrary);
+    Compiler.addGlobalFunc('function GetProcAddress(Lib: TlibHandle; const ProcName: string): Pointer', @_LapeGetProcAddress);
+    Compiler.addGlobalFunc('function FreeLibrary(Lib: TLibHandle): EvalBool', @_LapeFreeLibrary);
   end;
 end;
 
