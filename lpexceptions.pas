@@ -74,7 +74,10 @@ const
   lpeNoOverloadedMethod = 'Don''t know which overloaded method to call with params (%s)';
   lpeOperatorExpected = 'Operator expected';
   lpeOutOfStackRange = 'Out of stack range';
-  lpeOutOfTypeRange = 'Out of type range';
+  lpeOutOfTypeRange  = 'Out of type range';
+  lpeOutOfTypeRange1 = 'Out of type range (index:%d, low:%d, high:%d)';
+  lpeOutOfTypeRangeLow  = 'Out of type range (index:%d, low:%d)';
+  lpeOutOfTypeRangeHigh = 'Out of type range (index:%d, high:%d)';
   lpeParentOutOfScope = 'Parent declaration is out of scope';
   lpeRuntime = 'Runtime error: "%s"';
   lpeStatementNotAllowed = 'Statement not allowed here';

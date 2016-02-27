@@ -445,7 +445,7 @@ end;
 procedure _LapeRangeCheck(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if (PSizeInt(Params^[0])^ < PSizeInt(Params^[1])^) or (PSizeInt(Params^[0])^ > PSizeInt(Params^[2])^) then
-    LapeException(lpeOutOfTypeRange);
+    LapeExceptionFmt(lpeOutOfTypeRange1, [PSizeInt(Params^[0])^, PSizeInt(Params^[1])^, PSizeInt(Params^[2])^]);
 end;
 
 procedure _LapeGetMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
