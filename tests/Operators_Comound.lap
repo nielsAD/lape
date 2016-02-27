@@ -1,0 +1,25 @@
+{$assertions on}
+{$coperators on}
+
+var
+  x,y,z:Int32;
+begin
+  x := 10;
+  y := 6;
+  z := 2;
+
+  x += z div 2;
+  Assert(x = 11);
+  x /= z * 2;
+  Assert(x = 2);
+  x *=  (z * y) div 3;
+  Assert(x = 8);
+  x -= y + z;
+  Assert(x = 0);
+  x += y;
+  Assert(x = 6);
+
+  WriteLn('Compound Operator :: Passed');
+end;
+
+
