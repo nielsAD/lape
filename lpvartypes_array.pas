@@ -362,11 +362,11 @@ begin
   Hi := VarHi(Avar.Ptr);
   if ((Lo <> nil) and (Idx < Lo.AsInteger)) or ((Hi <> nil) and (Idx > Hi.AsInteger)) then
     if (Lo <> nil) and (Hi <> nil) then
-      LapeExceptionFmt(lpeOutOfTypeRange1, [idx, Lo.AsInteger, Hi.AsInteger])
+      LapeExceptionFmt(lpeIndexOutOfRange, [idx, Lo.AsInteger, Hi.AsInteger])
     else if (Lo <> nil) then
-      LapeExceptionFmt(lpeOutOfTypeRangeLow,  [idx, Lo.AsInteger])
+      LapeExceptionFmt(lpeIndexOutOfRangeLow,  [idx, Lo.AsInteger])
     else if (Hi <> nil) then
-      LapeExceptionFmt(lpeOutOfTypeRangeHigh, [idx, Hi.AsInteger]);
+      LapeExceptionFmt(lpeIndexOutOfRangeHigh, [idx, Hi.AsInteger]);
 end;
 
 procedure TLapeType_DynArray.RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil);
@@ -403,11 +403,11 @@ begin
     if ((Lo <> nil) and (Idx < Lo.AsInteger)) or ((Hi <> nil) and (Idx > Hi.AsInteger)) then
     begin
       if (Lo <> nil) and (Hi <> nil) then
-        LapeExceptionFmt(lpeOutOfTypeRange1, [idx, Lo.AsInteger, Hi.AsInteger])
+        LapeExceptionFmt(lpeIndexOutOfRange, [idx, Lo.AsInteger, Hi.AsInteger])
       else if (Lo <> nil) then
-        LapeExceptionFmt(lpeOutOfTypeRangeLow,  [idx, Lo.AsInteger])
+        LapeExceptionFmt(lpeIndexOutOfRangeLow,  [idx, Lo.AsInteger])
       else if (Hi <> nil) then
-        LapeExceptionFmt(lpeOutOfTypeRangeHigh, [idx, Hi.AsInteger]);
+        LapeExceptionFmt(lpeIndexOutOfRangeHigh, [idx, Hi.AsInteger]);
     end
     else if (Lo <> nil) and (Hi <> nil) then
       Exit;
