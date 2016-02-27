@@ -3136,7 +3136,7 @@ begin
   begin
     Method := FManagedDecls[Right.AsInteger] as TLapeGlobalVar;
     if (Method = nil) then
-      LapeException(lpeOutOfTypeRange);
+      LapeExceptionFmt(lpeIndexOutOfRange, [Right.AsInteger,0,FManagedDecls.Count-1]);
 
     Result := Method.VarType
   end
@@ -3160,7 +3160,7 @@ begin
   begin
     Result := FManagedDecls[Right.AsInteger] as TLapeGlobalVar;
     if (Result = nil) then
-      LapeException(lpeOutOfTypeRange);
+      LapeExceptionFmt(lpeIndexOutOfRange, [Right.AsInteger,0,FManagedDecls.Count-1]);
 
     if MethodOfObject(Result.VarType) and (Left.Ptr <> nil) and (TMethod(Left.Ptr^).Data <> nil) then
     begin
@@ -3184,7 +3184,7 @@ begin
   begin
     Method := FManagedDecls[Right.VarPos.GlobalVar.AsInteger] as TLapeGlobalVar;
     if (Method = nil) then
-      LapeException(lpeOutOfTypeRange);
+      LapeExceptionFmt(lpeIndexOutOfRange, [Right.VarPos.GlobalVar.AsInteger,0,FManagedDecls.Count-1]);
 
     Result := _ResVar.New(Method);
 
