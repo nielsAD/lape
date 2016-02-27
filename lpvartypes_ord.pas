@@ -436,7 +436,7 @@ end;
 function TLapeType_SubRange.NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
   if (Value < FRange.Lo) or (Value > FRange.Hi) then
-    LapeException(lpeOutOfTypeRange);
+    LapeExceptionFmt(lpeOutOfTypeRange1, [Value, FRange.Lo, FRange.Hi]);
 
   Result := NewGlobalVarP(nil, AName);
   case BaseIntType of
@@ -900,7 +900,10 @@ begin
     FBaseType := ltSmallSet;
 
   if (FRange.Range.Lo < Ord(Low(ELapeSmallEnum))) or (FRange.Range.Hi > Ord(High(ELapeLargeEnum))) then
-    LapeException(lpeOutOfTypeRange);
+    if (FRange.Range.Lo < Ord(Low(ELapeSmallEnum))) then
+      LapeExceptionFmt(lpeOutOfTypeRange1, [FRange.Range.Lo, Ord(Low(ELapeSmallEnum)), Ord(High(ELapeLargeEnum))])
+    else
+      LapeExceptionFmt(lpeOutOfTypeRange1, [FRange.Range.Hi, Ord(Low(ELapeSmallEnum)), Ord(High(ELapeLargeEnum))])
 end;
 
 function TLapeType_Set.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
