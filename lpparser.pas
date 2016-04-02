@@ -1079,7 +1079,15 @@ begin
         Argument := ''
       else
       begin
-        while (not (getChar(1) in ['}', #0])) do Inc(FPos);
+        while (not (getChar(1) in ['}', #0])) do
+        begin
+          Inc(FPos);
+          if CurChar in [#10,#13] then
+          begin
+            if (CurChar = #13) and (getChar(1) = #10) then Inc(FPos);
+            Inc(FDocPos.Line);
+          end;
+        end;
         Argument := TokString;
         Inc(FPos);
       end;
@@ -1088,7 +1096,15 @@ begin
         Exit(True);
     end
     else
-      while (not (CurChar in ['}', #0])) do Inc(FPos);
+      while (not (CurChar in ['}', #0])) do
+      begin
+        Inc(FPos);
+        if CurChar in [#10,#13] then
+        begin
+          if (CurChar = #13) and (getChar(1) = #10) then Inc(FPos);
+          Inc(FDocPos.Line);
+        end;
+      end;
 
     Result := False;
   finally
