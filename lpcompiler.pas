@@ -880,7 +880,7 @@ var
 
   function HasDefine(Def: lpString): Boolean;
   begin
-    if (FDefines.IndexOf(string(Def)) > -1) then
+    if (FDefines.IndexOfName(string(Def)) > -1) then
       Result := True
     else
     begin
@@ -930,15 +930,29 @@ var
     end;
   end;
 
-  procedure RemoveFromStringList(l: TStringList; s: string);
+  procedure RemoveDefine(l: TStringList; s: string);
   var
     i: Integer;
   begin
-    i := l.IndexOf(s);
-    while (i > -1) do
+    i := l.IndexOfName(s);
+    if i > -1 then l.Delete(i);
+  end;
+
+  procedure AddDefine(list:TStringList; def:string);
+  var
+    i:Int32;
+    name,value:string;
+  begin
+    i := System.Pos(':=', def);
+    if i <= 0 then
+      FDefines.Values[Trim(def)] := ''
+    else
     begin
-      l.Delete(i);
-      i := l.IndexOf(s);
+      name  := Trim(Copy(def, 1, i-1));
+      if name = '' then
+        LapeException(lpeInvalidEvaluation, Sender.DocPos);
+      value := Trim(Copy(def, i+2, Length(def) - i));
+      FDefines.Values[name] := value;
     end;
   end;
 
@@ -989,9 +1003,17 @@ begin
   else if InIgnore() then
     {nothing}
   else if (Directive = 'define') then
-    FDefines.Add(string(Trim(Argument)))
+    AddDefine(FDefines, string(Trim(Argument)))
   else if (Directive = 'undef') then
-    RemoveFromStringList(FDefines, string(Trim(Argument)))
+   RemoveDefine(FDefines, string(Trim(Argument)))
+  else if (Directive = 'macro') then
+  begin
+    IncludeFile := FDefines.Values[string(Trim(Argument))];
+    if (IncludeFile = '') then
+      LapeExceptionFmt(lpeUnknownDeclaration, [string(Trim(Argument))], Sender.DocPos);
+    NewTokenizer := TLapeTokenizerString.Create(IncludeFile);
+    pushTokenizer(NewTokenizer);
+  end
   else if (Directive = 'i') or (Directive = 'include') or (Directive = 'include_once') then
   begin
     IncludeFile := Argument;
@@ -3583,7 +3605,7 @@ end;
 
 procedure TLapeCompiler.addBaseDefine(Define: lpString);
 begin
-  FBaseDefines.Add(string(Define));
+  FBaseDefines.Values[string(Define)] := '';
 end;
 
 function TLapeCompiler.addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration;
