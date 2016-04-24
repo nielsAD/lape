@@ -1896,11 +1896,9 @@ begin
   end
   else if (op in CompoundOperators) and (lcoCOperators in Compiler.FOptions) then
   begin
-    Dest := NullResVar;
-    Result := Eval(ResolveCompoundOp(op, Left.VarType), Dest, Left, Right, Flags, Offset, Pos);
-    Result := Eval(op_Assign, Dest, Left, Result, Flags, Offset, Pos);
-    Exit;
-  end;
+    Dest := Left;
+    Exit(Eval(op_Assign, Dest, Left, Eval(ResolveCompoundOp(op, Left.VarType), Dest, Left, Right, Flags, Offset, Pos), Flags, Offset, Pos));
+  end; 
 
   Result.VarType := EvalRes(Op, Right.VarType, Flags);
   if (op = op_Addr) and (not Left.Writeable) then
