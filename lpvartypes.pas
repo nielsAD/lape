@@ -1896,11 +1896,9 @@ begin
   end
   else if (op in CompoundOperators) and (lcoCOperators in Compiler.FOptions) then
   begin
-    Dest := NullResVar;
-    Result := Eval(ResolveCompoundOp(op, Left.VarType), Dest, Left, Right, Flags, Offset, Pos);
-    Result := Eval(op_Assign, Dest, Left, Result, Flags, Offset, Pos);
-    Exit;
-  end;
+    Dest := Left;
+    Exit(Eval(op_Assign, Dest, Left, Eval(ResolveCompoundOp(op, Left.VarType), Dest, Left, Right, Flags, Offset, Pos), Flags, Offset, Pos));
+  end; 
 
   Result.VarType := EvalRes(Op, Right.VarType, Flags);
   if (op = op_Addr) and (not Left.Writeable) then
@@ -3136,7 +3134,7 @@ begin
   begin
     Method := FManagedDecls[Right.AsInteger] as TLapeGlobalVar;
     if (Method = nil) then
-      LapeException(lpeOutOfTypeRange);
+      LapeExceptionFmt(lpeIndexOutOfRange, [Right.AsInteger,0,FManagedDecls.Count-1]);
 
     Result := Method.VarType
   end
@@ -3160,7 +3158,7 @@ begin
   begin
     Result := FManagedDecls[Right.AsInteger] as TLapeGlobalVar;
     if (Result = nil) then
-      LapeException(lpeOutOfTypeRange);
+      LapeExceptionFmt(lpeIndexOutOfRange, [Right.AsInteger,0,FManagedDecls.Count-1]);
 
     if MethodOfObject(Result.VarType) and (Left.Ptr <> nil) and (TMethod(Left.Ptr^).Data <> nil) then
     begin
@@ -3184,7 +3182,7 @@ begin
   begin
     Method := FManagedDecls[Right.VarPos.GlobalVar.AsInteger] as TLapeGlobalVar;
     if (Method = nil) then
-      LapeException(lpeOutOfTypeRange);
+      LapeExceptionFmt(lpeIndexOutOfRange, [Right.VarPos.GlobalVar.AsInteger,0,FManagedDecls.Count-1]);
 
     Result := _ResVar.New(Method);
 

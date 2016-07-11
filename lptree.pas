@@ -4611,7 +4611,7 @@ begin
     if (FOperatorType = op_Index) then
       FRight := FRight.setExpectedType(FCompiler.getBaseType(ltSizeInt)) as TLapeTree_ExprBase;
 
-    if (FOperatorType in AssignOperators) and
+    if (FOperatorType = op_Assign) and
        (FLeft <> nil) and LeftVar.Writeable and
        (FRight is TLapeTree_DestExprBase) and
        (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos = NullResVar.VarPos.MemPos)
