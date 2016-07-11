@@ -843,10 +843,10 @@ begin
     Exit(True);
 
   {$IFDEF CPU86}
-    Result := (VarType.BaseType = ltRecord)
-      {$IF DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)}
-        and ((not (ABI in [FFI_CDECL, FFI_MS_CDECL])) or (not (UInt8(VarType.Size) in PowerTwoRegs)))
-      {$IFEND}
+    Result := (VarType.BaseType = ltRecord) and (
+      (not (UInt8(VarType.Size) in PowerTwoRegs))
+        {$IF (FPC_VERSION < 3) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)} or (not (ABI in [FFI_CDECL, FFI_MS_CDECL])) {$IFEND}
+      )
     ;
   {$ENDIF}
 
