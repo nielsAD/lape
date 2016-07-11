@@ -1,0 +1,10 @@
+// Issue #80
+{$assertions on}
+
+type
+  EBar = (bar1=3,bar2,bar3);
+begin
+  Assert(Ord(bar1) = 3);
+  Assert(Ord(bar2) = 4);
+  Assert(Ord(bar3) = 5);
+end.
