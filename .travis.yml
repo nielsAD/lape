@@ -1,7 +1,9 @@
 # Based on .travis.yml in `travis-lazarus` (https://github.com/nielsAD/travis-lazarus)
 # License: MIT
 
+language: generic
 sudo: true
+dist: trusty
 
 os:
   - linux
