@@ -540,7 +540,7 @@ end;
 
 function TLapeType_Enum.addMember(AName: lpString): Int64;
 begin
-  Result := addMember(FMemberMap.Count, AName);
+  Result := addMember(FRange.Hi + 1, AName);
 end;
 
 function TLapeType_Enum.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
