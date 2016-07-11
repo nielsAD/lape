@@ -113,7 +113,7 @@ type
     destructor Destroy; override;
 
     function hasMember(AName: lpString): Boolean; virtual;
-    function addMember(Value: Int64; AName: lpString): Int16; overload; virtual;
+    function addMember(Value: Int64; AName: lpString): Int64; overload; virtual;
     function addMember(AName: lpString): Int64; overload; virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
@@ -514,7 +514,7 @@ begin
   Result := FMemberMap.IndexOf(string(AName)) > -1;
 end;
 
-function TLapeType_Enum.addMember(Value: Int64; AName: lpString): Int16;
+function TLapeType_Enum.addMember(Value: Int64; AName: lpString): Int64;
 var
   i: Integer;
 begin
