@@ -1,0 +1,14 @@
+program new;
+{$assertions on}
+
+function Test(): UInt32;
+  function Test2(): Boolean;
+  begin
+  end;
+begin
+  while (Test2()) do;
+end;
+
+begin
+  Assert(True);
+end. 

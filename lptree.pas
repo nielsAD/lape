@@ -1980,6 +1980,9 @@ var
       Result := Res.NewGlobalVarP();
       TLapeImportedFunc(IdentVar.Ptr^)(@ParamVars[0], Result.Ptr);
       Result := TLapeGlobalVar(FCompiler.addManagedVar(Result));
+
+      for i := 1 to ImplicitParams do
+        FParams.Delete(0);
     end;
   end;
 
@@ -2391,6 +2394,9 @@ begin
         Result := DoImportedMethod(IdentVar, ParamVars)
       else
         Result := DoCombiMethod(IdentVar, ParamVars);
+
+      for i := 1 to ImplicitParams do
+        FParams.Delete(0);
     end;
 
     IdentVar.Spill(1);
