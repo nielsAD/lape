@@ -442,6 +442,7 @@ begin
     with TLapeTree_InternalMethod_Natify.Create(FCompiler, Pos) do
     try
       addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
+      addParam(TLapeTree_GlobalVar.Create(FCompiler['ffi_' + ABIToStr(FABI)], FCompiler));
       Right := Compile(Offset);
     finally
       Free();

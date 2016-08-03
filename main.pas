@@ -41,7 +41,7 @@ implementation
 
 uses
   lpparser, lpcompiler, lputils, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
-  LCLIntf, typinfo, lpffi, lpffiwrappers;
+  LCLIntf, typinfo, ffi, lpffi, lpffiwrappers;
 
 {$R *.lfm}
 
@@ -223,7 +223,7 @@ begin
   testCall();
 end;
 
-{$IF DEFINED(WINDOWS) AND DECLARED(LoadFFI)}
+{$IF DEFINED(MSWINDOWS) AND DECLARED(LoadFFI)}
 initialization
   if (not FFILoaded()) then
     LoadFFI(
