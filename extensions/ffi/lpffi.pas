@@ -276,6 +276,9 @@ begin
   if (Compiler = nil) then
     Exit;
 
+  if (fsiNative in Initialize) or (fsiLapify in Initialize) or (fsiExternal in Initialize) then
+    Compiler.Options := Compiler.Options + [lcoInitExternalResult];
+
   if (fsiNative in Initialize) or (fsiNatify in Initialize) or (fsiLapify in Initialize) then
   begin
     s := '';
@@ -307,7 +310,7 @@ begin
     Compiler.addGlobalVar(TLapeType_DynArray(t).NewGlobalVar(nil), '!ffi_lapify_closures'); //TFFILapifyClosures
   end;
 
-  if (fsiLapify in Initialize) then
+  if (fsiNatify in Initialize) then
   begin
     Compiler.addGlobalFunc(
       [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],

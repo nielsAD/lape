@@ -750,7 +750,7 @@ begin
   try
     with TLapeCompiler.Create(TLapeTokenizerString.Create('begin ' + RunStr + ' end.')) do
     try
-      Options := Options + [lcoAssertions, lcoInitExternalResult];
+      Options := Options + [lcoAssertions];
 
       addGlobalVar(
         addGlobalType('record MagicToken: NativeInt; Success: Boolean; end', 'TTest'),
