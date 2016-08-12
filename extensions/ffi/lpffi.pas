@@ -275,6 +275,7 @@ var
 begin
   if (Compiler = nil) then
     Exit;
+ AssertFFILoaded;
 
   if (fsiNative in Initialize) or (fsiLapify in Initialize) or (fsiExternal in Initialize) then
     Compiler.Options := Compiler.Options + [lcoInitExternalResult];
