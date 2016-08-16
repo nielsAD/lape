@@ -102,6 +102,8 @@ procedure LapeExceptionFmt(Msg: lpString; Args: array of const); overload;
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: TDocPos); overload;
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of TLapeBaseDeclClass); overload;
 
+function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString;
+
 implementation
 
 {$IFDEF Lape_NeedAnsiStringsUnit}
