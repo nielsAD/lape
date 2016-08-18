@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, SynEdit, SynHighlighterPas, lptypes, lpcompiler, lpvartypes;
+  StdCtrls, ExtCtrls, SynEdit, SynHighlighterPas, lptypes, lpvartypes;
 
 type
 
@@ -23,17 +23,13 @@ type
     pnlTop: TPanel;
     Splitter1: TSplitter;
     PasSyn: TSynPasSyn;
-
     procedure btnDisassembleClick(Sender: TObject);
     procedure btnMemLeaksClick(Sender: TObject);
     procedure btnEvalResClick(Sender: TObject);
     procedure btnEvalArrClick(Sender: TObject);
     procedure btnRunClick(Sender: TObject);
-    procedure WriteCompileHint(Sender: TLapeCompilerBase; Msg: String);
   private
-    { private declarations }
-  public
-    { public declarations }
+    procedure WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
   end; 
 
 var
@@ -42,7 +38,7 @@ var
 implementation
 
 uses
-  lpparser, lputils, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
+  lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
   LCLIntf, typinfo, ffi, lpffi, lpffiwrappers;
 
 {$R *.lfm}
@@ -95,18 +91,17 @@ procedure Compile(Run, Disassemble: Boolean);
   end;
 
 var
-  t: Cardinal;
+  t: UInt64;
   Parser: TLapeTokenizerBase;
   Compiler: TLapeCompiler;
 begin
   Parser := nil;
   Compiler := nil;
-
   with Form1 do
     try
       Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND});
       Compiler := TLapeCompiler.Create(Parser);
-      Compiler.OnCompileHint := @WriteCompileHint;
+      Compiler.OnHint := @WriteHint;
 
       InitializeFFI(Compiler);
       InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
@@ -115,9 +110,6 @@ begin
       Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
       Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
       Compiler.addGlobalFunc('function MyStupidProc: array of integer', @MyStupidProc);
-
-      m.Clear;
-      WriteLn(LineEnding);
 
       try
         t := getTickCount;
@@ -139,10 +131,10 @@ begin
 
         if Run then
         begin
-          t := getTickCount;
+          t := GetTickCount64();
           m.Append(LineEnding);
           RunCode(Compiler.Emitter.Code);
-          m.Append('Running Time: ' + IntToStr(getTickCount - t) + 'ms.');
+          m.Append('Running Time: ' + IntToStr(GetTickCount64() - t) + 'ms.');
         end;
       except
         on E: Exception do
@@ -161,7 +153,7 @@ begin
   Compile(True, False);
 end;
 
-procedure TForm1.WriteCompileHint(Sender: TLapeCompilerBase; Msg: String);
+procedure TForm1.WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
 begin
   m.Append(Msg);
 end;

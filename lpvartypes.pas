@@ -28,6 +28,7 @@ type
     lcoAutoProperties,                 // {$P} {$AUTOPROPERTIES}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
     lcoConstAddress,                   // {$J} {$CONSTADDRESS}
+    lcoHints,                          // {$H} {$HINTS}
     lcoContinueCase,                   //      {$CONTINUECASE}
     lcoCOperators,                     //      {$COPERATORS}
     lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)
@@ -538,7 +539,8 @@ type
     function addDeclaration(Decl: TLapeDeclaration): Integer; override;
     function addVar(StackVar: TLapeStackVar): TLapeStackVar; overload; virtual;
     function addVar(VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
-    function addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
+    function addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString = ''; IgnoreUsed: Boolean = False): TLapeStackVar; overload; virtual;
+    function addSelfVar(ParType: ELapeParameterType; VarType: TLapeType): TLapeStackVar; overload; virtual;
 
     function inheritVar(StackVar: TLapeStackVar): TLapeStackVar; virtual;
     function getInheritedVar(StackVar: TLapeStackVar): TLapeStackVar; virtual;
@@ -595,7 +597,7 @@ type
     function _Eval(AProc: TLapeEvalProc; Dest, Left, Right: TResVar; Pos: PDocPos = nil): Integer; overload; virtual;
   end;
 
-  TLapeCompileHint = procedure(Sender: TLapeCompilerBase; Hint: String) of object;
+  TLapeHint = procedure(Sender: TLapeCompilerBase; Msg: lpString) of object;
 
   TLapeCompilerBase = class(TLapeBaseDeclClass)
   protected
@@ -612,7 +614,8 @@ type
     FOptions: ECompilerOptionsSet;
     FOptions_PackRecords: UInt8;
 
-    FOnCompileHint: TLapeCompileHint;
+    FOnHint: TLapeHint;
+    FHasHintDefine: Boolean;
 
     procedure Reset; virtual;
     procedure setEmitter(AEmitter: TLapeCodeEmitter); virtual;
@@ -622,8 +625,6 @@ type
     constructor Create(AEmitter: TLapeCodeEmitter = nil; ManageEmitter: Boolean = True); reintroduce; virtual;
     destructor Destroy; override;
     procedure Clear; virtual;
-
-    procedure HandleHint(Msg: lpString; ADocPos: TDocPos);
 
     procedure VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
     procedure VarToDefault(AVar: TResVar; Pos: PDocPos = nil); overload; virtual;
@@ -675,6 +676,9 @@ type
     function hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; overload; virtual;
     function hasDeclaration(ADecl: TLapeDeclaration; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; overload; virtual;
 
+    procedure Hint(Msg: lpString; Args: array of const; ADocPos: TDocPos);
+    property HasHintDefine: Boolean read FHasHintDefine;
+
     property StackInfo: TLapeStackInfo read FStackInfo;
     property BaseTypes: TLapeBaseTypes read FBaseTypes;
 
@@ -685,8 +689,7 @@ type
     property Emitter: TLapeCodeEmitter read FEmitter write setEmitter;
     property Options: ECompilerOptionsSet read FOptions write FBaseOptions default Lape_OptionsDef;
     property Options_PackRecords: UInt8 read FOptions_PackRecords write FBaseOptions_PackRecords default Lape_PackRecordsDef;
-
-    property OnCompileHint: TLapeCompileHint read FOnCompileHint write FOnCompileHint;
+    property OnHint: TLapeHint read FOnHint write FOnHint;
   end;
 
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -727,7 +730,7 @@ implementation
 uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_array,
-  lpexceptions, lpeval, lpinterpreter;
+  lpmessages, lpeval, lpinterpreter;
 
 
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
@@ -1886,11 +1889,9 @@ function TLapeType.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; 
 
 var
   EvalProc: TLapeEvalProc;
-  LeftHi, RightHi: UInt64;
 begin
   Result := NullResVar;
   Assert(FCompiler <> nil);
-
 
   if (Left.VarPos.MemPos = NullResVar.VarPos.MemPos) then
   begin
@@ -1950,26 +1951,6 @@ begin
         LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
       else
         LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
-
-    if ({$IFNDEF FPC}@{$ENDIF}FCompiler.OnCompileHint <> nil) and (Pos <> nil) and (op = op_Assign) then
-    begin
-      if (Left.HasType()) and (Left.VarType.BaseType in LapeIntegerTypes) and
-         (Right.HasType()) and (Right.VarType.BaseType in LapeIntegerTypes) then
-        begin
-          LeftHi := 0;
-          RightHi := 0;
-
-          Move(LapeTypeHigh[Left.VarType.BaseType]^, LeftHi, Left.VarType.Size);
-
-          if (Right.VarPos.GlobalVar <> nil) and (Right.VarPos.GlobalVar.Ptr <> nil) and (Right.VarPos.GlobalVar.AsInteger <> 0) then
-            Move(Right.VarPos.GlobalVar.Ptr^, RightHi, Right.VarType.Size) // x := 15;
-          else
-            Move(LapeTypeHigh[Right.VarType.BaseType]^, RightHi, Right.VarType.Size); // x := Something
-
-          if (RightHi > LeftHi) then
-            FCompiler.HandleHint(Format('Possible overflow (%s, %s)', [Left.VarType.AsString, Right.VarType.AsString]), Pos^);
-        end;
-    end;
 
     FCompiler.getDestVar(Dest, Result, op);
 
@@ -3552,9 +3533,21 @@ begin
     Result := addVar(TLapeStackVar.Create(VarType, nil, Name));
 end;
 
-function TLapeStackInfo.addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString = ''): TLapeStackVar;
+function TLapeStackInfo.addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString; IgnoreUsed: Boolean): TLapeStackVar;
 begin
-  Result := addVar(TLapeParameterVar.Create(ParType, VarType, nil, Name));
+  if (VarType = nil) then
+    Result := addVar(TLapeParameterVar.Create(ParType, VarType, nil, Name))
+  else
+    Result := addVar(TLapeParameterVar.Create(ParType, VarType, nil, Name, @VarType._DocPos));
+
+  if (IgnoreUsed) then
+    Result.Used := duIgnore;
+end;
+
+function TLapeStackInfo.addSelfVar(ParType: ELapeParameterType; VarType: TLapeType): TLapeStackVar;
+begin
+  Result := addVar(ParType, VarType, 'Self');
+  Result.Used := duIgnore;
 end;
 
 function TLapeStackInfo.inheritVar(StackVar: TLapeStackVar): TLapeStackVar;
@@ -3936,7 +3929,7 @@ begin
   FBaseOptions := Lape_OptionsDef;
   FBaseOptions_PackRecords := Lape_PackRecordsDef;
 
-  FOnCompileHint := nil;
+  FOnHint := nil;
 
   FreeEmitter := ManageEmitter;
   if (AEmitter = nil) then
@@ -3973,12 +3966,6 @@ begin
   FManagedDeclarations.Clear();
   FCachedDeclarations.Clear();
   Reset();
-end;
-
-procedure TLapeCompilerBase.HandleHint(Msg: lpString; ADocPos: TDocPos);
-begin
-  if ({$IFDEF FPC}@{$ENDIF}FOnCompileHint <> nil) then
-    FOnCompileHint(Self, FormatLocation(Msg, ADocPos));
 end;
 
 procedure TLapeCompilerBase.VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
@@ -4575,6 +4562,14 @@ end;
 function TLapeCompilerBase.hasDeclaration(ADecl: TLapeDeclaration; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean;
 begin
   Result := hasDeclaration(ADecl, FStackInfo, LocalOnly, CheckWith);
+end;
+
+procedure TLapeCompilerBase.Hint(Msg: lpString; Args: array of const; ADocPos: TDocPos);
+begin
+  Assert(lcoHints in Options);
+  Assert({$IFDEF FPC}@{$ENDIF}FOnHint <> nil);
+
+  FOnHint(Self, FormatLocation(Format(Msg, Args), ADocPos));
 end;
 
 initialization
