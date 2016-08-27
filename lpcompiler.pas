@@ -31,6 +31,7 @@ type
   TLapeHandleDirective = function(Sender: TLapeCompiler; Directive, Argument: lpString; InPeek, InIgnore: Boolean): Boolean of object;
   TLapeHandleExternal = function(Sender: TLapeCompiler; Header: TLapeGlobalVar): Boolean of object;
   TLapeFindFile = function(Sender: TLapeCompiler; var FileName: lpString): TLapeTokenizerBase of object;
+  TLapeHint = procedure(Sender: TLapeCompiler; Msg: lpString) of object;
   TLapeCompilerNotification = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifier<TLapeCompiler>;
   TLapeTokenizerArray = array of TLapeTokenizerBase;
 
@@ -88,7 +89,10 @@ type
     FOnHandleDirective: TLapeHandleDirective;
     FOnHandleExternal: TLapeHandleExternal;
     FOnFindFile: TLapeFindFile;
+    FOnHint: TLapeHint;
     FAfterParsing: TLapeCompilerNotification;
+
+    procedure HandleHint(Msg: lpString; ADocPos: TDocPos);
 
     function getDocPos: TDocPos; override;
     procedure Reset; override;
@@ -246,6 +250,7 @@ type
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
     property OnHandleExternal: TLapeHandleExternal read FOnHandleExternal write FOnHandleExternal;
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
+    property OnHint: TLapeHint read FOnHint write FOnHint;
     property AfterParsing: TLapeCompilerNotification read FAfterParsing;
   end;
 
@@ -313,6 +318,12 @@ begin
   for i := 0 to High(FTokenizers) do
     if (FTokenizers[i] <> nil) then
       __LapeTokenizerBase(FTokenizers[i]).FInPeek := Peek;
+end;
+
+procedure TLapeCompiler.HandleHint(Msg: lpString; ADocPos: TDocPos);
+begin
+  if ({$IFDEF FPC}@{$ENDIF}FOnHint <> nil) then
+    FOnHint(Self, FormatLocation(Msg, ADocPos));
 end;
 
 function TLapeCompiler.getDocPos: TDocPos;
@@ -911,6 +922,8 @@ var
         Result := (lcoContinueCase in FOptions)
       else if (Def = 'coperators') then
         Result := (lcoCOperators in FOptions)
+      else if (Def = 'hints') then
+        Result := (lcoHints in FOptions)
       else
         Result := False;
     end;
@@ -1080,6 +1093,8 @@ begin
     setOption(lcoScopedEnums)
   else if (Directive = 'j') or (Directive = 'constaddress') then
     setOption(lcoConstAddress)
+  else if (Directive = 'h') or (Directive = 'hints') then
+    setOption(lcoHints)
   else if (Directive = 'continuecase') then
     setOption(lcoContinueCase)
   else if (Directive = 'coperators') then
@@ -1357,6 +1372,7 @@ begin
         if (Tokenizer.Tok = tk_sym_Colon) then
         begin
           Param.VarType := ParseType(nil, True);
+          Param.VarType._DocPos := Tokenizer.DocPos;
           if (Param.VarType = nil) then
             LapeException(lpeTypeExpected, Tokenizer.DocPos);
           Expect([tk_sym_Equals, tk_sym_SemiColon, tk_sym_ParenthesisClose], True, False);
@@ -1398,6 +1414,7 @@ begin
     begin
       Expect(tk_sym_Colon, True, False);
       Result.Res := ParseType(nil);
+      Result.Res._DocPos := Tokenizer.DocPos;
       if (Result.Res = nil) then
         LapeException(lpeTypeExpected, Tokenizer.DocPos);
 
@@ -1418,6 +1435,7 @@ var
   SelfWith: TLapeWithDeclRec;
   OldDeclaration: TLapeDeclaration;
   LocalDecl, ResetStack: Boolean;
+  i: Integer;
 
   procedure RemoveSelfVar;
   begin
@@ -1762,6 +1780,23 @@ begin
       if (Result.Statements = nil) or (not (Result.Statements.Statements[Result.Statements.Statements.Count - 1] is TLapeTree_StatementList)) then
         Expect(tk_kw_Begin, False, False);
 
+      if (lcoHints in FOptions) then
+        with Result.StackInfo do
+          for i := 0 to VarCount - 1 do
+          begin
+            if (Vars[i].Used) or (Vars[i].Name = '') or (Vars[i].Name = 'Self') or (Vars[i].Name[1] = '!') then
+              Continue;
+
+            if (Vars[i] is TLapeParameterVar) then
+            begin
+              if (FStackInfo.Vars[i].Name = 'Result') then
+                HandleHint('Result not set', Vars[i]._DocPos)
+              else
+                HandleHint(Format('Parameter "%s" not used', [Vars[i].Name]), Vars[i]._DocPos)
+            end
+            else
+              HandleHint(Format('Variable "%s" not used', [Vars[i].Name]), Vars[i]._DocPos);
+          end;
     except
       Result.FreeStackInfo := False;
       FreeAndNil(Result);
@@ -2264,6 +2299,7 @@ begin
           VarDecl.VarDecl := addLocalVar(VarType, Identifiers[i]);
 
         VarDecl.Default := nil;
+        VarDecl.VarDecl._DocPos := Tokenizer.DocPos;
         if (DefConst <> nil) then
           if (not (VarDecl.VarDecl is TLapeGlobalVar)) or (VarType is TLapeType_Method) then
             VarDecl.Default := TLapeTree_GlobalVar.Create(DefConst, Self, GetPDocPos())
@@ -2623,8 +2659,15 @@ begin
           begin
             Expr := getExpression(Tokenizer.TokString, getPDocPos());
             if (Expr = nil) then
-              LapeExceptionFmt(lpeUnknownDeclaration, [Tokenizer.TokString], Tokenizer.DocPos)
-            else if (Expr is TLapeTree_Invoke) then
+              LapeExceptionFmt(lpeUnknownDeclaration, [Tokenizer.TokString], Tokenizer.DocPos);
+
+            if (Expr is TLapeTree_ResVar) then
+              TLapeTree_ResVar(Expr).ResVar.VarPos.StackVar.Used := True
+            else
+            if (Expr is TLapeTree_GlobalVar) then
+              TLapeTree_GlobalVar(Expr).GlobalVar.Used := True;
+
+            if (Expr is TLapeTree_Invoke) then
             begin
               Method := Expr as TLapeTree_Invoke;
               DoNext := False;
@@ -3135,6 +3178,7 @@ begin
   FOnHandleDirective := nil;
   FOnHandleExternal := nil;
   FOnFindFile := nil;
+  FOnHint := nil;
   FAfterParsing := TLapeCompilerNotification.Create();
 
   FBaseDefines := TStringList.Create();
@@ -3436,6 +3480,23 @@ begin
 end;
 
 function TLapeCompiler.Compile: Boolean;
+
+  procedure GlobalHints;
+  var
+    Decls: TLapeDeclArray;
+    Decl: TLapeGlobalVar;
+    i: Integer;
+  begin
+    Decls := GlobalDeclarations.getByClass(TLapeGlobalVar, bFalse);
+    for i := 0 to High(Decls) do
+    begin
+      Decl := Decls[i] as TLapeGlobalVar;
+      if (Decl <> nil) and (not Decl.Used) and (Decl._DocPos.Line > 0) and (Decl._DocPos.Col > 0) and
+         (Decl.BaseType <> ltScriptMethod) and (Decl.Writeable) and (Decl.Name <> '') then
+        HandleHint(Format('Variable "%s" not used', [Decl.Name]), Decl._DocPos);
+    end;
+  end;
+
 begin
   Result := False;
   try
@@ -3445,6 +3506,9 @@ begin
     FTree := ParseFile();
     if (FTree = nil) and (FDelayedTree.GlobalCount(False) <= 0) then
       LapeException(lpeExpressionExpected);
+
+    if (lcoHints in FOptions) then
+      GlobalHints();
 
     FAfterParsing.Notify(Self);
 

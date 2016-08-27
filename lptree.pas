@@ -4363,6 +4363,8 @@ begin
     Include(Result, lefRangeCheck);
   if (lcoConstAddress in FCompilerOptions) then
     Include(Result, lefConstAddress);
+  if (lcoHints in FCompilerOptions) then
+    Include(Result, lefHints);
   if isAssigning() then
     Include(Result, lefAssigning);
   if isInvoking() then
