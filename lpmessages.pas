@@ -5,7 +5,7 @@
 
   Lape exceptions.
 }
-unit lpexceptions;
+unit lpmessages;
 
 {$I lape.inc}
 
@@ -95,12 +95,18 @@ const
   lpeVariableOfTypeExpected = 'Expected variable of type "%s", got "%s"';
   lpeWrongNumberParams = 'Wrong number of parameters found, expected %d';
 
+  lphVariableNotUsed = 'Variable "%s" not used';
+  lphParameterNotUsed = 'Parameter "%s" not used';
+  lphResultNotSet = 'Result not set';
+
 procedure LapeException(Msg: lpString); overload;
 procedure LapeException(Msg: lpString; DocPos: TDocPos); overload;
 procedure LapeException(Msg: lpString; DocPos: array of TLapeBaseDeclClass); overload;
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const); overload;
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: TDocPos); overload;
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of TLapeBaseDeclClass); overload;
+
+function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString;
 
 implementation
 
@@ -127,7 +133,7 @@ begin
 end;
 {$ENDIF}
 
-function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString; {inline;}
+function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString;
 begin
   Result := Msg;
   if (DocPos.Line > 0) and (DocPos.Col > 0) then

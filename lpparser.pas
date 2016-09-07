@@ -420,7 +420,7 @@ implementation
 uses
   typinfo,
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
-  lpexceptions;
+  lpmessages;
 
 {$WARN WIDECHAR_REDUCED OFF}
 

@@ -91,7 +91,7 @@ procedure RunCode(Code: PByte; InitialVarStack: TByteArray = nil; InitialJump: T
 implementation
 
 uses
-  lpexceptions;
+  lpmessages;
 
 {$OverFlowChecks Off}
 

@@ -107,7 +107,7 @@ type
 implementation
 
 uses
-  lpparser, lpeval, lpexceptions;
+  lpparser, lpeval, lpmessages;
 
 function TLapeType_DynArray.getAsString: lpString;
 begin
