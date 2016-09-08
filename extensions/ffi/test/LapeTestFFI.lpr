@@ -2,7 +2,7 @@ program LapeTestFFI;
 
 uses
   SysUtils, {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
-  lptypes, lpvartypes, lpcompiler, lptree, lpparser, lpinterpreter, lpexceptions,
+  lptypes, lpvartypes, lpcompiler, lptree, lpparser, lpinterpreter, lpmessages,
   lpffiwrappers, ffi;
 
 type
