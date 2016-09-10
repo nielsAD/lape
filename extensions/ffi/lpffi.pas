@@ -93,7 +93,7 @@ implementation
 
 uses
   {$IFDEF FPC}dynlibs{$ELSE}Windows{$ENDIF},
-  lpexceptions;
+  lpmessages;
 
 {$IFNDEF FPC}
 type

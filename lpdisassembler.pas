@@ -28,7 +28,7 @@ procedure DisassembleCode(Code: PByte; PointerNames: TLapeDeclArray = nil); over
 implementation
 
 uses
-  lpexceptions, lpinterpreter, lpeval, lputils;
+  lpmessages, lpinterpreter, lpeval, lputils;
 
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap);
 var

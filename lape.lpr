@@ -9,7 +9,7 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms, Main,
 
-  lpparser, lpcompiler, lptypes, lpeval, lpinterpreter, lpexceptions,
+  lpparser, lpcompiler, lptypes, lpeval, lpinterpreter, lpmessages,
   lpvartypes, lpcodeemitter, lptree, lpdisassembler, lpvartypes_array, 
   lpvartypes_ord, lpvartypes_record, lputils, lpffi, ffi;
 

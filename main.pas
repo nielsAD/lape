@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, SynEdit, SynHighlighterPas, lptypes;
+  StdCtrls, ExtCtrls, SynEdit, SynHighlighterPas, lptypes, lpvartypes;
 
 type
 
@@ -29,9 +29,7 @@ type
     procedure btnEvalArrClick(Sender: TObject);
     procedure btnRunClick(Sender: TObject);
   private
-    { private declarations }
-  public
-    { public declarations }
+    procedure WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
   end; 
 
 var
@@ -40,7 +38,7 @@ var
 implementation
 
 uses
-  lpparser, lpcompiler, lputils, lpvartypes, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
+  lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
   LCLIntf, typinfo, ffi, lpffi, lpffiwrappers;
 
 {$R *.lfm}
@@ -93,7 +91,7 @@ procedure Compile(Run, Disassemble: Boolean);
   end;
 
 var
-  t: Cardinal;
+  t: UInt64;
   Parser: TLapeTokenizerBase;
   Compiler: TLapeCompiler;
 begin
@@ -103,6 +101,7 @@ begin
     try
       Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND});
       Compiler := TLapeCompiler.Create(Parser);
+      Compiler.OnHint := @WriteHint;
 
       InitializeFFI(Compiler);
       InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
@@ -132,10 +131,10 @@ begin
 
         if Run then
         begin
-          t := getTickCount;
+          t := GetTickCount64();
           m.Append(LineEnding);
           RunCode(Compiler.Emitter.Code);
-          m.Append('Running Time: ' + IntToStr(getTickCount - t) + 'ms.');
+          m.Append('Running Time: ' + IntToStr(GetTickCount64() - t) + 'ms.');
         end;
       except
         on E: Exception do
@@ -152,6 +151,11 @@ end;
 procedure TForm1.btnRunClick(Sender: TObject);
 begin
   Compile(True, False);
+end;
+
+procedure TForm1.WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
+begin
+  m.Append(Msg);
 end;
 
 procedure TForm1.btnDisassembleClick(Sender: TObject);
