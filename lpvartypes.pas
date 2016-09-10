@@ -539,7 +539,7 @@ type
     function addDeclaration(Decl: TLapeDeclaration): Integer; override;
     function addVar(StackVar: TLapeStackVar): TLapeStackVar; overload; virtual;
     function addVar(VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
-    function addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString = ''; IgnoreUsed: Boolean = False): TLapeStackVar; overload; virtual;
+    function addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString = ''): TLapeStackVar; overload; virtual;
     function addSelfVar(ParType: ELapeParameterType; VarType: TLapeType): TLapeStackVar; overload; virtual;
 
     function inheritVar(StackVar: TLapeStackVar): TLapeStackVar; virtual;
@@ -615,7 +615,6 @@ type
     FOptions_PackRecords: UInt8;
 
     FOnHint: TLapeHint;
-    FHasHintDefine: Boolean;
 
     procedure Reset; virtual;
     procedure setEmitter(AEmitter: TLapeCodeEmitter); virtual;
@@ -677,7 +676,6 @@ type
     function hasDeclaration(ADecl: TLapeDeclaration; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; overload; virtual;
 
     procedure Hint(Msg: lpString; Args: array of const; ADocPos: TDocPos);
-    property HasHintDefine: Boolean read FHasHintDefine;
 
     property StackInfo: TLapeStackInfo read FStackInfo;
     property BaseTypes: TLapeBaseTypes read FBaseTypes;
@@ -3533,21 +3531,17 @@ begin
     Result := addVar(TLapeStackVar.Create(VarType, nil, Name));
 end;
 
-function TLapeStackInfo.addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString; IgnoreUsed: Boolean): TLapeStackVar;
+function TLapeStackInfo.addVar(ParType: ELapeParameterType; VarType: TLapeType; Name: lpString): TLapeStackVar;
 begin
   if (VarType = nil) then
     Result := addVar(TLapeParameterVar.Create(ParType, VarType, nil, Name))
   else
     Result := addVar(TLapeParameterVar.Create(ParType, VarType, nil, Name, @VarType._DocPos));
-
-  if (IgnoreUsed) then
-    Result.Used := duIgnore;
 end;
 
 function TLapeStackInfo.addSelfVar(ParType: ELapeParameterType; VarType: TLapeType): TLapeStackVar;
 begin
   Result := addVar(ParType, VarType, 'Self');
-  Result.Used := duIgnore;
 end;
 
 function TLapeStackInfo.inheritVar(StackVar: TLapeStackVar): TLapeStackVar;
@@ -4566,10 +4560,8 @@ end;
 
 procedure TLapeCompilerBase.Hint(Msg: lpString; Args: array of const; ADocPos: TDocPos);
 begin
-  Assert(lcoHints in Options);
-  Assert({$IFDEF FPC}@{$ENDIF}FOnHint <> nil);
-
-  FOnHint(Self, FormatLocation(Format(Msg, Args), ADocPos));
+  if ({$IFDEF FPC}@{$ENDIF}FOnHint <> nil) then
+    FOnHint(Self, FormatLocation(Format(Msg, Args), ADocPos));
 end;
 
 initialization

@@ -5158,22 +5158,24 @@ begin
     FCompiler.Emitter._JmpR(Offset - fo, fo, @_DocPos);
   end;
 
-  if (FCompiler.HasHintDefine) then
-    with FStackInfo do
-      for i := 0 to VarCount - 1 do
-      begin
-        if (Vars[i].Used <> duFalse) or (Vars[i].Name = '') or (Vars[i].Name[1] = '!') then
-          Continue;
+  with FStackInfo do
+    for i := 0 to VarCount - 1 do
+    begin
+      if (Vars[i].Used <> duFalse) or (Vars[i].Name = '') or (Vars[i].Name[1] = '!') then
+        Continue;
 
-        if (Vars[i] is TLapeParameterVar) then
-        begin
-          if (FStackInfo.Vars[i].Name = 'Result') then
-            FCompiler.Hint(lphResultNotSet, [], Vars[i]._DocPos)
-          else
-            FCompiler.Hint(lphParameterNotUsed, [Vars[i].Name], Vars[i]._DocPos);
-        end else
-          FCompiler.Hint(lphVariableNotUsed, [Vars[i].Name], Vars[i]._DocPos);
-      end;
+      if (Vars[i] is TLapeParameterVar) then
+      begin
+        if (TLapeParameterVar(Vars[i]).ParType = lptOut) then
+          FCompiler.Hint(lphParamterNotSet, [Vars[i].Name], Vars[i]._DocPos)
+        else
+        if (Vars[i].Name = 'Result') then
+          FCompiler.Hint(lphResultNotSet, [], Vars[i]._DocPos)
+        else
+          FCompiler.Hint(lphParameterNotUsed, [Vars[i].Name], Vars[i]._DocPos);
+      end else
+        FCompiler.Hint(lphVariableNotUsed, [Vars[i].Name], Vars[i]._DocPos);
+    end;
 end;
 
 function TLapeTree_method.canExit: Boolean;

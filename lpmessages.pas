@@ -97,6 +97,7 @@ const
 
   lphVariableNotUsed = 'Variable "%s" not used';
   lphParameterNotUsed = 'Parameter "%s" not used';
+  lphParamterNotSet = 'Parameter "%s" not set';
   lphResultNotSet = 'Result not set';
 
 procedure LapeException(Msg: lpString); overload;

@@ -2169,7 +2169,7 @@ constructor TLapeDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil
 begin
   inherited Create();
   Name := AName;
-  Used := duFalse;
+  Used := duIgnore;
   if (ADocPos <> nil) then
     _DocPos := ADocPos^
   else

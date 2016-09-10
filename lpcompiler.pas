@@ -872,11 +872,8 @@ var
   begin
     Argument := LowerCase(Trim(Argument));
     if (Argument = 'on') or (Argument = '+') then
-    begin
-      Include(FOptions, Option);
-      if (Option = lcoHints) then
-        FHasHintDefine := True;
-    end else if (Argument = 'off') or (Argument = '-') then
+      Include(FOptions, Option)
+    else if (Argument = 'off') or (Argument = '-') then
       Exclude(FOptions, Option)
     else
       LapeException(lpeInvalidCondition, [Self]);
@@ -1280,6 +1277,8 @@ end;
 function TLapeCompiler.ParseMethodHeader(out Name: lpString; addToScope: Boolean = True): TLapeType_Method;
 
   procedure addVar(ParType: ELapeParameterType; VarType: TLapeType; AVar: lpString);
+  var
+    StackVar: TLapeStackVar;
   begin
     if addToScope then
       if (FStackInfo = nil) then
@@ -1287,7 +1286,11 @@ function TLapeCompiler.ParseMethodHeader(out Name: lpString; addToScope: Boolean
       else if (LapeCase(Name) = LapeCase(AVar)) or hasDeclaration(AVar, True) then
         LapeExceptionFmt(lpeDuplicateDeclaration, [AVar], Tokenizer.DocPos)
       else
-        FStackInfo.addVar(ParType, VarType, AVar, not (lcoHints in FOptions));
+      begin
+        StackVar := FStackInfo.addVar(ParType, VarType, AVar);
+        if (lcoHints in FOptions) then
+          StackVar.Used := duFalse;
+      end;
   end;
 
 var
@@ -1799,9 +1802,9 @@ begin
       else if (FuncHeader is TLapeType_MethodOfObject) then
         FStackInfo.addSelfVar(lptConstRef, getGlobalType('ConstPointer'));
       for i := 0 to FuncHeader.Params.Count - 1 do
-        FStackInfo.addVar(FuncHeader.Params[i].ParType, FuncHeader.Params[i].VarType, lpString('Param'+IntToStr(i)), not (lcoHints in FOptions));
+        FStackInfo.addVar(FuncHeader.Params[i].ParType, FuncHeader.Params[i].VarType, lpString('Param'+IntToStr(i)));
       if (FuncHeader.Res <> nil) then
-        FStackInfo.addVar(lptOut, FuncHeader.Res, 'Result', not (lcoHints in FOptions));
+        FStackInfo.addVar(lptOut, FuncHeader.Res, 'Result');
     end;
     Result := ParseMethod(FuncForwards, FuncHeader, FuncName, False);
   finally
@@ -2273,9 +2276,9 @@ begin
           VarDecl.VarDecl := addLocalVar(VarType, Identifiers[i]);
 
         VarDecl.Default := nil;
-        if (not (lcoHints in FOptions)) then
-          VarDecl.VarDecl.Used := duIgnore;
         VarDecl.VarDecl._DocPos := Tokenizer.DocPos;
+        if (lcoHints in FOptions) then
+          VarDecl.VarDecl.Used := duFalse;
         if (DefConst <> nil) then
           if (not (VarDecl.VarDecl is TLapeGlobalVar)) or (VarType is TLapeType_Method) then
             VarDecl.Default := TLapeTree_GlobalVar.Create(DefConst, Self, GetPDocPos())
@@ -2316,7 +2319,6 @@ var
   _LastNode: (_None, _Var, _Op);
   InExpr: Integer;
   DoNext: Boolean;
-  Used: EDeclarationUsed;
 
   procedure PopOpNode;
   var
@@ -2638,16 +2640,11 @@ begin
             if (Expr = nil) then
               LapeExceptionFmt(lpeUnknownDeclaration, [Tokenizer.TokString], Tokenizer.DocPos);
 
-            if (lcoHints in FOptions) then
-              Used := duTrue
-            else
-              Used := duIgnore;
-
             if (Expr is TLapeTree_ResVar) then
-              TLapeTree_ResVar(Expr).ResVar.VarPos.StackVar.Used := Used
+              TLapeTree_ResVar(Expr).ResVar.VarPos.StackVar.Used := duTrue
             else
             if (Expr is TLapeTree_GlobalVar) then
-              TLapeTree_GlobalVar(Expr).GlobalVar.Used := Used;
+              TLapeTree_GlobalVar(Expr).GlobalVar.Used := duTrue;
 
             if (Expr is TLapeTree_Invoke) then
             begin
@@ -3156,7 +3153,6 @@ begin
   FDefines.Duplicates := dupIgnore;
   FDefines.CaseSensitive := LapeCaseSensitive;
   FConditionalStack := TLapeConditionalStack.Create(0);
-  FHasHintDefine := False;
 
   FOnHandleDirective := nil;
   FOnHandleExternal := nil;
@@ -3481,7 +3477,6 @@ function TLapeCompiler.Compile: Boolean;
     end;
   end;
 
-
 begin
   Result := False;
   try
@@ -3491,9 +3486,7 @@ begin
     FTree := ParseFile();
     if (FTree = nil) and (FDelayedTree.GlobalCount(False) <= 0) then
       LapeException(lpeExpressionExpected);
-
-    if (HasHintDefine) then
-      GlobalHints();
+    GlobalHints();
 
     FAfterParsing.Notify(Self);
 
