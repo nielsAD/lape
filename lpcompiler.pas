@@ -1339,7 +1339,7 @@ begin
           if addToScope then
             FStackInfo.addSelfVar(Lape_SelfParam, TLapeType(Typ));
           Result.Free();
-          Result := TLapeType_MethodOfType.Create(Self, TLapeType(Typ), nil, nil, '', @Pos);
+          Result := TLapeType_MethodOfType.Create(Self, TLapeType(Typ), nil, nil, Name, @Pos);
         end
         else if (not (Typ is TLapeType_SystemUnit)) then
           LapeException(lpeTypeExpected, [Tokenizer]);
@@ -1563,7 +1563,7 @@ begin
     ResetStack := False;
 
   try
-    isNext([tk_kw_ConstRef, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
+    isNext([tk_kw_Deprecated, tk_kw_ConstRef, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
     OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
     LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
 
@@ -1580,7 +1580,7 @@ begin
       TLapeType_MethodOfType(FuncHeader).SelfParam := lptConstRef;
       AddSelfVar(lptConstRef, TLapeType_MethodOfType(FuncHeader).ObjectType);
 
-      isNext([tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
+      isNext([tk_kw_Deprecated, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
     end
     else if (Tokenizer.Tok = tk_kw_Static) then
     begin
@@ -1590,7 +1590,7 @@ begin
         RemoveSelfVar();
         FuncHeader := TLapeType_Method(addManagedType(TLapeType_Method.Create(FuncHeader)));
       end;
-      isNext([tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
+      isNext([tk_kw_Deprecated, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
     end
     else if (not isExternal) and (not MethodOfObject(FuncHeader)) then
       FuncHeader := InheritMethodStack(FuncHeader, FStackInfo.Owner);
@@ -1638,7 +1638,7 @@ begin
           LapeException(lpString(E.Message), Tokenizer.DocPos);
         end;
 
-        isNext([tk_kw_External, tk_kw_Forward]);
+        isNext([tk_kw_External, tk_kw_Deprecated, tk_kw_Forward]);
       end
       else if (Tokenizer.Tok = tk_kw_Override) then
       begin
@@ -1761,6 +1761,14 @@ begin
         Result.FreeStackInfo := False;
         FreeAndNil(Result);
         Exit;
+      end;
+
+      if (Tokenizer.Tok = tk_kw_Deprecated) then
+      begin
+        TLapeType_Method(Result.Method.VarType).Deprecated := True;
+        Tokenizer.Expect(tk_typ_String);
+        TLapeType_Method(Result.Method.VarType).DeprecatedString := Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2);
+        Tokenizer.Expect(tk_sym_SemiColon);
       end;
 
       if isExternal then
@@ -2319,6 +2327,7 @@ var
   _LastNode: (_None, _Var, _Op);
   InExpr: Integer;
   DoNext: Boolean;
+  GlobalVar: TLapeGlobalVar;
 
   procedure PopOpNode;
   var
@@ -2644,7 +2653,15 @@ begin
               TLapeTree_ResVar(Expr).ResVar.VarPos.StackVar.Used := duTrue
             else
             if (Expr is TLapeTree_GlobalVar) then
-              TLapeTree_GlobalVar(Expr).GlobalVar.Used := duTrue;
+            begin
+              GlobalVar := TLapeTree_GlobalVar(Expr).GlobalVar;
+              if (lcoHints in FOptions) and (GlobalVar.VarType is TLapeType_Method) then
+              begin
+                if (TLapeType_Method(GlobalVar.VarType).Deprecated) then
+                  Hint(lphDeprecatedMethod, [GlobalVar.Name, TLapeType_Method(GlobalVar.VarType).DeprecatedString], Tokenizer.DocPos);
+              end else
+                GlobalVar.Used := duTrue;
+            end;
 
             if (Expr is TLapeTree_Invoke) then
             begin
