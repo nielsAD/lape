@@ -2333,6 +2333,10 @@ begin
   begin
     IdentVar := IdentExpr.Compile(Offset);
 
+    if (lcoHints in FCompilerOptions) and (IdentVar.VarType is TLapeType_Method) and (TLapeType_Method(IdentVar.VarType).Deprecated) then
+      with TLapeType_Method(IdentVar.VarType) do
+        FCompiler.Hint(lphDeprecatedMethod, [Name, DeprecatedString], IdentExpr.DocPos);
+
     if (not IdentVar.HasType()) or
        (not (IdentVar.VarType is TLapeType_Method))
     then
