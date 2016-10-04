@@ -37,7 +37,7 @@ contains
   lpcompiler in '..\lpcompiler.pas',
   lpdisassembler in '..\lpdisassembler.pas',
   lpeval in '..\lpeval.pas',
-  lpexceptions in '..\lpexceptions.pas',
+  lpmessages in '..\lpmessages.pas',
   lpinterpreter in '..\lpinterpreter.pas',
   lpparser in '..\lpparser.pas',
   lptree in '..\lptree.pas',
