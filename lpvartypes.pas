@@ -4560,7 +4560,7 @@ end;
 
 procedure TLapeCompilerBase.Hint(Msg: lpString; Args: array of const; ADocPos: TDocPos);
 begin
-  if ({$IFDEF FPC}@{$ENDIF}FOnHint <> nil) then
+  if ({$IFNDEF FPC}@{$ENDIF}FOnHint <> nil) then
     FOnHint(Self, FormatLocation(Format(Msg, Args), ADocPos));
 end;
 
