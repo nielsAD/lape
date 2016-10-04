@@ -1951,7 +1951,10 @@ var
       begin
         if (i > FParams.Count) or isEmpty(FParams[i]) then
           if (Params[i].Default <> nil) and (Params[i].Default is TLapeGlobalVar) then
-            Par := Params[i].Default as TLapeGlobalVar
+          begin
+            Params[i].Default.Used := duTrue;
+            Par := Params[i].Default as TLapeGlobalVar;
+          end
           else
             LapeExceptionFmt(lpeNoDefaultForParam, [i + 1 - ImplicitParams], [FParams[i], Self])
         else
@@ -2376,6 +2379,7 @@ begin
         if (i >= FParams.Count) or isEmpty(FParams[i]) then
           if (Params[i].Default <> nil) then
           begin
+            Params[i].Default.Used := duTrue;
             ParamVars[i] := _ResVar.New(Params[i].Default).InScope(FCompiler.StackInfo, @Self._DocPos);
             if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].Writeable) then
               LapeException(lpeVariableExpected, [FParams[i], Self]);
