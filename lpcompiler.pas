@@ -658,6 +658,8 @@ procedure TLapeCompiler.InitBaseDefinitions;
     addGlobalVar(OLMethod.NewGlobalVar('ToString'));
   end;
 begin
+  StartImporting();
+
   addBaseDefine('Lape');
   addBaseDefine('Sesquipedalian');
 
@@ -761,6 +763,8 @@ begin
     _LapeInsert,
     '!addDelayedCore'
   );
+
+  EndImporting();
 end;
 
 function TLapeCompiler.EnsureExpression(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
@@ -3206,7 +3210,6 @@ begin
   setTokenizer(ATokenizer);
   Reset();
 
-  StartImporting();
   InitBaseDefinitions();
 end;
 

@@ -107,6 +107,7 @@ begin
       InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
       ExposeGlobals(Compiler);
 
+      Compiler.StartImporting();
       Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
       Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
       Compiler.addGlobalFunc('function MyStupidProc: array of integer', @MyStupidProc);

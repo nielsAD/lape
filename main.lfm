@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 141
+  Left = 626
   Height = 692
-  Top = 113
+  Top = 128
   Width = 497
   Caption = 'Form1'
   ClientHeight = 692
@@ -535,8 +535,6 @@ object Form1: TForm1
         Command = emcStartDragMove
       end>
     Lines.Strings = (
-      '{$HINTS ON}'
-      ''
       'type'
       '  TPoint = record'
       '    x, y: Integer;'

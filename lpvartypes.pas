@@ -37,7 +37,7 @@ type
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoCOperators, lcoRangeCheck, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
+  Lape_OptionsDef = [lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
   Lape_PackRecordsDef = 8;
 
 type
@@ -4560,7 +4560,7 @@ end;
 
 procedure TLapeCompilerBase.Hint(Msg: lpString; Args: array of const; ADocPos: TDocPos);
 begin
-  if ({$IFDEF FPC}@{$ENDIF}FOnHint <> nil) then
+  if ({$IFNDEF FPC}@{$ENDIF}FOnHint <> nil) then
     FOnHint(Self, FormatLocation(Format(Msg, Args), ADocPos));
 end;
 

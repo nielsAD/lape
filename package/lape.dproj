@@ -107,7 +107,7 @@
 			<DCCReference Include="..\lpcompiler.pas"/>
 			<DCCReference Include="..\lpdisassembler.pas"/>
 			<DCCReference Include="..\lpeval.pas"/>
-			<DCCReference Include="..\lpexceptions.pas"/>
+			<DCCReference Include="..\lpmessages.pas"/>
 			<DCCReference Include="..\lpinterpreter.pas"/>
 			<DCCReference Include="..\lpparser.pas"/>
 			<DCCReference Include="..\lptree.pas"/>
