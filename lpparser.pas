@@ -32,7 +32,6 @@ type
     tk_kw_Case,
     tk_kw_Const,
     tk_kw_ConstRef,
-    tk_kw_Deprecated,
     tk_kw_Do,
     tk_kw_DownTo,
     tk_kw_Else,
@@ -247,7 +246,7 @@ const
   ParserToken_Symbols = [tk_sym_BracketClose..tk_sym_SemiColon];
   ParserToken_Types = [tk_typ_Float..tk_typ_Char];
 
-  Lape_Keywords: array[0..49 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
+  Lape_Keywords: array[0..48 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
       (Keyword: 'AND';          Token: tk_op_AND),
       (Keyword: 'DIV';          Token: tk_op_DIV),
       (Keyword: 'IN';           Token: tk_op_IN),
@@ -264,7 +263,6 @@ const
       (Keyword: 'CASE';         Token: tk_kw_Case),
       (Keyword: 'CONST';        Token: tk_kw_Const),
       (Keyword: 'CONSTREF';     Token: tk_kw_ConstRef),
-      (Keyword: 'DEPRECATED';   Token: tk_kw_Deprecated),
       (Keyword: 'DO';           Token: tk_kw_Do),
       (Keyword: 'DOWNTO';       Token: tk_kw_DownTo),
       (Keyword: 'ELSE';         Token: tk_kw_Else),
