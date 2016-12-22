@@ -3244,7 +3244,6 @@ begin
   setTokenizer(ATokenizer);
   Reset();
 
-  StartImporting();
   InitBaseDefinitions();
 end;
 
