@@ -363,9 +363,8 @@ type
     FreeParams: Boolean;
     ImplicitParams: Integer;
     Res: TLapeType;
-    IsOperator: Boolean;
-    Deprecated: Boolean;
-    DeprecatedString: String;
+    IsOperator, IsDeprecated, IsExperimental, IsUnImplemented: Boolean;
+    DeprecatedMsg, ExperimentaMsg, UnImplementedMsg: String;
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -2469,8 +2468,11 @@ begin
     AParams := TLapeParameterList.Create(NullParameter, dupAccept, False);
   FParams := AParams;
   Res := ARes;
-  Deprecated := False;
-  DeprecatedString := '';
+
+  IsOperator := False;
+  IsDeprecated := False;
+  IsExperimental := False;
+  IsUnImplemented := False;
 end;
 
 constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil);
