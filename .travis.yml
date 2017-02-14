@@ -1,7 +1,9 @@
 # Based on .travis.yml in `travis-lazarus` (https://github.com/nielsAD/travis-lazarus)
 # License: MIT
 
-sudo: true
+language: generic
+sudo: required
+dist: trusty
 
 os:
   - linux
@@ -15,17 +17,14 @@ env:
     - LAPE_PKG=../../package
     - LAPE_FFI=../../extensions/ffi/test
   matrix:
-    - LAZ_PKG=true   # Use the latest version from the default package manager
-    - LAZ_VER=1.0.14 # Use specific (binary) release
-    - LAZ_VER=1.2.6
+    - LAZ_PKG=true  # Use the latest version from the default package manager
+    - LAZ_VER=1.2.6 # Use specific (binary) release
     - LAZ_VER=1.4.4
 
 matrix:
   allow_failures:
     - env: LAZ_PKG=true
   include:
-    - os: linux
-      env: LAZ_VER=1.0.14 LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
     - os: linux
       env: LAZ_VER=1.2.6  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
     - os: linux
@@ -40,12 +39,12 @@ matrix:
       env: LAZ_VER=1.4.4  LAZ_ENV=qemu-arm LAZ_OPT="--os=linux --cpu=arm --widgetset=nogui"
 
 before_install:
-    # Start virtual display server
-  - sh -e /etc/init.d/xvfb start || true
+  # Start virtual display server
+  - Xvfb $DISPLAY &
   - cd "$LAPE_PWD"
 
 install:
-    # Install prerequisites (wine/fpc/lazarus)
+  # Install prerequisites (fpc/lazarus/wine/qemu)
   - ./travis-lazarus/.travis.install.py
 
 script:
@@ -53,3 +52,9 @@ script:
   - lazbuild $LAZ_OPT "LapeTest.lpi"
   - $LAZ_ENV ./LapeTest
   - cd "$LAPE_FFI" && ./runall.sh || true
+
+notifications:
+  email:
+    on_success: false
+    on_failure: change
+
