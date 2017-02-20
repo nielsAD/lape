@@ -1444,16 +1444,16 @@ end;
 function TLapeType.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FLo = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
-    with FCompiler, getBaseType(BaseIntType) do
-      Self.FLo := addManagedVar(NewGlobalVarP(LapeTypeLow[BaseType])) as TLapeGlobalVar;
+    with FCompiler do
+      Self.FLo := addManagedVar(NewGlobalVarP(LapeTypeLow[BaseIntType])) as TLapeGlobalVar;
   Result := FLo;
 end;
 
 function TLapeType.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FHi = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
-    with FCompiler, getBaseType(BaseIntType) do
-      Self.FHi := addManagedVar(NewGlobalVarP(LapeTypeHigh[BaseType])) as TLapeGlobalVar;
+    with FCompiler do
+      Self.FHi := addManagedVar(NewGlobalVarP(LapeTypeHigh[BaseIntType])) as TLapeGlobalVar;
   Result := FHi;
 end;
 
