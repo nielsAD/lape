@@ -7,9 +7,9 @@ unit lape;
 interface
 
 uses
-  lpcodeemitter, lpcompiler, lpdisassembler, lpeval, lpexceptions, 
-  lpinterpreter, lpparser, lptree, lptypes, lpvartypes, lpvartypes_array, 
-  lpvartypes_ord, lpvartypes_record, lputils;
+  lpcodeemitter, lpcompiler, lpdisassembler, lpeval, lpinterpreter, lpparser, 
+  lptree, lptypes, lpvartypes, lpvartypes_array, lpvartypes_ord, 
+  lpvartypes_record, lputils, lpmessages;
 
 implementation
 

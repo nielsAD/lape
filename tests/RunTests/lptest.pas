@@ -28,7 +28,7 @@ implementation
 uses
   {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF} strutils,
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
-  lpcompiler, lpparser, lpexceptions, lpinterpreter, lputils;
+  lpcompiler, lpparser, lpmessages, lpinterpreter, lputils;
 
 {$IFNDEF FPC} //Internal error workaround
 {$IF NOT DECLARED(GetTickCount)}

@@ -67,7 +67,7 @@ implementation
 
 uses
   Math,
-  lpvartypes_array, lpparser, lpeval, lpexceptions;
+  lpvartypes_array, lpparser, lpeval, lpmessages;
 
 function TLapeType_Record.getAsString: lpString;
 var

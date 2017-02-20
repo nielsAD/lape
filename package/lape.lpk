@@ -158,96 +158,96 @@ https://github.com/nielsAD/lape"/>
         <Type Value="Include"/>
       </Item30>
       <Item31>
-        <Filename Value="..\lpexceptions.pas"/>
-        <UnitName Value="lpexceptions"/>
-      </Item31>
-      <Item32>
         <Filename Value="..\lpinterpreter.pas"/>
         <UnitName Value="lpinterpreter"/>
+      </Item31>
+      <Item32>
+        <Filename Value="..\lpinterpreter_doeval.inc"/>
+        <Type Value="Include"/>
       </Item32>
       <Item33>
-        <Filename Value="..\lpinterpreter_doeval.inc"/>
+        <Filename Value="..\lpinterpreter_doinvoke.inc"/>
         <Type Value="Include"/>
       </Item33>
       <Item34>
-        <Filename Value="..\lpinterpreter_doinvoke.inc"/>
+        <Filename Value="..\lpinterpreter_dojump.inc"/>
         <Type Value="Include"/>
       </Item34>
       <Item35>
-        <Filename Value="..\lpinterpreter_dojump.inc"/>
+        <Filename Value="..\lpinterpreter_evalcase.inc"/>
         <Type Value="Include"/>
       </Item35>
       <Item36>
-        <Filename Value="..\lpinterpreter_evalcase.inc"/>
+        <Filename Value="..\lpinterpreter_evalopcodes.inc"/>
         <Type Value="Include"/>
       </Item36>
       <Item37>
-        <Filename Value="..\lpinterpreter_evalopcodes.inc"/>
+        <Filename Value="..\lpinterpreter_evalrecords.inc"/>
         <Type Value="Include"/>
       </Item37>
       <Item38>
-        <Filename Value="..\lpinterpreter_evalrecords.inc"/>
+        <Filename Value="..\lpinterpreter_invokecase.inc"/>
         <Type Value="Include"/>
       </Item38>
       <Item39>
-        <Filename Value="..\lpinterpreter_invokecase.inc"/>
+        <Filename Value="..\lpinterpreter_invokeopcodes.inc"/>
         <Type Value="Include"/>
       </Item39>
       <Item40>
-        <Filename Value="..\lpinterpreter_invokeopcodes.inc"/>
+        <Filename Value="..\lpinterpreter_invokerecords.inc"/>
         <Type Value="Include"/>
       </Item40>
       <Item41>
-        <Filename Value="..\lpinterpreter_invokerecords.inc"/>
+        <Filename Value="..\lpinterpreter_jumpcase.inc"/>
         <Type Value="Include"/>
       </Item41>
       <Item42>
-        <Filename Value="..\lpinterpreter_jumpcase.inc"/>
+        <Filename Value="..\lpinterpreter_jumpopcodes.inc"/>
         <Type Value="Include"/>
       </Item42>
       <Item43>
-        <Filename Value="..\lpinterpreter_jumpopcodes.inc"/>
+        <Filename Value="..\lpinterpreter_jumprecords.inc"/>
         <Type Value="Include"/>
       </Item43>
       <Item44>
-        <Filename Value="..\lpinterpreter_jumprecords.inc"/>
+        <Filename Value="..\lpinterpreter_opcodecase.inc"/>
         <Type Value="Include"/>
       </Item44>
       <Item45>
-        <Filename Value="..\lpinterpreter_opcodecase.inc"/>
-        <Type Value="Include"/>
-      </Item45>
-      <Item46>
         <Filename Value="..\lpparser.pas"/>
         <UnitName Value="lpparser"/>
-      </Item46>
-      <Item47>
+      </Item45>
+      <Item46>
         <Filename Value="..\lptree.pas"/>
         <UnitName Value="lptree"/>
-      </Item47>
-      <Item48>
+      </Item46>
+      <Item47>
         <Filename Value="..\lptypes.pas"/>
         <UnitName Value="lptypes"/>
-      </Item48>
-      <Item49>
+      </Item47>
+      <Item48>
         <Filename Value="..\lpvartypes.pas"/>
         <UnitName Value="lpvartypes"/>
-      </Item49>
-      <Item50>
+      </Item48>
+      <Item49>
         <Filename Value="..\lpvartypes_array.pas"/>
         <UnitName Value="lpvartypes_array"/>
-      </Item50>
-      <Item51>
+      </Item49>
+      <Item50>
         <Filename Value="..\lpvartypes_ord.pas"/>
         <UnitName Value="lpvartypes_ord"/>
-      </Item51>
-      <Item52>
+      </Item50>
+      <Item51>
         <Filename Value="..\lpvartypes_record.pas"/>
         <UnitName Value="lpvartypes_record"/>
-      </Item52>
-      <Item53>
+      </Item51>
+      <Item52>
         <Filename Value="..\lputils.pas"/>
         <UnitName Value="lputils"/>
+      </Item52>
+      <Item53>
+        <Filename Value="..\lpmessages.pas"/>
+        <UnitName Value="lpmessages"/>
       </Item53>
     </Files>
     <RequiredPkgs Count="1">

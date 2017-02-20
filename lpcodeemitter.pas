@@ -166,7 +166,7 @@ type
 implementation
 
 uses
-  lpexceptions;
+  lpmessages;
 
 procedure TLapeCodeEmitterBase._Int8(v: Int8; Pos: PInt8);          begin Pos^ := v; end;
 procedure TLapeCodeEmitterBase._UInt8(v: UInt8; Pos: PUInt8);       begin Pos^ := v; end;

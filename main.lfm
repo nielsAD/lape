@@ -1,12 +1,12 @@
 object Form1: TForm1
-  Left = 141
+  Left = 626
   Height = 692
-  Top = 113
+  Top = 128
   Width = 497
   Caption = 'Form1'
   ClientHeight = 692
   ClientWidth = 497
-  LCLVersion = '1.4.0.1'
+  LCLVersion = '1.6.0.4'
   inline e: TSynEdit
     Left = 0
     Height = 531
@@ -567,7 +567,6 @@ object Form1: TForm1
       'end;'
     )
     VisibleSpecialChars = [vscSpace, vscTabAtLast]
-    SelectedColor.FrameEdges = sfeAround
     SelectedColor.BackPriority = 50
     SelectedColor.ForePriority = 50
     SelectedColor.FramePriority = 50
@@ -575,23 +574,17 @@ object Form1: TForm1
     SelectedColor.ItalicPriority = 50
     SelectedColor.UnderlinePriority = 50
     SelectedColor.StrikeOutPriority = 50
-    IncrementColor.FrameEdges = sfeAround
-    HighlightAllColor.FrameEdges = sfeAround
     BracketHighlightStyle = sbhsBoth
     BracketMatchColor.Background = clNone
     BracketMatchColor.Foreground = clNone
-    BracketMatchColor.FrameEdges = sfeAround
     BracketMatchColor.Style = [fsBold]
     FoldedCodeColor.Background = clNone
     FoldedCodeColor.Foreground = clGray
     FoldedCodeColor.FrameColor = clGray
-    FoldedCodeColor.FrameEdges = sfeAround
     MouseLinkColor.Background = clNone
     MouseLinkColor.Foreground = clBlue
-    MouseLinkColor.FrameEdges = sfeAround
     LineHighlightColor.Background = clNone
     LineHighlightColor.Foreground = clNone
-    LineHighlightColor.FrameEdges = sfeAround
     inline SynLeftGutterPartList1: TSynGutterPartList
       object SynGutterMarks1: TSynGutterMarks
         Width = 24
@@ -602,7 +595,6 @@ object Form1: TForm1
         MouseActions = <>
         MarkupInfo.Background = clBtnFace
         MarkupInfo.Foreground = clNone
-        MarkupInfo.FrameEdges = sfeAround
         DigitCount = 2
         ShowOnlyLineNumbersMultiplesOf = 1
         ZeroStart = False
@@ -619,7 +611,6 @@ object Form1: TForm1
         MouseActions = <>
         MarkupInfo.Background = clWhite
         MarkupInfo.Foreground = clGray
-        MarkupInfo.FrameEdges = sfeAround
       end
       object SynGutterCodeFolding1: TSynGutterCodeFolding
         MouseActions = <        
@@ -650,7 +641,6 @@ object Form1: TForm1
           end>
         MarkupInfo.Background = clNone
         MarkupInfo.Foreground = clGray
-        MarkupInfo.FrameEdges = sfeAround
         MouseActionsExpanded = <        
           item
             ClickCount = ccAny
@@ -754,24 +744,13 @@ object Form1: TForm1
   end
   object PasSyn: TSynPasSyn
     Enabled = False
-    AsmAttri.FrameEdges = sfeAround
     CommentAttri.Foreground = clGreen
-    CommentAttri.FrameEdges = sfeAround
     CommentAttri.Style = []
-    IDEDirectiveAttri.FrameEdges = sfeAround
-    IdentifierAttri.FrameEdges = sfeAround
-    KeyAttri.FrameEdges = sfeAround
     NumberAttri.Foreground = clNavy
-    NumberAttri.FrameEdges = sfeAround
-    SpaceAttri.FrameEdges = sfeAround
     StringAttri.Foreground = clTeal
-    StringAttri.FrameEdges = sfeAround
     SymbolAttri.Foreground = clMaroon
-    SymbolAttri.FrameEdges = sfeAround
-    CaseLabelAttri.FrameEdges = sfeAround
     CaseLabelAttri.Style = [fsItalic]
     DirectiveAttri.Foreground = clOlive
-    DirectiveAttri.FrameEdges = sfeAround
     CompilerMode = pcmDelphi
     NestedComments = False
     left = 432

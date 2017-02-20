@@ -802,7 +802,7 @@ uses
   Math,
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
-  lpexceptions, lpeval, lpinterpreter;
+  lpmessages, lpeval, lpinterpreter;
 
 function getFlowStatement(Offset: Integer; Pos: PDocPos = nil; JumpSafe: Boolean = False): TLapeFlowStatement;
 begin
@@ -1951,7 +1951,10 @@ var
       begin
         if (i > FParams.Count) or isEmpty(FParams[i]) then
           if (Params[i].Default <> nil) and (Params[i].Default is TLapeGlobalVar) then
-            Par := Params[i].Default as TLapeGlobalVar
+          begin
+            Params[i].Default.Used := duTrue;
+            Par := Params[i].Default as TLapeGlobalVar;
+          end
           else
             LapeExceptionFmt(lpeNoDefaultForParam, [i + 1 - ImplicitParams], [FParams[i], Self])
         else
@@ -1980,6 +1983,9 @@ var
       Result := Res.NewGlobalVarP();
       TLapeImportedFunc(IdentVar.Ptr^)(@ParamVars[0], Result.Ptr);
       Result := TLapeGlobalVar(FCompiler.addManagedVar(Result));
+
+      for i := 1 to ImplicitParams do
+        FParams.Delete(0);
     end;
   end;
 
@@ -2373,6 +2379,7 @@ begin
         if (i >= FParams.Count) or isEmpty(FParams[i]) then
           if (Params[i].Default <> nil) then
           begin
+            Params[i].Default.Used := duTrue;
             ParamVars[i] := _ResVar.New(Params[i].Default).InScope(FCompiler.StackInfo, @Self._DocPos);
             if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].Writeable) then
               LapeException(lpeVariableExpected, [FParams[i], Self]);
@@ -2391,6 +2398,9 @@ begin
         Result := DoImportedMethod(IdentVar, ParamVars)
       else
         Result := DoCombiMethod(IdentVar, ParamVars);
+
+      for i := 1 to ImplicitParams do
+        FParams.Delete(0);
     end;
 
     IdentVar.Spill(1);
@@ -2721,6 +2731,7 @@ begin
       ResultDecl := FCompiler.getDeclaration('Result');
       if (ResultDecl = nil) or (not (ResultDecl is TLapeParameterVar)) then
         LapeExceptionFmt(lpeWrongNumberParams, [0], DocPos);
+      ResultDecl.Used := duTrue;
       Left := TLapeTree_ResVar.Create(_ResVar.New(ResultDecl as TLapeVar), FParams[0]);
       Right := TLapeTree_ResVar.Create(FParams[0].Compile(Offset), FParams[0]);
       Compile(Offset);
@@ -5150,6 +5161,25 @@ begin
     FCompiler.DecStackInfo(Offset, True, True, False, @_DocPos);
     FCompiler.Emitter._JmpR(Offset - fo, fo, @_DocPos);
   end;
+
+  with FStackInfo do
+    for i := 0 to VarCount - 1 do
+    begin
+      if (Vars[i].Used <> duFalse) or (Vars[i].Name = '') or (Vars[i].Name[1] = '!') then
+        Continue;
+
+      if (Vars[i] is TLapeParameterVar) then
+      begin
+        if (TLapeParameterVar(Vars[i]).ParType = lptOut) then
+          FCompiler.Hint(lphParamterNotSet, [Vars[i].Name], Vars[i]._DocPos)
+        else
+        if (Vars[i].Name = 'Result') then
+          FCompiler.Hint(lphResultNotSet, [], Vars[i]._DocPos)
+        else
+          FCompiler.Hint(lphParameterNotUsed, [Vars[i].Name], Vars[i]._DocPos);
+      end else
+        FCompiler.Hint(lphVariableNotUsed, [Vars[i].Name], Vars[i]._DocPos);
+    end;
 end;
 
 function TLapeTree_method.canExit: Boolean;

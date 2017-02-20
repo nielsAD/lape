@@ -2,7 +2,7 @@ program LapeTestFFI;
 
 uses
   SysUtils, {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
-  lptypes, lpvartypes, lpcompiler, lptree, lpparser, lpinterpreter, lpexceptions,
+  lptypes, lpvartypes, lpcompiler, lptree, lpparser, lpinterpreter, lpmessages,
   lpffiwrappers, ffi;
 
 type
@@ -750,7 +750,7 @@ begin
   try
     with TLapeCompiler.Create(TLapeTokenizerString.Create('begin ' + RunStr + ' end.')) do
     try
-      Options := Options + [lcoAssertions, lcoInitExternalResult];
+      Options := Options + [lcoAssertions];
 
       addGlobalVar(
         addGlobalType('record MagicToken: NativeInt; Success: Boolean; end', 'TTest'),
