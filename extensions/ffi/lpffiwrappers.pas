@@ -166,6 +166,7 @@ const
 
 function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
 function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
+function LapeFFIStackParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
 function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;
 function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
 function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;
@@ -801,13 +802,16 @@ begin
   Result := (Param.VarType.BaseType in [ltShortString, ltLargeSet])
       or   ((Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType = ltRecord) and (Param.VarType.Size > SizeOf(Pointer)))
 
-  {$IF DECLARED(FFI_REGISTER) AND DECLARED(FFI_PASCAL) AND DECLARED(FFI_FASTCALL)}
-      or ((ABI  =  FFI_REGISTER)                            and (Param.VarType.BaseType in [ltVariant]))
-      or ((ABI in [FFI_REGISTER, FFI_PASCAL, FFI_FASTCALL]) and (Param.VarType.BaseType in [ltRecord, ltStaticArray]) and (Param.VarType.Size > SizeOf(Pointer)))
-  {$IFEND}
-
   {$IF DECLARED(FFI_STDCALL)}
       or ((ABI = FFI_STDCALL) and (Param.VarType.BaseType in [ltVariant]) and (Param.ParType in Lape_ConstParams))
+  {$IFEND}
+
+  {$IF DECLARED(FFI_REGISTER)}
+      or ((ABI = FFI_REGISTER) and (Param.VarType.BaseType in [ltVariant]))
+  {$IFEND}
+
+  {$IF DECLARED(FFI_REGISTER) AND DECLARED(FFI_PASCAL) AND DECLARED(FFI_FASTCALL)}
+      or ((ABI in [FFI_REGISTER, FFI_PASCAL, FFI_FASTCALL]) and (Param.VarType.BaseType in [ltRecord, ltStaticArray]) and (Param.VarType.Size > SizeOf(Pointer)))
   {$IFEND}
 
   {$IFDEF CPUX86_64}
@@ -821,14 +825,26 @@ begin
   ;
 end;
 
+function LapeFFIStackParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
+begin
+  {$IFDEF CPU86}
+    Result := (Param.VarType <> nil) and (Param.VarType.BaseType = ltDynArray)
+
+    {$IF (FPC_VERSION >= 3) AND DECLARED(FFI_PASCAL)}
+      or ((ABI = FFI_PASCAL) and (Param.VarType.Size < SizeOf(Pointer)) and (Param.VarType.Size <> SizeOf(UInt16)))
+    {$IFEND}
+    ;
+  {$ELSE}
+    Result := False;
+  {$ENDIF}
+end;
+
 function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;
 begin
   if LapeFFIPointerParam(Param, ABI) then
     Result := TFFITypeManager.Create(ffi_type_pointer)
-{$IFDEF CPU86}
-  else if (Param.VarType <> nil) and (Param.VarType.BaseType = ltDynArray) then
-    Result := TFFITypeManager.Create(ffi_type_float) // Force on stack
-{$ENDIF}
+  else if LapeFFIStackParam(Param, ABI) then
+    Result := TFFITypeManager.Create(ffi_type_float) // TODO: Change to platform-independent type
   else
     Result := LapeTypeToFFIType(Param.VarType);
 end;
@@ -845,7 +861,8 @@ begin
   {$IFDEF CPU86}
     Result := (VarType.BaseType = ltRecord) and (
       (not (UInt8(VarType.Size) in PowerTwoRegs))
-        {$IF (FPC_VERSION < 3) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)} or (not (ABI in [FFI_CDECL, FFI_MS_CDECL])) {$IFEND}
+        {$IF (FPC_VERSION <  3) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)} or (not (ABI in [FFI_CDECL, FFI_MS_CDECL])) {$IFEND}
+        {$IF (FPC_VERSION >= 3) AND DECLARED(FFI_PASCAL)} or ((ABI = FFI_PASCAL) and (VarType.Size = SizeOf(UInt8))) {$IFEND}
       )
     ;
   {$ENDIF}
