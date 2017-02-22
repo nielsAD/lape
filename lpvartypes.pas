@@ -618,6 +618,8 @@ type
 
     procedure Reset; virtual;
     procedure setEmitter(AEmitter: TLapeCodeEmitter); virtual;
+    procedure setOptions(AOptions: ECompilerOptionsSet); virtual;
+    procedure setPackRecords(APackRecords: UInt8); virtual;
   public
     FreeEmitter: Boolean;
 
@@ -685,8 +687,8 @@ type
     property Globals[AName: lpString]: TLapeGlobalVar read getGlobalVar; default;
   published
     property Emitter: TLapeCodeEmitter read FEmitter write setEmitter;
-    property Options: ECompilerOptionsSet read FOptions write FBaseOptions default Lape_OptionsDef;
-    property Options_PackRecords: UInt8 read FOptions_PackRecords write FBaseOptions_PackRecords default Lape_PackRecordsDef;
+    property Options: ECompilerOptionsSet read FOptions write setOptions default Lape_OptionsDef;
+    property Options_PackRecords: UInt8 read FBaseOptions_PackRecords write setPackRecords default Lape_PackRecordsDef;
     property OnHint: TLapeHint read FOnHint write FOnHint;
   end;
 
@@ -3904,6 +3906,18 @@ begin
   FEmitter := AEmitter;
   if (FEmitter <> nil) then
     FEmitter.Reset();
+end;
+
+procedure TLapeCompilerBase.setOptions(AOptions: ECompilerOptionsSet);
+begin
+  FOptions     := AOptions;
+  FBaseOptions := AOptions;
+end;
+
+procedure TLapeCompilerBase.setPackRecords(APackRecords: UInt8);
+begin
+  FOptions_PackRecords     := APackRecords;
+  FBaseOptions_PackRecords := APackRecords;
 end;
 
 procedure TLapeCompilerBase.Reset;
