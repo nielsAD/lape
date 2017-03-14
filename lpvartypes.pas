@@ -351,6 +351,9 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
   end;
 
+  ELapeHintDirective = (lhdDeprecated, lhdExperimental, lhdUnImplemented);
+  ELapeHintDirectives = set of ELapeHintDirective;
+
   TLapeType_Method = class(TLapeType)
   protected
     FParams: TLapeParameterList;
@@ -363,8 +366,9 @@ type
     FreeParams: Boolean;
     ImplicitParams: Integer;
     Res: TLapeType;
-    IsOperator, IsDeprecated, IsExperimental, IsUnImplemented: Boolean;
-    DeprecatedMsg, ExperimentaMsg, UnImplementedMsg: String;
+    IsOperator: Boolean;
+    HintDirectives: ELapeHintDirectives;
+    DeprecatedHint: String;
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -2470,9 +2474,8 @@ begin
   Res := ARes;
 
   IsOperator := False;
-  IsDeprecated := False;
-  IsExperimental := False;
-  IsUnImplemented := False;
+  HintDirectives := [];
+  DeprecatedHint := '';
 end;
 
 constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil);

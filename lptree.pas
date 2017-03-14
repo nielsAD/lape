@@ -2326,22 +2326,21 @@ var
   end;
 
   procedure DoDirectiveHints(Method: TLapeType_Method);
-
-    procedure DoHint(Hint, Name, Message: String);
-    begin
-      if (Message = '') then
-        FCompiler.Hint(Hint, [Method.Name], IdentExpr.DocPos)
-      else
-        FCompiler.Hint(Hint + #32 + #34 + Message + #34, [Method.Name], IdentExpr.DocPos);
-    end;
-
+  var
+    Directive: ELapeHintDirective;
   begin
-    if (Method.IsDeprecated) then
-      DoHint(lphDeprecatedMethod, Method.Name, Method.DeprecatedMsg);
-    if (Method.IsUnImplemented) then
-      DoHint(lphUnImplementedMethod, Method.Name, Method.UnImplementedMsg);
-    if (Method.IsExperimental) then
-      DoHint(lphExperimentalMethod, Method.Name, Method.ExperimentaMsg);
+    for Directive in Method.HintDirectives do
+      case Directive of
+        lhdDeprecated:
+          if (Method.DeprecatedHint <> '') then
+            FCompiler.Hint(lphDeprecatedMethod2, [Method.Name, Method.DeprecatedHint], IdentExpr.DocPos)
+          else
+            FCompiler.Hint(lphDeprecatedMethod, [Method.Name], IdentExpr.DocPos);
+        lhdExperimental:
+          FCompiler.Hint(lphExperimentalMethod, [Method.Name], IdentExpr.DocPos);
+        lhdUnImplemented:
+          FCompiler.Hint(lphUnImplementedMethod, [Method.Name], IdentExpr.DocPos);
+      end;
   end;
 
 begin

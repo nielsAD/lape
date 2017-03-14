@@ -100,7 +100,8 @@ const
   lphParamterNotSet = 'Parameter "%s" not set';
   lphResultNotSet = 'Result not set';
   lphDeprecatedMethod = 'Method "%s" is deprecated';
-  lphUnImplementedMethod = 'Method "%s" is unimplemented';
+  lphDeprecatedMethod2 = 'Method "%s" is deprecated "%s"';
+  lphUnImplementedMethod = 'Method "%s" is not implemented';
   lphExperimentalMethod = 'Method "%s" is experimental';
 
 procedure LapeException(Msg: lpString); overload;

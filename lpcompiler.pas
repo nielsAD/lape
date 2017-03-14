@@ -1343,7 +1343,7 @@ begin
           if addToScope then
             FStackInfo.addSelfVar(Lape_SelfParam, TLapeType(Typ));
           Result.Free();
-          Result := TLapeType_MethodOfType.Create(Self, TLapeType(Typ), nil, nil, Name, @Pos);
+          Result := TLapeType_MethodOfType.Create(Self, TLapeType(Typ), nil, nil, '', @Pos);
         end
         else if (not (Typ is TLapeType_SystemUnit)) then
           LapeException(lpeTypeExpected, [Tokenizer]);
@@ -1551,33 +1551,25 @@ var
   end;
 
   procedure AddDirectiveHint(Tok: EParserToken);
-  var
-    Message: String = '';
   begin
-    if (Tokenizer.Expect([tk_typ_String, tk_sym_SemiColon]) = tk_typ_String) then
-      Message := Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2);
-
     with TLapeType_Method(Result.Method.VarType) do
       case Tok of
         tk_kw_Deprecated:
           begin
-            IsDeprecated := True;
-            DeprecatedMsg := Message;
+            Include(HintDirectives, lhdDeprecated);
+            if (Tokenizer.Expect([tk_typ_String, tk_sym_SemiColon]) = tk_typ_String) then
+              DeprecatedHint := Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2);
           end;
         tk_kw_UnImplemented:
-          begin
-            IsUnImplemented := True;
-            UnImplementedMsg := Message;
-          end;
+          Include(HintDirectives, lhdUnImplemented);
         tk_kw_Experimental:
-          begin
-            IsExperimental := True;
-            ExperimentaMsg := Message;
-          end;
+          Include(HintDirectives, lhdExperimental);
       end;
 
     if (Tokenizer.Tok <> tk_sym_SemiColon) then
       ParseExpressionEnd(tk_sym_SemiColon, True, False);
+    if (Tokenizer.Tok = tk_sym_SemiColon) and (Tokenizer.PeekNoJunk() in [tk_kw_Deprecated, tk_kw_UnImplemented, tk_kw_Experimental]) then
+      Tokenizer.NextNoJunk();
   end;
 
 begin
@@ -1798,7 +1790,7 @@ begin
         Exit;
       end;
 
-      if (Tokenizer.Tok in [tk_kw_Deprecated, tk_kw_Experimental, tk_kw_UnImplemented]) then
+      while (Tokenizer.Tok in [tk_kw_Deprecated, tk_kw_Experimental, tk_kw_UnImplemented]) do
         AddDirectiveHint(Tokenizer.Tok);
 
       if isExternal then
