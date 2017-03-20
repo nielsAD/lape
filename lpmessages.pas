@@ -100,7 +100,7 @@ const
   lphParamterNotSet = 'Parameter "%s" not set';
   lphResultNotSet = 'Result not set';
   lphDeprecatedMethod = 'Method "%s" is deprecated';
-  lphDeprecatedMethod2 = 'Method "%s" is deprecated "%s"';
+  lphDeprecatedMethodHint = 'Method "%s" is deprecated "%s"';
   lphUnImplementedMethod = 'Method "%s" is not implemented';
   lphExperimentalMethod = 'Method "%s" is experimental';
 
