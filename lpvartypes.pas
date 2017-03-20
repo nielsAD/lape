@@ -351,6 +351,9 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
   end;
 
+  ELapeHintDirective = (lhdDeprecated, lhdExperimental, lhdUnImplemented);
+  ELapeHintDirectives = set of ELapeHintDirective;
+
   TLapeType_Method = class(TLapeType)
   protected
     FParams: TLapeParameterList;
@@ -364,6 +367,8 @@ type
     ImplicitParams: Integer;
     Res: TLapeType;
     IsOperator: Boolean;
+    HintDirectives: ELapeHintDirectives;
+    DeprecatedHint: String;
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -2469,6 +2474,10 @@ begin
     AParams := TLapeParameterList.Create(NullParameter, dupAccept, False);
   FParams := AParams;
   Res := ARes;
+
+  IsOperator := False;
+  HintDirectives := [];
+  DeprecatedHint := '';
 end;
 
 constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil);
