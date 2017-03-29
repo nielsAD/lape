@@ -146,6 +146,8 @@ type
   TLapeImportedFunc = procedure(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
   ELoopType = (loopUp, loopDown, loopOver);
+  EPropertyType = (ptRead, ptWrite);
+  EMethodDef = (mdUnspecified, mdOperator, mdProperty);
 
   ELapeBaseType = (
     ltUnknown,
@@ -629,6 +631,7 @@ function LapeCase(const Str: lpString): lpString; {$IFDEF Lape_Inline}inline;{$E
 function LapeHash(const Value: lpString): UInt32;
 function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function LapeMethodDefToString(Value: EMethodDef): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
 function PointerToString(const p: Pointer): lpString;
 {$IF NOT(DECLARED(UIntToStr))}
@@ -733,6 +736,17 @@ function LapeOperatorToString(Token: EOperator): lpString;
 begin
   Result := lpString(getEnumName(TypeInfo(EOperator), Ord(Token)));
   Delete(Result, 1, 3);
+end;
+
+function LapeMethodDefToString(Value: EMethodDef): lpString;
+begin
+  if Value = mdUnspecified then
+    Result := 'Method'
+  else
+  begin
+    Result := lpString(getEnumName(TypeInfo(EMethodDef), Ord(Value)));
+    Delete(Result, 1, 2);
+  end;
 end;
 
 function PointerToString(const p: Pointer): lpString;

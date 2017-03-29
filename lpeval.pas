@@ -120,7 +120,7 @@ var
   LapeEvalRes: TLapeEvalRes;
   LapeEvalArr: TLapeEvalArr;
 
-  LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$AUTOINVOKE OFF}{$AUTOPROPERTIES OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
+  LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
 
   _LapeToString_Enum: lpString =
     'function _EnumToString(s: ^const string; Index, Lo, Hi: SizeInt): string;'          + LineEnding +

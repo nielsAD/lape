@@ -56,6 +56,7 @@ type
     tk_kw_Private,
     tk_kw_Procedure,
     tk_kw_Program,
+    tk_kw_Property,
     tk_kw_Record,
     tk_kw_Repeat,
     tk_kw_Set,
@@ -249,7 +250,7 @@ const
   ParserToken_Symbols = [tk_sym_BracketClose..tk_sym_SemiColon];
   ParserToken_Types = [tk_typ_Float..tk_typ_Char];
 
-  Lape_Keywords: array[0..51 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
+  Lape_Keywords: array[0..52 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
       (Keyword: 'AND';           Token: tk_op_AND),
       (Keyword: 'DIV';           Token: tk_op_DIV),
       (Keyword: 'IN';            Token: tk_op_IN),
@@ -292,6 +293,7 @@ const
       (Keyword: 'PRIVATE';       Token: tk_kw_Private),
       (Keyword: 'PROCEDURE';     Token: tk_kw_Procedure),
       (Keyword: 'PROGRAM';       Token: tk_kw_Program),
+      (Keyword: 'PROPERTY';      Token: tk_kw_Property),
       (Keyword: 'RECORD';        Token: tk_kw_Record),
       (Keyword: 'REPEAT';        Token: tk_kw_Repeat),
       (Keyword: 'SET';           Token: tk_kw_Set),
