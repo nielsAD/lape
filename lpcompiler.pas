@@ -2748,7 +2748,7 @@ begin
               PopOpStack(op_Invoke);
               if (Method = nil) then
               begin
-                if IsProperty(VarStack.Top) then
+                if __IsProperty(VarStack.Top.resType()) then
                   LapeException(lpeCannotInvoke, Tokenizer.DocPos);
 
                 Expr := ResolveMethods(VarStack.Top.FoldConstants(), True) as TLapeTree_ExprBase;
