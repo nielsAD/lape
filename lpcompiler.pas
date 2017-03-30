@@ -1351,7 +1351,7 @@ begin
           Result.MethodDef := methodDef;
         end
         else if (not (Typ is TLapeType_SystemUnit)) then
-          LapeException(lpeTypeExpected, [Tokenizer], Tokenizer.DocPos);
+          LapeException(lpeTypeExpected, [Tokenizer]);
       end
       else if (Result.MethodDef = mdProperty) then
         LapeException(lpeExpectedProperty, Tokenizer.DocPos);
