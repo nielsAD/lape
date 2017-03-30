@@ -2578,15 +2578,26 @@ var
     end;
   end;
 
-  function IsProperty(Node: TLapeTree_ExprBase): Boolean;
-  var
-    typ:TLapeType;
+  function __IsProperty(typ: TLapeType): Boolean;
   begin
-    if (Node is TLapeTree_Operator) and (TLapeTree_Operator(Node).OperatorType in AssignOperators) then
-      Node := TLapeTree_ExprBase(TLapeTree_Operator(Node).Left);
-
-    typ := Node.resType();
     Result := (Typ <> nil) and (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
+  end;
+
+  function IsProperty(Node: TLapeTree_ExprBase): Boolean;
+  begin
+    Result := False;
+    if TLapeTree_Base.isEmpty(Node) or (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke) then
+      Exit();
+
+    if __IsProperty(Node.resType()) then
+      Exit(True);
+
+    if (Node is TLapeTree_Operator) then
+    begin
+      Result := IsProperty(TLapeTree_Operator(Node).Left);
+      if (not Result) and (TLapeTree_Operator(Node).Right is TLapeTree_ExprBase) then
+        Result := IsProperty(TLapeTree_Operator(Node).Right);
+    end;
   end;
 
   function ResolveMethods(Node: TLapeTree_Base; SkipTop: Boolean): TLapeTree_Base;
@@ -2607,14 +2618,14 @@ var
         else
           Op := op_Unknown;
 
-        if (not (Op in AssignOperators)) and IsProperty(Node) then
+        if (not (Op in AssignOperators)) and __IsProperty(Node.resType()) then
         begin
           Result := TLapeTree_InvokeProperty.Create(Node, Node);
           TLapeTree_InvokeProperty(Result).PropertyType := ptRead;
         end
         else if (not (Op in AssignOperators)) and MethodType(Node.resType()) then
           Result := TLapeTree_Invoke.Create(Node, Node)
-        else if (Op in AssignOperators) and IsProperty(Node) then
+        else if (Op in AssignOperators) and __IsProperty(TLapeTree_Operator(Node).Left.resType()) then
         begin
           Result := TLapeTree_InvokeProperty.Create(TLapeTree_Operator(Node).Left, Node);
           TLapeTree_InvokeProperty(Result).addParam(TLapeTree_Operator(Node).Right);
@@ -2780,8 +2791,7 @@ begin
           if (_LastNode = _Var) then
           begin
             PopOpStack(op_Invoke);
-
-            if IsProperty(VarStack.Top) then
+            if __IsProperty(VarStack.Top.resType()) then
             begin
               Expr := ResolveMethods(VarStack.Pop().FoldConstants(), True) as TLapeTree_ExprBase;
               Prop := TLapeTree_InvokeProperty.Create(Expr, Self, getPDocPos());
@@ -4150,4 +4160,3 @@ begin
 end;
 
 end.
-
