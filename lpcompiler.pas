@@ -1351,10 +1351,10 @@ begin
           Result.MethodDef := methodDef;
         end
         else if (not (Typ is TLapeType_SystemUnit)) then
-          LapeException(lpeTypeExpected, [Tokenizer]);
+          LapeException(lpeTypeExpected, [Tokenizer], Tokenizer.DocPos);
       end
       else if (Result.MethodDef = mdProperty) then
-        LapeExceptionFmt(lpeExpectedOther, [Token, tk_sym_Dot]);
+        LapeException(lpeExpectedProperty, Tokenizer.DocPos);
     end;
 
     if (Token = tk_sym_ParenthesisOpen) or ((Token = tk_NULL) and isNext([tk_sym_ParenthesisOpen])) then
@@ -1388,7 +1388,7 @@ begin
           if (Tokenizer.Tok = tk_sym_Equals) then
           begin
             if (Result.MethodDef = mdProperty) then
-              LapeException(lpeDefaultParamInProperties, DocPos);
+              LapeException(lpeDefaultParamInProperties, Tokenizer.DocPos);
 
             Default := ParseExpression([tk_sym_ParenthesisClose], True, False).setExpectedType(Param.VarType) as TLapeTree_ExprBase;
             try
