@@ -87,6 +87,7 @@ const
   lpeIndexOutOfRangeLow  = 'Index out of range (index:%d, low:%d)';
   lpeIndexOutOfRangeHigh = 'Index out of range (index:%d, high:%d)';
   lpeParentOutOfScope = 'Parent declaration is out of scope';
+  lpeExpectedProperty = 'Property has to be of a type';
   lpeRuntime = 'Runtime error: "%s"';
   lpeStatementNotAllowed = 'Statement not allowed here';
   lpeTooMuchParameters = 'Too many parameters found';
