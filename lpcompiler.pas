@@ -1296,7 +1296,7 @@ function TLapeCompiler.ParseMethodHeader(out Name: lpString; addToScope: Boolean
 var
   i: Integer;
   Pos: TDocPos;
-  isFunction: Boolean;
+  ExpectResult: Boolean;
   methodDef: EMethodDef;
   Typ: TLapeDeclaration;
   Identifiers: TStringArray;
@@ -1314,7 +1314,7 @@ begin
     tk_kw_Property: Result.MethodDef := mdProperty;
     else            Result.MethodDef := mdUnspecified;
   end;
-  isFunction := Tokenizer.Tok in [tk_kw_Function, tk_kw_Operator];
+  ExpectResult := Tokenizer.Tok in [tk_kw_Function, tk_kw_Operator];
 
   try
     if (isNext([tk_Identifier, tk_sym_ParenthesisOpen], Token) and (Token = tk_Identifier)) or
@@ -1421,7 +1421,7 @@ begin
         LapeExceptionFmt(lpeCannotOverrideOperator, [op_name[op], ltyp.AsString, rtyp.AsString], Pos);
     end;
 
-    if isFunction or ((Result.MethodDef = mdProperty) and (Peek() = tk_sym_Colon)) then
+    if ExpectResult or ((Result.MethodDef = mdProperty) and (Peek() = tk_sym_Colon)) then
     begin
       Expect(tk_sym_Colon, True, False);
       Result.Res := ParseType(nil);
@@ -1650,7 +1650,9 @@ begin
       if (Tokenizer.Tok = tk_kw_Overload) or ((FuncHeader.MethodDef in [mdOperator, mdProperty]) and (Tokenizer.Tok <> tk_kw_Override)) then
       begin
         if not(FuncHeader.MethodDef in [mdOperator, mdProperty]) then
-          ParseExpressionEnd(tk_sym_SemiColon, True, False);
+          ParseExpressionEnd(tk_sym_SemiColon, True, False)
+        else if (Tokenizer.Tok = tk_kw_Overload) then
+          LapeExceptionFmt(lpeUnexpectedToken, [LapeTokenToString(Tokenizer.Tok)], DocPos);
 
         if (OldDeclaration = nil) or (not LocalDecl) or ((OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
           with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
@@ -2578,26 +2580,9 @@ var
     end;
   end;
 
-  function __IsProperty(typ: TLapeType): Boolean;
+  function IsProperty(typ: TLapeType): Boolean;
   begin
     Result := (Typ <> nil) and (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
-  end;
-
-  function IsProperty(Node: TLapeTree_ExprBase): Boolean;
-  begin
-    Result := False;
-    if TLapeTree_Base.isEmpty(Node) or (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke) then
-      Exit();
-
-    if __IsProperty(Node.resType()) then
-      Exit(True);
-
-    if (Node is TLapeTree_Operator) then
-    begin
-      Result := IsProperty(TLapeTree_Operator(Node).Left);
-      if (not Result) and (TLapeTree_Operator(Node).Right is TLapeTree_ExprBase) then
-        Result := IsProperty(TLapeTree_Operator(Node).Right);
-    end;
   end;
 
   function ResolveMethods(Node: TLapeTree_Base; SkipTop: Boolean): TLapeTree_Base;
@@ -2612,23 +2597,24 @@ var
       function ResolveMethod(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
       var
         Op: EOperator;
+        idc:Boolean;
       begin
         if (Node is TLapeTree_Operator) then
           Op := TLapeTree_Operator(Node).OperatorType
         else
           Op := op_Unknown;
 
-        if (not (Op in AssignOperators)) and __IsProperty(Node.resType()) then
+        if (not (Op in AssignOperators)) and IsProperty(Node.resType()) then
         begin
           Result := TLapeTree_InvokeProperty.Create(Node, Node);
           TLapeTree_InvokeProperty(Result).PropertyType := ptRead;
         end
-        else if (not (Op in AssignOperators)) and MethodType(Node.resType()) then
+        else if (lcoAutoInvoke in Node.CompilerOptions) and (not (Op in AssignOperators)) and MethodType(Node.resType()) then
           Result := TLapeTree_Invoke.Create(Node, Node)
-        else if (Op in AssignOperators) and __IsProperty(TLapeTree_Operator(Node).Left.resType()) then
+        else if (Op in AssignOperators) and IsProperty(TLapeTree_Operator(Node).Left.resType()) then
         begin
           Result := TLapeTree_InvokeProperty.Create(TLapeTree_Operator(Node).Left, Node);
-          TLapeTree_InvokeProperty(Result).addParam(TLapeTree_Operator(Node).Right);
+          TLapeTree_InvokeProperty(Result).addParam(Resolve(TLapeTree_Operator(Node).Right, True, True, idc) as TLapeTree_ExprBase);
           TLapeTree_InvokeProperty(Result).PropertyType := ptWrite;
           TLapeTree_InvokeProperty(Result).AssignOp := Op;
           Node.Free();
@@ -2649,8 +2635,7 @@ var
       Result := Node;
       HasChanged := False;
 
-      if TLapeTree_Base.isEmpty(Node) or (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke) or
-         ((not(lcoAutoInvoke in Node.CompilerOptions)) and (not IsProperty(TLapeTree_ExprBase(Node)))) then
+      if TLapeTree_Base.isEmpty(Node) or (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke) then
         Exit;
 
       if Top then
@@ -2748,7 +2733,7 @@ begin
               PopOpStack(op_Invoke);
               if (Method = nil) then
               begin
-                if __IsProperty(VarStack.Top.resType()) then
+                if IsProperty(VarStack.Top.resType()) then
                   LapeException(lpeCannotInvoke, Tokenizer.DocPos);
 
                 Expr := ResolveMethods(VarStack.Top.FoldConstants(), True) as TLapeTree_ExprBase;
@@ -2790,8 +2775,8 @@ begin
         tk_sym_BracketOpen:
           if (_LastNode = _Var) then
           begin
-            PopOpStack(op_Invoke);
-            if __IsProperty(VarStack.Top.resType()) then
+            PopOpStack(op_Index);
+            if IsProperty(VarStack.Top.resType()) then
             begin
               Expr := ResolveMethods(VarStack.Pop().FoldConstants(), True) as TLapeTree_ExprBase;
               Prop := TLapeTree_InvokeProperty.Create(Expr, Self, getPDocPos());
@@ -2810,8 +2795,8 @@ begin
                   Next();
                   Prop.PropertyType := ptWrite;
                   Prop.AssignOp := ParserTokenToOperator(Tokenizer.Tok);
-                  DoNext := False;
                   Prop.addParam(EnsureExpression(ParseExpression(ParserToken_ExpressionEnd, True)));
+                  DoNext := False;
                 end else
                   Prop.PropertyType := ptRead;
               end else

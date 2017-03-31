@@ -311,7 +311,7 @@ const
     );
 
   OperatorAssociative: array[EOperator] of EOperatorAssociative = (
-    assocNone,                          //op_Unkown
+    assocNone,                          //op_Unknown
 
     assocLeft,                          //op_cmp_Equal
     assocLeft,                          //op_cmp_GreaterThan

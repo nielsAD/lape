@@ -184,7 +184,6 @@ type
     FPropertyType: EPropertyType;
     FAssignOp: EOperator;
   public
-    function resType: TLapeType; override;
     function Compile(var Offset: Integer): TResVar; override;
 
     property PropertyType: EPropertyType read FPropertyType write FPropertyType;
@@ -1181,8 +1180,8 @@ begin
         CastTo := TLapeType_Set(FType).Range
       else if (FType is TLapeType_DynArray) then
         CastTo := TLapeType_DynArray(FType).PType;
-      if (CastTo = nil) xor (FType is TLapeType_Record) then
-        FCanCast := bFalse;
+    if (CastTo = nil) xor (FType is TLapeType_Record) then
+      FCanCast := bFalse;
 
     if (FCanCast <> bFalse) then
       for i := 0 to FValues.Count - 1 do
@@ -2449,11 +2448,6 @@ begin
   end;
 end;
 
-function TLapeTree_InvokeProperty.resType: TLapeType;
-begin
-  Result := inherited;
-end;
-
 function TLapeTree_InvokeProperty.Compile(var Offset: Integer): TResVar;
 var
   OldValue: TLapeTree_ExprBase;
@@ -2467,7 +2461,7 @@ begin
 
   if ((FPropertyType = ptWrite) and (TLapeType_MethodOfObject(RealIdent.resType()).Res <> nil)) or
      ((FPropertyType = ptRead)  and (TLapeType_MethodOfObject(RealIdent.resType()).Res = nil)) then
-    LapeException(lpeNoMatcingProperty, DocPos);
+    LapeException(lpeNoMatchingProperty, DocPos);
 
   if (self.FPropertyType = ptWrite) and (FAssignOp in CompoundOperators) then
   begin
@@ -2484,7 +2478,6 @@ begin
       ResVars[i] := FParams[i].Compile(Offset);
       ReadProp.addParam(TLapeTree_ResVar.Create(ResVars[i], FParams[i]));
     end;
-    ReadProp.resType(); //huh.. has to be called :#
 
     NewValue := TLapeTree_Operator.Create(ResolveCompoundOp(FAssignOp, OldValue.resType()), Self);
     NewValue.Left  := ReadProp;

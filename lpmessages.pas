@@ -40,7 +40,7 @@ const
   lpeConditionalNotClosed = 'Conditional statement not properly closed';
   lpeConstantExpected = 'Constant expression expected';
   lpeDeclarationOutOfScope = 'Declaration "%s" out of scope';
-  lpeDefaultParamInProperties = 'Properties does not support default parameters';
+  lpeDefaultParamInProperties = 'Properties do not support default parameters';
   lpeDefaultToMoreThanOne = 'Runtime default value can only be assigned to one variable';
   lpeDuplicateDeclaration = 'Duplicate declaration "%s"';
   lpeErrorScanningString = '%s while scanning string literal';
@@ -75,7 +75,7 @@ const
   lpeMethodOfObjectExpected = 'Expected method of object';
   lpeNoDefaultForParam = 'No default value for parameter %d found';
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';
-  lpeNoMatcingProperty = 'No matching property found';
+  lpeNoMatchingProperty = 'No matching property found';
   lpeNoOverloadedMethod = 'Don''t know which overloaded method to call with params (%s)';
   lpeOperatorExpected = 'Operator expected';
   lpeOutOfStackRange = 'Out of stack range';
