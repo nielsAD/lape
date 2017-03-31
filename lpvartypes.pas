@@ -25,7 +25,6 @@ type
     lcoLooseSemicolon,                 // {$L} {$LOOSESEMICOLON}
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
-    lcoAutoProperties,                 // {$P} {$AUTOPROPERTIES}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
     lcoConstAddress,                   // {$J} {$CONSTADDRESS}
     lcoHints,                          // {$H} {$HINTS}
@@ -366,7 +365,7 @@ type
     FreeParams: Boolean;
     ImplicitParams: Integer;
     Res: TLapeType;
-    IsOperator: Boolean;
+    MethodDef: EMethodDef;
     HintDirectives: ELapeHintDirectives;
     DeprecatedHint: String;
 
@@ -441,6 +440,7 @@ type
   public
     OnFunctionNotFound: TLapeGetOverloadedMethod;
     NeedFullMatch: Boolean;
+    MethodDef: EMethodDef;
 
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
@@ -2475,7 +2475,6 @@ begin
   FParams := AParams;
   Res := ARes;
 
-  IsOperator := False;
   HintDirectives := [];
   DeprecatedHint := '';
 end;
@@ -2505,6 +2504,7 @@ begin
   Params.ImportFromArray(AMethod.Params.ExportToArray());
 
   ImplicitParams := AMethod.ImplicitParams;
+  MethodDef := AMethod.MethodDef;
 
   inheritManagedDecls(AMethod);
   TypeID := AMethod.TypeID;
@@ -2524,6 +2524,7 @@ begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, FParams, Res, Name, @_DocPos);
 
   TLapeType_Method(Result).ImplicitParams := ImplicitParams;
+  TLapeType_Method(Result).MethodDef := MethodDef;
 
   Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;
@@ -2865,6 +2866,7 @@ begin
 
   TLapeType_MethodOfType(Result).SelfParam := SelfParam;
   TLapeType_MethodOfType(Result).ImplicitParams := ImplicitParams;
+  TLapeType_MethodOfType(Result).MethodDef := MethodDef;
 
   Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;
@@ -3067,6 +3069,7 @@ var
 begin
   Result := -1;
   MinWeight := High(Integer);
+
 
   for MethodIndex := 0 to FManagedDecls.Count - 1 do
     with TLapeType_Method(TLapeGlobalVar(FManagedDecls[MethodIndex]).VarType) do

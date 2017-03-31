@@ -1,0 +1,65 @@
+{$assertions ON}
+{$autoinvoke OFF}
+
+type
+  TFoo = record
+    FData: array of Int32;
+    FWidth: Int32;
+  end;
+
+property TFoo.Width(NewWidth:Int32);
+begin
+  FWidth := NewWidth;
+end;
+
+property TFoo.Width(): Int32;
+begin
+  Result := FWidth;
+end;
+
+property TFoo.Index(x,y: Int32): Int32;
+begin
+  Result := FData[y*FWidth+x];
+end;
+
+property TFoo.Index(x,y: Int32; value:Int32);
+begin
+  FData[y*FWidth+x] := value;
+end;
+
+
+//simple cases of property related expressions
+var
+  Foo: TFoo;
+begin
+  SetLength(Foo.FData, 10000);
+  Foo.Width := 100;
+  Foo.Index[10,10] := 100;
+
+  Assert(Foo.Index[10,10] = 100);
+  Assert(Foo.Index[10,10] = 10 + Foo.Index[10,10] - 10);
+
+  Assert(Foo.Width = 100);
+  Assert(Foo.Width = 10 + Foo.Width - 10);
+end;
+
+
+//make sure converting to func pointers also work, as it's a bit sneaky :P
+var
+  arrReadFunc: function(x,y: Int32): Int32 of object;
+  arrWriteFunc: procedure(x,y: Int32; value:Int32) of object;
+  readFunc: function(): Int32 of object;
+  writeFunc: procedure(value:Int32) of object;
+begin
+  arrWriteFunc := @Foo.Index;
+  arrWriteFunc(10,10, 50);
+
+  arrReadFunc := @Foo.Index;
+  Assert(arrReadFunc(10,10) = 50);
+
+  WriteFunc := @Foo.Width;
+  WriteFunc(50);
+
+  ReadFunc := @Foo.Width;
+  Assert(ReadFunc() = 50);
+end.

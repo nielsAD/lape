@@ -906,8 +906,6 @@ var
         Result := (lcoLooseSyntax in FOptions)
       else if (Def = 'autoinvoke') then
         Result := (lcoAutoInvoke in FOptions)
-      else if (Def = 'autoproperties') then
-        Result := (lcoAutoProperties in FOptions)
       else if (Def = 'scopedenums') then
         Result := (lcoScopedEnums in FOptions)
       else if (Def = 'constaddress') then
@@ -1081,8 +1079,6 @@ begin
     setOption(lcoLooseSyntax)
   else if (Directive = 'f') or (Directive = 'autoinvoke') then
     setOption(lcoAutoInvoke)
-  else if (Directive = 'p') or (Directive = 'autoproperties') then
-    setOption(lcoAutoProperties)
   else if (Directive = 's') or (Directive = 'scopedenums') then
     setOption(lcoScopedEnums)
   else if (Directive = 'j') or (Directive = 'constaddress') then
@@ -1243,7 +1239,7 @@ begin
               DoBreak := (Tokenizer.LastTok = tk_sym_Dot) or StopAfterBeginEnd;
             end;
           tk_kw_Const, tk_kw_Var: Statement := ParseVarBlock();
-          tk_kw_Function, tk_kw_Procedure, tk_kw_Operator: 
+          tk_kw_Function, tk_kw_Procedure, tk_kw_Property, tk_kw_Operator:
             addDelayedExpression(ParseMethod(FuncForwards));
           tk_kw_Type: ParseTypeBlock();
 
@@ -1300,7 +1296,8 @@ function TLapeCompiler.ParseMethodHeader(out Name: lpString; addToScope: Boolean
 var
   i: Integer;
   Pos: TDocPos;
-  isFunction: Boolean;
+  ExpectResult: Boolean;
+  methodDef: EMethodDef;
   Typ: TLapeDeclaration;
   Identifiers: TStringArray;
   Param: TLapeParameter;
@@ -1311,14 +1308,19 @@ var
 begin
   Pos := Tokenizer.DocPos;
   Result := TLapeType_Method.Create(Self, nil, nil, '', @Pos);
-  Result.isOperator := (Tokenizer.Tok = tk_kw_Operator);
-  isFunction := (Tokenizer.Tok = tk_kw_Function) or Result.isOperator;
-  
+
+  case Tokenizer.Tok of
+    tk_kw_Operator: Result.MethodDef := mdOperator;
+    tk_kw_Property: Result.MethodDef := mdProperty;
+    else            Result.MethodDef := mdUnspecified;
+  end;
+  ExpectResult := Tokenizer.Tok in [tk_kw_Function, tk_kw_Operator];
+
   try
     if (isNext([tk_Identifier, tk_sym_ParenthesisOpen], Token) and (Token = tk_Identifier)) or
-       (Result.isOperator and isNext(ParserToken_Operators, Token)) then
+       ((Result.MethodDef = mdOperator) and isNext(ParserToken_Operators, Token)) then
     begin
-      if not Result.isOperator then
+      if Result.MethodDef <> mdOperator then
         Name := Tokenizer.TokString
       else begin
         op := ParserTokenToOperator(Tokenizer.Tok);
@@ -1342,12 +1344,17 @@ begin
         begin
           if addToScope then
             FStackInfo.addSelfVar(Lape_SelfParam, TLapeType(Typ));
+
+          methodDef := Result.MethodDef;
           Result.Free();
           Result := TLapeType_MethodOfType.Create(Self, TLapeType(Typ), nil, nil, '', @Pos);
+          Result.MethodDef := methodDef;
         end
         else if (not (Typ is TLapeType_SystemUnit)) then
           LapeException(lpeTypeExpected, [Tokenizer]);
-      end;
+      end
+      else if (Result.MethodDef = mdProperty) then
+        LapeException(lpeExpectedProperty, Tokenizer.DocPos);
     end;
 
     if (Token = tk_sym_ParenthesisOpen) or ((Token = tk_NULL) and isNext([tk_sym_ParenthesisOpen])) then
@@ -1380,6 +1387,9 @@ begin
 
           if (Tokenizer.Tok = tk_sym_Equals) then
           begin
+            if (Result.MethodDef = mdProperty) then
+              LapeException(lpeDefaultParamInProperties, Tokenizer.DocPos);
+
             Default := ParseExpression([tk_sym_ParenthesisClose], True, False).setExpectedType(Param.VarType) as TLapeTree_ExprBase;
             try
               Param.Default := Default.Evaluate();
@@ -1401,7 +1411,7 @@ begin
         end;
       until (Tokenizer.Tok = tk_sym_ParenthesisClose);
 
-    if Result.isOperator then
+    if (Result.MethodDef = mdOperator) then
     begin
       if (Result.Params.Count <> 2) then
         LapeExceptionFmt(lpeInvalidOperator, [op_name[op], 2], Pos);
@@ -1411,7 +1421,7 @@ begin
         LapeExceptionFmt(lpeCannotOverrideOperator, [op_name[op], ltyp.AsString, rtyp.AsString], Pos);
     end;
 
-    if isFunction then
+    if ExpectResult or ((Result.MethodDef = mdProperty) and (Peek() = tk_sym_Colon)) then
     begin
       Expect(tk_sym_Colon, True, False);
       Result.Res := ParseType(nil);
@@ -1424,7 +1434,6 @@ begin
 
     Result.Name := Name;
     Result := addManagedType(Result) as TLapeType_Method;
-
   except
     Result.Free();
     raise;
@@ -1638,10 +1647,12 @@ begin
     end;
 
     try
-      if (Tokenizer.Tok = tk_kw_Overload) or (FuncHeader.isOperator and (Tokenizer.Tok <> tk_kw_Override)) then
+      if (Tokenizer.Tok = tk_kw_Overload) or ((FuncHeader.MethodDef in [mdOperator, mdProperty]) and (Tokenizer.Tok <> tk_kw_Override)) then
       begin
-        if not FuncHeader.isOperator then
-          ParseExpressionEnd(tk_sym_SemiColon, True, False);
+        if not(FuncHeader.MethodDef in [mdOperator, mdProperty]) then
+          ParseExpressionEnd(tk_sym_SemiColon, True, False)
+        else if (Tokenizer.Tok = tk_kw_Overload) then
+          LapeExceptionFmt(lpeUnexpectedToken, [LapeTokenToString(Tokenizer.Tok)], DocPos);
 
         if (OldDeclaration = nil) or (not LocalDecl) or ((OldDeclaration is TLapeGlobalVar) and (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
           with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
@@ -1653,6 +1664,7 @@ begin
               addMethod(OldDeclaration as TLapeGlobalVar);
             end;
 
+            MethodDef := FuncHeader.MethodDef;
             OldDeclaration := addLocalDecl(NewGlobalVar('', @_DocPos), FStackInfo.Owner);
             OldDeclaration.Name := FuncName;
           end
@@ -1660,6 +1672,9 @@ begin
           LapeException(lpeCannotOverload, Tokenizer.DocPos);
 
         try
+          if TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).MethodDef <> FuncHeader.MethodDef then
+            LapeExceptionFmt(lpeCannotOverload2, [LapeMethodDefToString(TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).MethodDef), LapeMethodDefToString(FuncHeader.MethodDef)], Tokenizer.DocPos);
+
           TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).addMethod(Result.Method, not LocalDecl);
         except on E: lpException do
           LapeException(lpString(E.Message), Tokenizer.DocPos);
@@ -2039,6 +2054,9 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     Name: lpString;
   begin
     BaseType := ltPointer;
+    if (Tokenizer.Tok in [tk_kw_Property, tk_kw_Operator]) then
+      LapeException(lpeTypeExpected);
+
     if (Tokenizer.Tok in [tk_kw_External, {tk_kw_Export,} tk_kw_Private]) then
     begin
       if (Tokenizer.Tok = tk_kw_External) then
@@ -2047,7 +2065,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       else if (Tokenizer.Tok = tk_kw_Private) then
         BaseType := ltScriptMethod;
 
-      Expect([tk_kw_Function, tk_kw_Procedure], True, False);
+      Expect([tk_kw_Function, tk_kw_Procedure{, tk_kw_Property, tk_kw_Operator}], True, False);
     end;
 
     Result := ParseMethodHeader(Name, False);
@@ -2154,7 +2172,7 @@ begin
         end;
       tk_sym_Caret: ParsePointer();
       tk_sym_ParenthesisOpen: ParseEnum();
-      tk_kw_Function, tk_kw_Procedure, tk_kw_Operator,
+      tk_kw_Function, tk_kw_Procedure, tk_kw_Property, tk_kw_Operator,
       tk_kw_External, {tk_kw_Export,} tk_kw_Private: ParseMethodType();
       tk_kw_Type: ParseTypeType();
       else ParseDef();
@@ -2346,6 +2364,7 @@ var
   Precedence: Byte;
   Expr: TLapeTree_ExprBase;
   Method: TLapeTree_Invoke;
+  Prop: TLapeTree_InvokeProperty;
   _LastNode: (_None, _Var, _Op);
   InExpr: Integer;
   DoNext: Boolean;
@@ -2460,9 +2479,9 @@ var
             Str := Str + #34 + getString()
           else
             Str := Str + getString();
-        tk_typ_Char: 
+        tk_typ_Char:
           Str := Str + lpString(Tokenizer.TokChar);
-        else 
+        else
           LapeException(lpeImpossible);
       end;
       ForceString := True;
@@ -2561,6 +2580,11 @@ var
     end;
   end;
 
+  function IsProperty(typ: TLapeType): Boolean;
+  begin
+    Result := (Typ <> nil) and (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
+  end;
+
   function ResolveMethods(Node: TLapeTree_Base; SkipTop: Boolean): TLapeTree_Base;
 
     function Resolve(Node: TLapeTree_Base; Top, Recurse: Boolean; out HasChanged: Boolean): TLapeTree_Base;
@@ -2573,26 +2597,32 @@ var
       function ResolveMethod(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
       var
         Op: EOperator;
+        idc:Boolean;
       begin
         if (Node is TLapeTree_Operator) then
           Op := TLapeTree_Operator(Node).OperatorType
         else
           Op := op_Unknown;
 
-        if (not (Op in AssignOperators)) and MethodType(Node.resType()) then
-          Result := TLapeTree_Invoke.Create(Node, Node)
-        else if (Op = op_Assign) and (lcoAutoProperties in Node.CompilerOptions) and MethodType(TLapeTree_Operator(Node).Left.resType()) then
+        if (not (Op in AssignOperators)) and IsProperty(Node.resType()) then
         begin
-          Result := TLapeTree_Invoke.Create(TLapeTree_Operator(Node).Left, Node);
-          TLapeTree_Invoke(Result).addParam(TLapeTree_Operator(Node).Right);
+          Result := TLapeTree_InvokeProperty.Create(Node, Node);
+          TLapeTree_InvokeProperty(Result).PropertyType := ptRead;
+        end
+        else if (lcoAutoInvoke in Node.CompilerOptions) and (not (Op in AssignOperators)) and MethodType(Node.resType()) then
+          Result := TLapeTree_Invoke.Create(Node, Node)
+        else if (Op in AssignOperators) and IsProperty(TLapeTree_Operator(Node).Left.resType()) then
+        begin
+          Result := TLapeTree_InvokeProperty.Create(TLapeTree_Operator(Node).Left, Node);
+          TLapeTree_InvokeProperty(Result).addParam(Resolve(TLapeTree_Operator(Node).Right, True, True, idc) as TLapeTree_ExprBase);
+          TLapeTree_InvokeProperty(Result).PropertyType := ptWrite;
+          TLapeTree_InvokeProperty(Result).AssignOp := Op;
           Node.Free();
         end
         else if (Op = op_Addr) and MethodType(TLapeTree_Operator(Node).Left.resType()) then
         begin
           Result := TLapeTree_Operator(Node).Left;
           Result.Parent := nil;
-          if (Node.Parent <> nil) then
-            Node.Parent.CompilerOptions := Node.Parent.CompilerOptions - [lcoAutoProperties];
           Node.Free();
         end
         else
@@ -2605,10 +2635,7 @@ var
       Result := Node;
       HasChanged := False;
 
-      if TLapeTree_Base.isEmpty(Node) or
-        (([lcoAutoInvoke, lcoAutoProperties] * Node.CompilerOptions) = []) or
-        (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke)
-      then
+      if TLapeTree_Base.isEmpty(Node) or (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke) then
         Exit;
 
       if Top then
@@ -2642,6 +2669,7 @@ var
 begin
   Result := nil;
   Method := nil;
+  Prop   := nil;
   VarStack := TLapeTree_NodeStack.Create(8);
   OpStack := TLapeTree_OpStack.Create(16);
   _LastNode := _None;
@@ -2705,6 +2733,9 @@ begin
               PopOpStack(op_Invoke);
               if (Method = nil) then
               begin
+                if IsProperty(VarStack.Top.resType()) then
+                  LapeException(lpeCannotInvoke, Tokenizer.DocPos);
+
                 Expr := ResolveMethods(VarStack.Top.FoldConstants(), True) as TLapeTree_ExprBase;
                 if (Expr <> VarStack.Pop()) and (Expr is TLapeTree_InternalMethod) then
                   Method := TLapeTree_Invoke(Expr)
@@ -2731,6 +2762,7 @@ begin
               Inc(InExpr);
             end;
           end;
+
         tk_sym_ParenthesisClose:
           begin
             while (OpStack.Cur >= 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) do
@@ -2739,6 +2771,44 @@ begin
               LapeException(lpeLostClosingParenthesis, Tokenizer.DocPos);
             Dec(InExpr);
           end;
+
+        tk_sym_BracketOpen:
+          if (_LastNode = _Var) then
+          begin
+            PopOpStack(op_Index);
+            if IsProperty(VarStack.Top.resType()) then
+            begin
+              Expr := ResolveMethods(VarStack.Pop().FoldConstants(), True) as TLapeTree_ExprBase;
+              Prop := TLapeTree_InvokeProperty.Create(Expr, Self, getPDocPos());
+              if (Next() <> tk_sym_BracketClose) then
+              begin
+                Prop.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma], False)));
+                while True do
+                  case Tokenizer.Tok of
+                    tk_sym_BracketClose: Break;
+                    tk_sym_Comma:        Prop.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma])));
+                    else                 LapeException(lpeClosingBracketExpected, Tokenizer.DocPos);
+                  end;
+
+                if ParserTokenToOperator(Peek()) in AssignOperators then
+                begin
+                  Next();
+                  Prop.PropertyType := ptWrite;
+                  Prop.AssignOp := ParserTokenToOperator(Tokenizer.Tok);
+                  Prop.addParam(EnsureExpression(ParseExpression(ParserToken_ExpressionEnd, True)));
+                  DoNext := False;
+                end else
+                  Prop.PropertyType := ptRead;
+              end else
+                LapeException(lpeExpectedIndexValue, Tokenizer.DocPos);
+
+              VarStack.Push(Prop);
+              Prop := nil;
+            end else
+              ParseOperator();
+          end
+          else
+            ParseOperator();
 
         {$IFDEF Lape_PascalLabels}
         tk_sym_Colon:
@@ -2760,9 +2830,11 @@ begin
           end;
         {$ENDIF}
 
-        ParserToken_FirstOperator..ParserToken_LastOperator: ParseOperator();
         else
-          Break;
+          if Tokenizer.Tok in [ParserToken_FirstOperator..ParserToken_LastOperator] then
+            ParseOperator()
+          else
+            Break;
       end;
     end;
 
@@ -3881,7 +3953,7 @@ begin
   OldState := getTempTokenizerState(AHeader + ';', '!addGlobalFuncHdr');
 
   try
-    Expect([tk_kw_Function, tk_kw_Procedure, tk_kw_Operator]);
+    Expect([tk_kw_Function, tk_kw_Procedure, tk_kw_Property, tk_kw_Operator]);
     Method := ParseMethod(nil, True);
     CheckAfterCompile();
 
@@ -4073,4 +4145,3 @@ begin
 end;
 
 end.
-
