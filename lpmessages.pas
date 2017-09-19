@@ -187,10 +187,10 @@ begin
        (DocPos[i].DocPos.Line <> NullDocPos.Line)
     then
     begin
-      LapeException(Msg, DocPos[i].DocPos);
+      _LapeException(Msg, DocPos[i].DocPos);
       Exit;
     end;
-  LapeException(Msg, NullDocPos);
+  _LapeException(Msg, NullDocPos);
 end;
 
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const);
@@ -214,7 +214,7 @@ begin
        (DocPos[i].DocPos.Line <> NullDocPos.Line)
     then
     begin
-      LapeException(Msg, DocPos[i].DocPos);
+      _LapeException(Msg, DocPos[i].DocPos);
       Exit;
     end;
   _LapeException(Msg, NullDocPos);
