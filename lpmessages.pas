@@ -16,7 +16,16 @@ uses
   lptypes;
 
 type
-  lpException = class(Exception);
+  lpException = class(Exception)
+  protected
+    FDocPos: TDocPos;
+    FError: lpString;
+  public
+    property DocPos: TDocPos read FDocPos;
+    property Error: lpString read FError;
+
+    constructor Create(AMessage: lpString; ADocPos: TDocPos);
+  end;
 
 const
   lpeArrayLengthsDontMatch = 'Length of arrays (%s) don''t match';
@@ -120,23 +129,16 @@ uses
   AnsiStrings;
 {$ENDIF}
 
-{$IF DEFINED(Delphi) AND (CompilerVersion <= 21.00)}
-function ReturnAddress: Pointer;
-asm
-  MOV  EAX, [EBP+4]
-end;
-{$IFEND}
+constructor lpException.Create(AMessage: lpString; ADocPos: TDocPos);
+begin
+  if (DocPos.Col <> NullDocPos.Col) and (DocPos.Line <> NullDocPos.Line) then
+    inherited Create(string(FormatLocation(AMessage, DocPos)))
+  else
+    inherited Create(string(AMessage));
 
-procedure _LapeException(Msg: lpString); inline;
-{$IFDEF FPC}
-begin
-  raise lpException.Create(string(Msg)) at get_caller_addr(get_frame);
+  FDocPos := ADocPos;
+  FError := AMessage;
 end;
-{$ELSE}
-begin
-  raise lpException.Create(string(Msg)) at ReturnAddress;
-end;
-{$ENDIF}
 
 function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString;
 begin
@@ -147,14 +149,32 @@ begin
     Result := Format(lpString(lpeExceptionIn), [Result, DocPos.FileName]);
 end;
 
+{$IF DEFINED(Delphi) AND (CompilerVersion <= 21.00)}
+function ReturnAddress: Pointer;
+asm
+  MOV  EAX, [EBP+4]
+end;
+{$IFEND}
+
+procedure _LapeException(Msg: lpString; DocPos: TDocPos); inline;
+{$IFDEF FPC}
+begin
+  raise lpException.Create(Msg, DocPos) at get_caller_addr(get_frame);
+end;
+{$ELSE}
+begin
+  raise lpException.Create(Msg, DocPos) at ReturnAddress;
+end;
+{$ENDIF}
+
 procedure LapeException(Msg: lpString);
 begin
-  _LapeException(Msg);
+  _LapeException(Msg, NullDocPos);
 end;
 
 procedure LapeException(Msg: lpString; DocPos: TDocPos);
 begin
-  _LapeException(FormatLocation(Msg, DocPos));
+  _LapeException(msg, DocPos);
 end;
 
 procedure LapeException(Msg: lpString; DocPos: array of TLapeBaseDeclClass);
@@ -167,20 +187,20 @@ begin
        (DocPos[i].DocPos.Line <> NullDocPos.Line)
     then
     begin
-      _LapeException(FormatLocation(Msg, DocPos[i].DocPos));
+      LapeException(Msg, DocPos[i].DocPos);
       Exit;
     end;
-  _LapeException(Msg);
+  LapeException(Msg, NullDocPos);
 end;
 
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const);
 begin
-  _LapeException(Format(Msg, Args));
+  _LapeException(Format(Msg, Args), NullDocPos);
 end;
 
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: TDocPos);
 begin
-  _LapeException(FormatLocation(Format(Msg, Args), DocPos));
+  _LapeException(Format(Msg, Args), DocPos);
 end;
 
 procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of TLapeBaseDeclClass);
@@ -194,11 +214,12 @@ begin
        (DocPos[i].DocPos.Line <> NullDocPos.Line)
     then
     begin
-      _LapeException(FormatLocation(Msg, DocPos[i].DocPos));
+      LapeException(Msg, DocPos[i].DocPos);
       Exit;
     end;
-  _LapeException(Msg);
+  _LapeException(Msg, NullDocPos);
 end;
 
 end.
+
 
