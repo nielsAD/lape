@@ -131,8 +131,8 @@ uses
 
 constructor lpException.Create(AMessage: lpString; ADocPos: TDocPos);
 begin
-  if (DocPos.Col <> NullDocPos.Col) and (DocPos.Line <> NullDocPos.Line) then
-    inherited Create(string(FormatLocation(AMessage, DocPos)))
+  if (ADocPos.Col <> NullDocPos.Col) and (ADocPos.Line <> NullDocPos.Line) then
+    inherited Create(string(FormatLocation(AMessage, ADocPos)))
   else
     inherited Create(string(AMessage));
 
@@ -174,7 +174,7 @@ end;
 
 procedure LapeException(Msg: lpString; DocPos: TDocPos);
 begin
-  _LapeException(msg, DocPos);
+  _LapeException(Msg, DocPos);
 end;
 
 procedure LapeException(Msg: lpString; DocPos: array of TLapeBaseDeclClass);
