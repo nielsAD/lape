@@ -376,6 +376,12 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
   end;
 
+  TLapeTree_InternalMethod_Find = class(TLapeTree_InternalMethod)
+  public
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_Callback = class;
   TLapeTreeCallback = procedure(Self: TLapeTree_Callback) of object;
 
@@ -4172,6 +4178,43 @@ constructor TLapeTree_InternalMethod_Raise.Create(ACompiler: TLapeCompilerBase; 
 begin
   inherited Create('RaiseException', ACompiler, ADocPos);
   FForceParam := True;
+end;
+
+function TLapeTree_InternalMethod_Find.resType: TLapeType;
+begin
+  if (FResType = nil) then
+    Result := FCompiler.getBaseType(ltInt32);
+end;
+
+function TLapeTree_InternalMethod_Find.Compile(var Offset: Integer): TResVar;
+var
+  _Find: TLapeGlobalVar;
+  Item, Arr: TResVar;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  Item := FParams[0].Compile(Offset);
+  Arr := FParams[1].Compile(Offset);
+
+  if (Item.VarType.BaseType in LapeArrayTypes - LapeStringTypes) then // Lape does not have array comparison
+    LapeException(lpeInvalidEvaluation, DocPos);
+  if not (Arr.VarType.BaseType in LapeArrayTypes) then
+    LapeException(lpeInvalidEvaluation, DocPos);
+
+  _Find := FCompiler['_Find'];
+  Assert((_Find <> nil) and (_Find.VarType is TLapeType_OverloadedMethod));
+  _Find := TLapeType_OverloadedMethod(_Find.VarType).getMethod(getTypeArray([Item.VarType, Arr.VarType]), FCompiler.getBaseType(ltInt32));
+
+  with TLapeTree_Invoke.Create(_Find, Self) do
+  try
+    addParam(TLapeTree_ResVar.Create(Item, Self));
+    addParam(TLapeTree_ResVar.Create(Arr, Self));
+
+    Result := Compile(Offset);
+  finally
+    Free();
+  end;
 end;
 
 constructor TLapeTree_Callback.Create(ACompiler: TLapeCompilerBase; ACallback: TLapeTreeCallback; AData: Pointer = nil; ADocPos: PDocPos = nil);

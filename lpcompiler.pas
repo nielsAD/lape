@@ -105,6 +105,7 @@ type
     function popConditional: TDocPos; virtual;
 
     procedure SetUniqueTypeID(Typ: TLapeType); virtual;
+    function GetFindMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
@@ -488,6 +489,117 @@ begin
   Inc(FTypeID);
 end;
 
+function TLapeCompiler.GetFindMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Method: TLapeTree_Method;
+  Assignment: TLapeTree_Operator;
+  Low: TLapeTree_InternalMethod_Low;
+  High: TLapeTree_InternalMethod_High;
+  Loop: TLapeTree_For;
+  _Item, _Array, _Counter, _High, _Result: TResVar;
+begin
+  Result := nil;
+  Method := nil;
+
+  GetMethod_FixupParams(AType, AParams, AResult);
+  if (AType = nil) then
+    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+
+  IncStackInfo();
+  try
+    Result := AType.NewGlobalVar(EndJump);
+    Sender.addMethod(Result);
+
+    _Item := _ResVar.New(FStackInfo.addVar(lptConstRef, AParams[0], '!Item'));
+    _Array := _ResVar.New(FStackInfo.addVar(lptConstRef, AParams[1], '!Array'));
+    _Result := _ResVar.New(FStackInfo.addVar(lptOut, AResult, '!Result'));
+    _Counter := _ResVar.New(getTempVar(ltInt32));
+    _High := _ResVar.New(getTempVar(ltInt32));
+
+    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
+    Method.Statements := TLapeTree_StatementList.Create(Self);
+
+    // Result := -1;
+    Assignment := TLapeTree_Operator.Create(op_Assign, Self);
+    Assignment.Left := TLapeTree_ResVar.Create(_Result.IncLock(), Assignment);
+    Assignment.Right := TLapeTree_Integer.Create(-1, Assignment);
+
+    Method.Statements.addStatement(Assignment);
+
+    // Counter := Low(Array)
+    Low := TLapeTree_InternalMethod_Low.Create(Self);
+    Low.addParam(TLapeTree_ResVar.Create(_Array.IncLock(), Low));
+
+    Assignment := TLapeTree_Operator.Create(op_Assign, Self);
+    Assignment.Left := TLapeTree_ResVar.Create(_Counter.IncLock(), Assignment);
+    Assignment.Right := Low.FoldConstants() as TLapeTree_ExprBase;
+
+    Method.Statements.addStatement(Assignment);
+
+    // High := High(Array)
+    High := TLapeTree_InternalMethod_High.Create(Self);
+    High.addParam(TLapeTree_ResVar.Create(_Array.IncLock(), Low));
+
+    Assignment := TLapeTree_Operator.Create(op_Assign, Self);
+    Assignment.Left := TLapeTree_ResVar.Create(_High.IncLock(), Assignment);
+    Assignment.Right := High.FoldConstants() as TLapeTree_ExprBase;
+
+    Method.Statements.addStatement(Assignment);
+
+    // for Counter to High do
+    //   if Array[i] = Item then
+    //   begin
+    //     Result := i
+    //     Break;
+    //   end;
+    Loop := TLapeTree_For.Create(Self);
+    with Loop do
+    begin
+      Counter := TLapeTree_ResVar.Create(_Counter.IncLock(), Self);
+      Limit := TLapeTree_ResVar.Create(_High.IncLock(), Self);
+
+      Body := TLapeTree_If.Create(Self);
+      with TLapeTree_If(Body) do
+      begin
+        Condition := TLapeTree_Operator.Create(op_cmp_Equal, Self);
+        with TLapeTree_Operator(Condition) do
+        begin
+          Left := TLapeTree_ResVar.Create(_Item.IncLock(), Condition);
+          Right := TLapeTree_Operator.Create(op_Index, Self);
+          with TLapeTree_Operator(Right) do
+          begin
+            Left := TLapeTree_ResVar.Create(_Array.IncLock(), Condition);
+            Right := TLapeTree_ResVar.Create(_Counter.IncLock(), Condition);
+          end;
+        end;
+
+        Assignment := TLapeTree_Operator.Create(op_Assign, Self);
+        Assignment.Left := TLapeTree_ResVar.Create(_Result.IncLock(), Assignment);
+        Assignment.Right := TLapeTree_ResVar.Create(_Counter.IncLock(), Assignment);
+
+        Body := TLapeTree_StatementList.Create(Self);
+        with TLapeTree_StatementList(Body) do
+        begin
+          addStatement(Assignment);
+          addStatement(TLapeTree_InternalMethod_Break.Create(Self));
+        end;
+      end;
+    end;
+
+    Method.Statements.addStatement(Loop);
+
+    addDelayedExpression(Method);
+  finally
+    _Item.Spill(1);
+    _Array.Spill(1);
+    _Result.Spill(1);
+    _Counter.Spill(1);
+    _High.Spill(1);
+
+    DecStackInfo(True, False, Method = nil);
+  end;
+end;
+
 function TLapeCompiler.GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Method: TLapeTree_Method;
@@ -742,6 +854,7 @@ begin
   addGlobalFunc('procedure UniqueString(var Str: UnicodeString); overload;', @_LapeUStr_Unique);
 
   addToString();
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetFindMethod).NewGlobalVar('_Find'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
 
@@ -3232,6 +3345,8 @@ begin
   FInternalMethodMap['goto'] := TLapeTree_InternalMethod_GoTo;
 
   FInternalMethodMap['raise'] := TLapeTree_InternalMethod_Raise;
+
+  FInternalMethodMap['Find'] := TLapeTree_InternalMethod_Find;
 
   setTokenizer(ATokenizer);
   Reset();

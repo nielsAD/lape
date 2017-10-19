@@ -1,0 +1,20 @@
+{$assertions on}
+
+type
+  TPoint = record
+    X, Y: Int32;
+  end;
+
+  TPointArray = array of TPoint;
+
+var
+  PointArray: TPointArray = [[1, 1], [8, 6], [-4, 8]];
+  ExtendedArray: array[11..12] of Extended = [1.509, 1.508];
+  CharArray: String = 'Olly';
+
+begin
+  Assert(Find(TPoint([-4, 8]), PointArray) = High(PointArray), 'Find TPoint');
+  Assert(Find(1.509, ExtendedArray) = Low(ExtendedArray), 'Find Extended');
+  Assert(Find('l', CharArray) = Pos('l', CharArray), 'Find Char');
+  Assert(Find(0, [1, 2, 3, 4, 5]) = -1, 'Find Integer');
+end;
