@@ -4194,6 +4194,9 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
 
+  if (FParams.Count <> 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
+
   Item := FParams[0].Compile(Offset);
   Arr := FParams[1].Compile(Offset);
 
