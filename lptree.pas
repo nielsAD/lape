@@ -4211,11 +4211,14 @@ begin
 
   with TLapeTree_Invoke.Create(_Find, Self) do
   try
-    addParam(TLapeTree_ResVar.Create(Item, Self));
-    addParam(TLapeTree_ResVar.Create(Arr, Self));
+    addParam(TLapeTree_ResVar.Create(Item.IncLock(), Self));
+    addParam(TLapeTree_ResVar.Create(Arr.IncLock(), Self));
 
     Result := Compile(Offset);
   finally
+    Item.Spill(1);
+    Arr.Spill(1);
+
     Free();
   end;
 end;
