@@ -1,0 +1,28 @@
+{$assertions on}
+
+type
+  TPoint = record
+    X, Y: Int32;
+  end;
+
+  TPointArray = array of TPoint;
+
+var
+  PointArray: TPointArray = [[1, 1], [8, 6], [-4, 8], [1, 1], [1, 1]];
+  ExtendedArray: array[11..13] of Extended = [1.509, 1.508, 1.508];
+  CharArray: String = 'Olly';
+  Indices: array of Int32;
+
+begin
+  Indices := FindAll(TPoint([1, 1]), PointArray);
+  Assert((Length(Indices) = 3) and (Indices[0] = 0) and (Indices[1] = 3) and (Indices[2] = 4), 'FindAll TPoint');
+
+  Indices := FindAll(1.508, ExtendedArray);
+  Assert((Length(Indices) = 2) and (Indices[0] = 12) and (Indices[1] = 13), 'FindAll Extended');
+
+  Indices := FindAll('l', CharArray);
+  Assert((Length(Indices) = 2) and (Indices[0] = 2) and (Indices[1] = 3), 'FindAll Char');
+
+  Indices := FindAll(0, [1, 2, 3, 4, 5]);
+  Assert(Length(Indices) = 0, 'FindAll Integer');
+end;
