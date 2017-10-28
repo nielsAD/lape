@@ -6,15 +6,21 @@ type
   end;
 
   TPointArray = array of TPoint;
+  T2DPointArray = array of TPointArray;
 
 var
-  PointArray: TPointArray = [[1, 1], [8, 6], [-4, 8]];
-  ExtendedArray: array[11..12] of Extended = [1.509, 1.508];
-  CharArray: String = 'Olly';
-
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+  TIA: array[11..13] of Int32;
 begin
-  Assert(Find(TPoint([-4, 8]), PointArray) = High(PointArray), 'Find TPoint');
-  Assert(Find(1.509, ExtendedArray) = Low(ExtendedArray), 'Find Extended');
-  Assert(Find('l', CharArray) = Pos('l', CharArray), 'Find Char');
-  Assert(Find(0, [1, 2, 3, 4, 5]) = -1, 'Find Integer');
+  TPA := [[1, 2], [3, 4], [5, 6]];
+  Assert(Find(TPoint([3, 4]), TPA) = 1, 'Find TPA');
+
+  ATPA := ATPA + TPointArray([[7, 8], [9, 10]]);
+  ATPA := ATPA + TPA;
+  Assert(Find(TPA, ATPA) = 1, 'Find ATPA');
+
+  TIA[12] := 9000;
+  TIA[13] := 9000;
+  Assert(Find(9000, TIA) = 12, 'Find TIA');
 end;

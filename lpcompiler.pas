@@ -105,6 +105,7 @@ type
     function popConditional: TDocPos; virtual;
 
     procedure SetUniqueTypeID(Typ: TLapeType); virtual;
+    function GetSameArrayMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetFindMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetFindAllMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
@@ -488,6 +489,134 @@ procedure TLapeCompiler.SetUniqueTypeID(Typ: TLapeType);
 begin
   Typ.TypeID := FTypeID;
   Inc(FTypeID);
+end;
+
+function TLapeCompiler.GetSameArrayMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+
+  // if Length(Array1) <> Length(Array2) then
+  //   Exit;
+  function CheckLengths(Array1, Array2: TResVar): TLapeTree_If;
+  var
+    Length: TLapeTree_InternalMethod_Length;
+  begin
+    Result := TLapeTree_If.Create(Self, getPDocPos());
+    Result.Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Result);
+
+    with TLapeTree_Operator(Result.Condition) do
+    begin
+      Length := TLapeTree_InternalMethod_Length.Create(Self, getPDocPos());
+      Length.addParam(TLapeTree_ResVar.Create(Array1.IncLock(), Length));
+
+      Left := TLapeTree_ExprBase(Length.FoldConstants());
+
+      Length := TLapeTree_InternalMethod_Length.Create(Self, getPDocPos());
+      Length.addParam(TLapeTree_ResVar.Create(Array2.IncLock(), Length));
+
+      Right := TLapeTree_ExprBase(Length.FoldConstants());
+    end;
+
+    Result.Body := TLapeTree_InternalMethod_Exit.Create(Self, getPDocPos());
+  end;
+
+var
+  Method: TLapeTree_Method;
+  Assignment: TLapeTree_Operator;
+  Low: TLapeTree_InternalMethod_Low;
+  High: TLapeTree_InternalMethod_High;
+  Loop: TLapeTree_For;
+  _Array1, _Array2, _Result, _Counter: TResVar;
+begin
+  Result := nil;
+  Method := nil;
+
+  GetMethod_FixupParams(AType, AParams, AResult);
+
+  if (not (AParams[0].BaseType in LapeArrayTypes)) or (not (AParams[1].BaseType in LapeArrayTypes)) then
+    LapeException(lpeArrayExpected, DocPos);
+  if (not AParams[0].Equals(AParams[1])) then
+    LapeException(Format(lpeExpectedMatchingTypes, [AParams[0].AsString, AParams[1].AsString]), DocPos);
+
+  if (AType = nil) then
+    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+
+  IncStackInfo();
+
+  try
+    Result := AType.NewGlobalVar(EndJump);
+    Sender.addMethod(Result);
+
+    _Array1 := _ResVar.New(FStackInfo.addVar(lptConstRef, AParams[0], 'Array1'));
+    _Array2 := _ResVar.New(FStackInfo.addVar(lptConstRef, AParams[1], 'Array2'));
+    _Result := _ResVar.New(FStackInfo.addVar(lptOut, AResult, 'Result'));
+    _Counter := _ResVar.New(getTempVar(ltInt32));
+
+    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
+    Method.Statements := TLapeTree_StatementList.Create(Self);
+    Method.Statements.addStatement(CheckLengths(_Array1, _Array2));
+
+    // Counter := Low(Array1);
+    Low := TLapeTree_InternalMethod_Low.Create(Self, getPDocPos());
+    Low.addParam(TLapeTree_ResVar.Create(_Array1.IncLock(), Low));
+
+    Assignment := TLapeTree_Operator.Create(op_Assign, Self, getPDocPos());
+    with Assignment do
+    begin
+      Left := TLapeTree_ResVar.Create(_Counter.IncLock(), Assignment);
+      Right := TLapeTree_ExprBase(Low.FoldConstants());
+    end;
+
+    Method.Statements.addStatement(Assignment);
+
+    High := TLapeTree_InternalMethod_High.Create(Self, getPDocPos());
+    High.addParam(TLapeTree_ResVar.Create(_Array1.IncLock(), High));
+
+    // for Counter to High(Array1) do
+    //   if Array1[Counter] <> Array2[Counter] then
+    //     Exit;
+    Loop := TLapeTree_For.Create(Self, getPDocPos());
+    with Loop do
+    begin
+      Counter := TLapeTree_ResVar.Create(_Counter.IncLock(), Loop);
+      Limit := TLapeTree_ExprBase(High.FoldConstants());
+
+      Body := TLapeTree_If.Create(Self);
+      with TLapeTree_If(Body) do
+      begin
+        Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Self, getPDocPos());
+        with TLapeTree_Operator(Condition) do
+        begin
+          Left := TLapeTree_Operator.Create(op_Index, Self, getPDocPos());
+          with TLapeTree_Operator(Left) do
+          begin
+            Left := TLapeTree_ResVar.Create(_Array1.IncLock(), Condition);
+            Right := TLapeTree_ResVar.Create(_Counter.IncLock(), Condition);
+          end;
+
+          Right := TLapeTree_Operator.Create(op_Index, Self, getPDocPos());
+          with TLapeTree_Operator(Right) do
+          begin
+            Left := TLapeTree_ResVar.Create(_Array2.IncLock(), Condition);
+            Right := TLapeTree_ResVar.Create(_Counter.IncLock(), Condition);
+          end;
+        end;
+
+        Body := TLapeTree_InternalMethod_Exit.Create(Self, getPDocPos());
+      end;
+    end;
+
+    Method.Statements.addStatement(Loop);
+
+    // Result := True
+    Assignment := TLapeTree_Operator.Create(op_Assign, Self, getPDocPos());
+    Assignment.Left := TLapeTree_ResVar.Create(_Result.IncLock(), Assignment);
+    Assignment.Right := TLapeTree_ResVar.Create(_ResVar.New(getGlobalVar('True')), Assignment);
+
+    Method.Statements.addStatement(Assignment);
+
+    addDelayedExpression(Method);
+  finally
+    DecStackInfo(True, False, Method = nil);
+  end;
 end;
 
 function TLapeCompiler.GetFindMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
@@ -957,6 +1086,7 @@ begin
   addGlobalFunc('procedure UniqueString(var Str: UnicodeString); overload;', @_LapeUStr_Unique);
 
   addToString();
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetSameArrayMethod).NewGlobalVar('_SameArray'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetFindMethod).NewGlobalVar('_Find'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetFindAllMethod).NewGlobalVar('_FindAll'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
@@ -3452,6 +3582,8 @@ begin
 
   FInternalMethodMap['Find'] := TLapeTree_InternalMethod_Find;
   FInternalMethodMap['FindAll'] := TLapeTree_InternalMethod_FindAll;
+
+  FInternalMethodMap['SameArray'] := TLapeTree_InternalMethod_SameArray;
 
   setTokenizer(ATokenizer);
   Reset();

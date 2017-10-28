@@ -376,6 +376,12 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
   end;
 
+  TLapeTree_InternalMethod_SameArray = class(TLapeTree_InternalMethod)
+  public
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_InternalMethod_Find = class(TLapeTree_InternalMethod)
   public
     function resType: TLapeType; override;
@@ -4186,6 +4192,46 @@ begin
   FForceParam := True;
 end;
 
+function TLapeTree_InternalMethod_SameArray.resType: TLapeType;
+begin
+  if (FResType = nil) then
+    FResType := FCompiler.getBaseType(ltEvalBool);
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_SameArray.Compile(var Offset: Integer): TResVar;
+var
+  _ArrayCompare: TLapeGlobalVar;
+  _Array1, _Array2: TResVar;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  if (FParams.Count <> 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
+
+  _Array1 := FParams[0].Compile(Offset);
+  _Array2 := FParams[1].Compile(Offset);
+
+  _ArrayCompare := FCompiler['_SameArray'];
+  Assert((_ArrayCompare <> nil) and (_ArrayCompare.VarType is TLapeType_OverloadedMethod));
+  _ArrayCompare := TLapeType_OverloadedMethod(_ArrayCompare.VarType).getMethod(getTypeArray([_Array1.VarType, _Array2.VarType]), FCompiler.getBaseType(ltEvalBool));
+
+  with TLapeTree_Invoke.Create(_ArrayCompare, Self) do
+  try
+    addParam(TLapeTree_ResVar.Create(_Array1.IncLock(), Self));
+    addParam(TLapeTree_ResVar.Create(_Array2.IncLock(), Self));
+
+    Result := Compile(Offset);
+  finally
+    _Array1.Spill(1);
+    _Array2.Spill(1);
+
+    Free();
+  end;
+end;
+
 function TLapeTree_InternalMethod_Find.resType: TLapeType;
 begin
   if (FResType = nil) then
@@ -4208,10 +4254,8 @@ begin
   Item := FParams[0].Compile(Offset);
   Arr := FParams[1].Compile(Offset);
 
-  if (Item.VarType.BaseType in LapeArrayTypes - LapeStringTypes) then // Lape does not have array comparison
-    LapeException(lpeInvalidEvaluation, DocPos);
   if not (Arr.VarType.BaseType in LapeArrayTypes) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeArrayExpected, DocPos);
 
   _Find := FCompiler['_Find'];
   Assert((_Find <> nil) and (_Find.VarType is TLapeType_OverloadedMethod));
@@ -4232,17 +4276,9 @@ begin
 end;
 
 function TLapeTree_InternalMethod_FindAll.resType: TLapeType;
-var
-  Decls: TLapeDeclArray;
 begin
   if (FResType = nil) then
-  begin
-    Decls := FCompiler.ManagedDeclarations.getByClassAndName('!TIntegerArray', TLapeType_DynArray, bFalse);
-    if Length(Decls) > 0 then
-      FResType := Decls[0] as TLapeType_DynArray
-    else
-      FResType := FCompiler.addManagedType(TLapeType_DynArray.Create(FCompiler.getBaseType(ltInt32), FCompiler, '!TIntegerArray'));
-  end;
+    FResType := FCompiler.addManagedType(TLapeType_DynArray.Create(FCompiler.getBaseType(ltInt32), FCompiler));
 
   Result := inherited;
 end;
@@ -4261,10 +4297,8 @@ begin
   Item := FParams[0].Compile(Offset);
   Arr := FParams[1].Compile(Offset);
 
-  if (Item.VarType.BaseType in LapeArrayTypes - LapeStringTypes) then // Lape does not have array comparison
-    LapeException(lpeInvalidEvaluation, DocPos);
   if not (Arr.VarType.BaseType in LapeArrayTypes) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeArrayExpected, DocPos);
 
   _Find := FCompiler['_FindAll'];
   Assert((_Find <> nil) and (_Find.VarType is TLapeType_OverloadedMethod));
