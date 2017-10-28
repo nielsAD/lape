@@ -615,6 +615,11 @@ begin
 
     addDelayedExpression(Method);
   finally
+    _Array1.Spill(1);
+    _Array2.Spill(1);
+    _Result.Spill(1);
+    _Counter.Spill(1);
+
     DecStackInfo(True, False, Method = nil);
   end;
 end;
