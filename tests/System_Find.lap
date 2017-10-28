@@ -1,0 +1,26 @@
+{$assertions on}
+
+type
+  TPoint = record
+    X, Y: Int32;
+  end;
+
+  TPointArray = array of TPoint;
+  T2DPointArray = array of TPointArray;
+
+var
+  TPA: TPointArray;
+  ATPA: T2DPointArray;
+  TIA: array[11..13] of Int32;
+begin
+  TPA := [[1, 2], [3, 4], [5, 6]];
+  Assert(Find(TPoint([3, 4]), TPA) = 1, 'Find TPA');
+
+  ATPA := ATPA + TPointArray([[7, 8], [9, 10]]);
+  ATPA := ATPA + TPA;
+  Assert(Find(TPA, ATPA) = 1, 'Find ATPA');
+
+  TIA[12] := 9000;
+  TIA[13] := 9000;
+  Assert(Find(9000, TIA) = 12, 'Find TIA');
+end;

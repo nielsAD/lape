@@ -1,0 +1,22 @@
+{$assertions on}
+
+type
+  TPoint = record
+    X, Y: Int32;
+  end;
+  TPointArray = array of TPoint;
+  TIntegerArray = array of Int32;
+  
+var
+  TPA: TPointArray;
+  TIA: array[5..10] of Int32;
+begin
+  TPA := [[1, 2], [3, 4], [5, 6], [1, 2], [1, 2]];
+  Assert(FindAll(TPoint([1, 2]), TPA) = TIntegerArray([0, 3, 4]), 'FindAll TPA');
+
+  TIA[5] := 50;
+  TIA[10] := 50;
+  Assert(FindAll(50, TIA) = TIntegerArray([5, 10]), 'FindAll TIA');
+
+  Assert(FindAll('a', 'abc abc') = TIntegerArray([1, 5]), 'FindAll String');
+ end;

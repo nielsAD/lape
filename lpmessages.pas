@@ -95,6 +95,8 @@ const
   lpeStatementNotAllowed = 'Statement not allowed here';
   lpeTooMuchParameters = 'Too many parameters found';
   lpeTypeExpected = 'Type expected';
+  lpeArrayExpected = 'Array expected';
+  lpeExpectedMatchingTypes = 'Matching types expected, got "%s" and "%s"';
   lpeUnexpectedToken = 'Found unexpected token "%s"';
   lpeUnknownDeclaration = 'Unknown declaration "%s"';
   lpeUnknownDirective = 'Unknown compiler directive';

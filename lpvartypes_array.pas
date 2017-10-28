@@ -452,6 +452,8 @@ begin
     Result := Self
   else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and (ARight <> nil) and (ARight is ClassType) and FPType.Equals(TLapeType_DynArray(ARight).FPType) then
     Result := Self
+  else if (op in [op_cmp_Equal, op_cmp_NotEqual]) and (BaseType in [ltDynArray, ltStaticArray]) then
+    Result := FCompiler.BaseTypes[ltEvalBool]
   else
     Result := inherited;
 end;
@@ -767,8 +769,21 @@ begin
       Free();
     end;
     if wasConstant then Result.Writeable := False;
-  end
-  else
+  end else if (op in [op_cmp_Equal, op_cmp_NotEqual]) and (BaseType in [ltDynArray, ltStaticArray]) then
+  begin
+    with TLapeTree_InternalMethod_SameArray.Create(FCompiler, Pos) do
+    try
+      addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), FCompiler, Pos));
+      addParam(TLapeTree_ResVar.Create(ARight.IncLock(), FCompiler, Pos));
+
+      Result := Compile(Offset);
+    finally
+      Free();
+    end;
+
+    if (op = op_cmp_NotEqual) then
+      FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar, Offset, @Self._DocPos);
+  end else
     Result := inherited;
 end;
 

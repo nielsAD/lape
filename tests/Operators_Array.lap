@@ -1,17 +1,22 @@
 {$assertions on}
 
-function ArraySum(Ar: array of Int32): Int32;
+function ArraySum(Arr: array of Int32): Int32;
 var
   i: Int32;
 begin
   Result := 0;
-  for i := Low(Ar) to High(Ar) do
-    Result := Result + Ar[i];
+  for i := Low(Arr) to High(Arr) do
+    Result := Result + Arr[i];
 end;
+
+type
+  TIntegerArray = array of Int32;
+  T2DIntegerArray = array of array of Int32;
 
 var
   a: array of Int32;
   b: array[0..9] of Int32;
+  c: T2DIntegerArray;
 begin
   Assert(Length(a) = 0, 'Length');
 
@@ -56,4 +61,15 @@ begin
 
   a := b;
   Assert(ArraySum(a) = 6, 'Sum(a) <> 6');
+
+  a := [1, 2, 3];
+  Assert(a = TIntegerArray([1, 2, 3]), 'a = [1, 2, 3]');
+  Assert(a <> TIntegerArray([4, 5, 6]), 'a <> [4, 5, 6]');
+
+  b := [0..9];
+  Assert(b = [0..9], 'b = [0..9]');
+
+  c := [[1, 2], [4, 5]];
+  Assert(c = T2DIntegerArray([[1, 2], [4, 5]]), 'c = [[1, 2], [4, 5]]');
+  Assert(c <> T2DIntegerArray([[4, 5], [1, 2]]), 'c <> [[4, 5], [1, 2]]');
 end;
