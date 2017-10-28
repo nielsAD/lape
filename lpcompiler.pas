@@ -531,6 +531,8 @@ begin
 
   GetMethod_FixupParams(AType, AParams, AResult);
 
+  if (Length(AParams) <> 2) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
   if (not (AParams[0].BaseType in LapeArrayTypes)) or (not (AParams[1].BaseType in LapeArrayTypes)) then
     LapeException(lpeArrayExpected, DocPos);
   if (not AParams[0].Equals(AParams[1])) then
@@ -637,6 +639,11 @@ begin
   Method := nil;
 
   GetMethod_FixupParams(AType, AParams, AResult);
+  if (Length(AParams) <> 2) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
+  if (not (AParams[1].BaseType in LapeArrayTypes)) then
+    LapeException(lpeArrayExpected, DocPos);
+
   if (AType = nil) then
     AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
@@ -741,7 +748,7 @@ var
   Assignment: TLapeTree_Operator;
   Low: TLapeTree_InternalMethod_Low;
   High: TLapeTree_InternalMethod_High;
-  Length: TLapeTree_InternalMethod_Length;
+  Len: TLapeTree_InternalMethod_Length;
   Loop: TLapeTree_For;
   _Item, _Array, _Counter, _High, _Result: TResVar;
 begin
@@ -749,6 +756,11 @@ begin
   Method := nil;
 
   GetMethod_FixupParams(AType, AParams, AResult);
+  if (Length(AParams) <> 2) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
+  if (not (AParams[1].BaseType in LapeArrayTypes)) then
+    LapeException(lpeArrayExpected, DocPos);
+
   if (AType = nil) then
     AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
@@ -813,12 +825,12 @@ begin
         Body := TLapeTree_InternalMethod_Insert.Create(Self);
         with TLapeTree_InternalMethod_Insert(Body) do
         begin
-          Length := TLapeTree_InternalMethod_Length.Create(Body);
-          Length.addParam(TLapeTree_ResVar.Create(_Result.IncLock(), Body));
+          Len := TLapeTree_InternalMethod_Length.Create(Body);
+          Len.addParam(TLapeTree_ResVar.Create(_Result.IncLock(), Body));
 
           addParam(TLapeTree_ResVar.Create(_Counter.IncLock(), Body));
           addParam(TLapeTree_ResVar.Create(_Result.IncLock(), Body));
-          addParam(TLapeTree_ExprBase(Length.FoldConstants()));
+          addParam(TLapeTree_ExprBase(Len.FoldConstants()));
         end;
       end;
     end;

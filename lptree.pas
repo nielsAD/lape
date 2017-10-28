@@ -4254,9 +4254,6 @@ begin
   Item := FParams[0].Compile(Offset);
   Arr := FParams[1].Compile(Offset);
 
-  if not (Arr.VarType.BaseType in LapeArrayTypes) then
-    LapeException(lpeArrayExpected, DocPos);
-
   _Find := FCompiler['_Find'];
   Assert((_Find <> nil) and (_Find.VarType is TLapeType_OverloadedMethod));
   _Find := TLapeType_OverloadedMethod(_Find.VarType).getMethod(getTypeArray([Item.VarType, Arr.VarType]), FCompiler.getBaseType(ltInt32));
@@ -4296,9 +4293,6 @@ begin
 
   Item := FParams[0].Compile(Offset);
   Arr := FParams[1].Compile(Offset);
-
-  if not (Arr.VarType.BaseType in LapeArrayTypes) then
-    LapeException(lpeArrayExpected, DocPos);
 
   _Find := FCompiler['_FindAll'];
   Assert((_Find <> nil) and (_Find.VarType is TLapeType_OverloadedMethod));
