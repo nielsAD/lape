@@ -2,6 +2,6 @@
 
 procedure Included;
 begin
-  WriteLn('Hi from include!');
+  WriteLn('Hi from include!: ', {$macro CURRENT_FILE});
   Included_Include();
 end;
