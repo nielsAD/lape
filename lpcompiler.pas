@@ -1015,9 +1015,14 @@ begin
     RemoveDefine(FDefines, string(Trim(Argument)))
   else if (Directive = 'macro') then
   begin
-    IncludeFile := FDefines.Values[string(Trim(Argument))];
-    if (IncludeFile = '') then
-      LapeExceptionFmt(lpeUnknownDeclaration, [string(Trim(Argument))], Sender.DocPos);
+    if (LowerCase(Argument) = 'current_file') and (Sender is TLapeTokenizerFile) then
+      IncludeFile := #39 + TLapeTokenizerFile(Sender).FileName + #39
+    else
+    begin
+      IncludeFile := FDefines.Values[string(Trim(Argument))];
+      if (IncludeFile = '') then
+        LapeExceptionFmt(lpeUnknownDeclaration, [string(Trim(Argument))], Sender.DocPos);
+    end;
     NewTokenizer := TLapeTokenizerString.Create(IncludeFile);
     pushTokenizer(NewTokenizer);
   end
