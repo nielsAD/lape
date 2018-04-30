@@ -1702,7 +1702,10 @@ begin
         end;
 
         if (MethodOfObject(TLapeGlobalVar(OldDeclaration).VarType) <> MethodOfObject(Result.Method.VarType)) then
-          LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
+        begin
+          if (not MethodOfObject(TLapeGlobalVar(OldDeclaration).VarType) and TLapeType_MethodOfObject(TLapeGlobalVar(OldDeclaration).VarType).HiddenSelf) then
+            LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
+        end;
 
         if LocalDecl then
         begin
@@ -3932,6 +3935,7 @@ begin
 
   Result := TLapeType_MethodOfObject(addManagedType(TLapeType_MethodOfObject.Create(AFunc.VarType as TLapeType_Method))).NewGlobalVar(Value, AFunc.Name);
   Result.setReadWrite(False, False);
+  TLapeType_MethodOfObject(Result.VarType).HiddenSelf := not (AFunc.VarType is TLapeType_MethodOfObject);
 
   if (AFunc.DeclarationList <> nil) then
     Result.DeclarationList := AFunc.DeclarationList
