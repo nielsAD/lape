@@ -453,7 +453,7 @@ end;
 function TLapeCompiler.popConditional: TDocPos;
 begin
   Assert(FConditionalStack <> nil);
-  if (FConditionalStack.Size > 0) then
+  if (FConditionalStack.Count > 0) then
     Result := FConditionalStack.Pop().Pos
   else
     LapeException(lpeLostConditional, Tokenizer.DocPos);
@@ -927,7 +927,7 @@ var
   var
     Conditional: TLapeConditional;
   begin
-    if (FConditionalStack.Size <= 0) then
+    if (FConditionalStack.Count <= 0) then
       LapeException(lpeLostConditional, Sender.DocPos)
     else
     begin
