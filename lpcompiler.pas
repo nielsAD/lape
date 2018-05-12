@@ -3938,6 +3938,7 @@ begin
 
   Result := TLapeType_MethodOfObject(addManagedType(TLapeType_MethodOfObject.Create(AFunc.VarType as TLapeType_Method))).NewGlobalVar(Value, AFunc.Name);
   Result.setReadWrite(False, False);
+  TLapeType_MethodOfObject(Result.VarType).HiddenSelf := not (AFunc.VarType is TLapeType_MethodOfObject);
 
   if (AFunc.DeclarationList <> nil) then
     Result.DeclarationList := AFunc.DeclarationList

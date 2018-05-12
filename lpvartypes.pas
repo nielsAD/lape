@@ -398,11 +398,15 @@ type
   TLapeType_MethodOfObject = class(TLapeType_Method)
   protected
     FMethodRecord: TLapeType;
+
     function getSize: SizeInt; override;
     function getAsString: lpString; override;
     function getParamSize: SizeInt; override;
   public
+    HiddenSelf: Boolean;
+
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); override;
+    function CreateCopy(DeepCopy: Boolean=False): TLapeType; override;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
@@ -437,6 +441,8 @@ type
   TLapeType_OverloadedMethod = class(TLapeType)
   protected
     FOfObject: TInitBool;
+    FHiddenSelf: TInitBool;
+
     function getAsString: lpString; override;
   public
     OnFunctionNotFound: TLapeGetOverloadedMethod;
@@ -2722,6 +2728,12 @@ begin
   Assert(FMethodRecord <> nil);
 end;
 
+function TLapeType_MethodOfObject.CreateCopy(DeepCopy: Boolean): TLapeType;
+begin
+  Result := inherited CreateCopy(DeepCopy);
+  TLapeType_MethodOfObject(Result).HiddenSelf := HiddenSelf;
+end;
+
 function TLapeType_MethodOfObject.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
 begin
   Result := (Other is TLapeType_MethodOfObject) and inherited;
@@ -2735,7 +2747,7 @@ end;
 function TLapeType_MethodOfObject.NewGlobalVar(AMethod: TMethod; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
   Result := NewGlobalVar(nil, AName, ADocPos);
-  TMethod(Result.Ptr^) := AMethod
+  TMethod(Result.Ptr^) := AMethod;
 end;
 
 function TLapeType_MethodOfObject.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
@@ -2905,6 +2917,7 @@ begin
   inherited Create(ltUnknown, ACompiler, AName, ADocPos);
 
   FOfObject := bUnknown;
+  FHiddenSelf := bUnknown;
   OnFunctionNotFound := nil;
   NeedFullMatch := False;
   FManagedDecls.Sorted := False;
@@ -2938,6 +2951,14 @@ begin
 
   AMethod.setReadWrite(False, False);
 
+  if (FHiddenSelf = bUnknown) then
+  begin
+    if MethodOfObject(AMethod.VarType) and TLapeType_MethodOfObject(AMethod.VarType).HiddenSelf then
+      FHiddenSelf := bTrue
+    else
+      FHiddenSelf := bFalse;
+  end;
+
   if MethodOfObject(AMethod.VarType) then
     case FOfObject of
       bUnknown: FOfObject := bTrue;
@@ -2946,7 +2967,7 @@ begin
   else
     case FOfObject of
       bUnknown: FOfObject := bFalse;
-      bTrue: LapeException(lpeCannotMixStaticOverload);
+      bTrue: if not (FHiddenSelf = bTrue) then LapeException(lpeCannotMixStaticOverload);
     end;
 
   if (AMethod.VarType is TLapeType_OverloadedMethod) then
