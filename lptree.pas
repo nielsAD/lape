@@ -2325,6 +2325,30 @@ var
     Assert(Result.VarPos.MemPos = tmpRes.VarPos.MemPos);
   end;
 
+  procedure DoDirectiveHints(Method: TLapeType_Method);
+  var
+    Directive: ELapeHintDirective;
+    Name: String;
+  begin
+    if (Method is TLapeType_MethodOfType) then
+      Name := TLapeType_MethodOfType(Method).ObjectType.Name + '.' + Method.Name
+    else
+      Name := Method.Name;
+
+    for Directive in Method.HintDirectives do
+      case Directive of
+        lhdDeprecated:
+          if (Method.DeprecatedHint <> '') then
+            FCompiler.Hint(lphDeprecatedMethodHint, [Name, Method.DeprecatedHint], IdentExpr.DocPos)
+          else
+            FCompiler.Hint(lphDeprecatedMethod, [Name], IdentExpr.DocPos);
+        lhdExperimental:
+          FCompiler.Hint(lphExperimentalMethod, [Name], IdentExpr.DocPos);
+        lhdUnImplemented:
+          FCompiler.Hint(lphUnImplementedMethod, [Name], IdentExpr.DocPos);
+      end;
+  end;
+
 begin
   Result := NullResVar;
   IdentExpr := RealIdent;
@@ -2335,6 +2359,9 @@ begin
   else
   begin
     IdentVar := IdentExpr.Compile(Offset);
+
+    if (lcoHints in FCompilerOptions) and (IdentVar.VarType is TLapeType_Method) then
+      DoDirectiveHints(IdentVar.VarType as TLapeType_Method);
 
     if (not IdentVar.HasType()) or
        (not (IdentVar.VarType is TLapeType_Method))

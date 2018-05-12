@@ -1,0 +1,21 @@
+// Issue 87
+
+type
+  SetOfChar = set of Char;
+  SetOfByte = set of Byte;
+  SubSetOfChar = set of 'a'..'z';
+  SubSetOfByte = set of 100..200;
+
+var
+  c: Char = 'c';
+  b: Byte = 102;
+  soc: SetOfChar     := ['b'..'y'];
+  sob: SetOfByte     := [101..199];
+  ssoc: SubSetOfChar := ['b'..'y'];
+  ssob: SubSetOfByte := [101..199];
+begin
+  soc  := [c..'y'];
+  sob  := [b..199];
+  ssoc := [c..'y'];
+  ssob := [b..199];
+end;

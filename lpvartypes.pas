@@ -351,6 +351,9 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
   end;
 
+  ELapeHintDirective = (lhdDeprecated, lhdExperimental, lhdUnImplemented);
+  ELapeHintDirectives = set of ELapeHintDirective;
+
   TLapeType_Method = class(TLapeType)
   protected
     FParams: TLapeParameterList;
@@ -364,6 +367,8 @@ type
     ImplicitParams: Integer;
     Res: TLapeType;
     IsOperator: Boolean;
+    HintDirectives: ELapeHintDirectives;
+    DeprecatedHint: String;
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -618,6 +623,8 @@ type
 
     procedure Reset; virtual;
     procedure setEmitter(AEmitter: TLapeCodeEmitter); virtual;
+    procedure setOptions(AOptions: ECompilerOptionsSet); virtual;
+    procedure setPackRecords(APackRecords: UInt8); virtual;
   public
     FreeEmitter: Boolean;
 
@@ -685,8 +692,8 @@ type
     property Globals[AName: lpString]: TLapeGlobalVar read getGlobalVar; default;
   published
     property Emitter: TLapeCodeEmitter read FEmitter write setEmitter;
-    property Options: ECompilerOptionsSet read FOptions write FBaseOptions default Lape_OptionsDef;
-    property Options_PackRecords: UInt8 read FOptions_PackRecords write FBaseOptions_PackRecords default Lape_PackRecordsDef;
+    property Options: ECompilerOptionsSet read FOptions write setOptions default Lape_OptionsDef;
+    property Options_PackRecords: UInt8 read FBaseOptions_PackRecords write setPackRecords default Lape_PackRecordsDef;
     property OnHint: TLapeHint read FOnHint write FOnHint;
   end;
 
@@ -1444,16 +1451,16 @@ end;
 function TLapeType.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FLo = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
-    with FCompiler, getBaseType(BaseIntType) do
-      Self.FLo := addManagedVar(NewGlobalVarP(LapeTypeLow[BaseType])) as TLapeGlobalVar;
+    with FCompiler do
+      Self.FLo := addManagedVar(NewGlobalVarP(LapeTypeLow[BaseIntType])) as TLapeGlobalVar;
   Result := FLo;
 end;
 
 function TLapeType.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FHi = nil) and (FCompiler <> nil) and (BaseIntType <> ltUnknown) then
-    with FCompiler, getBaseType(BaseIntType) do
-      Self.FHi := addManagedVar(NewGlobalVarP(LapeTypeHigh[BaseType])) as TLapeGlobalVar;
+    with FCompiler do
+      Self.FHi := addManagedVar(NewGlobalVarP(LapeTypeHigh[BaseIntType])) as TLapeGlobalVar;
   Result := FHi;
 end;
 
@@ -2467,6 +2474,10 @@ begin
     AParams := TLapeParameterList.Create(NullParameter, dupAccept, False);
   FParams := AParams;
   Res := ARes;
+
+  IsOperator := False;
+  HintDirectives := [];
+  DeprecatedHint := '';
 end;
 
 constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil);
@@ -3904,6 +3915,18 @@ begin
   FEmitter := AEmitter;
   if (FEmitter <> nil) then
     FEmitter.Reset();
+end;
+
+procedure TLapeCompilerBase.setOptions(AOptions: ECompilerOptionsSet);
+begin
+  FOptions     := AOptions;
+  FBaseOptions := AOptions;
+end;
+
+procedure TLapeCompilerBase.setPackRecords(APackRecords: UInt8);
+begin
+  FOptions_PackRecords     := APackRecords;
+  FBaseOptions_PackRecords := APackRecords;
 end;
 
 procedure TLapeCompilerBase.Reset;
