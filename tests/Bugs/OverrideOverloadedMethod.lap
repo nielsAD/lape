@@ -1,0 +1,16 @@
+// Issue 104
+
+type
+  TFoo = type Pointer;
+  TBar = type TFoo;
+
+function TFoo.Baz(): Boolean; overload; begin WriteLn('TFoo'); end;
+function TBar.Baz(): Boolean; override; begin WriteLn('TBar'); end;
+
+var
+  f: TFoo;
+  b: TBar;
+begin
+  f.Baz();
+  b.Baz();
+end.

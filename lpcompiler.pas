@@ -1682,7 +1682,8 @@ begin
             with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
             begin
               addMethod(OldDeclaration as TLapeGlobalVar);
-              OldDeclaration := addLocalDecl(NewGlobalVar(FuncName, @_DocPos), FStackInfo.Owner);
+              OldDeclaration := addLocalDecl(NewGlobalVar('', @_DocPos), FStackInfo.Owner);
+              OldDeclaration.Name := FuncName;
             end;
 
           if LocalDecl then
