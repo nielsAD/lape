@@ -1702,10 +1702,7 @@ begin
         end;
 
         if (MethodOfObject(TLapeGlobalVar(OldDeclaration).VarType) <> MethodOfObject(Result.Method.VarType)) then
-        begin
-          if (not MethodOfObject(TLapeGlobalVar(OldDeclaration).VarType) and TLapeType_MethodOfObject(TLapeGlobalVar(OldDeclaration).VarType).HiddenSelf) then
-            LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
-        end;
+          LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
 
         if LocalDecl then
         begin
