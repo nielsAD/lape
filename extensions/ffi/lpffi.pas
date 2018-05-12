@@ -22,18 +22,21 @@ type
     FHeader: TLapeType_Method;
     FABI: TFFIABI;
 
+    function getSize: SizeInt; override;
     function getAsString: lpString; override;
   public
     constructor Create(AHeader: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompiler; AHeader: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
 
+    function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
 
     function NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     property Header: TLapeType_Method read FHeader;
@@ -148,6 +151,34 @@ begin
   Natify(TCodePos(Params^[0]^), TFFINatifyClosures(Params^[1]^), SizeInt(Params^[2]^), PPointer(Result)^);
 end;
 
+procedure _NatifyMethod(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  procedure Natify(var m: TMethod; var c: TFFINatifyClosures; i: SizeInt; out Result: TMethod);
+  var
+    b, r: TExportClosure;
+  begin
+    Assert(i >= 0);
+    Assert(i <= Length(c));
+    b := c[i];
+    Assert(b.UserData.CodeBase <> nil);
+    Assert(b.UserData.CodePos = nil);
+
+    r := TExportClosure.Create(b.Cif, b.Callback);
+    r.ManageCif := False;
+
+    r.UserData := b.UserData;
+    r.UserData._CodePos := TCodePos(m.Code);
+    r.UserData.CodePos := @r.UserData._CodePos;
+
+    AddNatifyClosure(c, r);
+    Result.Code := r.Func;
+    Result.Data := m.Data;
+  end;
+
+begin
+  Natify(TMethod(Params^[0]^), TFFINatifyClosures(Params^[1]^), SizeInt(Params^[2]^), PMethod(Result)^);
+end;
+
 procedure _Lapify(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
   procedure Lapify(p: Pointer; var c: TFFILapifyClosures; i: SizeInt; out Result: Pointer);
@@ -173,6 +204,34 @@ procedure _Lapify(const Params: PParamArray; const Result: Pointer); {$IFDEF Lap
 
 begin
   Lapify(Pointer(Params^[0]^), TFFILapifyClosures(Params^[1]^), SizeInt(Params^[2]^), PPointer(Result)^);
+end;
+
+procedure _LapifyMethod(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  procedure Lapify(m: TMethod; var c: TFFILapifyClosures; i: SizeInt; out Result: TMethod);
+  var
+    b, r: TImportClosure;
+  begin
+    Assert(i >= 0);
+    Assert(i <= Length(c));
+    b := c[i];
+    Assert(b.UserData.FreeCif);
+    Assert(b.UserData.NativeFunc = nil);
+
+    r := TImportClosure.Create(b.Cif, b.Callback);
+    r.ManageCif := False;
+
+    r.UserData := b.UserData;
+    r.UserData.FreeCif := False;
+    r.UserData.NativeFunc := m.Code;
+
+    AddLapifyClosure(c, r);
+    Result.Code := r.Func;
+    Result.Data := m.Data;
+  end;
+
+begin
+  Lapify(TMethod(Params^[0]^), TFFILapifyClosures(Params^[1]^), SizeInt(Params^[2]^), PMethod(Result)^);
 end;
 
 procedure _LapeLoadLibrary(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -271,7 +330,7 @@ procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNa
 var
   f: TFFIABI;
   s, a: string;
-  t: TLapeType;
+  t, m: TLapeType;
 begin
   if (Compiler = nil) then
     Exit;
@@ -283,7 +342,6 @@ begin
   if (fsiNative in Initialize) or (fsiNatify in Initialize) or (fsiLapify in Initialize) then
   begin
     s := '';
-    t := nil;
 
     for f := Succ(FFI_UNKNOWN_ABI) to Pred(FFI_LAST_ABI) do
     begin
@@ -311,6 +369,9 @@ begin
     Compiler.addGlobalVar(TLapeType_DynArray(t).NewGlobalVar(nil), '!ffi_lapify_closures'); //TFFILapifyClosures
   end;
 
+  m := Compiler.getGlobalType('TMethod');
+  Assert(m <> nil);
+
   if (fsiNatify in Initialize) then
   begin
     Compiler.addGlobalFunc(
@@ -319,6 +380,13 @@ begin
       [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
       Compiler.getBaseType(ltPointer),
       @_Natify, '!ffi_natify'
+    );
+    Compiler.addGlobalFunc(
+      [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
+      [lptConstRef,         lptVar,              lptNormal],
+      [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
+      m,
+      @_NatifyMethod, '!ffi_natify_method'
     );
     Compiler.InternalMethodMap['Natify'] := TLapeTree_InternalMethod_Natify;
   end;
@@ -331,6 +399,13 @@ begin
       [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
       Compiler.getBaseType(ltPointer),
       @_Lapify, '!ffi_lapify'
+    );
+    Compiler.addGlobalFunc(
+      [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
+      [lptConstRef,         lptVar,              lptNormal],
+      [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
+      m,
+      @_LapifyMethod, '!ffi_lapify_method'
     );
     Compiler.InternalMethodMap['Lapify'] := TLapeTree_InternalMethod_Lapify;
   end;
@@ -349,6 +424,11 @@ begin
     Compiler.OnHandleExternal := @TExternalCompiler(Compiler).HandleExternal;
 end;
 
+function TLapeType_NativeMethod.getSize: SizeInt;
+begin
+  Result := FHeader.Size;
+end;
+
 function TLapeType_NativeMethod.getAsString: lpString;
 begin
   Result := 'native[' + ABIToStr(FABI) + '] ' + FHeader.AsString;
@@ -357,7 +437,7 @@ end;
 constructor TLapeType_NativeMethod.Create(AHeader: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   Assert(AHeader <> nil);
-  inherited Create(ltPointer, AHeader.Compiler, AName, ADocPos);
+  inherited Create(ltUnknown, AHeader.Compiler, AName, ADocPos);
 
   FHeader := AHeader;
   FABI := ABI;
@@ -376,9 +456,20 @@ begin
   TLapeType_NativeMethod(Result).FABI := FABI;
 end;
 
-function TLapeType_NativeMethod.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+function TLapeType_NativeMethod.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
 begin
-  Result := 'begin Result := '#39 + AsString + ' ('#39' + System.ToString(Pointer(Param0)) + '#39')'#39'; end;';
+  Result := (Other is TLapeType_NativeMethod) and FHeader.Equals(TLapeType_NativeMethod(Other).Header, ContextOnly);
+end;
+
+function TLapeType_NativeMethod.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+var
+  CastTo: lpString;
+begin
+  if MethodOfObject(FHeader) then
+    CastTo := 'System.TMethod'
+  else
+    CastTo := 'Pointer';
+  Result := 'begin Result := '#39 + AsString + ' ('#39' + System.ToString(' + CastTo + '(Param0)) + '#39')'#39'; end;';
 end;
 
 function TLapeType_NativeMethod.NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -391,14 +482,15 @@ function TLapeType_NativeMethod.EvalRes(Op: EOperator; Right: TLapeType = nil; F
 var
   m: TLapeGlobalVar;
 begin
-  if (Right <> nil) and (Right is TLapeType_OverloadedMethod) then
-  begin
-    m := TLapeType_OverloadedMethod(Right).getMethod(FHeader);
-    if (m <> nil) then
-      Right := m.VarType;
-  end;
-
   if (Op = op_Assign) and (Right <> nil) then
+  begin
+    if (Right <> nil) and (Right is TLapeType_OverloadedMethod) then
+    begin
+      m := TLapeType_OverloadedMethod(Right).getMethod(FHeader);
+      if (m <> nil) then
+        Right := m.VarType;
+    end;
+
     if (Right is TLapeType_NativeMethod) then
       if Equals(Right) then
         Result := Self
@@ -415,9 +507,14 @@ begin
       else
         Result := Self
     else
-      Result := inherited
+      Result := nil;
+  end
   else
-    Result := inherited;
+  begin
+    Result := FHeader.EvalRes(op, Right, Flags);
+    if Result = FHeader then
+      Result := Self;
+  end;
 end;
 
 function TLapeType_NativeMethod.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
@@ -428,10 +525,31 @@ begin
     Result := inherited;
 end;
 
+function TLapeType_NativeMethod.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
+begin
+  Assert((Left = nil) or (Left.VarType = Self));
+  if (Left <> nil) then
+    Left.VarType := FHeader;
+
+  try
+    try
+      Result := FHeader.EvalConst(Op, Left, Right, Flags);
+    except
+      Result := inherited;
+    end;
+  finally
+    if (Left <> nil) then
+      Left.VarType := Self;
+  end;
+end;
+
 function TLapeType_NativeMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   m: TLapeGlobalVar;
 begin
+  Assert(Left.VarType = Self);
+  Left.VarType := FHeader;
+
   if Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
   begin
     m := TLapeType_OverloadedMethod(Right.VarType).getMethod(FHeader);
@@ -439,17 +557,26 @@ begin
       Right := _ResVar.New(m);
   end;
 
-  if (op = op_Assign) and Right.HasType() and (Right.VarType is TLapeType_Method) then
-    with TLapeTree_InternalMethod_Natify.Create(FCompiler, Pos) do
-    try
-      addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
-      addParam(TLapeTree_GlobalVar.Create(FCompiler['ffi_' + ABIToStr(FABI)], FCompiler));
-      Right := Compile(Offset);
-    finally
-      Free();
-    end;
+  if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
+  begin
+    if (Right.VarType is TLapeType_Method) then
+      with TLapeTree_InternalMethod_Natify.Create(FCompiler, Pos) do
+      try
+        addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
+        addParam(TLapeTree_GlobalVar.Create(FCompiler['ffi_' + ABIToStr(FABI)], FCompiler));
+        Right := Compile(Offset);
+      finally
+        Free();
+      end;
+    if (Right.VarType is TLapeType_NativeMethod) then
+      Right.VarType := TLapeType_NativeMethod(Right.VarType).Header;
+  end;
 
-  Result := inherited;
+  try
+    Result := FHeader.Eval(op, Dest, Left, RIght, Flags, Offset, Pos);
+  except
+    Result := inherited;
+  end;
 end;
 
 constructor TLapeType_ClosureDisposer.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
@@ -604,6 +731,7 @@ var
   Method: TLapeType_NativeMethod;
   Closure: TExportClosure;
   Index: Integer;
+  Natify: lpString;
 begin
   Method := resType() as TLapeType_NativeMethod;
   if (FParams.Count < 1) or (FParams.Count > 2) or isEmpty(FParams[0]) then
@@ -625,7 +753,12 @@ begin
   FDest := NullResVar;
   Index := AddNatifyClosure(TFFINatifyClosures(FClosures.Ptr^), Closure);
 
-  with TLapeTree_Invoke.Create('!ffi_natify', Self) do
+  if MethodOfObject(Method.Header) then
+    Natify := '!ffi_natify_method'
+  else
+    Natify := '!ffi_natify';
+
+  with TLapeTree_Invoke.Create(Natify, Self) do
   try
     addParam(TLapeTree_ResVar.Create(Self.Params[0].Compile(Offset), Self));
     addParam(TLapeTree_GlobalVar.Create(FClosures, Self));
@@ -678,6 +811,7 @@ var
   Method: TLapeType_NativeMethod;
   Closure: TImportClosure;
   Index: Integer;
+  Lapify: lpString;
 begin
   if (FParams.Count <> 1) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos)
@@ -696,7 +830,12 @@ begin
   FDest := NullResVar;
   Index := AddLapifyClosure(TFFILapifyClosures(FClosures.Ptr^), Closure);
 
-  with TLapeTree_Invoke.Create('!ffi_lapify', Self) do
+  if MethodOfObject(Method.Header) then
+    Lapify := '!ffi_lapify_method'
+  else
+    Lapify := '!ffi_lapify';
+
+  with TLapeTree_Invoke.Create(Lapify, Self) do
   try
     addParam(TLapeTree_ResVar.Create(Self.Params[0].Compile(Offset), Self));
     addParam(TLapeTree_GlobalVar.Create(FClosures, Self));

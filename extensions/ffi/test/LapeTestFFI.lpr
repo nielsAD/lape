@@ -501,7 +501,7 @@ begin
   Result := r.a = 50;
 end;
 
-{$IF DEFINED(FPC) AND DEFINED(FFITest_CDECL) AND (FPC_VERSION = 2)}
+{$IF DEFINED(FPC) AND DEFINED(FFITest_CDECL) AND DEFINED(CPU86)}
 // Work around FPC internal error
 type TFunc19 = function(const a: TPackRec): TStatPackArr; cdecl;
 function Func19(const a: TPackRec): TStatPackArr; cdecl;
