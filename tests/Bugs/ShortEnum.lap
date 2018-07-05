@@ -1,0 +1,7 @@
+// Issue 102
+
+type E = (a,b,c);
+begin
+  WriteLn( a ); //will access violate
+  WriteLn( b ); //will write InvalidEnum(1);
+end;

@@ -455,7 +455,7 @@ end;
 function TLapeCompiler.popConditional: TDocPos;
 begin
   Assert(FConditionalStack <> nil);
-  if (FConditionalStack.Size > 0) then
+  if (FConditionalStack.Count > 0) then
     Result := FConditionalStack.Pop().Pos
   else
     LapeException(lpeLostConditional, Tokenizer.DocPos);
@@ -929,7 +929,7 @@ var
   var
     Conditional: TLapeConditional;
   begin
-    if (FConditionalStack.Size <= 0) then
+    if (FConditionalStack.Count <= 0) then
       LapeException(lpeLostConditional, Sender.DocPos)
     else
     begin
@@ -1017,9 +1017,14 @@ begin
     RemoveDefine(FDefines, string(Trim(Argument)))
   else if (Directive = 'macro') then
   begin
-    IncludeFile := FDefines.Values[string(Trim(Argument))];
-    if (IncludeFile = '') then
-      LapeExceptionFmt(lpeUnknownDeclaration, [string(Trim(Argument))], Sender.DocPos);
+    if (LowerCase(Argument) = 'current_file') and (Sender is TLapeTokenizerFile) then
+      IncludeFile := #39 + TLapeTokenizerFile(Sender).FileName + #39
+    else
+    begin
+      IncludeFile := FDefines.Values[string(Trim(Argument))];
+      if (IncludeFile = '') then
+        LapeExceptionFmt(lpeUnknownDeclaration, [string(Trim(Argument))], Sender.DocPos);
+    end;
     NewTokenizer := TLapeTokenizerString.Create(IncludeFile);
     pushTokenizer(NewTokenizer);
   end
@@ -1679,7 +1684,8 @@ begin
             with TLapeType_OverloadedMethod(addLocalDecl(TLapeType_OverloadedMethod.Create(Self, '', @Pos), FStackInfo.Owner)) do
             begin
               addMethod(OldDeclaration as TLapeGlobalVar);
-              OldDeclaration := addLocalDecl(NewGlobalVar(FuncName, @_DocPos), FStackInfo.Owner);
+              OldDeclaration := addLocalDecl(NewGlobalVar('', @_DocPos), FStackInfo.Owner);
+              OldDeclaration.Name := FuncName;
             end;
 
           if LocalDecl then
@@ -3940,6 +3946,7 @@ begin
 
   Result := TLapeType_MethodOfObject(addManagedType(TLapeType_MethodOfObject.Create(AFunc.VarType as TLapeType_Method))).NewGlobalVar(Value, AFunc.Name);
   Result.setReadWrite(False, False);
+  TLapeType_MethodOfObject(Result.VarType).HiddenSelf := not (AFunc.VarType is TLapeType_MethodOfObject);
 
   if (AFunc.DeclarationList <> nil) then
     Result.DeclarationList := AFunc.DeclarationList

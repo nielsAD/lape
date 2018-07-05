@@ -2674,7 +2674,7 @@ begin
     Node := Node.Parent;
   end;
 
-  if (BreakCount < BreakDepth) then
+  if (FParams.Count = 1) and (BreakCount < BreakDepth) then
     LapeException(lpeOutOfTypeRange, FParams[0].DocPos)
   else if (FoundNode = nil) then
     LapeException(lpeCannotBreak, DocPos)
@@ -2724,7 +2724,7 @@ begin
     Node := Node.Parent;
   end;
 
-  if (ContinueCount < ContinueDepth) then
+  if (FParams.Count = 1) and (ContinueCount < ContinueDepth) then
     LapeException(lpeOutOfTypeRange, FParams[0].DocPos)
   else if (FoundNode = nil) then
     LapeException(lpeCannotContinue, DocPos)

@@ -553,7 +553,7 @@ begin
   begin
     if (Result <> '') then
       Result := Result + ', ';
-    Result := Result + #39 + lpString(FMemberMap[i]) + #39;
+    Result := Result + 'string(' + #39 + lpString(FMemberMap[i]) + #39 + ')';
   end;
   Result := Format(lpString(
     'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.SizeInt): System.string;' + LineEnding +
