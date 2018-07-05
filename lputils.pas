@@ -17,12 +17,13 @@ uses
 type
   PSInit = (psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions, psiUselessTypes);
   PSInitSet = set of PSInit;
+  EExposeGlobalsMethods = set of (egmName, egmPtr, egmValue, egmInvoke);
   TTraverseCallback = procedure(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
 
 procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);
 procedure TraverseGlobals(Compiler: TLapeCompilerBase; Callback: TTraverseCallback; var Arg; BaseName: lpString = ''; Decls: TLapeDeclarationList = nil);
 procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean); overload;
-procedure ExposeGlobals(Compiler: TLapeCompiler); overload;
+procedure ExposeGlobals(Compiler: TLapeCompiler; Methods: EExposeGlobalsMethods = [egmName, egmPtr, egmValue, egmInvoke]); overload;
 
 const
   LapePascalScriptCompilerOptions = [lcoLooseSemicolon, lcoAutoInvoke];
@@ -380,18 +381,24 @@ procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean
       'end;';
   end;
 
+var
+  Code: lpString;
 begin
   if (Compiler = nil) then
     Exit;
 
-  Compiler.addDelayedCode(
-    LapeDelayedFlags +
-    GetGlobalPtr()  + LineEnding +
-    GetGlobalName() + LineEnding +
-    GetGlobalVal()  + LineEnding +
-    VariantInvoke() + LineEnding +
-    ToString()
-  , '!addDelayedExpose');
+  Code := LapeDelayedFlags;
+
+  if Compiler.hasDefine('Lape_VariantInvoke') then
+    Code := Code + VariantInvoke();
+  if Compiler.hasDefine('Lape_GetGlobalValue') then
+    Code := Code + GetGlobalVal();
+  if Compiler.hasDefine('Lape_GetGlobalPtr') then
+    Code := Code + GetGlobalPtr();
+  if Compiler.hasDefine('Lape_GetGlobalName')  then
+    Code := Code + GetGlobalName() + ToString();
+
+  Compiler.addDelayedCode(Code, '!addDelayedExpose');
 end;
 
 procedure _ExposeGlobals_FillProcs(Compiler: TLapeCompiler);
@@ -399,10 +406,19 @@ begin
   ExposeGlobals(Compiler, False, True);
 end;
 
-procedure ExposeGlobals(Compiler: TLapeCompiler);
+procedure ExposeGlobals(Compiler: TLapeCompiler; Methods: EExposeGlobalsMethods);
 begin
   if (Compiler = nil) then
     Exit;
+
+  if egmInvoke in Methods then
+    Compiler.addBaseDefine('Lape_VariantInvoke');
+  if egmName in Methods then
+    Compiler.addBaseDefine('Lape_GetGlobalName');
+  if egmPtr in Methods then
+    Compiler.addBaseDefine('Lape_GetGlobalPtr');
+  if egmValue in Methods then
+    Compiler.addBaseDefine('Lape_GetGlobalValue');
 
   ExposeGlobals(Compiler, True, False);
   Compiler.addBaseDefine('Lape_ExposeGlobals');
