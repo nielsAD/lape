@@ -96,6 +96,7 @@ procedure _LapeToString_Pointer(const Params: PParamArray; const Result: Pointer
 {$I lpeval_headers_string.inc}
 {$I lpeval_headers_datetime.inc}
 {$I lpeval_headers_variant.inc}
+{$I lpeval_headers_file.inc}
 
 procedure ClearToStrArr(var Arr: TLapeToStrArr);
 procedure LoadToStrArr(var Arr: TLapeToStrArr);
@@ -747,6 +748,7 @@ type
 {$I lpeval_wrappers_string.inc}
 {$I lpeval_wrappers_datetime.inc}
 {$I lpeval_wrappers_variant.inc}
+{$I lpeval_wrappers_file.inc}
 
 procedure ClearToStrArr(var Arr: TLapeToStrArr);
 var
