@@ -190,7 +190,7 @@ function _ParseMethodHeader(Compiler: TLapeCompiler; Header: lpString): TLapeTyp
 implementation
 
 uses
-  lpmessages, lpparser, lpeval, lpinterpreter, lpvartypes_array, lpvartypes_record;
+  lpmessages, lpparser, lpeval, lpinterpreter, lpvartypes_array, lpvartypes_record, lpffi;
 
 const
   PowerTwoRegs = [SizeOf(UInt8), SizeOf(UInt16), SizeOf(UInt32), SizeOf(UInt64)];
@@ -764,7 +764,7 @@ begin
   try
     if (VarType.BaseIntType <> ltUnknown) then
       Result.Typ := ConvertBaseIntType(VarType.BaseIntType)
-    else if (VarType.BaseType in LapePointerTypes) then
+    else if (VarType.BaseType in LapePointerTypes) or (VarType is TLapeType_NativeMethod) then
       Result.Typ := ffi_type_pointer
     else
       case VarType.BaseType of
