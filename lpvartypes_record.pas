@@ -491,7 +491,8 @@ begin
         LeftVar := Eval(op_Dot, tmpVar, Left, LeftFieldName, [], Offset, Pos);
         RightVar := Right.VarType.Eval(op_Dot, tmpVar, Right, RightFieldName, [], Offset, Pos);
 
-        tmpVar := LeftVar.VarType.Eval(op_cmp_Equal, Result, LeftVar, RightVar, [], Offset, Pos);
+        tmpVar := Result;
+        tmpVar := LeftVar.VarType.Eval(op_cmp_Equal, tmpVar, LeftVar, RightVar, [], Offset, Pos);
         if (tmpVar.VarPos.MemPos <> Result.VarPos.MemPos) or (tmpVar.VarPos.StackVar <> Result.VarPos.StackVar) then
           Result.VarType.Eval(op_Assign, Dest, Result, tmpVar, [], Offset, Pos);
         LoopOffset[i] := FCompiler.Emitter._JmpRIfNot(0, Result, Offset, Pos);

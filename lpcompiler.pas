@@ -1930,7 +1930,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         if IsPacked then
           Rec.addField(FieldType, Identifiers[i], 1)
         else
-          Rec.addField(FieldType, Identifiers[i], Options_PackRecords);
+          Rec.addField(FieldType, Identifiers[i], FOptions_PackRecords);
 
     until (Next() in [tk_NULL, tk_kw_End]);
 
