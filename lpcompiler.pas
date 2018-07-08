@@ -749,6 +749,7 @@ begin
   {$I lpeval_import_string.inc}
   {$I lpeval_import_datetime.inc}
   {$I lpeval_import_variant.inc}
+  {$I lpeval_import_file.inc}
 
   addDelayedCode(
     LapeDelayedFlags +
@@ -1017,6 +1018,9 @@ begin
   begin
     if (LowerCase(Argument) = 'current_file') and (Sender is TLapeTokenizerFile) then
       IncludeFile := #39 + TLapeTokenizerFile(Sender).FileName + #39
+    else
+    if (LowerCase(Argument) = 'current_directory') and (Sender is TLapeTokenizerFile) then
+      IncludeFile := #39 + ExtractFileDir(TLapeTokenizerFile(Sender).FileName) + #39
     else
     begin
       IncludeFile := FDefines.Values[string(Trim(Argument))];

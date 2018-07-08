@@ -2,6 +2,9 @@
 {$Include_once include.inc}
 
 begin
+  WriteLn('Hi from path: ', {$macro CURRENT_DIRECTORY});
+  WriteLn('Hi from drive: ', ExtractFileDrive({$macro CURRENT_FILE}));
+  
   Included();
   Included_Include();
 end;

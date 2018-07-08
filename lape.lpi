@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="9"/>
+    <Version Value="10"/>
     <PathDelim Value="\"/>
     <General>
       <SessionStorage Value="InProjectDir"/>
@@ -11,9 +11,6 @@
     <i18n>
       <EnableI18N LFM="False"/>
     </i18n>
-    <VersionInfo>
-      <StringTable ProductVersion=""/>
-    </VersionInfo>
     <BuildModes Count="4">
       <Item1 Name="Debug" Default="True"/>
       <Item2 Name="Deploy">
@@ -162,7 +159,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="58">
+    <Units Count="61">
       <Unit0>
         <Filename Value="lape.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -320,15 +317,15 @@
         <IsPartOfProject Value="True"/>
       </Unit37>
       <Unit38>
-        <Filename Value="lpeval_wrappers_variant.inc"/>
+        <Filename Value="lpeval_wrappers_file.inc"/>
         <IsPartOfProject Value="True"/>
       </Unit38>
       <Unit39>
-        <Filename Value="lpeval_headers_variant.inc"/>
+        <Filename Value="lpeval_headers_file.inc"/>
         <IsPartOfProject Value="True"/>
       </Unit39>
       <Unit40>
-        <Filename Value="lpeval_import_variant.inc"/>
+        <Filename Value="lpeval_import_file.inc"/>
         <IsPartOfProject Value="True"/>
       </Unit40>
       <Unit41>
@@ -399,6 +396,18 @@
         <Filename Value="lpmessages.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit57>
+      <Unit58>
+        <Filename Value="lpeval_headers_variant.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit58>
+      <Unit59>
+        <Filename Value="lpeval_import_variant.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit59>
+      <Unit60>
+        <Filename Value="lpeval_wrappers_variant.inc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit60>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
