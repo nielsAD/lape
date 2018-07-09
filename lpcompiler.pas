@@ -196,6 +196,7 @@ type
     function getExpression(AName: lpString; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
 
     function hasDefine(Define: String; Value: String = ''): Boolean;
+    function hasBaseDefine(Define: String; Value: String = ''): Boolean;
 
     procedure addBaseDefine(Define: lpString); virtual;
     function addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration; override;
@@ -3684,8 +3685,12 @@ end;
 
 function TLapeCompiler.hasDefine(Define: String; Value: String): Boolean;
 begin
-  Result := ((FDefines.IndexOfName(Define) >= 0) and (FDefines.Values[Define] = Value)) or
-            ((FBaseDefines.IndexOfName(Define) >= 0) and (FBaseDefines.Values[Define] = Value));
+  Result := (FDefines.IndexOfName(Define) >= 0) and (FDefines.Values[Define] = Value);
+end;
+
+function TLapeCompiler.hasBaseDefine(Define: String; Value: String): Boolean;
+begin
+  Result := (FBaseDefines.IndexOfName(Define) >= 0) and (FBaseDefines.Values[Define] = Value);
 end;
 
 procedure TLapeCompiler.addBaseDefine(Define: lpString);

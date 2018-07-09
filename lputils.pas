@@ -17,12 +17,14 @@ uses
 type
   PSInit = (psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions, psiUselessTypes);
   PSInitSet = set of PSInit;
-  EExposeGlobalsMethods = set of (egmName, egmPtr, egmValue, egmInvoke);
+
+  EExposeGlobalsMethod = (egmName, egmPtr, egmValue, egmInvoke);
+  EExposeGlobalsMethods = set of EExposeGlobalsMethod;
+
   TTraverseCallback = procedure(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
 
 procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);
 procedure TraverseGlobals(Compiler: TLapeCompilerBase; Callback: TTraverseCallback; var Arg; BaseName: lpString = ''; Decls: TLapeDeclarationList = nil);
-procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean); overload;
 procedure ExposeGlobals(Compiler: TLapeCompiler; Methods: EExposeGlobalsMethods = [egmName, egmPtr, egmValue, egmInvoke]); overload;
 
 const
@@ -110,103 +112,6 @@ begin
   end;
 end;
 
-procedure ExposeGlobals__GetPtr(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
-var
-  Temp: lpString;
-begin
-  if (AName = '') or (AName[1] = '!') or (not v.HasType()) then
-    Exit
-  else if (v.VarType is TLapeType_Method) then
-    Temp := ''
-  else if (v.VarType.EvalRes(op_Addr) <> nil) then
-    Temp := '@'
-  else
-    Exit;
-
-  AName := LapeCase(AName);
-  TLapeStringList(Arg).Add(#39 + AName + #39': Result := ' + Temp + AName);
-end;
-
-procedure ExposeGlobals__GetName(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
-var
-  Temp: lpString;
-begin
-  if (AName = '') or (AName[1] = '!') or (not v.HasType()) then
-    Exit
-  else if (v.VarType is TLapeType_Method) then
-    Temp := 'ConstPointer(' + AName + ')'
-  else if (v.VarType.EvalRes(op_Addr) <> nil) then
-    Temp := '@' + AName
-  else
-    Exit;
-
-  TLapeStringList(Arg).Add(Temp + ': Result := '#39 + AName + #39);
-end;
-
-procedure ExposeGlobals__GetVal(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
-begin
-  if (AName = '') or (AName[1] = '!') or (not v.HasType()) or
-     (not v.Readable) or (not Compiler.getBaseType(ltVariant).CompatibleWith(v.VarType))
-  then
-    Exit;
-
-  AName := LapeCase(AName);
-  TLapeStringList(Arg).Add(#39 + AName + #39': Result := ' + AName);
-end;
-
-procedure ExposeGlobals__Invoke(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
-var
-  VariantType: TLapeType;
-
-  function ParamsCompatible(Params: TLapeParameterList): Boolean;
-  var
-    i: Integer;
-  begin
-    Result := True;
-    for i := 0 to Params.Count - 1 do
-      if (Params[i].VarType = nil) or (not (Params[i].ParType in Lape_ValParams)) then
-        Exit(False)
-      else if (not Params[i].VarType.CompatibleWith(VariantType)) then
-        Exit(False);
-  end;
-
-var
-  i: Integer;
-  Temp: lpString;
-begin
-  Temp := '';
-  if (AName = '') or (AName[1] = '!') or (not v.HasType()) or
-      (not (v.VarType is TLapeType_Method)) or MethodOfObject(v.VarType)
-  then
-    Exit;
-
-  AName := LapeCase(AName);
-  VariantType := Compiler.getBaseType(ltVariant);
-
-  with TLapeType_Method(v.VarType) do
-  begin
-    if (not ParamsCompatible(Params)) then
-      Exit;
-
-    Temp := #39 + AName + #39': begin ' +
-      'Assert(ParamsLen = ' + lpString(IntToStr(Params.Count)) + ', ErrParamCount); ';
-    if (Res <> nil) and VariantType.CompatibleWith(Res) then
-      Temp := Temp + 'Result := ';
-    Temp := Temp + AName + '(';
-
-    for i := 0 to Params.Count - 1 do
-    begin
-      if (i > 0) then
-        Temp := Temp + ', ';
-      Temp := Temp + 'Params[' + lpString(IntToStr(i)) + ']';
-    end;
-
-    Temp := Temp + '); end';
-  end;
-
-  TLapeStringList(Arg).Add(Temp);
-end;
-
 procedure TraverseGlobals(Compiler: TLapeCompilerBase; Callback: TTraverseCallback; var Arg; BaseName: lpString = ''; Decls: TLapeDeclarationList = nil);
 
   procedure TraverseBaseTypes;
@@ -268,161 +173,228 @@ begin
   end;
 end;
 
-procedure ExposeGlobals(Compiler: TLapeCompiler; HeaderOnly, DoOverride: Boolean);
+procedure _ExposeGlobals_Invoke_Callback(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
+var
+  VariantType: TLapeType;
 
-  function TraverseGlobals_String(Callback: TTraverseCallback): lpString;
+  function ParamsCompatible(Params: TLapeParameterList): Boolean;
   var
-    Builder: TLapeStringList;
+    i: Integer;
   begin
-    Builder := TLapeStringList.Create('', dupIgnore, True, False);
-    try
-      TraverseGlobals(Compiler, Callback, Builder);
-      Builder.Add('');
-      Result := Builder.Implode(';' + LineEnding);
-    finally
-      Builder.Free();
-    end;
-  end;
-
-  function GetGlobalPtr: lpString;
-  begin
-    Result := 'function GetGlobalPtr(Name: string): ConstPointer;';
-    if DoOverride then
-      Result := Result + 'override;';
-    Result := Result + 'begin Result := nil;';
-    if (not HeaderOnly) then
-    begin
-      {$IFDEF Lape_CaseSensitive}
-      Result := Result + 'case Name of ' + LineEnding;
-      {$ELSE}
-      Result := Result + 'case LowerCase(Name) of ' + LineEnding;
-      {$ENDIF}
-
-      Result := Result + TraverseGlobals_String(@ExposeGlobals__GetPtr);
-      Result := Result + 'end;';
-    end;
-    Result := Result + 'end;';
-  end;
-
-  function GetGlobalName: lpString;
-  begin
-    Result := 'function GetGlobalName(Ptr: ConstPointer): string;';
-    if DoOverride then
-      Result := Result + 'override;';
-    Result := Result + 'begin Result := '#39#39';';
-    if (not HeaderOnly) then
-    begin
-      Result := Result + 'case Ptr of ' + LineEnding;
-      Result := Result + TraverseGlobals_String(@ExposeGlobals__GetName);
-      Result := Result + 'end;';
-    end;
-    Result := Result + 'end;';
-  end;
-
-  function GetGlobalVal: lpString;
-  begin
-    Result := 'function GetGlobal(Name: string): Variant;';
-    if DoOverride then
-      Result := Result + 'override;';
-    Result := Result + 'begin Result := Unassigned;';
-    if (not HeaderOnly) then
-    begin
-      {$IFDEF Lape_CaseSensitive}
-      Result := Result + 'case Name of ' + LineEnding;
-      {$ELSE}
-      Result := Result + 'case LowerCase(Name) of ' + LineEnding;
-      {$ENDIF}
-
-      Result := Result + TraverseGlobals_String(@ExposeGlobals__GetVal);
-      Result := Result + 'else raise '#39'Cannot get value of "'#39' + Name + '#39'" using GetGlobal'#39';';
-      Result := Result + 'end;';
-    end;
-    Result := Result + 'end;';
-  end;
-
-  function VariantInvoke: lpString;
-  begin
-    Result := 'function VariantInvoke(Name: string; Params: array of Variant = []): Variant;';
-    if DoOverride then
-      Result := Result + 'override;';
-    Result := Result + 'const ErrParamCount = '#39'Parameter count mismatch'#39';';
-    Result := Result + 'var ParamsLen: SizeInt := Length(Params);';
-    Result := Result + 'begin Result := Unassigned;';
-    if (not HeaderOnly) then
-    begin
-      {$IFDEF Lape_CaseSensitive}
-      Result := Result + 'case Name of ' + LineEnding;
-      {$ELSE}
-      Result := Result + 'case LowerCase(Name) of ' + LineEnding;
-      {$ENDIF}
-
-      Result := Result + TraverseGlobals_String(@ExposeGlobals__Invoke);
-      Result := Result + 'else raise '#39'Cannot invoke "'#39' + Name + '#39'" using VariantInvoke'#39';';
-      Result := Result + 'end;';
-    end;
-    Result := Result + 'end;';
-  end;
-
-  function ToString: lpString;
-  begin
-    Result := '';
-    if DoOverride then
-      Exit;
-
-    Result :=
-      'function ToString(constref p: Pointer): string; override;' +
-      'var n: string; begin' +
-      '  Result := inherited();' +
-      '  if (p <> nil) then' +
-      '  begin' +
-      '    n := GetGlobalName(p);' +
-      '    if (n <> '#39#39') then Result := '#39'"'#39' + n + '#39'"::'#39' + Result;' +
-      '  end;' +
-      'end;';
+    Result := True;
+    for i := 0 to Params.Count - 1 do
+      if (Params[i].VarType = nil) or (not (Params[i].ParType in Lape_ValParams)) then
+        Exit(False)
+      else if (not Params[i].VarType.CompatibleWith(VariantType)) then
+        Exit(False);
   end;
 
 var
-  Code: lpString;
+  i: Integer;
+  Temp: lpString;
 begin
-  if (Compiler = nil) then
+  Temp := '';
+  if (AName = '') or (AName[1] = '!') or (not v.HasType()) or
+      (not (v.VarType is TLapeType_Method)) or MethodOfObject(v.VarType)
+  then
     Exit;
 
-  Code := LapeDelayedFlags;
+  AName := LapeCase(AName);
+  VariantType := Compiler.getBaseType(ltVariant);
 
-  if Compiler.hasDefine('Lape_VariantInvoke') then
-    Code := Code + VariantInvoke();
-  if Compiler.hasDefine('Lape_GetGlobalValue') then
-    Code := Code + GetGlobalVal();
-  if Compiler.hasDefine('Lape_GetGlobalPtr') then
-    Code := Code + GetGlobalPtr();
-  if Compiler.hasDefine('Lape_GetGlobalName')  then
-    Code := Code + GetGlobalName() + ToString();
+  with TLapeType_Method(v.VarType) do
+  begin
+    if (not ParamsCompatible(Params)) then
+      Exit;
 
-  Compiler.addDelayedCode(Code, '!addDelayedExpose');
+    Temp := #39 + AName + #39': begin ' +
+      'Assert(ParamsLen = ' + lpString(IntToStr(Params.Count)) + ', ErrParamCount); ';
+    if (Res <> nil) and VariantType.CompatibleWith(Res) then
+      Temp := Temp + 'Result := ';
+    Temp := Temp + AName + '(';
+
+    for i := 0 to Params.Count - 1 do
+    begin
+      if (i > 0) then
+        Temp := Temp + ', ';
+      Temp := Temp + 'Params[' + lpString(IntToStr(i)) + ']';
+    end;
+
+    Temp := Temp + '); end';
+  end;
+
+  TLapeStringList(Arg).Add(Temp);
 end;
 
-procedure _ExposeGlobals_FillProcs(Compiler: TLapeCompiler);
+procedure _ExposeGlobals_GetPtr_Callback(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
+var
+  Temp: lpString;
 begin
-  ExposeGlobals(Compiler, False, True);
+  if (AName = '') or (AName[1] = '!') or (not v.HasType()) then
+    Exit
+  else if (v.VarType is TLapeType_Method) then
+    Temp := ''
+  else if (v.VarType.EvalRes(op_Addr) <> nil) then
+    Temp := '@'
+  else
+    Exit;
+
+  AName := LapeCase(AName);
+  TLapeStringList(Arg).Add(#39 + AName + #39': Result := ' + Temp + AName);
+end;
+
+procedure _ExposeGlobals_GetName_Callback(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
+var
+  Temp: lpString;
+begin
+  if (AName = '') or (AName[1] = '!') or (not v.HasType()) then
+    Exit
+  else if (v.VarType is TLapeType_Method) then
+    Temp := 'ConstPointer(' + AName + ')'
+  else if (v.VarType.EvalRes(op_Addr) <> nil) then
+    Temp := '@' + AName
+  else
+    Exit;
+
+  TLapeStringList(Arg).Add(Temp + ': Result := '#39 + AName + #39);
+end;
+
+procedure _ExposeGlobals_GetVal_Callback(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
+begin
+  if (AName = '') or (AName[1] = '!') or (not v.HasType()) or
+     (not v.Readable) or (not Compiler.getBaseType(ltVariant).CompatibleWith(v.VarType))
+  then
+    Exit;
+
+  AName := LapeCase(AName);
+  TLapeStringList(Arg).Add(#39 + AName + #39': Result := ' + AName);
+end;
+
+function TraverseGlobals_String(Compiler: TLapeCompiler; Callback: TTraverseCallback): lpString;
+var
+  Builder: TLapeStringList;
+begin
+  Builder := TLapeStringList.Create('', dupIgnore, True, False);
+
+  try
+    TraverseGlobals(Compiler, Callback, Builder);
+    Builder.Add('');
+    Result := Builder.Implode(';' + LineEnding);
+  finally
+    Builder.Free();
+  end;
+end;
+
+procedure _ExposeGlobals_AddInvoke(Compiler: TLapeCompiler);
+begin
+  Compiler.addDelayedCode(
+     LapeDelayedFlags                                                                         + LineEnding +
+    'function VariantInvoke(Name: string; Params: array of Variant = []): Variant; override;' + LineEnding +
+    'const ErrParamCount = '#39'Parameter count mismatch'#39';'                               + LineEnding +
+    'var ParamsLen: SizeInt := Length(Params);'                                               + LineEnding +
+    'begin'                                                                                   + LineEnding +
+    '  Result := Unassigned;'                                                                 + LineEnding +
+    {$IFDEF Lape_CaseSensitive}
+    '  case Name of '                                                                         + LineEnding +
+    {$ELSE}
+    '  case LowerCase(Name) of '                                                              + LineEnding +
+    {$ENDIF}
+    '    ' + TraverseGlobals_String(Compiler, @_ExposeGlobals_Invoke_Callback)                + LineEnding +
+    '    else raise '#39'Cannot invoke "'#39' + Name + '#39'" using VariantInvoke'#39';'      + LineEnding +
+    '  end;'                                                                                  + LineEnding +
+    'end;',
+    '!VariantInvoke');
+end;
+
+procedure _ExposeGlobals_AddPtr(Compiler: TLapeCompiler);
+begin
+  Compiler.addDelayedCode(
+    LapeDelayedFlags                                                                          + LineEnding +
+    'function GetGlobalPtr(Name: string): ConstPointer; override;'                            + LineEnding +
+    'begin'                                                                                   + LineEnding +
+    '  Result := nil;'                                                                        + LineEnding +
+    {$IFDEF Lape_CaseSensitive}
+    '  case Name of '                                                                         + LineEnding +
+    {$ELSE}
+    '  case LowerCase(Name) of '                                                              + LineEnding +
+    {$ENDIF}
+    '    ' + TraverseGlobals_String(Compiler, @_ExposeGlobals_GetPtr_Callback)                 + LineEnding +
+    '  end;'                                                                                  + LineEnding +
+    'end;',
+    '!GetGlobalPtr'
+  );
+end;
+
+procedure _ExposeGlobals_AddGlobalVal(Compiler: TLapeCompiler);
+begin
+  Compiler.addDelayedCode(
+    LapeDelayedFlags                                                                          + LineEnding +
+    'function GetGlobal(Name: string): Variant; override;'                                    + LineEnding +
+    'begin'                                                                                   + LineEnding +
+    '  Result := Unassigned;'                                                                 + LineEnding +
+    {$IFDEF Lape_CaseSensitive}
+    '  case Name of '                                                                         + LineEnding +
+    {$ELSE}
+    '  case LowerCase(Name) of '                                                              + LineEnding +
+    {$ENDIF}
+    '    ' + TraverseGlobals_String(Compiler, @_ExposeGlobals_GetVal_Callback)                + LineEnding +
+    '    else raise '#39'Cannot get value of "'#39' + Name + '#39'" using GetGlobal'#39';'    + LineEnding +
+    '  end;'                                                                                  + LineEnding +
+    'end;',
+    '!GetGlobalVal'
+  );
+end;
+
+procedure _ExposeGlobals_AddGlobalName(Compiler: TLapeCompiler);
+begin
+  Compiler.addDelayedCode(
+    LapeDelayedFlags                                                                          + LineEnding +
+    'function GetGlobalName(Ptr: ConstPointer): string; override;'                            + LineEnding +
+    'begin'                                                                                   + LineEnding +
+    '  Result := '#39#39';'                                                                   + LineEnding +
+    '  case Ptr of '                                                                          + LineEnding +
+    '    ' + TraverseGlobals_String(Compiler, @_ExposeGlobals_GetName_Callback)               + LineEnding +
+    '  end;'                                                                                  + LineEnding +
+    'end;',
+    '!GetGlobalName'
+  );
 end;
 
 procedure ExposeGlobals(Compiler: TLapeCompiler; Methods: EExposeGlobalsMethods);
+var
+  Method: EExposeGlobalsMethod;
 begin
   if (Compiler = nil) then
     Exit;
 
-  if egmInvoke in Methods then
-    Compiler.addBaseDefine('Lape_VariantInvoke');
-  if egmName in Methods then
-    Compiler.addBaseDefine('Lape_GetGlobalName');
-  if egmPtr in Methods then
-    Compiler.addBaseDefine('Lape_GetGlobalPtr');
-  if egmValue in Methods then
-    Compiler.addBaseDefine('Lape_GetGlobalValue');
+  for Method in Methods do
+    case Method of
+      egmInvoke:
+        begin
+          Compiler.addDelayedCode('function VariantInvoke(Name: string; Params: array of Variant = []): Variant; begin end;', '!VariantInvoke');
+          Compiler.AfterParsing.AddProc(@_ExposeGlobals_AddInvoke);
+        end;
 
-  ExposeGlobals(Compiler, True, False);
+      egmPtr:
+        begin
+          Compiler.addDelayedCode('function GetGlobalPtr(Name: string): ConstPointer; begin end;', '!GetGlobalPtr');
+          Compiler.AfterParsing.AddProc(@_ExposeGlobals_AddPtr);
+        end;
+
+      egmValue:
+        begin
+          Compiler.addDelayedCode('function GetGlobal(Name: string): Variant; begin end;', '!GetGlobalVal');
+          Compiler.AfterParsing.AddProc(@_ExposeGlobals_AddGlobalVal);
+        end;
+
+      egmName:
+        begin
+          Compiler.addDelayedCode('function GetGlobalName(Ptr: ConstPointer): string; begin end;', '!GetGlobalName');
+          Compiler.AfterParsing.AddProc(@_ExposeGlobals_AddGlobalName);
+        end;
+    end;
+
   Compiler.addBaseDefine('Lape_ExposeGlobals');
-  Compiler.AfterParsing.AddProc(@_ExposeGlobals_FillProcs);
 end;
 
 end.
