@@ -744,7 +744,7 @@ begin
     else
       LapeExceptionFmt(lpeExpected, [FABIType.AsString], [FParams[1], Self]);
 
-  Closure := LapeExportWrapper(FCompiler.Emitter.PCode, nil, Method.Header, Method.ABI);
+  Closure := LapeExportWrapper(FCompiler.Emitter.PCode, FCompiler.Emitter.PCodeLen, nil, Method.Header, Method.ABI);
   if (Closure = nil) then
     LapeException(lpeImpossible, [FParams[0], Self])
   else
