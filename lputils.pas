@@ -371,25 +371,25 @@ begin
     case Method of
       egmInvoke:
         begin
-          Compiler.addDelayedCode('function VariantInvoke(Name: string; Params: array of Variant = []): Variant; begin end;', '!VariantInvoke');
+          Compiler.addDelayedCode('{$H-} function VariantInvoke(Name: string; Params: array of Variant = []): Variant; begin end;', '!VariantInvoke');
           Compiler.AfterParsing.AddProc(@_ExposeGlobals_AddInvoke);
         end;
 
       egmPtr:
         begin
-          Compiler.addDelayedCode('function GetGlobalPtr(Name: string): ConstPointer; begin end;', '!GetGlobalPtr');
+          Compiler.addDelayedCode('{$H-} function GetGlobalPtr(Name: string): ConstPointer; begin end;', '!GetGlobalPtr');
           Compiler.AfterParsing.AddProc(@_ExposeGlobals_AddPtr);
         end;
 
       egmValue:
         begin
-          Compiler.addDelayedCode('function GetGlobal(Name: string): Variant; begin end;', '!GetGlobalVal');
+          Compiler.addDelayedCode('{$H-} function GetGlobal(Name: string): Variant; begin end;', '!GetGlobalVal');
           Compiler.AfterParsing.AddProc(@_ExposeGlobals_AddGlobalVal);
         end;
 
       egmName:
         begin
-          Compiler.addDelayedCode('function GetGlobalName(Ptr: ConstPointer): string; begin end;', '!GetGlobalName');
+          Compiler.addDelayedCode('{$H-} function GetGlobalName(Ptr: ConstPointer): string; begin end;', '!GetGlobalName');
           Compiler.AfterParsing.AddProc(@_ExposeGlobals_AddGlobalName);
         end;
     end;
