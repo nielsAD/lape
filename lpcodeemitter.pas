@@ -52,6 +52,7 @@ type
     procedure _ParamSize(v: TParamSize; Pos: PParamSize); overload; virtual;
 
     function getPCode: Pointer;
+    function getPCodeLen: PInteger;
     procedure IncStack(Size: TStackInc); virtual;
     procedure DecStack(Size: TStackInc); virtual;
   public
@@ -160,6 +161,7 @@ type
     property PCode: Pointer read getPCode;
     property Code: Pointer read _PCode;
     property CodeLen: Integer read FCodeCur;
+    property PCodeLen: PInteger read getPCodeLen;
     property MaxStack: Integer read FMaxStack;
   end;
 
@@ -192,6 +194,11 @@ procedure TLapeCodeEmitterBase._ParamSize(v: TParamSize; Pos: PParamSize);      
 function TLapeCodeEmitterBase.getPCode: Pointer;
 begin
   Result := @_PCode;
+end;
+
+function TLapeCodeEmitterBase.getPCodeLen: PInteger;
+begin
+  Result := @FCodeCur;
 end;
 
 procedure TLapeCodeEmitterBase.IncStack(Size: TStackInc);
@@ -627,7 +634,7 @@ function TLapeCodeEmitterBase._DocPos(Pos: TDocPos): Integer;
   var o: Integer; begin o := -1; Result := _DocPos(Pos, o); end;
 function TLapeCodeEmitterBase._DocPos(Pos: PDocPos): Integer;
   var o: Integer; begin o := -1; Result := _DocPos(Pos, o); end;
-function TLapeCodeEmitterBase._DocPos(): Integer;
+function TLapeCodeEmitterBase._DocPos: Integer;
   var o: Integer; begin o := -1; Result := _DocPos(o); end;
 function TLapeCodeEmitterBase._op(op: opCode; Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _op(op, o, Pos); end;
