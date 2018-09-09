@@ -761,20 +761,21 @@ begin
 
   Param := Self.Params[0].Compile(Offset);
 
-  with TLapeTree_If.Create(Self) do
-  try
-    Condition := TLapeTree_InternalMethod_IsScriptMethod.Create(FCompiler);
-    with Condition as TLapeTree_Invoke do
-      addParam(TLapeTree_ResVar.Create(Param, Self));
+  if (Method.Header.BaseType <> ltScriptMethod) then
+    with TLapeTree_If.Create(Self) do
+    try
+      Condition := TLapeTree_InternalMethod_IsScriptMethod.Create(FCompiler);
+      with Condition as TLapeTree_Invoke do
+        addParam(TLapeTree_ResVar.Create(Param, Self));
 
-    ElseBody := TLapeTree_InternalMethod_Raise.Create(FCompiler);
-    with ElseBody as TLapeTree_Invoke do
-      addParam(TLapeTree_String.Create(FormatLocation(lpeScriptMethodExpected, Self.DocPos), FCompiler));
+      ElseBody := TLapeTree_InternalMethod_Raise.Create(FCompiler);
+      with ElseBody as TLapeTree_Invoke do
+        addParam(TLapeTree_String.Create(FormatLocation(lpeScriptMethodExpected, Self.DocPos), FCompiler));
 
-    Compile(Offset).Spill(1);
-  finally
-    Free();
-  end;
+      Compile(Offset).Spill(1);
+    finally
+      Free();
+    end;
 
   with TLapeTree_Invoke.Create(Natify, Self) do
   try
