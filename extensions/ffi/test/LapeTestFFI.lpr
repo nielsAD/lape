@@ -564,10 +564,13 @@ end;
 
 type
   TTestCallback = function: Int32; {$I cconv.inc}
+  TTestCallbackObject = function: Int32 of object; {$I cconv.inc}
 
   TTestObject = object
     MagicToken: NativeInt;
     Success: Boolean;
+
+    function Callback: Int32; {$I cconv.inc}
 
     procedure Meth1; {$I cconv.inc}
     procedure Meth2(a, b, c, d, e, f, g, h, i, j: NativeInt); {$I cconv.inc}
@@ -577,6 +580,7 @@ type
     function Meth6(constref a: TStrRec): TStrRec; {$I cconv.inc}
     function Meth7(const a: TLargeRec): TLargeRec; {$I cconv.inc}
     function Meth8(Func: TTestCallback): Int32; {$I cconv.inc}
+    function Meth9(Func: TTestCallbackObject): Int32; {$I cconv.inc}
   end;
 
 const
@@ -584,6 +588,12 @@ const
 
 function Callback: Int32; {$I cconv.inc}
 begin
+  Result := 1989;
+end;
+
+function TTestObject.Callback: Int32; {$I cconv.inc}
+begin
+  Assert(MagicToken = NullTestObject.MagicToken);
   Result := 1989;
 end;
 
@@ -744,6 +754,11 @@ begin
   Result := Func();
 end;
 
+function TTestObject.Meth9(Func: TTestCallbackObject): Int32; {$I cconv.inc}
+begin
+  Result := Func();
+end;
+
 function RunMeth8(f: Pointer): Boolean;
 type
   TM = function(Func: TTestCallback): Int32 of object; {$I cconv.inc}
@@ -755,6 +770,19 @@ begin
   TMethod(m).Code := f;
   TMethod(m).Data := @o;
   Result := TM(m)(@Callback) = 1989;
+end;
+
+function RunMeth9(f: Pointer): Boolean;
+type
+  TM = function(Func: TTestCallbackObject): Int32 of object; {$I cconv.inc}
+var
+  m: TM;
+  o: TTestObject;
+begin
+  o := NullTestObject;
+  TMethod(m).Code := f;
+  TMethod(m).Data := @o;
+  Result := TM(m)(@o.Callback) = 1989;
 end;
 
 function TestBiDiFFI(Header: lpString; ImportFun: Pointer; RunFun: TRunFun; RunStr: lpString = ''; ImportABI: TFFIABI = FFI_DEFAULT_ABI; ExportABI: TFFIABI = FFI_DEFAULT_ABI): Boolean;
@@ -787,6 +815,7 @@ begin
       );
 
       addDelayedCode('function LapeCallback: Int32; begin Result := 1989; end;');
+      addDelayedCode('function TTest.LapeCallback: Int32; begin Assert(Self.MagicToken = 12345); Result := 1989; end;');
 
       addGlobalType('function: Int32', 'TLapeCallback');
       addGlobalType('native(TLapeCallback, ' + 'ffi_' + ABIToStr(TEST_ABI) + ')', 'TNativeCallback');
@@ -863,7 +892,7 @@ type
   end;
 
 const
-  BiDiTests: array[1..39] of TRunProc = (
+  BiDiTests: array[1..40] of TRunProc = (
     (Fun: @Proc1;  Run: @RunProc1;  Str: 'procedure Proc1';                                                                                                        Arg: 'TestMe();'),
     (Fun: @Proc2;  Run: @RunProc2;  Str: 'procedure Proc2(a, b, c, d, e, f, g, h, i, j: NativeInt)';                                                               Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);'),
     (Fun: @Proc3;  Run: @RunProc3;  Str: 'procedure Proc3(a: UInt8; b: Int64; c: UInt32; d: Int16; e: UInt16; f: Int32; g: UInt64; h: Int8)';                      Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8);'),
@@ -904,7 +933,8 @@ const
     (Fun: @TTestObject.Meth5; Run: @RunMeth5; Str: 'function TTest.Meth5(const a: TStatPackArr): TStatPackArr';      Arg: 'Assert(Test.TestMe([1..3])[2] = 6);'),
     (Fun: @TTestObject.Meth6; Run: @RunMeth6; Str: 'function TTest.Meth6(constref a: TStrRec): TStrRec';             Arg: 'Assert(Test.TestMe(["123"]) = ["0123"]);'),
     (Fun: @TTestObject.Meth7; Run: @RunMeth7; Str: 'function TTest.Meth7(const a: TLargeRec): TLargeRec';            Arg: 'Assert(Test.TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);'),
-    (Fun: @TTestObject.Meth8; Run: @RunMeth8; Str: 'function TTest.Meth8(const Func: TNativeCallback): Int32';       Arg: 'Assert(Test.TestMe(@LapeCallback) = 1989);')
+    (Fun: @TTestObject.Meth8; Run: @RunMeth8; Str: 'function TTest.Meth8(const Func: Pointer): Int32';               Arg: 'Assert(Test.TestMe(Pointer(Natify(@LapeCallback))) = 1989);'),
+    (Fun: @TTestObject.Meth9; Run: @RunMeth9; Str: 'function TTest.Meth9(const Func: TMethod): Int32';               Arg: 'Assert(Test.TestMe(TMethod(Natify(@Test.LapeCallback))) = 1989);')
   );
 
 {$IF DECLARED(TEST_ABI)}
