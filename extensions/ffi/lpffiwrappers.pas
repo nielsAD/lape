@@ -1090,7 +1090,7 @@ var
   i, c: Integer;
   ParInfo: array of TExportClosureParamInfo;
 begin
-  if (Header = nil) or (Header.BaseType <> ltScriptMethod) then
+  if (Header = nil) then
     Exit(nil);
 
   c := 0;
