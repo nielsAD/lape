@@ -2185,7 +2185,7 @@ end;
 function TLapeType_Pointer.VarToString(AVar: Pointer): lpString;
 begin
   Result := PointerToString(AVar);
-  if (AVar <> nil) and HasType() then
+  if (AVar <> nil) and (PPointer(AVar)^ <> nil) and HasType() then
   try
     Result := Result + '(' + FPType.VarToString(PPointer(AVar)^) + ')';
   except end;

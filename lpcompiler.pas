@@ -195,6 +195,9 @@ type
     function getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
     function getExpression(AName: lpString; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
 
+    function hasDefine(Define: String; Value: String = ''): Boolean;
+    function hasBaseDefine(Define: String; Value: String = ''): Boolean;
+
     procedure addBaseDefine(Define: lpString); virtual;
     function addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration; override;
     function addLocalVar(AVar: TLapeType; Name: lpString = ''): TLapeVar; virtual;
@@ -749,6 +752,7 @@ begin
   {$I lpeval_import_string.inc}
   {$I lpeval_import_datetime.inc}
   {$I lpeval_import_variant.inc}
+  {$I lpeval_import_file.inc}
 
   addDelayedCode(
     LapeDelayedFlags +
@@ -883,7 +887,7 @@ var
       LapeException(lpeInvalidCondition, [Self]);
   end;
 
-  function HasDefine(Def: lpString): Boolean;
+  function HasDefineOrOption(Def: lpString): Boolean;
   begin
     if (FDefines.IndexOfName(string(Def)) > -1) then
       Result := True
@@ -1000,7 +1004,7 @@ begin
 
   Directive := LowerCase(Directive);
   if (Directive = 'ifdef') or (Directive = 'ifndef') then
-    pushConditional((not InIgnore()) and (HasDefine(Trim(Argument)) xor (Directive = 'ifndef')), Sender.DocPos)
+    pushConditional((not InIgnore()) and (HasDefineOrOption(Trim(Argument)) xor (Directive = 'ifndef')), Sender.DocPos)
   else if (Directive = 'ifdecl') or (Directive = 'ifndecl') then
     pushConditional((not InIgnore()) and (hasDeclaration(Trim(Argument)) xor (Directive = 'ifndecl')), Sender.DocPos)
   else if (Directive = 'else') then
@@ -1017,6 +1021,9 @@ begin
   begin
     if (LowerCase(Argument) = 'current_file') and (Sender is TLapeTokenizerFile) then
       IncludeFile := #39 + TLapeTokenizerFile(Sender).FileName + #39
+    else
+    if (LowerCase(Argument) = 'current_directory') and (Sender is TLapeTokenizerFile) then
+      IncludeFile := #39 + ExtractFileDir(TLapeTokenizerFile(Sender).FileName) + #39
     else
     begin
       IncludeFile := FDefines.Values[string(Trim(Argument))];
@@ -1926,7 +1933,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         if IsPacked then
           Rec.addField(FieldType, Identifiers[i], 1)
         else
-          Rec.addField(FieldType, Identifiers[i], Options_PackRecords);
+          Rec.addField(FieldType, Identifiers[i], FOptions_PackRecords);
 
     until (Next() in [tk_NULL, tk_kw_End]);
 
@@ -3678,6 +3685,16 @@ end;
 function TLapeCompiler.getExpression(AName: lpString; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase;
 begin
   Result := getExpression(AName, FStackInfo, Pos, LocalOnly);
+end;
+
+function TLapeCompiler.hasDefine(Define: String; Value: String): Boolean;
+begin
+  Result := (FDefines.IndexOfName(Define) >= 0) and (FDefines.Values[Define] = Value);
+end;
+
+function TLapeCompiler.hasBaseDefine(Define: String; Value: String): Boolean;
+begin
+  Result := (FBaseDefines.IndexOfName(Define) >= 0) and (FBaseDefines.Values[Define] = Value);
 end;
 
 procedure TLapeCompiler.addBaseDefine(Define: lpString);

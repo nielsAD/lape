@@ -732,11 +732,12 @@ var
   Closure: TExportClosure;
   Index: Integer;
   Natify: lpString;
+  Param: TResVar;
 begin
   Method := resType() as TLapeType_NativeMethod;
   if (FParams.Count < 1) or (FParams.Count > 2) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos)
-  else if isConstant() or (Method = nil) or (Method.Header.BaseType <> ltScriptMethod) then
+  else if isConstant() or (Method = nil) then
     LapeException(lpeInvalidCast, [FParams[0], Self])
   else if (Method.ABI = FFI_UNKNOWN_ABI) then
     if (FParams.Count = 2) and (not (FParams[1].isConstant)) then
@@ -744,7 +745,7 @@ begin
     else
       LapeExceptionFmt(lpeExpected, [FABIType.AsString], [FParams[1], Self]);
 
-  Closure := LapeExportWrapper(FCompiler.Emitter.PCode, nil, Method.Header, Method.ABI);
+  Closure := LapeExportWrapper(FCompiler.Emitter.PCode, FCompiler.Emitter.PCodeLen, nil, Method.Header, Method.ABI);
   if (Closure = nil) then
     LapeException(lpeImpossible, [FParams[0], Self])
   else
@@ -758,9 +759,27 @@ begin
   else
     Natify := '!ffi_natify';
 
+  Param := Self.Params[0].Compile(Offset);
+
+  if (Method.Header.BaseType <> ltScriptMethod) then
+    with TLapeTree_If.Create(Self) do
+    try
+      Condition := TLapeTree_InternalMethod_IsScriptMethod.Create(FCompiler);
+      with Condition as TLapeTree_Invoke do
+        addParam(TLapeTree_ResVar.Create(Param, Self));
+
+      ElseBody := TLapeTree_InternalMethod_Raise.Create(FCompiler);
+      with ElseBody as TLapeTree_Invoke do
+        addParam(TLapeTree_String.Create(FormatLocation(lpeScriptMethodExpected, Self.DocPos), FCompiler));
+
+      Compile(Offset).Spill(1);
+    finally
+      Free();
+    end;
+
   with TLapeTree_Invoke.Create(Natify, Self) do
   try
-    addParam(TLapeTree_ResVar.Create(Self.Params[0].Compile(Offset), Self));
+    addParam(TLapeTree_ResVar.Create(Param, Self));
     addParam(TLapeTree_GlobalVar.Create(FClosures, Self));
     addParam(TLapeTree_Integer.Create(Index, Self));
     Result := Compile(Offset);

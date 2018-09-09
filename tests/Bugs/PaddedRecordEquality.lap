@@ -1,0 +1,18 @@
+// Issue 118
+{$assertions on}
+
+type
+  TTest = {packed} record // packed fixes it
+    i: Int32;
+    e: Extended;
+  end;
+
+  TRec = record
+    Test: TTest;
+  end;
+
+var
+  Left, Right: TRec;
+begin
+  Assert(Left = Right);
+end.

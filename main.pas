@@ -134,7 +134,7 @@ begin
         begin
           t := GetTickCount64();
           m.Append(LineEnding);
-          RunCode(Compiler.Emitter.Code);
+          RunCode(Compiler.Emitter.Code, Compiler.Emitter.CodeLen);
           m.Append('Running Time: ' + IntToStr(GetTickCount64() - t) + 'ms.');
         end;
       except

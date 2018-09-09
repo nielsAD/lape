@@ -85,8 +85,8 @@ const
   TryStackSize = 512;
   CallStackSize = 512;
 
-procedure RunCode(Code: PByte; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
-procedure RunCode(Code: PByte; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
+procedure RunCode(Code: PByte; CodeLen: Integer; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
+procedure RunCode(Code: PByte; CodeLen: Integer; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
 
 implementation
 
@@ -121,11 +121,12 @@ begin
     AJump.JumpSafe := Merge.JumpSafe;
 end;
 
-procedure RunCode(Code: PByte; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0);
+procedure RunCode(Code: PByte; CodeLen: Integer; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0);
 const
   opNone: opCodeType = opCodeType(ocNone);
 var
   CodeBase: PByte;
+  CodeUpper: PByte;
   Stack: TByteArray;
   StackPos: UInt32;
 
@@ -258,12 +259,11 @@ var
   end;
 
   procedure DoCheckInternal; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  var
+    Check: PtrUInt;
   begin
-    try
-      PEvalBool(@Stack[StackPos - SizeOf(Pointer)])^ := opCodeTypeP(PtrUInt(CodeBase) + PtrUInt(PCodePos(@Stack[StackPos - SizeOf(Pointer)])^))^ = opCodeType(ocIncTry);
-    except
-      PEvalBool(@Stack[StackPos - SizeOf(Pointer)])^ := False;
-    end;
+    Check := PtrUInt(CodeBase) + PtrUInt(PCodePos(@Stack[StackPos - SizeOf(Pointer)])^);
+    PEvalBool(@Stack[StackPos - SizeOf(Pointer)])^ := (Check >= PtrUInt(CodeBase)) and (Check < PtrUInt(CodeUpper)) and (opCodeTypeP(Check)^ = opCodeType(ocIncTry));
     Dec(StackPos, SizeOf(Pointer) - SizeOf(EvalBool));
     Inc(Code, ocSize);
   end;
@@ -550,6 +550,7 @@ var
 
 begin
   CodeBase := Code;
+  CodeUpper := PByte(PtrUInt(CodeBase) + CodeLen * SizeOf(Byte));
   SetLength(Stack, StackSize);
   SetLength(TryStack, TryStackSize);
   SetLength(CallStack, CallStackSize);
@@ -581,12 +582,12 @@ begin
   end;
 end;
 
-procedure RunCode(Code: PByte; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0);
+procedure RunCode(Code: PByte; CodeLen: Integer; InitialVarStack: TByteArray; InitialJump: TCodePos);
 var
   DoContinue: TInitBool;
 begin
   DoContinue := bTrue;
-  RunCode(Code, DoContinue, InitialVarStack, InitialJump);
+  RunCode(Code, CodeLen, DoContinue, InitialVarStack, InitialJump);
 end;
 
 end.
