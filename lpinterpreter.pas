@@ -22,6 +22,7 @@ type
   opCode = (
     ocNone,
     ocIsInternal,                                              //IsInternal
+    ocGetExceptionMessage,                                     //GetExceptionMessage
     ocInitStackLen,                                            //InitStackLen TStackOffset
     ocInitVarLen,                                              //InitVarLen TStackOffset
     ocInitStack,                                               //InitStack TStackOffset
@@ -140,6 +141,7 @@ var
   TryStack: array of record
     Jmp: PByte;
     JmpFinally: PByte;
+    ExceptionMessage: String;
   end;
   TryStackPos: UInt32;
   InJump: TInJump;
@@ -222,6 +224,8 @@ var
     begin
       Dec(TryStackPos);
       Code := TryStack[TryStackPos].Jmp;
+      if InJump.JumpException.Obj <> nil then
+        TryStack[TryStackPos].ExceptionMessage := InJump.JumpException.Obj.Message;
     end
     else
       raise InJump.JumpException.Obj;
@@ -265,6 +269,13 @@ var
     Check := PtrUInt(CodeBase) + PtrUInt(PCodePos(@Stack[StackPos - SizeOf(Pointer)])^);
     PEvalBool(@Stack[StackPos - SizeOf(Pointer)])^ := (Check >= PtrUInt(CodeBase)) and (Check < PtrUInt(CodeUpper)) and (opCodeTypeP(Check)^ = opCodeType(ocIncTry));
     Dec(StackPos, SizeOf(Pointer) - SizeOf(EvalBool));
+    Inc(Code, ocSize);
+  end;
+
+  procedure DoGetExceptionMessage; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    PShortString(@Stack[StackPos])^ := TryStack[TryStackPos].ExceptionMessage;
+    Inc(StackPos, SizeOf(ShortString));
     Inc(Code, ocSize);
   end;
 
@@ -428,6 +439,8 @@ var
 
   procedure DoEndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
+    TryStack[TryStackPos].ExceptionMessage := '';
+
     if (InJump.JumpException.Obj <> nil) then
       HandleException()
     else if (InJump.JumpSafe <> nil) then

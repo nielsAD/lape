@@ -72,6 +72,13 @@ var
     Inc(Code, ocSize);
   end;
 
+  procedure DoGetExceptionMessage; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    _WriteLn('GetExceptionMessage');
+    _WriteLn('IncStack %d', [SizeOf(ShortString)]);
+    Inc(Code, ocSize);
+  end;
+
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('InitStackLen %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);

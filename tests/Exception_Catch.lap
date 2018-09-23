@@ -1,0 +1,21 @@
+procedure Test;
+begin
+  raise 'Exception 1';
+end;
+
+begin
+  try
+    try
+      Test();
+    except
+      WriteLn GetExceptionMessage();
+    end;
+  
+    raise 'Exception 2';
+  except
+    WriteLn GetExceptionMessage();
+  end;
+  
+  if GetExceptionMessage() = '' then
+    WriteLn 'No Exception';
+end;
