@@ -1,3 +1,2 @@
 Exception 1
 Exception 2
-No Exception

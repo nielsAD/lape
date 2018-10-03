@@ -15,7 +15,4 @@ begin
   except
     WriteLn GetExceptionMessage();
   end;
-  
-  if GetExceptionMessage() = '' then
-    WriteLn 'No Exception';
 end;

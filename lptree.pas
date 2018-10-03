@@ -2644,8 +2644,31 @@ begin
 end;
 
 function TLapeTree_InternalMethod_GetExceptionMessage.Compile(var Offset: Integer): TResVar;
+
+  function InTry: Boolean;
+  var
+    Node: TLapeTree_Base;
+  begin
+    Node := Self;
+
+    while (Node.Parent <> nil) do
+    begin
+      if (Node.Parent is TLapeTree_Try) then
+        with Node.Parent as TLapeTree_Try do
+          if (Node = ExceptBody) or (Node = FinallyBody) then
+            Exit(True);
+
+      Node := Node.Parent;
+    end;
+
+    Exit(False);
+  end;
+
 begin
   Result := NullResVar;
+
+  if (not InTry()) then
+    LapeException(lpeOutsideExceptionBlock, _DocPos);
 
   FCompiler.Emitter._GetExceptionMessage(Offset, @_DocPos);
 
