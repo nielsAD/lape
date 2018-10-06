@@ -216,6 +216,11 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+   TLapeTree_InternalMethod_GetExceptionMessage = class(TLapeTree_InternalMethod)
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_InternalMethod_Break = class(TLapeTree_InternalMethod)
   public
     function Compile(var Offset: Integer): TResVar; override;
@@ -2614,6 +2619,59 @@ begin
   Param.Spill(1);
 
   FCompiler.Emitter._IsInternal(Offset, @_DocPos);
+  Result.VarPos.MemPos := mpStack;
+  Result.VarType := resType();
+
+  if (FDest.VarPos.MemPos = mpVar) and ((not FDest.HasType()) or FDest.VarType.Equals(Result.VarType)) then
+  begin
+    if (not FDest.HasType()) then
+    begin
+      Dest := _ResVar.New(Compiler.getTempVar(Result.VarType));
+      Dest.isConstant := True;
+    end;
+
+    FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
+    Result := FDest;
+  end
+  else
+    Dest := NullResVar;
+end;
+
+constructor TLapeTree_InternalMethod_GetExceptionMessage.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FResType := ACompiler.getBaseType(ltShortString);
+end;
+
+function TLapeTree_InternalMethod_GetExceptionMessage.Compile(var Offset: Integer): TResVar;
+
+  function InTry: Boolean;
+  var
+    Node: TLapeTree_Base;
+  begin
+    Node := Self;
+
+    while (Node.Parent <> nil) do
+    begin
+      if (Node.Parent is TLapeTree_Try) then
+        with Node.Parent as TLapeTree_Try do
+          if (Node = ExceptBody) or (Node = FinallyBody) then
+            Exit(True);
+
+      Node := Node.Parent;
+    end;
+
+    Exit(False);
+  end;
+
+begin
+  Result := NullResVar;
+
+  if (not InTry()) then
+    LapeException(lpeOutsideExceptionBlock, _DocPos);
+
+  FCompiler.Emitter._GetExceptionMessage(Offset, @_DocPos);
+
   Result.VarPos.MemPos := mpStack;
   Result.VarType := resType();
 
