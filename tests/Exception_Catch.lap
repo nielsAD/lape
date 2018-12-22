@@ -10,8 +10,18 @@ begin
     except
       WriteLn GetExceptionMessage();
     end;
-  
+
     raise 'Exception 2';
+  except
+    WriteLn GetExceptionMessage();
+  end;
+
+  try
+    try
+      raise 'Exception 3';
+    except
+      raise;
+    end;
   except
     WriteLn GetExceptionMessage();
   end;

@@ -113,6 +113,8 @@ type
     function _IsInternal(Pos: PDocPos = nil): Integer; overload;
     function _GetExceptionMessage(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _GetExceptionMessage(Pos: PDocPos = nil): Integer; overload;
+    function _ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _ReRaiseException(Pos: PDocPos = nil): Integer; overload;
     function _InitStackLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _InitStackLen(Len: TStackOffset; Pos: PDocPos = nil): Integer; overload;
     function _InitVarLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
@@ -501,6 +503,11 @@ begin
   IncStack(SizeOf(ShortString));
 end;
 
+function TLapeCodeEmitterBase._ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer;
+begin
+  Result := _op(ocReRaiseException, Offset, Pos);
+end;
+
 function TLapeCodeEmitterBase._InitStackLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocInitStackLen, Offset, Pos);
@@ -650,6 +657,9 @@ function TLapeCodeEmitterBase._IsInternal(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _IsInternal(o, Pos); end;
 function TLapeCodeEmitterBase._GetExceptionMessage(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _GetExceptionMessage(o, Pos); end;
+function TLapeCodeEmitterBase._ReRaiseException(Pos: PDocPos): Integer;
+  var o: Integer; begin o := -1; Result := _ReRaiseException(o, Pos); end;
+
 function TLapeCodeEmitterBase._InitStackLen(Len: TStackOffset; Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _InitStackLen(Len, o, Pos); end;
 function TLapeCodeEmitterBase._InitVarLen(Len: TStackOffset; Pos: PDocPos = nil): Integer;

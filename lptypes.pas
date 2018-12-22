@@ -658,6 +658,8 @@ procedure _Insert16(Arr: PUInt16; var Index: Integer);
 procedure _Insert32(Arr: PUInt32; var Index: Integer);
 procedure _Insert64(Arr: PUInt64; var Index: Integer);
 
+operator = (Left, Right: TDocPos): Boolean;
+
 {$IFDEF Lape_TrackObjects}
 var
   lpgCounter: Integer;
@@ -1084,6 +1086,11 @@ begin
     Move(Arr[Index], Arr[Index + 1], (Hi - Index) * SizeOf(UInt64));
     Arr[Index] := Item;
   end;
+end;
+
+operator = (Left, Right: TDocPos): Boolean;
+begin
+  Result := (Left.Line = Right.Line) and (Left.Col = Right.Col) and (Left.FileName = Right.FileName);
 end;
 
 function TLapeBaseClass._AddRef: Integer; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};

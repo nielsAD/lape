@@ -2699,7 +2699,7 @@ begin
               begin
                 if (Method is TLapeTree_InternalMethod) and
                    TLapeTree_InternalMethod(Method).ForceParam and
-                   (not (Tokenizer.Tok in ReturnOn))
+                   (Tokenizer.Tok <> tk_sym_SemiColon) and (not (Tokenizer.Tok in ReturnOn))
                 then
                   Method.addParam(EnsureExpression(ParseExpression(ReturnOn, False)));
 

@@ -42,6 +42,7 @@ type
     ocDecTry,                                                  //DecTry
     ocEndTry,                                                  //EndTry
     ocCatchException,                                          //CatchException
+    ocReRaiseException,                                        //ReRaiseException
 
     ocDecCall,                                                 //DecCall
     ocDecCall_EndTry,                                          //DecCall_EndTry
@@ -142,6 +143,7 @@ var
     Jmp: PByte;
     JmpFinally: PByte;
     ExceptionMessage: String;
+    ExceptionLocation: TDocPos;
   end;
   TryStackPos: UInt32;
   InJump: TInJump;
@@ -224,8 +226,17 @@ var
     begin
       Dec(TryStackPos);
       Code := TryStack[TryStackPos].Jmp;
-      if InJump.JumpException.Obj <> nil then
-        TryStack[TryStackPos].ExceptionMessage := InJump.JumpException.Obj.Message;
+
+      if (InJump.JumpException.Obj <> nil) then
+      begin
+        if (InJump.JumpException.Obj is lpException) then
+          TryStack[TryStackPos].ExceptionMessage := lpException(InJump.JumpException.Obj).Error
+        else
+          TryStack[TryStackPos].ExceptionMessage := InJump.JumpException.Obj.Message;
+
+        if (InJump.JumpException.Pos <> nil) then
+          TryStack[TryStackPos].ExceptionLocation := InJump.JumpException.Pos^;
+      end;
     end
     else
       raise InJump.JumpException.Obj;
@@ -277,6 +288,13 @@ var
     PShortString(@Stack[StackPos])^ := TryStack[TryStackPos].ExceptionMessage;
     Inc(StackPos, SizeOf(ShortString));
     Inc(Code, ocSize);
+  end;
+
+  procedure DoReRaiseException; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    Inc(Code, ocSize);
+    with TryStack[TryStackPos] do
+      LapeException(ExceptionMessage, ExceptionLocation);
   end;
 
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -440,6 +458,7 @@ var
   procedure DoEndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     TryStack[TryStackPos].ExceptionMessage := '';
+    TryStack[TryStackPos].ExceptionLocation := NullDocPos;
 
     if (InJump.JumpException.Obj <> nil) then
       HandleException()
@@ -588,10 +607,15 @@ begin
     DaLoop();
   except
     on E: Exception do
+    begin
+      if (E is lpException) and (lpException(E).DocPos <> NullDocPos) then
+        LapeExceptionFmt(lpeRuntime, [lpException(E).Error], lpException(E).DocPos)
+      else
       if (E = InJump.JumpException.Obj) and (InJump.JumpException.Pos <> nil) then
         LapeExceptionFmt(lpeRuntime, [E.Message], InJump.JumpException.Pos^)
       else
         LapeExceptionFmt(lpeRuntime, [E.Message]);
+    end;
   end;
 end;
 

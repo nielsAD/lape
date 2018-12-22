@@ -379,6 +379,7 @@ type
   TLapeTree_InternalMethod_Raise = class(TLapeTree_InternalMethod)
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function Compile(var Offset: Integer): TResVar; override;
   end;
 
   TLapeTree_Callback = class;
@@ -4228,8 +4229,56 @@ end;
 
 constructor TLapeTree_InternalMethod_Raise.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  inherited Create('RaiseException', ACompiler, ADocPos);
+  inherited;
   FForceParam := True;
+end;
+
+function TLapeTree_InternalMethod_Raise.Compile(var Offset: Integer): TResVar;
+
+  function InExceptBlock: Boolean;
+  var
+    Node: TLapeTree_Base;
+  begin
+    Node := Self;
+
+    while (Node.Parent <> nil) do
+    begin
+      if (Node.Parent is TLapeTree_Try) then
+        with Node.Parent as TLapeTree_Try do
+          if (Node = ExceptBody) then
+            Exit(True);
+
+      Node := Node.Parent;
+    end;
+
+    Exit(False);
+  end;
+
+var
+  Invoke: TLapeTree_Invoke;
+begin
+  Result := NullResVar;
+
+  if (FParams.Count = 0) then
+  begin
+    if (not InExceptBlock()) then
+      LapeException(lpeOutsideExceptBlock, _DocPos);
+
+    FCompiler.Emitter._ReRaiseException(Offset, @_DocPos);
+  end else
+  begin
+    if (FParams.Count <> 1) then
+      LapeException(lpeTooMuchParameters, _DocPos);
+
+    Invoke := TLapeTree_Invoke.Create('RaiseException', Self);
+    try
+      Invoke.addParam(FParams[0]);
+
+      Result := Invoke.Compile(Offset);
+    finally
+      Invoke.Free();
+    end;
+  end;
 end;
 
 constructor TLapeTree_Callback.Create(ACompiler: TLapeCompilerBase; ACallback: TLapeTreeCallback; AData: Pointer = nil; ADocPos: PDocPos = nil);
