@@ -26,6 +26,7 @@ type
   TLapeFuncForwards = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeGlobalVar>;
   TLapeTree_NodeStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeTree_ExprBase>;
   TLapeTree_OpStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeTree_Operator>;
+  TLapeDefineMap =  {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<lpString>;
 
   TLapeCompiler = class;
   TLapeHandleDirective = function(Sender: TLapeCompiler; Directive, Argument: lpString; InPeek, InIgnore: Boolean): Boolean of object;
@@ -48,7 +49,7 @@ type
     TokStates: array of Pointer;
     Options: ECompilerOptionsSet;
     Options_PackRecords: UInt8;
-    Defines: string;
+    Defines: TLapeDefineMap.TTArrays;
     Conditionals: TLapeConditionalStack.TTArray;
   end;
 
@@ -82,8 +83,8 @@ type
     FImporting: Pointer;
 
     FIncludes: TStringList;
-    FBaseDefines: TStringList;
-    FDefines: TStringList;
+    FBaseDefines: TLapeDefineMap;
+    FDefines: TLapeDefineMap;
     FConditionalStack: TLapeConditionalStack;
 
     FOnHandleDirective: TLapeHandleDirective;
@@ -96,7 +97,7 @@ type
 
     function getImporting: Boolean; virtual;
     procedure setImporting(Import: Boolean); virtual;
-    procedure setBaseDefines(Defines: TStringList); virtual;
+    procedure setBaseDefines(Defines: TLapeDefineMap); virtual;
     function getTokenizer: TLapeTokenizerBase; virtual;
     procedure setTokenizer(ATokenizer: TLapeTokenizerBase); virtual;
     procedure pushTokenizer(ATokenizer: TLapeTokenizerBase); virtual;
@@ -246,7 +247,7 @@ type
     property Importing: Boolean read getImporting write setImporting;
   published
     property Tokenizer: TLapeTokenizerBase read getTokenizer write setTokenizer;
-    property Defines: TStringList read FDefines write setBaseDefines;
+    property Defines: TLapeDefineMap read FDefines;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
     property OnHandleExternal: TLapeHandleExternal read FOnHandleExternal write FOnHandleExternal;
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
@@ -358,7 +359,7 @@ begin
 
   if (FDefines <> nil) then
     if (FBaseDefines <> nil) then
-      FDefines.Assign(FBaseDefines)
+      FDefines.ImportFromArrays(FBaseDefines.ExportToArrays())
     else
       FDefines.Clear();
 end;
@@ -376,10 +377,10 @@ begin
     EndImporting();
 end;
 
-procedure TLapeCompiler.setBaseDefines(Defines: TStringList);
+procedure TLapeCompiler.setBaseDefines(Defines: TLapeDefineMap);
 begin
   Assert(FBaseDefines <> nil);
-  FBaseDefines.Assign(Defines);
+  FBaseDefines.ImportFromArrays(Defines.ExportToArrays());
   Reset();
 end;
 
@@ -889,7 +890,7 @@ var
 
   function HasDefineOrOption(Def: lpString): Boolean;
   begin
-    if (FDefines.IndexOfName(string(Def)) > -1) then
+    if (FDefines.IndexOfKey(string(Def)) > -1) then
       Result := True
     else
     begin
@@ -941,29 +942,29 @@ var
     end;
   end;
 
-  procedure RemoveDefine(l: TStringList; s: string);
+  procedure RemoveDefine(s: string);
   var
     i: Integer;
   begin
-    i := l.IndexOfName(s);
-    if i > -1 then l.Delete(i);
+    i := FDefines.IndexOfKey(s);
+    if i > -1 then FDefines.Delete(i);
   end;
 
-  procedure AddDefine(list:TStringList; def:string);
+  procedure AddDefine(def:string);
   var
     i:Int32;
     name,value:string;
   begin
     i := System.Pos(':=', def);
     if i <= 0 then
-      FDefines.Values[Trim(def)] := ''
+      FDefines.Items[Trim(def)] := ''
     else
     begin
       name  := Trim(Copy(def, 1, i-1));
       if name = '' then
         LapeException(lpeInvalidEvaluation, Sender.DocPos);
       value := Trim(Copy(def, i+2, Length(def) - i));
-      FDefines.Values[name] := value;
+      FDefines[name] := value;
     end;
   end;
 
@@ -1014,9 +1015,9 @@ begin
   else if InIgnore() then
     {nothing}
   else if (Directive = 'define') then
-    AddDefine(FDefines, string(Trim(Argument)))
+    AddDefine(string(Trim(Argument)))
   else if (Directive = 'undef') then
-    RemoveDefine(FDefines, string(Trim(Argument)))
+    RemoveDefine(string(Trim(Argument)))
   else if (Directive = 'macro') then
   begin
     if (LowerCase(Argument) = 'current_file') and (Sender is TLapeTokenizerFile) then
@@ -1026,7 +1027,7 @@ begin
       IncludeFile := #39 + ExtractFileDir(TLapeTokenizerFile(Sender).FileName) + #39
     else
     begin
-      IncludeFile := FDefines.Values[string(Trim(Argument))];
+      IncludeFile := FDefines[string(Trim(Argument))];
       if (IncludeFile = '') then
         LapeExceptionFmt(lpeUnknownDeclaration, [string(Trim(Argument))], Sender.DocPos);
     end;
@@ -3192,18 +3193,14 @@ begin
   FIncludes := TStringList.Create();
   FIncludes.Duplicates := dupIgnore;
   FIncludes.CaseSensitive := LapeSystemCaseSensitive;
-  FDefines := TStringList.Create();
-  FDefines.Duplicates := dupIgnore;
-  FDefines.CaseSensitive := LapeCaseSensitive;
+  FDefines := TLapeDefineMap.Create('', dupAccept, False);
+  FBaseDefines := TLapeDefineMap.Create('', dupAccept, False);
   FConditionalStack := TLapeConditionalStack.Create(0);
 
   FOnHandleDirective := nil;
   FOnHandleExternal := nil;
   FOnFindFile := nil;
   FAfterParsing := TLapeCompilerNotification.Create();
-
-  FBaseDefines := TStringList.Create();
-  FBaseDefines.CaseSensitive := LapeCaseSensitive;
 
   FTreeMethodMap := TLapeTreeMethodMap.Create(nil, dupError, True);
   FInternalMethodMap := TLapeInternalMethodMap.Create(nil, dupError, True);
@@ -3296,7 +3293,7 @@ begin
 
     Options := FOptions;
     Options_PackRecords := FOptions_PackRecords;
-    Defines := FDefines.Text;
+    Defines := FDefines.ExportToArrays();
     Conditionals := FConditionalStack.ExportToArray();
   end;
 end;
@@ -3324,7 +3321,7 @@ begin
 
     FOptions := Options;
     FOptions_PackRecords := Options_PackRecords;
-    FDefines.Text := Defines;
+    FDefines.ImportFromArrays(Defines);
     FConditionalStack.ImportFromArray(Conditionals);
   end;
   if DoFreeState then
@@ -3375,7 +3372,7 @@ begin
     FStackInfo := nil;
     FOptions := FBaseOptions;
     FOptions_PackRecords := FBaseOptions_PackRecords;
-    FDefines.Text := FBaseDefines.Text;
+    FDefines.ImportFromArrays(FBaseDefines.ExportToArrays());
   end;
 
   if (FStackInfo = nil) then
@@ -3451,7 +3448,7 @@ begin
 
   try
     if (FDefines <> nil) and (FBaseDefines <> nil) then
-      FDefines.Assign(FBaseDefines);
+      FDefines.ImportFromArrays(FBaseDefines.ExportToArrays());
 
     if (Next() = tk_kw_Program) then
     begin
@@ -3689,17 +3686,17 @@ end;
 
 function TLapeCompiler.hasDefine(Define: String; Value: String): Boolean;
 begin
-  Result := (FDefines.IndexOfName(Define) >= 0) and (FDefines.Values[Define] = Value);
+  Result := (FDefines.IndexOfKey(Define) >= 0) and (FDefines[Define] = Value);
 end;
 
 function TLapeCompiler.hasBaseDefine(Define: String; Value: String): Boolean;
 begin
-  Result := (FBaseDefines.IndexOfName(Define) >= 0) and (FBaseDefines.Values[Define] = Value);
+  Result := (FBaseDefines.IndexOfKey(Define) >= 0) and (FBaseDefines[Define] = Value);
 end;
 
 procedure TLapeCompiler.addBaseDefine(Define: lpString);
 begin
-  FBaseDefines.Values[string(Define)] := '';
+  FBaseDefines[string(Define)] := '';
 end;
 
 function TLapeCompiler.addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration;
