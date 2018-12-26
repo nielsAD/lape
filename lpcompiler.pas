@@ -2699,7 +2699,7 @@ begin
               begin
                 if (Method is TLapeTree_InternalMethod) and
                    TLapeTree_InternalMethod(Method).ForceParam and
-                   (Tokenizer.Tok <> tk_sym_SemiColon) and (not (Tokenizer.Tok in ReturnOn))
+                    (not (Tokenizer.Tok in ReturnOn))
                 then
                   Method.addParam(EnsureExpression(ParseExpression(ReturnOn, False)));
 
@@ -2868,7 +2868,7 @@ begin
     end
   else if (not (Tokenizer.Tok in ParserToken_BlockEnd)) then
   begin
-    Result := ParseExpression([], False);
+    Result := ParseExpression([tk_sym_SemiColon], False);
     try
       ParseExpressionEnd(ExprEnd);
     except

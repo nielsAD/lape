@@ -24,6 +24,8 @@ type
     property DocPos: TDocPos read FDocPos;
     property Error: lpString read FError;
 
+    function hasDocPos: Boolean;
+
     constructor Create(AMessage: lpString; ADocPos: TDocPos);
   end;
 
@@ -131,6 +133,11 @@ implementation
 uses
   AnsiStrings;
 {$ENDIF}
+
+function lpException.hasDocPos: Boolean;
+begin
+  Result := (DocPos.Col <> NullDocPos.Col) and (DocPos.Line <> NullDocPos.Line);
+end;
 
 constructor lpException.Create(AMessage: lpString; ADocPos: TDocPos);
 begin

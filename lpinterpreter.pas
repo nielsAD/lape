@@ -608,7 +608,7 @@ begin
   except
     on E: Exception do
     begin
-      if (E is lpException) and (lpException(E).DocPos <> NullDocPos) then
+      if (E is lpException) and lpException(E).hasDocPos() then
         LapeExceptionFmt(lpeRuntime, [lpException(E).Error], lpException(E).DocPos)
       else
       if (E = InJump.JumpException.Obj) and (InJump.JumpException.Pos <> nil) then

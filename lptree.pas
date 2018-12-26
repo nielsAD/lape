@@ -2662,7 +2662,7 @@ function TLapeTree_InternalMethod_GetExceptionMessage.Compile(var Offset: Intege
       Node := Node.Parent;
     end;
 
-    Exit(False);
+    Result := False;
   end;
 
 begin
@@ -4251,7 +4251,7 @@ function TLapeTree_InternalMethod_Raise.Compile(var Offset: Integer): TResVar;
       Node := Node.Parent;
     end;
 
-    Exit(False);
+    Result := False;
   end;
 
 var
