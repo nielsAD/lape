@@ -1,7 +1,12 @@
+{$X+}
+
 procedure Test;
 begin
   raise 'Exception 1';
 end;
+
+var
+  Message: String;
 
 begin
   try
@@ -11,16 +16,19 @@ begin
       WriteLn GetExceptionMessage();
     end;
 
-    raise 'Exception 2';
+    raise('Exception 2');
   except
     WriteLn GetExceptionMessage();
   end;
 
   try
     try
-      raise 'Exception 3';
+      raise Message := 'Exception 3';
     except
-      raise;
+      if True then
+        raise
+      else
+        raise();
     end;
   except
     WriteLn GetExceptionMessage();
