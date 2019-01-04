@@ -1,0 +1,18 @@
+type
+  TPoint = record X, Y: Int32; end;
+  TBox = record X1, Y1, X2, Y2: Int32; end;
+
+procedure Test(p: TPoint); overload;
+begin
+  WriteLn('TPoint');
+end;
+
+procedure Test(b: TBox); overload;
+begin
+  WriteLn('TBox');
+end;
+
+begin
+  Test([1, 2, 3, 4]);
+  Test([1, 3]);
+end;

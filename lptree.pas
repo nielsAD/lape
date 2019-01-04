@@ -1662,9 +1662,19 @@ begin
 end;
 
 function TLapeTree_Invoke.getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBase;
+
+  procedure CastOpenArrays(Method: TLapeType_Method);
+  var
+    i: Int32;
+  begin
+    for i := 0 to FParams.Count - 1 do
+      if FParams[i] is TLapeTree_OpenArray then
+        FParams[i] := FParams[i].setExpectedType(Method.Params[i].VarType) as TLapeTree_ExprBase;
+  end;
+
 var
   Typ: TLapeType;
-  Index: Integer;
+  MethodIndex, i: Integer;
 begin
   if (FRealIdent = nil) and (not isEmpty(FExpr)) then
   begin
@@ -1672,12 +1682,26 @@ begin
 
     if (not (FExpr is TLapeTree_VarType)) and (Typ is TLapeType_OverloadedMethod) then
     begin
-      Index := TLapeType_OverloadedMethod(Typ).getMethodIndex(getParamTypes(), ExpectType);
-      if (Index >= 0) then
+      with TLapeType_OverloadedMethod(Typ) do
+      begin
+        MethodIndex := getMethodIndex(getParamTypes(), ExpectType);
+
+        if (MethodIndex = -1) then
+          for i := 0 to ManagedDeclarations.Count - 1 do
+          begin
+            CastOpenArrays(TLapeGlobalVar(ManagedDeclarations[i]).VarType as TLapeType_Method);
+
+            MethodIndex := getMethodIndex(getParamTypes(), ExpectType);
+            if (MethodIndex >= 0) then
+              Break;
+          end;
+      end;
+
+      if (MethodIndex >= 0) then
       begin
         Result := TLapeTree_Operator.Create(op_Index, FExpr);
         TLapeTree_Operator(Result).Left := FExpr;
-        TLapeTree_Operator(Result).Right := TLapeTree_Integer.Create(Index, Result);
+        TLapeTree_Operator(Result).Right := TLapeTree_Integer.Create(MethodIndex, Result);
         TLapeTree_Operator(Result).FInvoking := bTrue;
 
         FRealIdent := TLapeTree_ExprBase(Result.FoldConstants(False));
