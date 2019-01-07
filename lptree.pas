@@ -1667,6 +1667,9 @@ function TLapeTree_Invoke.getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBas
   var
     i: Int32;
   begin
+    if (FParams.Count <> Method.Params.Count) then
+      Exit;
+
     for i := 0 to FParams.Count - 1 do
       if FParams[i] is TLapeTree_OpenArray then
         FParams[i] := FParams[i].setExpectedType(Method.Params[i].VarType) as TLapeTree_ExprBase;
