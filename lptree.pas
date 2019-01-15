@@ -1114,9 +1114,22 @@ begin
 end;
 
 function TLapeTree_OpenArray.addValue(Val: TLapeTree_Base): Integer;
+var
+  Op: TLapeTree_Operator;
 begin
   if (Val <> nil) then
   begin
+    Op := nil;
+
+    if (Val is TLapeTree_Operator) and (TLapeTree_Operator(Val).resType() = nil) then
+      Op := TLapeTree_Operator(Val)
+    else
+    if (Val is TLapeTree_Invoke) and (TLapeTree_Invoke(Val).resType() = nil) and (TLapeTree_Invoke(Val).Expr is TLapeTree_Operator) then
+      Op := TLapeTree_Operator(TLapeTree_Invoke(Val).Expr);
+
+    if (Op <> nil) and (Op.Right <> nil) and (Op.Right is TLapeTree_Field) and ValidFieldName(TLapeTree_Field(Op.Right).GlobalVar) then
+      LapeExceptionFmt(lpeUnknownDeclaration, [PlpString(TLapeTree_Field(Op.Right).GlobalVar.Ptr)^], Val.DocPos);
+
     Result := FValues.Add(Val);
     Val.Parent := Self;
     ClearCache();
