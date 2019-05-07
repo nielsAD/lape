@@ -1,6 +1,20 @@
 type
   TPoint = record X, Y: Int32; end;
+  TPointArray = array of TPoint;
   TBox = record X1, Y1, X2, Y2: Int32; end;
+
+  TTestRecord = record
+    Nested: record
+      P: TPoint;
+      B: TBox;
+    end;
+    A: TPointArray;
+  end;
+
+function Box(X1, Y1, X2, Y2: Int32): TBox;
+begin
+  Result := [X1, Y1, X2, Y2];
+end;
 
 procedure Test(p: TPoint); overload;
 begin
@@ -12,7 +26,19 @@ begin
   WriteLn('TBox');
 end;
 
+procedure Test(R: TTestRecord); overload;
+begin
+  Writeln('TTestRecord');
+end;
+
+procedure Test(A: TPointArray); overload;
+begin
+  Writeln('TPointArray');
+end;
+
 begin
   Test([1, 2, 3, 4]);
-  Test([1, 3]);
+  Test([1, 2]);
+  Test([[[1, 2], Box(1, 2, 3, 4)], [[1, 1], [2, 2]]]);
+  Test([[1, 1], [2, 2], [3, 3]]);
 end;

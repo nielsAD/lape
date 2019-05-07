@@ -1,2 +1,4 @@
 TBox
 TPoint
+TTestRecord
+TPointArray
