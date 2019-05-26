@@ -256,10 +256,10 @@ function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: 
 var
   i: Integer;
 begin
-  if (Right <> nil) and (Right is TLapeType_Record) and  (TLapeType_Record(Right).FieldMap.Count = FFieldMap.Count) then
+  if (Right <> nil) and (Right is TLapeType_Record) and (TLapeType_Record(Right).FieldMap.Count >= FFieldMap.Count) then
     if (op = op_Assign) then
     begin
-      for i := 0 to FFieldMap.Count - 1 do
+      for i := 0 to Min(TLapeType_Record(Right).FieldMap.Count, FFieldMap.Count) - 1 do
         if (FFieldMap.Key[i] <> TLapeType_Record(Right).FieldMap.Key[i]) or
            (not FFieldMap.ItemsI[i].FieldType.CompatibleWith(TLapeType_Record(Right).FieldMap.ItemsI[i].FieldType))
         then
