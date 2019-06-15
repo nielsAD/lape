@@ -132,6 +132,7 @@ type
     function addValue(Val: TLapeTree_Base): Integer; virtual;
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; override;
 
+    function canCastTo(AType: TLapeType): Boolean;
     function canCast: Boolean; virtual;
     function isConstant: Boolean; override;
     function resType: TLapeType; override;
@@ -1150,6 +1151,47 @@ begin
     ToType := OldType;
 end;
 
+function TLapeTree_OpenArray.canCastTo(AType: TLapeType): Boolean;
+var
+  i: Int32;
+  CastTo: TLapeType;
+begin
+  Result := False;
+
+  if (AType is TLapeType_DynArray) then
+    CastTo := TLapeType_DynArray(AType).PType
+  else
+  if (AType is TLapeType_Set) then
+    CastTo := TLapeType_Set(AType).Range
+  else
+    CastTo := nil;
+
+  if (CastTo <> nil) or (AType is TLapeType_Record) then
+  begin
+    for i := 0 to FValues.Count - 1 do
+    begin
+      if isEmpty(FValues[i]) then
+        Continue;
+
+      if (AType is TLapeType_Record) then
+      begin
+        CastTo := TLapeType_Record(AType).FieldMap.ItemsI[i].FieldType;
+        if (CastTo = nil) then
+          Exit;
+      end;
+
+      if (FValues[i] is TLapeTree_OpenArray) and TLapeTree_OpenArray(FValues[i]).canCastTo(CastTo) then
+        Continue;
+      if (FValues[i] is TLapeTree_ExprBase) and CastTo.CompatibleWith(TLapeTree_ExprBase(FValues[i]).resType()) then
+        Continue;
+
+      Exit;
+    end;
+
+    Result := True;
+  end;
+end;
+
 function TLapeTree_OpenArray.canCast: Boolean;
 var
   i: Integer;
@@ -1667,9 +1709,37 @@ begin
 end;
 
 function TLapeTree_Invoke.getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBase;
+
+  function CastOpenArrays(Method: TLapeType_Method): Boolean;
+  var
+    i: Int32;
+  begin
+    Result := False;
+
+    if (FParams.Count = Method.Params.Count) then
+    begin
+      // Check if we can cast all open arrays to their respective parameter types.
+      for i := 0 to FParams.Count - 1 do
+        if FParams[i] is TLapeTree_OpenArray then
+        begin
+          Result := TLapeTree_OpenArray(FParams[i]).canCastTo(Method.Params[i].VarType);
+          if (not Result) then
+            Exit;
+        end;
+
+      // Open arrays can be casted. Perform the casting.
+      if Result then
+      begin
+        for i := 0 to FParams.Count - 1 do
+          if (FParams[i] is TLapeTree_OpenArray) then
+            FParams[i] := FParams[i].setExpectedType(Method.Params[i].VarType) as TLapeTree_ExprBase;
+      end;
+    end;
+  end;
+
 var
   Typ: TLapeType;
-  Index: Integer;
+  MethodIndex, i: Integer;
 begin
   if (FRealIdent = nil) and (not isEmpty(FExpr)) then
   begin
@@ -1677,12 +1747,28 @@ begin
 
     if (not (FExpr is TLapeTree_VarType)) and (Typ is TLapeType_OverloadedMethod) then
     begin
-      Index := TLapeType_OverloadedMethod(Typ).getMethodIndex(getParamTypes(), ExpectType);
-      if (Index >= 0) then
+      with TLapeType_OverloadedMethod(Typ) do
+      begin
+        MethodIndex := getMethodIndex(getParamTypes(), ExpectType);
+
+        // Didn't find a overload match. Let's test if we can cast open arrays to the parameters type.
+        if (MethodIndex = -1) then
+          for i := 0 to ManagedDeclarations.Count - 1 do
+          begin
+            if CastOpenArrays(TLapeGlobalVar(ManagedDeclarations[i]).VarType as TLapeType_Method) then
+            begin
+              MethodIndex := i;
+
+              Break;
+            end;
+          end;
+      end;
+
+      if (MethodIndex >= 0) then
       begin
         Result := TLapeTree_Operator.Create(op_Index, FExpr);
         TLapeTree_Operator(Result).Left := FExpr;
-        TLapeTree_Operator(Result).Right := TLapeTree_Integer.Create(Index, Result);
+        TLapeTree_Operator(Result).Right := TLapeTree_Integer.Create(MethodIndex, Result);
         TLapeTree_Operator(Result).FInvoking := bTrue;
 
         FRealIdent := TLapeTree_ExprBase(Result.FoldConstants(False));
