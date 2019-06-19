@@ -1,0 +1,11 @@
+type
+  TPoint = record
+    X, Y: Int32;
+  end;
+  TPointArray = array of TPoint;
+
+var
+  Arr: TPointArray;
+begin
+  Arr := Arr + [1, 2];
+end.

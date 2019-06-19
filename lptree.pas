@@ -4789,7 +4789,11 @@ begin
 
   if (FRight <> nil) then
   begin
-    FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
+    if (FOperatorType in [op_Plus, op_AssignPlus]) and (LeftVar.VarType is TLapeType_DynArray) then
+      FRight := FRight.setExpectedType(TLapeType_DynArray(LeftVar.VarType).PType) as TLapeTree_ExprBase
+    else
+      FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
+
     if (FOperatorType = op_Index) then
       FRight := FRight.setExpectedType(FCompiler.getBaseType(ltSizeInt)) as TLapeTree_ExprBase;
 
