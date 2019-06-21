@@ -1619,9 +1619,9 @@ begin
       with FValues[FInvalidCastIndex] as TLapeTree_ExprBase do
       begin
         if resType() <> nil then
-          LapeExceptionFmt(lpeInvalidOpenArrayIndex, [FInvalidCastIndex, resType().AsString], DocPos)
+          LapeExceptionFmt(lpeInvalidOpenArrayElement, [resType().AsString, FInvalidCastIndex], DocPos)
         else
-          LapeExceptionFmt(lpeUnknownOpenArrayIndex, [FInvalidCastIndex], DocPos);
+          LapeExceptionFmt(lpeUnknownDeclarationOpenArray, [FInvalidCastIndex], DocPos);
       end;
     end else
       LapeException(lpeInvalidEvaluation, DocPos);
