@@ -1020,11 +1020,11 @@ begin
     RemoveDefine(string(Trim(Argument)))
   else if (Directive = 'macro') then
   begin
-    if (LowerCase(Argument) = 'current_file') and (Sender is TLapeTokenizerFile) then
-      IncludeFile := #39 + TLapeTokenizerFile(Sender).FileName + #39
+    if (LowerCase(Argument) = 'current_file') and (Sender.FileName <> '') then
+      IncludeFile := #39 + Sender.FileName + #39
     else
-    if (LowerCase(Argument) = 'current_directory') and (Sender is TLapeTokenizerFile) then
-      IncludeFile := #39 + ExtractFileDir(TLapeTokenizerFile(Sender).FileName) + #39
+    if (LowerCase(Argument) = 'current_directory') and (Sender.FileName <> '') then
+      IncludeFile := #39 + ExtractFileDir(Sender.FileName) + #39
     else
     begin
       IncludeFile := FDefines[string(Trim(Argument))];
