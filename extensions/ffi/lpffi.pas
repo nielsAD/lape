@@ -126,10 +126,29 @@ end;
 
 procedure _Natify(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
+  function FindClosure(p: TCodePos; var c: TFFINatifyClosures; out o: Pointer): Boolean;
+  var
+    i: Int32;
+  begin
+    Result := False;
+
+    for i := 0 to High(c) do
+      if (c[i].UserData._CodePos = p) then
+      begin
+        o := c[i].Func;
+
+        Result := True;
+        Break;
+      end;
+  end;
+
   procedure Natify(var p: TCodePos; var c: TFFINatifyClosures; i: SizeInt; out Result: Pointer);
   var
     b, r: TExportClosure;
   begin
+    if FindClosure(p, c, Result) then
+      Exit;
+
     Assert(i >= 0);
     Assert(i <= Length(c));
     b := c[i];
@@ -153,10 +172,30 @@ end;
 
 procedure _NatifyMethod(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
+  function FindClosure(m: TMethod; var c: TFFINatifyClosures; out o: TMethod): Boolean;
+  var
+    i: Int32;
+  begin
+    Result := False;
+
+    for i := 0 to High(c) do
+      if (c[i].UserData._CodePos = TCodePos(m.Code)) then
+      begin
+        o.Code := c[i].Func;
+        o.Data := m.Data;
+
+        Result := True;
+        Break;
+      end;
+  end;
+
   procedure Natify(var m: TMethod; var c: TFFINatifyClosures; i: SizeInt; out Result: TMethod);
   var
     b, r: TExportClosure;
   begin
+    if FindClosure(m, c, Result) then
+      Exit;
+
     Assert(i >= 0);
     Assert(i <= Length(c));
     b := c[i];
@@ -181,10 +220,29 @@ end;
 
 procedure _Lapify(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
+  function FindClosure(p: Pointer; var c: TFFILapifyClosures; out o: Pointer): Boolean;
+  var
+    i: Int32;
+  begin
+    Result := False;
+
+    for i := 0 to High(c) do
+      if (c[i].UserData.NativeFunc = p) then
+      begin
+        o := c[i].Func;
+
+        Result := True;
+        Break;
+      end;
+  end;
+
   procedure Lapify(p: Pointer; var c: TFFILapifyClosures; i: SizeInt; out Result: Pointer);
   var
     b, r: TImportClosure;
   begin
+    if FindClosure(p, c, Result) then
+      Exit;
+
     Assert(i >= 0);
     Assert(i <= Length(c));
     b := c[i];
@@ -208,10 +266,30 @@ end;
 
 procedure _LapifyMethod(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
+  function FindClosure(m: TMethod; var c: TFFILapifyClosures; out o: TMethod): Boolean;
+  var
+    i: Int32;
+  begin
+    Result := False;
+
+    for i := 0 to High(c) do
+      if (c[i].UserData.NativeFunc = m.Code) then
+      begin
+        o.Code := c[i].Func;
+        o.Data := m.Data;
+
+        Result := True;
+        Break;
+      end;
+  end;
+
   procedure Lapify(m: TMethod; var c: TFFILapifyClosures; i: SizeInt; out Result: TMethod);
   var
     b, r: TImportClosure;
   begin
+    if FindClosure(m, c, Result) then
+      Exit;
+
     Assert(i >= 0);
     Assert(i <= Length(c));
     b := c[i];
