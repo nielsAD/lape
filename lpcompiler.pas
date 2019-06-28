@@ -2697,7 +2697,7 @@ begin
                 _LastNode := _Var
               else
               begin
-                if (Method is TLapeTree_InternalMethod) and (TLapeTree_InternalMethod(Method).ForceParam and (Tokenizer.Tok in ParserToken_Types + [tk_Identifier])) then
+                if (Method is TLapeTree_InternalMethod) and (TLapeTree_InternalMethod(Method).ForceParam and (not (Tokenizer.Tok in ReturnOn))) then
                   Method.addParam(EnsureExpression(ParseExpression(ReturnOn, False)));
 
                 VarStack.Push(Method);
@@ -2865,7 +2865,7 @@ begin
     end
   else if (not (Tokenizer.Tok in ParserToken_BlockEnd)) then
   begin
-    Result := ParseExpression([], False);
+    Result := ParseExpression(ExprEnd, False);
     try
       ParseExpressionEnd(ExprEnd);
     except
