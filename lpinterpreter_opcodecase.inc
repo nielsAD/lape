@@ -30,6 +30,7 @@ case opCode(opCodeTypeP(Code)^) of
   ocDecTry: DoDecTry();
   ocEndTry: DoEndTry();
   ocCatchException: DoCatchException();
+  ocReRaiseException: DoReRaiseException();
 
   ocDecCall: DoDecCall();
   ocDecCall_EndTry: DoDecCall_EndTry();

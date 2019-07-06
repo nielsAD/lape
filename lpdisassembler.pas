@@ -201,6 +201,12 @@ var
     Inc(Code, ocSize);
   end;
 
+  procedure DoReRaiseException; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    _WriteLn('ReRaiseException');
+    Inc(Code, ocSize);
+  end;
+
   procedure DoDecCall; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('DecCall');
