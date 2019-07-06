@@ -70,6 +70,7 @@ const
   lpeInvalidIndex = 'Invalid index "%s"';
   lpeInvalidIterator = 'Variable cannot be used for iteration';
   lpeInvalidJump = 'Invalid jump';
+  lpeInvalidOpenArrayElement = 'Invalid open array element (%s) (index: %d)';
   lpeInvalidOperator = 'Operator "%s" expects %d parameters';
   lpeInvalidRange = 'Expression is not a valid range';
   lpeInvalidUnionType = 'Invalid union type';
@@ -98,6 +99,7 @@ const
   lpeTypeExpected = 'Type expected';
   lpeUnexpectedToken = 'Found unexpected token "%s"';
   lpeUnknownDeclaration = 'Unknown declaration "%s"';
+  lpeUnknownDeclarationOpenArray = 'Unknown declaration in open array (index: %d)';
   lpeUnknownDirective = 'Unknown compiler directive';
   lpeUnknownOC = 'Unknown opcode';
   lpeUnknownParent = 'Cannot find parent declaration';

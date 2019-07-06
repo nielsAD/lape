@@ -118,6 +118,7 @@ type
   TLapeTree_OpenArray = class(TLapeTree_DestExprBase)
   protected
     FCanCast: TInitBool;
+    FInvalidCastIndex: Integer;
     FType: TLapeType;
     FValues: TLapeStatementList;
     FRange: TLapeRange;
@@ -1094,6 +1095,7 @@ begin
   inherited Create(ACompiler, ADocPos);
   FType := nil;
   FValues := TLapeStatementList.Create(nil, dupAccept, False);
+  FInvalidCastIndex := -1;
 end;
 
 destructor TLapeTree_OpenArray.Destroy;
@@ -1111,6 +1113,7 @@ procedure TLapeTree_OpenArray.ClearCache;
 begin
   inherited;
   FCanCast := bUnknown;
+  FInvalidCastIndex := -1;
   FRange := NullRange;
 end;
 
@@ -1231,6 +1234,7 @@ begin
           FValues[i] := FValues[i].setExpectedType(CastTo)
         else
         begin
+          FInvalidCastIndex := i;
           FCanCast := bFalse;
           Break;
         end;
@@ -1244,6 +1248,7 @@ begin
           HasRange := True
         else
         begin
+          FInvalidCastIndex := i;
           FCanCast := bFalse;
           Break;
         end;
@@ -1648,8 +1653,21 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
 
 begin
   Result := NullResVar;
+
   if (not canCast()) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+  begin
+    if (FInvalidCastIndex > -1) and (FValues[FInvalidCastIndex] is TLapeTree_ExprBase) then
+    begin
+      with FValues[FInvalidCastIndex] as TLapeTree_ExprBase do
+      begin
+        if resType() <> nil then
+          LapeExceptionFmt(lpeInvalidOpenArrayElement, [resType().AsString, FInvalidCastIndex], DocPos)
+        else
+          LapeExceptionFmt(lpeUnknownDeclarationOpenArray, [FInvalidCastIndex], DocPos);
+      end;
+    end else
+      LapeException(lpeInvalidEvaluation, DocPos);
+  end;
 
   Dest := NullResVar;
   Result := _ResVar.New(FCompiler.getTempVar(FType));

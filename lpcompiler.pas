@@ -2562,7 +2562,7 @@ var
     if (op = op_Dot) then
     begin
       if (Next() <> tk_Identifier) then
-        LapeExceptionFmt(lpeExpected, [LapeTokenToString(tk_Identifier)]);
+        LapeExceptionFmt(lpeExpected, [LapeTokenToString(tk_Identifier)], Tokenizer.DocPos);
       PushVarStack(TLapeTree_Field.Create(Tokenizer.TokString, Self, getPDocPos()));
     end
     else if (op = op_Index) then
