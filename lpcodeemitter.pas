@@ -66,7 +66,7 @@ type
     function addCodePointer(p: PCodePos): Integer; virtual;
     procedure deleteCodePointer(i: Integer); overload; virtual;
     procedure deleteCodePointer(p: PCodePos); overload; virtual;
-    procedure adjustCodePointers(Pos, Offset: Integer); virtual;
+    procedure adjustCodePointers(Pos: TCodePos; Offset: TCodeOffset); virtual;
 
     procedure Delete(StartOffset, Len: Integer); overload; virtual;
     procedure Delete(StartOffset, Len: Integer; var Offset: Integer); overload; virtual;
@@ -266,7 +266,7 @@ begin
   FCodePointers.DeleteItem(p);
 end;
 
-procedure TLapeCodeEmitterBase.adjustCodePointers(Pos, Offset: Integer);
+procedure TLapeCodeEmitterBase.adjustCodePointers(Pos: TCodePos; Offset: TCodeOffset);
 var
   i: Integer;
 begin
