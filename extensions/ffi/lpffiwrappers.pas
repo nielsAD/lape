@@ -796,6 +796,11 @@ begin
   if (Param.VarType = nil) or (Param.ParType in Lape_RefParams) then
     Exit(True);
 
+  {$IF DECLARED(FFI_UNIX64)}
+    if (ABI = FFI_UNIX64) and (Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType = ltRecord) and (Param.VarType.Size = SizeOf(Pointer) * 2) then
+      Exit(False);
+  {$IFEND}
+
   {$IF DEFINED(CPU86) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)}
     if (ABI in [FFI_CDECL, FFI_MS_CDECL]) then
       Exit(Param.VarType.BaseType in [ltShortString, ltStaticArray]);
@@ -822,7 +827,7 @@ begin
 
   {$IF DECLARED(FFI_WIN64)}
       or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (not (UInt8(Param.VarType.Size) in PowerTwoRegs)))
-      or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (Param.ParType in Lape_ConstParams) and (Param.VarType.Size = SizeOf(UInt8)))
+      or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (Param.ParType in Lape_ConstParams) and (Param.VarType.Size in PowerTwoRegs))
   {$IFEND}
   ;
 end;
@@ -833,7 +838,7 @@ begin
     Result := (Param.VarType <> nil) and (Param.VarType.BaseType = ltDynArray)
 
     {$IF (FPC_VERSION >= 3) AND DECLARED(FFI_PASCAL)}
-      or ((ABI = FFI_PASCAL) and (Param.VarType.Size < SizeOf(Pointer)) and (Param.VarType.Size <> SizeOf(UInt16)))
+      or ((ABI = FFI_PASCAL) and (Param.VarType.Size < SizeOf(Pointer)));
     {$IFEND}
     ;
   {$ELSE}
@@ -860,17 +865,22 @@ begin
   if (VarType = nil) or (VarType.BaseType in ComplexTypes) {$IF FPC_VERSION >= 3}or VarType.NeedFinalization{$IFEND} then
     Exit(True);
 
+  {$IF DECLARED(FFI_PASCAL) and DECLARED(FFI_REGISTER) and DECLARED(FFI_STDCALL)}
+    if (ABI in [FFI_PASCAL, FFI_REGISTER, FFI_STDCALL]) and (VarType.BaseType = ltRecord) and (VarType.Size = SizeOf(Pointer) * 2) then
+      Exit(True);
+  {$IFEND}
+
   {$IFDEF CPU86}
     Result := (VarType.BaseType = ltRecord) and (
       (not (UInt8(VarType.Size) in PowerTwoRegs))
         {$IF (FPC_VERSION <  3) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)} or (not (ABI in [FFI_CDECL, FFI_MS_CDECL])) {$IFEND}
-        {$IF (FPC_VERSION >= 3) AND DECLARED(FFI_PASCAL)} or ((ABI = FFI_PASCAL) and (VarType.Size = SizeOf(UInt8))) {$IFEND}
+        {$IF (FPC_VERSION >= 3) AND DECLARED(FFI_PASCAL)} or ((ABI = FFI_PASCAL) and (VarType.Size <= SizeOf(Pointer))) {$IFEND}
       )
     ;
   {$ENDIF}
 
   {$IF DECLARED(FFI_UNIX64)}
-    Result := (ABI = FFI_UNIX64) and (VarType.BaseType = ltRecord) and (VarType.Size > SizeOf(Pointer));
+    Result := (ABI = FFI_UNIX64) and (VarType.BaseType = ltRecord) and (VarType.Size > SizeOf(Pointer) * 2);
   {$IFEND}
 
   {$IF DECLARED(FFI_WIN64)}

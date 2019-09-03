@@ -50,14 +50,27 @@ unit ffi;
 interface
 
 {$IFDEF StaticFFI}
-  {$LINKLIB libffi}
+
   {$UNDEF DynamicFFI}
 
-  {$IFDEF MSWINDOWS}
-    {$LINKLIB libgcc}
-    {$LINKLIB libmsvcrt}
-    {$LINKLIB libkernel32}
-  {$ENDIF}
+  {$IFDEF WIN32}
+    {$LINKLIB ../bin/win32/libffi.a}
+    {$LINKLIB ../bin/win32/libgcc.a}
+    {$LINKLIB ../bin/win32/libmsvcrt.a}
+    {$LINKLIB ../bin/win32/libkernel32.a}
+  {$ELSE}{$IFDEF WIN64}
+    {$LINKLIB ../bin/win64/libffi.a}
+    {$LINKLIB ../bin/win64/libgcc.a}
+    {$LINKLIB ../bin/win64/libmsvcrt.a}
+    {$LINKLIB ../bin/win64/libkernel32.a}
+  {$ELSE}{$IFDEF DARWIN}
+    {$LINKLIB ../bin/darwin/libffi.a}
+  {$ELSE}{$IFDEF LINUX}
+    {$LINKLIB ../bin/linux/libffi.a}
+  {$ELSE}
+    {$LINKLIB libffi.a}
+  {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+
 {$ENDIF}
 
 uses
@@ -432,6 +445,9 @@ initialization
   ffi_closure_alloc    := @_ffi_closure_alloc;
   ffi_closure_free     := @_ffi_closure_free;
   ffi_prep_closure_loc := @_ffi_prep_closure_loc;
+  {$IFNDEF HasExtended}
+  ffi_type_longdouble  := ffi_type_double;
+  {$ENDIF}
   {$ENDIF}
 
   {$IFNDEF StaticFFI}

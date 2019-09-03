@@ -5,10 +5,6 @@ language: generic
 sudo: required
 dist: trusty
 
-os:
-  - linux
-  - osx
-
 env:
   global:
     - WINEPREFIX=~/.winelaz
@@ -16,20 +12,19 @@ env:
     - LAPE_PWD=./tests/RunTests
     - LAPE_PKG=../../package
     - LAPE_FFI=../../extensions/ffi/test
-  matrix:
-    - LAZ_PKG=true  # Use the latest version from the default package manager
-    - LAZ_VER=1.8.2
 
 matrix:
-  allow_failures:
-    - env: LAZ_PKG=true
   include:
     - os: linux
-      env: LAZ_VER=1.8.2  LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386"
+      env: LAZ_VER=1.8.2 LAZ_OPT="--os=linux --cpu=x86_64" FFI="default:default-static"
     - os: linux
-      env: LAZ_VER=1.8.2  LAZ_ENV=wine WINEARCH=win64 LAZ_OPT="--os=win64 --cpu=x86_64"
+      env: LAZ_VER=1.8.2 LAZ_ENV=wine WINEARCH=win32 LAZ_OPT="--os=win32 --cpu=i386" FFI="stdcall:stdcall-static:cdecl:cdecl-static:pascal:pascal-static:register-static:register"
     - os: linux
-      env: LAZ_VER=1.8.2  LAZ_ENV=qemu-arm LAZ_OPT="--os=linux --cpu=arm --widgetset=nogui"
+      env: LAZ_VER=1.8.2 LAZ_ENV=wine WINEARCH=win64 LAZ_OPT="--os=win64 --cpu=x86_64" FFI="default:default-static"
+    - os: linux
+      env: LAZ_VER=1.8.2 LAZ_ENV=qemu-arm LAZ_OPT="--os=linux --cpu=arm --widgetset=nogui" FFI=""
+    - os: osx
+      env: LAZ_VER=1.8.2 LAZ_OPT="--cpu=x86_64 --compiler=/usr/local/bin/fpc" FFI="default-static"
 
 before_install:
   # Start virtual display server
@@ -44,10 +39,9 @@ script:
   - lazbuild $LAZ_OPT "$LAPE_PKG/lape.lpk"
   - lazbuild $LAZ_OPT "LapeTest.lpi"
   - $LAZ_ENV ./LapeTest
-  - cd "$LAPE_FFI" && ./runall.sh || true
+  - cd "$LAPE_FFI" && ./runall.sh
 
 notifications:
   email:
     on_success: false
     on_failure: change
-

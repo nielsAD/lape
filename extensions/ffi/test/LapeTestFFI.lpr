@@ -14,10 +14,16 @@ type
   TStatStrArr  = array[1..5] of lpString;
   TStatIntArr  = array[1..2] of Int16;
 
-  TShortRec =        record a: Int8; end;
-  TPackRec  = packed record b: Int16; x: Int8; end;
-  TStrRec   =        record c: lpString; end;
-  TLargeRec =        record a: UInt8; b,c: UInt64; d: UInt8; end;
+  TShortRec   =        record a: Int8; end;
+  TPackRec    = packed record b: Int16; x: Int8; end;
+  TStrRec     =        record c: lpString; end;
+  TLargeRec   =        record a: UInt8; b,c: UInt64; d: UInt8; end;
+  TRecTest2   =        record a: Int16; end;
+  TRecTest4   =        record a: Int32; end;
+  TRecTest8   =        record a, b: Int32; end;
+  TRecTest16  =        record a, b, c, d: Int32; end;
+  TRecTest32  =        record a, b, c, d: Int64; end;
+  TRecTest64  =        record a, b, c, d, e, f, g, h: Int64; end;
 
 {$IFDEF FFITest_REGISTER}
   {$IF DECLARED(FFI_REGISTER)} const TEST_ABI = FFI_REGISTER; {$IFEND}
@@ -562,6 +568,118 @@ begin
   Result := (r.a = 4) and (r.b = 3) and (r.c = 2) and (r.d = 1);
 end;
 
+function Func22(const r: TRecTest2): TRecTest2; {$I cconv.inc}
+begin
+  Result := r;
+end;
+
+function RunFunc22(f: Pointer): Boolean;
+type
+  TF = function(const a: TRecTest2): TRecTest2; {$I cconv.inc}
+var
+  r: TRecTest2;
+begin
+  r.a := 1;
+  r := TF(f)(r);
+
+  Result := (r.a = 1);
+end;
+
+function Func23(const r: TRecTest4): TRecTest4; {$I cconv.inc}
+begin
+  Result := r;
+end;
+
+function RunFunc23(f: Pointer): Boolean;
+type
+  TF = function(const a: TRecTest4): TRecTest4; {$I cconv.inc}
+var
+  r: TRecTest4;
+begin
+  r.a := 1;
+  r := TF(f)(r);
+
+  Result := (r.a = 1);
+end;
+
+function Func24(const r: TRecTest8): TRecTest8; {$I cconv.inc}
+begin
+  Result := r;
+end;
+
+function RunFunc24(f: Pointer): Boolean;
+type
+  TF = function(const a: TRecTest8): TRecTest8; {$I cconv.inc}
+var
+  r: TRecTest8;
+begin
+  r.a := 1;
+  r.b := 2;
+  r := TF(f)(r);
+
+  Result := (r.a = 1) and (r.b = 2);
+end;
+
+function Func25(const r: TRecTest16): TRecTest16; {$I cconv.inc}
+begin
+  Result := r;
+end;
+
+function RunFunc25(f: Pointer): Boolean;
+type
+  TF = function(const a: TRecTest16): TRecTest16; {$I cconv.inc}
+var
+  r: TRecTest16;
+begin
+  r.a := 1;
+  r.b := 2;
+  r.c := 3;
+  r.d := 4;
+  r := TF(f)(r);
+
+  Result := (r.a = 1) and (r.b = 2) and (r.c = 3) and (r.d = 4);
+end;
+
+function Func26(const r: TRecTest32): TRecTest32; {$I cconv.inc}
+begin
+  Result := r;
+end;
+
+function RunFunc26(f: Pointer): Boolean;
+type
+  TF = function(const a: TRecTest32): TRecTest32; {$I cconv.inc}
+var
+  r: TRecTest32;
+begin
+  r.a := 1;
+  r.b := 2;
+  r.c := 3;
+  r.d := 4;
+  r := TF(f)(r);
+
+  Result := (r.a = 1) and (r.b = 2) and (r.c = 3) and (r.d = 4);
+end;
+
+function Func27(const r: TRecTest64): TRecTest64; {$I cconv.inc}
+begin
+  Result := r;
+end;
+
+function RunFunc27(f: Pointer): Boolean;
+type
+  TF = function(const a: TRecTest64): TRecTest64; {$I cconv.inc}
+var
+  r: TRecTest64;
+begin
+  r.a := 1; r.b := 2; r.c := 3;
+  r.d := 4; r.e := 5; r.f := 6;
+  r.g := 7; r.h := 8;
+  r := TF(f)(r);
+
+  Result := (r.a = 1) and (r.b = 2) and (r.c = 3) and (r.d = 4) and
+            (r.e = 5) and (r.f = 6) and (r.g = 7) and (r.h = 8);
+end;
+
 type
   TTestCallback = function: Int32; {$I cconv.inc}
   TTestCallbackObject = function: Int32 of object; {$I cconv.inc}
@@ -579,8 +697,8 @@ type
     function Meth5(const a: TStatPackArr): TStatPackArr; {$I cconv.inc}
     function Meth6(constref a: TStrRec): TStrRec; {$I cconv.inc}
     function Meth7(const a: TLargeRec): TLargeRec; {$I cconv.inc}
-    function Meth8(Func: TTestCallback): Int32; {$I cconv.inc}
-    function Meth9(Func: TTestCallbackObject): Int32; {$I cconv.inc}
+    function Meth8(const Func: TTestCallback): Int32; {$I cconv.inc}
+    function Meth9(const Func: TTestCallbackObject): Int32; {$I cconv.inc}
   end;
 
 const
@@ -749,12 +867,7 @@ begin
   Result := (r.a = 4) and (r.b = 3) and (r.c = 2) and (r.d = 1);
 end;
 
-function TTestObject.Meth8(Func: TTestCallback): Int32; {$I cconv.inc}
-begin
-  Result := Func();
-end;
-
-function TTestObject.Meth9(Func: TTestCallbackObject): Int32; {$I cconv.inc}
+function TTestObject.Meth8(const Func: TTestCallback): Int32; {$I cconv.inc}
 begin
   Result := Func();
 end;
@@ -770,6 +883,11 @@ begin
   TMethod(m).Code := f;
   TMethod(m).Data := @o;
   Result := TM(m)(@Callback) = 1989;
+end;
+
+function TTestObject.Meth9(const Func: TTestCallbackObject): Int32; {$I cconv.inc}
+begin
+  Result := Func();
 end;
 
 function RunMeth9(f: Pointer): Boolean;
@@ -817,8 +935,7 @@ begin
       addDelayedCode('function LapeCallback: Int32; begin Result := 1989; end;');
       addDelayedCode('function TTest.LapeCallback: Int32; begin Assert(Self.MagicToken = 12345); Result := 1989; end;');
 
-      addGlobalType('function: Int32', 'TLapeCallback');
-      addGlobalType('native(TLapeCallback, ' + 'ffi_' + ABIToStr(TEST_ABI) + ')', 'TNativeCallback');
+      addGlobalVar('TFFI_ABI', 'TFFI_ABI('+IntToStr(Ord(ExportABI))+')', 'TEST_ABI').isConstant := True;
 
       addGlobalType('(ESmallFirst = ' + IntToStr(Ord(Low(ELapeSmallEnum))) + ', ESmallLast = ' + IntToStr(Ord(High(ELapeSmallEnum))) + ')', 'TSmallEnum');
       addGlobalType('(ELargeFirst = ' + IntToStr(Ord(Low(ELapeSmallEnum))) + ', ELargeLast = ' + IntToStr(Ord(High(ELapeLargeEnum))) + ')', 'TLargeEnum');
@@ -835,6 +952,12 @@ begin
       addGlobalType('packed record b: Int16; x: Int8; end', 'TPackRec');
       addGlobalType('       record c: string;         end', 'TStrRec');
       addGlobalType('       record a: UInt8; b,c: UInt64; d: UInt8; end', 'TLargeRec');
+      addGlobalType('       record a: Int16; end;', 'TRecTest2');
+      addGlobalType('       record a: Int32; end;', 'TRecTest4');
+      addGlobalType('       record a, b: Int32; end;', 'TRecTest8');
+      addGlobalType('       record a, b, c, d: Int32; end;', 'TRecTest16');
+      addGlobalType('       record a, b, c, d: Int64; end;', 'TRecTest32');
+      addGlobalType('       record a, b, c, d, e, f, g, h: Int64; end;', 'TRecTest64');
 
       i := LapeImportWrapper(ImportFun, TLapeCompiler(GetSelf()), Header, ImportABI);
       v := addGlobalFunc(Header, i.Func);
@@ -892,7 +1015,7 @@ type
   end;
 
 const
-  BiDiTests: array[1..40] of TRunProc = (
+  BiDiTests: array[1..46] of TRunProc = (
     (Fun: @Proc1;  Run: @RunProc1;  Str: 'procedure Proc1';                                                                                                        Arg: 'TestMe();'),
     (Fun: @Proc2;  Run: @RunProc2;  Str: 'procedure Proc2(a, b, c, d, e, f, g, h, i, j: NativeInt)';                                                               Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);'),
     (Fun: @Proc3;  Run: @RunProc3;  Str: 'procedure Proc3(a: UInt8; b: Int64; c: UInt32; d: Int16; e: UInt16; f: Int32; g: UInt64; h: Int8)';                      Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8);'),
@@ -925,6 +1048,12 @@ const
     (Fun: @Func19; Run: @RunFunc19; Str: 'function Func19(const a: TPackRec): TPackRec';          Arg: 'Assert(TestMe([1, 10]) = [11, 10]);'),
     (Fun: @Func20; Run: @RunFunc20; Str: 'function Func20(constref a: TStrRec): TStrRec';         Arg: 'Assert(TestMe(["123"]) = ["0123"]);'),
     (Fun: @Func21; Run: @RunFunc21; Str: 'function Func21(const a: TLargeRec): TLargeRec';        Arg: 'Assert(TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);'),
+    (Fun: @Func22; Run: @RunFunc22; Str: 'function Func22(const a: TRecTest2): TRecTest2';        Arg: 'Assert(TestMe([1]) = [1]);'),
+    (Fun: @Func23; Run: @RunFunc23; Str: 'function Func22(const a: TRecTest4): TRecTest4';        Arg: 'Assert(TestMe([1]) = [1]);'),
+    (Fun: @Func24; Run: @RunFunc24; Str: 'function Func23(const a: TRecTest8): TRecTest8';        Arg: 'Assert(TestMe([1, 2]) = [1, 2]);'),
+    (Fun: @Func25; Run: @RunFunc25; Str: 'function Func24(const a: TRecTest16): TRecTest16';      Arg: 'Assert(TestMe([1, 2, 3, 4]) = [1, 2, 3, 4]);'),
+    (Fun: @Func26; Run: @RunFunc26; Str: 'function Func25(const a: TRecTest32): TRecTest32';      Arg: 'Assert(TestMe([1, 2, 3, 4]) = [1, 2, 3, 4]);'),
+    (Fun: @Func27; Run: @RunFunc27; Str: 'function Func26(const a: TRecTest64): TRecTest64';      Arg: 'Assert(TestMe([1, 2, 3, 4, 5, 6, 7, 8]) = [1, 2, 3, 4, 5, 6, 7, 8]);'),
 
     (Fun: @TTestObject.Meth1; Run: @RunMeth1; Str: 'procedure TTest.Meth1';                                          Arg: 'Test.TestMe();'),
     (Fun: @TTestObject.Meth2; Run: @RunMeth2; Str: 'procedure TTest.Meth2(a, b, c, d, e, f, g, h, i, j: NativeInt)'; Arg: 'Test.TestMe(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);'),
@@ -933,8 +1062,8 @@ const
     (Fun: @TTestObject.Meth5; Run: @RunMeth5; Str: 'function TTest.Meth5(const a: TStatPackArr): TStatPackArr';      Arg: 'Assert(Test.TestMe([1..3])[2] = 6);'),
     (Fun: @TTestObject.Meth6; Run: @RunMeth6; Str: 'function TTest.Meth6(constref a: TStrRec): TStrRec';             Arg: 'Assert(Test.TestMe(["123"]) = ["0123"]);'),
     (Fun: @TTestObject.Meth7; Run: @RunMeth7; Str: 'function TTest.Meth7(const a: TLargeRec): TLargeRec';            Arg: 'Assert(Test.TestMe([1, 2, 3, 4]) = [4, 3, 2, 1]);'),
-    (Fun: @TTestObject.Meth8; Run: @RunMeth8; Str: 'function TTest.Meth8(const Func: Pointer): Int32';               Arg: 'Assert(Test.TestMe(Pointer(Natify(@LapeCallback))) = 1989);'),
-    (Fun: @TTestObject.Meth9; Run: @RunMeth9; Str: 'function TTest.Meth9(const Func: TMethod): Int32';               Arg: 'Assert(Test.TestMe(TMethod(Natify(@Test.LapeCallback))) = 1989);')
+    (Fun: @TTestObject.Meth8; Run: @RunMeth8; Str: 'function TTest.Meth8(const Func: Pointer): Int32';               Arg: 'Assert(Test.TestMe(Pointer(Natify(@LapeCallback, TEST_ABI))) = 1989);'),
+    (Fun: @TTestObject.Meth9; Run: @RunMeth9; Str: 'function TTest.Meth9(const Func: TMethod): Int32';               Arg: 'Assert(Test.TestMe(TMethod(Natify(@Test.LapeCallback, TEST_ABI))) = 1989);')
   );
 
 {$IF DECLARED(TEST_ABI)}

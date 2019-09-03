@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="9"/>
+    <Version Value="11"/>
     <General>
       <Flags>
         <MainUnitHasCreateFormStatements Value="False"/>
@@ -16,12 +16,9 @@
     <i18n>
       <EnableI18N LFM="False"/>
     </i18n>
-    <VersionInfo>
-      <StringTable ProductVersion=""/>
-    </VersionInfo>
-    <BuildModes Count="5">
+    <BuildModes Count="10">
       <Item1 Name="default" Default="True"/>
-      <Item2 Name="register">
+      <Item2 Name="default-static">
         <CompilerOptions>
           <Version Value="11"/>
           <Target>
@@ -38,9 +35,15 @@
               <IncludeAssertionCode Value="True"/>
             </SyntaxOptions>
           </Parsing>
+          <Other>
+            <CustomOptions Value="-dStaticFFI"/>
+            <OtherDefines Count="1">
+              <Define0 Value="StaticFFI"/>
+            </OtherDefines>
+          </Other>
         </CompilerOptions>
       </Item2>
-      <Item3 Name="pascal">
+      <Item3 Name="register">
         <CompilerOptions>
           <Version Value="11"/>
           <Target>
@@ -59,7 +62,7 @@
           </Parsing>
         </CompilerOptions>
       </Item3>
-      <Item4 Name="cdecl">
+      <Item4 Name="register-static">
         <CompilerOptions>
           <Version Value="11"/>
           <Target>
@@ -76,9 +79,15 @@
               <IncludeAssertionCode Value="True"/>
             </SyntaxOptions>
           </Parsing>
+          <Other>
+            <CustomOptions Value="-dStaticFFI"/>
+            <OtherDefines Count="1">
+              <Define0 Value="StaticFFI"/>
+            </OtherDefines>
+          </Other>
         </CompilerOptions>
       </Item4>
-      <Item5 Name="stdcall">
+      <Item5 Name="pascal">
         <CompilerOptions>
           <Version Value="11"/>
           <Target>
@@ -97,20 +106,125 @@
           </Parsing>
         </CompilerOptions>
       </Item5>
+      <Item6 Name="pascal-static">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="LapeTestFFI"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+            <Libraries Value="../bin/$(TargetOS)"/>
+            <OtherUnitFiles Value=".."/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+          <Other>
+            <CustomOptions Value="-dStaticFFI"/>
+          </Other>
+        </CompilerOptions>
+      </Item6>
+      <Item7 Name="cdecl">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="LapeTestFFI"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+            <Libraries Value="../bin/$(TargetOS)"/>
+            <OtherUnitFiles Value=".."/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+        </CompilerOptions>
+      </Item7>
+      <Item8 Name="cdecl-static">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="LapeTestFFI"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+            <Libraries Value="../bin/$(TargetOS)"/>
+            <OtherUnitFiles Value=".."/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+          <Other>
+            <CustomOptions Value="-dStaticFFI"/>
+          </Other>
+        </CompilerOptions>
+      </Item8>
+      <Item9 Name="stdcall">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="LapeTestFFI"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+            <Libraries Value="../bin/$(TargetOS)"/>
+            <OtherUnitFiles Value=".."/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+        </CompilerOptions>
+      </Item9>
+      <Item10 Name="stdcall-static">
+        <CompilerOptions>
+          <Version Value="11"/>
+          <Target>
+            <Filename Value="LapeTestFFI"/>
+          </Target>
+          <SearchPaths>
+            <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
+            <Libraries Value="../bin/$(TargetOS)"/>
+            <OtherUnitFiles Value=".."/>
+            <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+          </SearchPaths>
+          <Parsing>
+            <SyntaxOptions>
+              <IncludeAssertionCode Value="True"/>
+            </SyntaxOptions>
+          </Parsing>
+          <Other>
+            <CustomOptions Value="-dStaticFFI"/>
+          </Other>
+        </CompilerOptions>
+      </Item10>
       <SharedMatrixOptions Count="4">
-        <Item1 ID="438870483490" Targets="#project" Modes="register" Value="-dFFITest_REGISTER"/>
-        <Item2 ID="034699903166" Targets="#project" Modes="pascal" Value="-dFFITest_PASCAL"/>
-        <Item3 ID="895036950427" Targets="#project" Modes="cdecl" Value="-dFFITest_CDECL"/>
-        <Item4 ID="385979714954" Targets="#project" Modes="stdcall" Value="-dFFITest_STDCALL"/>
+        <Item1 ID="438870483490" Targets="#project" Modes="register,register-static" Value="-dFFITest_REGISTER"/>
+        <Item2 ID="034699903166" Targets="#project" Modes="pascal,pascal-static" Value="-dFFITest_PASCAL"/>
+        <Item3 ID="895036950427" Targets="#project" Modes="cdecl,cdecl-static" Value="-dFFITest_CDECL"/>
+        <Item4 ID="385979714954" Targets="#project" Modes="stdcall,stdcall-static" Value="-dFFITest_STDCALL"/>
       </SharedMatrixOptions>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
     </PublishOptions>
     <RunParams>
-      <local>
-        <FormatVersion Value="1"/>
-      </local>
+      <FormatVersion Value="2"/>
+      <Modes Count="1">
+        <Mode0 Name="default"/>
+      </Modes>
     </RunParams>
     <RequiredPackages Count="2">
       <Item1>
