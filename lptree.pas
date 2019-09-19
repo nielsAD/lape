@@ -1735,24 +1735,28 @@ function TLapeTree_Invoke.getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBas
   begin
     Result := False;
 
-    if (FParams.Count = Method.Params.Count) then
+    if (FParams.Count > Method.Params.Count) then
+      Exit;
+
+    // Check if we can cast all open arrays to their respective parameter types.
+    for i := 0 to FParams.Count - 1 do
+      if FParams[i] is TLapeTree_OpenArray then
+      begin
+        Result := TLapeTree_OpenArray(FParams[i]).canCastTo(Method.Params[i].VarType);
+        if (not Result) then
+          Exit;
+      end;
+
+    // If function ends with default parameter(s) it's still a match. Else parameter count was wrong.
+    if Result and (i < Method.Params.Count - 1) then
+      Result := Method.Params[i + 1].Default <> nil;
+
+    // Open arrays can be casted. Perform the casting.
+    if Result then
     begin
-      // Check if we can cast all open arrays to their respective parameter types.
       for i := 0 to FParams.Count - 1 do
         if FParams[i] is TLapeTree_OpenArray then
-        begin
-          Result := TLapeTree_OpenArray(FParams[i]).canCastTo(Method.Params[i].VarType);
-          if (not Result) then
-            Exit;
-        end;
-
-      // Open arrays can be casted. Perform the casting.
-      if Result then
-      begin
-        for i := 0 to FParams.Count - 1 do
-          if (FParams[i] is TLapeTree_OpenArray) then
-            FParams[i] := FParams[i].setExpectedType(Method.Params[i].VarType) as TLapeTree_ExprBase;
-      end;
+          FParams[i] := FParams[i].setExpectedType(Method.Params[i].VarType) as TLapeTree_ExprBase;
     end;
   end;
 

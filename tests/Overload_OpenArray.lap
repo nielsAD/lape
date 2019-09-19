@@ -26,7 +26,7 @@ begin
   WriteLn('TBox');
 end;
 
-procedure Test(R: TTestRecord); overload;
+procedure Test(R: TTestRecord; i: Int32 = 0); overload;
 begin
   Writeln('TTestRecord');
 end;
