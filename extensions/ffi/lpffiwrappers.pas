@@ -826,8 +826,7 @@ begin
   {$ENDIF}
 
   {$IF DECLARED(FFI_WIN64)}
-      or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (not (UInt8(Param.VarType.Size) in PowerTwoRegs)))
-      or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and (Param.ParType in Lape_ConstParams) and (Param.VarType.Size in PowerTwoRegs))
+      or ((ABI = FFI_WIN64) and (Param.VarType.BaseType = ltRecord) and ((Param.ParType in Lape_ConstParams) and (Param.VarType.Size in PowerTwoRegs))) or (not (UInt8(Param.VarType.Size) in PowerTwoRegs))
   {$IFEND}
   ;
 end;
@@ -838,7 +837,7 @@ begin
     Result := (Param.VarType <> nil) and (Param.VarType.BaseType = ltDynArray)
 
     {$IF (FPC_VERSION >= 3) AND DECLARED(FFI_PASCAL)}
-      or ((ABI = FFI_PASCAL) and (Param.VarType.Size < SizeOf(Pointer)));
+      or ((ABI = FFI_PASCAL) and (Param.VarType.Size < SizeOf(Pointer)))
     {$IFEND}
     ;
   {$ELSE}
