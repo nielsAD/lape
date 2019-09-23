@@ -50,27 +50,14 @@ unit ffi;
 interface
 
 {$IFDEF StaticFFI}
-
+  {$LINKLIB libffi.a}
   {$UNDEF DynamicFFI}
 
-  {$IFDEF WIN32}
-    {$LINKLIB ../bin/win32/libffi.a}
-    {$LINKLIB ../bin/win32/libgcc.a}
-    {$LINKLIB ../bin/win32/libmsvcrt.a}
-    {$LINKLIB ../bin/win32/libkernel32.a}
-  {$ELSE}{$IFDEF WIN64}
-    {$LINKLIB ../bin/win64/libffi.a}
-    {$LINKLIB ../bin/win64/libgcc.a}
-    {$LINKLIB ../bin/win64/libmsvcrt.a}
-    {$LINKLIB ../bin/win64/libkernel32.a}
-  {$ELSE}{$IFDEF DARWIN}
-    {$LINKLIB ../bin/darwin/libffi.a}
-  {$ELSE}{$IFDEF LINUX}
-    {$LINKLIB ../bin/linux/libffi.a}
-  {$ELSE}
-    {$LINKLIB libffi.a}
-  {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
-
+  {$IFDEF MSWINDOWS}
+    {$LINKLIB libgcc}
+    {$LINKLIB libmsvcrt}
+    {$LINKLIB libkernel32}
+  {$ENDIF}
 {$ENDIF}
 
 uses

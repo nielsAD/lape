@@ -5,6 +5,16 @@ language: generic
 sudo: required
 dist: trusty
 
+addons:
+  homebrew:
+    packages:
+      - libffi
+ 
+addons:
+  apt:
+    packages:
+      - libffi-dev
+    
 env:
   global:
     - WINEPREFIX=~/.winelaz

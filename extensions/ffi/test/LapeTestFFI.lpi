@@ -26,7 +26,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir);..;../../.."/>
-            <Libraries Value="../bin/$(TargetOS)"/>
+            <Libraries Value="../bin/$(TargetOS);/usr/local/opt/libffi/lib/"/>
             <OtherUnitFiles Value=".."/>
             <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
