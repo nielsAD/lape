@@ -16,6 +16,11 @@ begin
   Result := [X1, Y1, X2, Y2];
 end;
 
+procedure Test(p: TPoint; b: TBox); overload;
+begin
+  WriteLn('TPoint TBox');
+end;
+
 procedure Test(p: TPoint); overload;
 begin
   WriteLn('TPoint');
@@ -37,6 +42,7 @@ begin
 end;
 
 begin
+  Test([1, 2]);
   Test([1, 2, 3, 4]);
   Test([1, 2]);
   Test([[[1, 2], Box(1, 2, 3, 4)], [[1, 1], [2, 2]]]);
