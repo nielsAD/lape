@@ -308,6 +308,16 @@ type
     property TType: TLapeType read FTType;
   end;
 
+  TLapeType_TypeRecord = class(TLapeType_Type)
+  public
+    function CanHaveChild: Boolean; override;
+    function HasChild(AName: lpString): Boolean; override;
+    function HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean; override;
+
+    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
+  end;
+
   TLapeType_TypeEnum = class(TLapeType_Type)
   public
     function CanHaveChild: Boolean; override;
@@ -740,7 +750,7 @@ implementation
 
 uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
-  lpvartypes_ord, lpvartypes_array,
+  lpvartypes_ord, lpvartypes_array, lpvartypes_record,
   lpmessages, lpeval, lpinterpreter;
 
 
@@ -823,6 +833,40 @@ end;
 function ValidFieldName(Field: TResVar): Boolean; overload;
 begin
   Result := (Field.VarPos.MemPos = mpMem) and Field.isConstant and Field.HasType() and (Field.VarType.BaseType = ltString) and (Field.VarPos.GlobalVar.Ptr <> nil);
+end;
+
+function TLapeType_TypeRecord.CanHaveChild: Boolean;
+begin
+  Result := (FTType is TLapeType_Record) or inherited;
+end;
+
+function TLapeType_TypeRecord.HasChild(AName: lpString): Boolean;
+begin
+  Result := TLapeType_Record(FTType).ClassVarMap.ExistsKey(AName) or inherited;
+end;
+
+function TLapeType_TypeRecord.HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean;
+begin
+  Result := ((FTType is TLapeType_Record) and (TLapeType_Record(FTType).ClassVarMap.ExistsKey(AName) or inherited));
+end;
+
+function TLapeType_TypeRecord.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
+begin
+  if (Op = op_Dot) and (FTType <> nil) and ValidFieldName(Right) and
+     (FTType is TLapeType_Record) and TLapeType_Record(FTType).ClassVarMap.ExistsKey(PlpString(Right.Ptr)^)
+  then
+    Result := TLapeType_Record(FTType).FieldMap[PlpString(Right.Ptr)^].FieldType
+  else
+    Result := inherited EvalRes(Op, Right, Flags);
+end;
+
+function TLapeType_TypeRecord.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
+begin
+  Assert((Left = nil) or (Left.VarType = Self));
+  if (Op = op_Dot) and ValidFieldName(Right) and (FTType is TLapeType_Record) and TLapeType_Record(FTType).ClassVarMap.ExistsKey(PlpString(Right.Ptr)^) then
+    Result := TLapeType_Record(FTType).ClassVarMap[PlpString(Right.Ptr)^]
+  else
+    Result := inherited;
 end;
 
 function TResVar.getReadable: Boolean;
@@ -4481,6 +4525,9 @@ function TLapeCompilerBase.getTypeVar(AType: TLapeType): TLapeGlobalVar;
 var
   TType: TLapeTTypeClass;
 begin
+  if (AType is TLapeType_Record) then
+    TType := TLapeType_TypeRecord
+  else
   if (AType is TLapeType_Enum) then
     TType := TLapeType_TypeEnum
   else

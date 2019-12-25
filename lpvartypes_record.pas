@@ -21,23 +21,29 @@ type
     FieldType: TLapeType;
   end;
   TRecordFieldMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TRecordField>;
+  TRecordClassFieldMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeGlobalVar>;
 
   TLapeType_Record = class(TLapeType)
   protected
     FAlignment: UInt16;
     FFieldMap: TRecordFieldMap;
+
+    FClassVarMap: TRecordClassFieldMap;
+
     function getAsString: lpString; override;
     function getPadding: SizeInt; override;
     function getSize: SizeInt; override;
   public
     FreeFieldMap: Boolean;
+    FreeClassMap: Boolean;
 
-    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
+    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AClassFieldMap: TRecordClassFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
 
     procedure ClearCache; override;
     procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); virtual;
+    procedure addClassField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: String; IsConst: Boolean); virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -52,6 +58,7 @@ type
     procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); override;
 
     property FieldMap: TRecordFieldMap read FFieldMap;
+    property ClassVarMap: TRecordClassFieldMap read FClassVarMap;
     property Alignment: UInt16 read FAlignment;
   end;
 
@@ -59,7 +66,7 @@ type
   protected
     function getAsString: lpString; override;
   public
-    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); override;
+    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AClassFieldMap: TRecordClassFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); override;
     procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); override;
   end;
 
@@ -104,7 +111,7 @@ begin
   end;
 end;
 
-constructor TLapeType_Record.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil);
+constructor TLapeType_Record.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AClassFieldMap: TRecordClassFieldMap; AName: lpString; ADocPos: PDocPos);
 const
   InvalidRec: TRecordField = (Offset: Word(-1); FieldType: nil);
 begin
@@ -115,6 +122,12 @@ begin
   if (AFieldMap = nil) then
     AFieldMap := TRecordFieldMap.Create(InvalidRec, dupError, False);
   FFieldMap := AFieldMap;
+
+  FreeClassMap := (AClassFieldMap = nil);
+  if (AClassFieldMap = nil) then
+    AClassFieldMap := TRecordClassFieldMap.Create(nil, dupError, False);
+  FClassVarMap := AClassFieldMap;
+
   FAlignment := 1;
 end;
 
@@ -122,6 +135,9 @@ destructor TLapeType_Record.Destroy;
 begin
   if FreeFieldMap then
     FFieldMap.Free();
+  if FreeClassMap then
+    FClassVarMap.Free();
+
   inherited;
 end;
 
@@ -190,6 +206,21 @@ begin
   ClearCache();
 end;
 
+procedure TLapeType_Record.addClassField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: String; IsConst: Boolean);
+var
+  Field: TLapeGlobalVar;
+begin
+  Assert(FCompiler <> nil);
+
+  Field := FCompiler.addManagedVar(TLapeGlobalVar.Create(FieldType)) as TLapeGlobalVar;
+  if (FieldValue <> nil) then
+    FieldType.EvalConst(op_Assign, Field, FieldValue, []);
+
+  Field.isConstant := IsConst;
+
+  FClassVarMap[AName] := Field;
+end;
+
 function TLapeType_Record.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
   i: Integer;
@@ -226,11 +257,12 @@ type
 begin
   if DeepCopy then
   begin
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name, @_DocPos);
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, nil, Name, @_DocPos);
     TLapeType_Record(Result).FieldMap.ImportFromArrays(FFieldMap.ExportToArrays());
+    TLapeType_Record(Result).ClassVarMap.ImportFromArrays(ClassVarMap.ExportToArrays());
   end
   else
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FFieldMap, Name, @_DocPos);
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FFieldMap, FClassVarMap, Name, @_DocPos);
 
   with TLapeType_Record(Result) do
   begin
@@ -249,7 +281,7 @@ end;
 
 function TLapeType_Record.HasChild(AName: lpString): Boolean;
 begin
-  Result := FFieldMap.ExistsKey(AName) or HasSubDeclaration(AName, bTrue);
+  Result := FFieldMap.ExistsKey(AName) or FClassVarMap.ExistsKey(AName) or HasSubDeclaration(AName, bTrue);
 end;
 
 function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
@@ -292,6 +324,9 @@ begin
   if (Op = op_Dot) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.Ptr)^) then
     Result := FFieldMap[PlpString(Right.Ptr)^].FieldType
   else
+  if (Op = op_Dot) and ValidFieldName(Right) and FClassVarMap.ExistsKey(PlpString(Right.Ptr)^) then
+    Result := FClassVarMap[PlpString(Right.Ptr)^].VarType
+  else
     Result := inherited;
 end;
 
@@ -309,6 +344,8 @@ begin
       Result := FieldType.NewGlobalVarP(Pointer(PtrUInt(Left.Ptr) + Offset));
       Result.CopyFlags(Left);
     end
+  else if (Op = op_Dot) and (Left <> nil) and ValidFieldName(Right) and FClassVarMap.ExistsKey(PlpString(Right.Ptr)^) then
+    Result := FClassVarMap[PlpString(Right.Ptr)^]
   else if (op = op_Assign) and (Right <> nil) and Right.HasType() and CompatibleWith(Right.VarType) then
   begin
     LeftFieldName := nil;
@@ -397,6 +434,11 @@ begin
       end;
       Result.CopyFlags(Left);
     end
+  else if (Op = op_Dot) and ValidFieldName(Right) and FClassVarMap.ExistsKey(PlpString(Right.VarPos.GlobalVar.Ptr)^) then
+  begin
+    Dest := NullResVar;
+    Result := _ResVar.New(FClassVarMap[PlpString(Right.VarPos.GlobalVar.Ptr)^]);
+  end
   else if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
     begin
@@ -559,7 +601,7 @@ begin
   Result := inherited;
 end;
 
-constructor TLapeType_Union.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil);
+constructor TLapeType_Union.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AClassFieldMap: TRecordClassFieldMap; AName: lpString; ADocPos: PDocPos);
 begin
   inherited;
   FBaseType := ltUnion;
