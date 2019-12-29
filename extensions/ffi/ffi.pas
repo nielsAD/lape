@@ -50,7 +50,7 @@ unit ffi;
 interface
 
 {$IFDEF StaticFFI}
-  {$LINKLIB libffi}
+  {$LINKLIB libffi.a}
   {$UNDEF DynamicFFI}
 
   {$IFDEF MSWINDOWS}
@@ -432,6 +432,9 @@ initialization
   ffi_closure_alloc    := @_ffi_closure_alloc;
   ffi_closure_free     := @_ffi_closure_free;
   ffi_prep_closure_loc := @_ffi_prep_closure_loc;
+  {$IFNDEF HasExtended}
+  ffi_type_longdouble  := ffi_type_double;
+  {$ENDIF}
   {$ENDIF}
 
   {$IFNDEF StaticFFI}

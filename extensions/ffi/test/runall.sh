@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
-# Compiles and runs LapeTestFFI for all calling conventions
 
-CON="default:register:pascal:cdecl:stdcall"
-LOG="{}.ffi.log"
-BLD="lazbuild $LAZ_OPT LapeTestFFI.lpr --bm={} > $LOG"
-RUN="$LAZ_ENV ./LapeTestFFI || [ \$? -eq 221 -o \$? -eq 222  ]"
+for mode in $(echo $FFI | tr ":" "\n"); do
 
-echo "$CON" | tr ":" "\n" | xargs -L1 -I {} bash -c "(($BLD) && ($RUN) && rm $LOG) || cat $LOG"
-exit $(ls -1 | grep .ffi.log | wc -l)
+	echo "Testing ${mode}"
+
+	lazbuild $LAZ_OPT LapeTestFFI.lpr --build-mode=$mode > log
+	
+	if [ $? == 0 ]; then
+		$LAZ_ENV ./LapeTestFFI
+		if [ $? != 0 ]; then
+			export err=1;
+		fi
+	else
+		cat log	
+		export err=1;
+	fi
+done;
+
+exit $err;
