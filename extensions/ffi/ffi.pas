@@ -50,7 +50,7 @@ unit ffi;
 interface
 
 {$IFDEF StaticFFI}
-  {$LINKLIB libffi.a}
+  {$LINKLIB libffi}
   {$UNDEF DynamicFFI}
 
   {$IFDEF MSWINDOWS}
