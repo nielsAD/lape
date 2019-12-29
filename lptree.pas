@@ -1750,7 +1750,7 @@ function TLapeTree_Invoke.getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBas
           else
           begin
             Result := False;
-            Break;
+            Exit;
           end;
         end;
 
@@ -1758,7 +1758,7 @@ function TLapeTree_Invoke.getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBas
         begin
           Result := TLapeTree_OpenArray(FParams[i]).canCastTo(Method.Params[i].VarType, Strict);
           if (not Result) then
-            Break;
+            Exit;
         end;
       end;
     end;
