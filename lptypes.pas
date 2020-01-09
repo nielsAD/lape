@@ -595,6 +595,7 @@ const
   AssignOperators = [op_Assign] + CompoundOperators;
 
   OverloadableOperators = [op_Assign, op_Plus, op_Minus, op_Multiply, op_Divide, op_DIV, op_Power, op_MOD, op_IN, op_IS, op_SHL, op_SHR] + CompareOperators + BinaryOperators + CompoundOperators;
+  FinalizeOperatorTypes = [ltRecord];
 
   op_str: array[EOperator] of lpString = ('',
     '=', '>', '>=', '<', '<=', '<>', '@', 'and', ':=', '/=', '-=', '*=', '+=',
@@ -629,6 +630,7 @@ function LapeCase(const Str: lpString): lpString; {$IFDEF Lape_Inline}inline;{$E
 function LapeHash(const Value: lpString): UInt32;
 function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function LapeIsFinalizeOperator(const Value: lpString): Boolean;
 
 function PointerToString(const p: Pointer): lpString;
 {$IF NOT(DECLARED(UIntToStr))}
@@ -733,6 +735,11 @@ function LapeOperatorToString(Token: EOperator): lpString;
 begin
   Result := lpString(getEnumName(TypeInfo(EOperator), Ord(Token)));
   Delete(Result, 1, 3);
+end;
+
+function LapeIsFinalizeOperator(const Value: lpString): Boolean;
+begin
+  Result := UpperCase(Value) = '!FINALIZE';
 end;
 
 function PointerToString(const p: Pointer): lpString;

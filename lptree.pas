@@ -257,6 +257,7 @@ type
   TLapeTree_InternalMethod_Dispose = class(TLapeTree_InternalMethod)
   public
     FunctionOnly: Boolean;
+    class function NeedDispose(ACompiler: TLapeCompilerBase; AVar: TResVar): Boolean;
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
@@ -381,6 +382,12 @@ type
   TLapeTree_InternalMethod_Raise = class(TLapeTree_InternalMethod)
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_Finalize = class(TLapeTree_InternalMethod)
+  public
+    class function NeedFinalize(ACompiler: TLapeCompilerBase; AVar: TResVar): Boolean;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
@@ -799,7 +806,6 @@ type
 
 function getFlowStatement(Offset: Integer; Pos: PDocPos = nil; JumpSafe: Boolean = False): TLapeFlowStatement; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function EnsureCompound(Compiler: TLapeCompilerBase; Statement: TLapeTree_Base; AllowNil: Boolean = True): TLapeTree_StatementList;
-function GetMagicMethodOrNil(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; AResult: TLapeType = nil): TResVar;
 
 const
   NullFlowStatement: TLapeFlowStatement = (CodeOffset: 0; DocPos: (Line: 0; Col: 0; FileName: ''); JumpSafe: False);
@@ -838,22 +844,48 @@ begin
   end;
 end;
 
+function GetMagicMethod(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  i: Int32;
+  Key: String;
+  Method: TLapeGlobalVar;
+begin
+  Result := nil;
+
+  if (Compiler <> nil) then
+  begin
+    Key := AName;
+    for i := 0 to High(AParams) do
+      Key := Key + AParams[i].AsString + AParams[i].Name;
+
+    if not Compiler.getCachedVar(Key, Result) then
+    begin
+      Method := Compiler[AName];
+
+      Assert(Method <> nil);
+      Assert(Method.VarType is TLapeType_OverloadedMethod);
+
+      with TLapeType_OverloadedMethod(Method.VarType) do
+        Result := Compiler.addCachedVar(Key, getMethod(getTypeArray(AParams), AResult));
+    end;
+  end;
+end;
+
 function GetMagicMethodOrNil(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; AResult: TLapeType = nil): TResVar;
 var
   Method: TLapeGlobalVar;
 begin
   if (Compiler = nil) then
-    Result := NullResVar;
+    Result := NullResVar
+  else
+  begin
+    Method := GetMagicMethod(Compiler, AName, AParams, AResult);
+    if (Method = nil) then
+      Method := Compiler.getCachedConstant('nil', ltPointer);
 
-  Method := Compiler[AName];
-  if (Method <> nil) and (Method.VarType is TLapeType_OverloadedMethod) then
-    Method := TLapeType_OverloadedMethod(Method.VarType).getMethod(getTypeArray(AParams), AResult);
-
-  if (Method = nil) then
-    Method := Compiler.addManagedVar(Compiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar;
-
-  Result := _ResVar.New(Method);
-  Result.VarType := Compiler.getBaseType(ltPointer);
+    Result := _ResVar.New(Method);
+    Result.VarType := Compiler.getBaseType(ltPointer);
+  end;
 end;
 
 constructor TLapeTreeType.Create(ADecl: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase);
@@ -3037,6 +3069,11 @@ begin
   Param.Spill(1);
 end;
 
+class function TLapeTree_InternalMethod_Dispose.NeedDispose(ACompiler: TLapeCompilerBase; AVar: TResVar): Boolean;
+begin
+  Result := AVar.HasType and (GetMagicMethod(ACompiler, '!Dispose', [AVar.VarType]) <> nil);
+end;
+
 constructor TLapeTree_InternalMethod_Dispose.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
@@ -3072,10 +3109,7 @@ begin
   if ((VarType = nil) and (not IsPointer)) or (not Param.Writeable) then
     LapeException(lpeVariableExpected, [FParams[0], Self]);
 
-  _Dispose := FCompiler['_Dispose'];
-  Assert((_Dispose <> nil) and (_Dispose.VarType is TLapeType_OverloadedMethod));
-  _Dispose := TLapeType_OverloadedMethod(_Dispose.VarType).getMethod(getTypeArray([VarType]));
-
+  _Dispose := GetMagicMethod(FCompiler, '!Dispose', [VarType]);
   if (_Dispose <> nil) then
     with TLapeTree_Invoke.Create(_Dispose, Self) do
     try
@@ -3612,8 +3646,9 @@ begin
       else if (not (Param.VarType.BaseType in LapeStringTypes)) then
       begin
         addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
-        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
-        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Assign', [ArrayType, ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Dispose', [ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Assign', [ArrayType, ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Finalize', [ArrayType]), Self));
       end;
       Result := Compile(Offset);
     finally
@@ -3776,7 +3811,7 @@ begin
         addParam(TLapeTree_ExprBase(TmpExpr.FoldConstants()));
 
         addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
-        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Assign', [ArrayType, ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Assign', [ArrayType, ArrayType]), Self));
 
         Result.VarType := FCompiler.getBaseType(ltPointer);
       end;
@@ -3839,8 +3874,9 @@ begin
       if (not (Param.VarType.BaseType in LapeStringTypes)) then
       begin
         addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
-        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
-        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Assign', [ArrayType, ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Dispose', [ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Assign', [ArrayType, ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Finalize', [ArrayType]), Self));
       end;
 
       Result := Compile(Offset);
@@ -3933,8 +3969,9 @@ begin
         addParam(TLapeTree_ExprBase(TmpExpr.FoldConstants()));
 
         addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
-        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
-        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Assign', [ArrayType, ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Dispose', [ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Assign', [ArrayType, ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '!Finalize', [ArrayType]), Self));
       end;
 
       Result := Compile(Offset);
@@ -4412,6 +4449,36 @@ begin
       Invoke.Free();
     end;
   end;
+end;
+
+class function TLapeTree_InternalMethod_Finalize.NeedFinalize(ACompiler: TLapeCompilerBase; AVar: TResVar): Boolean;
+begin
+  Result := AVar.Writeable and AVar.HasType and (AVar.VarType.BaseType in FinalizeOperatorTypes) and (GetMagicMethod(ACompiler, '!Finalize', [AVar.VarType]) <> nil);
+end;
+
+function TLapeTree_InternalMethod_Finalize.Compile(var Offset: Integer): TResVar;
+var
+  Param: TResVar;
+  Method: TLapeGlobalVar;
+begin
+  Result := NullResVar;
+
+  if (FParams.Count <> 1) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  Param := FParams[0].Compile(Offset);
+  if (Param.VarPos.MemPos = NullResVar.VarPos.MemPos) or (not Param.HasType()) then
+    Exit;
+
+  Method := GetMagicMethod(FCompiler, '!Finalize', [Param.VarType]);
+  if (Method <> nil)  then
+    with TLapeTree_Invoke.Create(TLapeTree_GlobalVar.Create(Method, Self), Self) do
+    try
+      addParam(TLapeTree_ResVar.Create(Param.IncLock(), Self));
+      Compile(Offset).Spill(1);
+    finally
+      Free();
+    end;
 end;
 
 constructor TLapeTree_Callback.Create(ACompiler: TLapeCompilerBase; ACallback: TLapeTreeCallback; AData: Pointer = nil; ADocPos: PDocPos = nil);
@@ -5389,6 +5456,7 @@ end;
 function TLapeTree_Method.Compile(var Offset: Integer): TResVar;
 var
   i, fo, mo, co: Integer;
+  Param: TResVar;
 begin
   Assert(Method <> nil);
   FExitStatements.Clear();
@@ -5419,6 +5487,29 @@ begin
       finally
         Free();
       end;
+
+    if LapeIsFinalizeOperator(Method.VarType.Name) then
+    begin
+      Param := _ResVar.New(FStackInfo.Vars[0]);
+
+      if Param.VarType.EvalRes(op_cmp_Equal, Param.VarType) <> nil then // Check if cmp_Equal is available
+        with TLapeTree_If.Create(Self) do
+        try
+          Parent := Self;
+
+          Condition := TLapeTree_Operator.Create(op_cmp_Equal, Self);
+          with TLapeTree_Operator(Condition) do
+          begin
+            Left := TLapeTree_ResVar.Create(Param.IncLock(), Condition);
+            Right := TLapeTree_GlobalVar.Create(Param.VarType.NewGlobalVarP(), Condition);
+          end;
+          Body := TLapeTree_InternalMethod_Exit.Create(Condition);
+
+          Compile(Offset).Spill(1);
+        finally
+          Free();
+        end;
+    end;
 
     FStatements.Compile(Offset).Spill(1);
 

@@ -1,0 +1,99 @@
+type
+  TPoint = record
+    X, Y: Integer;
+  end;
+  TPointArray = array of TPoint;
+
+procedure TestContainers;
+var
+  Dyn: TPointArray;
+  Stat: array[0..1] of TPointArray;
+  Rec: record
+    Rec: record
+      Dyn: TPointArray;
+      Stat: array[0..1] of TPointArray;
+    end;
+  end;
+begin
+  SetLength(Dyn, 10);
+
+  Dyn[0].X := 100;
+  Dyn[0].Y := 100;
+  Dyn += [200, 200];
+
+  Stat[1] += [300, 300];
+
+  with Rec.Rec do
+  begin
+    SetLength(Dyn, 10);
+
+    Dyn[0].X := 400;
+    Dyn[0].Y := 400;
+    Dyn += [500, 500];
+
+    Stat[1] += [600, 600];
+  end;
+end;
+
+procedure TestAssignment;
+var
+  P: TPoint;
+begin
+  P := [100, 100];
+  WriteLn '>> Assign >>';
+  P := [200, 200];
+  WriteLn '<< Assign <<';
+end;
+
+procedure TestSetLength;
+var
+  Arr: array of TPointArray;
+begin
+  SetLength(Arr, 10, 10);
+
+  Arr[0][0] := [100, 100];
+  Arr[5][6] := [200, 200];
+  Arr[6][6] := [300, 300];
+
+  WriteLn '>> Clear >>';
+  SetLength(Arr, 1);
+  WriteLn '>> Clear <<';
+end;
+
+procedure TestMethod;
+
+  function Method(out P1: TPoint; var P2: TPoint; const P3: TPoint; constref P4: TPoint; P5: TPoint): TPoint;
+  begin
+    Result := [600, 600];
+  end;
+
+var
+  P1, P2, P3, P4, P5, P6: TPoint;
+begin
+  P1 := [100, 100];
+  P2 := [200, 200];
+  P3 := [300, 300];
+  P4 := [400, 400];
+  P5 := [500, 500];
+  WriteLn '>> Invoke >>';
+  P6 := Method(P1, P2, P3, P4, P5);
+  WriteLn '<< Invoke <<';
+end;
+
+class operator TPoint.Finalize(var P: TPoint);
+begin
+  WriteLn('Finalize: ', P);
+end;
+
+var
+  Rec: TPoint := [100, 100];
+  Dyn: TPointArray := [[200, 200]];
+  Stat: array[0..0] of TPoint := [[300, 300]];
+
+begin
+  WriteLn '>> TestContainers >> '; TestContainers(); WriteLn '<< TestContainers <<';
+  WriteLn '>> TestAssignment >>'; TestAssignment(); WriteLn '<< TestAssignment <<';
+  WriteLn '>> TestSetLength >>'; TestSetLength(); WriteLn '<< TestSetLength <<';
+  WriteLn '>> TestMethod >>'; TestMethod(); WriteLn '<< TestMethod <<';
+  WriteLn '>> TestConstants >>';
+end.

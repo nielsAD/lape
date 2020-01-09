@@ -67,7 +67,7 @@ implementation
 
 uses
   Math,
-  lpvartypes_array, lpparser, lpeval, lpmessages;
+  lpvartypes_array, lpparser, lpeval, lpmessages, lptree;
 
 function TLapeType_Record.getAsString: lpString;
 var
@@ -400,6 +400,15 @@ begin
   else if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
     begin
+      if TLapeTree_InternalMethod_Finalize.NeedFinalize(FCompiler, Left) then
+        with TLapeTree_InternalMethod_Finalize.Create(FCompiler, Pos) do
+        try
+          addParam(TLapeTree_ResVar.Create(Left.IncLock(), FCompiler, Pos));
+          Compile(Offset).Spill(1);
+        finally
+          Free();
+        end;
+
       Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
 
       if Left.HasType() then

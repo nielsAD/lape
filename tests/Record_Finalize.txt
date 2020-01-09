@@ -1,0 +1,36 @@
+>> TestContainers >> 
+Finalize: {X = 100, Y = 100}
+Finalize: {X = 200, Y = 200}
+Finalize: {X = 300, Y = 300}
+Finalize: {X = 400, Y = 400}
+Finalize: {X = 500, Y = 500}
+Finalize: {X = 600, Y = 600}
+<< TestContainers <<
+>> TestAssignment >>
+>> Assign >>
+Finalize: {X = 100, Y = 100}
+<< Assign <<
+Finalize: {X = 200, Y = 200}
+<< TestAssignment <<
+>> TestSetLength >>
+>> Clear >>
+Finalize: {X = 200, Y = 200}
+Finalize: {X = 300, Y = 300}
+>> Clear <<
+Finalize: {X = 100, Y = 100}
+<< TestSetLength <<
+>> TestMethod >>
+>> Invoke >>
+Finalize: {X = 500, Y = 500}
+<< Invoke <<
+Finalize: {X = 100, Y = 100}
+Finalize: {X = 200, Y = 200}
+Finalize: {X = 300, Y = 300}
+Finalize: {X = 400, Y = 400}
+Finalize: {X = 500, Y = 500}
+Finalize: {X = 600, Y = 600}
+<< TestMethod <<
+>> TestConstants >>
+Finalize: {X = 100, Y = 100}
+Finalize: {X = 200, Y = 200}
+Finalize: {X = 300, Y = 300}

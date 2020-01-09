@@ -56,6 +56,7 @@ const
   lpeExceptionIn = '%s in file "%s"';
   lpeExpected = '%s expected';
   lpeExpectedOther = 'Found unexpected token "%s", expected "%s"';
+  lpeExpectedVarParameter = 'Expected var parameter (index: %d)';
   lpeExpressionExpected = 'Expression expected';
   lpeFileNotFound = 'File "%s" not found';
   lpeImpossible = 'It''s impossible!';
@@ -72,6 +73,7 @@ const
   lpeInvalidIndex = 'Invalid index "%s"';
   lpeInvalidIterator = 'Variable cannot be used for iteration';
   lpeInvalidJump = 'Invalid jump';
+  lpeInvalidManagementMethod = 'Invalid mangment method "%s"';
   lpeInvalidOpenArrayElement = 'Invalid open array element (%s) (index: %d)';
   lpeInvalidOperator = 'Operator "%s" expects %d parameters';
   lpeInvalidRange = 'Expression is not a valid range';
@@ -80,6 +82,7 @@ const
   lpeInvalidWithReference = 'Invalid with-reference';
   lpeLostClosingParenthesis = 'Found closing parenthesis without matching opening parenthesis';
   lpeLostConditional = 'Found conditional without matching opening statement';
+  lpeManagementMethodNotSupported = 'Management method not supported for type "%s"';
   lpeMethodOfObjectExpected = 'Expected method of object';
   lpeNoDefaultForParam = 'No default value for parameter %d found';
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';
