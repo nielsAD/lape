@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+export LD_LIBRARY_PATH=/usr/local/opt/libffi/lib
+
 for mode in $(echo $FFI | tr ":" "\n"); do
 
 	echo "Testing ${mode}"
