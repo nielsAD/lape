@@ -34,7 +34,7 @@ matrix:
     - os: linux
       env: LAZ_VER=1.8.2 LAZ_ENV=qemu-arm LAZ_OPT="--os=linux --cpu=arm --widgetset=nogui" FFI=""
     - os: osx
-      env: LAZ_VER=1.8.2 LAZ_OPT="--cpu=x86_64 --compiler=/usr/local/bin/fpc" FFI="default-static"
+      env: LAZ_VER=1.8.2 LAZ_OPT="--cpu=x86_64 --compiler=/usr/local/bin/fpc" FFI="default"
 
 before_install:
   # Start virtual display server

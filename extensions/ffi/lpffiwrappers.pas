@@ -800,6 +800,11 @@ begin
     if (ABI = FFI_UNIX64) and (Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType = ltRecord) and (Param.VarType.Size = SizeOf(Pointer) * 2) then
       Exit(False);
   {$IFEND}
+  
+  {$IF DECLARED(FFI_SYSV)}
+    if (ABI = FFI_SYSV) and (Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType = ltRecord) and (Param.VarType.Size = SizeOf(Pointer) * 2) then
+      Exit(False);
+  {$IFEND}
 
   {$IF DEFINED(CPU86) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)}
     if (ABI in [FFI_CDECL, FFI_MS_CDECL]) then
