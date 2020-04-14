@@ -2113,7 +2113,7 @@ end;
 
 function TLapeType_TypeEnum.HasChild(AName: lpString): Boolean;
 begin
-  Result := HasConstantChild(nil, AName) or inherited;
+  Result := ((FTType is TLapeType_Enum) and TLapeType_Enum(FTType).hasMember(AName)) or inherited;
 end;
 
 function TLapeType_TypeEnum.HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean;

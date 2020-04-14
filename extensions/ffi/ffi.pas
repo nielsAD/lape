@@ -146,6 +146,10 @@ type
       FFI_VFP   = 2,
     {$ENDIF}
 
+    {$IFDEF CPUAARCH64}
+      FFI_SYSV = 1,
+    {$ENDIF}
+
     FFI_LAST_ABI
   );
 
@@ -153,12 +157,14 @@ const
   FFI_DEFAULT_ABI =
     {$IFDEF CPU86}FFI_REGISTER{$ENDIF}
     {$IFDEF CPUX86_64}{$IFDEF MSWINDOWS}FFI_WIN64{$ELSE}FFI_UNIX64{$ENDIF}{$ENDIF}
-    {$IFDEF CPUARM}{$IFDEF FPUVFP}FFI_VFP{$ELSE}FFI_CDECL{$ENDIF}{$ENDIF};
+    {$IFDEF CPUARM}{$IFDEF FPUVFP}FFI_VFP{$ELSE}FFI_CDECL{$ENDIF}{$ENDIF}
+    {$IFDEF CPUAARCH64}FFI_SYSV{$ENDIF};
 
   FFI_TRAMPOLINE_SIZE =
     {$IFDEF CPU86}12{$ENDIF}
     {$IFDEF CPUX86_64}24{$ENDIF}
-    {$IFDEF CPUARM}12{$ENDIF};
+    {$IFDEF CPUARM}12{$ENDIF}
+    {$IFDEF CPUAARCH64}24{$ENDIF};
 
   {$IF DECLARED(FFI_CDECL)}
   FFI_SYSV = FFI_CDECL;
@@ -404,6 +410,9 @@ begin
     Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_alloc)    := GetProcAddress(ffi_libhandle, 'ffi_closure_alloc');
     Pointer({$IFNDEF FPC}@{$ENDIF}ffi_closure_free)     := GetProcAddress(ffi_libhandle, 'ffi_closure_free');
     Pointer({$IFNDEF FPC}@{$ENDIF}ffi_prep_closure_loc) := GetProcAddress(ffi_libhandle, 'ffi_prep_closure_loc');
+	
+	if (ffi_prep_cif = nil) or (ffi_call = nil) or (ffi_closure_alloc = nil) or (ffi_closure_free = nil) or (ffi_prep_closure_loc = nil) then
+      UnloadFFI();
   end;
 end;
 
