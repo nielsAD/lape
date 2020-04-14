@@ -1,7 +1,7 @@
 Lape
 ====
 
-[![Build Status](https://travis-ci.org/nielsAD/lape.svg?branch=master)](https://travis-ci.org/nielsAD/lape)
+![Build Status](https://github.com/nielsAD/lape/workflows/Lape%20Tests/badge.svg)
 
 Lape is a scripting engine with a Pascal derived syntax for Free Pascal and Delphi. It's written with speed and a broad platform compatibility in mind. The syntax is backwards compatible with Pascal Script (to a certain degree).
 
