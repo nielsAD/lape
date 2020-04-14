@@ -1924,9 +1924,9 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       Rec := FieldType.CreateCopy(True) as TLapeType_Record;
     end
     else if IsRecord then
-      Rec := TLapeType_Record.Create(Self, nil, nil, '', getPDocPos())
+      Rec := TLapeType_Record.Create(Self, nil, '', getPDocPos())
     else
-      Rec := TLapeType_Union.Create(Self, nil, nil, '', getPDocPos());
+      Rec := TLapeType_Union.Create(Self, nil, '', getPDocPos());
 
     repeat
       if Tokenizer.Tok = tk_kw_Class then
