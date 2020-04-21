@@ -17,25 +17,25 @@ jobs:
         config:
           - os: windows-latest
             name: Windows 32
-            LAZ_VER: 2.0.6
+            LAZ_VER: 2.0.8
             LAZ_OPT: "--os=win32 --cpu=i386"
             FFI_TESTS: "stdcall cdecl pascal register stdcall-static cdecl-static pascal-static register-static"
 
           - os: windows-latest
             name: Windows 64
-            LAZ_VER: 2.0.6
+            LAZ_VER: 2.0.8
             LAZ_OPT: "--os=win64 --cpu=x86_64"
             FFI_TESTS: "default default-static"
 
           - os: ubuntu-latest
             name: Linux 64
-            LAZ_VER: 2.0.6
+            LAZ_VER: 2.0.8
             LAZ_OPT: "--os=linux --cpu=x86_64"
             FFI_TESTS: "default default-static"
 
           - os: macos-latest
             name: MacOS 64
-            LAZ_VER: 2.0.6
+            LAZ_VER: 2.0.8
             LAZ_OPT: "--os=darwin --cpu=x86_64"
             FFI_TESTS: "default default-static"
 
@@ -71,8 +71,8 @@ jobs:
         LAZ_BIN_TARGET = {
             'Linux':   'Lazarus Linux amd64 DEB/Lazarus %(version)s',
             'Windows': 'Lazarus Windows 64 bits/Lazarus %(version)s',
-            'macOS':   'Lazarus macOS x86-64/'
-        }[OS_NAME];
+            'macOS':   'Lazarus macOS x86-64/Lazarus %(version)s'
+        }[OS_NAME]
 
         def install_lazarus_version(ver):
 
@@ -100,13 +100,18 @@ jobs:
                 process_file = lambda f: (not f.endswith('.deb')) or subprocess.call('sudo dpkg --force-overwrite -i %s' % (f), shell=True) == 0
             elif OS_NAME == 'macOS':
                 # Install all .pkg files
-                process_file = lambda f: (not f.endswith('.pkg')) or subprocess.call('sudo installer -pkg %s -target /' % (f), shell=True) == 0
+                process_file = lambda f: (not f.endswith('.pkg')) or (subprocess.call('sudo installer -pkg %s -target /' % (f), shell=True) == 0 or True)
             else:
                 return False
 
             # Process all downloaded files
-            if not all(map(lambda f: subprocess.call('echo Installing %s' % (f), shell=True) == 0 and process_file(os.path.join(LAZ_DOWNLOAD_DIR, f)), sorted(os.listdir(LAZ_DOWNLOAD_DIR)))):
+            if not all(map(lambda f: process_file(os.path.join(LAZ_DOWNLOAD_DIR, f)), sorted(os.listdir(LAZ_DOWNLOAD_DIR)))):
                 return False
+
+            # Fix macOS installer https://forum.lazarus.freepascal.org/index.php/topic,47408.msg358322.html#msg358322
+            if OS_NAME == 'macOS':
+                for command in ['sudo rm /etc/fpc.cfg', 'sudo fpcmkcfg -d basepath=/usr/local/lib/fpc/\$fpcversion -o /etc/fpc.cfg', 'sudo ln -s /usr/local/lib/fpc/3.0.4/ppcx64 /usr/local/bin']:
+                  subprocess.call(command, shell=True)
 
             return True
 
