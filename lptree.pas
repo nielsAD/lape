@@ -233,7 +233,14 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
   
-  TLapeTree_InternalMethod_Operator = class(TLapeTree_InternalMethod)
+  TLapeTree_InternalMethod_OperatorOverload = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce;
+  end;
+
+  TLapeTree_InternalMethod_OperatorOverride = class(TLapeTree_InternalMethod)
+  protected
+    function getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBase; overload; override;
   public
     constructor Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce;
   end;
@@ -2921,12 +2928,63 @@ begin
   else if (FoundNode = nil) then
     LapeException(lpeCannotContinue, DocPos)
   else
-      FoundNode.addContinueStatement(JumpSafe, Offset, @_DocPos);
+    FoundNode.addContinueStatement(JumpSafe, Offset, @_DocPos);
 end;
 
-constructor TLapeTree_InternalMethod_Operator.Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+constructor TLapeTree_InternalMethod_OperatorOverload.Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
-  inherited Create('!op_'+op_name[AOperator], ACompiler, ADocPos);
+  inherited Create('!op_' + op_name[AOperator] + '_overload', ACompiler, ADocPos);
+end;
+
+function TLapeTree_InternalMethod_OperatorOverride.getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBase;
+var
+  Typ: TLapeType;
+  Method: TLapeType_Method;
+  i: Int32;
+  leftType, rightType: TLapeTYpe;
+  leftConstant, rightConstant: Boolean;
+begin
+  if (FRealIdent = nil) and (not isEmpty(FExpr)) then
+  begin
+    Typ := FExpr.resType();
+
+    leftType := FParams[0].resType();
+    leftConstant := FParams[0].isConstant;
+    if (FParams[0] is TLapeTree_ResVar) then
+      leftConstant := not TLapeTree_ResVar(FParams[0]).ResVar.Writeable;
+
+    rightType := FParams[1].resType();
+    rightConstant := FParams[1].isConstant;
+    if (FParams[1] is TLapeTree_ResVar) then
+      rightConstant := not TLapeTree_ResVar(FParams[1]).ResVar.Writeable;
+
+    if (not (FExpr is TLapeTree_VarType)) and (Typ is TLapeType_OverloadedMethod) then
+      with TLapeType_OverloadedMethod(Typ) do
+      begin
+        for i := 0 to ManagedDeclarations.Count - 1 do
+        begin
+          Method := TLapeType_Method(TLapeGlobalVar(ManagedDeclarations[i]).VarType);
+
+          if (Method.Params[0].ParType in Lape_ConstParams = leftConstant) and (Method.Params[0].VarType = leftType) and
+             (Method.Params[1].ParType in Lape_ConstParams = rightConstant) and (Method.Params[1].VarType = rightType) then
+            begin
+              FRealIdent := TLapeTree_GlobalVar.Create(TLapeGlobalVar(ManagedDeclarations[i]), Self);
+
+              Break;
+            end;
+        end;
+      end;
+  end;
+
+  if (FRealIdent = nil) and (ExpectType = nil) then
+    Result := FExpr
+  else
+    Result := FRealIdent;
+end;
+
+constructor TLapeTree_InternalMethod_OperatorOverride.Create(AOperator: EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create('!op_' + op_name[AOperator] + '_override', ACompiler, ADocPos);
 end;
 
 function TLapeTree_InternalMethod_Exit.Compile(var Offset: Integer): TResVar;
@@ -4647,53 +4705,56 @@ var
   tmpLeft: TLapeTree_ExprBase;
   tmpVar, ResVar: TResVar;
 begin
+  LeftType := nil;
+  RightType := nil;
+
   if (FResType = nil) then
-    try
-      if (FLeft <> nil) then
-        if (FLeft is TLapeTree_If) then
-          Exit(FCompiler.getBaseType(ltEvalBool))
-        else
-          LeftType := TLapeTree_ExprBase(FLeft).resType()
+  try
+    if (FLeft <> nil) then
+      if (FLeft is TLapeTree_If) then
+        Exit(FCompiler.getBaseType(ltEvalBool))
       else
-        LeftType := nil;
+        LeftType := TLapeTree_ExprBase(FLeft).resType()
+    else
+      LeftType := nil;
 
-      if (FRight <> nil) then
-      begin
-        FRight := FRight.setExpectedType(LeftType) as TLapeTree_ExprBase;
-        RightType := FRight.resType();
-      end
-      else
-        RightType := nil;
+    if (FRight <> nil) then
+    begin
+      FRight := FRight.setExpectedType(LeftType) as TLapeTree_ExprBase;
+      RightType := FRight.resType();
+    end
+    else
+      RightType := nil;
 
-      if (LeftType = nil) then
-        LeftType := FCompiler.addManagedType(TLapeType.Create(ltUnknown, FCompiler));
-      if (FRight <> nil) and (FRight is TLapeTree_GlobalVar) then
-        Result := LeftType.EvalRes(FOperatorType, TLapeTree_GlobalVar(FRight).GlobalVar, EvalFlags())
-      else if (LeftType <> nil) then
-        Result := LeftType.EvalRes(FOperatorType, RightType, EvalFlags());
+    if (LeftType = nil) then
+      LeftType := FCompiler.addManagedType(TLapeType.Create(ltUnknown, FCompiler));
+    if (FRight <> nil) and (FRight is TLapeTree_GlobalVar) then
+      Result := LeftType.EvalRes(FOperatorType, TLapeTree_GlobalVar(FRight).GlobalVar, EvalFlags())
+    else if (LeftType <> nil) then
+      Result := LeftType.EvalRes(FOperatorType, RightType, EvalFlags());
 
-      if (LeftType <> nil) and (FRight <> nil) and
-         ((Result = nil)  and ((FOperatorType = op_IN) and (FRight is TLapeTree_OpenArray)) or
-         ((lcoShortCircuit in FCompilerOptions) and (Result <> nil) and (Result.BaseType in LapeBoolTypes) and (FOperatorType in [op_AND, op_OR]) and
-          (LeftType.BaseType in LapeBoolTypes) and (RightType <> nil) and (RightType.BaseType in LapeBoolTypes)))
-      then
-      begin
-        FRestructure := bTrue;
-        if (Result = nil) then
-          Result := FCompiler.getBaseType(ltEvalBool);
-      end 
-      else
-        FRestructure := bFalse;
-    finally
-      FResType := Result;
-    end;
+    if (LeftType <> nil) and (FRight <> nil) and
+       ((Result = nil)  and ((FOperatorType = op_IN) and (FRight is TLapeTree_OpenArray)) or
+       ((lcoShortCircuit in FCompilerOptions) and (Result <> nil) and (Result.BaseType in LapeBoolTypes) and (FOperatorType in [op_AND, op_OR]) and
+        (LeftType.BaseType in LapeBoolTypes) and (RightType <> nil) and (RightType.BaseType in LapeBoolTypes)))
+    then
+    begin
+      FRestructure := bTrue;
+      if (Result = nil) then
+        Result := FCompiler.getBaseType(ltEvalBool);
+    end
+    else
+      FRestructure := bFalse;
+  finally
+    FResType := Result;
+  end;
 
   Result := inherited resType();
 
   if (FResType = nil) and (LeftType <> nil) and (RightType <> nil) and (LeftType.BaseType <> ltUnknown) and
      (FOperatorType in OverloadableOperators) then
   begin
-    with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, nil) do
+    with TLapeTree_InternalMethod_OperatorOverload.Create(FOperatorType, FCompiler, nil) do
     try
       tmpVar := NullResVar;
       tmpVar.VarType := LeftType;
@@ -4854,7 +4915,7 @@ var
   function DoOperatorOverload(): TResVar;
   begin
     Dest := NullResVar;
-    with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, @_DocPos) do
+    with TLapeTree_InternalMethod_OperatorOverload.Create(FOperatorType, FCompiler, @_DocPos) do
     try
       addParam(Left);
       addParam(Right);
@@ -4863,6 +4924,39 @@ var
       Right := Params[1];
       Left := Params[0];
       Free();
+    end;
+  end;
+
+  function DoOperatorOverride(var ResVar: TResVar): Boolean;
+  begin
+    Result := False;
+
+    if (FResType <> nil) and (FOperatorType in OverridableOperators) and (lcoOperatorOverride in CompilerOptions) then
+    try
+      FCompiler.Options := FCompiler.Options - [lcoOperatorOverride];
+
+      with TLapeTree_InternalMethod_OperatorOverride.Create(FOperatorType, FCompiler) do
+      try
+        addParam(TLapeTree_ResVar.Create(LeftVar, FCompiler));
+        addParam(TLapeTree_ResVar.Create(RightVar, FCompiler));
+
+        if (resType() <> nil) then
+        begin
+          ResVar := Compile(Offset);
+
+          Result := True;
+        end;
+      finally
+        Free();
+      end;
+    finally
+      if Result then
+      begin
+        LeftVar.Spill(1);
+        RightVar.Spill(1);
+      end;
+
+      FCompiler.Options := FCompiler.Options + [lcoOperatorOverride];
     end;
   end;
   
@@ -4904,6 +4998,9 @@ begin
     end;
 
     RightVar := FRight.Compile(Offset);
+    if DoOperatorOverride(Result) then
+      Exit;
+
     DoneAssignment := DoneAssignment and (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos);
   end
   else

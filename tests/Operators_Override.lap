@@ -1,0 +1,98 @@
+{$assertions on}
+
+// ASSIGN
+
+type
+  PStringArray = ^TStringArray;
+  TStringArray = array of String;
+  T2DStringArray = array of TStringArray;
+
+operator := (var Left: TStringArray; var Right: TStringArray): TStringArray; override;
+begin
+  inherited(Left, ['Right is a variable']);
+  inherited(Result, Left);
+end;
+
+operator := (var Left: TStringArray; constref Right: TStringArray): TStringArray; override;
+begin
+  inherited(Left, ['Right is a constant']);
+  inherited(Result, Left);
+end;
+
+const
+  ConstantStrings: TStringArray = [];
+
+var
+  VariableStrings: TStringArray;
+
+var
+  VariableArrayOfStrings: T2DStringArray = [[]];
+
+const
+  ConstantArrayOfStrings: T2DStringArray = [[]];
+
+var
+  VariableRecordStrings: record
+    Field: TStringArray;
+  end;
+
+const
+  ConstantRecordStrings: record
+    Field: TStringArray;
+  end = [];
+
+function ReturnStrings: TStringArray;
+begin
+  Result := ['Hello', 'World'];
+end;
+
+var
+  Test: array[0..8] of TStringArray;
+
+begin
+  Test[0] := ConstantStrings;                    // const
+  Test[1] := VariableStrings;                    // var
+  Test[2] := ReturnStrings();                    // const
+  Test[3] := VariableStrings + VariableStrings;  // var
+  Test[4] := VariableRecordStrings.Field;        // var
+  Test[5] := ConstantRecordStrings.Field;        // const
+  Test[6] := VariableArrayOfStrings[0];          // var
+  Test[7] := ConstantArrayOfStrings[0];          // const
+  Test[8] := PStringArray(@VariableStrings)^;    // var
+
+  Assert(Test[0][0] = 'Right is a constant');
+  Assert(Test[1][0] = 'Right is a variable');
+  Assert(Test[2][0] = 'Right is a constant');
+  Assert(Test[3][0] = 'Right is a variable');
+  Assert(Test[4][0] = 'Right is a variable');
+  Assert(Test[5][0] = 'Right is a constant');
+  Assert(Test[6][0] = 'Right is a variable');
+  Assert(Test[7][0] = 'Right is a constant');
+  Assert(Test[8][0] = 'Right is a variable');
+end;
+
+// REF
+
+type
+  TRec = record
+    Ref: PtrUInt;
+  end;
+
+operator := (var Left: TRec; var Right: TRec): TRec; override;
+begin
+  Swap(Left.Ref, Right.Ref);
+end;
+
+var
+  A, B, C: TRec;
+
+begin
+  A.Ref := 1000;
+
+  B := A;
+  C := B;
+
+  Assert(A.Ref = 0);
+  Assert(B.Ref = 0);
+  Assert(C.Ref = 1000);
+end;

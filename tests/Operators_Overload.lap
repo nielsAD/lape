@@ -1,6 +1,8 @@
-{$assertions ON}
+{$assertions on}
+
 type
   TPoint = record x,y:Int32; end;
+  TVector = type TPoint;
 
 operator * (Left:String; Right:Int32): String;
 begin
@@ -8,7 +10,7 @@ begin
   for 1 to Right do
     Result := Result + Left;
 end;
-  
+
 operator + (Left,Right:TPoint): TPoint;
 begin
   Result.x := (Left.x + Right.x);
@@ -27,11 +29,17 @@ begin
   Result.y := (Left.y xor Right.y);
 end;
 
-var
-  a,b:TPoint;
-  str:String;
+operator := (var Left: TPoint; Right: TVector): TPoint;
 begin
-  a := [9,9];
+  Left := [Right.X, Right.Y];
+  Result := Left;
+end;
+
+var
+  a,b: TPoint;
+  str: String;
+begin
+  a := TVector([9,9]);
   b := [2,2];
   Assert((a = b) = False);
   Assert(UInt64(a + b)   = UInt64(TPoint([11,11])));

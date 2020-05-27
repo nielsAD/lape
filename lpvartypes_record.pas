@@ -259,15 +259,10 @@ begin
   if (Right <> nil) and (Right is TLapeType_Record) and  (TLapeType_Record(Right).FieldMap.Count = FFieldMap.Count) then
     if (op = op_Assign) then
     begin
-      for i := 0 to FFieldMap.Count - 1 do
-        if (FFieldMap.Key[i] <> TLapeType_Record(Right).FieldMap.Key[i]) or
-           (not FFieldMap.ItemsI[i].FieldType.CompatibleWith(TLapeType_Record(Right).FieldMap.ItemsI[i].FieldType))
-        then
-        begin
-          Result := inherited;
-          Exit;
-        end;
-      Result := Self;
+      if Self = Right then
+        Result := Self
+      else
+        Result := inherited;
     end
     else if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
     begin

@@ -31,13 +31,14 @@ type
     lcoHints,                          // {$H} {$HINTS}
     lcoContinueCase,                   //      {$CONTINUECASE}
     lcoCOperators,                     //      {$COPERATORS}
+    lcoOperatorOverride,               //      {$OPERATOROVERRIDE}
     lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
+  Lape_OptionsDef = [lcoOperatorOverride, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
   Lape_PackRecordsDef = 8;
 
 type
@@ -366,6 +367,7 @@ type
     FreeParams: Boolean;
     ImplicitParams: Integer;
     Res: TLapeType;
+    OperatorType: EOperator;
     IsOperator: Boolean;
     HintDirectives: ELapeHintDirectives;
     DeprecatedHint: String;
