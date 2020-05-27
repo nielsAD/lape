@@ -1,0 +1,248 @@
+{$hints off}
+{$assertions on}
+
+type
+  TManagedRecord = record
+    MyObject: Int32;
+    Ref: ^Int32;
+  end;
+
+  TContainer = record
+    Obj: TManagedRecord;
+  end;
+
+  TArr = array of TManagedRecord;
+  TStaticArr = array[0..1] of TManagedRecord;
+
+var
+  Initialized: Int32;
+  Finalized: array of Int32;
+
+class operator TManagedRecord.AddRef(var Obj: TManagedRecord);
+begin
+  Assert(Obj.Ref <> nil);
+
+  Obj.Ref^ += 1;
+end;
+
+class operator TManagedRecord.Finalize(var Obj: TManagedRecord);
+var
+  i: Int32;
+begin
+  Assert(Obj.Ref <> nil);
+  Assert(Obj.Ref^ > 0);
+
+  Dec(Obj.Ref^);
+  if (Obj.Ref^ > 0) then
+    Exit;
+
+  // Check double finalize
+  for i := 0 to High(Finalized) do
+    Assert(Finalized[i] <> Obj.MyObject);
+  Finalized += Obj.MyObject;
+
+  FreeMem(Obj.Ref);
+end;
+
+function getManagedRecord: TManagedRecord;
+begin
+  Result.MyObject := Inc(Initialized);
+  Result.Ref := GetMem(SizeOf(Int32));
+  Result.Ref^ := 1;
+end;
+
+function getContainer: TContainer;
+begin
+  Result.Obj := getManagedRecord();
+end;
+
+function getArray: TArr;
+begin
+  SetLength(Result, 2);
+
+  Result[0] := getManagedRecord();
+  Result[1] := getManagedRecord();
+end;
+
+function getStaticArray: TStaticArr;
+begin
+  Result[0] := getManagedRecord();
+  Result[1] := getManagedRecord();
+end;
+
+procedure TestArray;
+var
+  A, B: TArr;
+  R: TManagedRecord;
+  I: Int32;
+begin
+  A := [getManagedRecord(), getManagedRecord()] + [getManagedRecord(), getManagedRecord(), getManagedRecord(), getManagedRecord()];
+  A := [];
+
+  // Open array still hold references, will be finalized when method cleans up.
+  Assert(Length(Finalized) = 0);
+
+  SetLength(A, 5);
+  for I := 0 to High(A) do
+    A[I] := getManagedRecord();
+
+  B := Copy(A);
+  A := [];
+
+  // B holds references now
+  Assert(Length(Finalized) = 0);
+
+  B := [];
+
+  // B is no more!
+  Assert(Length(Finalized) = 5);
+
+  for I := 0 to High(A) do
+    Insert(getManagedRecord(), A);
+  Delete(A, 0, Length(A));
+
+  Assert(Length(Finalized) = 5);
+end;
+
+procedure TestUnassigned;
+begin
+  getManagedRecord();
+  getManagedRecord();
+
+  with getManagedRecord(), getManagedRecord() do
+    ;
+
+  for 1 to 6 do
+    getManagedRecord();
+
+  Assert(Length(Finalized) = 5); // Only overwrites in the for loop, others will be finalized when method cleans up.
+end;
+
+procedure TestMethod_Array;
+var
+  a, b, c, d, e, f: TArr;
+
+  function Method(var a: TArr; out b: TArr; c: TArr; const d: TArr; constref e: TArr): TArr; static;
+  begin
+    a := getArray();
+    b := getArray();
+    c := getArray();
+
+    Result := getArray();
+  end;
+
+begin
+  a := getArray();
+  b := getArray();
+  c := getArray();
+  d := getArray();
+  e := getArray();
+  f := getArray();
+
+  for 1 to 2 do
+    f := Method(a, b, c, d, e);
+
+  Assert(Length(Finalized) = 16);
+end;
+
+procedure TestMethod_StaticArray;
+var
+  a, b, c, d, e, f: TStaticArr;
+
+  function Method(var a: TStaticArr; out b: TStaticArr; c: TStaticArr; const d: TStaticArr; constref e: TStaticArr): TStaticArr; static;
+  begin
+    a := getStaticArray();
+    b := getStaticArray();
+    c := getStaticArray();
+
+    Result := getStaticArray();
+  end;
+
+begin
+  a := getStaticArray();
+  b := getStaticArray();
+  c := getStaticArray();
+  d := getStaticArray();
+  e := getStaticArray();
+  f := getStaticArray();
+
+  for 1 to 2 do
+    f := Method(a, b, c, d, e);
+
+  Assert(Length(Finalized) = 16);
+end;
+
+procedure TestMethod_Container;
+var
+  a, b, c, d, e, f: TContainer;
+
+  function Method(var a: TContainer; out b: TContainer; c: TContainer; const d: TContainer; constref e: TContainer): TContainer; static;
+  begin
+    a := getContainer();
+    b := getContainer();
+    c := getContainer();
+
+    Result := getContainer();
+  end;
+
+begin
+  a := getContainer();
+  b := getContainer();
+  c := getContainer();
+  d := getContainer();
+  e := getContainer();
+  f := getContainer();
+
+  for 1 to 2 do
+    f := Method(a, b, c, d, e);
+
+  Assert(Length(Finalized) = 8);
+end;
+
+procedure TestMethod;
+
+  function Method(var a: TManagedRecord; out b: TManagedRecord; c: TManagedRecord; const d: TManagedRecord; constref e: TManagedRecord): TManagedRecord; static;
+  begin
+    a := getManagedRecord();
+    b := getManagedRecord();
+    c := getManagedRecord();
+
+    Result := getManagedRecord();
+  end;
+
+var
+  a, b, c, d, e, f: TManagedRecord;
+begin
+  a := getManagedRecord();
+  b := getManagedRecord();
+  c := getManagedRecord();
+  d := getManagedRecord();
+  e := getManagedRecord();
+  f := getManagedRecord();
+
+  for 1 to 2 do
+    f := Method(a, b, c, d, e);
+
+  Assert(Length(Finalized) = 8);
+end;
+
+procedure Test(Proc: procedure; Name: String);
+begin
+  Initialized := 0;
+  Finalized := [];
+
+  Proc();
+
+  WriteLn(Name, ' -> ', Initialized, ' :: ', Length(Finalized));
+  Assert(Initialized = Length(Finalized), Name);
+end;
+
+begin
+  Test(@TestMethod,             'TestMethod');
+  Test(@TestMethod_Array,       'TestMethod_Array');
+  Test(@TestMethod_StaticArray, 'TestMethod_StaticArray');
+  Test(@TestMethod_Container,   'TestMethod_Container');
+
+  Test(@TestArray, 'TestArray');
+  Test(@TestUnassigned, 'TestUnassigned');
+end.

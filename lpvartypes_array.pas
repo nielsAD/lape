@@ -19,6 +19,7 @@ type
   TLapeType_DynArray = class(TLapeType_Pointer)
   protected
     function getAsString: lpString; override;
+    function getFinalizeOperator: Boolean; override;
   public
     constructor Create(ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
@@ -116,6 +117,22 @@ begin
       FAsString := 'array of ' + FPType.AsString
     else
       FAsString := 'array';
+  Result := inherited;
+end;
+
+function TLapeType_DynArray.getFinalizeOperator: Boolean;
+begin
+  if (FFinalizeOperator = bUnknown) then
+  begin
+    if HasType() then
+    begin
+      if PType.NeedFinalizeOperator then
+        FFinalizeOperator := bTrue
+      else
+        FFinalizeOperator := bFalse;
+    end;
+  end;
+
   Result := inherited;
 end;
 
@@ -921,6 +938,7 @@ var
   wasConstant: Boolean;
   CounterVar, IndexLow, IndexHigh: TLapeVar;
   LoopOffset: Integer;
+  Assign: TLapeTree_Operator;
 begin
   Assert(FCompiler <> nil);
   Assert(Left.VarType is TLapeType_Pointer);
@@ -979,7 +997,7 @@ begin
     Result.CopyFlags(Left);
   end
   else if (op = op_Assign) and (BaseType = ltStaticArray) and CompatibleWith(Right.VarType) then
-    if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) then
+    if (not NeedInitialization) and (not NeedFinalizeOperator) and Equals(Right.VarType) and (Size > 0) then
     begin
       Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
 
@@ -1039,7 +1057,26 @@ begin
       IndexHigh := FCompiler.getConstant(FRange.Hi, CounterVar.VarType.BaseType, False, True);
       LeftVar := CounterVar.VarType.Eval(op_Assign, LeftVar, _ResVar.New(CounterVar), _ResVar.New(IndexLow), [], Offset, Pos);
       LoopOffset := Offset;
-      FPType.Eval(op_Assign, tmpVar, Eval(op_Index, tmpVar, Left, LeftVar, [], Offset, Pos), Right.VarType.Eval(op_Index, tmpVar, Right, LeftVar, [], Offset, Pos), [], Offset, Pos);
+
+      Assign := TLapeTree_Operator.Create(op_Assign, FCompiler);
+      try
+        Assign.Left := TLapeTree_Operator.Create(op_Index, FCompiler);
+        Assign.Right := TLapeTree_Operator.Create(op_Index, FCompiler);
+
+        TLapeTree_Operator(Assign.Left).Left := TLapeTree_ResVar.Create(Left.IncLock(1), FCompiler);
+        TLapeTree_Operator(Assign.Left).Right := TLapeTree_ResVar.Create(LeftVar.IncLock(1), FCompiler);
+
+        TLapeTree_Operator(Assign.Right).Left := TLapeTree_ResVar.Create(Right.IncLock(1), FCompiler);
+        TLapeTree_Operator(Assign.Right).Right := TLapeTree_ResVar.Create(LeftVar.IncLock(1), FCompiler);
+
+        Assign.Compile(Offset).Spill(1);
+      finally
+        Left.DecLock(1);
+        Right.DecLock(1);
+
+        Assign.Free();
+      end;
+
       CounterVar.VarType.Eval(op_Assign, tmpVar, LeftVar, CounterVar.VarType.Eval(op_Plus, tmpVar, LeftVar, _ResVar.New(FCompiler.getConstant(1, CounterVar.VarType.BaseType, False, True)), [], Offset, Pos), [], Offset, Pos);
       FCompiler.Emitter._JmpRIf(LoopOffset - Offset, CounterVar.VarType.Eval(op_cmp_LessThanOrEqual, tmpVar, LeftVar, _ResVar.New(IndexHigh), [], Offset, Pos), Offset, Pos);
       LeftVar.Spill(BigLock);
@@ -1360,4 +1397,5 @@ begin
 end;
 
 end.
+
 

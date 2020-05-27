@@ -65,6 +65,7 @@ const
   lpeIncompatibleOperator2 = 'Operator "%s" not compatible with types "%s" and "%s"';
   lpeInvalidAssignment = 'Invalid assignment';
   lpeInvalidCast = 'Invalid cast';
+  lpeInvalidClassOperatorMethod = 'Invalid class operator method';
   lpeInvalidCondition = 'Invalid condition';
   lpeInvalidEvaluation = 'Invalid evaluation';
   lpeInvalidForward = 'Forwarded declaration "%s" not resolved';
@@ -74,6 +75,7 @@ const
   lpeInvalidJump = 'Invalid jump';
   lpeInvalidOpenArrayElement = 'Invalid open array element (%s) (index: %d)';
   lpeInvalidOperator = 'Operator "%s" expects %d parameters';
+  lpeInvalidParameterModifier = 'Invalid parameter modifier at index %d';
   lpeInvalidRange = 'Expression is not a valid range';
   lpeInvalidUnionType = 'Invalid union type';
   lpeInvalidValueForType = 'Invalid value for type "%s"';

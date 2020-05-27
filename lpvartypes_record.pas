@@ -29,6 +29,7 @@ type
     function getAsString: lpString; override;
     function getPadding: SizeInt; override;
     function getSize: SizeInt; override;
+    function getFinalizeOperator: Boolean; override;
   public
     FreeFieldMap: Boolean;
 
@@ -67,7 +68,7 @@ implementation
 
 uses
   Math,
-  lpvartypes_array, lpparser, lpeval, lpmessages;
+  lpvartypes_array, lpparser, lpeval, lpmessages, lptree;
 
 function TLapeType_Record.getAsString: lpString;
 var
@@ -86,6 +87,26 @@ end;
 function TLapeType_Record.getSize: SizeInt;
 begin
   Result := (inherited + (FAlignment - 1)) and not (FAlignment - 1);
+end;
+
+function TLapeType_Record.getFinalizeOperator: Boolean;
+var
+  i: Int32;
+begin
+  if (FFinalizeOperator = bUnknown) then
+  begin
+    FFinalizeOperator := bFalse;
+
+    for i := 0 to FFieldMap.Count - 1 do
+      if FFieldMap.ItemsI[i].FieldType.NeedFinalizeOperator then
+      begin
+        FFinalizeOperator := bTrue;
+
+        Break;
+      end;
+  end;
+
+  Result := inherited;
 end;
 
 function TLapeType_Record.getPadding: SizeInt;
@@ -398,7 +419,7 @@ begin
       Result.CopyFlags(Left);
     end
   else if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
-    if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
+    if (not NeedInitialization) and (not NeedFinalizeOperator) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then
     begin
       Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, False));
 
@@ -420,7 +441,7 @@ begin
       end;
     end
     else
-    begin
+    begin;
       for i := 0 to FFieldMap.Count - 1 do
       begin
         LeftFieldName := _ResVar.New(FCompiler.getConstant(FFieldMap.Key[i]));
@@ -429,7 +450,16 @@ begin
 
         LeftVar := Eval(op_Dot, tmpVar, Left, LeftFieldName, [lefAssigning], Offset, Pos);
         RightVar := Right.VarType.Eval(op_Dot, tmpVar, Right, RightFieldName, [], Offset, Pos);
-        LeftVar.VarType.Eval(op_Assign, Dest, LeftVar, RightVar, [], Offset, Pos);
+
+        with TLapeTree_Operator.Create(op_Assign, FCompiler) do
+        try
+          Left := TLapeTree_ResVar.Create(LeftVar.IncLock(), FCompiler);
+          Right := TLapeTree_ResVar.Create(RightVar.IncLock(), FCompiler);
+
+          Compile(Offset).Spill(1);
+        finally
+          Free();
+        end;
 
         if (LeftVar.VarPos.MemPos = mpStack) then
         begin
@@ -442,9 +472,10 @@ begin
             FCompiler.Emitter._GrowStack(FieldOffset, Offset, Pos);
         end;
 
-        LeftVar.Spill(1);
-        RightVar.Spill(1);
+        LeftVar.Spill(2);
+        RightVar.Spill(2);
       end;
+
       Result := Left;
     end
   else if (op in [op_cmp_Equal, op_cmp_NotEqual]) and Right.HasType() and (EvalRes(Op, Right.VarType, Flags) <> nil) then
