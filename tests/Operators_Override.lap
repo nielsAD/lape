@@ -1,0 +1,86 @@
+{$assertions on}
+
+// ASSIGN
+
+type
+  TStringArray = array of String;
+
+operator := (var Left: TStringArray; var Right: TStringArray): TStringArray; override;
+begin
+  inherited(Left, ['Right is a variable']);
+  inherited(Result, Left);
+end;
+
+operator := (var Left: TStringArray; constref Right: TStringArray): TStringArray; override;
+begin
+  inherited(Left, ['Right is a constant']);
+  inherited(Result, Left);
+end;
+
+const
+  ConstantStrings: TStringArray = [];
+
+var
+  VariableStrings: TStringArray;
+
+var
+  RecordStrings: record
+    Field: TStringArray;
+  end;
+
+function ReturnStrings: TStringArray;
+begin
+  Result := ['Hello', 'World'];
+end;
+
+var
+  Test: array[0..4] of TStringArray;
+
+begin
+  Test[0] := ConstantStrings;                    // const
+  Test[1] := VariableStrings;                    // var
+  Test[2] := ReturnStrings();                    // const
+  Test[3] := VariableStrings + VariableStrings;  // const
+  Test[4] := RecordStrings.Field;                // var
+
+  Assert(Length(Test[0]) = 1);
+  Assert(Test[0][0] = 'Right is a constant');
+
+  Assert(Length(Test[1]) = 1);
+  Assert(Test[1][0] = 'Right is a variable');
+
+  Assert(Length(Test[2]) = 1);
+  Assert(Test[2][0] = 'Right is a constant');
+
+  Assert(Length(Test[3]) = 1);
+  Assert(Test[3][0] = 'Right is a constant');
+
+  Assert(Length(Test[4]) = 1);
+  Assert(Test[4][0] = 'Right is a variable');
+end;
+
+// REF
+
+type
+  TRec = record
+    Ref: PtrUInt;
+  end;
+
+operator := (var Left: TRec; var Right: TRec): TRec; override;
+begin
+  Swap(Left.Ref, Right.Ref);
+end;
+
+var
+  A, B, C: TRec;
+
+begin
+  A.Ref := 1000;
+
+  B := A;
+  C := B;
+
+  Assert(A.Ref = 0);
+  Assert(B.Ref = 0);
+  Assert(C.Ref = 1000);
+end;

@@ -595,6 +595,7 @@ const
   AssignOperators = [op_Assign] + CompoundOperators;
 
   OverloadableOperators = [op_Assign, op_Plus, op_Minus, op_Multiply, op_Divide, op_DIV, op_Power, op_MOD, op_IN, op_IS, op_SHL, op_SHR] + CompareOperators + BinaryOperators + CompoundOperators;
+  OverridableOperators = [op_Assign];
 
   op_str: array[EOperator] of lpString = ('',
     '=', '>', '>=', '<', '<=', '<>', '@', 'and', ':=', '/=', '-=', '*=', '+=',
