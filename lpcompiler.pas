@@ -3653,6 +3653,8 @@ begin
   if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() then
     with TLapeTree_InternalMethod_Default.Create(Self, Pos) do
     try
+      CompilerOptions := CompilerOptions - [lcoOperatorOverride];
+
       addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Self, Pos));
       Compile(Offset).Spill(1);
     finally
