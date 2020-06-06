@@ -4937,8 +4937,8 @@ var
 
       with TLapeTree_InternalMethod_OperatorOverride.Create(FOperatorType, FCompiler) do
       try
-        addParam(TLapeTree_ResVar.Create(LeftVar, FCompiler));
-        addParam(TLapeTree_ResVar.Create(RightVar, FCompiler));
+        addParam(TLapeTree_ResVar.Create(LeftVar.IncLock(), FCompiler));
+        addParam(TLapeTree_ResVar.Create(RightVar.IncLock(), FCompiler));
 
         if (resType() <> nil) then
         begin
