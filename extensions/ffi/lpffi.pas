@@ -497,7 +497,7 @@ begin
       else
         Result := nil
     else if (Right is TLapeType_Method) then
-      if FHeader.Equals(Right) and (Right.BaseType = ltScriptMethod) then
+      if FHeader.Equals(Right) then
         Result := Self
       else
         Result := nil
