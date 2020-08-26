@@ -234,6 +234,9 @@ var
         else
           TryStack[TryStackPos].ExceptionMessage := InJump.JumpException.Obj.Message;
 
+        if (InJump.JumpException.Obj is lpException) and lpException(InJump.JumpException.Obj).hasDocPos then
+          TryStack[TryStackPos].ExceptionLocation := lpException(InJump.JumpException.Obj).DocPos
+        else
         if (InJump.JumpException.Pos <> nil) then
           TryStack[TryStackPos].ExceptionLocation := InJump.JumpException.Pos^;
       end;
@@ -291,9 +294,19 @@ var
   end;
 
   procedure DoReRaiseException; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  var
+    Pos: Int32;
   begin
     Inc(Code, ocSize);
-    with TryStack[TryStackPos] do
+
+    Pos := TryStackPos;
+    while (Pos > 0) and
+          (TryStack[Pos].ExceptionLocation.Line = NullDocPos.Line) and
+          (TryStack[Pos].ExceptionLocation.Col = NullDocPos.Line) and
+          (TryStack[Pos].ExceptionMessage = '') do
+      Dec(Pos);
+
+    with TryStack[Pos] do
       LapeException(ExceptionMessage, ExceptionLocation);
   end;
 
