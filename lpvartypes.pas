@@ -2511,6 +2511,9 @@ begin
   Params.ImportFromArray(AMethod.Params.ExportToArray());
 
   ImplicitParams := AMethod.ImplicitParams;
+  IsOperator := AMethod.IsOperator;
+  DeprecatedHint := AMethod.DeprecatedHint;
+  HintDirectives := AMethod.HintDirectives;
 
   inheritManagedDecls(AMethod);
   TypeID := AMethod.TypeID;
@@ -2530,6 +2533,9 @@ begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, FParams, Res, Name, @_DocPos);
 
   TLapeType_Method(Result).ImplicitParams := ImplicitParams;
+  TLapeType_Method(Result).IsOperator := IsOperator;
+  TLapeType_Method(Result).DeprecatedHint := DeprecatedHint;
+  TLapeType_Method(Result).HintDirectives := HintDirectives;
 
   Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;

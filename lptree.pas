@@ -2499,7 +2499,7 @@ begin
   begin
     IdentVar := IdentExpr.Compile(Offset);
 
-    if (lcoHints in FCompilerOptions) and (IdentVar.VarType is TLapeType_Method) then
+    if (lcoHints in FCompilerOptions) and (IdentVar.VarType is TLapeType_Method) and (TLapeType_Method(IdentVar.VarType).HintDirectives <> []) then
       DoDirectiveHints(IdentVar.VarType as TLapeType_Method);
 
     if (not IdentVar.HasType()) or
