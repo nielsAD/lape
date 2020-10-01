@@ -142,7 +142,7 @@ type
     procedure ParseLabelBlock; virtual;
     function ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList; virtual;
 
-    function ParseExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True): TLapeTree_ExprBase; virtual;
+    function ParseExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True; IsInternalMethod: Boolean = False): TLapeTree_ExprBase; virtual;
     function ParseTypeExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True): TLapeTree_Base; virtual;
     function ParseStatement(FirstNext: Boolean = True; ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_Base; virtual;
     function ParseStatementList: TLapeTree_StatementList; virtual;
@@ -2351,7 +2351,7 @@ begin
   end;
 end;
 
-function TLapeCompiler.ParseExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True): TLapeTree_ExprBase;
+function TLapeCompiler.ParseExpression(ReturnOn: EParserTokenSet; FirstNext: Boolean; DoFold: Boolean; IsInternalMethod: Boolean): TLapeTree_ExprBase;
 const
   ParenthesisOpen = Pointer(-1);
 var
@@ -2677,6 +2677,13 @@ begin
         tk_typ_Char,
         tk_typ_String,
         tk_typ_HereString: ParseAndPushString();
+        tk_kw_Type:
+          begin
+            if not IsInternalMethod then
+              Break;
+
+            PushVarStack(TLapeTree_VarType.Create(parseType(nil), Self));
+          end;
 
         tk_Identifier:
           begin
@@ -2724,11 +2731,11 @@ begin
               end;
               if (Next() <> tk_sym_ParenthesisClose) then
               begin
-                Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False)));
+                Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True, Method is TLapeTree_InternalMethod)));
                 while True do
                   case Tokenizer.Tok of
                     tk_sym_ParenthesisClose: Break;
-                    tk_sym_Comma: Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma])));
+                    tk_sym_Comma: Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], True, True, Method is TLapeTree_InternalMethod)));
                     else
                       LapeException(lpeClosingParenthesisExpected, Tokenizer.DocPos);
                   end;
