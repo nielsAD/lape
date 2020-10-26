@@ -1,0 +1,23 @@
+{$assertions on}
+
+procedure ex;
+begin
+  raise 'hmm';
+end;
+
+procedure bug;
+begin
+  try
+  finally
+    Assert(GetExceptionMessage() = '');
+  end;
+end;
+
+begin
+  try
+    ex();
+  except
+  end;
+
+  bug;
+end.
