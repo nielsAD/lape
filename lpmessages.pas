@@ -55,6 +55,7 @@ const
   lpeExceptionAt = '%s at line %d, column %d';
   lpeExceptionIn = '%s in file "%s"';
   lpeExpected = '%s expected';
+  lpeExpectedNormalMethod = 'Normal method expected';
   lpeExpectedOther = 'Found unexpected token "%s", expected "%s"';
   lpeExpressionExpected = 'Expression expected';
   lpeFileNotFound = 'File "%s" not found';

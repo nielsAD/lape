@@ -384,6 +384,13 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_Objectify = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_Callback = class;
   TLapeTreeCallback = procedure(Self: TLapeTree_Callback) of object;
 
@@ -4414,6 +4421,106 @@ begin
   end;
 end;
 
+constructor TLapeTree_InternalMethod_Objectify.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, ADocPos);
+
+  FConstant := bFalse;
+end;
+
+function TLapeTree_InternalMethod_Objectify.resType: TLapeType;
+var
+  VarType: TLapeType;
+begin
+  if (FResType = nil) then
+  begin
+    if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+      LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+    VarType := FParams[0].resType();
+    if (VarType = nil) then
+      LapeException(lpeTypeExpected, DocPos);
+    if (VarType.ClassType <> TLapeType_Method) then
+      LapeException(lpeExpectedNormalMethod, DocPos);
+
+    FResType := FCompiler.addManagedType(TLapeType_MethodOfObject.Create(VarType as TLapeType_Method)) as TLapeType_MethodOfObject;
+  end;
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_Objectify.Compile(var Offset: Integer): TResVar;
+var
+  Method: TLapeGlobalVar;
+  Param: TResVar;
+  _Method, _Callback: TResVar;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  with FCompiler['_Objectify'].VarType as TLapeType_OverloadedMethod do
+    Method := OnFunctionNotFound(TLapeType_OverloadedMethod(GetSelf()), TLapeType_Method(resType()));
+
+  Result := _ResVar.New(Method);
+
+  Param := FParams[0].Compile(Offset);
+
+  if (Param.VarPos.MemPos = mpMem) then
+  begin
+    if (Param.VarPos.GlobalVar.Ptr = nil) then
+      LapeException(lpeImpossible, DocPos);
+
+    PMethod(Method.Ptr)^.Data := Param.VarPos.GlobalVar.Ptr;
+  end else
+  begin
+    _Callback := _ResVar.New(FCompiler.getTempVar(ltPointer)).IncLock();
+    _Callback.isConstant := False;
+
+    with TLapeTree_Operator.Create(op_Assign, Self) do
+    try
+      Left := TLapeTree_ResVar.Create(_Callback.IncLock(), Self);
+      Right := TLapeTree_ResVar.Create(Param.IncLock(), Self);
+
+      Compile(Offset).Spill(1);
+    finally
+      Free();
+    end;
+
+    Result.isConstant := False;
+
+    with TLapeTree_Operator.Create(op_Deref, Self) do
+    try
+      Left := TLapeTree_Operator.Create(op_Addr, Self);
+      with Left as TLapeTree_Operator do
+        Left := TLapeTree_ResVar.Create(Result.IncLock(), Self);
+
+      _Method := Compile(Offset);
+    finally
+      Free();
+    end;
+
+    with TLapeTree_Operator.Create(op_Assign, Self) do
+    try
+      Left := TLapeTree_Operator.Create(op_Dot, Self);
+      with Left as TLapeTree_Operator do
+      begin
+        Left := TLapeTree_ResVar.Create(_Method.IncLock(), Self);
+        Right := TLapeTree_String.Create('Self', Self);
+      end;
+
+      Right := TLapeTree_Operator.Create(op_Addr, Self);
+      with Right as TLapeTree_Operator do
+        Left := TLapeTree_ResVar.Create(_Callback.IncLock(), Self);
+
+      Compile(Offset).Spill(1);
+    finally
+      Free();
+    end;
+
+    Result.isConstant := True;
+  end;
+end;
+
 constructor TLapeTree_Callback.Create(ACompiler: TLapeCompilerBase; ACallback: TLapeTreeCallback; AData: Pointer = nil; ADocPos: PDocPos = nil);
 begin
   inherited Create(ACompiler, ADocPos);
@@ -6294,7 +6401,6 @@ begin
   end;
 end;
 
-
 function TLapeTree_For.CompileForIn(var Offset: Integer): TResVar;
 var
   upper, lower: TResVar;
@@ -6345,7 +6451,6 @@ begin
     upper.Spill(1);
   end;
 end;
-
 
 procedure TLapeTree_Repeat.setCondition(Node: TLapeTree_ExprBase);
 begin

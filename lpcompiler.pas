@@ -106,6 +106,7 @@ type
     function popConditional: TDocPos; virtual;
 
     procedure SetUniqueTypeID(Typ: TLapeType); virtual;
+    function GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
@@ -492,6 +493,49 @@ begin
   Inc(FTypeID);
 end;
 
+function TLapeCompiler.GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  Method: TLapeTree_Method;
+  Invoke: TLapeTree_Invoke;
+  Assignment: TLapeTree_Operator;
+  Callback: TResVar;
+  i: Int32;
+begin
+  Result := nil;
+  if (AType = nil) or (AType.ClassType <> TLapeType_MethodOfObject) then
+    Exit;
+
+  IncStackInfo();
+
+  try
+    Result := addManagedDecl(AType.NewGlobalVar(EndJump)) as TLapeGlobalVar;
+
+    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
+    Method.Statements := TLapeTree_StatementList.Create(Method);
+
+    Callback := _ResVar.New(FStackInfo.addSelfVar(lptConstRef, getGlobalType('ConstPointer')));
+    Callback.VarType := addManagedType(TLapeType_Method.Create(AType));
+
+    Invoke := TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Callback.IncLock(), Self), Self);
+    for i := 0 to AType.Params.Count - 1 do
+      Invoke.addParam(TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(AType.Params[i].ParType, AType.Params[i].VarType)), Self));
+
+    if (AType.Res <> nil) then
+    begin
+      Assignment := TLapeTree_Operator.Create(op_Assign, Self);
+      Assignment.Left := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptOut, AType.Res)), Self);
+      Assignment.Right := Invoke;
+
+      Method.Statements.addStatement(Assignment);
+    end else
+      Method.Statements.addStatement(Invoke);
+
+    addDelayedExpression(Method);
+  finally
+    DecStackInfo(True, False, Method = nil);
+  end;
+end;
+
 function TLapeCompiler.GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Method: TLapeTree_Method;
@@ -746,6 +790,7 @@ begin
   addGlobalFunc('procedure UniqueString(var Str: UnicodeString); overload;', @_LapeUStr_Unique);
 
   addToString();
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetObjectifyMethod).NewGlobalVar('_Objectify'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
 
@@ -923,6 +968,8 @@ var
         Result := (lcoCOperators in FOptions)
       else if (Def = 'hints') then
         Result := (lcoHints in FOptions)
+      else if (Def = 'autoobjectify') then
+        Result := (lcoAutoObjectify in FOptions)
       else
         Result := False;
     end;
@@ -1106,6 +1153,8 @@ begin
     setOption(lcoContinueCase)
   else if (Directive = 'coperators') then
     setOption(lcoCOperators)
+  else if (Directive = 'autoobjectify') then
+    setOption(lcoAutoObjectify)
   else
     Result := False;
 end;
@@ -3246,6 +3295,8 @@ begin
   FInternalMethodMap['goto'] := TLapeTree_InternalMethod_GoTo;
 
   FInternalMethodMap['raise'] := TLapeTree_InternalMethod_Raise;
+
+  FInternalMethodMap['Objectify'] := TLapeTree_InternalMethod_Objectify;
 
   setTokenizer(ATokenizer);
   Reset();

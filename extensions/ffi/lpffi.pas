@@ -21,6 +21,7 @@ type
   protected
     FHeader: TLapeType_Method;
     FABI: TFFIABI;
+    FObjectify: Boolean;
 
     function getSize: SizeInt; override;
     function getAsString: lpString; override;
@@ -491,6 +492,18 @@ begin
         Right := m.VarType;
     end;
 
+    if lcoAutoObjectify in FCompiler.Options then
+    begin
+      FObjectify := (Right.ClassType = TLapeType_Method) and
+                    (FHeader is TLapeType_MethodOfObject) and FHeader.EqualParams(Right as TLapeType_Method);
+
+      if FObjectify then
+      begin
+        Result := Self;
+        Exit;
+      end;
+    end;
+
     if (Right is TLapeType_NativeMethod) then
       if Equals(Right) then
         Result := Self
@@ -560,14 +573,28 @@ begin
   if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
   begin
     if (Right.VarType is TLapeType_Method) then
+    begin
+      if FObjectify then
+        with TLapeTree_InternalMethod_Objectify.Create(FCompiler, Pos) do
+        try
+          addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
+
+          Right := Compile(Offset);
+        finally
+          Free();
+        end;
+
       with TLapeTree_InternalMethod_Natify.Create(FCompiler, Pos) do
       try
         addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
         addParam(TLapeTree_GlobalVar.Create(FCompiler['ffi_' + ABIToStr(FABI)], FCompiler));
+
         Right := Compile(Offset);
       finally
         Free();
       end;
+    end;
+
     if (Right.VarType is TLapeType_NativeMethod) then
       Right.VarType := TLapeType_NativeMethod(Right.VarType).Header;
   end;
@@ -603,7 +630,6 @@ begin
 end;
 
 procedure TLapeType_ClosureDisposer.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
-
 begin
   Assert(AVar.VarType = Self);
   if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) then

@@ -1,0 +1,33 @@
+{$assertions on}
+{$autoobjectify on}
+
+function Rand(Min, Max: Int64): Int64;
+begin
+  Result := Random(Min, Max);
+end;
+
+function Test1(Callback: function(Min, Max: Int64): Int64 of object): Int64;
+begin
+  Result := Callback(10,10);
+end;
+
+function Test2(Callback: function(Min, Max: Int64): Int64): Int64;
+begin
+  Result := Objectify(@Callback)(10,10);
+end;
+
+begin
+  // ltScriptMethod
+  Assert(Test1(@Rand)=10);
+  Assert(Test2(@Rand)=10);
+
+  Assert(Objectify(@Rand)(10,10)=10);
+  Assert(Objectify(@Rand)(10,10)=10);
+
+  // ltImportedMethod
+  Assert(Test1(@Random[0])=10);
+  Assert(Test2(@Random[0])=10);
+
+  Assert(Objectify(@Random[0])(10,10)=10);
+  Assert(Objectify(@Random[0])(10,10)=10);
+end;
