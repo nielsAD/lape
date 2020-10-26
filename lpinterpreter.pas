@@ -224,6 +224,8 @@ var
   begin
     if (TryStackPos > 0) then
     begin
+      TryStack[TryStackPos].ExceptionMessage := '';
+
       Dec(TryStackPos);
       Code := TryStack[TryStackPos].Jmp;
 
