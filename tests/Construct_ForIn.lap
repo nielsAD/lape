@@ -72,6 +72,7 @@ begin
   Assert(evalCount = 1);
 end;
 
+
 //---| make sure locks are working |---\
 var
   c1,c2,c3:Char;
@@ -81,4 +82,25 @@ begin
     for c2 in str do
       for c3 in str do ;
   Assert((c1 = 'g') and (c2 = 'g') and (c3 = 'g'));
+end;
+
+
+//---| Enums & Sets |---\
+type
+  ETestEnum = (TestA = 50, TestB = 60, TestC, TestD);
+  ETestSet = set of ETestEnum;
+
+var
+  Test: ETestEnum;
+  TestSet: ETestSet = [TestA, TestD];
+begin
+  resStr := '';
+  for Test in ETestEnum do
+    resStr += ToString(Test) + ' ';
+  Assert(resStr = 'TestA TestB TestC TestD ');
+
+  resStr := '';
+  for Test in TestSet do
+    resStr += ToString(Test) + ' ';
+  Assert(resStr = 'TestA TestD ');
 end;

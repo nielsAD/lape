@@ -3297,6 +3297,7 @@ begin
   FInternalMethodMap['raise'] := TLapeTree_InternalMethod_Raise;
 
   FInternalMethodMap['Objectify'] := TLapeTree_InternalMethod_Objectify;
+  FInternalMethodMap['IsEnumGap'] := TLapeTree_InternalMethod_IsEnumGap;
 
   setTokenizer(ATokenizer);
   Reset();

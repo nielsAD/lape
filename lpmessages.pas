@@ -58,6 +58,7 @@ const
   lpeExpectedNormalMethod = 'Normal method expected';
   lpeExpectedOther = 'Found unexpected token "%s", expected "%s"';
   lpeExpressionExpected = 'Expression expected';
+  lpeExpectedEnum = 'Enum expected';
   lpeFileNotFound = 'File "%s" not found';
   lpeImpossible = 'It''s impossible!';
   lpeIncompatibleAssignment = 'Can''t assign "%s" to "%s"';
