@@ -5085,7 +5085,7 @@ begin
         Free();
       end;
     except on E: lpException do
-      LapeException(lpString(E.Message), DocPos)
+      LapeException(lpString(E.Message), DocPos);
     end;
   finally
     LeftVar.Spill(1);
@@ -6326,7 +6326,7 @@ begin
   begin
     FCounter.CompileToTempVar(Offset, tmpVar);
 
-    with TLapeTree_If.Create(Self) do
+    with TLapeTree_If.Create(FCounter) do
     try
       Condition := TLapeTree_InternalMethod_IsEnumGap.Create(Self);
       TLapeTree_InternalMethod_IsEnumGap(Condition).addParam(TLapeTree_ResVar.Create(tmpVar.IncLock(), Self));
@@ -6343,7 +6343,7 @@ begin
     begin
       FLimit.CompileToTempVar(Offset, tmpVar2);
 
-      with TLapeTree_If.Create(Self) do
+      with TLapeTree_If.Create(FLimit) do
       try
         Condition := TLapeTree_Operator.Create(op_IN, Self);
         TLapeTree_Operator(Condition).Left := TLapeTree_ResVar.Create(tmpVar.IncLock(), Self);
@@ -6363,10 +6363,10 @@ begin
   begin
     FCounter.CompileToTempVar(Offset, tmpVar);
 
-    with TLapeTree_Operator.Create(op_Assign, FCompiler, @_DocPos) do
+    with TLapeTree_Operator.Create(op_Assign, FCounter) do
     try
       Left := TLapeTree_ResVar.Create(tmpVar.IncLock(), FCounter);
-      Right := TLapeTree_Operator.Create(op_Index, FCompiler);
+      Right := TLapeTree_Operator.Create(op_Index, FCounter);
       with TLapeTree_Operator(Right) do
       begin
         CompilerOptions := CompilerOptions - [lcoRangeCheck];
@@ -6401,7 +6401,7 @@ begin
   begin
     FCounter.CompileToTempVar(Offset, tmpVar);
 
-    with TLapeTree_Operator.Create(op_Assign, FCompiler, @_DocPos) do
+    with TLapeTree_Operator.Create(op_Assign, FCounter) do
     try
       Left := TLapeTree_ResVar.Create(tmpVar.IncLock(), FCounter);
       Right := TLapeTree_InternalMethod_Succ.Create(FCompiler);
@@ -6524,13 +6524,13 @@ begin
     lower := _ResVar.New(FCompiler.getTempVar(FCounter.resType())).IncLock();
     upper := _ResVar.New(FCompiler.getTempVar(FCounter.resType())).IncLock();
     if (not FCounter.CompileToTempVar(Offset, Container)) or (not Container.HasType()) then
-      LapeException(lpeInvalidEvaluation, FLimit.DocPos);
+      LapeException(lpeInvalidEvaluation, FCounter.DocPos);
 
-    method := TLapeTree_InternalMethod_Low.Create(FCompiler);
-    TLapeTree_InternalMethod_Low(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FCompiler));
+    method := TLapeTree_InternalMethod_Low.Create(FCounter);
+    TLapeTree_InternalMethod_Low(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FCounter));
     with TLapeTree_Operator.Create(op_Assign, Self) do
     try
-      Left :=  TLapeTree_ResVar.Create(Container.IncLock(), FCompiler);
+      Left := TLapeTree_ResVar.Create(Container.IncLock(), FCounter);
       Right := method.FoldConstants() as TLapeTree_ExprBase;
       Compile(Offset);
     finally
@@ -6550,22 +6550,22 @@ begin
     upper := _ResVar.New(FCompiler.getTempVar(ltSizeInt)).IncLock();
   end;
 
-  method := TLapeTree_InternalMethod_Low.Create(FCompiler);
-  TLapeTree_InternalMethod_Low(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FCompiler));
+  method := TLapeTree_InternalMethod_Low.Create(FCounter);
+  TLapeTree_InternalMethod_Low(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FCounter));
   with TLapeTree_Operator.Create(op_Assign, Self) do
   try
-    Left :=  TLapeTree_ResVar.Create(lower.IncLock(), FCompiler);
+    Left := TLapeTree_ResVar.Create(lower.IncLock(), FCounter);
     Right := method.FoldConstants() as TLapeTree_ExprBase;
     Compile(Offset);
   finally
     Free();
   end;
 
-  method := TLapeTree_InternalMethod_High.Create(FCompiler);
-  TLapeTree_InternalMethod_High(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FCompiler));
+  method := TLapeTree_InternalMethod_High.Create(FLimit);
+  TLapeTree_InternalMethod_High(method).addParam(TLapeTree_ResVar.Create(Container.IncLock(), FLimit));
   with TLapeTree_Operator.Create(op_Assign, Self) do
   try
-    Left := TLapeTree_ResVar.Create(upper.IncLock(), FCompiler);
+    Left := TLapeTree_ResVar.Create(upper.IncLock(), FLimit);
     Right := method.FoldConstants() as TLapeTree_ExprBase;
     Compile(Offset);
   finally
@@ -6574,8 +6574,8 @@ begin
 
   try
     FCondition := TLapeTree_Operator.Create(op_cmp_LessThanOrEqual, Self);
-    TLapeTree_Operator(FCondition).Left := TLapeTree_ResVar.Create(lower.IncLock(), FCompiler);
-    TLapeTree_Operator(FCondition).Right := TLapeTree_ResVar.Create(upper.IncLock(), FCompiler);
+    TLapeTree_Operator(FCondition).Left := TLapeTree_ResVar.Create(lower.IncLock(), FCounter);
+    TLapeTree_Operator(FCondition).Right := TLapeTree_ResVar.Create(upper.IncLock(), FLimit);
     Result := inherited Compile(Offset);
   finally
     setCondition(nil);

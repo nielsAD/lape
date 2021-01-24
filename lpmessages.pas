@@ -67,6 +67,7 @@ const
   lpeIncompatibleOperator2 = 'Operator "%s" not compatible with types "%s" and "%s"';
   lpeInvalidAssignment = 'Invalid assignment';
   lpeInvalidCast = 'Invalid cast';
+  lpeInvalidCaseStatement = 'Invalid case statement';
   lpeInvalidCondition = 'Invalid condition';
   lpeInvalidEvaluation = 'Invalid evaluation';
   lpeInvalidForward = 'Forwarded declaration "%s" not resolved';

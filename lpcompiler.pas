@@ -2997,6 +2997,9 @@ begin
     while (not (Tokenizer.Tok in [tk_Null, tk_kw_Else, tk_kw_End])) do
     begin
       Expr := ParseTypeExpression([tk_sym_Comma, tk_sym_Colon], False);
+      if (Expr = nil) then
+        LapeException(lpeInvalidCaseStatement, Tokenizer.DocPos);
+
       Field := TLapeTree_MultiIf.Create(nil, Self, @Expr._DocPos);
       repeat
         Field.addValue(Expr);
