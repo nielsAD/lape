@@ -3248,7 +3248,7 @@ begin
 
   FIncludes := TStringList.Create();
   FIncludes.Duplicates := dupIgnore;
-  FIncludes.CaseSensitive := LapeSystemCaseSensitive;
+  FIncludes.CaseSensitive := {$IFDEF DARWIN}False{$ELSE}LapeSystemCaseSensitive{$ENDIF};
   FDefines := TLapeDefineMap.Create('', dupAccept, False);
   FBaseDefines := TLapeDefineMap.Create('', dupAccept, False);
   FConditionalStack := TLapeConditionalStack.Create(0);
