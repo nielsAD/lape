@@ -105,6 +105,7 @@ type
   protected
     FMemberMap: TEnumMap;
     FSmall: Boolean;
+    FGapCount: Int32;
     function getAsString: lpString; override;
   public
     FreeMemberMap: Boolean;
@@ -128,6 +129,7 @@ type
 
     property MemberMap: TEnumMap read FMemberMap;
     property Small: Boolean read FSmall;
+    property GapCount: Int32 read FGapCount;
   end;
 
   TLapeType_Boolean = class(TLapeType_Enum)
@@ -528,7 +530,10 @@ begin
   if (FMemberMap.Count = 0) then
     FRange.Lo := Value
   else for i := FMemberMap.Count to Value - FRange.Lo - 1 do
+  begin
+    FGapCount := FGapCount + 1;
     FMemberMap.Add('');
+  end;
   FMemberMap.Add(string(AName));
 
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
@@ -612,6 +617,7 @@ begin
     FBaseType := Self.BaseType;
     FRange := Self.Range;
     FSmall := Self.Small;
+    FGapCount := Self.GapCount;
   end;
 end;
 

@@ -893,7 +893,7 @@ begin
 
   Enum := TLapeType_Enum(FParams[0].resType());
 
-  if Enum.MemberMap.IndexOf('') = -1 then
+  if (Enum.GapCount = 0) then
     Result := _ResVar.New(FCompiler.getConstant('False', ltEvalBool)).IncLock()
   else
   try
@@ -3525,7 +3525,7 @@ begin
       ParamType := FParams[0].resType();
       if (ParamType <> nil) and (ParamType is TLapeType_Type) then
         ParamType := TLapeType_Type(ParamType).TType;
-      if (ParamType <> nil) and (ParamType.BaseType  = ltStaticArray) then
+      if (ParamType <> nil) and (ParamType.BaseType in [ltStaticArray, ltSmallEnum, ltLargeEnum]) then
         FConstant := bTrue;
     end;
   end;
@@ -3567,11 +3567,18 @@ begin
     ParamType := FParams[0].resType();
     if (ParamType <> nil) and (ParamType is TLapeType_Type) then
       ParamType := TLapeType_Type(ParamType).TType;
-    if (ParamType = nil) or (ParamType.BaseType <> ltStaticArray) then
+    if (ParamType = nil) or (not (ParamType.BaseType in [ltStaticArray, ltSmallEnum, ltLargeEnum])) then
       LapeException(lpeInvalidEvaluation, DocPos);
 
-    with TLapeType_StaticArray(ParamType) do
-      FRes := FCompiler.getConstant(Range.Hi - Range.Lo + 1, ltSizeInt, False, True);
+    case ParamType.BaseType of
+      ltStaticArray:
+        with TLapeType_StaticArray(ParamType) do
+          FRes := FCompiler.getConstant(Range.Hi - Range.Lo + 1, ltSizeInt, False, True);
+
+      ltSmallEnum, ltLargeEnum:
+        with TLapeType_Enum(ParamType) do
+          FRes := FCompiler.getConstant(MemberMap.Count - GapCount, ltSizeInt, False, True);
+    end;
   end;
 
   Result := inherited;
