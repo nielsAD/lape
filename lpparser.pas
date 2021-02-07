@@ -189,7 +189,7 @@ type
     function Expect(Token: EParserToken; NextBefore: Boolean = True; NextAfter: Boolean = False): EParserToken; overload; virtual;
     function Expect(Tokens: EParserTokenSet; NextBefore: Boolean = True; NextAfter: Boolean = False): EParserToken; overload; virtual;
 
-    property FileName: lpString read FFileName;
+    property FileName: lpString read FFileName write FFileName;
     property LastTok: EParserToken read FLastTok;
     property Tok: EParserToken read FTok;
     property TokString: lpString read getTokString;

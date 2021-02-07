@@ -41,10 +41,19 @@ begin
   Writeln('TPointArray');
 end;
 
+procedure Test(A: TBox; B: String); overload;
+begin
+end;
+
+procedure Test(A: TBox; B: Single); overload;
+begin
+end;  
+
 begin
   Test([1, 2]);
   Test([1, 2, 3, 4]);
   Test([1, 2]);
   Test([[[1, 2], Box(1, 2, 3, 4)], [[1, 1], [2, 2]]]);
   Test([[1, 1], [2, 2], [3, 3]]);
+  Test([1, 2, 3, 4], 123.456); 
 end;
