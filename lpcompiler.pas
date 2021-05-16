@@ -3563,7 +3563,7 @@ function TLapeCompiler.Compile: Boolean;
     Decl: TLapeGlobalVar;
     i: Integer;
   begin
-    Decls := GlobalDeclarations.getByClass(TLapeGlobalVar, bFalse);
+    Decls := GlobalDeclarations.GetAll(TLapeGlobalVar, bFalse);
     for i := 0 to High(Decls) do
     begin
       Decl := Decls[i] as TLapeGlobalVar;
@@ -3786,12 +3786,14 @@ begin
 end;
 
 function TLapeCompiler.addGlobalVar(AVar: TLapeGlobalVar; AName: lpString = ''): TLapeGlobalVar;
+var
+  Decl: TLapeDeclaration;
 begin
   if (AVar <> nil) then
   begin
     if (AName <> '') then
       AVar.Name := AName;
-    if (Length(FGlobalDeclarations.getByName(AVar.Name, bTrue)) > 0) then
+    if FGlobalDeclarations.Get(AVar.Name, Decl, bTrue) then
       LapeExceptionFmt(lpeDuplicateDeclaration, [AVar.Name]);
     AVar.isConstant := False;
     FGlobalDeclarations.addDeclaration(AVar);
@@ -3811,7 +3813,6 @@ begin
   try
     ParseVarBlock().Free();
     Result := getGlobalVar(AName);
-    //Result := FGlobalDeclarations.Items[FGlobalDeclarations.Items.Count - 1] as TLapeGlobalVar;
     CheckAfterCompile();
   finally
     resetTokenizerState(OldState);
@@ -3920,6 +3921,8 @@ begin
 end;
 
 function TLapeCompiler.addGlobalType(Typ: TLapeType; AName: lpString = ''; ACopy: Boolean = True): TLapeType;
+var
+  Decl: TLapeDeclaration;
 begin
   if (Typ <> nil) then
   begin
@@ -3927,7 +3930,7 @@ begin
       SetUniqueTypeID(Typ);
     if (AName <> '') then
       Typ.Name := AName;
-    if (Length(FGlobalDeclarations.getByName(Typ.Name, bTrue)) > 0) then
+    if FGlobalDeclarations.Get(Typ.Name, Decl, bTrue) then
       LapeExceptionFmt(lpeDuplicateDeclaration, [Typ.Name]);
     FGlobalDeclarations.addDeclaration(Typ);
   end;
@@ -3944,7 +3947,6 @@ begin
   try
     ParseTypeBlock();
     Result := getGlobalType(AName);
-    //Result := FGlobalDeclarations.Items[FGlobalDeclarations.Items.Count - 1] as TLapeType;
     CheckAfterCompile();
   finally
     resetTokenizerState(OldState);
