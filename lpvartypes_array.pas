@@ -195,7 +195,7 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(0, ltSizeInt, False, True);
+    Result := FCompiler.getConstant(0, ltSizeInt);
 end;
 
 function TLapeType_DynArray.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
@@ -203,7 +203,7 @@ begin
   if (FCompiler = nil) or (AVar = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(High(PCodeArray(AVar)^), ltSizeInt, False, True);
+    Result := FCompiler.getConstant(High(PCodeArray(AVar)^), ltSizeInt);
 end;
 
 procedure TLapeType_DynArray.VarSetLength(var AVar: Pointer; ALen: SizeInt);
@@ -837,7 +837,7 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(FRange.Lo, ltSizeInt, False, True);
+    Result := FCompiler.getConstant(FRange.Lo, ltSizeInt);
 end;
 
 function TLapeType_StaticArray.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
@@ -845,7 +845,7 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(FRange.Hi, ltSizeInt, False, True);
+    Result := FCompiler.getConstant(FRange.Hi, ltSizeInt);
 end;
 
 function TLapeType_StaticArray.CreateCopy(DeepCopy: Boolean = False): TLapeType;
@@ -1004,7 +1004,7 @@ begin
         else
           wasConstant := False;
 
-        IndexHigh := FCompiler.getConstant(Size, ltSizeInt, False, True);
+        IndexHigh := FCompiler.getConstant(Size, ltSizeInt);
         tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, Pos);
         if wasConstant then
@@ -1035,12 +1035,12 @@ begin
         wasConstant := False;
 
       CounterVar := FCompiler.getTempVar(ltSizeInt, BigLock);
-      IndexLow := FCompiler.getConstant(FRange.Lo, CounterVar.VarType.BaseType, False, True);
-      IndexHigh := FCompiler.getConstant(FRange.Hi, CounterVar.VarType.BaseType, False, True);
+      IndexLow := FCompiler.getConstant(FRange.Lo, CounterVar.VarType.BaseType);
+      IndexHigh := FCompiler.getConstant(FRange.Hi, CounterVar.VarType.BaseType);
       LeftVar := CounterVar.VarType.Eval(op_Assign, LeftVar, _ResVar.New(CounterVar), _ResVar.New(IndexLow), [], Offset, Pos);
       LoopOffset := Offset;
       FPType.Eval(op_Assign, tmpVar, Eval(op_Index, tmpVar, Left, LeftVar, [], Offset, Pos), Right.VarType.Eval(op_Index, tmpVar, Right, LeftVar, [], Offset, Pos), [], Offset, Pos);
-      CounterVar.VarType.Eval(op_Assign, tmpVar, LeftVar, CounterVar.VarType.Eval(op_Plus, tmpVar, LeftVar, _ResVar.New(FCompiler.getConstant(1, CounterVar.VarType.BaseType, False, True)), [], Offset, Pos), [], Offset, Pos);
+      CounterVar.VarType.Eval(op_Assign, tmpVar, LeftVar, CounterVar.VarType.Eval(op_Plus, tmpVar, LeftVar, _ResVar.New(FCompiler.getConstant(1, CounterVar.VarType.BaseType)), [], Offset, Pos), [], Offset, Pos);
       FCompiler.Emitter._JmpRIf(LoopOffset - Offset, CounterVar.VarType.Eval(op_cmp_LessThanOrEqual, tmpVar, LeftVar, _ResVar.New(IndexHigh), [], Offset, Pos), Offset, Pos);
       LeftVar.Spill(BigLock);
 
@@ -1068,12 +1068,12 @@ begin
   if UseCompiler and (FCompiler <> nil) then
   begin
     Counter := FCompiler.getTempVar(ltSizeInt, BigLock);
-    LowIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(lpString(IntToStr(FRange.Lo))));
-    HighIndex := FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr(lpString(IntToStr(FRange.Hi))));
+    LowIndex := FCompiler.getConstant(FRange.Lo);
+    HighIndex := FCompiler.getConstant(FRange.Hi);
     IndexVar := Counter.VarType.Eval(op_Assign, IndexVar, _ResVar.New(Counter), _ResVar.New(LowIndex), [], Offset, Pos);
     LoopOffset := Offset;
     FCompiler.FinalizeVar(Eval(op_Index, tmpVar, AVar, IndexVar, [], Offset, Pos), Offset, Pos);
-    Counter.VarType.Eval(op_Assign, tmpVar, IndexVar, Counter.VarType.Eval(op_Plus, tmpVar, IndexVar, _ResVar.New(FCompiler.addManagedVar(Counter.VarType.NewGlobalVarStr('1'))), [], Offset, Pos), [], Offset, Pos);
+    Counter.VarType.Eval(op_Assign, tmpVar, IndexVar, Counter.VarType.Eval(op_Plus, tmpVar, IndexVar, _ResVar.New(FCompiler.getConstant(1)), [], Offset, Pos), [], Offset, Pos);
     FCompiler.Emitter._JmpRIf(LoopOffset - Offset, Counter.VarType.Eval(op_cmp_LessThanOrEqual, tmpVar, IndexVar, _ResVar.New(HighIndex), [], Offset, Pos), Offset, Pos);
     IndexVar.Spill(BigLock);
   end
@@ -1133,7 +1133,7 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(1, ltSizeInt, False, True);
+    Result := FCompiler.getConstant(1, ltSizeInt);
 end;
 
 function TLapeType_String.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
@@ -1141,7 +1141,7 @@ begin
   if (FCompiler = nil) or (AVar = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(Length(PString(AVar)^), ltSizeInt, False, True);
+    Result := FCompiler.getConstant(Length(PString(AVar)^), ltSizeInt);
 end;
 
 function TLapeType_String.NewGlobalVarStr(Str: AnsiString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -1259,15 +1259,15 @@ begin
   if (FCompiler = nil) then
     Result := nil
   else
-    Result := FCompiler.getConstant(1, ltUInt8, False, True);
+    Result := FCompiler.getConstant(1, ltUInt8);
 end;
 
 function TLapeType_ShortString.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
-  if (FCompiler = nil) then
-    Result := FCompiler.getConstant(Length(PShortString(AVar)^), ltUInt8, False, True)
+  if (AVar <> nil) then
+    Result := FCompiler.getConstant(Length(PShortString(AVar)^), ltUInt8)
   else
-    Result := FCompiler.getConstant(FRange.Hi, ltUInt8, False, True);
+    Result := FCompiler.getConstant(FRange.Hi, ltUInt8);
 end;
 
 function TLapeType_ShortString.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;

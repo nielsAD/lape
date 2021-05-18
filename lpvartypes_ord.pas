@@ -412,14 +412,14 @@ end;
 function TLapeType_SubRange.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FLo = nil) and (FCompiler <> nil) and IsOrdinal() then
-    FLo := FCompiler.addManagedVar(NewGlobalVarStr(lpString(IntToStr(Range.Lo)))) as TLapeGlobalVar;
+    FLo := FCompiler.addManagedDecl(NewGlobalVar(FRange.Lo)) as TLapeGlobalVar;
   Result := FLo;
 end;
 
 function TLapeType_SubRange.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FHi = nil) and (FCompiler <> nil) and IsOrdinal() then
-    FHi := FCompiler.addManagedVar(NewGlobalVarStr(lpString(IntToStr(Range.Hi)))) as TLapeGlobalVar;
+    FHi := FCompiler.addManagedDecl(NewGlobalVar(FRange.Hi)) as TLapeGlobalVar;
   Result := FHi;
 end;
 

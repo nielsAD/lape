@@ -390,7 +390,7 @@ begin
       Result := Left.IncLock();
       Result.VarType :=FieldType;
       case Left.VarPos.MemPos of
-        mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + Offset)), True));
+        mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedDecl(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + Offset))));
         mpVar,
         mpStack: Result.IncOffset(Offset);
         else LapeException(lpeImpossible);
@@ -410,7 +410,7 @@ begin
       end
       else
       begin
-        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt, False, True));
+        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt));
         tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
@@ -461,7 +461,7 @@ begin
       begin
         Assert(op in [op_cmp_Equal, op_cmp_NotEqual]);
 
-        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt, False, True));
+        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt));
         tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
@@ -527,7 +527,7 @@ begin
     case FieldVar.VarPos.MemPos of
       mpMem:
         if UseCompiler and (FCompiler <> nil) then
-          FieldVar.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset)), True))
+          FieldVar.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedDecl(FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset))))
         else
           FieldVar.VarPos.GlobalVar := FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset));
       mpVar: FieldVar.IncOffset(FFieldMap.ItemsI[i].Offset);
