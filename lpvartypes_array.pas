@@ -1068,8 +1068,8 @@ begin
   if UseCompiler and (FCompiler <> nil) then
   begin
     Counter := FCompiler.getTempVar(ltSizeInt, BigLock);
-    LowIndex := FCompiler.getConstant(FRange.Lo);
-    HighIndex := FCompiler.getConstant(FRange.Hi);
+    LowIndex := FCompiler.getConstant(FRange.Lo, Counter.BaseType);
+    HighIndex := FCompiler.getConstant(FRange.Hi, Counter.BaseType);
     IndexVar := Counter.VarType.Eval(op_Assign, IndexVar, _ResVar.New(Counter), _ResVar.New(LowIndex), [], Offset, Pos);
     LoopOffset := Offset;
     FCompiler.FinalizeVar(Eval(op_Index, tmpVar, AVar, IndexVar, [], Offset, Pos), Offset, Pos);

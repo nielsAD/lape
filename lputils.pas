@@ -128,7 +128,6 @@ procedure TraverseGlobals(Compiler: TLapeCompilerBase; Callback: TTraverseCallba
   end;
 
 var
-  i: Integer;
   n: lpString;
   Decl: TLapeDeclaration;
 begin
@@ -144,13 +143,12 @@ begin
       Decls := Compiler.GlobalDeclarations;
     end;
 
-  for i := 0 to Decls.Count - 1 do
+  for Decl in Decls.ExportToArray() do
   begin
-    Decl := Decls[i];
     try
       if (Decl.Name = '') then
         if (Decl is TLapeGlobalVar) and (TLapeGlobalVar(Decl).VarType is TLapeType_Method) then
-          n := BaseName + '[' + lpString(IntToStr(i)) + ']'
+          n := BaseName + '[' + lpString(IntToStr(Decls.IndexOf(Decl))) + ']'
         else
           Continue
       else if (BaseName <> '') then

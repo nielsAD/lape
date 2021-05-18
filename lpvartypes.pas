@@ -666,7 +666,7 @@ type
     function addStackVar(VarType: TLapeType; Name: lpString): TLapeStackVar; virtual;
 
     function getConstant(Value: lpString; BaseType: ELapeBaseType = ltString): TLapeGlobalVar; overload; virtual;
-    function getConstant(Value: Int64; IntType: ELapeBaseType = ltNativeInt): TLapeGlobalVar; overload; virtual;
+    function getConstant(Value: Int64; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar; overload; virtual;
     function getLabel(CodePos: Integer): TLapeGlobalVar; virtual;
 
     procedure getDestVar(var Dest, Res: TResVar; Op: EOperator); virtual;
@@ -743,7 +743,6 @@ uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_array, lptree,
   lpmessages, lpeval, lpinterpreter;
-
 
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
 begin
@@ -2933,6 +2932,9 @@ constructor TLapeType_OverloadedMethod.Create(ACompiler: TLapeCompilerBase; ANam
 begin
   inherited Create(ltUnknown, ACompiler, AName, ADocPos);
 
+  // Use unsorted list for indexing
+  setManagedDecls(TLapeDeclarationList.Create(TLapeDeclCollection_List.Create(False)), True);
+
   FOfObject := bUnknown;
   FHiddenSelf := bUnknown;
   OnFunctionNotFound := nil;
@@ -3986,7 +3988,7 @@ begin
 
   LoadBaseTypes(FBaseTypes, Self);
 
-  FBaseTypesDictionary := TLapeBaseTypesDictionary.Create(nil, 1024);
+  FBaseTypesDictionary := TLapeBaseTypesDictionary.Create(nil, 256);
   for BaseType in ELapeBaseType do
     if (FBaseTypes[BaseType] <> nil) then
       FBaseTypesDictionary[FBaseTypes[BaseType].Name] := FBaseTypes[BaseType];
@@ -4010,7 +4012,7 @@ begin
   FreeAndNil(FGlobalDeclarations);
   FreeAndNil(FManagedDeclarations);
   for BaseType in ELapeBaseType do
-    FreeAndNil(FCachedDeclarations);
+    FreeAndNil(FCachedDeclarations[BaseType]);
 
   ClearBaseTypes(FBaseTypes, True);
 
@@ -4331,8 +4333,18 @@ begin
   Assert(not (Result is TLapeStackTempVar));
 end;
 
-function TLapeCompilerBase.getConstant(Value: lpString; BaseType: ELapeBaseType = ltString): TLapeGlobalVar;
+function TLapeCompilerBase.getConstant(Value: lpString; BaseType: ELapeBaseType): TLapeGlobalVar;
 begin
+  if (BaseType in LapeIntegerTypes + [ltUnknown]) then
+  begin
+    if (BaseType = ltUnknown) then
+      BaseType := DetermineIntType(Value)
+    else
+      BaseType := DetermineIntType(Value, BaseType, False);
+
+    Assert(BaseType in LapeIntegerTypes);
+  end;
+
   Result := FCachedDeclarations[BaseType][Value];
   if (Result = nil) then
   begin
@@ -4342,6 +4354,11 @@ begin
   end;
 end;
 
+function TLapeCompilerBase.getConstant(Value: Int64; BaseType: ELapeBaseType): TLapeGlobalVar;
+begin
+  Result := getConstant(lpString(IntToStr(Value)), BaseType);
+end;
+
 function TLapeCompilerBase.getLabel(CodePos: Integer): TLapeGlobalVar;
 begin
   Emitter.CheckOffset(CodePos);
@@ -4349,11 +4366,6 @@ begin
 
   PCodePos(Result.Ptr)^ := CodePos;
   Emitter.addCodePointer(Result.Ptr);
-end;
-
-function TLapeCompilerBase.getConstant(Value: Int64; IntType: ELapeBaseType = ltNativeInt): TLapeGlobalVar;
-begin
-  Result := getConstant(lpString(IntToStr(Value)), IntType);
 end;
 
 procedure TLapeCompilerBase.getDestVar(var Dest, Res: TResVar; Op: EOperator);

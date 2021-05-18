@@ -128,7 +128,7 @@ begin
 
       try
         if Disassemble then
-          DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.getByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.getByClass(TLapeGlobalVar, bTrue)));
+          DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue)));
 
         if Run then
         begin

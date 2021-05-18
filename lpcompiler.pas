@@ -3563,7 +3563,7 @@ function TLapeCompiler.Compile: Boolean;
     Decl: TLapeGlobalVar;
     i: Integer;
   begin
-    Decls := GlobalDeclarations.GetAll(TLapeGlobalVar, bFalse);
+    Decls := GlobalDeclarations.GetByClass(TLapeGlobalVar, bFalse);
     for i := 0 to High(Decls) do
     begin
       Decl := Decls[i] as TLapeGlobalVar;

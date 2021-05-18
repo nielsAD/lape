@@ -831,6 +831,8 @@ end;
 {$WARN COMPARING_SIGNED_UNSIGNED OFF}
 {$WARN IMPLICIT_STRING_CAST OFF}
 {$WARN IMPLICIT_STRING_CAST_LOSS OFF}
+{$WARN 6058 off} // has not been inlined warning
+
 {$I lpeval_functions.inc}
 
 procedure LoadEvalArr(var Arr: TLapeEvalArr);

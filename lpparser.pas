@@ -313,9 +313,6 @@ const
       (Keyword: 'WITH';          Token: tk_kw_With)
     );
 
-  LapeKeyword_MinLength = 2;
-  LapeKeyword_MaxLength = 13;
-
   OperatorAssociative: array[EOperator] of EOperatorAssociative = (
     assocNone,                          //op_Unkown
 
@@ -693,20 +690,14 @@ var
   function Alpha: EParserToken; inline;
   var
     Token: EParserToken;
-    TokenLen: Integer;
   begin
     while (getChar(1) in ['0'..'9', 'A'..'Z', '_', 'a'..'z']) do
       Inc(FPos);
 
-    TokenLen := getTokLen();
-    if (TokenLen >= LapeKeyword_MinLength) and (TokenLen <= LapeKeyword_MaxLength) then
-    begin
-      Token := FKeywordDictionary[getTokString()];
-      if (Token <> tk_Unknown) then
-        Result := setTok(Token)
-      else
-        Result := setTok(tk_Identifier);
-    end else
+    Token := FKeywordDictionary[getTokString()];
+    if (Token <> tk_Unknown) then
+      Result := setTok(Token)
+    else
       Result := setTok(tk_Identifier);
   end;
 
@@ -1117,7 +1108,7 @@ begin
   FOnParseDirective := nil;
   FOnHandleDirective := nil;
 
-  FKeywordDictionary := TLapeKeywordDictionary.Create(tk_Unknown, 2048);
+  FKeywordDictionary := TLapeKeywordDictionary.Create(tk_Unknown, 512);
   for i := 0 to High(Lape_Keywords) do
     FKeywordDictionary[Lape_Keywords[i].Keyword] := Lape_Keywords[i].Token;
 

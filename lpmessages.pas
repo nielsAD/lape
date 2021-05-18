@@ -51,6 +51,7 @@ const
   lpeDeclarationOutOfScope = 'Declaration "%s" out of scope';
   lpeDefaultToMoreThanOne = 'Runtime default value can only be assigned to one variable';
   lpeDuplicateDeclaration = 'Duplicate declaration "%s"';
+  lpeDuplicateHashBucket = 'Duplicate hash bucket with "%s" and "%s"';
   lpeErrorScanningString = '%s while scanning string literal';
   lpeExceptionAt = '%s at line %d, column %d';
   lpeExceptionIn = '%s in file "%s"';
@@ -77,6 +78,7 @@ const
   lpeInvalidJump = 'Invalid jump';
   lpeInvalidOpenArrayElement = 'Invalid open array element (%s) (index: %d)';
   lpeInvalidOperator = 'Operator "%s" expects %d parameters';
+  lpeInvalidDictionaryOperation = 'Invalid operation (%s) on dictionary';
   lpeInvalidRange = 'Expression is not a valid range';
   lpeInvalidUnionType = 'Invalid union type';
   lpeInvalidValueForType = 'Invalid value for type "%s"';
