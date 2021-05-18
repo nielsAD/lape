@@ -610,12 +610,14 @@ type
   end;
 
   TLapeHint = procedure(Sender: TLapeCompilerBase; Msg: lpString) of object;
+  TLapeBaseTypesDictionary = specialize TLapeUniqueDictionary<TLapeType>;
 
   TLapeCompilerBase = class(TLapeBaseDeclClass)
   protected
     FEmitter: TLapeCodeEmitter;
     FStackInfo: TLapeStackInfo;
     FBaseTypes: TLapeBaseTypes;
+    FBaseTypesDictionary: TLapeBaseTypesDictionary;
 
     FGlobalDeclarations: TLapeDeclarationList;
     FManagedDeclarations: TLapeDeclarationList;
@@ -3969,6 +3971,8 @@ begin
 end;
 
 constructor TLapeCompilerBase.Create(AEmitter: TLapeCodeEmitter = nil; ManageEmitter: Boolean = True);
+var
+  BaseType: ELapeBaseType;
 begin
   inherited Create();
 
@@ -3983,6 +3987,12 @@ begin
   FEmitter := AEmitter;
 
   LoadBaseTypes(FBaseTypes, Self);
+
+  FBaseTypesDictionary := TLapeBaseTypesDictionary.Create(nil, 1024);
+  for BaseType in ELapeBaseType do
+    if (FBaseTypes[BaseType] <> nil) then
+      FBaseTypesDictionary[FBaseTypes[BaseType].Name] := FBaseTypes[BaseType];
+
   FStackInfo := nil;
 
   FGlobalDeclarations := TLapeDeclarationList.Create(nil);
@@ -3995,6 +4005,7 @@ begin
   Clear();
   setEmitter(nil);
 
+  FreeAndNil(FBaseTypesDictionary);
   FreeAndNil(FGlobalDeclarations);
   FreeAndNil(FManagedDeclarations);
   FreeAndNil(FCachedDeclarations);
@@ -4261,14 +4272,8 @@ begin
 end;
 
 function TLapeCompilerBase.getBaseType(Name: lpString): TLapeType;
-var
-  BaseType: ELapeBaseType;
 begin
-  Name := LapeCase(Name);
-  for BaseType := Low(FBaseTypes) to High(FBaseTypes) do
-    if (FBaseTypes[BaseType] <> nil) and (LapeCase(FBaseTypes[BaseType].Name) = Name) then
-      Exit(FBaseTypes[BaseType]);
-  Result := nil;
+  Result := FBaseTypesDictionary[Name];
 end;
 
 function TLapeCompilerBase.getBaseType(BaseType: ELapeBaseType): TLapeType;

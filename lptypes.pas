@@ -407,20 +407,38 @@ type
     property Sorted: Boolean read getSorted write setSorted;
   end;
 
+  {$IFDEF FPC}generic{$ENDIF} TLapeUniqueDictionary<_T> = class(TLapeBaseClass)
+  protected type
+    TBucket = record Name: lpString; Value: _T; end;
+    TArr = array of TBucket;
+  protected
+    FArr: TArr;
+    FSize: Integer;
+
+    procedure setValue(Key: lpString; Value: _T);
+    function getValue(Key: lpString): _T;
+  public
+    InvalidVal: _T;
+
+    constructor Create(InvalidValue: _T; Size: Integer); reintroduce; virtual;
+
+    property Value[Key: lpString]: _T read getValue write setValue; default;
+  end;
+
   {$IFDEF FPC}generic{$ENDIF} TLapeNotifier<_T> = class(TLapeBaseClass)
   public type
-     TNotifyProc = procedure(Sender: _T);
-     TNotifiers = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TNotifyProc>;
-   var protected
-     FNotifiers: TNotifiers;
-   public
-     constructor Create; reintroduce; virtual;
-     destructor Destroy; override;
+    TNotifyProc = procedure(Sender: _T);
+    TNotifiers = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TNotifyProc>;
+  var protected
+    FNotifiers: TNotifiers;
+  public
+    constructor Create; reintroduce; virtual;
+    destructor Destroy; override;
 
-     procedure AddProc(const Proc: TNotifyProc); virtual;
-     procedure DeleteProc(const Proc: TNotifyProc); virtual;
+    procedure AddProc(const Proc: TNotifyProc); virtual;
+    procedure DeleteProc(const Proc: TNotifyProc); virtual;
 
-     procedure Notify(Sender: _T); virtual;
+    procedure Notify(Sender: _T); virtual;
   end;
 
   {$IFDEF FPC}generic{$ENDIF} TLapeNotifierOfObject<_T> = class(TLapeBaseClass)
@@ -464,9 +482,9 @@ type
     procedure _Add(Hash: UInt32; Decl: TLapeDeclaration);
     procedure _Grow;
 
-    function getBucket(Hash: UInt32): THashBucket; overload; //{$IFDEF Lape_Inline}inline;{$ENDIF}
-    function getBucket(Key: lpString): THashBucket; overload;/// {$IFDEF Lape_Inline}inline;{$ENDIF}
-    function getItem(Index: Integer): TLapeDeclaration; //{$IFDEF Lape_Inline}inline;{$ENDIF}
+    function getBucket(Hash: UInt32): THashBucket; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    function getBucket(Key: lpString): THashBucket; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    function getItem(Index: Integer): TLapeDeclaration; {$IFDEF Lape_Inline}inline;{$ENDIF}
   public
     constructor Create(InitialSize: Int32 = 0); reintroduce; virtual;
     destructor Destroy; override;
@@ -1123,6 +1141,42 @@ begin
   end;
 end;
 
+procedure TLapeUniqueDictionary.setValue(Key: lpString; Value: _T);
+var
+  Bucket: UInt32;
+begin
+  Bucket := LapeHash(UpperCase(Key)) and FSize;
+  if (FArr[Bucket].Name <> '') then
+    LapeExceptionFmt(lpeDuplicateDeclaration, [Key]);
+
+  FArr[Bucket].Name  := Key;
+  FArr[Bucket].Value := Value;
+end;
+
+function TLapeUniqueDictionary.getValue(Key: lpString): _T;
+begin
+  with FArr[LapeHash(UpperCase(Key)) and FSize] do
+    if SameText(Name, Key) then
+      Result := Value
+    else
+      Result := InvalidVal;
+end;
+
+constructor TLapeUniqueDictionary.Create(InvalidValue: _T; Size: Integer);
+begin
+  inherited Create();
+
+  // must be power of two
+  FSize := 16;
+  while (FSize < Size) do
+   FSize := FSize * 2;
+
+  FSize := Size - 1;
+  SetLength(FArr, Size);
+
+  InvalidVal := InvalidValue;
+end;
+
 procedure TLapeDeclCollection.NameChanged(Decl: TLapeDeclaration);
 begin
   Assert(Decl <> nil);
@@ -1309,7 +1363,11 @@ begin
 
   if (InitialSize = 0) then
     InitialSize := MIN_SIZE;
+
+  // must be power of two
   FInitialSize := InitialSize;
+  while (FInitialSize < InitialSize) do
+    FInitialSize := FInitialSize * 2;
 end;
 
 destructor TLapeDeclCollection.Destroy;
