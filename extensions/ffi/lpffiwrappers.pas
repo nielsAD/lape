@@ -168,7 +168,6 @@ const
 
 function LapeTypeToFFIType(const VarType: TLapeType): TFFITypeManager;
 function LapeFFIPointerParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
-function LapeFFIStackParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
 function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;
 function LapeFFIComplexReturn(const VarType: TLapeType; ABI: TFFIABI): Boolean;
 function LapeResultToFFIType(const Res: TLapeType; ABI: TFFIABI): TFFITypeManager;
@@ -836,26 +835,10 @@ begin
   ;
 end;
 
-function LapeFFIStackParam(const Param: TLapeParameter; ABI: TFFIABI): Boolean;
-begin
-  {$IFDEF CPU86}
-    Result := (Param.VarType <> nil) and (Param.VarType.BaseType = ltDynArray)
-
-    {$IF (FPC_VERSION >= 3) AND DECLARED(FFI_PASCAL)}
-      or ((ABI = FFI_PASCAL) and (Param.VarType.Size < SizeOf(Pointer)))
-    {$IFEND}
-    ;
-  {$ELSE}
-    Result := False;
-  {$ENDIF}
-end;
-
 function LapeParamToFFIType(const Param: TLapeParameter; ABI: TFFIABI): TFFITypeManager;
 begin
   if LapeFFIPointerParam(Param, ABI) then
     Result := TFFITypeManager.Create(ffi_type_pointer)
-  else if LapeFFIStackParam(Param, ABI) then
-    Result := TFFITypeManager.Create(ffi_type_float) // TODO: Change to platform-independent type
   else
     Result := LapeTypeToFFIType(Param.VarType);
 end;
@@ -866,7 +849,7 @@ const
 begin
   Result := False;
 
-  if (VarType = nil) or (VarType.BaseType in ComplexTypes) {$IF FPC_VERSION >= 3}or VarType.NeedFinalization{$IFEND} then
+  if (VarType = nil) or (VarType.BaseType in ComplexTypes) or VarType.NeedFinalization then
     Exit(True);
 
   {$IF DECLARED(FFI_PASCAL) and DECLARED(FFI_REGISTER) and DECLARED(FFI_STDCALL)}
@@ -877,8 +860,7 @@ begin
   {$IFDEF CPU86}
     Result := (VarType.BaseType = ltRecord) and (
       (not (UInt8(VarType.Size) in PowerTwoRegs))
-        {$IF (FPC_VERSION <  3) AND DECLARED(FFI_CDECL) AND DECLARED(FFI_MS_CDECL)} or (not (ABI in [FFI_CDECL, FFI_MS_CDECL])) {$IFEND}
-        {$IF (FPC_VERSION >= 3) AND DECLARED(FFI_PASCAL)} or ((ABI = FFI_PASCAL) and (VarType.Size <= SizeOf(Pointer))) {$IFEND}
+        {$IF DECLARED(FFI_PASCAL)} or ((ABI = FFI_PASCAL) and (VarType.Size <= SizeOf(Pointer))) {$IFEND}
       )
     ;
   {$ENDIF}

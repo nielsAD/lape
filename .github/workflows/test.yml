@@ -1,0 +1,80 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - os: windows-latest
+            name: Windows 64
+            ffi: default default-static
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2064%20bits/Lazarus%202.0.12/lazarus-2.0.12-fpc-3.2.0-win64.exe
+            
+          - os: windows-latest
+            name: Windows 32
+            ffi: stdcall cdecl pascal register stdcall-static cdecl-static pascal-static register-static
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2032%20bits/Lazarus%202.0.12/lazarus-2.0.12-fpc-3.2.0-win32.exe
+            
+          - os: ubuntu-latest
+            name: Linux 64
+            ffi: default
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%202.0.12/lazarus-project_2.0.12-0_amd64.deb
+            fpc-url: |
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%202.0.12/fpc-laz_3.2.0-1_amd64.deb
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%202.0.12/fpc-src_3.2.0-1_amd64.deb
+              
+          - os: macos-latest
+            name: MacOS 64
+            ffi: default
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%202.0.12/Lazarus-2.0.12-x86_64-macosx.pkg
+            fpc-url: |
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%202.0.12/fpc-3.2.0.intel-macosx.dmg
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%202.0.12/fpc-src-3.2.0-2-laz.pkg      
+        
+    steps:
+      - uses: actions/checkout@v2.3.4
+      
+      - name: Install Lazarus
+        uses: ollydev/setup-lazarus@master
+        with:
+          laz-url: ${{ matrix.config.laz-url }}
+          fpc-url: ${{ matrix.config.fpc-url }}
+      
+      - name: Install Dependencies (Ubuntu)
+        if: matrix.config.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get -m -y install libffi-dev 
+          
+      - name: Install Dependencies (MacOS)
+        if: matrix.config.os == 'macos-latest'
+        run: |
+          brew install libffi
+      
+      - name: 'Test Lape'
+        run: |
+          lazbuild package/lape.lpk
+          lazbuild tests/RunTests/LapeTest.lpi
+          
+          cd tests/RunTests/ && ./LapeTest
+          
+      - name: 'Test Lape FFI'
+        if: ${{ matrix.config.ffi }} != ''
+        run: |
+          cd extensions/ffi/test/
+          
+          for BUILD_MODE in ${{ matrix.config.ffi }}
+          do
+            lazbuild LapeTestFFI.lpi --build-mode=$BUILD_MODE
+            ./LapeTestFFI
+          done || error=1
+          
+          exit $error
