@@ -538,14 +538,14 @@ var
       HandleSafeJump();
   end;
 
-  procedure DoInvokeImportedProc(RecSize: Integer; Ptr: Pointer; ParamSize: UInt16; StackPosOffset: Integer = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure DoInvokeImportedProc(RecSize: Integer; Ptr: Pointer; ParamSize: TParamSize; StackPosOffset: TStackInc = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     TLapeImportedProc(Ptr)(@Stack[StackPos - ParamSize]);
     Dec(StackPos, ParamSize - StackPosOffset);
     Inc(Code, RecSize + ocSize);
   end;
 
-  procedure DoInvokeImportedFunc(RecSize: Integer; Ptr, Res: Pointer; ParamSize: UInt16; StackPosOffset: Integer = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure DoInvokeImportedFunc(RecSize: Integer; Ptr, Res: Pointer; ParamSize: TParamSize; StackPosOffset: TStackInc = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     TLapeImportedFunc(Ptr)(@Stack[StackPos - ParamSize], Res);
     Dec(StackPos, ParamSize - StackPosOffset);

@@ -19,7 +19,7 @@ type
   EParserToken = (
     //General
     tk_NULL,
-    tk_Unkown,
+    tk_Unknown,
     tk_Identifier,
     tk_Comment,
     tk_Directive,
@@ -140,6 +140,13 @@ type
   TLapeParseDirective = function(Sender: TLapeTokenizerBase): Boolean of object;
   TLapeHandleDirective = function(Sender: TLapeTokenizerBase; Directive, Argument: lpString): Boolean of object;
 
+  TLapeKeyword = record
+    Keyword: lpString;
+    Token: EParserToken;
+  end;
+
+  TLapeKeywordDictionary = specialize TLapeUniqueDictionary<EParserToken>;
+
   TLapeTokenizerBase = class(TLapeBaseDeclClass)
   protected
     FFileName: lpString;
@@ -153,6 +160,8 @@ type
 
     FOnParseDirective: TLapeParseDirective;
     FOnHandleDirective: TLapeHandleDirective;
+
+    FKeywordDictionary: TLapeKeywordDictionary;
 
     function Compare(Key: lpString): Boolean; virtual; abstract;
     function Identify: EParserToken; virtual;
@@ -173,6 +182,7 @@ type
     NullPos: TDocPos;
 
     constructor Create(AFileName: lpString = ''); reintroduce; virtual;
+    destructor Destroy; override;
     procedure Reset(ClearDoc: Boolean = False); virtual;
     function getState: Pointer; virtual;
     procedure setState(const State: Pointer; DoFreeState: Boolean = True); virtual;
@@ -226,11 +236,6 @@ type
   public
     constructor Create(AFileName: UnicodeString = ''); reintroduce; overload; virtual;
     constructor Create(AFileName: AnsiString = ''); reintroduce; overload; virtual;
-  end;
-
-  TLapeKeyword = record
-    Keyword: lpString;
-    Token: EParserToken;
   end;
 
 const
@@ -386,21 +391,14 @@ const
     3                                   //op_UnaryPlus
   );
 
-var
-  {$IFDEF Lape_DoubleKeywordsCache}
-  Lape_KeywordsCache: array[2..13, Byte] of array of TLapeKeyword;
-  {$ELSE}
-  Lape_KeywordsCache: array[Byte] of array of TLapeKeyword;
-  {$ENDIF}
-
-  {$IF NOT DECLARED(FormatSettings)}
-  FormatSettings: TFormatSettings
+{$IF NOT DECLARED(FormatSettings)}
+  var FormatSettings: TFormatSettings
     {$IF DECLARED(DefaultFormatSettings)}
     absolute DefaultFormatSettings
     {$ELSE}
     {$DEFINE LoadDefaultFormatSettings}
     {$IFEND};
-  {$IFEND}
+{$IFEND}
 
 function LapeTokenToString(Token: EParserToken): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function ParserTokenToOperator(Token: EParserToken): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -668,102 +666,12 @@ begin
   end;
 end;
 
-function Lape_HashKeyword(const Str: lpString): Byte;
-var
-  i: Integer;
-begin
-  //Str := UpperCase(Str);
-  Result := Length(Str);
-  for i := 1 to Length(Str) do
-    Result := Byte(Result - 128) xor Byte((Ord(Str[i]) - 65) shl ((i + 2) mod 8));
-end;
-
-function Lape_IsKeyword(Str: lpString; out Token: EParserToken): Boolean;
-var
-  Hash: Byte;
-  i: Integer;
-  {$IFDEF Lape_DoubleKeywordsCache}
-  StrLen: Integer;
-  {$ENDIF}
-begin
-  {$IFDEF Lape_DoubleKeywordsCache}
-  StrLen := Length(Str);
-  if (StrLen < Low(Lape_KeywordsCache)) or (StrLen > High(Lape_KeywordsCache)) then
-    Exit(False);
-  {$ENDIF}
-
-  Str := UpperCase(Str);
-  Hash := Lape_HashKeyword(Str);
-
-  {$IFDEF Lape_DoubleKeywordsCache}
-  for i := High(Lape_KeywordsCache[StrLen][Hash]) downto 0 do
-    if (CompareStr(Lape_KeywordsCache[StrLen][Hash][i].Keyword, Str) = 0) then
-    begin
-      Token := Lape_KeywordsCache[StrLen][Hash][i].Token;
-      Exit(True);
-    end;
-  {$ELSE}
-  for i := High(Lape_KeywordsCache[Hash]) downto 0 do
-    if (CompareStr(Lape_KeywordsCache[Hash][i].Keyword, b) = 0) then
-    begin
-      Token := Lape_KeywordsCache[Hash][i].Token;
-      Exit(True);
-    end;
-  {$ENDIF}
-  Result := False;
-end;
-
-procedure Lape_ClearKeywordsCache;
-var
-  i: Integer;
-  {$IFDEF Lape_DoubleKeywordsCache}
-  ii: Integer;
-  {$ENDIF}
-begin
-  {$IFDEF Lape_DoubleKeywordsCache}
-  for i := Low(Lape_KeywordsCache) to High(Lape_KeywordsCache) do
-    for ii := Low(Lape_KeywordsCache[i]) to High(Lape_KeywordsCache[i]) do
-      Lape_KeywordsCache[i][ii] := nil;
-  {$ELSE}
-  for i := Low(Lape_KeywordsCache) to High(Lape_KeywordsCache) do
-    Lape_KeywordsCache[i] := nil;
-  {$ENDIF}
-end;
-
-procedure Lape_InitKeywordsCache;
-var
-  Hash: Byte;
-  i: Integer;
-  {$IFDEF Lape_DoubleKeywordsCache}
-  StrLen: Integer;
-  {$ENDIF}
-begin
-  Lape_ClearKeywordsCache();
-
-  {$IFDEF Lape_DoubleKeywordsCache}
-  for i := Low(Lape_Keywords) to High(Lape_Keywords) do
-  begin
-    Hash := Lape_HashKeyword(UpperCase(Lape_Keywords[i].Keyword));
-    StrLen := Length(Lape_Keywords[i].Keyword);
-    SetLength(Lape_KeywordsCache[StrLen][Hash], Length(Lape_KeywordsCache[StrLen][Hash]) + 1);
-    Lape_KeywordsCache[StrLen][Hash][High(Lape_KeywordsCache[StrLen][Hash])] := Lape_Keywords[i];
-  end;
-  {$ELSE}
-  for i := Low(Lape_Keywords) to High(Lape_Keywords) do
-  begin
-    Hash := Lape_HashKeyword(UpperCase(Lape_Keywords[i].Keyword));
-    SetLength(Lape_KeywordsCache[Hash], Length(Lape_KeywordsCache[Hash]) + 1);
-    Lape_KeywordsCache[Hash][High(Lape_KeywordsCache[Hash])] := Lape_Keywords[i];
-  end;
-  {$ENDIF}
-end;
-
 function TLapeTokenizerBase.Identify: EParserToken;
 var
   Char: lpChar;
-  tmpDocPos:TDocPos;
+  tmpDocPos: TDocPos;
   
-  procedure NextPos_CountLines;
+  procedure NextPos_CountLines; inline;
   begin
     repeat
       case CurChar of
@@ -779,21 +687,15 @@ var
     until (not (CurChar in [#9, #32, #10, #13]));
   end;
 
-  function Alpha: EParserToken;
+  function Alpha: EParserToken; inline;
   var
-    Str: lpString;
     Token: EParserToken;
   begin
-    Str := Char;
-    Char := getChar(1);
-    while (Char in ['0'..'9', 'A'..'Z', '_', 'a'..'z']) do
-    begin
+    while (getChar(1) in ['0'..'9', 'A'..'Z', '_', 'a'..'z']) do
       Inc(FPos);
-      Str := Str + Char;
-      Char := getChar(1);
-    end;
 
-    if Lape_IsKeyword(Str, Token) then
+    Token := FKeywordDictionary[getTokString()];
+    if (Token <> tk_Unknown) then
       Result := setTok(Token)
     else
       Result := setTok(tk_Identifier);
@@ -878,14 +780,15 @@ begin
         else
           Result := setTok(tk_op_Divide);
       end;
-          
- 
+
     {Minus, AssignMinus} 
-    '-':if (getChar(1) = '=') then begin
-          Result := setTok(tk_op_AssignMinus);
-          Inc(FPos);
-        end else 
-          Result := setTok(tk_op_Minus);
+    '-':
+      if (getChar(1) = '=') then
+      begin
+        Result := setTok(tk_op_AssignMinus);
+        Inc(FPos);
+      end else
+        Result := setTok(tk_op_Minus);
     
     {Multiply, Power, AssignMul}      
     '*':
@@ -903,15 +806,16 @@ begin
         else
           Result := setTok(tk_op_Multiply);
       end;
-      
-    
+
     {Plus, AssignPlus}
-    '+':if (getChar(1) = '=') then begin
-          Result := setTok(tk_op_AssignPlus);
-          Inc(FPos);
-        end else 
-          Result := setTok(tk_op_Plus);
-    
+    '+':
+      if (getChar(1) = '=') then
+      begin
+        Result := setTok(tk_op_AssignPlus);
+        Inc(FPos);
+      end else
+        Result := setTok(tk_op_Plus);
+
     '@': Result := setTok(tk_op_Addr);
     '^': Result := setTok(tk_sym_Caret);
 
@@ -920,31 +824,29 @@ begin
     '[': Result := setTok(tk_sym_BracketOpen);
     ',': Result := setTok(tk_sym_Comma);
     '.':
+      if (getChar(1) = '.') then
       begin
-        if (getChar(1) = '.') then
-        begin
-          Inc(FPos);
-          Result := setTok(tk_sym_DotDot);
-        end
-        else
-          Result := setTok(tk_op_Dot);
-      end;
+        Inc(FPos);
+        Result := setTok(tk_sym_DotDot);
+      end
+      else
+        Result := setTok(tk_op_Dot);
+
     ')': Result := setTok(tk_sym_ParenthesisClose);
     '(':
+      if (getChar(1) = '*') then
       begin
-        if (getChar(1) = '*') then
-        begin
-          Inc(FPos, 2);
-          while (not ((CurChar in ['*', #0]) and (getChar(1) in [')', #0]))) do
-            NextPos_CountLines();
+        Inc(FPos, 2);
+        while (not ((CurChar in ['*', #0]) and (getChar(1) in [')', #0]))) do
+          NextPos_CountLines();
 
-          Result := setTok(tk_Comment);
-          if (CurChar = '*') then
-            Inc(FPos);
-        end
-        else
-          Result := setTok(tk_sym_ParenthesisOpen);
-      end;
+        Result := setTok(tk_Comment);
+        if (CurChar = '*') then
+          Inc(FPos);
+      end
+      else
+        Result := setTok(tk_sym_ParenthesisOpen);
+
     ';': Result := setTok(tk_sym_SemiColon);
     '{':
       begin
@@ -994,27 +896,23 @@ begin
         end;
       end;
     '$':
+      if (getChar(1) in ['0'..'9', 'A'..'F', 'a'..'f']) then
       begin
-        if (getChar(1) in ['0'..'9', 'A'..'F', 'a'..'f']) then
-        begin
-          Inc(FPos);
-          while (getChar(1) in ['0'..'9', 'A'..'F', 'a'..'f', '_']) do Inc(FPos);
-          Result := setTok(tk_typ_Integer_Hex);
-        end
-        else
-          Result := setTok(tk_Unkown);
-      end;
+        Inc(FPos);
+        while (getChar(1) in ['0'..'9', 'A'..'F', 'a'..'f', '_']) do Inc(FPos);
+        Result := setTok(tk_typ_Integer_Hex);
+      end
+      else
+        Result := setTok(tk_Unknown);
     '%':
+      if (getChar(1) in ['0'..'1']) then
       begin
-        if (getChar(1) in ['0'..'1']) then
-        begin
-          Inc(FPos);
-          while (getChar(1) in ['0'..'1', '_']) do Inc(FPos);
-          Result := setTok(tk_typ_Integer_Bin);
-        end
-        else
-          Result := setTok(tk_Unkown);
-      end;
+        Inc(FPos);
+        while (getChar(1) in ['0'..'1', '_']) do Inc(FPos);
+        Result := setTok(tk_typ_Integer_Bin);
+      end
+      else
+        Result := setTok(tk_Unknown);
     'A'..'Z', '_', 'a'..'z': Result := Alpha();
     #34: //heredoc string
       begin
@@ -1052,16 +950,14 @@ begin
                 Result := setTok(tk_typ_Char);
               end
               else
-                Result := setTok(tk_Unkown);
+                Result := setTok(tk_Unknown);
             end;
           else
-            Result := setTok(tk_Unkown);
+            Result := setTok(tk_Unknown);
         end;
       end;
     else
-    begin
-      Result := setTok(tk_Unkown);
-    end;
+      Result := setTok(tk_Unknown);
   end;
 end;
 
@@ -1132,7 +1028,7 @@ begin
 end;
 
 function TLapeTokenizerBase.getTokUInt64: UInt64;
-  function Bin2Dec(s: lpString): UInt64;
+  function Bin2Dec(s: lpString): UInt64; inline;
   var
     i: Integer;
   begin
@@ -1203,12 +1099,18 @@ begin
 end;
 
 constructor TLapeTokenizerBase.Create(AFileName: lpString = '');
+var
+  i: Integer;
 begin
   inherited Create();
 
   FFileName := AFileName;
   FOnParseDirective := nil;
   FOnHandleDirective := nil;
+
+  FKeywordDictionary := TLapeKeywordDictionary.Create(tk_Unknown, 512);
+  for i := 0 to High(Lape_Keywords) do
+    FKeywordDictionary[Lape_Keywords[i].Keyword] := Lape_Keywords[i].Token;
 
   OverridePos := nil;
   NullPos := NullDocPos;
@@ -1219,6 +1121,13 @@ begin
   end;
 
   Reset();
+end;
+
+destructor TLapeTokenizerBase.Destroy;
+begin
+  FreeAndNil(FKeywordDictionary);
+
+  inherited Destroy();
 end;
 
 procedure TLapeTokenizerBase.Reset(ClearDoc: Boolean = False);
@@ -1267,7 +1176,7 @@ begin
   Dispose(PTokenizerState(State));
 end;
 
-function TLapeTokenizerBase.TempRollBack: EParserToken;
+function TLapeTokenizerBase.tempRollBack: EParserToken;
 begin
   Result := FTok;
   FTok := FLastTok;
@@ -1445,11 +1354,9 @@ begin
 end;
 
 initialization
-  Lape_InitKeywordsCache();
   {$IFDEF LoadDefaultFormatSettings}
   GetLocaleFormatSettings(0, FormatSettings);
   {$ENDIF}
-finalization
-  Lape_ClearKeywordsCache();
+
 end.
 

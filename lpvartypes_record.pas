@@ -311,24 +311,18 @@ begin
     end
   else if (op = op_Assign) and (Right <> nil) and Right.HasType() and CompatibleWith(Right.VarType) then
   begin
-    LeftFieldName := nil;
-    RightFieldName := nil;
     LeftVar := nil;
     RightVar := nil;
 
     for i := 0 to FFieldMap.Count - 1 do
     try
-      LeftFieldName := FCompiler.getBaseType(ltString).NewGlobalVarStr(FFieldMap.Key[i]);
-      RightFieldName := FCompiler.getBaseType(ltString).NewGlobalVarStr(TLapeType_Record(Right.VarType).FieldMap.Key[i]);
+      LeftFieldName := FCompiler.getConstant(FFieldMap.Key[i]);
+      RightFieldName := FCompiler.getConstant(TLapeType_Record(Right.VarType).FieldMap.Key[i]);
 
       LeftVar := EvalConst(op_Dot, Left, LeftFieldName, []);
       RightVar := Right.VarType.EvalConst(op_Dot, Right, RightFieldName, []);
       LeftVar.VarType.EvalConst(op, LeftVar, RightVar, []);
     finally
-      if (LeftFieldName <> nil) then
-        FreeAndNil(LeftFieldName);
-      if (RightFieldName <> nil) then
-        FreeAndNil(RightFieldName);
       if (LeftVar <> nil) then
         FreeAndNil(LeftVar);
       if (RightVar <> nil) then
@@ -339,15 +333,13 @@ begin
   end
   else if (op in [op_cmp_Equal, op_cmp_NotEqual]) and (Right <> nil) and Right.HasType() and (EvalRes(op, Right, Flags) <> nil) then
   begin
-    LeftFieldName := nil;
-    RightFieldName := nil;
     LeftVar := nil;
     RightVar := nil;
 
     for i := 0 to FFieldMap.Count - 1 do
     try
-      LeftFieldName := FCompiler.getBaseType(ltString).NewGlobalVarStr(FFieldMap.Key[i]);
-      RightFieldName := FCompiler.getBaseType(ltString).NewGlobalVarStr(TLapeType_Record(Right.VarType).FieldMap.Key[i]);
+      LeftFieldName := FCompiler.getConstant(FFieldMap.Key[i]);
+      RightFieldName := FCompiler.getConstant(TLapeType_Record(Right.VarType).FieldMap.Key[i]);
 
       LeftVar := EvalConst(op_Dot, Left, LeftFieldName, []);
       RightVar := Right.VarType.EvalConst(op_Dot, Right, RightFieldName, []);
@@ -358,10 +350,6 @@ begin
       if (Result.AsInteger <> Ord(False)) xor (op = op_cmp_Equal) then
         Exit;
     finally
-      if (LeftFieldName <> nil) then
-        FreeAndNil(LeftFieldName);
-      if (RightFieldName <> nil) then
-        FreeAndNil(RightFieldName);
       if (LeftVar <> nil) then
         FreeAndNil(LeftVar);
       if (RightVar <> nil) then
@@ -390,7 +378,7 @@ begin
       Result := Left.IncLock();
       Result.VarType :=FieldType;
       case Left.VarPos.MemPos of
-        mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + Offset)), True));
+        mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedDecl(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + Offset))));
         mpVar,
         mpStack: Result.IncOffset(Offset);
         else LapeException(lpeImpossible);
@@ -410,7 +398,7 @@ begin
       end
       else
       begin
-        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt, False, True));
+        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt));
         tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
@@ -461,7 +449,7 @@ begin
       begin
         Assert(op in [op_cmp_Equal, op_cmp_NotEqual]);
 
-        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt, False, True));
+        RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt));
         tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
@@ -527,7 +515,7 @@ begin
     case FieldVar.VarPos.MemPos of
       mpMem:
         if UseCompiler and (FCompiler <> nil) then
-          FieldVar.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedVar(FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset)), True))
+          FieldVar.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedDecl(FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset))))
         else
           FieldVar.VarPos.GlobalVar := FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset));
       mpVar: FieldVar.IncOffset(FFieldMap.ItemsI[i].Offset);

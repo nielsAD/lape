@@ -412,14 +412,14 @@ end;
 function TLapeType_SubRange.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FLo = nil) and (FCompiler <> nil) and IsOrdinal() then
-    FLo := FCompiler.addManagedVar(NewGlobalVarStr(lpString(IntToStr(Range.Lo)))) as TLapeGlobalVar;
+    FLo := FCompiler.addManagedDecl(NewGlobalVar(FRange.Lo)) as TLapeGlobalVar;
   Result := FLo;
 end;
 
 function TLapeType_SubRange.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FHi = nil) and (FCompiler <> nil) and IsOrdinal() then
-    FHi := FCompiler.addManagedVar(NewGlobalVarStr(lpString(IntToStr(Range.Hi)))) as TLapeGlobalVar;
+    FHi := FCompiler.addManagedDecl(NewGlobalVar(FRange.Hi)) as TLapeGlobalVar;
   Result := FHi;
 end;
 
@@ -626,7 +626,7 @@ begin
   if (Str <> '') and (AnsiChar(Str[1]) in ['-', '0'..'9']) then
     Result := NewGlobalVar(StrToInt64(string(Str)), AName, ADocPos)
   else
-    Result := NewGlobalVar(FMemberMap.IndexOf(Str), AName, ADocPos);
+    Result := NewGlobalVar(FMemberMap.IndexOf(string(Str)), AName, ADocPos);
 end;
 
 function TLapeType_Enum.EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean;
