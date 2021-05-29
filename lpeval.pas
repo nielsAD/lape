@@ -392,6 +392,31 @@ var
     '  _ArraySetLength(Dst, LenDst + LenSrc - Count, ElSize, nil, nil);'                 + LineEnding +
     'end;';
 
+    _LapeSort: lpString =
+    'procedure _Sort(A: Pointer; ElSize, Len: SizeInt;'                                  + LineEnding +
+    '  Compare: function(constref A, B): Int32); overload;'                              + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  I, J: Int32;'                                                                     + LineEnding +
+    '  Item: Pointer;'                                                                   + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  if (Compare = nil) then'                                                          + LineEnding +
+    '    raise "Compare function is nil";'                                               + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  Item := GetMem(ElSize);'                                                          + LineEnding +
+    '  for I := 1 to Len - 1 do'                                                         + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    Move(A[I * ElSize]^, Item^, ElSize);'                                           + LineEnding +
+    '    J := I - 1;'                                                                    + LineEnding +
+    '    while (J >= 0) and (Compare(A[J * ElSize]^, Item^) > 0) do'                     + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      Move(A[J * ElSize]^, A[(J+1) * ElSize]^, ElSize);'                            + LineEnding +
+    '      Dec(J);'                                                                      + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    '    Move(Item^, A[(J+1) * ElSize]^, ElSize);'                                       + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    '  FreeMem(Item);'                                                                   + LineEnding +
+    'end;';
+
 implementation
 
 uses

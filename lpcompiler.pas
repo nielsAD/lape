@@ -109,6 +109,7 @@ type
     function GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetCompareMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     procedure InitBaseDefinitions; virtual;
 
@@ -599,6 +600,84 @@ begin
   end;
 end;
 
+function TLapeCompiler.GetCompareMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  Method: TLapeTree_Method;
+  Statement: TLapeTree_If;
+  Assign: TLapeTree_Operator;
+  LeftVar, RightVar, ResultVar: TResVar;
+begin
+  Result := nil;
+  Method := nil;
+  GetMethod_FixupParams(AType, AParams, AResult);
+  if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult = nil) then
+    Exit;
+
+  if (AType = nil) then
+    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+
+  IncStackInfo();
+  try
+    Result := AType.NewGlobalVar(EndJump);
+    Sender.addMethod(Result);
+
+    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
+    Method.Statements := TLapeTree_StatementList.Create(Self);
+
+    LeftVar := _ResVar.New(FStackInfo.addVar(lptConstRef, nil, 'Left')).IncLock();
+    RightVar := _ResVar.New(FStackInfo.addVar(lptConstRef, nil, 'Right')).IncLock();
+    ResultVar := _ResVar.New(FStackInfo.addVar(lptOut, AResult, 'Result')).IncLock();
+
+    LeftVar.VarType := AParams[0];
+    RightVar.VarType := AParams[1];
+
+    // op_cmp_LessThan
+    Statement := TLapeTree_If.Create(Self);
+    Statement.Condition := TLapeTree_Operator.Create(op_cmp_LessThan, Self);
+    with TLapeTree_Operator(Statement.Condition) do
+    begin
+      Left := TLapeTree_ResVar.Create(LeftVar.IncLock(), Self);
+      Right := TLapeTree_ResVar.Create(RightVar.IncLock(), Self);
+    end;
+    Statement.Body := TLapeTree_InternalMethod_Exit.Create(Method);
+    with TLapeTree_InternalMethod_Exit(Statement.Body) do
+      addParam(TLapeTree_Integer.Create(-1, Statement.Body));
+
+    Method.Statements.addStatement(Statement);
+
+    // op_cmp_GreaterThan
+    Statement := TLapeTree_If.Create(Self);
+    Statement.Condition := TLapeTree_Operator.Create(op_cmp_GreaterThan, Self);
+    with TLapeTree_Operator(Statement.Condition) do
+    begin
+      Left := TLapeTree_ResVar.Create(LeftVar.IncLock(), Self);
+      Right := TLapeTree_ResVar.Create(RightVar.IncLock(), Self);
+    end;
+    Statement.Body := TLapeTree_InternalMethod_Exit.Create(Method);
+    with TLapeTree_InternalMethod_Exit(Statement.Body) do
+      addParam(TLapeTree_Integer.Create(1, Statement.Body));
+
+    Method.Statements.addStatement(Statement);
+
+    // op_cmp_Equal
+    if (not (lcoAlwaysInitialize in Method.CompilerOptions)) then
+    begin
+      Assign := TLapeTree_Operator.Create(op_Assign, Self);
+      with Assign do
+      begin
+        Left := TLapeTree_ResVar.Create(ResultVar.IncLock(), Self);
+        Right := TLapeTree_Integer.Create(0, Assign);
+      end;
+
+      Method.Statements.addStatement(Assign);
+    end;
+
+    addDelayedExpression(Method);
+  finally
+    DecStackInfo(True, False, Method = nil);
+  end;
+end;
+
 function TLapeCompiler.GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Body: lpString;
@@ -793,6 +872,7 @@ begin
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetObjectifyMethod).NewGlobalVar('_Objectify'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCompareMethod).NewGlobalVar('_Compare'));
 
   {$I lpeval_import_math.inc}
   {$I lpeval_import_string.inc}
@@ -810,7 +890,8 @@ begin
     _LapeSetLength +
     _LapeCopy +
     _LapeDelete +
-    _LapeInsert,
+    _LapeInsert +
+    _LapeSort,
     '!addDelayedCore'
   );
 
@@ -3287,6 +3368,9 @@ begin
   FInternalMethodMap['Copy'] := TLapeTree_InternalMethod_Copy;
   FInternalMethodMap['Delete'] := TLapeTree_InternalMethod_Delete;
   FInternalMethodMap['Insert'] := TLapeTree_InternalMethod_Insert;
+
+  FInternalMethodMap['Sort'] := TLapeTree_InternalMethod_Sort;
+  FInternalMethodMap['Sorted'] := TLapeTree_InternalMethod_Sorted;
 
   FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
   FInternalMethodMap['Succ'] := TLapeTree_InternalMethod_Succ;

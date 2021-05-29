@@ -1,0 +1,45 @@
+{$assertions on}
+
+type
+  TPoint = record X, Y: Int32; end;
+  TPointArray = array of TPoint;
+
+  TIntegerArray = array of Int32;
+  TStringArray = array of String;
+  TVariantArray = array[2..6] of Variant;
+  TBooleanArray = array of Boolean;
+
+// _Sort overloads will be checked before generating a method
+procedure _Sort(A: TBooleanArray); overload;
+begin
+  A[0] := True;
+end;
+
+function CompareByX(constref L, R: TPoint): Int32;
+begin
+  if L.X < R.X then
+    Result := -1
+  else
+  if L.X > R.X then
+    Result := 1;
+end;
+
+var 
+  Integers: TIntegerArray = [100, -100, $FFFFFF, 5, 0];
+  Strings: TStringArray = ['Niels', 'Olly', 'Slacky', '0'];
+  Points: TPointArray = [[5,10], [-5,100], [50,50], [0,0]];
+  Variants: TVariantArray = [500, 400, -300, 200, 100];
+  Booleans: TBooleanArray = [False];
+begin
+  Assert(ToString(Sorted(Integers))            = '[-100, 0, 5, 100, 16777215]');
+  Assert(ToString(Sorted(Strings))             = '[0, Niels, Olly, Slacky]');
+  Assert(ToString(Sorted(Points, @CompareByX)) = '[{X = -5, Y = 100}, {X = 0, Y = 0}, {X = 5, Y = 10}, {X = 50, Y = 50}]');
+  Assert(ToString(Sorted(Variants))            = '[-300, 100, 200, 400, 500]');
+  Assert(ToString(Sorted(Booleans))            = '[True]');
+
+  Sort(Integers);            Assert(ToString(Integers) = '[-100, 0, 5, 100, 16777215]');
+  Sort(Strings);             Assert(ToString(Strings)  = '[0, Niels, Olly, Slacky]');
+  Sort(Points, @CompareByX); Assert(ToString(Points)   = '[{X = -5, Y = 100}, {X = 0, Y = 0}, {X = 5, Y = 10}, {X = 50, Y = 50}]');
+  Sort(Variants);            Assert(ToString(Variants) = '[-300, 100, 200, 400, 500]');
+  Sort(Booleans);            Assert(ToString(Booleans) = '[True]');
+end.

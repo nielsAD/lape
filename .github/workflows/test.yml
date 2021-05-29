@@ -48,17 +48,6 @@ jobs:
           laz-url: ${{ matrix.config.laz-url }}
           fpc-url: ${{ matrix.config.fpc-url }}
       
-      - name: Install Dependencies (Ubuntu)
-        if: matrix.config.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get -m -y install libffi-dev 
-          
-      - name: Install Dependencies (MacOS)
-        if: matrix.config.os == 'macos-latest'
-        run: |
-          brew install libffi
-      
       - name: Test Lape
         run: |
           lazbuild package/lape.lpk
