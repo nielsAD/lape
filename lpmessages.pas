@@ -56,6 +56,7 @@ const
   lpeExceptionAt = '%s at line %d, column %d';
   lpeExceptionIn = '%s in file "%s"';
   lpeExpected = '%s expected';
+  lpeExpectedArray = 'Array expected';
   lpeExpectedNormalMethod = 'Normal method expected';
   lpeExpectedOther = 'Found unexpected token "%s", expected "%s"';
   lpeExpressionExpected = 'Expression expected';
@@ -70,6 +71,7 @@ const
   lpeInvalidCast = 'Invalid cast';
   lpeInvalidCaseStatement = 'Invalid case statement';
   lpeInvalidCondition = 'Invalid condition';
+  lpeInvalidCompareMethod = 'Invalid compare method';
   lpeInvalidEvaluation = 'Invalid evaluation';
   lpeInvalidForward = 'Forwarded declaration "%s" not resolved';
   lpeInvalidLabel = 'Invalid label';
