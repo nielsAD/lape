@@ -124,3 +124,98 @@ procedure _LapeStrToDateTimeDef(const Params: PParamArray; const Result: Pointer
 begin
   PDateTime(Result)^ := StrToDateTimeDef(string(PlpString(Params^[0])^), PDateTime(Params^[1])^);
 end;
+
+procedure _LapeDateTimeToUnix(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt64(Result)^ := DateTimeToUnix(PDateTime(Params^[0])^, PBoolean(Params^[1])^);
+end;
+
+procedure _LapeUnixToDateTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PDateTime(Result)^ := UnixToDateTime(PInt64(Params^[0])^, PBoolean(Params^[1])^);
+end;
+
+procedure _LapeUnixTime(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt64(Result)^ := DateTimeToUnix(Now(), False);
+end;
+
+procedure _LapeNowUTC(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PDateTime(Result)^ := UnixToDateTime(DateTimeToUnix(Now(), False));
+end;
+
+procedure _LapeYearsBetween(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt32(Result)^ := YearsBetween(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
+end;
+
+procedure _LapeMonthsBetween(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt32(Result)^ := MonthsBetween(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
+end;
+
+procedure _LapeWeeksBetween(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt32(Result)^ := WeeksBetween(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
+end;
+
+procedure _LapeDaysBetween(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt32(Result)^ := DaysBetween(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
+end;
+
+procedure _LapeHoursBetween(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt64(Result)^ := HoursBetween(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
+end;
+
+procedure _LapeMinutesBetween(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt64(Result)^ := MinutesBetween(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
+end;
+
+procedure _LapeSecondsBetween(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt64(Result)^ := SecondsBetween(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
+end;
+
+procedure _LapeMilliSecondsBetween(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt64(Result)^ := MilliSecondsBetween(PDateTime(Params^[0])^, PDateTime(Params^[1])^);
+end;
+
+procedure _LapeIncYear(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PDateTime(Result)^ := IncYear(PDateTime(Params^[0])^, PInt32(Params^[1])^);
+end;
+
+procedure _LapeIncWeek(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PDateTime(Result)^ := IncWeek(PDateTime(Params^[0])^, PInt32(Params^[1])^);
+end;
+
+procedure _LapeIncDay(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PDateTime(Result)^ := IncDay(PDateTime(Params^[0])^, PInt32(Params^[1])^);
+end;
+
+procedure _LapeIncHour(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PDateTime(Result)^ := IncHour(PDateTime(Params^[0])^, PInt64(Params^[1])^);
+end;
+
+procedure _LapeIncMinute(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PDateTime(Result)^ := IncMinute(PDateTime(Params^[0])^, PInt64(Params^[1])^);
+end;
+
+procedure _LapeIncSecond(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PDateTime(Result)^ := IncSecond(PDateTime(Params^[0])^, PInt64(Params^[1])^);
+end;
+
+procedure _LapeIncMilliSecond(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PDateTime(Result)^ := IncMilliSecond(PDateTime(Params^[0])^, PInt64(Params^[1])^);
+end;
