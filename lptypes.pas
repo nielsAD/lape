@@ -90,6 +90,7 @@ type
     VarRecs: TVarRecArray;
   end;
 
+  PStringArray = ^TStringArray;
   TStringArray = array of lpString;
   TByteArray = array of Byte;
   TIntegerArray = array of Integer;

@@ -12,7 +12,7 @@ unit lpeval;
 interface
 
 uses
-  SysUtils,
+  Classes, SysUtils,
   lptypes;
 
 type
@@ -420,7 +420,7 @@ var
 implementation
 
 uses
-  Variants, Math,
+  Variants, Math, DateUtils,
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
   lpmessages, lpparser;
