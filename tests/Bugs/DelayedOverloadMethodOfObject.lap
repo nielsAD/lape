@@ -1,0 +1,24 @@
+{$assertions on}
+
+procedure Pointer.Foo;
+begin
+  Assert(True);
+end;
+
+procedure Pointer.Test;
+begin
+  Foo();      // Compilation error: "Don't know which overloaded method to call with params ()"
+  Self.Foo();
+end;
+
+// Introduce Foo overload later on
+procedure Pointer.Foo(i: Integer); overload;
+begin
+  Assert(False);
+end;
+
+var P: Pointer;
+
+begin
+  P.Test();
+end;
