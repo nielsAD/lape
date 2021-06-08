@@ -1,27 +1,29 @@
 object Form1: TForm1
-  Left = 626
-  Height = 692
-  Top = 128
-  Width = 497
-  Caption = 'Form1'
-  ClientHeight = 692
-  ClientWidth = 497
-  LCLVersion = '1.6.0.4'
+  Left = 442
+  Height = 850
+  Top = 356
+  Width = 800
+  Caption = 'Lape '
+  ClientHeight = 850
+  ClientWidth = 800
+  Color = clWindow
+  Position = poScreenCenter
+  LCLVersion = '2.0.10.0'
   inline e: TSynEdit
     Left = 0
-    Height = 531
-    Top = 42
-    Width = 497
+    Height = 644
+    Top = 41
+    Width = 800
     Align = alClient
     Font.CharSet = ANSI_CHARSET
-    Font.Height = -13
+    Font.Height = -17
     Font.Name = 'Courier New'
     Font.Pitch = fpFixed
-    Font.Quality = fqNonAntialiased
     ParentColor = False
     ParentFont = False
     TabOrder = 1
-    Gutter.Width = 57
+    BorderStyle = bsNone
+    Gutter.Width = 61
     Gutter.MouseActions = <    
       item
         ClickCount = ccAny
@@ -591,7 +593,7 @@ object Form1: TForm1
         MouseActions = <>
       end
       object SynGutterLineNumber1: TSynGutterLineNumber
-        Width = 17
+        Width = 21
         MouseActions = <>
         MarkupInfo.Background = clBtnFace
         MarkupInfo.Foreground = clNone
@@ -666,11 +668,15 @@ object Form1: TForm1
     end
   end
   object m: TMemo
-    Left = 0
-    Height = 114
-    Top = 578
-    Width = 497
+    Left = 3
+    Height = 160
+    Top = 690
+    Width = 797
     Align = alBottom
+    BorderSpacing.Left = 3
+    BorderStyle = bsNone
+    Font.Height = -16
+    ParentFont = False
     ScrollBars = ssAutoBoth
     TabOrder = 2
   end
@@ -678,65 +684,94 @@ object Form1: TForm1
     Cursor = crVSplit
     Left = 0
     Height = 5
-    Top = 573
-    Width = 497
+    Top = 685
+    Width = 800
     Align = alBottom
+    Color = clForm
+    ParentColor = False
     ResizeAnchor = akBottom
   end
   object pnlTop: TPanel
     Left = 0
-    Height = 42
+    Height = 41
     Top = 0
-    Width = 497
+    Width = 800
     Align = alTop
-    ClientHeight = 42
-    ClientWidth = 497
+    AutoSize = True
+    ClientHeight = 41
+    ClientWidth = 800
+    Color = clForm
+    ParentColor = False
     TabOrder = 0
     object btnEvalRes: TButton
-      Left = 331
-      Height = 25
-      Top = 8
-      Width = 75
+      AnchorSideRight.Control = btnEvalArr
+      Left = 649
+      Height = 29
+      Top = 6
+      Width = 71
       Anchors = [akTop, akRight]
+      AutoSize = True
+      BorderSpacing.Top = 5
+      BorderSpacing.Right = 5
+      BorderSpacing.Bottom = 5
       Caption = 'EvalRes'
       OnClick = btnEvalResClick
       TabOrder = 3
     end
     object btnEvalArr: TButton
-      Left = 411
-      Height = 25
-      Top = 8
-      Width = 75
-      Anchors = [akTop, akRight]
+      Left = 725
+      Height = 29
+      Top = 6
+      Width = 69
+      Align = alRight
+      BorderSpacing.Top = 5
+      BorderSpacing.Right = 5
+      BorderSpacing.Bottom = 5
       Caption = 'EvalArr'
       OnClick = btnEvalArrClick
       TabOrder = 4
     end
     object btnMemLeaks: TButton
-      Left = 251
-      Height = 25
-      Top = 8
-      Width = 75
+      AnchorSideRight.Control = btnEvalRes
+      Left = 552
+      Height = 29
+      Top = 6
+      Width = 92
       Anchors = [akTop, akRight]
+      AutoSize = True
+      BorderSpacing.Top = 5
+      BorderSpacing.Right = 5
+      BorderSpacing.Bottom = 5
       Caption = 'MemLeaks'
       OnClick = btnMemLeaksClick
       TabOrder = 2
     end
     object btnRun: TButton
-      Left = 8
-      Height = 25
-      Top = 8
-      Width = 75
+      Left = 6
+      Height = 29
+      Top = 6
+      Width = 50
+      Align = alLeft
+      AutoSize = True
+      BorderSpacing.Left = 5
+      BorderSpacing.Top = 5
+      BorderSpacing.Bottom = 5
       Caption = 'Run'
       Default = True
       OnClick = btnRunClick
       TabOrder = 0
     end
     object btnDisassemble: TButton
-      Left = 88
-      Height = 25
-      Top = 8
-      Width = 75
+      AnchorSideLeft.Control = btnRun
+      AnchorSideLeft.Side = asrBottom
+      Left = 61
+      Height = 29
+      Top = 6
+      Width = 101
+      AutoSize = True
+      BorderSpacing.Left = 5
+      BorderSpacing.Top = 5
+      BorderSpacing.Bottom = 5
       Caption = 'Disassemble'
       OnClick = btnDisassembleClick
       TabOrder = 1
@@ -753,7 +788,7 @@ object Form1: TForm1
     DirectiveAttri.Foreground = clOlive
     CompilerMode = pcmDelphi
     NestedComments = False
-    left = 432
-    top = 8
+    Left = 728
+    Top = 64
   end
 end

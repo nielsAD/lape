@@ -6,12 +6,10 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, SynEdit, SynHighlighterPas, lptypes, lpvartypes;
+  StdCtrls, ExtCtrls, SynEdit, SynHighlighterPas,
+  lptypes, lpvartypes;
 
 type
-
-  { TForm1 }
-
   TForm1 = class(TForm)
     btnRun: TButton;
     btnMemLeaks: TButton;
@@ -39,42 +37,35 @@ implementation
 
 uses
   lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
-  LCLIntf, typinfo, ffi, lpffi, lpffiwrappers;
+  ffi, lpffi, lpffiwrappers;
 
 {$R *.lfm}
 
-{ TForm1 }
-
-procedure IntTest(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure IntTest(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt32(Params^[0])^ := PInt32(Params^[0])^ + 1;
 end;
 
-procedure MyWrite(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure MyWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   with TForm1(Params^[0]) do
     m.Text := m.Text + {$IF DEFINED(Lape_Unicode)}UTF8Encode(PlpString(Params^[1])^){$ELSE}PlpString(Params^[1])^{$IFEND};
   Write(PlpString(Params^[1])^);
 end;
 
-procedure MyWriteLn(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure MyWriteLn(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   with TForm1(Params^[0]) do
-    Form1.m.Append('');
+    m.Text := m.Text + LineEnding;
   WriteLn();
 end;
 
-procedure MyStupidProc(Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure MyStupidProc(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 var
   x: TIntegerArray;
 begin
   SetLength(x, 5);
   TIntegerArray(Result^) := x;
-end;
-
-function StupidProc(abc: TIntegerArray): TIntegerArray; cdecl;
-begin
-  SetLength(Result, 5);
 end;
 
 procedure Compile(Run, Disassemble: Boolean);
@@ -98,55 +89,54 @@ begin
   Parser := nil;
   Compiler := nil;
   with Form1 do
+  try
+    Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND});
+    Compiler := TLapeCompiler.Create(Parser);
+    Compiler.OnHint := @WriteHint;
+
+    InitializeFFI(Compiler);
+    InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
+    ExposeGlobals(Compiler);
+
+    Compiler.StartImporting();
+    Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
+    Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
+    Compiler.addGlobalFunc('function MyStupidProc: array of integer', @MyStupidProc);
+
     try
-      Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND});
-      Compiler := TLapeCompiler.Create(Parser);
-      Compiler.OnHint := @WriteHint;
-
-      InitializeFFI(Compiler);
-      InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
-      ExposeGlobals(Compiler);
-
-      Compiler.StartImporting();
-      Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
-      Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
-      Compiler.addGlobalFunc('function MyStupidProc: array of integer', @MyStupidProc);
-
-      try
-        t := getTickCount;
-        if Compiler.Compile() then
-          m.Append('Compiling Time: ' + IntToStr(getTickCount - t) + 'ms.')
-        else
-          m.Append('Error!');
-      except
-        on E: Exception do
-        begin
-          m.Append('Compilation error: "' + E.Message + '"');
-          Exit;
-        end;
+      t := GetTickCount64();
+      if Compiler.Compile() then
+        m.Lines.Add('Compiling Time: ' + IntToStr(GetTickCount64() - t) + 'ms.')
+      else
+        m.Lines.Add('Error!');
+    except
+      on E: Exception do
+      begin
+        m.Lines.Add('Compilation error: "' + E.Message + '"');
+        Exit;
       end;
-
-      try
-        if Disassemble then
-          DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue)));
-
-        if Run then
-        begin
-          t := GetTickCount64();
-          m.Append(LineEnding);
-          RunCode(Compiler.Emitter.Code, Compiler.Emitter.CodeLen);
-          m.Append('Running Time: ' + IntToStr(GetTickCount64() - t) + 'ms.');
-        end;
-      except
-        on E: Exception do
-          m.Append(E.Message);
-      end;
-    finally
-      if (Compiler <> nil) then
-        Compiler.Free()
-      else if (Parser <> nil) then
-        Parser.Free();
     end;
+
+    try
+      if Disassemble then
+        DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue)));
+
+      if Run then
+      begin
+        t := GetTickCount64();
+        RunCode(Compiler.Emitter.Code, Compiler.Emitter.CodeLen);
+        m.Lines.Add('Running Time: ' + IntToStr(GetTickCount64() - t) + 'ms.');
+      end;
+    except
+      on E: Exception do
+        m.Lines.Add(E.Message);
+    end;
+  finally
+    if (Compiler <> nil) then
+      Compiler.Free()
+    else if (Parser <> nil) then
+      Parser.Free();
+  end;
 end;
 
 procedure TForm1.btnRunClick(Sender: TObject);
@@ -156,7 +146,7 @@ end;
 
 procedure TForm1.WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
 begin
-  m.Append(Msg);
+  m.Lines.Add(Msg);
 end;
 
 procedure TForm1.btnDisassembleClick(Sender: TObject);

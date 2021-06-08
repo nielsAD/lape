@@ -1,6 +1,6 @@
 {
   Author: Niels A.D
-  Project: Lape (http://code.google.com/p/la-pe/)
+  Project: Lape (https://github.com/nielsAD/lape)
   License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
 
   Foreign function interface extension with help of libffi.

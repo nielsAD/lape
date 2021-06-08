@@ -1,6 +1,6 @@
 {
   Author: Niels A.D
-  Project: Lape (http://code.google.com/p/la-pe/)
+  Project: Lape (https://github.com/nielsAD/lape)
   License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
 
   Redirects the input of 3 certain variables to the correct evaluation emitter function.

@@ -1,7 +1,7 @@
 Lape
 ====
 
-[![Build Status](https://travis-ci.org/nielsAD/lape.svg?branch=master)](https://travis-ci.org/nielsAD/lape)
+[![tests](https://github.com/nielsAD/lape/actions/workflows/tests.yml/badge.svg)](https://github.com/nielsAD/lape/actions/workflows/tests.yml)
 
 Lape is a scripting engine with a Pascal derived syntax for Free Pascal and Delphi. It's written with speed and a broad platform compatibility in mind. The syntax is backwards compatible with Pascal Script (to a certain degree).
 
@@ -14,6 +14,7 @@ Lape is:
     - Internal and external (overloaded) functions (with support for default params)
     - Internal/external variables and constants (every variable is represented exactly as how it would be by FPC/Delphi)
     - Support for local (nested) declarations. So function can have their own constants/types/variables/functions.
+    - Operator overloading.
 - Portable
     - Fully written in FPC/Delphi. No need for external libraries.
     - Tested with Linux(x86/x64), Windows(x86/x64) and Mac OS, but supports virtually every platform FPC supports.

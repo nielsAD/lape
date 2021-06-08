@@ -16,7 +16,7 @@
       <CodeGeneration>
         <SmartLinkUnit Value="True"/>
         <Optimizations>
-          <OptimizationLevel Value="2"/>
+          <OptimizationLevel Value="3"/>
           <UncertainOptimizations Value="True"/>
         </Optimizations>
       </CodeGeneration>
