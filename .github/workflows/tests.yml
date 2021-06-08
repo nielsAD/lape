@@ -1,9 +1,9 @@
-name: Test
+name: tests
 
 on: [push, pull_request]
 
 jobs:
-  test:
+  tests:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     defaults:
