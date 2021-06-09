@@ -110,7 +110,13 @@ type
     function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetCompareMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+
     procedure InitBaseDefinitions; virtual;
+    procedure InitBaseMath; virtual;
+    procedure InitBaseString; virtual;
+    procedure InitBaseDateTime; virtual;
+    procedure InitBaseVariant; virtual;
+    procedure InitBaseFile; virtual;
 
     function EnsureExpression(Node: TLapeTree_ExprBase): TLapeTree_ExprBase; virtual;
     function EnsureTypeExpression(Node: TLapeTree_Base): TLapeTree_Base; virtual;
@@ -873,11 +879,11 @@ begin
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCompareMethod).NewGlobalVar('_Compare'));
 
-  {$I lpeval_import_math.inc}
-  {$I lpeval_import_string.inc}
-  {$I lpeval_import_datetime.inc}
-  {$I lpeval_import_variant.inc}
-  {$I lpeval_import_file.inc}
+  InitBaseMath();
+  InitBaseString();
+  InitBaseDateTime();
+  InitBaseVariant();
+  InitBaseFile();
 
   addDelayedCode(
     LapeDelayedFlags +
@@ -895,6 +901,31 @@ begin
   );
 
   EndImporting();
+end;
+
+procedure TLapeCompiler.InitBaseMath;
+begin
+  {$I lpeval_import_math.inc}
+end;
+
+procedure TLapeCompiler.InitBaseString;
+begin
+  {$I lpeval_import_string.inc}
+end;
+
+procedure TLapeCompiler.InitBaseDateTime;
+begin
+ {$I lpeval_import_datetime.inc}
+end;
+
+procedure TLapeCompiler.InitBaseVariant;
+begin
+  {$I lpeval_import_variant.inc}
+end;
+
+procedure TLapeCompiler.InitBaseFile;
+begin
+  {$I lpeval_import_file.inc}
 end;
 
 function TLapeCompiler.EnsureExpression(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
@@ -1385,7 +1416,7 @@ begin
               DoBreak := (Tokenizer.LastTok = tk_sym_Dot) or StopAfterBeginEnd;
             end;
           tk_kw_Const, tk_kw_Var: Statement := ParseVarBlock();
-          tk_kw_Function, tk_kw_Procedure, tk_kw_Operator: 
+          tk_kw_Function, tk_kw_Procedure, tk_kw_Operator:
             addDelayedExpression(ParseMethod(FuncForwards));
           tk_kw_Type: ParseTypeBlock();
 
@@ -1455,7 +1486,7 @@ begin
   Result := TLapeType_Method.Create(Self, nil, nil, '', @Pos);
   Result.isOperator := (Tokenizer.Tok = tk_kw_Operator);
   isFunction := (Tokenizer.Tok = tk_kw_Function) or Result.isOperator;
-  
+
   try
     if (isNext([tk_Identifier, tk_sym_ParenthesisOpen], Token) and (Token = tk_Identifier)) or
        (Result.isOperator and isNext(ParserToken_Operators, Token)) then
@@ -2603,9 +2634,9 @@ var
             Str := Str + #34 + getString()
           else
             Str := Str + getString();
-        tk_typ_Char: 
+        tk_typ_Char:
           Str := Str + lpString(Tokenizer.TokChar);
-        else 
+        else
           LapeException(lpeImpossible);
       end;
       ForceString := True;

@@ -822,7 +822,7 @@ end;
 // Fowler–Noll–Vo + extra shuffle
 function LapeHash(const Str: lpString): UInt32;
 var
-  i, Len: Integer;
+  i, Len: UInt32;
 begin
   {$UNDEF REDO_Q}{$IFOPT Q+}{$Q-}{$DEFINE REDO_Q}{$ENDIF}
   {$UNDEF REDO_R}{$IFOPT R+}{$R-}{$DEFINE REDO_R}{$ENDIF}
