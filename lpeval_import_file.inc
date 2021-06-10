@@ -10,13 +10,13 @@
 addGlobalVar(DirectorySeparator, 'DirectorySeparator').isConstant := True;
 addGlobalVar(LineEnding, 'LineEnding').isConstant := True;
 
-addGlobalFunc('function FindFiles(const Directory: String; Extensions: array of String; Recursive: Boolean): array of String;', @_LapeFindFiles);
-addGlobalFunc('function FindDirectories(const Directory: String; Recursive: Boolean): array of String;', @_LapeFindDirectories);
+addGlobalFunc('function FindFiles(const Directory: String; Extensions: array of String; Recursive: Boolean = False): array of String;', @_LapeFindFiles);
+addGlobalFunc('function FindDirectories(const Directory: String; Recursive: Boolean = False): array of String;', @_LapeFindDirectories);
 addGlobalFunc('function WriteFileContents(const FileName: String; const Text: String; Append: Boolean): Boolean;', @_LapeWriteFileContents);
 addGlobalFunc('function ReadFileContents(const FileName: String): String;', @_LapeReadFileContents);
 addGlobalFunc('function CreateDirectory(const Directory: String): Boolean;', @_LapeCreateDirectory);
 addGlobalFunc('function ForceDirectories(const Directory: String): Boolean;', @_LapeForceDirectories);
-addGlobalFunc('function DeleteDirectory(const Directory: String): Boolean;', @_LapeDeleteDirectory);
+addGlobalFunc('function DeleteDirectory(const Directory: String; OnlyChildren: Boolean): Boolean;', @_LapeDeleteDirectory);
 addGlobalFunc('function DeleteFile(const FileName: String): Boolean;', @_LapeDeleteFile);
 addGlobalFunc('function RenameFile(const OldFileName, NewFileName: String): Boolean;', @_LapeRenameFile);
 addGlobalFunc('function CopyFile(const SourceFileName, DestFileName: String; Overwrite: Boolean = False): Boolean;', @_LapeCopyFile);
@@ -39,8 +39,8 @@ addGlobalFunc('function IncludeLeadingPathDelimiter(const Path : String) : Strin
 addGlobalFunc('function ExcludeLeadingPathDelimiter(const Path: String): String;', @_LapeExcludeLeadingPathDelimiter);
 
 addDelayedCode(LapeDelayedFlags +
-  'function FindFiles(const Directory: String; Recursive: Boolean): array of String; overload;' + LineEnding +
-  'begin'                                                                                       + LineEnding +
-  '  Result := FindFiles(Directory, [#42], Recursive);'                                         + LineEnding +
+  'function FindFiles(const Directory: String; Recursive: Boolean = False): array of String; overload;' + LineEnding +
+  'begin'                                                                                               + LineEnding +
+  '  Result := FindFiles(Directory, [#42], Recursive);'                                                 + LineEnding +
   'end;'
-, '!addDelayedFile');
+, 'FindFiles');

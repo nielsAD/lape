@@ -15,7 +15,7 @@ procedure _LapeFindFiles(const Params: PParamArray; const Result: Pointer); {$IF
     FileName, FileExtension: lpString;
     i: Integer;
   begin
-    Directory := IncludeTrailingPathDelimiter(Directory);
+    Directory := IncludeTrailingPathDelimiter(ExpandFileName(Directory));
 
     if (FindFirst(Directory + '*', faAnyFile, Info) = 0) then
     begin
@@ -59,7 +59,7 @@ procedure _LapeFindDirectories(const Params: PParamArray; const Result: Pointer)
     Info: TSearchRec;
     FileName: lpString;
   begin
-    Directory := IncludeTrailingPathDelimiter(Directory);
+    Directory := IncludeTrailingPathDelimiter(ExpandFileName(Directory));
 
     if (FindFirst(Directory + '*', faAnyFile, Info) = 0) then
     begin
@@ -154,8 +154,42 @@ begin
 end;
 
 procedure _LapeDeleteDirectory(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function DeleteDirectory(Directory: lpString; OnlyChildren: Boolean): Boolean;
+  var
+    Info: TSearchRec;
+    FileName: lpString;
+  begin
+    Directory := IncludeTrailingPathDelimiter(ExpandFileName(Directory));
+
+    if (FindFirst(Directory + '*', faAnyFile, Info) = 0) then
+    begin
+      repeat
+        if (Info.Name = '.') or (Info.Name = '..') then
+          Continue;
+
+        FileName := Directory + Info.Name;
+
+        if (Info.Attr and faDirectory <> 0) then
+        begin
+          if (not DeleteDirectory(FileName, False)) then
+            Exit(False);
+
+          Continue;
+        end;
+
+        if (not DeleteFile(FileName)) then
+          Exit(False);
+      until (FindNext(Info) <> 0);
+
+      FindClose(Info);
+    end;
+
+    Result := OnlyChildren or RemoveDir(Directory);
+  end;
+
 begin
-  PBoolean(Result)^ := RemoveDir(PlpString(Params^[0])^);
+  PBoolean(Result)^ := DeleteDirectory(PlpString(Params^[0])^, PBoolean(Params^[1])^);
 end;
 
 procedure _LapeDeleteFile(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

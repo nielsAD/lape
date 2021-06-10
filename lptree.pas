@@ -150,7 +150,7 @@ type
     FRealIdent: TLapeTree_ExprBase;
     FParams: TLapeExpressionList;
 
-    function resolveOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType = nil): TLapeTree_ExprBase;
+    function ResolveOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType = nil): Boolean;
 
     procedure setExpr(Node: TLapeTree_ExprBase); virtual;
     procedure setRealIdent(Node: TLapeTree_ExprBase); virtual;
@@ -1908,7 +1908,7 @@ begin
   Result.isConstant := True;
 end;
 
-function TLapeTree_Invoke.resolveOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType): TLapeTree_ExprBase;
+function TLapeTree_Invoke.ResolveOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType): Boolean;
 
   function CastOpenArrays(Strict: Boolean = True): Integer;
   var
@@ -1954,30 +1954,31 @@ function TLapeTree_Invoke.resolveOverload(Overloaded: TLapeType_OverloadedMethod
 
 var
   MethodIndex: Integer;
+  IndexOperator: TLapeTree_Operator;
 begin
-  Result := nil;
-
   MethodIndex := Overloaded.getMethodIndex(getParamTypes(), ExpectType);
   if (MethodIndex < 0) then
     MethodIndex := CastOpenArrays();
 
-  if (MethodIndex > -1) then
+  Result := MethodIndex > -1;
+
+  if Result then
   begin
-    Result := TLapeTree_Operator.Create(op_Index, FExpr);
+    IndexOperator := TLapeTree_Operator.Create(op_Index, FExpr);
+    IndexOperator.Left := FExpr;
+    IndexOperator.Right := TLapeTree_Integer.Create(MethodIndex, Self);
+    IndexOperator.FInvoking := bTrue;
 
-    TLapeTree_Operator(Result).Left := FExpr;
-    TLapeTree_Operator(Result).Right := TLapeTree_Integer.Create(MethodIndex, Result);
-    TLapeTree_Operator(Result).FInvoking := bTrue;
-
-    FRealIdent := TLapeTree_ExprBase(Result.FoldConstants(False));
+    FRealIdent := TLapeTree_ExprBase(IndexOperator.FoldConstants(False));
     FRealIdent.Parent := Self;
 
-    FExpr := TLapeTree_Operator(Result).Left;
+    FExpr := IndexOperator.Left;
 
-    if (FRealIdent <> Result) then
+    if (FRealIdent <> IndexOperator) then
     begin
       FExpr.Parent := Self;
-      Result.Free();
+
+      IndexOperator.Free();
     end;
   end;
 end;
@@ -2021,70 +2022,6 @@ begin
 end;
 
 function TLapeTree_Invoke.getRealIdent(ExpectType: TLapeType): TLapeTree_ExprBase;
-
-  function CastOpenArrays(Typ: TLapeType_OverloadedMethod): Int32;
-  var
-    ParamTypes: TLapeTypeArray;
-    ParamIndices: TIntegerArray;
-
-    function Cast(Strict: Boolean): Integer;
-    var
-      Method: TLapeType_Method;
-      Param: Int32;
-      i, j: Int32;
-      Casted: Boolean;
-    begin
-      Result := -1;
-
-      for i := 0 to Typ.ManagedDeclarations.Count - 1 do
-      begin
-        Method := TLapeGlobalVar(Typ.ManagedDeclarations[i]).VarType as TLapeType_Method;
-        if (Length(ParamTypes) > Method.Params.Count) then
-          Continue;
-
-        for j := 0 to High(ParamIndices) do
-        begin
-          Param := ParamIndices[j];
-
-          Casted := TLapeTree_OpenArray(FParams[Param]).canCastTo(Method.Params[Param].VarType, Strict);
-          if not Casted then
-            Break;
-
-          ParamTypes[Param] := Method.Params[Param].VarType;
-        end;
-
-        if Casted then
-        begin
-          Result := Typ.getMethodIndex(ParamTypes, ExpectType);
-          if (Result >= 0) then
-            Break;
-        end;
-      end;
-    end;
-
-  var
-    i: Int32;
-  begin
-    Result := -1;
-
-    ParamIndices := nil;
-    for i := 0 to FParams.Count - 1 do
-      if FParams[i] is TLapeTree_OpenArray then
-      begin
-        SetLength(ParamIndices, Length(ParamIndices) + 1);
-        ParamIndices[High(ParamIndices)] := i;
-      end;
-
-    if Length(ParamIndices) > 0 then
-    begin
-      ParamTypes := getParamTypes();
-
-      Result := Cast(True);
-      if Result = -1 then
-        Result := Cast(False);
-    end;
-  end;
-
 var
   Typ: TLapeType;
 begin
@@ -2092,7 +2029,7 @@ begin
   begin
     Typ := FExpr.resType();
     if (not (FExpr is TLapeTree_VarType)) and (Typ is TLapeType_OverloadedMethod) then
-      Result := resolveOverload(Typ as TLapeType_OverloadedMethod, ExpectType);
+      ResolveOverload(Typ as TLapeType_OverloadedMethod, ExpectType);
   end;
 
   if (FRealIdent = nil) and (ExpectType = nil) then
@@ -2764,16 +2701,15 @@ begin
     if (lcoHints in FCompilerOptions) and (IdentVar.VarType is TLapeType_Method) and (TLapeType_Method(IdentVar.VarType).HintDirectives <> []) then
       DoDirectiveHints(IdentVar.VarType as TLapeType_Method);
 
-    if (not IdentVar.HasType()) or
-       (not (IdentVar.VarType is TLapeType_Method))
-    then
-      if IdentVar.HasType() and (IdentVar.VarType is TLapeType_OverloadedMethod) then
+    if (not IdentVar.HasType()) or (not (IdentVar.VarType is TLapeType_Method)) then
+      if (IdentVar.VarType is TLapeType_OverloadedMethod) then
       begin
-        IdentVar := resolveOverload(IdentVar.VarType as TLapeType_OverloadedMethod).Compile(Offset);
+        if resolveOverload(IdentVar.VarType as TLapeType_OverloadedMethod) then
+          IdentVar := RealIdent.Compile(Offset);
+
         if (not IdentVar.HasType()) or (not (IdentVar.VarType is TLapeType_Method)) then
           LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], IdentExpr.DocPos);
-      end
-      else
+      end else
         LapeException(lpeCannotInvoke, IdentExpr.DocPos);
 
     if (IdentVar.VarType is TLapeType_MethodOfType) and
