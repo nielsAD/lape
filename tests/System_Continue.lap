@@ -1,5 +1,4 @@
 {$assertions on}
-{$continuecase on} 
 
 var
   i: Int32 = 1;
@@ -38,17 +37,5 @@ begin
   until True;
 
   Assert(i = 3, 'i <> 3');
-  WriteLn('Double :: Passed');
-  
-  case i of
-    1: begin i := 1; Continue; end;
-    2: begin i := 2; Continue; end;
-    3: begin i := 3; Continue; end;
-    4: begin i := 4; end;
-    5: begin i := 5; Continue; end;
-    else     i := -1;
-  end;
- 
-  Assert(i = 4, 'i <> 4');
-  WriteLn('Case :: Passed'); 
+  WriteLn('Double :: Passed'); 
 end;

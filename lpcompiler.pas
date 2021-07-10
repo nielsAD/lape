@@ -1073,8 +1073,6 @@ var
         Result := (lcoScopedEnums in FOptions)
       else if (Def = 'constaddress') then
         Result := (lcoConstAddress in FOptions)
-      else if (Def = 'continuecase') then
-        Result := (lcoContinueCase in FOptions)
       else if (Def = 'coperators') then
         Result := (lcoCOperators in FOptions)
       else if (Def = 'hints') then
@@ -1260,8 +1258,6 @@ begin
     setOption(lcoConstAddress)
   else if (Directive = 'h') or (Directive = 'hints') then
     setOption(lcoHints)
-  else if (Directive = 'continuecase') then
-    setOption(lcoContinueCase)
   else if (Directive = 'coperators') then
     setOption(lcoCOperators)
   else if (Directive = 'autoobjectify') then
@@ -3096,11 +3092,11 @@ end;
 function TLapeCompiler.ParseCase(ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_Case;
 var
   Expr: TLapeTree_Base;
-  Field: TLapeTree_MultiIf;
+  Branch: TLapeTree_CaseBranch;
 begin
   Result := TLapeTree_Case.Create(Self, getPDocPos());
   Expr := nil;
-  Field := nil;
+  Branch := nil;
   try
     Result.Condition := ParseExpression();
     Expect(tk_kw_Of, False, True);
@@ -3111,9 +3107,9 @@ begin
       if (Expr = nil) then
         LapeException(lpeInvalidCaseStatement, Tokenizer.DocPos);
 
-      Field := TLapeTree_MultiIf.Create(nil, Self, @Expr._DocPos);
+      Branch := TLapeTree_CaseBranch.Create(Self, @Expr._DocPos);
       repeat
-        Field.addValue(Expr);
+        Branch.addValue(Expr);
         Expr := nil;
         Expect([tk_sym_Comma, tk_sym_Colon], False, False);
         if (Tokenizer.Tok = tk_sym_Colon) then
@@ -3122,9 +3118,9 @@ begin
           Expr := ParseTypeExpression([tk_sym_Comma, tk_sym_Colon]);
       until False;
 
-      Field.Body := ParseStatement();
-      Result.addField(Field);
-      Field := nil;
+      Branch.Statement := ParseStatement();
+      Result.addBranch(Branch);
+      Branch := nil;
     end;
 
     Expect([tk_kw_Else, tk_kw_End], False, True);
@@ -3138,8 +3134,8 @@ begin
   except
     if (Expr <> nil) then
       Expr.Free();
-    if (Field <> nil) then
-      Field.Free();
+    if (Branch <> nil) then
+      Branch.Free();
     Result.Free();
     raise;
   end;
@@ -3380,6 +3376,7 @@ begin
   FInternalMethodMap['GetExceptionMessage'] := TLapeTree_InternalMethod_GetExceptionMessage;
   FInternalMethodMap['Break'] := TLapeTree_InternalMethod_Break;
   FInternalMethodMap['Continue'] := TLapeTree_InternalMethod_Continue;
+  FInternalMethodMap['FallThrough'] := TLapeTree_InternalMethod_FallThrough;
   FInternalMethodMap['Exit'] := TLapeTree_InternalMethod_Exit;
   FInternalMethodMap['Halt'] := TLapeTree_InternalMethod_Halt;
 

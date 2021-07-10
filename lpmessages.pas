@@ -40,6 +40,7 @@ const
   lpeCannotEvalConst = 'Cannot be evaluated as constant';
   lpeCannotEvalConstProc = 'Procedures cannot be used for constant evaluation';
   lpeCannotEvalRunTime = 'Cannot be evaluated at runtime';
+  lpeCannotFallthrough = 'Cannot use fallthrough in this context';
   lpeCannotInvoke = 'Cannot invoke identifier';
   lpeCannotMixStaticOverload = 'Cannot mix static with non-static method overload';
   lpeCannotOverload = 'Cannot overload function';
