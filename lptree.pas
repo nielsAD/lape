@@ -410,19 +410,9 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
-  TLapeTree_Callback = class;
-  TLapeTreeCallback = procedure(Self: TLapeTree_Callback) of object;
-
-  TLapeTree_Callback = class(TLapeTree_Base)
-  protected
-    FCallback: TLapeTreeCallback;
-    FData: Pointer;
+  TLapeTree_InternalMethod_FallThrough = class(TLapeTree_InternalMethod)
   public
-    constructor Create(ACompiler: TLapeCompilerBase; ACallback: TLapeTreeCallback; AData: Pointer = nil; ADocPos: PDocPos = nil); reintroduce;
     function Compile(var Offset: Integer): TResVar; override;
-
-    property Callback: TLapeTreeCallback read FCallback;
-    property Data: Pointer read FData write FData;
   end;
 
   TLapeTree_Operator = class(TLapeTree_DestExprBase)
@@ -698,6 +688,7 @@ type
   TLapeTree_MultiIf = class(TLapeTree_If)
   protected
     FValues: TLapeStatementList;
+
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
     constructor Create(Ident: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -709,32 +700,60 @@ type
     property Values: TLapeStatementList read FValues;
   end;
 
-  TLapeCaseFieldList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeTree_MultiIf>;
-  TLapeTree_Case = class(TLapeTree_Base, ILapeTree_CanContinue)
+  TLapeTree_CaseBranch = class(TLapeTree_Base)
   protected
+    FValues: TLapeStatementList;
     FCondition: TLapeTree_ExprBase;
-    FElse: TLapeTree_Base;
-    FFields: TLapeCaseFieldList;
+    FStatement: TLapeTree_Base;
+    FCaseEndJump: Integer;
+    FFallThroughStatements: TLapeFlowStatementList;
+    FBodyOffset: Integer;
 
-    FContinueStatements: TLapeFlowStatementList;
-    procedure CompileContinue(Sender: TLapeTree_Callback); virtual;
-
-    procedure setCondition(Node: TLapeTree_ExprBase); virtual;
-    procedure setElse(Node: TLapeTree_Base); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
+
+    procedure setCaseEndOffset(Offset: Integer); virtual;
+    procedure setFallThroughOffset(Offset: Integer); virtual;
+    procedure setCondition(Node: TLapeTree_ExprBase); virtual;
+    procedure setStatement(Node: TLapeTree_Base); virtual;
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
 
-    function addField(p: TLapeTree_MultiIf): Integer; virtual;
+    function addValue(Value: TLapeTree_Base): Integer; virtual;
+    procedure addFallThroughStatement(JumpSafe: Boolean; Offset: Integer; Pos: PDocPos = nil); virtual;
+
     function Compile(var Offset: Integer): TResVar; override;
 
-    function canContinue: Boolean; virtual;
-    procedure addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
+    property Condition: TLapeTree_ExprBase read FCondition write setCondition;
+    property Statement: TLapeTree_Base read FStatement write setStatement;
+    property BodyOffset: Integer read FBodyOffset;
+    property CaseEndOffset: Integer write setCaseEndOffset;
+    property FallThroughOffset: Integer write setFallThroughOffset;
+  end;
+
+  TLapeTree_Case = class(TLapeTree_Base)
+  protected
+  type
+    TCaseBranches = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeTree_CaseBranch>;
+  protected
+    FCondition: TLapeTree_ExprBase;
+    FElse: TLapeTree_Base;
+    FBranches: TCaseBranches;
+
+    procedure DeleteChild(Node: TLapeTree_Base); override;
+
+    procedure setCondition(Node: TLapeTree_ExprBase); virtual;
+    procedure setElse(Node: TLapeTree_Base); virtual;
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    destructor Destroy; override;
+
+    procedure addBranch(Branch: TLapeTree_CaseBranch); virtual;
+
+    function Compile(var Offset: Integer): TResVar; override;
 
     property Condition: TLapeTree_ExprBase read FCondition write setCondition;
     property ElseBody: TLapeTree_Base read FElse write setElse;
-    property Fields: TLapeCaseFieldList read FFields;
   end;
 
   TLapeTree_While = class(TLapeTree_If, ILapeTree_CanBreak, ILapeTree_CanContinue)
@@ -880,6 +899,54 @@ begin
 
   Result := _ResVar.New(Method);
   Result.VarType := Compiler.getBaseType(ltPointer);
+end;
+
+function TLapeTree_InternalMethod_FallThrough.Compile(var Offset: Integer): TResVar;
+
+  function getBranch(out InTry: Boolean): TLapeTree_CaseBranch;
+  var
+    Node: TLapeTree_Base;
+  begin
+    InTry := False;
+
+    Node := Parent;
+    while (Node <> nil) do
+    begin
+      if (Node is TLapeTree_Try) then
+        InTry := True;
+
+      if (Node is TLapeTree_CaseBranch) then
+      begin
+        Result := TLapeTree_CaseBranch(Node);
+        Exit;
+      end;
+
+      Node := Node.Parent;
+    end;
+
+    Result := nil;
+  end;
+
+var
+  Branch: TLapeTree_CaseBranch;
+  InTry: Boolean;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  Branch := getBranch(InTry);
+  if (Branch = nil) then
+    LapeException(lpeCannotFallthrough, DocPos);
+
+  FCompiler.Emitter.FullEmit := False;
+  try
+    if InTry then
+      Branch.addFallThroughStatement(True, FCompiler.Emitter._JmpSafeR(0, Offset, @_DocPos), @_DocPos)
+    else
+      Branch.addFallThroughStatement(False, FCompiler.Emitter._JmpR(0, Offset, @_DocPos), @_DocPos);
+  finally
+    FCompiler.Emitter.FullEmit := True;
+  end;
 end;
 
 function TLapeTree_InternalMethod_IsEnumGap.resType: TLapeType;
@@ -4724,21 +4791,6 @@ begin
   end;
 end;
 
-constructor TLapeTree_Callback.Create(ACompiler: TLapeCompilerBase; ACallback: TLapeTreeCallback; AData: Pointer = nil; ADocPos: PDocPos = nil);
-begin
-  inherited Create(ACompiler, ADocPos);
-  Assert({$IFNDEF FPC}@{$ENDIF}ACallback <> nil);
-
-  FCallback := ACallback;
-  FData := AData;
-end;
-
-function TLapeTree_Callback.Compile(var Offset: Integer): TResVar;
-begin
-  Result := NullResVar;
-  FCallback(Self);
-end;
-
 function TLapeTree_Operator.getLeft: TLapeTree_ExprBase;
 begin
   if (FLeft is TLapeTree_ExprBase) then
@@ -6192,21 +6244,174 @@ begin
   ConditionVar.Spill(1);
 end;
 
-procedure TLapeTree_Case.CompileContinue(Sender: TLapeTree_Callback);
-var
-  Offset, co: Integer;
+procedure TLapeTree_CaseBranch.DeleteChild(Node: TLapeTree_Base);
 begin
-  Offset := FCompiler.Emitter.CheckOffset();
+  if (FCondition = Node) then
+    FCondition := nil
+  else
+  if (FStatement = Node) then
+    FStatement := nil
+  else
+  if (FValues <> nil) then
+    FValues.DeleteItem(Node);
+end;
 
-  while (FContinueStatements.Count > 0) do
-    with FContinueStatements.Delete(0) do
-    begin
-      co := CodeOffset;
+procedure TLapeTree_CaseBranch.setCaseEndOffset(Offset: Integer);
+begin
+  FCompiler.Emitter._JmpR(Offset - FCaseEndJump, FCaseEndJump, @_DocPos);
+end;
+
+procedure TLapeTree_CaseBranch.setFallThroughOffset(Offset: Integer);
+var
+  i: Integer;
+begin
+  for i := 0 to FFallThroughStatements.Count - 1 do
+    with FFallThroughStatements[i] do
       if JumpSafe then
-        FCompiler.Emitter._JmpSafeR(Offset - co, co, @DocPos)
+        FCompiler.Emitter._JmpSafeR(Offset - CodeOffset, CodeOffset, @DocPos)
       else
-        FCompiler.Emitter._JmpR(Offset - co, co, @DocPos);
-    end;
+        FCompiler.Emitter._JmpR(Offset - CodeOffset, CodeOffset, @DocPos);
+end;
+
+procedure TLapeTree_CaseBranch.setCondition(Node: TLapeTree_ExprBase);
+begin
+  if (FCondition <> nil) and (FCondition <> Node) then
+    FCondition.Free();
+  FCondition := Node;
+  if (Node <> nil) then
+    Node.Parent := Self;
+end;
+
+procedure TLapeTree_CaseBranch.setStatement(Node: TLapeTree_Base);
+begin
+  if (FStatement <> nil) and (FStatement <> Node) then
+    FStatement.Free();
+  FStatement := Node;
+  if (Node <> nil) then
+    Node.Parent := Self;
+end;
+
+constructor TLapeTree_CaseBranch.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, ADocPos);
+
+  FValues := TLapeStatementList.Create(nil, dupAccept, False);
+  FFallThroughStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, False);
+end;
+
+destructor TLapeTree_CaseBranch.Destroy;
+var
+  i: Integer;
+begin
+  setCondition(nil);
+  setStatement(nil);
+
+  for i := FValues.Count - 1 downto 0 do
+    if (FValues[i] <> nil) and (FValues[i].Parent = Self) then
+      FValues[i].Free();
+  FreeAndNil(FValues);
+  FreeAndNil(FFallThroughStatements);
+
+  inherited Destroy;
+end;
+
+function TLapeTree_CaseBranch.Compile(var Offset: Integer): TResVar;
+var
+  i: Integer;
+  ConditionVar, CompareVar: TResVar;
+  Values: TLapeStatementList.TTArray;
+  JumpOffsets: TIntegerArray;
+begin
+  Result := NullResVar;
+
+  Assert(FValues.Count > 0);
+  Assert(FCondition <> nil);
+
+  if (not FCondition.CompileToTempVar(Offset, ConditionVar)) then
+    LapeException(lpeInvalidCondition, DocPos);
+
+  SetLength(JumpOffsets, FValues.Count);
+
+  Values := FValues.ExportToArray();
+
+  for i := 0 to High(Values) do
+  begin
+    if (Values[i] is TLapeTree_ExprBase) then
+    begin
+      with TLapeTree_Operator.Create(op_cmp_Equal, Self) do
+      try
+        Right := TLapeTree_ExprBase(Values[i]).FoldConstants(False) as TLapeTree_ExprBase;
+        Left := TLapeTree_ResVar.Create(ConditionVar, Self);
+
+        CompareVar := Compile(Offset);
+      finally
+        Free();
+      end;
+    end
+    else
+    if (Values[i] is TLapeTree_Range) then
+    begin
+      if (TLapeTree_Range(Values[i]).Lo = nil) or (TLapeTree_Range(Values[i]).Hi = nil) then
+        LapeException(lpeInvalidRange, DocPos);
+
+      with TLapeTree_Operator.Create(op_AND, Self) do
+      try
+        Left := TLapeTree_Operator.Create(op_cmp_GreaterThanOrEqual, Self);
+        with TLapeTree_Operator(Left) do
+        begin
+          Left := TLapeTree_ResVar.Create(ConditionVar, Self);
+          Right := TLapeTree_Range(Values[i]).Lo.FoldConstants(False) as TLapeTree_ExprBase;
+        end;
+
+        Right := TLapeTree_Operator.Create(op_cmp_LessThanOrEqual, Self);
+        with TLapeTree_Operator(Right) do
+        begin
+          Left := TLapeTree_ResVar.Create(ConditionVar, Self);
+          Right := TLapeTree_Range(Values[i]).Hi.FoldConstants(False) as TLapeTree_ExprBase;
+        end;
+
+        CompareVar := Compile(Offset);
+      finally
+        Free();
+      end;
+    end else
+      LapeException(lpeInvalidEvaluation, DocPos);
+
+    FCompiler.Emitter.FullEmit := False;
+
+    if (i = High(Values)) then
+      JumpOffsets[i] := FCompiler.Emitter._JmpRIfNot(0, CompareVar, Offset, @_DocPos) // IF NOT: Jump past statement
+    else
+      JumpOffsets[i] := FCompiler.Emitter._JmpRIf(0, CompareVar, Offset, @_DocPos);   // IF: Jump to statement
+
+    FCompiler.Emitter.FullEmit := True;
+  end;
+
+  FBodyOffset := Offset;
+  if (FStatement <> nil) then
+    Result := FStatement.Compile(Offset);
+
+  FCompiler.Emitter.FullEmit := False;
+  FCaseEndJump := FCompiler.Emitter._JmpR(0, Offset, @_DocPos); // Jump to case statement end. Set after branches are compiled.
+  FCompiler.Emitter.FullEmit := True;
+
+  for i := 0 to High(JumpOffsets) do
+    if (i = High(JumpOffsets)) then
+      FCompiler.Emitter._JmpRIfNot(Offset - JumpOffsets[i], CompareVar, JumpOffsets[i], @_DocPos)
+    else
+      FCompiler.Emitter._JmpRIf(FBodyOffset - JumpOffsets[i], CompareVar, JumpOffsets[i], @_DocPos);
+end;
+
+function TLapeTree_CaseBranch.addValue(Value: TLapeTree_Base): Integer;
+begin
+  Result := FValues.Add(Value);
+  if (Value <> nil) then
+    Value.Parent := Self;
+end;
+
+procedure TLapeTree_CaseBranch.addFallThroughStatement(JumpSafe: Boolean; Offset: Integer; Pos: PDocPos);
+begin
+  FFallThroughStatements.Add(getFlowStatement(Offset, Pos, JumpSafe));
 end;
 
 procedure TLapeTree_Case.setCondition(Node: TLapeTree_ExprBase);
@@ -6234,7 +6439,8 @@ begin
   else if (FElse = Node) then
     FElse := nil
   else
-    FFields.DeleteItem(TLapeTree_MultiIf(Node));
+  if (FBranches <> nil) then
+    FBranches.DeleteItem(TLapeTree_CaseBranch(Node));
 end;
 
 constructor TLapeTree_Case.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
@@ -6242,92 +6448,63 @@ begin
   inherited;
   FCondition := nil;
   FElse := nil;
-
-  FFields := TLapeCaseFieldList.Create(nil, dupAccept, False);
-  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
+  FBranches := TCaseBranches.Create(nil, dupAccept, False);
 end;
 
 destructor TLapeTree_Case.Destroy;
 var
   i: Integer;
 begin
-  for i := FFields.Count - 1 downto 0 do
-    if (FFields[i] <> nil) and (FFields[i].Parent = Self) then
-      FFields[i].Free();
-  FreeAndNil(FFields);
-  FreeAndNil(FContinueStatements);
+  for i := FBranches.Count - 1 downto 0 do
+    if (FBranches[i] <> nil) and (FBranches[i].Parent = Self) then
+      FBranches[i].Free();
+  FreeAndNil(FBranches);
 
   setCondition(nil);
   setElse(nil);
+
   inherited;
 end;
 
-function TLapeTree_Case.addField(p: TLapeTree_MultiIf): Integer;
+procedure TLapeTree_Case.addBranch(Branch: TLapeTree_CaseBranch);
 begin
-  Result := FFields.Add(p);
-  if (p <> nil) then
-    p.Parent := Self;
+  FBranches.Add(Branch);
+  if (Branch <> nil) then
+    Branch.Parent := Self;
 end;
 
 function TLapeTree_Case.Compile(var Offset: Integer): TResVar;
-
-  function addCallback(Statement: TLapeTree_Base; i: Integer): TLapeTree_StatementList;
-  begin
-    Result := nil;
-    if (Statement <> nil) then
-    begin
-      Result := EnsureCompound(FCompiler, Statement);
-      TLapeTree_StatementList(Result).addStatement(
-        TLapeTree_Callback.Create(FCompiler, {$IFDEF FPC}@{$ENDIF}CompileContinue, Pointer(i)),
-        True
-      );
-    end;
-  end;
-
 var
   i: Integer;
   ConditionVar: TResVar;
 begin
-  Assert(FCondition <> nil);
   Result := NullResVar;
-  FElse := addCallback(FElse, FFields.Count);
 
-  if (FFields.Count > 0) then
+  Assert(FCondition <> nil);
+  if (not FCondition.CompileToTempVar(Offset, ConditionVar, 1)) then
+    LapeException(lpeInvalidCondition, DocPos);
+
+  if (FBranches.Count > 0) then
   begin
-    if (not FCondition.CompileToTempVar(Offset, ConditionVar)) then
-      LapeException(lpeInvalidCondition, DocPos);
-
-    for i := 0 to FFields.Count - 1 do
+    for i := 0 to FBranches.Count - 1 do
     begin
-      FFields[i].Condition := TLapeTree_ResVar.Create(ConditionVar.IncLock(), FCondition);
-      FFields[i].Body := addCallback(FFields[i].Body, i);
+      FBranches[i].Condition := TLapeTree_ResVar.Create(ConditionVar, FCondition);
+
+      Result := FBranches[i].Compile(Offset);
     end;
 
-    FFields[FFields.Count - 1].ElseBody := FElse;
-    for i := FFields.Count - 1 downto 1 do
-      FFields[i - 1].ElseBody := FFields[i];
+    for i := 1 to FBranches.Count - 1 do
+      FBranches[i - 1].FallThroughOffset := FBranches[i].BodyOffset;
+    FBranches[FBranches.Count - 1].FallThroughOffset := Offset;
+  end;
 
-    FFields[0].CompileToTempVar(Offset, Result);
-    ConditionVar.Spill(1);
-  end
-  else if (FElse <> nil) then
-    FElse.CompileToTempVar(Offset, Result);
+  if (FElse <> nil) then
+    Result := FElse.Compile(Offset);
 
-  CompileContinue(nil);
-end;
+  for i := 0 to FBranches.Count - 1 do
+    FBranches[i].CaseEndOffset := Offset;
 
-function TLapeTree_Case.canContinue: Boolean;
-begin
-  Result := lcoContinueCase in CompilerOptions;
-end;
-
-procedure TLapeTree_Case.addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil);
-begin
-  Assert(lcoContinueCase in CompilerOptions);
-  if JumpSafe then
-    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset, Pos), Pos, JumpSafe))
-  else
-    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset, Pos), Pos, JumpSafe));
+  ConditionVar.Spill(1);
 end;
 
 function TLapeTree_While.CompileBody(var Offset: Integer): TResVar;

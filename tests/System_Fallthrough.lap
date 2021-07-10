@@ -1,0 +1,19 @@
+{$assertions on}
+
+var
+  i: Int32;
+  test: Int32 = -1;
+begin
+  for i:=0 to 1 do
+    case i of
+      1: begin test := 1; FallThrough; end;
+      2: begin test := 2; FallThrough; end;
+      3: begin test := 3; FallThrough; end;
+      4: begin test := 4;              end;
+      5: begin test := 5; FallThrough; end;
+      else     
+	    Continue;
+    end;
+
+  Assert(test = 4, 'test <> 4');
+end.

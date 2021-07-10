@@ -29,7 +29,6 @@ type
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
     lcoConstAddress,                   // {$J} {$CONSTADDRESS}
     lcoHints,                          // {$H} {$HINTS}
-    lcoContinueCase,                   //      {$CONTINUECASE}
     lcoCOperators,                     //      {$COPERATORS}
     lcoAutoObjectify,                  //      {$AUTOOBJECTIFY}
     lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)
