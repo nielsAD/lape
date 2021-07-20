@@ -26,14 +26,17 @@ type
   TLapeFuncForwards = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeGlobalVar>;
   TLapeTree_NodeStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeTree_ExprBase>;
   TLapeTree_OpStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeTree_Operator>;
-  TLapeDefineMap =  {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<lpString>;
 
   TLapeCompiler = class;
   TLapeHandleDirective = function(Sender: TLapeCompiler; Directive, Argument: lpString; InPeek, InIgnore: Boolean): Boolean of object;
   TLapeHandleExternal = function(Sender: TLapeCompiler; Header: TLapeGlobalVar): Boolean of object;
   TLapeFindFile = function(Sender: TLapeCompiler; var FileName: lpString): TLapeTokenizerBase of object;
+  TLapeFindMacro = function(Sender: TLapeCompiler; Name: lpString; var Value: lpString): Boolean of object;
   TLapeCompilerNotification = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifier<TLapeCompiler>;
   TLapeTokenizerArray = array of TLapeTokenizerBase;
+
+  TLapeDefine = record Name, Value: lpString; end;
+  TLapeDefineArray = array of TLapeDefine;
 
   TLapeConditional = record
     Eval: Boolean;
@@ -48,7 +51,7 @@ type
     TokStates: array of Pointer;
     Options: ECompilerOptionsSet;
     Options_PackRecords: UInt8;
-    Defines: TLapeDefineMap.TTArrays;
+    Defines: TLapeDefineArray;
     Conditionals: TLapeConditionalStack.TTArray;
   end;
 
@@ -82,13 +85,14 @@ type
     FImporting: Pointer;
 
     FIncludes: TStringList;
-    FBaseDefines: TLapeDefineMap;
-    FDefines: TLapeDefineMap;
+    FBaseDefines: TLapeDefineArray;
+    FDefines: TLapeDefineArray;
     FConditionalStack: TLapeConditionalStack;
 
     FOnHandleDirective: TLapeHandleDirective;
     FOnHandleExternal: TLapeHandleExternal;
     FOnFindFile: TLapeFindFile;
+    FOnFindMacro: TLapeFindMacro;
     FAfterParsing: TLapeCompilerNotification;
 
     function getDocPos: TDocPos; override;
@@ -96,7 +100,7 @@ type
 
     function getImporting: Boolean; virtual;
     procedure setImporting(Import: Boolean); virtual;
-    procedure setBaseDefines(Defines: TLapeDefineMap); virtual;
+    procedure setBaseDefines(Defines: TLapeDefineArray); virtual;
     function getTokenizer: TLapeTokenizerBase; virtual;
     procedure setTokenizer(ATokenizer: TLapeTokenizerBase); virtual;
     procedure pushTokenizer(ATokenizer: TLapeTokenizerBase); virtual;
@@ -203,10 +207,12 @@ type
     function getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
     function getExpression(AName: lpString; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
 
-    function hasDefine(Define: String; Value: String = ''): Boolean;
-    function hasBaseDefine(Define: String; Value: String = ''): Boolean;
+    function hasBaseDefine(AName: lpString): Boolean; virtual;
+    function hasDefine(AName: lpString): Boolean; virtual;
 
-    procedure addBaseDefine(Define: lpString); virtual;
+    procedure addBaseDefine(AName: lpString; AValue: lpString = ''); virtual;
+    procedure addDefine(AName: lpString; AValue: lpString = ''); virtual;
+
     function addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration; override;
     function addLocalVar(AVar: TLapeType; Name: lpString = ''): TLapeVar; virtual;
 
@@ -254,10 +260,11 @@ type
     property Importing: Boolean read getImporting write setImporting;
   published
     property Tokenizer: TLapeTokenizerBase read getTokenizer write setTokenizer;
-    property Defines: TLapeDefineMap read FDefines write setBaseDefines;
+    property Defines: TLapeDefineArray read FDefines write setBaseDefines;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
     property OnHandleExternal: TLapeHandleExternal read FOnHandleExternal write FOnHandleExternal;
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
+    property OnFindMacro: TLapeFindMacro read FOnFindMacro write FOnFindMacro;
     property AfterParsing: TLapeCompilerNotification read FAfterParsing;
   end;
 
@@ -364,11 +371,7 @@ begin
   if (FConditionalStack <> nil) then
     FConditionalStack.Reset();
 
-  if (FDefines <> nil) then
-    if (FBaseDefines <> nil) then
-      FDefines.ImportFromArrays(FBaseDefines.ExportToArrays())
-    else
-      FDefines.Clear();
+  FDefines := FBaseDefines;
 end;
 
 function TLapeCompiler.getImporting: Boolean;
@@ -384,10 +387,9 @@ begin
     EndImporting();
 end;
 
-procedure TLapeCompiler.setBaseDefines(Defines: TLapeDefineMap);
+procedure TLapeCompiler.setBaseDefines(Defines: TLapeDefineArray);
 begin
-  Assert(FBaseDefines <> nil);
-  FBaseDefines.ImportFromArrays(Defines.ExportToArrays());
+  FBaseDefines := Defines;
   Reset();
 end;
 
@@ -1028,60 +1030,55 @@ begin
 end;
 
 function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Argument: lpString): Boolean;
-var
-  NewTokenizer: TLapeTokenizerBase;
-  Pos: TDocPos;
-  IncludeFile: lpString;
 
-  procedure setOption(Option: ECompilerOption);
+  function hasDefineOrOption(Name: lpString): Boolean;
   begin
-    Argument := LowerCase(Trim(Argument));
-    if (Argument = 'on') or (Argument = '+') then
-      Include(FOptions, Option)
-    else if (Argument = 'off') or (Argument = '-') then
-      Exclude(FOptions, Option)
-    else
-      LapeException(lpeInvalidCondition, [Self]);
-  end;
+    Result := hasDefine(Name) or hasBaseDefine(Name);
+    if Result then
+      Exit;
 
-  function HasDefineOrOption(Def: lpString): Boolean;
-  begin
-    if (FDefines.IndexOfKey(string(Def)) > -1) then
-      Result := True
+    Name := LowerCase(Name);
+    if (Name = 'assertions') then
+      Result := (lcoAssertions in FOptions)
     else
-    begin
-      Def := LowerCase(Def);
-      if (Def = 'assertions') then
-        Result := (lcoAssertions in FOptions)
-      else if (Def = 'rangechecks') then
-        Result := (lcoRangeCheck in FOptions)
-      else if (Def = 'booleval') then
-        Result := (lcoShortCircuit in FOptions)
-      else if (Def = 'memoryinit') then
-        Result := (lcoAlwaysInitialize in FOptions)
-      else if (Def = 'fulldisposal') then
-        Result := (lcoFullDisposal in FOptions)
-      else if (Def = 'loosesemicolon') then
-        Result := (lcoLooseSemicolon in FOptions)
-      else if (Def = 'extendedsyntax') then
-        Result := (lcoLooseSyntax in FOptions)
-      else if (Def = 'autoinvoke') then
-        Result := (lcoAutoInvoke in FOptions)
-      else if (Def = 'autoproperties') then
-        Result := (lcoAutoProperties in FOptions)
-      else if (Def = 'scopedenums') then
-        Result := (lcoScopedEnums in FOptions)
-      else if (Def = 'constaddress') then
-        Result := (lcoConstAddress in FOptions)
-      else if (Def = 'coperators') then
-        Result := (lcoCOperators in FOptions)
-      else if (Def = 'hints') then
-        Result := (lcoHints in FOptions)
-      else if (Def = 'autoobjectify') then
-        Result := (lcoAutoObjectify in FOptions)
-      else
-        Result := False;
-    end;
+    if (Name = 'rangechecks') then
+      Result := (lcoRangeCheck in FOptions)
+    else
+    if (Name = 'booleval') then
+      Result := (lcoShortCircuit in FOptions)
+    else
+    if (Name = 'memoryinit') then
+      Result := (lcoAlwaysInitialize in FOptions)
+    else
+    if (Name = 'fulldisposal') then
+      Result := (lcoFullDisposal in FOptions)
+    else
+    if (Name = 'loosesemicolon') then
+      Result := (lcoLooseSemicolon in FOptions)
+    else
+    if (Name = 'extendedsyntax') then
+      Result := (lcoLooseSyntax in FOptions)
+    else
+    if (Name = 'autoinvoke') then
+      Result := (lcoAutoInvoke in FOptions)
+    else
+    if (Name = 'autoproperties') then
+      Result := (lcoAutoProperties in FOptions)
+    else
+    if (Name = 'scopedenums') then
+      Result := (lcoScopedEnums in FOptions)
+    else
+    if (Name = 'constaddress') then
+      Result := (lcoConstAddress in FOptions)
+    else
+    if (Name = 'coperators') then
+      Result := (lcoCOperators in FOptions)
+    else
+    if (Name = 'hints') then
+      Result := (lcoHints in FOptions)
+    else
+    if (Name = 'autoobjectify') then
+      Result := (lcoAutoObjectify in FOptions);
   end;
 
   procedure switchConditional;
@@ -1098,29 +1095,97 @@ var
     end;
   end;
 
-  procedure RemoveDefine(s: string);
-  var
-    i: Integer;
+  procedure setOption(Option: ECompilerOption);
   begin
-    i := FDefines.IndexOfKey(s);
-    if i > -1 then FDefines.Delete(i);
+    Argument := LowerCase(Argument);
+
+    if (Argument = 'on') or (Argument = '+') then
+      Include(FOptions, Option)
+    else if (Argument = 'off') or (Argument = '-') then
+      Exclude(FOptions, Option)
+    else
+      LapeException(lpeInvalidCondition, Sender.DocPos);
   end;
 
-  procedure AddDefine(def:string);
-  var
-    i:Int32;
-    name,value:string;
+  procedure setAlignment(Argument: lpString);
   begin
-    i := System.Pos(':=', def);
-    if i <= 0 then
-      FDefines.Items[Trim(def)] := ''
+    Argument := LowerCase(Argument);
+
+    if (Argument = 'on') then
+      FOptions_PackRecords := Lape_PackRecordsDef
+    else if (Argument = 'off') then
+      FOptions_PackRecords := 1
     else
     begin
-      name  := Trim(Copy(def, 1, i-1));
-      if name = '' then
+      FOptions_PackRecords := StrToIntDef(string(Argument), 0);
+      if (not (FOptions_PackRecords in [1, 2, 4, 8, 16])) then
+        LapeException(lpeInvalidCondition, Sender.DocPos);
+    end;
+  end;
+
+  procedure pushMacro(Argument: lpString);
+  var
+    i: Integer;
+    Value: lpString;
+  begin
+    Value := '';
+    if ({$IFNDEF FPC}@{$ENDIF}FOnFindMacro <> nil) then
+      if FOnFindMacro(Self, Argument, Value) then
+      begin
+        pushTokenizer(TLapeTokenizerString.Create(Value));
+
+        Exit;
+      end;
+
+    if (Sender.FileName <> '') and (LowerCase(Argument) = 'current_file') then
+      pushTokenizer(TLapeTokenizerString.Create(#39 + Sender.FileName + #39))
+    else
+    if (Sender.FileName <> '') and (LowerCase(Argument) = 'current_directory') then
+      pushTokenizer(TLapeTokenizerString.Create(#39 + IncludeTrailingPathDelimiter(ExtractFileDir(Sender.FileName)) + #39))
+    else
+    begin
+      Argument := UpperCase(Trim(Argument));
+      for i := 0 to High(FDefines) do
+        if (FDefines[i].Name = Argument) then
+        begin
+          pushTokenizer(TLapeTokenizerString.Create(FDefines[i].Value));
+
+          Exit;
+        end;
+
+      LapeExceptionFmt(lpeUnknownDeclaration, [string(Argument)], Sender.DocPos);
+    end;
+  end;
+
+  procedure handleDefine(Directive, Argument: lpString);
+  var
+    p, i: Integer;
+    Name, Value: lpString;
+  begin
+    if (Directive = 'define') then
+    begin
+      p := Pos(':=', Argument);
+      if (p > 0) then
+      begin
+        Name := Copy(Argument, 1, p - 1);
+        Value := Copy(Argument, p + 2);
+      end else
+      begin
+        Name := Argument;
+        Value := '';
+      end;
+
+      if (Name = '') then
         LapeException(lpeInvalidEvaluation, Sender.DocPos);
-      value := Trim(Copy(def, i+2, Length(def) - i));
-      FDefines[name] := value;
+
+      addDefine(Name, Value);
+    end else
+    if (Directive = 'undef') then
+    begin
+      Name := UpperCase(Argument);
+      for i := High(FDefines) downto 0 do
+        if (FDefines[i].Name = Name) then
+          Delete(FDefines, i, 1);
     end;
   end;
 
@@ -1150,51 +1215,16 @@ var
       Result := '';
   end;
 
-begin
-  Assert(Sender = Tokenizer);
-  Result := True;
-  NewTokenizer := nil;
-
-  if ({$IFNDEF FPC}@{$ENDIF}FOnHandleDirective <> nil) then
-    if FOnHandleDirective(Self, Directive, Argument, Sender.InPeek, InIgnore()) then
-      Exit;
-
-  Directive := LowerCase(Directive);
-  if (Directive = 'ifdef') or (Directive = 'ifndef') then
-    pushConditional((not InIgnore()) and (HasDefineOrOption(Trim(Argument)) xor (Directive = 'ifndef')), Sender.DocPos)
-  else if (Directive = 'ifdecl') or (Directive = 'ifndecl') then
-    pushConditional((not InIgnore()) and (hasDeclaration(Trim(Argument)) xor (Directive = 'ifndecl')), Sender.DocPos)
-  else if (Directive = 'else') then
-    switchConditional()
-  else if (Directive = 'endif') then
-    Pos := popConditional() //Assign to a variable to work around FPC internal compiler error
-  else if InIgnore() then
-    {nothing}
-  else if (Directive = 'define') then
-    AddDefine(string(Trim(Argument)))
-  else if (Directive = 'undef') then
-    RemoveDefine(string(Trim(Argument)))
-  else if (Directive = 'macro') then
-  begin
-    if (LowerCase(Argument) = 'current_file') and (Sender.FileName <> '') then
-      IncludeFile := #39 + Sender.FileName + #39
-    else
-    if (LowerCase(Argument) = 'current_directory') and (Sender.FileName <> '') then
-      IncludeFile := #39 + ExtractFileDir(Sender.FileName) + #39
-    else
-    begin
-      IncludeFile := FDefines[string(Trim(Argument))];
-      if (IncludeFile = '') then
-        LapeExceptionFmt(lpeUnknownDeclaration, [string(Trim(Argument))], Sender.DocPos);
-    end;
-    NewTokenizer := TLapeTokenizerString.Create(IncludeFile);
-    pushTokenizer(NewTokenizer);
-  end
-  else if (Directive = 'i') or (Directive = 'include') or (Directive = 'include_once') then
+  procedure pushInclude(Directive, Argument: lpString);
+  var
+    IncludeFile: lpString;
+    NewTokenizer: TLapeTokenizerBase;
   begin
     IncludeFile := Argument;
     if ({$IFNDEF FPC}@{$ENDIF}FOnFindFile <> nil) then
-      NewTokenizer := FOnFindFile(Self, IncludeFile);
+      NewTokenizer := FOnFindFile(Self, IncludeFile)
+    else
+      NewTokenizer := nil;
 
     if (IncludeFile = '') or (not FileExists(string(IncludeFile))) then
     begin
@@ -1205,8 +1235,9 @@ begin
     IncludeFile := ExpandFileName(IncludeFile);
 
     if (Directive = 'include_once') and (FIncludes.IndexOf(string(IncludeFile)) > -1) then
-      Exit(True)
-    else if (not Sender.InPeek) then
+      Exit;
+
+    if (not Sender.InPeek) then
       FIncludes.Add(string(IncludeFile));
 
     if (NewTokenizer = nil) then
@@ -1219,51 +1250,118 @@ begin
         NewTokenizer := TLapeTokenizerFile.Create(IncludeFile);
 
     pushTokenizer(NewTokenizer);
-  end
-  else if (Directive = 'a') or (Directive = 'align') then
+  end;
+
+begin
+  Assert(Sender = Tokenizer);
+
+  Result := True;
+
+  if ({$IFNDEF FPC}@{$ENDIF}FOnHandleDirective <> nil) then
+    if FOnHandleDirective(Self, Directive, Argument, Sender.InPeek, InIgnore()) then
+      Exit;
+
+  Directive := LowerCase(Directive);
+  Argument := Trim(Argument);
+
+  if InIgnore() then
   begin
-    Argument := LowerCase(Argument);
-    if (Argument = 'on') then
-      FOptions_PackRecords := Lape_PackRecordsDef
-    else if (Argument = 'off') then
-      FOptions_PackRecords := 1
+    if (Directive = 'else') then
+      switchConditional()
     else
-    begin
-      FOptions_PackRecords := StrToIntDef(string(Argument), 0);
-      if (not (FOptions_PackRecords in [1, 2, 4, 8, 16])) then
-        LapeException(lpeInvalidCondition, [Self]);
-    end;
-  end
-  else if (Directive = 'c') or (Directive = 'assertions') then
-    setOption(lcoAssertions)
-  else if (Directive = 'r') or (Directive = 'rangechecks') then
-    setOption(lcoRangeCheck)
-  else if (Directive = 'b') or (Directive = 'booleval') then
-    setOption(lcoShortCircuit)
-  else if (Directive = 'm') or (Directive = 'memoryinit') then
-    setOption(lcoAlwaysInitialize)
-  else if (Directive = 'd') or (Directive = 'fulldisposal') then
-    setOption(lcoFullDisposal)
-  else if (Directive = 'l') or (Directive = 'loosesemicolon') then
-    setOption(lcoLooseSemicolon)
-  else if (Directive = 'x') or (Directive = 'extendedsyntax') then
-    setOption(lcoLooseSyntax)
-  else if (Directive = 'f') or (Directive = 'autoinvoke') then
-    setOption(lcoAutoInvoke)
-  else if (Directive = 'p') or (Directive = 'autoproperties') then
-    setOption(lcoAutoProperties)
-  else if (Directive = 's') or (Directive = 'scopedenums') then
-    setOption(lcoScopedEnums)
-  else if (Directive = 'j') or (Directive = 'constaddress') then
-    setOption(lcoConstAddress)
-  else if (Directive = 'h') or (Directive = 'hints') then
-    setOption(lcoHints)
-  else if (Directive = 'coperators') then
-    setOption(lcoCOperators)
-  else if (Directive = 'autoobjectify') then
-    setOption(lcoAutoObjectify)
-  else
-    Result := False;
+    if (Directive = 'endif') then
+      popConditional()
+    else
+    if (Directive = 'ifdef') then
+      pushConditional(False, Sender.DocPos)
+    else
+    if (Directive = 'ifndef') then
+      pushConditional(False, Sender.DocPos)
+    else
+    if (Directive = 'ifdecl') then
+      pushConditional(False, Sender.DocPos)
+    else
+    if (Directive = 'ifndecl') then
+      pushConditional(False, Sender.DocPos)
+  end else
+  begin
+    // Conditionals
+    if (Directive = 'else') then
+      switchConditional()
+    else
+    if (Directive = 'endif') then
+      popConditional()
+    else
+    if (Directive = 'ifdef') then
+      pushConditional(HasDefineOrOption(Argument), Sender.DocPos)
+    else
+    if (Directive = 'ifndef') then
+      pushConditional(not HasDefineOrOption(Argument), Sender.DocPos)
+    else
+    if (Directive = 'ifdecl') then
+      pushConditional(hasDeclaration(Argument), Sender.DocPos)
+    else
+    if (Directive = 'ifndecl') then
+      pushConditional(not hasDeclaration(Argument), Sender.DocPos)
+    else
+    if (Directive = 'define') or (Directive = 'undef') then
+      handleDefine(Directive, Argument)
+    else
+    // Includes
+    if (Directive = 'macro') then
+      pushMacro(Argument)
+    else
+    if (Directive = 'i') or (Directive = 'include') or (Directive = 'include_once') then
+      pushInclude(Directive, Argument)
+    else
+    // Options
+    if (Directive = 'a') or (Directive = 'align') then
+      setAlignment(Argument)
+    else
+    if (Directive = 'c') or (Directive = 'assertions') then
+      setOption(lcoAssertions)
+    else
+    if (Directive = 'r') or (Directive = 'rangechecks') then
+      setOption(lcoRangeCheck)
+    else
+    if (Directive = 'b') or (Directive = 'booleval') then
+      setOption(lcoShortCircuit)
+    else
+    if (Directive = 'm') or (Directive = 'memoryinit') then
+      setOption(lcoAlwaysInitialize)
+    else
+    if (Directive = 'd') or (Directive = 'fulldisposal') then
+      setOption(lcoFullDisposal)
+    else
+    if (Directive = 'l') or (Directive = 'loosesemicolon') then
+      setOption(lcoLooseSemicolon)
+    else
+    if (Directive = 'x') or (Directive = 'extendedsyntax') then
+      setOption(lcoLooseSyntax)
+    else
+    if (Directive = 'f') or (Directive = 'autoinvoke') then
+      setOption(lcoAutoInvoke)
+    else
+    if (Directive = 'p') or (Directive = 'autoproperties') then
+      setOption(lcoAutoProperties)
+    else
+    if (Directive = 's') or (Directive = 'scopedenums') then
+      setOption(lcoScopedEnums)
+    else
+    if (Directive = 'j') or (Directive = 'constaddress') then
+      setOption(lcoConstAddress)
+    else
+    if (Directive = 'h') or (Directive = 'hints') then
+      setOption(lcoHints)
+    else
+    if (Directive = 'coperators') then
+      setOption(lcoCOperators)
+    else
+    if (Directive = 'autoobjectify') then
+      setOption(lcoAutoObjectify)
+    else
+      Result := False;
+  end;
 end;
 
 function TLapeCompiler.InIgnore: Boolean;
@@ -2237,7 +2335,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
 
   procedure ParseTypeType;
   var
-    TypeExpr: TlapeTree_Base;
+    TypeExpr: TLapeTree_Base;
   begin
     TypeExpr := ParseTypeExpression([tk_sym_Equals, tk_op_Assign, tk_sym_ParenthesisClose, tk_sym_SemiColon]);
     try
@@ -3356,8 +3454,6 @@ begin
   FIncludes := TStringList.Create();
   FIncludes.Duplicates := dupIgnore;
   FIncludes.CaseSensitive := {$IFDEF DARWIN}False{$ELSE}LapeSystemCaseSensitive{$ENDIF};
-  FDefines := TLapeDefineMap.Create('', dupAccept, False);
-  FBaseDefines := TLapeDefineMap.Create('', dupAccept, False);
   FConditionalStack := TLapeConditionalStack.Create(0);
 
   FOnHandleDirective := nil;
@@ -3426,8 +3522,6 @@ begin
   if FreeTree and (FDelayedTree <> nil) then
     FreeAndNil(FDelayedTree);
   FreeAndNil(FIncludes);
-  FreeAndNil(FDefines);
-  FreeAndNil(FBaseDefines);
   FreeAndNil(FConditionalStack);
   FreeAndNil(FAfterParsing);
   FreeAndNil(FTreeMethodMap);
@@ -3463,7 +3557,7 @@ begin
 
     Options := FOptions;
     Options_PackRecords := FOptions_PackRecords;
-    Defines := FDefines.ExportToArrays();
+    Defines := FDefines;
     Conditionals := FConditionalStack.ExportToArray();
   end;
 end;
@@ -3491,7 +3585,7 @@ begin
 
     FOptions := Options;
     FOptions_PackRecords := Options_PackRecords;
-    FDefines.ImportFromArrays(Defines);
+    FDefines := Defines;
     FConditionalStack.ImportFromArray(Conditionals);
   end;
   if DoFreeState then
@@ -3542,7 +3636,7 @@ begin
     FStackInfo := nil;
     FOptions := FBaseOptions;
     FOptions_PackRecords := FBaseOptions_PackRecords;
-    FDefines.ImportFromArrays(FBaseDefines.ExportToArrays());
+    FDefines := FBaseDefines;
   end;
 
   if (FStackInfo = nil) then
@@ -3617,8 +3711,7 @@ begin
   Assert(Tokenizer <> nil);
 
   try
-    if (FDefines <> nil) and (FBaseDefines <> nil) then
-      FDefines.ImportFromArrays(FBaseDefines.ExportToArrays());
+    FDefines := FBaseDefines;
 
     if (Next() = tk_kw_Program) then
     begin
@@ -3840,7 +3933,7 @@ begin
     else if (Decl is TLapeGlobalVar) then
       Result := TLapeTree_GlobalVar.Create(TLapeGlobalVar(Decl), Self, Pos)
     else if (Decl is TLapeVar) then
-      Result := TlapeTree_ResVar.Create(_ResVar.New(TLapeVar(Decl)), Self, Pos)
+      Result := TLapeTree_ResVar.Create(_ResVar.New(TLapeVar(Decl)), Self, Pos)
     else if (Decl is TLapeType) then
       Result := TLapeTree_VarType.Create(TLapeType(Decl), Self, Pos)
     else
@@ -3854,19 +3947,56 @@ begin
   Result := getExpression(AName, FStackInfo, Pos, LocalOnly);
 end;
 
-function TLapeCompiler.hasDefine(Define: String; Value: String): Boolean;
+function TLapeCompiler.hasBaseDefine(AName: lpString): Boolean;
+var
+  i: Integer;
 begin
-  Result := (FDefines.IndexOfKey(Define) >= 0) and (FDefines[Define] = Value);
+  AName := UpperCase(Trim(AName));
+  for i := 0 to High(FBaseDefines) do
+    if (FBaseDefines[i].Name = AName) then
+      Exit(True);
+
+  Result := False;
 end;
 
-function TLapeCompiler.hasBaseDefine(Define: String; Value: String): Boolean;
+function TLapeCompiler.hasDefine(AName: lpString): Boolean;
+var
+  i: Integer;
 begin
-  Result := (FBaseDefines.IndexOfKey(Define) >= 0) and (FBaseDefines[Define] = Value);
+  AName := UpperCase(Trim(AName));
+  for i := 0 to High(FDefines) do
+    if (FDefines[i].Name = AName) then
+      Exit(True);
+
+  Result := False;
 end;
 
-procedure TLapeCompiler.addBaseDefine(Define: lpString);
+procedure TLapeCompiler.addDefine(AName: lpString; AValue: lpString);
+var
+  i: Integer;
 begin
-  FBaseDefines[string(Define)] := '';
+  if hasDefine(AName) then
+    Exit;
+
+  SetLength(FDefines, Length(FDefines) + 1);
+  with FDefines[High(FDefines)] do
+  begin
+    Name := AName;
+    Value := Trim(AValue);
+  end;
+end;
+
+procedure TLapeCompiler.addBaseDefine(AName: lpString; AValue: lpString);
+begin
+  if hasBaseDefine(AName) then
+    Exit;
+
+  SetLength(FBaseDefines, Length(FBaseDefines) + 1);
+  with FBaseDefines[High(FBaseDefines)] do
+  begin
+    Name := UpperCase(Trim(AName));
+    Value := Trim(AValue);
+  end;
 end;
 
 function TLapeCompiler.addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration;
