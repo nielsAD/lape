@@ -410,7 +410,7 @@ type
   end;
 
   // Must be large enough not to have multiple values fall into the same bucket
-  {$IFDEF FPC}generic{$ENDIF} TLapeUniqueDictionary<_T> = class(TLapeBaseClass)
+  {$IFDEF FPC}generic{$ENDIF} TLapeUniqueStringDictionary<_T> = class(TLapeBaseClass)
   protected type
     TBucket = record Name: lpString; Value: _T; end;
     TArr = array of TBucket;
@@ -1955,7 +1955,7 @@ begin
   Result.Items := FItems.ExportToArray;
 end;
 
-procedure TLapeUniqueDictionary{$IFNDEF FPC}<_T>{$ENDIF}.setValue(Key: lpString; Value: _T);
+procedure TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.setValue(Key: lpString; Value: _T);
 var
   Bucket: UInt32;
 begin
@@ -1971,7 +1971,7 @@ begin
   if (Length(Key) > FMaxLength) then FMaxLength := Length(Key);
 end;
 
-function TLapeUniqueDictionary{$IFNDEF FPC}<_T>{$ENDIF}.getValue(Key: lpString): _T;
+function TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.getValue(Key: lpString): _T;
 var
   Len: Integer;
 begin
@@ -1987,7 +1987,7 @@ begin
   Result := InvalidVal;
 end;
 
-constructor TLapeUniqueDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Create(InvalidValue: _T; Size: Integer);
+constructor TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Create(InvalidValue: _T; Size: Integer);
 begin
   inherited Create();
 

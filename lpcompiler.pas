@@ -21,7 +21,7 @@ const
 
 type
   TLapeTreeMethodMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeTree_Method>;
-  TLapeInternalMethodMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeTree_InternalMethodClass>;
+  TLapeInternalMethodMap = {$IFDEF FPC}specialize{$ENDIF} TLapeUniqueStringDictionary<TLapeTree_InternalMethodClass>;
   TLapeTypeForwards = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeType>;
   TLapeFuncForwards = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeGlobalVar>;
   TLapeTree_NodeStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeTree_ExprBase>;
@@ -3462,7 +3462,7 @@ begin
   FAfterParsing := TLapeCompilerNotification.Create();
 
   FTreeMethodMap := TLapeTreeMethodMap.Create(nil, dupError, True);
-  FInternalMethodMap := TLapeInternalMethodMap.Create(nil, dupError, True);
+  FInternalMethodMap := TLapeInternalMethodMap.Create(nil, 1024);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
   FInternalMethodMap['WriteLn'] := TLapeTree_InternalMethod_WriteLn;
   FInternalMethodMap['ToStr'] := TLapeTree_InternalMethod_ToStr;
@@ -3868,7 +3868,7 @@ begin
   if (not Result) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
     Result := inherited hasDeclaration(AName, nil, Localonly, CheckWith);
   if (not Result) and ((AStackInfo = nil) or (not LocalOnly)) then
-    Result := FInternalMethodMap.ExistsKey(AName);
+    Result := FInternalMethodMap[AName] <> FInternalMethodMap.InvalidVal;
 end;
 
 function TLapeCompiler.hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean;
@@ -3876,8 +3876,6 @@ begin
   Result := inherited;
   if (not Result) and LocalOnly and (AStackInfo <> nil) and (AStackInfo.Owner = nil) then
     Result := inherited hasDeclaration(ADecl, nil, Localonly, CheckWith);
-  if (not Result) and ((AStackInfo = nil) or (not LocalOnly)) then
-    Result := FInternalMethodMap.ExistsItem(TLapeTree_InternalMethodClass(ADecl.ClassType));
 end;
 
 function TLapeCompiler.getDeclarationNoWith(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False): TLapeDeclaration;
@@ -3938,7 +3936,7 @@ begin
       Result := TLapeTree_VarType.Create(TLapeType(Decl), Self, Pos)
     else
       {nothing}
-  else if FInternalMethodMap.ExistsKey(AName) then
+  else if FInternalMethodMap[AName] <> nil then
     Result := FInternalMethodMap[AName].Create(Self, Pos);
 end;
 

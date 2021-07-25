@@ -609,7 +609,7 @@ type
   end;
 
   TLapeHint = procedure(Sender: TLapeCompilerBase; Msg: lpString) of object;
-  TLapeBaseTypesDictionary = specialize TLapeUniqueDictionary<TLapeType>;
+  TLapeBaseTypesDictionary = specialize TLapeUniqueStringDictionary<TLapeType>;
 
   TLapeCompilerBase = class(TLapeBaseDeclClass)
   protected

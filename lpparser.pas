@@ -145,7 +145,7 @@ type
     Token: EParserToken;
   end;
 
-  TLapeKeywordDictionary = specialize TLapeUniqueDictionary<EParserToken>;
+  TLapeKeywordDictionary = specialize TLapeUniqueStringDictionary<EParserToken>;
 
   TLapeTokenizerBase = class(TLapeBaseDeclClass)
   protected
