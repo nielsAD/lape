@@ -103,4 +103,15 @@ begin
   for Test in TestSet do
     resStr += ToString(Test) + ' ';
   Assert(resStr = 'TestA TestD ');
+
+  resStr := '';
+  for Test in [TestA, TestC, TestD] do
+    resStr += ToString(Test) + ' ';
+  Assert(resStr = 'TestA TestC TestD ');
+
+  resStr := '';
+  for Test in [TestB..TestD] do
+    resStr += ToString(Test) + ' ';
+
+  Assert(resStr = 'TestB TestC TestD ');
 end;

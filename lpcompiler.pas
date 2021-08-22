@@ -3298,15 +3298,28 @@ begin
       end;
 
     LimitType := Result.Counter.resType();
-    if (Result.LoopType = lptypes.loopOver) then
+    if (Result.LoopType = loopOver) then
     begin
-      LimitType := addManagedType(TLapeType_DynArray.Create(LimitType, Self, '', getPDocPos()));
-      if basicLoopOver then
-        with TLapeTree_Operator(tmpExpr).Right do
-        begin
-          Parent := Result;
-          Result.Limit := TLapeTree_ExprBase(setExpectedType(LimitType));
-        end;
+      if basicLoopOver and (LimitType is TLapeType_Enum) then
+      begin
+        Result.Limit := TLapeTree_Operator(tmpExpr).Right;
+        if Result.Limit.resType() is TLapeType_Set then
+          Result.LoopType := loopOverSet
+        else
+          Result.LoopType := loopOverEnum;
+
+        tmpExpr.Parent := Result;
+      end else
+      begin
+        LimitType := addManagedType(TLapeType_DynArray.Create(LimitType, Self, '', getPDocPos()));
+        if basicLoopOver then
+          with TLapeTree_Operator(tmpExpr).Right do
+          begin
+            Parent := Result;
+            Result.Limit := TLapeTree_ExprBase(setExpectedType(LimitType));
+          end;
+      end;
+
       tmpExpr.Free();
     end;
 
@@ -3459,6 +3472,7 @@ begin
   FOnHandleDirective := nil;
   FOnHandleExternal := nil;
   FOnFindFile := nil;
+  FOnFindMacro := nil;
   FAfterParsing := TLapeCompilerNotification.Create();
 
   FTreeMethodMap := TLapeTreeMethodMap.Create(nil, dupError, True);
@@ -3970,8 +3984,6 @@ begin
 end;
 
 procedure TLapeCompiler.addDefine(AName: lpString; AValue: lpString);
-var
-  i: Integer;
 begin
   if hasDefine(AName) then
     Exit;
