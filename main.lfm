@@ -8,7 +8,7 @@ object Form1: TForm1
   ClientWidth = 800
   Color = clWindow
   Position = poScreenCenter
-  LCLVersion = '2.0.10.0'
+  LCLVersion = '2.2.0.1'
   inline e: TSynEdit
     Left = 0
     Height = 644
@@ -16,14 +16,15 @@ object Form1: TForm1
     Width = 800
     Align = alClient
     Font.CharSet = ANSI_CHARSET
-    Font.Height = -17
-    Font.Name = 'Courier New'
+    Font.Height = -16
+    Font.Name = 'Consolas'
     Font.Pitch = fpFixed
+    Font.Quality = fqCleartypeNatural
     ParentColor = False
     ParentFont = False
     TabOrder = 1
     BorderStyle = bsNone
-    Gutter.Width = 61
+    Gutter.Width = 59
     Gutter.MouseActions = <    
       item
         ClickCount = ccAny
@@ -593,7 +594,7 @@ object Form1: TForm1
         MouseActions = <>
       end
       object SynGutterLineNumber1: TSynGutterLineNumber
-        Width = 21
+        Width = 19
         MouseActions = <>
         MarkupInfo.Background = clBtnFace
         MarkupInfo.Foreground = clNone
@@ -788,6 +789,7 @@ object Form1: TForm1
     DirectiveAttri.Foreground = clOlive
     CompilerMode = pcmDelphi
     NestedComments = False
+    TypeHelpers = True
     Left = 728
     Top = 64
   end

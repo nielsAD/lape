@@ -6803,7 +6803,7 @@ begin
   Assert(FCounter <> nil);
   Assert(FLimit <> nil);
 
-  if LoopType = LoopOver then
+  if LoopType in [LoopOver, loopOverEnum, loopOverSet] then
     Exit(CompileForIn(Offset));
   
   CounterVar := nil;
@@ -6847,7 +6847,7 @@ begin
   Assert(FCounter <> nil);
   Assert(FLimit <> nil);
 
-  if (FCounter.resType() <> nil) and (FCounter.resType().BaseType in [ltSmallEnum, ltLargeEnum]) then
+  if (LoopType in [loopOverEnum, loopOverSet]) then
   begin
     lower := _ResVar.New(FCompiler.getTempVar(FCounter.resType())).IncLock();
     upper := _ResVar.New(FCompiler.getTempVar(FCounter.resType())).IncLock();
@@ -6864,11 +6864,6 @@ begin
     finally
       Free();
     end;
-
-    if (FLimit.resType() <> nil) and (FLimit.resType().BaseType in [ltLargeSet, ltSmallSet]) then
-      LoopType := loopOverSet
-    else
-      LoopType := loopOverEnum;
   end else
   begin
     if (not FLimit.CompileToTempVar(Offset, Container)) or (not Container.HasType()) then
