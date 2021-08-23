@@ -670,7 +670,8 @@ function TLapeTokenizerBase.Identify: EParserToken;
 var
   Char: lpChar;
   tmpDocPos: TDocPos;
-  
+  CommentLevel: Integer;
+
   procedure NextPos_CountLines; inline;
   begin
     repeat
@@ -837,8 +838,24 @@ begin
       if (getChar(1) = '*') then
       begin
         Inc(FPos, 2);
-        while (not ((CurChar in ['*', #0]) and (getChar(1) in [')', #0]))) do
+
+        CommentLevel := 1;
+        repeat
+          if (CurChar in ['(', '*']) then
+          begin
+            NextPos_CountLines();
+            case CurChar of
+              '*': Inc(CommentLevel);
+              ')':
+                begin
+                  Dec(CommentLevel);
+                  if (CommentLevel = 0) then
+                    Break;
+                end;
+            end;
+          end;
           NextPos_CountLines();
+        until (CurChar = #0);
 
         Result := setTok(tk_Comment);
         if (CurChar = '*') then
@@ -856,10 +873,23 @@ begin
           Result := setTok(tk_Directive);
           if (not HandleDirective()) then
             LapeException(lpeUnknownDirective, DocPos);
-        end
-        else
+        end else
         begin
-          while (not (CurChar in ['}', #0])) do NextPos_CountLines();
+          CommentLevel := 1;
+
+          repeat
+            case CurChar of
+              '{': Inc(CommentLevel);
+              '}':
+                begin
+                  Dec(CommentLevel);
+                  if (CommentLevel = 0) then
+                    Break;
+                end;
+            end;
+            NextPos_CountLines();
+          until (CurChar = #0);
+
           Result := setTok(tk_Comment);
         end;
       end;

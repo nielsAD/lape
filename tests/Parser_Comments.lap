@@ -14,3 +14,20 @@ begin
     'Passed'
   );
 end;
+
+{{Multi
+ line nested
+ comment
+// }}
+
+//Single line comment
+
+begin
+  WriteLn((* (* Multi
+    line nested
+    comment {
+    *)*)
+
+    'Passed'
+  );
+end;
