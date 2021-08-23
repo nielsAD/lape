@@ -55,7 +55,8 @@ const
   lpeDuplicateHashBucket = 'Duplicate hash bucket with "%s" and "%s"';
   lpeErrorScanningString = '%s while scanning string literal';
   lpeExceptionAt = '%s at line %d, column %d';
-  lpeExceptionIn = '%s in file "%s"';
+  lpeExceptionIn = '%s in "%s"';
+  lpeExceptionInFile = '%s in file "%s"';
   lpeExpected = '%s expected';
   lpeExpectedArray = 'Array expected';
   lpeExpectedNormalMethod = 'Normal method expected';
@@ -166,7 +167,7 @@ begin
   if (DocPos.Line > 0) and (DocPos.Col > 0) then
     Result := Format(lpString(lpeExceptionAt), [Result, DocPos.Line, DocPos.Col]);
   if (DocPos.FileName <> '') then
-    Result := Format(lpString(lpeExceptionIn), [Result, DocPos.FileName]);
+    Result := Format(lpString(lpeExceptionInFile), [Result, DocPos.FileName]);
 end;
 
 {$IF DEFINED(Delphi) AND (CompilerVersion <= 21.00)}

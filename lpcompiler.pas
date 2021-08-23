@@ -4208,28 +4208,46 @@ function TLapeCompiler.addGlobalFunc(AHeader: lpString; Value: Pointer): TLapeGl
 var
   Method: TLapeTree_Method;
   OldState: Pointer;
+  p: TDocPos;
 begin
   Result := nil;
   OldState := getTempTokenizerState(AHeader + ';', '!addGlobalFuncHdr');
 
   try
-    Expect([tk_kw_Function, tk_kw_Procedure, tk_kw_Operator]);
-    Method := ParseMethod(nil, True);
-    CheckAfterCompile();
-
     try
-      if (Method.Method = nil) or (not Method.Method.HasType()) or
-         (Method.Method.VarType.BaseType <> ltImportedMethod)
-      then
-        LapeException(lpeInvalidEvaluation);
+      Expect([tk_kw_Function, tk_kw_Procedure, tk_kw_Operator]);
+      Method := ParseMethod(nil, True);
+      CheckAfterCompile();
 
-      Result := Method.Method;
-      PPointer(Result.Ptr)^ := Value;
+      try
+        if (Method.Method = nil) or (not Method.Method.HasType()) or
+           (Method.Method.VarType.BaseType <> ltImportedMethod)
+        then
+          LapeException(lpeInvalidEvaluation);
+
+        Result := Method.Method;
+        PPointer(Result.Ptr)^ := Value;
+      finally
+        FreeAndNil(Method);
+      end;
     finally
-      FreeAndNil(Method);
+      resetTokenizerState(OldState);
     end;
-  finally
-    resetTokenizerState(OldState);
+  except
+    on e: Exception do
+    begin
+      if (e is lpException) then
+        with lpException(e) do
+          if (DocPos.FileName <> '') and (DocPos.FileName[1] = '!') then
+          begin
+            p := DocPos;
+            p.FileName := '';
+
+            LapeExceptionFmt(lpeExceptionIn, [Error, AHeader], p);
+          end;
+
+      raise;
+    end;
   end;
 end;
 
