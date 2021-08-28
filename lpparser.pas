@@ -837,31 +837,24 @@ begin
     '(':
       if (getChar(1) = '*') then
       begin
-        Inc(FPos, 2);
+        tmpDocPos := DocPos;
 
-        CommentLevel := 1;
+        CommentLevel := 0;
+
         repeat
-          if (CurChar in ['(', '*']) then
-          begin
-            NextPos_CountLines();
-            case CurChar of
-              '*': Inc(CommentLevel);
-              ')':
-                begin
-                  Dec(CommentLevel);
-                  if (CommentLevel = 0) then
-                    Break;
-                end;
-            end;
-          end;
+          if (CurChar = '(') and (getChar(1) = '*') then
+            Inc(CommentLevel);
+          if (CurChar = '*') and (getChar(1) = ')') then
+            Dec(CommentLevel);
+
           NextPos_CountLines();
-        until (CurChar = #0);
+        until (CurChar = #0) or (CommentLevel = 0);
+
+        if (CurChar = #0) then
+          LapeException(lpeUnClosedComment, tmpDocPos);
 
         Result := setTok(tk_Comment);
-        if (CurChar = '*') then
-          Inc(FPos);
-      end
-      else
+      end else
         Result := setTok(tk_sym_ParenthesisOpen);
 
     ';': Result := setTok(tk_sym_SemiColon);
@@ -875,6 +868,8 @@ begin
             LapeException(lpeUnknownDirective, DocPos);
         end else
         begin
+          tmpDocPos := DocPos;
+
           CommentLevel := 1;
 
           repeat
@@ -887,8 +882,12 @@ begin
                     Break;
                 end;
             end;
+
             NextPos_CountLines();
           until (CurChar = #0);
+
+          if (CurChar = #0) then
+            LapeException(lpeUnClosedComment, tmpDocPos);
 
           Result := setTok(tk_Comment);
         end;

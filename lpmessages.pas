@@ -109,7 +109,8 @@ const
   lpeStatementNotAllowed = 'Statement not allowed here';
   lpeTooMuchParameters = 'Too many parameters found';
   lpeTypeExpected = 'Type expected';
-  lpeUnexpectedToken = 'Found unexpected token "%s"';
+  lpeUnClosedComment = 'Unclosed comment';
+  lpeUnExpectedToken = 'Found unexpected token "%s"';
   lpeUnknownDeclaration = 'Unknown declaration "%s"';
   lpeUnknownDeclarationOpenArray = 'Unknown declaration in open array (index: %d)';
   lpeUnknownDirective = 'Unknown compiler directive';
