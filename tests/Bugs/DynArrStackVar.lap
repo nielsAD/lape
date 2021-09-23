@@ -1,0 +1,21 @@
+type
+  TCrash = record
+    A: array of Int32;
+    B: String;
+    C: String;
+  end;
+
+procedure test_crash_1(test: TCrash);
+begin
+end;
+
+procedure test_crash_2(const test: TCrash);
+begin
+end;
+
+var
+  crash: TCrash = [[1]];
+begin
+  test_crash_1(crash);
+  test_crash_2(crash);
+end.

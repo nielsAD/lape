@@ -1048,7 +1048,7 @@ begin
         LapeException(lpeInvalidCompareMethod, DocPos);
     end;
 
-    CompareVar.VarType := FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [nil, nil], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], ResultType));
+    CompareVar.VarType := FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [TLapeType(nil), TLapeType(nil)], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], ResultType));
   end;
 
   wasConstant := not ParamVar.Writeable;
