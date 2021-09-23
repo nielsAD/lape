@@ -608,26 +608,27 @@ begin
         'end;'
       , ['Left', 'Right'], [], [ALeft, ARight], Offset, Pos)}
 
-      with TLapeTree_If.Create(FCompiler, Pos) do
-      try
-        Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler, Pos);
-        with TLapeTree_Operator(Condition) do
-        begin
-          Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
-          Right := TLapeTree_ResVar.Create(ARight.IncLock(), Condition);
-        end;
+      if (tmpVar = nil) then // ALeft is initalized (issue #147)
+        with TLapeTree_If.Create(FCompiler, Pos) do
+        try
+          Condition := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler, Pos);
+          with TLapeTree_Operator(Condition) do
+          begin
+            Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
+            Right := TLapeTree_ResVar.Create(ARight.IncLock(), Condition);
+          end;
 
-        Body := TLapeTree_InternalMethod_SetLength.Create(Condition);
-        with TLapeTree_InternalMethod_SetLength(Body) do
-        begin
-          addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), Body));
-          addParam(TLapeTree_Integer.Create(0, Body));
-        end;
+          Body := TLapeTree_InternalMethod_SetLength.Create(Condition);
+          with TLapeTree_InternalMethod_SetLength(Body) do
+          begin
+            addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), Body));
+            addParam(TLapeTree_Integer.Create(0, Body));
+          end;
 
-        Compile(Offset).Spill(1);
-      finally
-        Free();
-      end;
+          Compile(Offset).Spill(1);
+        finally
+          Free();
+        end;
 
       inherited;
     end
