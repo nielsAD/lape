@@ -898,7 +898,8 @@ begin
     _LapeCopy +
     _LapeDelete +
     _LapeInsert +
-    _LapeSort,
+    _LapeSort +
+    _LapeSortWeighted,
     '!addDelayedCore'
   );
 

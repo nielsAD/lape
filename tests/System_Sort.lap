@@ -1,5 +1,17 @@
 {$assertions on}
 
+// Sort(var array)
+// Sort(var array; compareMethod: function(constref L,R: Type): Integer));
+
+// Sorted(const array): array;
+// Sorted(const array; compareMethod: function(constref L,R: Type): Integer)): array;
+
+// Sort(var array; const weights: array of Int64);
+// Sort(var array; const weights: array of Extended);
+
+// Sorted(const array; const weights: array of Int64): array;
+// Sorted(const array; const weights: array of Extended): array;
+
 type
   TPoint = record X, Y: Int32; end;
   TPointArray = array of TPoint;
@@ -8,11 +20,18 @@ type
   TStringArray = array of String;
   TVariantArray = array[2..6] of Variant;
   TBooleanArray = array of Boolean;
+  TExtendedArray = array of Extended;
 
 // _Sort overloads will be checked before generating a method
-procedure _Sort(A: TBooleanArray); overload;
+procedure _Sort(var A: TBooleanArray); overload;
 begin
   A[0] := True;
+end;
+
+// ..
+procedure _Sort(var A: TBooleanArray; weights: TExtendedArray); overload;
+begin
+  A[0] := False;
 end;
 
 function CompareByX(constref L, R: TPoint): Int32;
@@ -24,13 +43,21 @@ begin
     Result := 1;
 end;
 
-var 
+function Distance(fromX, fromY, toX, toY: Integer): Extended;
+begin
+  Result := Hypot(fromX - toX, fromY - toY);
+end;
+
+var
   Integers: TIntegerArray = [100, -100, $FFFFFF, 5, 0];
   Strings: TStringArray = ['Niels', 'Olly', 'Slacky', '0'];
   Points: TPointArray = [[5,10], [-5,100], [50,50], [0,0]];
   Variants: TVariantArray = [500, 400, -300, 200, 100];
   Booleans: TBooleanArray = [False];
+  I: Int32;
+  Weights: TExtendedArray;
 begin
+  // Compare methods
   Assert(ToString(Sorted(Integers))            = '[-100, 0, 5, 100, 16777215]');
   Assert(ToString(Sorted(Strings))             = '[0, Niels, Olly, Slacky]');
   Assert(ToString(Sorted(Points, @CompareByX)) = '[{X = -5, Y = 100}, {X = 0, Y = 0}, {X = 5, Y = 10}, {X = 50, Y = 50}]');
@@ -42,4 +69,22 @@ begin
   Sort(Points, @CompareByX); Assert(ToString(Points)   = '[{X = -5, Y = 100}, {X = 0, Y = 0}, {X = 5, Y = 10}, {X = 50, Y = 50}]');
   Sort(Variants);            Assert(ToString(Variants) = '[-300, 100, 200, 400, 500]');
   Sort(Booleans);            Assert(ToString(Booleans) = '[True]');
+
+  // Weights
+  points[0] := [200,200];
+  points[1] := [100,100];
+  points[2] := [150,150];
+  points[3] := [75, 75];
+
+  for i:=0 to High(Points) do
+    weights += Distance(Points[i].X, Points[i].Y, 100, 100);
+
+  Sort(points, weights);
+
+  Assert(ToString(Points) = '[{X = 100, Y = 100}, {X = 75, Y = 75}, {X = 150, Y = 150}, {X = 200, Y = 200}]');
+  Assert(ToString(Sorted(Points, [Int64(3),Int64(2),Int64(1),Int64(0)])) = '[{X = 200, Y = 200}, {X = 150, Y = 150}, {X = 75, Y = 75}, {X = 100, Y = 100}]');
+
+  Sort(Booleans, weights);
+
+  Assert(ToString(Booleans) = '[False]');
 end.
