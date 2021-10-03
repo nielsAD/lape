@@ -59,6 +59,7 @@ const
   lpeExceptionInFile = '%s in file "%s"';
   lpeExpected = '%s expected';
   lpeExpectedArray = 'Array expected';
+  lpeExpectedArrayOfType = 'Array expected of type "%s"';
   lpeExpectedNormalMethod = 'Normal method expected';
   lpeExpectedOther = 'Found unexpected token "%s", expected "%s"';
   lpeExpressionExpected = 'Expression expected';

@@ -898,7 +898,8 @@ begin
     _LapeCopy +
     _LapeDelete +
     _LapeInsert +
-    _LapeSort,
+    _LapeSort +
+    _LapeSortWeighted,
     '!addDelayedCore'
   );
 
@@ -3508,6 +3509,9 @@ begin
 
   FInternalMethodMap['Sort'] := TLapeTree_InternalMethod_Sort;
   FInternalMethodMap['Sorted'] := TLapeTree_InternalMethod_Sorted;
+
+  FInternalMethodMap['SortWeighted'] := TLapeTree_InternalMethod_SortWeighted;
+  FInternalMethodMap['SortedWeighted'] := TLapeTree_InternalMethod_SortedWeighted;
 
   FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
   FInternalMethodMap['Succ'] := TLapeTree_InternalMethod_Succ;

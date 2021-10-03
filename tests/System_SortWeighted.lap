@@ -1,0 +1,26 @@
+{$assertions on}
+
+function dist(fromX, fromY, toX, toY: Integer): Extended;
+begin
+  Result := Hypot(fromX-toX, fromY-toY);
+end;
+
+var
+  points: array of record x,y: Integer; end;
+  weights: array of Extended;
+  i: Integer;
+begin
+  points += [200,200];
+  points += [100,100];
+  points += [150,150];
+  points += [75, 75];
+  points += [80, 80];
+
+  for i:=0 to High(points) do
+    weights += dist(points[i].x, points[i].y, 100, 100);
+
+  SortWeighted(points, weights);
+
+  Assert(ToString(points) = '[{X = 100, Y = 100}, {X = 80, Y = 80}, {X = 75, Y = 75}, {X = 150, Y = 150}, {X = 200, Y = 200}]');
+  Assert(ToString(SortedWeighted(points, [Int64(4),Int64(3),Int64(2),Int64(1),Int64(0)])) = '[{X = 200, Y = 200}, {X = 150, Y = 150}, {X = 75, Y = 75}, {X = 80, Y = 80}, {X = 100, Y = 100}]');
+end.

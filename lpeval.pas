@@ -400,7 +400,7 @@ var
     '  Item: Pointer;'                                                                   + LineEnding +
     'begin'                                                                              + LineEnding +
     '  if (Compare = nil) then'                                                          + LineEnding +
-    '    raise "Compare function is nil";'                                               + LineEnding +
+    '    raise "Sort: Compare function is nil";'                                         + LineEnding +
     ''                                                                                   + LineEnding +
     '  Item := GetMem(ElSize);'                                                          + LineEnding +
     '  for I := 1 to Len - 1 do'                                                         + LineEnding +
@@ -413,6 +413,65 @@ var
     '      Dec(J);'                                                                      + LineEnding +
     '    end;'                                                                           + LineEnding +
     '    Move(Item^, A[(J+1) * ElSize]^, ElSize);'                                       + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    '  FreeMem(Item);'                                                                   + LineEnding +
+    'end;';
+
+    _LapeSortWeighted: lpString =
+    'procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt;'                          + LineEnding +
+    '  Weights: ^Int64; WeightsLen: SizeInt); overload;'                                 + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  I, J: Int32;'                                                                     + LineEnding +
+    '  Weight: Int64;'                                                                   + LineEnding +
+    '  Item: Pointer;'                                                                   + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  if (Len <> WeightsLen) then'                                                      + LineEnding +
+    '    raise Format("Sort: Array and weights lengths must be equal (%d, %d)",'         + LineEnding +
+    '                 [Len, WeightsLen]);'                                               + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  Item := GetMem(ElSize);'                                                          + LineEnding +
+    '  for I := 1 to Len - 1 do'                                                         + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    Move(A[I * ElSize]^, Item^, ElSize);'                                           + LineEnding +
+    '    Weight := Weights[I]^;'                                                         + LineEnding +
+    '    J := I - 1;'                                                                    + LineEnding +
+    '    while (J >= 0) and (Weights[J]^ > Weight) do'                                   + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      Move(A[J * ElSize]^, A[(J+1) * ElSize]^, ElSize);'                            + LineEnding +
+    '      Weights[J + 1]^ := Weights[J]^;'                                              + LineEnding +
+    '      Dec(J);'                                                                      + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    '    Move(Item^, A[(J+1) * ElSize]^, ElSize);'                                       + LineEnding +
+    '    Weights[J + 1]^ := Weight;'                                                     + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    '  FreeMem(Item);'                                                                   + LineEnding +
+    'end;'                                                                               + LineEnding +
+    ''                                                                                   + LineEnding +
+    'procedure _SortWeightedF(A: Pointer; ElSize, Len: SizeInt;'                         + LineEnding +
+    '  Weights: ^Extended; WeightsLen: SizeInt); overload;'                              + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  I, J: Int32;'                                                                     + LineEnding +
+    '  Weight: Extended;'                                                                + LineEnding +
+    '  Item: Pointer;'                                                                   + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  if (Len <> WeightsLen) then'                                                      + LineEnding +
+    '    raise Format("Sort: Array and weights lengths must be equal (%d, %d)",'         + LineEnding +
+    '                 [Len, WeightsLen]);'                                               + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  Item := GetMem(ElSize);'                                                          + LineEnding +
+    '  for I := 1 to Len - 1 do'                                                         + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    Move(A[I * ElSize]^, Item^, ElSize);'                                           + LineEnding +
+    '    Weight := Weights[I]^;'                                                         + LineEnding +
+    '    J := I - 1;'                                                                    + LineEnding +
+    '    while (J >= 0) and (Weights[J]^ > Weight) do'                                   + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      Move(A[J * ElSize]^, A[(J+1) * ElSize]^, ElSize);'                            + LineEnding +
+    '      Weights[J + 1]^ := Weights[J]^;'                                              + LineEnding +
+    '      Dec(J);'                                                                      + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    '    Move(Item^, A[(J+1) * ElSize]^, ElSize);'                                       + LineEnding +
+    '    Weights[J + 1]^ := Weight;'                                                     + LineEnding +
     '  end;'                                                                             + LineEnding +
     '  FreeMem(Item);'                                                                   + LineEnding +
     'end;';
