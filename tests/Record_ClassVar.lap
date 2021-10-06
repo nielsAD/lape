@@ -1,0 +1,49 @@
+{$assertions on}
+
+type
+  TPoint = record
+  class var
+    ClassVar1: Int32 = 100;
+    ClassVar2: Int32 = 200;
+  class const
+    ClassConst1,
+    ClassConst2 = 'Hello World';
+  var
+    X, Y: Int32;
+  end;
+
+procedure Test;
+type
+  TPoint3D = record(TPoint)
+  class const
+    ClassVar3: Int32 = 300;
+  var
+    Z: Int32;
+  end;
+begin
+  with TPoint3D([100, 200, 300]) do
+  begin
+    Assert(X = ClassVar1);
+    Assert(Y = ClassVar2);
+    Assert(Z = ClassVar3);
+
+    ClassVar1 := 1000;
+    ClassVar2 := 2000;
+  end;
+end;
+
+var
+  P: TPoint;
+
+begin
+  Assert(TPoint.ClassVar1 = 100);
+  Assert(TPoint.ClassVar2 = 200);
+
+  Assert(TPoint.ClassConst1 = 'Hello World');
+  Assert(TPoint.ClassConst2 = 'Hello World');
+
+  Test();
+
+  Assert(P.ClassVar1 = 1000);
+  Assert(P.ClassVar2 = 2000);
+end.
