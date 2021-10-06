@@ -197,7 +197,6 @@ begin
   PExtended(Result)^ := ArcTanH(PExtended(Params^[0])^);
 end;
 
-
 procedure _LapeRandomRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   Pint64(Result)^ := PInt64(Params^[0])^ + Random(PInt64(Params^[1])^ - PInt64(Params^[0])^ + 1);
@@ -205,7 +204,7 @@ end;
 
 procedure _LapeRandomRangeF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := PExtended(Params^[0])^ + Random()*(PExtended(Params^[1])^ - PExtended(Params^[0])^);
+  PExtended(Result)^ := PExtended(Params^[0])^ + Random() * (PExtended(Params^[1])^ - PExtended(Params^[0])^);
 end;
 
 procedure _LapeRandom(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -221,4 +220,24 @@ end;
 procedure _LapeRandomize(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   Randomize();
+end;
+
+procedure _LapeEnsureRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt64(Result)^ := EnsureRange(PInt64(Params^[0])^, PInt64(Params^[1])^, PInt64(Params^[2])^);
+end;
+
+procedure _LapeEnsureRangeF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PExtended(Result)^ := EnsureRange(PExtended(Params^[0])^, PExtended(Params^[1])^, PExtended(Params^[2])^);
+end;
+
+procedure _LapeInRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PEvalBool(Result)^ := InRange(PInt64(Params^[0])^, PInt64(Params^[1])^, PInt64(Params^[2])^);
+end;
+
+procedure _LapeInRangeF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PEvalBool(Result)^ := InRange(PExtended(Params^[0])^, PExtended(Params^[1])^, PExtended(Params^[2])^);
 end;
