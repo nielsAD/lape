@@ -2184,7 +2184,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       Rec := TLapeType_Union.Create(Self, nil, '', getPDocPos());
 
     repeat
-      if Tokenizer.Tok = tk_kw_Class then
+      if (Tokenizer.Tok = tk_kw_Class) then
       begin
         IsConst := Expect([tk_kw_Var, tk_kw_Const], True, True) = tk_kw_Const;
 
@@ -2211,7 +2211,12 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
             end;
 
             for i := 0 to High(Identifiers) do
+            begin
+              if Rec.HasChild(Identifiers[i]) then
+                LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], DocPos);
+
               Rec.addClassField(FieldType, FieldValue, Identifiers[i], IsConst);
+            end;
 
             Expect(tk_sym_SemiColon, False, True);
           finally
