@@ -29,7 +29,7 @@ begin
 end;
 
 // ..
-procedure _Sort(var A: TBooleanArray; weights: TExtendedArray); overload;
+procedure _Sort(var A: TBooleanArray; weights: TExtendedArray; SortUp: Boolean); overload;
 begin
   A[0] := False;
 end;

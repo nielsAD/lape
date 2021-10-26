@@ -41,6 +41,10 @@ procedure _LapeFillMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$EN
 procedure _LapeMove(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeCompareMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
+procedure _LapeSortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeSortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeSortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
 procedure _LapeHigh(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeLength(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
@@ -417,65 +421,6 @@ var
     '  FreeMem(Item);'                                                                   + LineEnding +
     'end;';
 
-    _LapeSortWeighted: lpString =
-    'procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt;'                          + LineEnding +
-    '  Weights: ^Int64; WeightsLen: SizeInt); overload;'                                 + LineEnding +
-    'var'                                                                                + LineEnding +
-    '  I, J: Int32;'                                                                     + LineEnding +
-    '  Weight: Int64;'                                                                   + LineEnding +
-    '  Item: Pointer;'                                                                   + LineEnding +
-    'begin'                                                                              + LineEnding +
-    '  if (Len <> WeightsLen) then'                                                      + LineEnding +
-    '    raise Format("Sort: Array and weights lengths must be equal (%d, %d)",'         + LineEnding +
-    '                 [Len, WeightsLen]);'                                               + LineEnding +
-    ''                                                                                   + LineEnding +
-    '  Item := GetMem(ElSize);'                                                          + LineEnding +
-    '  for I := 1 to Len - 1 do'                                                         + LineEnding +
-    '  begin'                                                                            + LineEnding +
-    '    Move(A[I * ElSize]^, Item^, ElSize);'                                           + LineEnding +
-    '    Weight := Weights[I]^;'                                                         + LineEnding +
-    '    J := I - 1;'                                                                    + LineEnding +
-    '    while (J >= 0) and (Weights[J]^ > Weight) do'                                   + LineEnding +
-    '    begin'                                                                          + LineEnding +
-    '      Move(A[J * ElSize]^, A[(J+1) * ElSize]^, ElSize);'                            + LineEnding +
-    '      Weights[J + 1]^ := Weights[J]^;'                                              + LineEnding +
-    '      Dec(J);'                                                                      + LineEnding +
-    '    end;'                                                                           + LineEnding +
-    '    Move(Item^, A[(J+1) * ElSize]^, ElSize);'                                       + LineEnding +
-    '    Weights[J + 1]^ := Weight;'                                                     + LineEnding +
-    '  end;'                                                                             + LineEnding +
-    '  FreeMem(Item);'                                                                   + LineEnding +
-    'end;'                                                                               + LineEnding +
-    ''                                                                                   + LineEnding +
-    'procedure _SortWeightedF(A: Pointer; ElSize, Len: SizeInt;'                         + LineEnding +
-    '  Weights: ^Extended; WeightsLen: SizeInt); overload;'                              + LineEnding +
-    'var'                                                                                + LineEnding +
-    '  I, J: Int32;'                                                                     + LineEnding +
-    '  Weight: Extended;'                                                                + LineEnding +
-    '  Item: Pointer;'                                                                   + LineEnding +
-    'begin'                                                                              + LineEnding +
-    '  if (Len <> WeightsLen) then'                                                      + LineEnding +
-    '    raise Format("Sort: Array and weights lengths must be equal (%d, %d)",'         + LineEnding +
-    '                 [Len, WeightsLen]);'                                               + LineEnding +
-    ''                                                                                   + LineEnding +
-    '  Item := GetMem(ElSize);'                                                          + LineEnding +
-    '  for I := 1 to Len - 1 do'                                                         + LineEnding +
-    '  begin'                                                                            + LineEnding +
-    '    Move(A[I * ElSize]^, Item^, ElSize);'                                           + LineEnding +
-    '    Weight := Weights[I]^;'                                                         + LineEnding +
-    '    J := I - 1;'                                                                    + LineEnding +
-    '    while (J >= 0) and (Weights[J]^ > Weight) do'                                   + LineEnding +
-    '    begin'                                                                          + LineEnding +
-    '      Move(A[J * ElSize]^, A[(J+1) * ElSize]^, ElSize);'                            + LineEnding +
-    '      Weights[J + 1]^ := Weights[J]^;'                                              + LineEnding +
-    '      Dec(J);'                                                                      + LineEnding +
-    '    end;'                                                                           + LineEnding +
-    '    Move(Item^, A[(J+1) * ElSize]^, ElSize);'                                       + LineEnding +
-    '    Weights[J + 1]^ := Weight;'                                                     + LineEnding +
-    '  end;'                                                                             + LineEnding +
-    '  FreeMem(Item);'                                                                   + LineEnding +
-    'end;';
-
 implementation
 
 uses
@@ -566,6 +511,21 @@ end;
 procedure _LapeCompareMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PEvalBool(Result)^ := CompareMem(Params^[0], Params^[1], PSizeInt(Params^[2])^);
+end;
+
+procedure _LapeSortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TIntegerArray(Params^[3]^), PEvalBool(Params^[4])^);
+end;
+
+procedure _LapeSortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TInt64Array(Params^[3]^), PEvalBool(Params^[4])^);
+end;
+
+procedure _LapeSortWeighted_Extended(const Params: PParamArray);{$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TExtendedArray(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeHigh(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -915,7 +875,10 @@ end;
 {$WARN COMPARING_SIGNED_UNSIGNED OFF}
 {$WARN IMPLICIT_STRING_CAST OFF}
 {$WARN IMPLICIT_STRING_CAST_LOSS OFF}
-{$WARN 6058 off} // has not been inlined warning
+
+{$IFDEF FPC}
+  {$WARN 6058 off} // has not been inlined warning
+{$ENDIF}
 
 {$I lpeval_functions.inc}
 
