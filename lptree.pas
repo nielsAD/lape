@@ -1032,8 +1032,14 @@ function TLapeTree_InternalMethod_Sort.Compile(var Offset: Integer): TResVar;
     end;
   end;
 
+  function GetArrayCopy(Arr: TResVar): TLapeTree_InternalMethod_Copy;
+  begin
+    Result := TLapeTree_InternalMethod_Copy.Create(Self);
+    Result.addParam(TLapeTree_ResVar.Create(Arr.IncLock(), Self));
+  end;
+
 var
-  ArrayVar, ArrayLengthVar, CompareLengthVar, CompareVar: TResVar;
+  ArrayVar, ArrayLengthVar, CompareVar, SortUpVar: TResVar;
   ArrayWasConstant, CompareWasConstant: Boolean;
   ArrayType, ResultType: TLapeType;
   Method: TLapeGlobalVar;
@@ -1042,32 +1048,33 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
 
-  if (not (Params.Count in [1..2])) then
+  if (not (Params.Count in [1..3])) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   if (not FParams[0].CompileToTempVar(Offset, ArrayVar)) then
     LapeException(lpeInvalidEvaluation, DocPos);
   if (not (ArrayVar.VarType is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  _SortMethod := '_Sort';
-
   ResultType := FCompiler.getBaseType(ltInt32);
   ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
 
-  if (FParams.Count = 2) then
+  _SortMethod := '_Sort';
+
+  if (FParams.Count > 1) then
   begin
     if (not FParams[1].CompileToTempVar(Offset, CompareVar)) then
       LapeException(lpeInvalidCompareMethod, DocPos);
 
     if (CompareVar.VarType is TLapeType_DynArray) then
     begin
-      case TLapeType_DynArray(CompareVar.VarType).PType.BaseType of
-        ltInt64: _SortMethod := '_SortWeighted';
-        ltExtended: _SortMethod := '_SortWeightedF';
-        else
-          LapeExceptionFmt(lpeExpectedArrayOfType, ['Int64 or Extended'], DocPos);
-      end;
-    end else
+      if (FParams.Count = 3) then
+        FParams[2].CompileToTempVar(Offset, SortUpVar)
+      else
+        SortUpVar := _ResVar.New(FCompiler.getConstant(1, ltEvalBool));
+
+      _SortMethod := '_SortWeighted'
+    end
+    else
     begin
       if (not (CompareVar.VarType is TLapeType_Method)) then
         LapeException(lpeInvalidCompareMethod, DocPos);
@@ -1099,9 +1106,9 @@ begin
     if CompareWasConstant then
       CompareVar.isConstant := False;
 
-    // Check if user defined `_Sort` exists. Useful for providing a imported method
+    // Check if user defined `_Sort` exists. Useful for providing an imported method
     if (CompareVar.VarType is TLapeType_DynArray) then
-      Method := TLapeType_OverloadedMethod(FCompiler['_Sort'].VarType).getMethod(getTypeArray([ArrayVar.VarType, CompareVar.VarType]))
+      Method := TLapeType_OverloadedMethod(FCompiler['_Sort'].VarType).getMethod(getTypeArray([ArrayVar.VarType, CompareVar.VarType, Compiler.getBaseType(ltEvalBool)]))
     else
       Method := TLapeType_OverloadedMethod(FCompiler['_Sort'].VarType).getMethod(getTypeArray([ArrayVar.VarType]));
 
@@ -1112,8 +1119,10 @@ begin
       try
         addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
         if (CompareVar.VarType is TLapeType_DynArray) then
-          addParam(TLapeTree_ResVar.Create(CompareVar.IncLock(), Self));
-
+        begin
+          addParam(GetArrayCopy(CompareVar.IncLock())); // dont reorder weights
+          addParam(TLapeTree_ResVar.Create(SortUpVar.IncLock(), Self));
+        end;
         Result := Compile(Offset);
       finally
         Free();
@@ -1121,8 +1130,6 @@ begin
     end else
     begin
       ArrayLengthVar := GetArrayLength(ArrayVar).IncLock();
-      if (CompareVar.VarType is TLapeType_DynArray) then
-        CompareLengthVar := GetArrayLength(CompareVar).IncLock();
 
       with TLapeTree_If.Create(Self) do
       try
@@ -1141,8 +1148,8 @@ begin
           addParam(TLapeTree_ResVar.Create(ArrayLengthVar.IncLock(), Self));
           if (CompareVar.VarType is TLapeType_DynArray) then
           begin
-            addParam(GetArrayPointer(CompareVar.IncLock()));
-            addParam(TLapeTree_ResVar.Create(CompareLengthVar.IncLock(), Self));
+            addParam(GetArrayCopy(CompareVar.IncLock())); // dont reorder weights
+            addParam(TLapeTree_ResVar.Create(SortUpVar.IncLock(), Self));
           end else
             addParam(TLapeTree_ResVar.Create(CompareVar.IncLock(), Self));
         end;
@@ -1158,6 +1165,7 @@ begin
     if CompareWasConstant then
       CompareVar.isConstant := True;
 
+    SortUpVar.Spill(1);
     CompareVar.Spill(1);
     ArrayLengthVar.Spill(1);
     ArrayVar.Spill(1);
@@ -1174,7 +1182,7 @@ end;
 
 function TLapeTree_InternalMethod_Sorted.resType: TLapeType;
 begin
-  if (FCopyMethod = nil) and (FParams.Count in [1..2]) then
+  if (FCopyMethod = nil) and (FParams.Count in [1..3]) then
   begin
     FCopyMethod := TLapeTree_InternalMethod_Copy.Create(Self);
     FCopyMethod.Parent := Self;
@@ -1200,7 +1208,7 @@ begin
   with TLapeTree_InternalMethod_Sort.Create(Self) do
   try
     addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
-    if (Self.Params.Count = 1) then
+    while (Self.Params.Count > 0) do
       addParam(Self.Params[0]);
 
     Compile(Offset).Spill(1);

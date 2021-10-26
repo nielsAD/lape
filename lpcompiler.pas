@@ -858,6 +858,10 @@ begin
   addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: WideString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeWStr_Insert);
   addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: UnicodeString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeUStr_Insert);
 
+  addGlobalFunc('procedure _SortWeighted(A: Pointer; Len, ElSize: SizeInt; Weights: array of Int32; SortUp: EvalBool); overload;', @_LapeSortWeighted_Int32);
+  addGlobalFunc('procedure _SortWeighted(A: Pointer; Len, ElSize: SizeInt; Weights: array of Int64; SortUp: EvalBool); overload;', @_LapeSortWeighted_Int64);
+  addGlobalFunc('procedure _SortWeighted(A: Pointer; Len, ElSize: SizeInt; Weights: array of Extended; SortUp: EvalBool); overload;', @_LapeSortWeighted_Extended);
+
   addGlobalFunc('function GetMem(i: SizeInt): Pointer;', @_LapeGetMem);
   addGlobalFunc('function AllocMem(i: SizeInt): Pointer;', @_LapeAllocMem);
   addGlobalFunc('procedure FreeMem(p: Pointer);', @_LapeFreeMem);
@@ -898,8 +902,7 @@ begin
     _LapeCopy +
     _LapeDelete +
     _LapeInsert +
-    _LapeSort +
-    _LapeSortWeighted,
+    _LapeSort,
     '!addDelayedCore'
   );
 
