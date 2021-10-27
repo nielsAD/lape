@@ -3,8 +3,8 @@ program LapeTest;
 {$APPTYPE CONSOLE}
 
 uses
-  SysUtils,
-  lptest;
+  Classes, SysUtils,
+  lptest, lptypes;
 
 begin
   try

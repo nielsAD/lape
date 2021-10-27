@@ -1,4 +1,4 @@
-{
+﻿{
   Author: Niels A.D
   Project: Lape (https://github.com/nielsAD/lape)
   License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
@@ -19,14 +19,6 @@ const
   LapeSystemCaseSensitive = {$IFDEF Unix}True{$ELSE}False{$ENDIF};
 
 type
-  UInt8 = Byte;
-  Int8 = ShortInt;
-  UInt16 = Word;
-  Int16 = SmallInt;
-  UInt32 = LongWord;
-  Int32 = LongInt;
-  //UInt64 = QWord;    Already defined
-  //Int64 = Int64;     Already defined
 
   PUInt8 = ^UInt8;
   PInt8 = ^Int8;
@@ -35,7 +27,7 @@ type
   PUInt32 = ^UInt32;
   PInt32 = ^Int32;
   PUInt64 = ^UInt64;
-  //PInt64 = ^Int64;   Already defined
+  PInt64 = ^Int64;
 
   PByteBool = ^ByteBool;
 
@@ -645,20 +637,12 @@ type
     property ManagedDeclarations: TLapeDeclarationList read FManagedDecls write setManagedDecls;
   end;
 
-  {$IFDEF FPC}generic{$ENDIF} TLapeSorter<_T> = class
-  public
-  type
-    TWeightArray = {$IFDEF FPC}specialize{$ENDIF} TArray<_T>;
-  public
-    class procedure QuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: TWeightArray; iLo, iHi: SizeInt; const SortUp: Boolean); static;
-  end;
-
 const
   op_Invoke = op_Index;
   op_Label = op_Addr;
 
   {$IFNDEF FPC}
-  LineEnding = #13#10;
+  LineEnding = {$IFDEF MSWINDOWS}#13#10{$ELSE}#10{$ENDIF};
   DirectorySeparator = PathDelim;
   {$ENDIF}
 
@@ -709,6 +693,7 @@ const
     {$MESSAGE Fatal 'TCodePos should be <= Pointer for universal methods'}
   {$IFEND}
 
+  LapeBaseTypes = [Low(ELapeBaseType)..High(ELapeBaseType)];
   LapeIntegerTypes = [Low(LapeIntegerTypeRange)..High(LapeIntegerTypeRange)];
   LapeSignedIntegerTypes = [ltInt8, ltInt16, ltInt32, ltInt64];
   LapeUnsignedIntegerTypes = [ltUInt8, ltUInt16, ltUInt32, ltUInt64];
@@ -808,9 +793,9 @@ procedure _Insert16(Arr: PUInt16; var Index: Integer);
 procedure _Insert32(Arr: PUInt32; var Index: Integer);
 procedure _Insert64(Arr: PUInt64; var Index: Integer);
 
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TIntegerArray; const SortUp: Boolean);
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TInt64Array;  const SortUp: Boolean);
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean);
+procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TIntegerArray; const SortUp: Boolean); overload;
+procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TInt64Array;  const SortUp: Boolean); overload;
+procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean); overload;
 
 {$IFDEF Lape_TrackObjects}
 var
@@ -1217,33 +1202,48 @@ begin
 end;
 
 procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TIntegerArray; const SortUp: Boolean);
-type
-  TSorter = specialize TLapeSorter<Integer>;
-begin
-  if (Len <> Length(Weights)) then
-    LapeExceptionFmt(lpeArrayLengthsDontMatch, [Format('%d, %d', [Len, Length(Weights)])]);
 
-  TSorter.QuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
+  procedure QuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: TIntegerArray; iLo, iHi: SizeInt; const SortUp: Boolean);
+  var
+    Lo, Hi: SizeInt;
+    Mid, T: Integer;
+    Item: PByte;
+  begin
+    {$i lpsort.inc}
+  end;
+
+begin
+  QuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
 end;
 
 procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TInt64Array; const SortUp: Boolean);
-type
-  TSorter = specialize TLapeSorter<Int64>;
-begin
-  if (Len <> Length(Weights)) then
-    LapeExceptionFmt(lpeArrayLengthsDontMatch, [Format('%d, %d', [Len, Length(Weights)])]);
 
-  TSorter.QuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
+  procedure QuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: TInt64Array; iLo, iHi: SizeInt; const SortUp: Boolean);
+  var
+    Lo, Hi: SizeInt;
+    Mid, T: Int64;
+    Item: PByte;
+  begin
+    {$i lpsort.inc}
+  end;
+
+begin
+  QuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
 end;
 
 procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean);
-type
-  TSorter = specialize TLapeSorter<Extended>;
-begin
-  if (Len <> Length(Weights)) then
-    LapeExceptionFmt(lpeArrayLengthsDontMatch, [Format('%d, %d', [Len, Length(Weights)])]);
 
-  TSorter.QuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
+  procedure QuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: TExtendedArray; iLo, iHi: SizeInt; const SortUp: Boolean);
+  var
+    Lo, Hi: SizeInt;
+    Mid, T: Extended;
+    Item: PByte;
+  begin
+    {$i lpsort.inc}
+  end;
+
+begin
+  QuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
 end;
 
 function TLapeBaseClass._AddRef: Integer; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};
@@ -2163,7 +2163,7 @@ begin
   if (Decl.FName <> '') then
     Inc(FNamedCount);
 
-  Decl.FNameChangeNotifier.AddProc(@NameChanged);
+  Decl.FNameChangeNotifier.AddProc({$IFDEF FPC}@{$ENDIF}NameChanged);
 end;
 
 procedure TLapeDeclCollection_Dictionary._Grow;
@@ -2452,7 +2452,7 @@ end;
 
 function TLapeDeclCollection_List.ExportToArray: TLapeDeclArray;
 begin
-  Result := FList.ExportToArray();
+  Result := TLapeDeclArray(FList.ExportToArray());
 end;
 
 constructor TLapeDeclarationList.Create(AList: TLapeDeclCollection; ManageDeclarations: Boolean);
@@ -2755,64 +2755,6 @@ end;
 procedure TLapeManagingDeclaration.ClearSubDeclarations;
 begin
   FManagedDecls.Clear();
-end;
-
-class procedure TLapeSorter.QuickSort{$IFNDEF FPC}<_T>{$ENDIF}(const Arr: PByte; const ElSize: SizeInt; var Weights: TWeightArray; iLo, iHi: SizeInt; const SortUp: Boolean);
-var
-  Lo, Hi: SizeInt;
-  Mid, T: _T;
-  Item: PByte;
-begin
-  Item := GetMem(ElSize);
-
-  repeat
-    Lo := iLo;
-    Hi := iHi;
-    Mid := Weights[(Lo + Hi) shr 1];
-    repeat
-      if SortUp then
-      begin
-        while (Weights[Lo] < Mid) do Inc(Lo);
-        while (Weights[Hi] > Mid) do Dec(Hi);
-      end else
-      begin
-        while (Weights[Lo] > Mid) do Inc(Lo);
-        while (Weights[Hi] < Mid) do Dec(Hi);
-      end;
-      if (Lo <= Hi) then
-      begin
-        if (Lo <> Hi) then
-        begin
-          T := Weights[Lo];
-          Weights[Lo] := Weights[Hi];
-          Weights[Hi] := T;
-
-          Move(Arr[Lo * ElSize], Item^, ElSize);
-          Move(Arr[Hi * ElSize], Arr[Lo * ElSize], ElSize);
-          Move(Item^, Arr[Hi * ElSize], ElSize);
-        end;
-        Inc(Lo);
-        Dec(Hi);
-      end;
-    until Lo > Hi;
-
-    // sort the smaller range recursively
-    // sort the bigger range via the loop
-    // Reasons: memory usage is O(log(n)) instead of O(n) and loop is faster than recursion
-    if Hi - iLo < iHi - Lo then
-    begin
-      if iLo < Hi then
-        QuickSort(Arr, ElSize, Weights, iLo, Hi, SortUp);
-      iLo := Lo;
-    end else
-    begin
-      if Lo < iHi then
-        QuickSort(Arr, ElSize, Weights, Lo, iHi, SortUp);
-      iHi := Hi;
-    end;
-  until iLo >= iHi;
-
-  FreeMem(Item);
 end;
 
 {$IFDEF Lape_TrackObjects}

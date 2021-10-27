@@ -146,7 +146,7 @@ type
     Token: EParserToken;
   end;
 
-  TLapeKeywordDictionary = specialize TLapeUniqueStringDictionary<EParserToken>;
+  TLapeKeywordDictionary = {$IFDEF FPC}specialize{$ENDIF} TLapeUniqueStringDictionary<EParserToken>;
 
   TLapeTokenizerBase = class(TLapeBaseDeclClass)
   protected
@@ -214,7 +214,6 @@ type
     property Pos: Integer read FPos write setPos;
     property Len: Integer read FLen;
     property InPeek: Boolean read FInPeek;
-  published
     property OnParseDirective: TLapeParseDirective read FOnParseDirective write FOnParseDirective;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
   end;
@@ -229,7 +228,6 @@ type
     procedure Reset(ClearDoc: Boolean = False); override;
     constructor Create(ADoc: lpString; AFileName: lpString = ''); reintroduce; virtual;
     function getChar(Offset: Integer = 0): lpChar; override;
-  published
     property Doc: lpString read FDoc write setDoc;
   end;
 
@@ -674,7 +672,7 @@ var
   tmpDocPos: TDocPos;
   CommentLevel: Integer;
 
-  procedure NextPos_CountLines; inline;
+  procedure NextPos_CountLines; {$IFDEF FPC}inline;{$ENDIF}
   begin
     repeat
       case CurChar of
@@ -690,7 +688,7 @@ var
     until (not (CurChar in [#9, #32, #10, #13]));
   end;
 
-  function Alpha: EParserToken; inline;
+  function Alpha: EParserToken; {$IFDEF FPC}inline;{$ENDIF}
   var
     Token: EParserToken;
   begin
@@ -1372,7 +1370,7 @@ var
 begin
   StrList := TStringList.Create();
   try
-    StrList.LoadFromFile(string(AFileName));
+    StrList.LoadFromFile(string(AFileName), TEncoding.ANSI);
     inherited Create(lpString(StrList.Text), lpString(AFileName));
   finally
     StrList.Free();
