@@ -258,7 +258,6 @@ type
     property Tree: TLapeTree_Base read FTree;
     property DelayedTree: TLapeTree_DelayedStatementList read FDelayedTree;
     property Importing: Boolean read getImporting write setImporting;
-  published
     property Tokenizer: TLapeTokenizerBase read getTokenizer write setTokenizer;
     property Defines: TLapeDefineArray read FDefines write setBaseDefines;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
@@ -828,9 +827,13 @@ begin
   addGlobalType(getBaseType(DetermineIntType(SizeOf(NativeUInt), False)).createCopy(), 'NativeUInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrInt), True)).createCopy(), 'PtrInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrUInt), False)).createCopy(), 'PtrUInt');
-  addGlobalVar(True, 'True').isConstant := True;
-  addGlobalVar(False, 'False').isConstant := True;
-  addGlobalVar(nil, 'nil').isConstant := True;
+
+  addDelayedCode(
+    'const'                  + LineEnding +
+    '  True = EvalBool(1);'  + LineEnding +
+    '  False = EvalBool(0);' + LineEnding +
+    '  nil = Pointer(0);'
+  );
 
   addGlobalFunc('procedure _Write(s: string);', @_LapeWrite);
   addGlobalFunc('procedure _WriteLn();', @_LapeWriteLn);
@@ -1168,7 +1171,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
   begin
     if (Directive = 'define') then
     begin
-      p := Pos(':=', Argument);
+      p := Pos(':=', lpString(Argument));
       if (p > 0) then
       begin
         Name := Copy(Argument, 1, p - 1);
@@ -1829,7 +1832,7 @@ var
           begin
             Include(HintDirectives, lhdDeprecated);
             if (Tokenizer.Expect([tk_typ_String, tk_sym_SemiColon]) = tk_typ_String) then
-              DeprecatedHint := Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2);
+              DeprecatedHint := lpString(Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2));
           end;
         tk_kw_UnImplemented:
           Include(HintDirectives, lhdUnImplemented);
@@ -2767,8 +2770,10 @@ var
     case Tokenizer.Tok of
       tk_typ_String, tk_typ_HereString: Str := getString();
       tk_typ_Char: Str := lpString(Tokenizer.TokChar);
-      else LapeException(lpeImpossible);
+      else
+        LapeException(lpeImpossible);
     end;
+
     while isNext([tk_typ_String, tk_typ_HereString, tk_typ_Char], Token) do
     begin
       case Token of
@@ -2961,6 +2966,8 @@ var
     Result := Resolve(Node, not SkipTop, not SkipTop, HasChanged);
   end;
 
+var
+  Signed: Boolean;
 begin
   Result := nil;
   Method := nil;
@@ -2978,10 +2985,38 @@ begin
       DoNext := True;
 
       case Tokenizer.Tok of
-        tk_typ_Integer: PushVarStack(TLapeTree_Integer.Create(Tokenizer.TokString, Self, getPDocPos()));
-        tk_typ_Integer_Hex,
-        tk_typ_Integer_Bin: PushVarStack(TLapeTree_Integer.Create(lpString(UIntToStr(Tokenizer.TokUInt64)), Self, getPDocPos()));
-        tk_typ_Float: PushVarStack(TLapeTree_Float.Create(Tokenizer.TokString, Self, getPDocPos()));
+        tk_typ_Integer,
+        tk_typ_Integer_Hex, tk_typ_Integer_Bin,
+        tk_typ_Float:
+          begin
+            // FCachedDeclarations are used - Need to know if signed or not. Remove op_UnaryMinus node too.
+            Signed := (OpStack.Cur >= 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) and (opStack.Top.OperatorType = op_UnaryMinus);
+
+            if Signed then
+            begin
+              case Tokenizer.Tok of
+                tk_typ_Integer:
+                  PushVarStack(TLapeTree_Integer.Create(lpString('-' + Tokenizer.TokString), Self, getPDocPos()));
+                tk_typ_Integer_Hex, tk_typ_Integer_Bin:
+                  PushVarStack(TLapeTree_Integer.Create(lpString('-' + UIntToStr(Tokenizer.TokUInt64)), Self, getPDocPos()));
+                tk_typ_Float:
+                  PushVarStack(TLapeTree_Float.Create(lpString('-' + Tokenizer.TokString), Self, getPDocPos()));
+              end;
+
+              OpStack.Pop.Free();
+            end else
+            begin
+              case Tokenizer.Tok of
+                tk_typ_Integer:
+                  PushVarStack(TLapeTree_Integer.Create(lpString(Tokenizer.TokString), Self, getPDocPos()));
+                tk_typ_Integer_Hex, tk_typ_Integer_Bin:
+                  PushVarStack(TLapeTree_Integer.Create(lpString(UIntToStr(Tokenizer.TokUInt64)), Self, getPDocPos()));
+                tk_typ_Float:
+                  PushVarStack(TLapeTree_Float.Create(lpString(Tokenizer.TokString), Self, getPDocPos()));
+              end;
+            end;
+          end;
+
         tk_typ_Char,
         tk_typ_String,
         tk_typ_HereString: ParseAndPushString();

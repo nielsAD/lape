@@ -378,8 +378,8 @@ begin
   Assert(b - a = -(a - b), 'b - a <> -(a - b)');
   Assert(b - a =  -a + b,  'b - a <>  -a + b');
 
-  Assert(a - b = -6, 'a - b');
-  Assert(b - a =  6, 'b - a');
+  Assert(Int64(a - b) = -6, 'a - b');
+  Assert(UInt64(b - a) =  6, 'b - a');
 
   Assert(a * b = b * a, 'a * b <> b * a');
   Assert(a + a = 2 * a, 'a + a <> 2 * a');

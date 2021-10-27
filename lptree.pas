@@ -6341,13 +6341,19 @@ end;
 procedure TLapeTree_CaseBranch.setFallThroughOffset(Offset: Integer);
 var
   i: Integer;
+  FlowStatement: TLapeFlowStatement;
 begin
   for i := 0 to FFallThroughStatements.Count - 1 do
-    with FFallThroughStatements[i] do
+  begin
+    FlowStatement := FFallThroughStatements[i];
+    with FlowStatement do
       if JumpSafe then
         FCompiler.Emitter._JmpSafeR(Offset - CodeOffset, CodeOffset, @DocPos)
       else
         FCompiler.Emitter._JmpR(Offset - CodeOffset, CodeOffset, @DocPos);
+
+    FFallThroughStatements[i] := FlowStatement;
+  end;
 end;
 
 procedure TLapeTree_CaseBranch.setCondition(Node: TLapeTree_ExprBase);

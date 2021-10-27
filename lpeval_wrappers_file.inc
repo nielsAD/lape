@@ -44,7 +44,7 @@ procedure _LapeFindFiles(const Params: PParamArray; const Result: Pointer); {$IF
           end;
       until (FindNext(Info) <> 0);
 
-      FindClose(Info);
+      SysUtils.FindClose(Info);
     end;
   end;
 
@@ -79,7 +79,7 @@ procedure _LapeFindDirectories(const Params: PParamArray; const Result: Pointer)
         end;
       until (FindNext(Info) <> 0);
 
-      FindClose(Info);
+      SysUtils.FindClose(Info);
     end;
   end;
 
@@ -158,7 +158,7 @@ procedure _LapeDeleteDirectory(const Params: PParamArray; const Result: Pointer)
   function DeleteDirectory(Directory: lpString; OnlyChildren: Boolean): Boolean;
   var
     Info: TSearchRec;
-    FileName: lpString;
+    FileName: String;
   begin
     Directory := IncludeTrailingPathDelimiter(ExpandFileName(Directory));
 
@@ -178,11 +178,11 @@ procedure _LapeDeleteDirectory(const Params: PParamArray; const Result: Pointer)
           Continue;
         end;
 
-        if (not DeleteFile(FileName)) then
+        if (not SysUtils.DeleteFile(FileName)) then
           Exit(False);
       until (FindNext(Info) <> 0);
 
-      FindClose(Info);
+      SysUtils.FindClose(Info);
     end;
 
     Result := OnlyChildren or RemoveDir(Directory);
@@ -194,7 +194,7 @@ end;
 
 procedure _LapeDeleteFile(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PBoolean(Result)^ := DeleteFile(PlpString(Params^[0])^);
+  PBoolean(Result)^ := SysUtils.DeleteFile(PlpString(Params^[0])^);
 end;
 
 procedure _LapeRenameFile(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -309,11 +309,31 @@ begin
 end;
 
 procedure _LapeIncludeLeadingPathDelimiter(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  {$IFNDEF FPC}
+  function IncludeLeadingPathDelimiter(const Path: lpString): lpString;
+  begin
+    Result := Path;
+    If (Length(Result) = 0) or (Result[1] <> DirectorySeparator) then
+      Result := DirectorySeparator + Result;
+  end;
+  {$ENDIF}
+
 begin
   PlpString(Result)^ := IncludeLeadingPathDelimiter(PlpString(Params^[0])^);
 end;
 
 procedure _LapeExcludeLeadingPathDelimiter(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  {$IFNDEF FPC}
+  function ExcludeLeadingPathDelimiter(const Path: lpString): lpString;
+  begin
+    Result := Path;
+    If (Length(Result) > 0) and (Result[1] = DirectorySeparator) then
+      Delete(Result, 1, 1);
+  end;
+  {$ENDIF}
+
 begin
   PlpString(Result)^ := ExcludeLeadingPathDelimiter(PlpString(Params^[0])^);
 end;

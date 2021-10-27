@@ -32,7 +32,8 @@
   {$DEFINE Lape_NeedAnsiStringsUnit}
 {$IFEND}
 
+
 // https://bugs.freepascal.org/view.php?id=37305
-{$IF (FPC_FULLVERSION=30200) OR (FPC_FULLVERSION=30201)}
+{$IF (DEFINED(FPC) and ((FPC_FULLVERSION=30200) or (FPC_FULLVERSION=30201)))}
   {$OPTIMIZATION NOLOOPUNROLL}
 {$ENDIF}

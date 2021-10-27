@@ -23,3 +23,5 @@ gmon.out
 __history/
 lib/
 backup/
+__recovery
+*.rsm

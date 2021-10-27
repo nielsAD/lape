@@ -368,7 +368,7 @@ type
     Res: TLapeType;
     IsOperator: Boolean;
     HintDirectives: ELapeHintDirectives;
-    DeprecatedHint: String;
+    DeprecatedHint: lpString;
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -609,7 +609,7 @@ type
   end;
 
   TLapeHint = procedure(Sender: TLapeCompilerBase; Msg: lpString) of object;
-  TLapeBaseTypesDictionary = specialize TLapeUniqueStringDictionary<TLapeType>;
+  TLapeBaseTypesDictionary = {$IFDEF FPC}specialize{$ENDIF}TLapeUniqueStringDictionary<TLapeType>;
 
   TLapeCompilerBase = class(TLapeBaseDeclClass)
   protected
@@ -696,7 +696,6 @@ type
     property GlobalDeclarations: TLapeDeclarationList read FGlobalDeclarations;
     property ManagedDeclarations: TLapeDeclarationList read FManagedDeclarations;
     property Globals[AName: lpString]: TLapeGlobalVar read getGlobalVar; default;
-  published
     property Emitter: TLapeCodeEmitter read FEmitter write setEmitter;
     property Options: ECompilerOptionsSet read FOptions write setOptions default Lape_OptionsDef;
     property Options_PackRecords: UInt8 read FBaseOptions_PackRecords write setPackRecords default Lape_PackRecordsDef;
@@ -771,7 +770,7 @@ procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 var
   BaseType: ELapeBaseType;
 begin
-  for BaseType := Low(ELapeBaseType) to High(ELapeBaseType) do
+  for BaseType in LapeBaseTypes do
     if (Arr[BaseType] <> nil) then
       if DoFree then
         FreeAndNil(Arr[BaseType])
@@ -3988,7 +3987,7 @@ begin
   LoadBaseTypes(FBaseTypes, Self);
 
   FBaseTypesDictionary := TLapeBaseTypesDictionary.Create(nil, 256);
-  for BaseType in ELapeBaseType do
+  for BaseType in LapeBaseTypes do
     if (FBaseTypes[BaseType] <> nil) then
       FBaseTypesDictionary[FBaseTypes[BaseType].Name] := FBaseTypes[BaseType];
 
@@ -3996,7 +3995,7 @@ begin
 
   FGlobalDeclarations := TLapeDeclarationList.Create(nil);
   FManagedDeclarations := TLapeDeclarationList.Create(nil);
-  for BaseType in ELapeBaseType do
+  for BaseType in LapeBaseTypes do
     FCachedDeclarations[BaseType] := TLapeVarMap.Create(nil, dupIgnore, True, '', True);
 end;
 
@@ -4010,7 +4009,7 @@ begin
   FreeAndNil(FBaseTypesDictionary);
   FreeAndNil(FGlobalDeclarations);
   FreeAndNil(FManagedDeclarations);
-  for BaseType in ELapeBaseType do
+  for BaseType in LapeBaseTypes do
     FreeAndNil(FCachedDeclarations[BaseType]);
 
   ClearBaseTypes(FBaseTypes, True);
@@ -4027,7 +4026,7 @@ begin
   FManagedDeclarations.Delete(TLapeVar, True);
   FGlobalDeclarations.Clear();
   FManagedDeclarations.Clear();
-  for BaseType in ELapeBaseType do
+  for BaseType in LapeBaseTypes do
     FCachedDeclarations[BaseType].Clear();
   Reset();
 end;
