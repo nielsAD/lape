@@ -3565,7 +3565,7 @@ begin
   FAfterParsing := TLapeCompilerNotification.Create();
 
   FTreeMethodMap := TLapeTreeMethodMap.Create(nil, dupError, True);
-  FInternalMethodMap := TLapeInternalMethodMap.Create(nil, 1024);
+  FInternalMethodMap := TLapeInternalMethodMap.Create(nil);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
   FInternalMethodMap['WriteLn'] := TLapeTree_InternalMethod_WriteLn;
   FInternalMethodMap['ToStr'] := TLapeTree_InternalMethod_ToStr;

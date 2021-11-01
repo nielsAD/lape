@@ -162,8 +162,6 @@ type
     FOnParseDirective: TLapeParseDirective;
     FOnHandleDirective: TLapeHandleDirective;
 
-    FKeywordDictionary: TLapeKeywordDictionary;
-
     function Compare(Key: lpString): Boolean; virtual; abstract;
     function Identify: EParserToken; virtual;
     function HandleDirective: Boolean; virtual;
@@ -183,7 +181,6 @@ type
     NullPos: TDocPos;
 
     constructor Create(AFileName: lpString = ''); reintroduce; virtual;
-    destructor Destroy; override;
     procedure Reset(ClearDoc: Boolean = False); virtual;
     function getState: Pointer; virtual;
     procedure setState(const State: Pointer; DoFreeState: Boolean = True); virtual;
@@ -418,6 +415,12 @@ function DetermineIntType(i1, i2: Int64; MinSize: UInt8): ELapeBaseType; overloa
 function DetermineIntType(i1, i2: Int64; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
 function DetermineIntType(i1, i2: Int64): ELapeBaseType; overload;
 function DetermineIntType(Size: Integer; Signed: Boolean): ELapeBaseType; overload;
+
+procedure LapeInitKeywordDictionary;
+procedure LapeFreeKeywordDictionary;
+
+var
+  LapeKeywordDictionary: TLapeKeywordDictionary;
 
 implementation
 
@@ -695,7 +698,7 @@ var
     while (getChar(1) in ['0'..'9', 'A'..'Z', '_', 'a'..'z']) do
       Inc(FPos);
 
-    Token := FKeywordDictionary[getTokString()];
+    Token := LapeKeywordDictionary[getTokString()];
     if (Token <> tk_Unknown) then
       Result := setTok(Token)
     else
@@ -1128,18 +1131,12 @@ begin
 end;
 
 constructor TLapeTokenizerBase.Create(AFileName: lpString = '');
-var
-  i: Integer;
 begin
   inherited Create();
 
   FFileName := AFileName;
   FOnParseDirective := nil;
   FOnHandleDirective := nil;
-
-  FKeywordDictionary := TLapeKeywordDictionary.Create(tk_Unknown, 512);
-  for i := 0 to High(Lape_Keywords) do
-    FKeywordDictionary[Lape_Keywords[i].Keyword] := Lape_Keywords[i].Token;
 
   OverridePos := nil;
   NullPos := NullDocPos;
@@ -1150,13 +1147,6 @@ begin
   end;
 
   Reset();
-end;
-
-destructor TLapeTokenizerBase.Destroy;
-begin
-  FreeAndNil(FKeywordDictionary);
-
-  inherited Destroy();
 end;
 
 procedure TLapeTokenizerBase.Reset(ClearDoc: Boolean = False);
@@ -1382,10 +1372,29 @@ begin
   Create(UnicodeString(AFileName));
 end;
 
+procedure LapeInitKeywordDictionary;
+var
+  i: Integer;
+begin
+  LapeKeywordDictionary := TLapeKeywordDictionary.Create(tk_Unknown);
+  for i := Low(Lape_Keywords) to High(Lape_Keywords) do
+    LapeKeywordDictionary[Lape_Keywords[i].Keyword] := Lape_Keywords[i].Token;
+end;
+
+procedure LapeFreeKeywordDictionary;
+begin
+  FreeAndNil(LapeKeywordDictionary);
+end;
+
 initialization
   {$IFDEF LoadDefaultFormatSettings}
   GetLocaleFormatSettings(0, FormatSettings);
   {$ENDIF}
+
+  LapeInitKeywordDictionary();
+
+finalization
+  LapeFreeKeywordDictionary();
 
 end.
 

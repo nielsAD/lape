@@ -3986,7 +3986,7 @@ begin
 
   LoadBaseTypes(FBaseTypes, Self);
 
-  FBaseTypesDictionary := TLapeBaseTypesDictionary.Create(nil, 256);
+  FBaseTypesDictionary := TLapeBaseTypesDictionary.Create(nil);
   for BaseType in LapeBaseTypes do
     if (FBaseTypes[BaseType] <> nil) then
       FBaseTypesDictionary[FBaseTypes[BaseType].Name] := FBaseTypes[BaseType];
