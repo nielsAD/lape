@@ -69,6 +69,7 @@ type
     function getReadable: Boolean;
     function getWriteable: Boolean;
     function getConstant: Boolean;
+    function getLock: Integer;
   public
     VarType: TLapeType;
     VarPos: TVarPos;
@@ -99,6 +100,7 @@ type
     property Readable: Boolean read getReadable write setReadable;
     property Writeable: Boolean read getWriteable write setWriteable;
     property isConstant: Boolean read getConstant write setConstant;
+    property Lock: Integer read getLock;
   end;
 
   ELapeParameterType = (lptNormal, lptConst, lptConstRef, lptVar, lptOut);
@@ -703,7 +705,7 @@ type
   end;
 
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
+function getTypeArray(Arr: array of TLapeType): TLapeTypeArray; {$IFDEF Lape_Inline}inline;{$ENDIF}
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
 
@@ -845,6 +847,13 @@ end;
 function TResVar.getConstant: Boolean;
 begin
   Result := Readable and (not Writeable);
+end;
+
+function TResVar.getLock: Integer;
+begin
+  Result := 0;
+  if (VarPos.MemPos = mpVar) and (VarPos.StackVar <> nil) and (VarPos.StackVar is TLapeStackTempVar) then
+    Result := TLapeStackTempVar(VarPos.StackVar).FLock;
 end;
 
 class function TResVar.New(AVar: TLapeVar): TResVar;
