@@ -421,6 +421,63 @@ var
     '  FreeMem(Item);'                                                                   + LineEnding +
     'end;';
 
+    _LapeIndexOf: lpString =
+    'function _IndexOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'              + LineEnding +
+    '  Equals: function(constref A, B): EvalBool): SizeInt;'                             + LineEnding +
+    'type'                                                                               + LineEnding +
+    '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  i: SizeInt;'                                                                      + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  if (p = nil) then'                                                                + LineEnding +
+    '    Exit;'                                                                          + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  if (Hi = -1) then'                                                                + LineEnding +
+    '    Hi := PSizeInt(p)[-1]^;'                                                        + LineEnding +
+    '  for i := 0 to Hi do'                                                              + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    if Equals(Item^, p^) then'                                                      + LineEnding +
+    '      Exit(Lo+i);'                                                                  + LineEnding +
+    '    Inc(p, ElSize);'                                                                + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  Result := -1;'                                                                    + LineEnding +
+    'end;'                                                                               + LineEnding +
+    ''                                                                                   + LineEnding +
+    'function _IndicesOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'            + LineEnding +
+    '  Equals: function(constref A, B): EvalBool): array of Int32;'                      + LineEnding +
+    'type'                                                                               + LineEnding +
+    '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  i, Count, Len: SizeInt;'                                                          + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  if (p = nil) then'                                                                + LineEnding +
+    '    Exit;'                                                                          + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  Len := 4;'                                                                        + LineEnding +
+    '  SetLength(Result, Len);'                                                          + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  if (Hi = -1) then'                                                                + LineEnding +
+    '    Hi := PSizeInt(p)[-1]^;'                                                        + LineEnding +
+    '  for i := 0 to Hi do'                                                              + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    if Equals(Item^, p^) then'                                                      + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      if (Count = Len) then'                                                        + LineEnding +
+    '      begin'                                                                        + LineEnding +
+    '        Len := Len * 2;'                                                            + LineEnding +
+    '        SetLength(Result, Len);'                                                    + LineEnding +
+    '      end;'                                                                         + LineEnding +
+    ''                                                                                   + LineEnding +
+    '      Result[Count] := Lo+i;'                                                       + LineEnding +
+    '      Inc(Count);'                                                                  + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    '    Inc(p, ElSize);'                                                                + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  SetLength(Result, Count);'                                                        + LineEnding +
+    'end;';
+
 implementation
 
 uses
@@ -523,7 +580,7 @@ begin
   _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TInt64Array(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
-procedure _LapeSortWeighted_Extended(const Params: PParamArray);{$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeSortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TExtendedArray(Params^[3]^), PEvalBool(Params^[4])^);
 end;

@@ -1,0 +1,26 @@
+{$assertions on}
+
+type
+  TPoint = record X,Y:Integer; end;
+
+var
+  Stat: array[5..8] of TPoint;
+  P: TPoint;
+  Dyn: array of Integer;
+begin
+  P := [15,15];
+  Stat := [[15,15],[30,30],[15,15],[0,0]];
+
+  Assert(ToString(IndicesOf(P, Stat)) = '[5, 7]');
+  Assert(IndexOf(TPoint([0,0]), Stat) = 8);
+
+  Dyn += 10;
+  Dyn += 20;
+  Dyn += 40;
+  Dyn += 20;
+  Dyn += 20;
+  Dyn += 10;
+
+  Assert(ToString(IndicesOf(20, Dyn)) = '[1, 3, 4]');
+  Assert(IndexOf(20, Dyn) = 1);
+end;
