@@ -914,6 +914,8 @@ begin
   addGlobalFunc('procedure _SortWeighted(A: Pointer; Len, ElSize: SizeInt; Weights: array of Int64; SortUp: EvalBool); overload;', @_LapeSortWeighted_Int64);
   addGlobalFunc('procedure _SortWeighted(A: Pointer; Len, ElSize: SizeInt; Weights: array of Extended; SortUp: EvalBool); overload;', @_LapeSortWeighted_Extended);
 
+  addGlobalFunc('procedure _Reverse(A: Pointer; ElSize, Len: SizeInt); overload;', @_LapeReverse);
+
   addGlobalFunc('function GetMem(i: SizeInt): Pointer;', @_LapeGetMem);
   addGlobalFunc('function AllocMem(i: SizeInt): Pointer;', @_LapeAllocMem);
   addGlobalFunc('procedure FreeMem(p: Pointer);', @_LapeFreeMem);
@@ -3648,6 +3650,8 @@ begin
 
   FInternalMethodMap['Sort'] := TLapeTree_InternalMethod_Sort;
   FInternalMethodMap['Sorted'] := TLapeTree_InternalMethod_Sorted;
+  FInternalMethodMap['Reverse'] := TLapeTree_InternalMethod_Reverse;
+  FInternalMethodMap['Reversed'] := TLapeTree_InternalMethod_Reversed;
   FInternalMethodMap['IndexOf'] := TLapeTree_InternalMethod_IndexOf;
   FInternalMethodMap['IndicesOf'] := TLapeTree_InternalMethod_IndicesOf;
 

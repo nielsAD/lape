@@ -829,6 +829,8 @@ procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TInte
 procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TInt64Array; const SortUp: Boolean); overload;
 procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean); overload;
 
+procedure _Reverse(const Arr: PByte; const ElSize: SizeInt; Len: SizeInt);
+
 {$IFDEF Lape_TrackObjects}
 var
   lpgCounter: Integer;
@@ -1266,6 +1268,36 @@ procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TExte
 
 begin
   QuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
+end;
+
+procedure _Reverse(const Arr: PByte; const ElSize: SizeInt; Len: SizeInt);
+type
+  PSizeInt = ^SizeInt;
+var
+  T: PByte;
+  Lo, Hi: PByte;
+begin
+  if (Arr = nil) then
+    Exit;
+
+  if (Len = -1) then
+    Len := PSizeInt(Arr)[-1]; // High
+
+  T := GetMem(ElSize);
+
+  Lo := Arr;
+  Hi := Arr + (Len * ElSize);
+  while (PtrUInt(Lo) < PtrUInt(Hi)) do
+  begin
+    Move(Hi^, T^, ElSize);
+    Move(Lo^, Hi^, ElSize);
+    Move(T^, Lo^, ElSize);
+
+    Dec(Hi, ElSize);
+    Inc(Lo, ElSize);
+  end;
+
+  FreeMem(T);
 end;
 
 function TLapeBaseClass._AddRef: Integer; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};

@@ -1,0 +1,28 @@
+{$assertions on}
+
+type
+  TPoint = record X,Y:Integer; end;
+
+var
+  Stat: array[5..8] of TPoint;
+  Dyn: array of Integer;
+begin
+  Stat := [[0,0],[1,1],[2,2],[3,3]];
+
+  Reverse(Stat);
+
+  Assert(ToString(Stat) = '[{X = 3, Y = 3}, {X = 2, Y = 2}, {X = 1, Y = 1}, {X = 0, Y = 0}]');
+  Assert(ToString(Reversed(Stat)) = '[{X = 0, Y = 0}, {X = 1, Y = 1}, {X = 2, Y = 2}, {X = 3, Y = 3}]');
+
+  Dyn += 0;
+  Dyn += 1;
+  Dyn += 2;
+  Dyn += 3;
+  Dyn += 4;
+  Dyn += 5;
+
+  Reverse(Dyn);
+
+  Assert(ToString(Dyn) = '[5, 4, 3, 2, 1, 0]');
+  Assert(ToString(Reversed(Dyn)) = '[0, 1, 2, 3, 4, 5]');
+end;
