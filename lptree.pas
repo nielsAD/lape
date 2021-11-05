@@ -426,6 +426,21 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_Reverse = class(TLapeTree_InternalMethod)
+  public
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_Reversed = class(TLapeTree_InternalMethod)
+  protected
+    FCopyMethod: TLapeTree_InternalMethod_Copy;
+  public
+    destructor Destroy; override;
+
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_InternalMethod_FallThrough = class(TLapeTree_InternalMethod)
   public
     function Compile(var Offset: Integer): TResVar; override;
@@ -1212,11 +1227,10 @@ function TLapeTree_InternalMethod_Sorted.Compile(var Offset: Integer): TResVar;
 begin
   Result := NullResVar;
   Dest := NullResVar;
-  if (FCopyMethod = nil) then
+  if (resType() = nil) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
   Result := FCopyMethod.Compile(Offset).IncLock();
-  Result.isConstant := False;
 
   with TLapeTree_InternalMethod_Sort.Create(Self) do
   try
@@ -1240,8 +1254,7 @@ end;
 
 function TLapeTree_InternalMethod_IndexOf.Compile(var Offset: Integer): TResVar;
 var
-  ItemVar, ArrayVar, CompareVar: TResVar;
-  ArrayPtr: TLapeTree_ExprBase;
+  ItemVar, ArrayVar, CompareVar, ArrayPointer: TResVar;
   ArrayType: TLapeType;
   ItemWasConstant, ArrayWasConstant: Boolean;
 begin
@@ -1266,21 +1279,25 @@ begin
   case ArrayVar.VarType.BaseType of
     ltStaticArray:
       begin
-        ArrayPtr := TLapeTree_Operator.Create(op_Addr, Self);
-        with TLapeTree_Operator(ArrayPtr) do
-        begin
+        with TLapeTree_Operator.Create(op_Addr, Self) do
+        try
           Left := TLapeTree_Operator.Create(op_Index, Self);
 
-          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar, Self);
+          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
           TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
+
+          ArrayPointer := Compile(Offset);
+        finally
+          ArrayVar.DecLock(1);
+
+          Free();
         end;
       end;
 
     ltDynArray:
       begin
-        ArrayPtr := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
-        with TLapeTree_ResVar(ArrayPtr) do
-          FResVar.VarType := FCompiler.getBaseType(ltPointer);
+        ArrayPointer := ArrayVar;
+        ArrayPointer.VarType := FCompiler.getBaseType(ltPointer);
       end;
     else
       LapeException(lpeExpectedArray, DocPos);
@@ -1294,7 +1311,7 @@ begin
 
   with TLapeTree_Invoke.Create('_IndexOf', Self) do
   try
-    addParam(ArrayPtr);
+    addParam(TLapeTree_ResVar.Create(ArrayPointer.IncLock(), Self));
     addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
 
     case ArrayVar.VarType.BaseType of
@@ -1302,104 +1319,7 @@ begin
         with TLapeType_StaticArray(ArrayVar.VarType) do
         begin
           addParam(TLapeTree_Integer.Create(Range.Lo, Self));
-          addParam(TLapeTree_Integer.Create(Range.Hi - Range.Lo + 1, Self));
-        end;
-
-      ltDynArray:
-        begin
-          addParam(TLapeTree_Integer.Create(0, Self));
-          addParam(TLapeTree_Integer.Create(-1, Self));
-        end;
-    end;
-
-    addParam(TLapeTree_Operator.Create(op_Addr, Self));
-    with TLapeTree_Operator(FParams[4]) do
-      Left := TLapeTree_ResVar.Create(ItemVar.IncLock(), Self);
-
-    addParam(TLapeTree_ResVar.Create(CompareVar.IncLock(), Self));
-
-    Result := Compile(Offset).IncLock();
-  finally
-    Free();
-  end;
-
-  ItemVar.isConstant := ItemVar.isConstant;
-  ArrayVar.isConstant := ArrayVar.isConstant;
-end;
-
-function TLapeTree_InternalMethod_IndicesOf.resType: TLapeType;
-begin
-  if (FResType = nil) then
-    FResType := FCompiler.addManagedType(TLapeType_DynArray.Create(FCompiler.getBaseType(ltInt32), FCompiler));
-
-  Result := inherited;
-end;
-
-function TLapeTree_InternalMethod_IndicesOf.Compile(var Offset: Integer): TResVar;
-var
-  ItemVar, ArrayVar, CompareVar: TResVar;
-  ArrayPtr: TLapeTree_ExprBase;
-  ArrayType: TLapeType;
-  ItemWasConstant, ArrayWasConstant: Boolean;
-begin
-  Result := NullResVar;
-  Dest := NullResVar;
-
-  if (Params.Count <> 2) then
-    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
-  if (not FParams[0].CompileToTempVar(Offset, ItemVar)) then
-    LapeException(lpeInvalidEvaluation, DocPos);
-  if (not FParams[1].CompileToTempVar(Offset, ArrayVar)) then
-    LapeException(lpeInvalidEvaluation, DocPos);
-
-  ItemWasConstant := ItemVar.isConstant;
-  if ItemWasConstant then
-    ItemVar.isConstant := False;
-
-  ArrayWasConstant := ArrayVar.isConstant;
-  if ArrayWasConstant then
-    ArrayVar.isConstant := False;
-
-  case ArrayVar.VarType.BaseType of
-    ltStaticArray:
-      begin
-        ArrayPtr := TLapeTree_Operator.Create(op_Addr, Self);
-        with TLapeTree_Operator(ArrayPtr) do
-        begin
-          Left := TLapeTree_Operator.Create(op_Index, Self);
-
-          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar, Self);
-          TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
-        end;
-      end;
-
-    ltDynArray:
-      begin
-        ArrayPtr := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
-        with TLapeTree_ResVar(ArrayPtr) do
-          FResVar.VarType := FCompiler.getBaseType(ltPointer);
-      end;
-    else
-      LapeException(lpeExpectedArray, DocPos);
-  end;
-
-  ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
-  if not ItemVar.VarType.CompatibleWith(ArrayType) then
-    LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op_cmp_Equal), ItemVar.VarType.AsString, ArrayType.AsString], DocPos);
-
-  CompareVar := GetMagicMethodOrNil(FCompiler, '_Equals', [ItemVar.VarType, ArrayType], FCompiler.getBaseType(ltEvalBool));
-
-  with TLapeTree_Invoke.Create('_IndicesOf', Self) do
-  try
-    addParam(ArrayPtr);
-    addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
-
-    case ArrayVar.VarType.BaseType of
-      ltStaticArray:
-        with TLapeType_StaticArray(ArrayVar.VarType) do
-        begin
-          addParam(TLapeTree_Integer.Create(Range.Lo, Self));
-          addParam(TLapeTree_Integer.Create(Range.Hi - Range.Lo + 1, Self));
+          addParam(TLapeTree_Integer.Create(Range.Hi - Range.Lo, Self));
         end;
 
       ltDynArray:
@@ -1417,11 +1337,230 @@ begin
 
     Result := Compile(Offset);
   finally
+    CompareVar.DecLock(1);
+
     Free();
   end;
 
-  ItemVar.isConstant := ItemVar.isConstant;
-  ArrayVar.isConstant := ArrayVar.isConstant;
+  ItemVar.isConstant := ItemWasConstant;
+  ArrayVar.isConstant := ArrayWasConstant;
+end;
+
+function TLapeTree_InternalMethod_IndicesOf.resType: TLapeType;
+begin
+  if (FResType = nil) then
+    FResType := FCompiler.addManagedType(TLapeType_DynArray.Create(FCompiler.getBaseType(ltInt32), FCompiler));
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_IndicesOf.Compile(var Offset: Integer): TResVar;
+var
+  ItemVar, ArrayVar, CompareVar, ArrayPointer: TResVar;
+  ArrayType: TLapeType;
+  ItemWasConstant, ArrayWasConstant: Boolean;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  if (Params.Count <> 2) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
+  if (not FParams[0].CompileToTempVar(Offset, ItemVar)) then
+    LapeException(lpeInvalidEvaluation, DocPos);
+  if (not FParams[1].CompileToTempVar(Offset, ArrayVar)) then
+    LapeException(lpeInvalidEvaluation, DocPos);
+
+  ItemWasConstant := ItemVar.isConstant;
+  if ItemWasConstant then
+    ItemVar.isConstant := False;
+
+  ArrayWasConstant := ArrayVar.isConstant;
+  if ArrayWasConstant then
+    ArrayVar.isConstant := False;
+
+  case ArrayVar.VarType.BaseType of
+    ltStaticArray:
+      begin
+        with TLapeTree_Operator.Create(op_Addr, Self) do
+        try
+          Left := TLapeTree_Operator.Create(op_Index, Self);
+
+          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
+          TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
+
+          ArrayPointer := Compile(Offset);
+        finally
+          ArrayVar.DecLock(1);
+
+          Free();
+        end;
+      end;
+
+    ltDynArray:
+      begin
+        ArrayPointer := ArrayVar;
+        ArrayPointer.VarType := FCompiler.getBaseType(ltPointer);
+      end;
+    else
+      LapeException(lpeExpectedArray, DocPos);
+  end;
+
+  ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
+  if not ItemVar.VarType.CompatibleWith(ArrayType) then
+    LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op_cmp_Equal), ItemVar.VarType.AsString, ArrayType.AsString], DocPos);
+
+  CompareVar := GetMagicMethodOrNil(FCompiler, '_Equals', [ItemVar.VarType, ArrayType], FCompiler.getBaseType(ltEvalBool));
+
+  with TLapeTree_Invoke.Create('_IndicesOf', Self) do
+  try
+    addParam(TLapeTree_ResVar.Create(ArrayPointer.IncLock(), Self));
+    addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
+
+    case ArrayVar.VarType.BaseType of
+      ltStaticArray:
+        with TLapeType_StaticArray(ArrayVar.VarType) do
+        begin
+          addParam(TLapeTree_Integer.Create(Range.Lo, Self));
+          addParam(TLapeTree_Integer.Create(Range.Hi - Range.Lo, Self));
+        end;
+
+      ltDynArray:
+        begin
+          addParam(TLapeTree_Integer.Create(0, Self));
+          addParam(TLapeTree_Integer.Create(-1, Self));
+        end;
+    end;
+
+    addParam(TLapeTree_Operator.Create(op_Addr, Self));
+    with TLapeTree_Operator(FParams[4]) do
+      Left := TLapeTree_ResVar.Create(ItemVar.IncLock(), Self);
+
+    addParam(TLapeTree_ResVar.Create(CompareVar.IncLock(), Self));
+
+    Result := Compile(Offset);
+  finally
+    CompareVar.DecLock(1);
+
+    Free();
+  end;
+
+  ItemVar.isConstant := ItemWasConstant;
+  ArrayVar.isConstant := ArrayWasConstant;
+end;
+
+function TLapeTree_InternalMethod_Reverse.Compile(var Offset: Integer): TResVar;
+var
+  ArrayVar, ArrayPointer: TResVar;
+  ArrayType: TLapeType;
+  ArrayWasConstant: Boolean;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  if (Params.Count <> 1) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  if (not FParams[0].CompileToTempVar(Offset, ArrayVar)) then
+    LapeException(lpeInvalidEvaluation, DocPos);
+
+  ArrayWasConstant := ArrayVar.isConstant;
+  if ArrayWasConstant then
+    ArrayVar.isConstant := False;
+
+  case ArrayVar.VarType.BaseType of
+    ltStaticArray:
+      begin
+        with TLapeTree_Operator.Create(op_Addr, Self) do
+        try
+          Left := TLapeTree_Operator.Create(op_Index, Self);
+
+          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
+          TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
+
+          ArrayPointer := Compile(Offset);
+        finally
+          ArrayVar.DecLock(1);
+
+          Free();
+        end;
+      end;
+
+    ltDynArray:
+      begin
+        ArrayPointer := ArrayVar;
+        ArrayPointer.VarType := FCompiler.getBaseType(ltPointer);
+      end;
+    else
+      LapeException(lpeExpectedArray, DocPos);
+  end;
+
+  ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
+
+  with TLapeTree_Invoke.Create('_Reverse', Self) do
+  try
+    addParam(TLapeTree_ResVar.Create(ArrayPointer.IncLock(), Self));
+    addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
+
+    case ArrayVar.VarType.BaseType of
+      ltStaticArray:
+        with TLapeType_StaticArray(ArrayVar.VarType) do
+          addParam(TLapeTree_Integer.Create(Range.Hi - Range.Lo, Self));
+
+      ltDynArray:
+        addParam(TLapeTree_Integer.Create(-1, Self));
+    end;
+
+    Compile(Offset).Spill(1);
+  finally
+    ArrayPointer.DecLock(1);
+
+    Free();
+  end;
+
+  ArrayVar.isConstant := ArrayWasConstant;
+end;
+
+destructor TLapeTree_InternalMethod_Reversed.Destroy;
+begin
+  if (FCopyMethod <> nil) then
+    FreeAndNil(FCopyMethod);
+
+  inherited Destroy();
+end;
+
+function TLapeTree_InternalMethod_Reversed.resType: TLapeType;
+begin
+  if (FCopyMethod = nil) and (FParams.Count = 1) then
+  begin
+    FCopyMethod := TLapeTree_InternalMethod_Copy.Create(Self);
+    FCopyMethod.Parent := Self;
+    FCopyMethod.addParam(FParams[0]);
+  end;
+
+  if (FResType = nil) and (FCopyMethod <> nil) then
+    FResType := FCopyMethod.resType;
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_Reversed.Compile(var Offset: Integer): TResVar;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+  if (resType() = nil) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  Result := FCopyMethod.Compile(Offset);
+
+  with TLapeTree_InternalMethod_Reverse.Create(Self) do
+  try
+    addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
+    while (Self.Params.Count > 0) do
+      addParam(Self.Params[0]);
+
+    Compile(Offset).Spill(1);
+  finally
+    Free();
+  end;
 end;
 
 constructor TLapeTreeType.Create(ADecl: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase);
