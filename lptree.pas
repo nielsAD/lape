@@ -441,6 +441,16 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_Unique = class(TLapeTree_InternalMethod)
+  protected
+    FCopyMethod: TLapeTree_InternalMethod_Copy;
+  public
+    destructor Destroy; override;
+
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_InternalMethod_FallThrough = class(TLapeTree_InternalMethod)
   public
     function Compile(var Offset: Integer): TResVar; override;
@@ -1227,6 +1237,7 @@ function TLapeTree_InternalMethod_Sorted.Compile(var Offset: Integer): TResVar;
 begin
   Result := NullResVar;
   Dest := NullResVar;
+
   if (resType() = nil) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
@@ -1561,6 +1572,73 @@ begin
   finally
     Free();
   end;
+end;
+
+destructor TLapeTree_InternalMethod_Unique.Destroy;
+begin
+  if (FCopyMethod <> nil) then
+    FreeAndNil(FCopyMethod);
+
+  inherited Destroy();
+end;
+
+function TLapeTree_InternalMethod_Unique.resType: TLapeType;
+begin
+  if (FCopyMethod = nil) and (FParams.Count = 1) then
+  begin
+    FCopyMethod := TLapeTree_InternalMethod_Copy.Create(Self);
+    FCopyMethod.Parent := Self;
+    FCopyMethod.addParam(FParams[0]);
+  end;
+
+  if (FResType = nil) and (FCopyMethod <> nil) then
+    FResType := FCopyMethod.resType;
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_Unique.Compile(var Offset: Integer): TResVar;
+var
+  CompareVar, ArrayVar: TResVar;
+  ArrayType: TLapeType;
+  ResultWasConstant: Boolean;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  if (resType() = nil) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  Result := FCopyMethod.Compile(Offset);
+  if (not Result.HasType()) or (Result.VarType.BaseType <> ltDynArray) then
+    LapeException(lpeExpectedArray, DocPos);
+
+  ResultWasConstant := Result.isConstant;
+  if ResultWasConstant then
+    Result.isConstant := False;
+
+  ArrayType := TLapeType_DynArray(Result.VarType).PType;
+  CompareVar := GetMagicMethodOrNil(FCompiler, '_Equals', [ArrayType, ArrayType], FCompiler.getBaseType(ltEvalBool));
+
+  ArrayVar := Result;
+  ArrayVar.VarType := FCompiler.getBaseType(ltPointer);
+
+  with TLapeTree_Invoke.Create('_Unique', Self) do
+  try
+    addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
+    addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
+    addParam(TLapeTree_ResVar.Create(CompareVar.IncLock(), Self));
+    addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
+
+    Compile(Offset).Spill(1);
+  finally
+    ArrayVar.DecLock();
+    CompareVar.DecLock();
+
+    Free();
+  end;
+
+  Result.isConstant := ResultWasConstant;
 end;
 
 constructor TLapeTreeType.Create(ADecl: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase);

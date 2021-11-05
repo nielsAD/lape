@@ -958,7 +958,8 @@ begin
     _LapeDelete +
     _LapeInsert +
     _LapeSort +
-    _LapeIndexOf,
+    _LapeIndexOf +
+    _LapeUnique,
     '!addDelayedCore'
   );
 
@@ -3650,6 +3651,7 @@ begin
 
   FInternalMethodMap['Sort'] := TLapeTree_InternalMethod_Sort;
   FInternalMethodMap['Sorted'] := TLapeTree_InternalMethod_Sorted;
+  FInternalMethodMap['Unique'] := TLapeTree_InternalMethod_Unique;
   FInternalMethodMap['Reverse'] := TLapeTree_InternalMethod_Reverse;
   FInternalMethodMap['Reversed'] := TLapeTree_InternalMethod_Reversed;
   FInternalMethodMap['IndexOf'] := TLapeTree_InternalMethod_IndexOf;
