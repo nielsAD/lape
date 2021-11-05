@@ -480,6 +480,37 @@ var
     '  SetLength(Result, Count);'                                                        + LineEnding +
     'end;';
 
+    _LapeUnique: lpString =
+    'procedure _Unique(var p: Pointer; ElSize: SizeInt;'                                 + LineEnding +
+    '  Equals: function(constref A, B): EvalBool;'                                       + LineEnding +
+    '  Dispose: private procedure(p: Pointer)); overload;'                               + LineEnding +
+    'type'                                                                               + LineEnding +
+    '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  i, j, Len: SizeInt;'                                                              + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  Len := PSizeInt(p)[-1]^' {$IFDEF FPC}+'+1'{$ENDIF}+';'                            + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  while (i < Len) do'                                                               + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    j := i+1;'                                                                      + LineEnding +
+    '    while (j < Len) do'                                                             + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      if Equals(p[i * ElSize]^, p[j * ElSize]^) then'                               + LineEnding +
+    '      begin'                                                                        + LineEnding +
+    '        Move(p[(Len-1) * ElSize]^, p[j * ElSize]^, ElSize);'                        + LineEnding +
+    ''                                                                                   + LineEnding +
+    '        Dec(Len);'                                                                  + LineEnding +
+    '        Dec(j);'                                                                    + LineEnding +
+    '      end;'                                                                         + LineEnding +
+    '      Inc(j);'                                                                      + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    '    Inc(i);'                                                                        + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  _ArraySetLength(p, Len, ElSize, Dispose, nil);'                                   + LineEnding +
+    'end;';
+
 implementation
 
 uses
