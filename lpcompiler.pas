@@ -115,6 +115,7 @@ type
     function GetCompareMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetEqualsMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetIsEnumGapMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     procedure InitBaseDefinitions; virtual;
     procedure InitBaseMath; virtual;
@@ -778,6 +779,99 @@ begin
     FreeAndNil(Result);
 end;
 
+function TLapeCompiler.GetIsEnumGapMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  Method: TLapeTree_Method;
+  Statement: TLapeTree_Operator;
+  EnumType: TLapeType_Enum;
+  i: Integer;
+  ParamVar, ResultVar: TResVar;
+  LoopVar, GapVar, IndexVar, ArrayVar: TLapeGlobalVar;
+  Loop, Gap: Integer;
+begin
+  Result := nil;
+  Method := nil;
+  GetMethod_FixupParams(AType, AParams, AResult);
+
+  if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_Enum)) or (AResult = nil) then
+    Exit;
+
+  if (AType = nil) then
+    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConst], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+
+  IncStackInfo();
+  try
+    Result := AType.NewGlobalVar(EndJump);
+    Sender.addMethod(Result);
+
+    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
+    Method.Statements := TLapeTree_StatementList.Create(Self);
+
+    EnumType := TLapeType_Enum(AParams[0]);
+
+    ParamVar := _ResVar.New(FStackInfo.addVar(lptConst, getBaseType(EnumType.BaseIntType), 'Param')).IncLock();
+    ResultVar := _ResVar.New(FStackInfo.addVar(lptOut, AResult, 'Result')).IncLock();
+
+    if (EnumType.GapCount = 0) then
+    begin
+      Statement := TLapeTree_Operator.Create(op_Assign, Self);
+      with Statement do
+      begin
+        Left := TLapeTree_ResVar.Create(ResultVar.IncLock(), Self);
+        Right := TLapeTree_GlobalVar.Create('False', ltEvalBool, Self);
+      end;
+    end else
+    begin
+      with addManagedType(TLapeType_DynArray.Create(getBaseType(ltInt32), Self)) as TLapeType_DynArray do
+      begin
+        Loop := 0;
+        Gap := 0;
+
+        LoopVar := getBaseType(ltInt32).NewGlobalVarP(@Loop);
+        GapVar := getBaseType(ltInt32).NewGlobalVarP(@Gap);
+        ArrayVar := NewGlobalVarP();
+
+        VarSetLength(PPointer(ArrayVar.Ptr)^, EnumType.GapCount);
+
+        for i:=0 to EnumType.MemberMap.Count - 1 do
+          if EnumType.MemberMap[i] = '' then
+          try
+            Gap := EnumType.Range.Lo + i;
+
+            IndexVar := EvalConst(op_Index, ArrayVar, LoopVar, [lefAssigning]);
+            IndexVar.VarType.EvalConst(op_Assign, IndexVar, GapVar, []);
+
+            Inc(Loop);
+          finally
+            if (IndexVar <> nil) then
+              FreeAndNil(IndexVar);
+          end;
+
+        LoopVar.Free();
+        GapVar.Free();
+
+        Statement := TLapeTree_Operator.Create(op_Assign, Self);
+        with Statement do
+        begin
+          Left := TLapeTree_ResVar.Create(ResultVar.IncLock(), Self);
+          Right := TLapeTree_InternalMethod_Contains.Create(Self);
+          with TLapeTree_InternalMethod_Contains(Right) do
+          begin
+            addParam(TLapeTree_ResVar.Create(ParamVar.IncLock(), Self));
+            addParam(TLapeTree_GlobalVar.Create(ArrayVar, Self));
+          end;
+        end;
+      end;
+    end;
+
+    Method.Statements.addStatement(Statement);
+
+    addDelayedExpression(Method);
+  finally
+    DecStackInfo(True, False, Method = nil);
+  end;
+end;
+
 procedure TLapeCompiler.InitBaseDefinitions;
 
   procedure addCompilerFuncs;
@@ -786,7 +880,7 @@ procedure TLapeCompiler.InitBaseDefinitions;
     pv = lptVar;
   var
     a, w, u, i, b, n: TLapeType;
-    gn: TlapeGlobalVar;
+    gn: TLapeGlobalVar;
   begin
     a := getBaseType(ltAnsiString);
     w := getBaseType(ltWideString);
@@ -939,6 +1033,7 @@ begin
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCompareMethod).NewGlobalVar('_Compare'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetEqualsMethod).NewGlobalVar('_Equals'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetIsEnumGapMethod).NewGlobalVar('_IsEnumGap'));
 
   InitBaseMath();
   InitBaseString();
@@ -3656,6 +3751,7 @@ begin
   FInternalMethodMap['Reversed'] := TLapeTree_InternalMethod_Reversed;
   FInternalMethodMap['IndexOf'] := TLapeTree_InternalMethod_IndexOf;
   FInternalMethodMap['IndicesOf'] := TLapeTree_InternalMethod_IndicesOf;
+  FInternalMethodMap['Contains'] := TLapeTree_InternalMethod_Contains;
 
   FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
   FInternalMethodMap['Succ'] := TLapeTree_InternalMethod_Succ;

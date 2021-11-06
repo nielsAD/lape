@@ -456,6 +456,12 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_Contains = class(TLapeTree_InternalMethod)
+  public
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_Operator = class(TLapeTree_DestExprBase)
   protected
     FRestructure: TInitBool;
@@ -1001,39 +1007,27 @@ end;
 
 function TLapeTree_InternalMethod_IsEnumGap.Compile(var Offset: Integer): TResVar;
 var
-  i: Int32;
-  Enum: TLapeType_Enum;
-  Index: TLapeTree_Operator;
+  Method: TLapeGlobalVar;
+  Typ: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
 
-  if (FParams.Count = 0) or isEmpty(FParams[0]) or (FParams[0].resType() = nil) then
+  if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
-  if (not (FParams[0].resType() is TLapeType_Enum)) then
+
+  Typ := FParams[0].resType();
+  if (not (Typ is TLapeType_Enum)) then
     LapeException(lpeExpectedEnum, DocPos);
 
-  Enum := TLapeType_Enum(FParams[0].resType());
-
-  if (Enum.GapCount = 0) then
-    Result := _ResVar.New(FCompiler.getConstant('False', ltEvalBool)).IncLock()
-  else
+  Method := TLapeType_OverloadedMethod(FCompiler['_IsEnumGap'].VarType).getMethod(getTypeArray([Typ]), FCompiler.getBaseType(ltEvalBool));
+  with TLapeTree_Invoke.Create(Method, Self) do
   try
-    Index := TLapeTree_Operator.Create(op_Index, Self);
-    Index.Left := TLapeTree_OpenArray.Create(Self);
-    for i := 0 to Enum.MemberMap.Count - 1 do
-      if Enum.MemberMap[i] = '' then
-        TLapeTree_OpenArray(Index.Left).addValue(TLapeTree_GlobalVar.Create('True', ltEvalBool, Self))
-      else
-        TLapeTree_OpenArray(Index.Left).addValue(TLapeTree_GlobalVar.Create('False', ltEvalBool, Self));
+    addParam(Self.FParams[0]);
 
-    Index.Right := TLapeTree_Operator.Create(op_Minus, Self);
-    TLapeTree_Operator(Index.Right).Left := FParams[0];
-    TLapeTree_Operator(Index.Right).Right := TLapeTree_Integer.Create(Enum.Range.Lo, Self);
-
-    Result := Index.Compile(Offset);
+    Result := Compile(Offset);
   finally
-    Index.Free();
+    Free();
   end;
 end;
 
@@ -1639,6 +1633,36 @@ begin
   end;
 
   Result.isConstant := ResultWasConstant;
+end;
+
+function TLapeTree_InternalMethod_Contains.resType: TLapeType;
+begin
+  if (FResType = nil) then
+    FResType := FCompiler.getBaseType(ltEvalBool);
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_Contains.Compile(var Offset: Integer): TResVar;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  if (resType() = nil) then
+    LapeException(lpeImpossible, DocPos);
+
+  with TLapeTree_Operator.Create(op_cmp_GreaterThan, Self) do
+  try
+    Left := TLapeTree_InternalMethod_IndexOf.Create(Self);
+    while (Self.Params.Count > 0) do
+      TLapeTree_InternalMethod_IndexOf(Left).addParam(Self.Params[0]);
+
+    Right := TLapeTree_Integer.Create(-1, Self);
+
+    Result := Compile(Offset);
+  finally
+    Free();
+  end;
 end;
 
 constructor TLapeTreeType.Create(ADecl: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase);
@@ -7161,18 +7185,19 @@ begin
   begin
     FCounter.CompileToTempVar(Offset, tmpVar);
 
-    with TLapeTree_If.Create(FCounter) do
-    try
-      Condition := TLapeTree_InternalMethod_IsEnumGap.Create(Self);
-      TLapeTree_InternalMethod_IsEnumGap(Condition).addParam(TLapeTree_ResVar.Create(tmpVar.IncLock(), Self));
+    if (tmpVar.VarType is TLapeType_Enum) and (TLapeType_Enum(tmpVar.VarType).GapCount > 0) then
+      with TLapeTree_If.Create(FCounter) do
+      try
+        Condition := TLapeTree_InternalMethod_IsEnumGap.Create(Self);
+        TLapeTree_InternalMethod_IsEnumGap(Condition).addParam(TLapeTree_ResVar.Create(tmpVar.IncLock(), Self));
 
-      Body := TLapeTree_InternalMethod_Continue.Create(Self);
-      Body.FParent := Self;
+        Body := TLapeTree_InternalMethod_Continue.Create(Self);
+        Body.FParent := Self;
 
-      Compile(Offset);
-    finally
-      Free();
-    end;
+        Compile(Offset);
+      finally
+        Free();
+      end;
 
     if (LoopType = loopOverSet) then
     begin
@@ -7312,7 +7337,7 @@ begin
 
   if LoopType in [LoopOver, loopOverEnum, loopOverSet] then
     Exit(CompileForIn(Offset));
-  
+
   CounterVar := nil;
   Count := FCounter.Compile(Offset).IncLock();
   try
