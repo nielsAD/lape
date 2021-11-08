@@ -825,9 +825,9 @@ procedure _Insert16(Arr: PUInt16; var Index: Integer);
 procedure _Insert32(Arr: PUInt32; var Index: Integer);
 procedure _Insert64(Arr: PUInt64; var Index: Integer);
 
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TIntegerArray; const SortUp: Boolean); overload;
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TInt64Array; const SortUp: Boolean); overload;
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean); overload;
+procedure _Sort(const Arr: PByte; const ElSize: SizeInt; var Weights: TIntegerArray; const SortUp: Boolean); overload;
+procedure _Sort(const Arr: PByte; const ElSize: SizeInt; var Weights: TInt64Array; const SortUp: Boolean); overload;
+procedure _Sort(const Arr: PByte; const ElSize: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean); overload;
 
 procedure _Reverse(const Arr: PByte; const ElSize: SizeInt; Len: SizeInt);
 
@@ -1225,7 +1225,7 @@ begin
   end;
 end;
 
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TIntegerArray; const SortUp: Boolean);
+procedure _Sort(const Arr: PByte; const ElSize: SizeInt; var Weights: TIntegerArray; const SortUp: Boolean);
 
   procedure QuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: TIntegerArray; iLo, iHi: SizeInt; const SortUp: Boolean);
   var
@@ -1240,7 +1240,7 @@ begin
   QuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
 end;
 
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TInt64Array; const SortUp: Boolean);
+procedure _Sort(const Arr: PByte; const ElSize: SizeInt; var Weights: TInt64Array; const SortUp: Boolean);
 
   procedure QuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: TInt64Array; iLo, iHi: SizeInt; const SortUp: Boolean);
   var
@@ -1255,7 +1255,7 @@ begin
   QuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
 end;
 
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean);
+procedure _Sort(const Arr: PByte; const ElSize: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean);
 
   procedure QuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: TExtendedArray; iLo, iHi: SizeInt; const SortUp: Boolean);
   var

@@ -399,33 +399,38 @@ var
     'end;';
 
     _LapeSort: lpString =
-    'procedure _Sort(A: Pointer; ElSize, Len: SizeInt;'                                  + LineEnding +
+    'procedure _Sort(p: Pointer; ElSize, Hi: SizeInt;'                                   + LineEnding +
     '  Compare: function(constref A, B): Int32); overload;'                              + LineEnding +
+    'type'                                                                               + LineEnding +
+    '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
     '  I, J: Int32;'                                                                     + LineEnding +
     '  Item: Pointer;'                                                                   + LineEnding +
     'begin'                                                                              + LineEnding +
-    '  if (Compare = nil) then'                                                          + LineEnding +
-    '    raise "Sort: Compare function is nil";'                                         + LineEnding +
+    '  if (p = nil) then'                                                                + LineEnding +
+    '    Exit;'                                                                          + LineEnding +
     ''                                                                                   + LineEnding +
+    '  if (Hi = -1) then'                                                                + LineEnding +
+    '    Hi := PSizeInt(p)[-1]^;'                                                        + LineEnding +
+
     '  Item := GetMem(ElSize);'                                                          + LineEnding +
-    '  for I := 1 to Len - 1 do'                                                         + LineEnding +
+    '  for I := 1 to Hi do'                                                              + LineEnding +
     '  begin'                                                                            + LineEnding +
-    '    Move(A[I * ElSize]^, Item^, ElSize);'                                           + LineEnding +
+    '    Move(p[I * ElSize]^, Item^, ElSize);'                                           + LineEnding +
     '    J := I - 1;'                                                                    + LineEnding +
-    '    while (J >= 0) and (Compare(A[J * ElSize]^, Item^) > 0) do'                     + LineEnding +
+    '    while (J >= 0) and (Compare(p[J * ElSize]^, Item^) > 0) do'                     + LineEnding +
     '    begin'                                                                          + LineEnding +
-    '      Move(A[J * ElSize]^, A[(J+1) * ElSize]^, ElSize);'                            + LineEnding +
+    '      Move(p[J * ElSize]^, p[(J+1) * ElSize]^, ElSize);'                            + LineEnding +
     '      Dec(J);'                                                                      + LineEnding +
     '    end;'                                                                           + LineEnding +
-    '    Move(Item^, A[(J+1) * ElSize]^, ElSize);'                                       + LineEnding +
+    '    Move(Item^, p[(J+1) * ElSize]^, ElSize);'                                       + LineEnding +
     '  end;'                                                                             + LineEnding +
     '  FreeMem(Item);'                                                                   + LineEnding +
     'end;';
 
     _LapeIndexOf: lpString =
     'function _IndexOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'              + LineEnding +
-    '  Equals: function(constref A, B): EvalBool): SizeInt;'                             + LineEnding +
+    '  Equals: function(constref A, B): EvalBool): SizeInt; overload;'                   + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -447,7 +452,7 @@ var
     'end;'                                                                               + LineEnding +
     ''                                                                                   + LineEnding +
     'function _IndicesOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'            + LineEnding +
-    '  Equals: function(constref A, B): EvalBool): array of Int32;'                      + LineEnding +
+    '  Equals: function(constref A, B): EvalBool): array of Int32; overload;'            + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -489,11 +494,13 @@ var
     'var'                                                                                + LineEnding +
     '  i, j, Len: SizeInt;'                                                              + LineEnding +
     'begin'                                                                              + LineEnding +
-    '  Len := PSizeInt(p)[-1]^' {$IFDEF FPC}+'+1'{$ENDIF}+';'                            + LineEnding +
+    '  if (p = nil) then'                                                                + LineEnding +
+    '    Exit;'                                                                          + LineEnding +
     ''                                                                                   + LineEnding +
+    '  Len := PSizeInt(p)[-1]^' {$IFDEF FPC}+'+1'{$ENDIF}+';'                            + LineEnding +
     '  while (i < Len) do'                                                               + LineEnding +
     '  begin'                                                                            + LineEnding +
-    '    j := i+1;'                                                                      + LineEnding +
+    '    j := i + 1;'                                                                    + LineEnding +
     '    while (j < Len) do'                                                             + LineEnding +
     '    begin'                                                                          + LineEnding +
     '      if Equals(p[i * ElSize]^, p[j * ElSize]^) then'                               + LineEnding +
@@ -605,17 +612,17 @@ end;
 
 procedure _LapeSortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TIntegerArray(Params^[3]^), PEvalBool(Params^[4])^);
+  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, TIntegerArray(Params^[2]^), PEvalBool(Params^[3])^);
 end;
 
 procedure _LapeSortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TInt64Array(Params^[3]^), PEvalBool(Params^[4])^);
+  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, TInt64Array(Params^[2]^), PEvalBool(Params^[3])^);
 end;
 
 procedure _LapeSortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TExtendedArray(Params^[3]^), PEvalBool(Params^[4])^);
+  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, TExtendedArray(Params^[2]^), PEvalBool(Params^[3])^);
 end;
 
 procedure _LapeReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

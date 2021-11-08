@@ -75,17 +75,17 @@ type
     VarPos: TVarPos;
 
     class function New(AVar: TLapeVar): TResVar; {$IFNDEF FPC}static;{$ENDIF}
-    function HasType: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    function HasType: Boolean;
 
-    procedure Spill(Unlock: Integer = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
-    function IncLock(Count: Integer = 1): TResVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
-    function DecLock(Count: Integer = 1): TResVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    procedure Spill(Unlock: Integer = 0);
+    function IncLock(Count: Integer = 1): TResVar;
+    function DecLock(Count: Integer = 1): TResVar;
 
-    function InScope(AStack: TLapeStackInfo; Pos: PDocPos = nil): TResVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    function InScope(AStack: TLapeStackInfo; Pos: PDocPos = nil): TResVar;
 
-    procedure IncOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
-    procedure DecOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
-    procedure setOffset(Offset: Integer); {$IFDEF Lape_Inline}inline;{$ENDIF}
+    procedure IncOffset(Offset: Integer);
+    procedure DecOffset(Offset: Integer);
+    procedure setOffset(Offset: Integer);
 
     procedure setReadable(AReadable: Boolean; ChangeStack: Boolean); overload;
     procedure setReadable(AReadable: Boolean); overload;
