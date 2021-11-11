@@ -31,6 +31,7 @@ type
     lcoHints,                          // {$H} {$HINTS}
     lcoCOperators,                     //      {$COPERATORS}
     lcoAutoObjectify,                  //      {$AUTOOBJECTIFY}
+    lcoDuplicateLocalNameHints,        //
     lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)
   );
   ECompilerOptionsSet = set of ECompilerOption;

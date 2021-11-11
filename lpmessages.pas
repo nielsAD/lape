@@ -130,6 +130,7 @@ const
   lphDeprecatedMethodHint = 'Method "%s" is deprecated "%s"';
   lphUnImplementedMethod = 'Method "%s" is not implemented';
   lphExperimentalMethod = 'Method "%s" is experimental';
+  lphDuplicateLocalName = 'Local declaration "%s" exists globally';
 
 procedure LapeException(Msg: lpString); overload;
 procedure LapeException(Msg: lpString; DocPos: TDocPos); overload;

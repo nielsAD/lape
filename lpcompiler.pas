@@ -975,7 +975,8 @@ begin
     'const'                  + LineEnding +
     '  True = EvalBool(1);'  + LineEnding +
     '  False = EvalBool(0);' + LineEnding +
-    '  nil = Pointer(0);'
+    '  nil = Pointer(0);',
+    '!BaseDefinitionsDelayedCode'
   );
 
   addGlobalFunc('procedure _Write(s: string);', @_LapeWrite);
@@ -1234,7 +1235,10 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
       Result := (lcoHints in FOptions)
     else
     if (Name = 'autoobjectify') then
-      Result := (lcoAutoObjectify in FOptions);
+      Result := (lcoAutoObjectify in FOptions)
+    else
+    if (Name = 'duplicatelocalnamehints') then
+      Result := (lcoDuplicateLocalNameHints in FOptions);
   end;
 
   procedure switchConditional;
@@ -1515,6 +1519,9 @@ begin
     else
     if (Directive = 'autoobjectify') then
       setOption(lcoAutoObjectify)
+    else
+    if (Directive = 'duplicatelocalnamehints') then
+      setOption(lcoDuplicateLocalNameHints)
     else
       Result := False;
   end;
@@ -4257,8 +4264,16 @@ function TLapeCompiler.addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeSta
 begin
   if (Decl = nil) then
     Exit(nil);
-  if (Decl.Name <> '') and hasDeclaration(Decl.Name, AStackInfo, True) then
-    LapeExceptionFmt(lpeDuplicateDeclaration, [Decl.Name]);
+
+  if (Decl.Name <> '') then
+  begin
+    if hasDeclaration(Decl.Name, AStackInfo, True) then
+      LapeExceptionFmt(lpeDuplicateDeclaration, [Decl.Name]);
+
+    if (lcoDuplicateLocalNameHints in Options) and
+       (FStackInfo <> nil) and hasDeclaration(Decl.Name, FStackInfo, False, False) then
+      Hint(lphDuplicateLocalName, [Decl.Name], DocPos);
+  end;
 
   Result := Decl;
   if (AStackInfo = nil) or (AStackInfo.Owner = nil) then
@@ -4271,8 +4286,20 @@ function TLapeCompiler.addLocalVar(AVar: TLapeType; Name: lpString = ''): TLapeV
 begin
   if (AVar = nil) then
     Exit(nil);
+
   if (Name <> '') and hasDeclaration(Name, True) then
     LapeExceptionFmt(lpeDuplicateDeclaration, [Name]);
+
+  if (Name <> '') then
+  begin
+    if hasDeclaration(Name, True) then
+      LapeExceptionFmt(lpeDuplicateDeclaration, [Name]);
+
+    if (lcoDuplicateLocalNameHints in Options) and
+       (FStackInfo <> nil) and hasDeclaration(Name, FStackInfo, False, False) then
+      Hint(lphDuplicateLocalName, [Name], DocPos);
+  end;
+
 
   if (FStackInfo = nil) or (FStackInfo.Owner = nil) then
     Result := addGlobalVar(AVar.NewGlobalVarP(), Name)
