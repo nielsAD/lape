@@ -400,7 +400,7 @@ var
 
     _LapeSort: lpString =
     'procedure _Sort(p: Pointer; ElSize, Hi: SizeInt;'                                   + LineEnding +
-    '  Compare: function(constref A, B): Int32); overload;'                              + LineEnding +
+    '  Compare: private function(constref A, B): Int32); overload;'                      + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -430,7 +430,7 @@ var
 
     _LapeIndexOf: lpString =
     'function _IndexOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'              + LineEnding +
-    '  Equals: function(constref A, B): EvalBool): SizeInt; overload;'                   + LineEnding +
+    '  Equals: private function(constref A, B): EvalBool): SizeInt; overload;'           + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -452,7 +452,7 @@ var
     'end;'                                                                               + LineEnding +
     ''                                                                                   + LineEnding +
     'function _IndicesOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'            + LineEnding +
-    '  Equals: function(constref A, B): EvalBool): array of Int32; overload;'            + LineEnding +
+    '  Equals: private function(constref A, B): EvalBool): array of Int32; overload;'    + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -487,7 +487,7 @@ var
 
     _LapeUnique: lpString =
     'procedure _Unique(var p: Pointer; ElSize: SizeInt;'                                 + LineEnding +
-    '  Equals: function(constref A, B): EvalBool;'                                       + LineEnding +
+    '  Equals: private function(constref A, B): EvalBool;'                               + LineEnding +
     '  Dispose: private procedure(p: Pointer)); overload;'                               + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +

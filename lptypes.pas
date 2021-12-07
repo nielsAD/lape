@@ -416,7 +416,7 @@ type
     FCount: Integer;
     FItems: TBuckets;
 
-    function Hash(const S: PChar; const Len: Integer): UInt32; inline;
+    function Hash(const S: PChar; const Len: Integer): UInt32;
 
     procedure Build;
 
@@ -1283,7 +1283,7 @@ begin
   if (Len = -1) then
     Len := PSizeInt(Arr)[-1]; // High
 
-  T := GetMem(ElSize);
+  T := GetMemory(ElSize);
 
   Lo := Arr;
   Hi := Arr + (Len * ElSize);

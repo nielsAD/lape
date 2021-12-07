@@ -705,14 +705,14 @@ type
     property OnHint: TLapeHint read FOnHint write FOnHint;
   end;
 
-function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function getTypeArray(Arr: array of TLapeType): TLapeTypeArray; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
+function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
 
-function MethodOfObject(VarType: TLapeType): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function ValidFieldName(Field: TResVar): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function MethodOfObject(VarType: TLapeType): Boolean;
+function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload;
+function ValidFieldName(Field: TResVar): Boolean; overload;
 
 const
   BigLock = 256;

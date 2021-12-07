@@ -1120,6 +1120,8 @@ function TLapeTree_InternalMethod_Sort.Compile(var Offset: Integer): TResVar;
     end;
   end;
 
+const
+  CompareParameter: TLapeParameter = (ParType: lptConstRef; VarType: TLapeType(nil); Default: TLapeVar(nil));
 var
   ArrayVar, CompareVar, ArrayPointer: TResVar;
   ArrayWasConstant: Boolean;
@@ -1176,7 +1178,13 @@ begin
           LapeException(lpeInvalidCompareMethod, DocPos);
       end;
 
-      CompareVar.VarType := FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [TLapeType(nil), TLapeType(nil)], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], ResultType));
+      CompareVar.VarType := FCompiler.addManagedType(CompareVar.VarType.CreateCopy(True));
+      with TLapeType_Method(CompareVar.VarType) do
+      begin
+        Params.Clear();
+        Params.Add(CompareParameter);
+        Params.Add(CompareParameter);
+      end;
     end else
       CompareVar := GetMagicMethodOrNil(FCompiler, '_Compare', [ArrayType, ArrayType], ResultType);
 
