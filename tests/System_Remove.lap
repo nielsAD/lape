@@ -1,0 +1,13 @@
+{$assertions on}
+
+type
+  TPoint = record X,Y:Integer; end;
+
+var
+  Arr: array of TPoint;
+begin
+  Arr := [[0,0],[1,1],[2,2],[1,1]];
+
+  Assert(Remove(TPoint([2,2]), Arr) = True);
+  Assert(ToString(Arr) = '[{X = 0, Y = 0}, {X = 1, Y = 1}, {X = 1, Y = 1}]');
+end;

@@ -66,7 +66,6 @@ type
   TLapeCompiler = class(TLapeCompilerBase)
   private
     __tmp: TDocPos;
-    function getPDocPos: PDocPos; inline;
     function hasTokenizer: Boolean; inline;
     function hasMoreTokenizers: Boolean; inline;
     function incTokenizerLock(ATokenizer: TLapeTokenizerBase): TLapeTokenizerBase;
@@ -95,6 +94,7 @@ type
     FOnFindMacro: TLapeFindMacro;
     FAfterParsing: TLapeCompilerNotification;
 
+    function getPDocPos: PDocPos; inline;
     function getDocPos: TDocPos; override;
     procedure Reset; override;
 
@@ -3759,6 +3759,7 @@ begin
   FInternalMethodMap['IndexOf'] := TLapeTree_InternalMethod_IndexOf;
   FInternalMethodMap['IndicesOf'] := TLapeTree_InternalMethod_IndicesOf;
   FInternalMethodMap['Contains'] := TLapeTree_InternalMethod_Contains;
+  FInternalMethodMap['Remove'] := TLapeTree_InternalMethod_Remove;
 
   FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
   FInternalMethodMap['Succ'] := TLapeTree_InternalMethod_Succ;
@@ -4683,7 +4684,7 @@ begin
     Result := FCompiler[FieldName];
     if (Result = nil) and (FCompiler is TLapeCompiler) then
     begin
-      Decl := TLapeCompiler(FCompiler).getExpression(FieldName, TLapeStackInfo(nil));
+      Decl := TLapeCompiler(FCompiler).getExpression(FieldName, TLapeStackInfo(nil), TLapeCompiler(FCompiler).getPDocPos());
       if (Decl <> nil) then
         Result := TLapeTreeType.Create(Decl).NewGlobalVarP();
     end;
