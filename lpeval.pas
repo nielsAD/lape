@@ -612,17 +612,17 @@ end;
 
 procedure _LapeSortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, TIntegerArray(Params^[2]^), PEvalBool(Params^[3])^);
+  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TIntegerArray(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeSortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, TInt64Array(Params^[2]^), PEvalBool(Params^[3])^);
+  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TInt64Array(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeSortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, TExtendedArray(Params^[2]^), PEvalBool(Params^[3])^);
+  _Sort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TExtendedArray(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

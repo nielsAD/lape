@@ -79,12 +79,12 @@ begin
   for i:=0 to High(Points) do
     weights += Distance(Points[i].X, Points[i].Y, 100, 100);
 
-  Sort(points, weights);
+  Sort(points, weights, True);
 
   Assert(ToString(Points) = '[{X = 100, Y = 100}, {X = 75, Y = 75}, {X = 150, Y = 150}, {X = 200, Y = 200}]');
-  Assert(ToString(Sorted(Points, [Int64(3),Int64(2),Int64(1),Int64(0)])) = '[{X = 200, Y = 200}, {X = 150, Y = 150}, {X = 75, Y = 75}, {X = 100, Y = 100}]');
+  Assert(ToString(Sorted(Points, [Int64(3),Int64(2),Int64(1),Int64(0)], True)) = '[{X = 200, Y = 200}, {X = 150, Y = 150}, {X = 75, Y = 75}, {X = 100, Y = 100}]');
 
-  Sort(Booleans, weights);
+  Sort(Booleans, weights, True);
 
   Assert(ToString(Booleans) = '[False]');
 end.
