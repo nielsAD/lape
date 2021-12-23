@@ -2396,10 +2396,15 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         FieldType := ParseType(nil, addToStackOwner, ScopedEnums);
         Expect(tk_sym_SemiColon, True, False);
         for i := 0 to High(Identifiers) do
+        begin
+          if Rec.HasChild(Identifiers[i]) then
+            LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], DocPos);
+
           if IsPacked then
             Rec.addField(FieldType, Identifiers[i], 1)
           else
             Rec.addField(FieldType, Identifiers[i], FOptions_PackRecords);
+        end;
 
         Expect(tk_sym_SemiColon, False, True);
       end;
@@ -4243,7 +4248,7 @@ begin
   SetLength(FDefines, Length(FDefines) + 1);
   with FDefines[High(FDefines)] do
   begin
-    Name := AName;
+    Name := UpperCase(Trim(AName));
     Value := Trim(AValue);
   end;
 end;

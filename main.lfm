@@ -3,7 +3,7 @@ object Form1: TForm1
   Height = 900
   Top = 175
   Width = 800
-  Caption = 'Lape '
+  Caption = 'Lape'
   ClientHeight = 900
   ClientWidth = 800
   Color = clWindow
@@ -785,17 +785,17 @@ object Form1: TForm1
       TabOrder = 1
     end
   end
-  object PasSyn: TSynPasSyn
+  object PasSyn: TSynFreePascalSyn
     Enabled = False
-    CommentAttri.Foreground = clGreen
-    CommentAttri.Style = []
+    CommentAttri.Foreground = clBlue
+    CommentAttri.Style = [fsBold]
     NumberAttri.Foreground = clNavy
     StringAttri.Foreground = clTeal
     SymbolAttri.Foreground = clMaroon
     CaseLabelAttri.Style = [fsItalic]
     DirectiveAttri.Foreground = clOlive
-    CompilerMode = pcmDelphi
-    NestedComments = False
+    CompilerMode = pcmObjFPC
+    NestedComments = True
     Left = 910
     Top = 80
   end

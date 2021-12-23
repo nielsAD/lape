@@ -20,7 +20,7 @@ type
     m: TMemo;
     pnlTop: TPanel;
     Splitter1: TSplitter;
-    PasSyn: TSynPasSyn;
+    PasSyn: TSynFreePascalSyn;
     procedure btnDisassembleClick(Sender: TObject);
     procedure btnMemLeaksClick(Sender: TObject);
     procedure btnEvalResClick(Sender: TObject);
