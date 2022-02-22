@@ -10,12 +10,12 @@ begin
   Result := StrToIntDef(s, Def);
 end;
 
-function NativeInt.Next(i: NativeInt): NativeInt; constref;
+function NativeInt.Next(i: NativeInt): NativeInt;
 begin
   Result := Self + i;
 end;
 
-function NativeInt.Next(s: string): NativeInt; constref; overload;
+function NativeInt.Next(s: string): NativeInt; overload;
 begin
   Result := Next(Self.Create(s));
 end;

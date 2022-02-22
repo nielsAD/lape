@@ -3437,6 +3437,9 @@ var
       end;
   end;
 
+var
+  Pos: TDocPos;
+  TempNullVar, TempPtrVar, TempSelfVar: TResVar;
 begin
   Result := NullResVar;
   IdentExpr := RealIdent;
@@ -3462,12 +3465,6 @@ begin
       end else
         LapeException(lpeCannotInvoke, IdentExpr.DocPos);
 
-    if (IdentVar.VarType is TLapeType_MethodOfType) and
-       (not (TLapeType_MethodOfType(IdentVar.VarType).SelfParam in Lape_ValParams)) and
-       (not IdentVar.Readable)
-    then
-      LapeException(lpeVariableExpected, IdentExpr.DocPos);
-
     if (lcoInitExternalResult in FCompilerOptions) then
       Dest := NullResVar;
 
@@ -3484,12 +3481,38 @@ begin
 
       if (IdentVar.VarType is TLapeType_MethodOfObject) and (IdentVar.VarPos.MemPos <> mpStack) then
       begin
-        Result := IdentVar;
-        Result.VarType := FCompiler.getBaseType(ltPointer);
+        if (IdentVar.VarType is TLapeType_MethodOfType) and
+           (not (TLapeType_MethodOfType(IdentVar.VarType).SelfParam in Lape_ValParams)) and
+           (not IdentVar.Readable) then
+        begin
+          Pos := IdentExpr.DocPos;
 
-        Result.IncOffset(SizeOf(Pointer));
-        AssignToStack(Result, IdentExpr.DocPos, False);
-        Result.DecOffset(SizeOf(Pointer));
+          // TempVar := TMethod.Self^;
+          // TMethod.Self := @TempVar;
+          TempNullVar := NullResVar;
+          TempPtrVar  := _ResVar.New(FCompiler.getTempVar(ltPointer));
+          TempSelfVar := _ResVar.New(FCompiler.getTempVar(TLapeType_MethodOfType(IdentVar.VarType).ObjectType));
+
+          Result := IdentVar;
+          Result.VarType := FCompiler.getBaseType(ltPointer);
+          Result.IncOffset(SizeOf(Pointer));
+
+          TempPtrVar  := TempPtrVar.VarType.Eval(op_Assign, TempNullVar, TempPtrVar, Result, [], Offset, @Pos);
+          TempSelfVar := TempSelfVar.VarType.Eval(op_Assign, TempNullVar, TempSelfVar, TempPtrVar.VarType.Eval(op_Deref, TempNullVar, TempPtrVar, NullResVar, [], Offset, @Pos), [], Offset, @Pos);
+          TempPtrVar  := TempSelfVar.VarType.Eval(op_Addr, TempNullVar, TempSelfVar, NullResVar, [], Offset, @Pos);
+
+          AssignToStack(TempPtrVar, Pos, False);
+
+          Result.DecOffset(SizeOf(Pointer));
+        end else
+        begin
+          Result := IdentVar;
+          Result.VarType := FCompiler.getBaseType(ltPointer);
+
+          Result.IncOffset(SizeOf(Pointer));
+          AssignToStack(Result, IdentExpr.DocPos, False);
+          Result.DecOffset(SizeOf(Pointer));
+        end;
       end;
 
       SetLength(ParamVars, Params.Count);
