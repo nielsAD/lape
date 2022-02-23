@@ -3442,6 +3442,10 @@ var
   TempNullVar, TempPtrVar, TempSelfVar: TResVar;
 begin
   Result := NullResVar;
+
+  TempPtrVar := NullResVar;
+  TempSelfVar := NullResVar;
+
   IdentExpr := RealIdent;
   Assert(IdentExpr <> nil);
 
@@ -3547,6 +3551,11 @@ begin
     IdentVar.Spill(1);
     for i := 0 to High(ParamVars) do
       ParamVars[i].Spill(1);
+
+    if (TempPtrVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+      TempPtrVar.Spill(1);
+    if (TempSelfVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+      TempSelfVar.Spill(1);
   end;
 end;
 
