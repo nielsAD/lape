@@ -2020,26 +2020,14 @@ begin
     ResetStack := False;
 
   try
-    isNext([tk_kw_UnImplemented, tk_kw_Experimental, tk_kw_Deprecated, tk_kw_ConstRef, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
+    isNext([tk_kw_UnImplemented, tk_kw_Experimental, tk_kw_Deprecated, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
     OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
     LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
 
     if (OldDeclaration <> nil) and (FuncHeader is TLapeType_MethodOfType) and (not LocalDecl) and (not TLapeType_MethodOfType(FuncHeader).ObjectType.HasSubDeclaration(OldDeclaration, bTrue)) then
       OldDeclaration := nil;
 
-    if (Tokenizer.Tok = tk_kw_ConstRef) then
-    begin
-      ParseExpressionEnd(tk_sym_SemiColon, True, False);
-      if (not (FuncHeader is TLapeType_MethodOfType)) then
-        LapeException(lpeMethodOfObjectExpected, Tokenizer.DocPos);
-
-      RemoveSelfVar();
-      TLapeType_MethodOfType(FuncHeader).SelfParam := lptConstRef;
-      AddSelfVar(lptConstRef, TLapeType_MethodOfType(FuncHeader).ObjectType);
-
-      isNext([tk_kw_UnImplemented, tk_kw_Experimental, tk_kw_Deprecated, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
-    end
-    else if (Tokenizer.Tok = tk_kw_Static) then
+    if (Tokenizer.Tok = tk_kw_Static) then
     begin
       ParseExpressionEnd(tk_sym_SemiColon, True, False);
       if MethodOfObject(FuncHeader) then

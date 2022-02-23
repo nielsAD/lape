@@ -1,0 +1,34 @@
+{$assertions on}
+
+type
+  TPoint = record
+    X, Y: Integer;
+  end;
+
+procedure TPoint.Swap;
+begin
+  Assert(Self = [1, 2]);
+
+  System.Swap(Self.X, Self.Y);
+end;
+
+function GetPoint: TPoint;
+begin
+  Result := [1, 2];
+end;
+
+const
+  A: TPoint = [1, 2];
+
+var
+  B: TPoint = [1, 2];
+
+begin
+  A.Swap();
+  Assert(A = [1, 2]);
+
+  B.Swap();
+  Assert(B = [2, 1]);
+
+  GetPoint().Swap();
+end;

@@ -3437,8 +3437,12 @@ var
       end;
   end;
 
+var
+  Pos: TDocPos;
+  TempVar, TempSelfVar, TempSelfAddrVar: TResVar;
 begin
   Result := NullResVar;
+
   IdentExpr := RealIdent;
   Assert(IdentExpr <> nil);
 
@@ -3446,6 +3450,10 @@ begin
     Result := DoCast()
   else
   begin
+    TempVar := NullResVar;
+    TempSelfVar := NullResVar;
+    TempSelfAddrVar := NullResVar;
+
     IdentVar := IdentExpr.Compile(Offset);
 
     if (lcoHints in FCompilerOptions) and (IdentVar.VarType is TLapeType_Method) and (TLapeType_Method(IdentVar.VarType).HintDirectives <> []) then
@@ -3461,12 +3469,6 @@ begin
           LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], IdentExpr.DocPos);
       end else
         LapeException(lpeCannotInvoke, IdentExpr.DocPos);
-
-    if (IdentVar.VarType is TLapeType_MethodOfType) and
-       (not (TLapeType_MethodOfType(IdentVar.VarType).SelfParam in Lape_ValParams)) and
-       (not IdentVar.Readable)
-    then
-      LapeException(lpeVariableExpected, IdentExpr.DocPos);
 
     if (lcoInitExternalResult in FCompilerOptions) then
       Dest := NullResVar;
@@ -3484,12 +3486,35 @@ begin
 
       if (IdentVar.VarType is TLapeType_MethodOfObject) and (IdentVar.VarPos.MemPos <> mpStack) then
       begin
-        Result := IdentVar;
-        Result.VarType := FCompiler.getBaseType(ltPointer);
+        if (IdentVar.VarType is TLapeType_MethodOfType) and
+           (not (TLapeType_MethodOfType(IdentVar.VarType).SelfParam in Lape_ValParams)) and
+           (not IdentVar.Readable) then
+        begin
+          Pos := IdentExpr.DocPos;
 
-        Result.IncOffset(SizeOf(Pointer));
-        AssignToStack(Result, IdentExpr.DocPos, False);
-        Result.DecOffset(SizeOf(Pointer));
+          TempSelfVar := _ResVar.New(FCompiler.getTempVar(TLapeType_MethodOfType(IdentVar.VarType).ObjectType));
+
+          Result := IdentVar;
+          Result.VarType := FCompiler.GetPointerType(TempSelfVar.VarType, False);
+          Result.IncOffset(SizeOf(Result.VarType));
+
+          // TempSelfVar := Self^
+          // TempSelfAddrVar := @TempSelfVar
+          TempSelfVar := Result.VarType.Eval(op_Deref, TempVar, Result, NullResVar, [], Offset, @Pos);
+          TempSelfAddrVar := TempSelfVar.VarType.Eval(op_Addr, TempVar, TempSelfVar, NullResVar, [], Offset, @Pos);
+
+          AssignToStack(TempSelfAddrVar, Pos, False);
+
+          Result.DecOffset(SizeOf(Pointer));
+        end else
+        begin
+          Result := IdentVar;
+          Result.VarType := FCompiler.getBaseType(ltPointer);
+
+          Result.IncOffset(SizeOf(Pointer));
+          AssignToStack(Result, IdentExpr.DocPos, False);
+          Result.DecOffset(SizeOf(Pointer));
+        end;
       end;
 
       SetLength(ParamVars, Params.Count);
@@ -3524,6 +3549,11 @@ begin
     IdentVar.Spill(1);
     for i := 0 to High(ParamVars) do
       ParamVars[i].Spill(1);
+
+    if (TempSelfVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+      TempSelfVar.Spill(1);
+    if (TempSelfAddrVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+      TempSelfAddrVar.Spill(1);
   end;
 end;
 
