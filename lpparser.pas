@@ -38,6 +38,7 @@ type
     tk_kw_DownTo,
     tk_kw_Else,
     tk_kw_End,
+    tk_kw_Enum,
     tk_kw_Except,
     tk_kw_Experimental,
     tk_kw_External,
@@ -250,7 +251,7 @@ const
   ParserToken_Symbols = [tk_sym_BracketClose..tk_sym_SemiColon];
   ParserToken_Types = [tk_typ_Float..tk_typ_Char];
 
-  Lape_Keywords: array[0..52 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
+  Lape_Keywords: array[0..53 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
       (Keyword: 'AND';           Token: tk_op_AND),
       (Keyword: 'DIV';           Token: tk_op_DIV),
       (Keyword: 'IN';            Token: tk_op_IN),
@@ -273,6 +274,7 @@ const
       (Keyword: 'DOWNTO';        Token: tk_kw_DownTo),
       (Keyword: 'ELSE';          Token: tk_kw_Else),
       (Keyword: 'END';           Token: tk_kw_End),
+      (Keyword: 'ENUM';          Token: tk_kw_Enum),
       (Keyword: 'EXCEPT';        Token: tk_kw_Except),
       (Keyword: 'EXPERIMENTAL';  Token: tk_kw_Experimental),
       (Keyword: 'EXTERNAL';      Token: tk_kw_External),

@@ -104,18 +104,22 @@ type
   TLapeType_Enum = class(TLapeType_SubRange)
   protected
     FMemberMap: TEnumMap;
+    FScoped: Boolean;
     FSmall: Boolean;
     FGapCount: Int32;
+
     function getAsString: lpString; override;
   public
     FreeMemberMap: Boolean;
-    constructor Create(ACompiler: TLapeCompilerBase; AMemberMap: TEnumMap; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
+    constructor Create(ACompiler: TLapeCompilerBase; AMemberMap: TEnumMap; AScoped: Boolean; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
 
     function hasMember(AName: lpString): Boolean; virtual;
     function addMember(Value: Int64; AName: lpString): Int64; overload; virtual;
     function addMember(AName: lpString): Int64; overload; virtual;
+
+    function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; reintroduce; override;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -128,6 +132,7 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     property MemberMap: TEnumMap read FMemberMap;
+    property Scoped: Boolean read FScoped;
     property Small: Boolean read FSmall;
     property GapCount: Int32 read FGapCount;
   end;
@@ -483,7 +488,7 @@ begin
   Result := inherited;
 end;
 
-constructor TLapeType_Enum.Create(ACompiler: TLapeCompilerBase; AMemberMap: TEnumMap; AName: lpString = ''; ADocPos: PDocPos = nil);
+constructor TLapeType_Enum.Create(ACompiler: TLapeCompilerBase; AMemberMap: TEnumMap; AScoped: Boolean; AName: lpString; ADocPos: PDocPos);
 begin
   inherited Create(NullRange, ACompiler, nil, AName, ADocPos);
   FBaseType := ltLargeEnum;
@@ -496,6 +501,7 @@ begin
     AMemberMap.CaseSensitive := LapeCaseSensitive;
   end;
   FMemberMap := AMemberMap;
+  FScoped := AScoped;
 
   FRange.Hi := Int64(FMemberMap.Count) - 1;
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
@@ -548,6 +554,16 @@ begin
   Result := addMember(FRange.Hi + 1, AName);
 end;
 
+function TLapeType_Enum.Equals(Other: TLapeType; ContextOnly: Boolean): Boolean;
+var
+  OtherEnum: TLapeType_Enum absolute Other;
+begin
+  Result := (Other is TLapeType_Enum) and
+            (FSmall = OtherEnum.FSmall) and
+            (FScoped = OtherEnum.FScoped) and
+            (FMemberMap.Equals(OtherEnum.FMemberMap)) and inherited;
+end;
+
 function TLapeType_Enum.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
 var
   i: Integer;
@@ -558,7 +574,10 @@ begin
   begin
     if (Result <> '') then
       Result := Result + ', ';
-    Result := Result + 'string(' + #39 + lpString(FMemberMap[i]) + #39 + ')';
+    if FScoped then
+      Result := Result + 'string(' + #39 + lpString(FName + '.' + FMemberMap[i]) + #39 + ')'
+    else
+      Result := Result + 'string(' + #39 + lpString(FMemberMap[i]) + #39 + ')';
   end;
   Result := Format(lpString(
     'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.SizeInt): System.string;' + LineEnding +
@@ -604,11 +623,11 @@ type
 begin
   if DeepCopy then
   begin
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name, @_DocPos);
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Scoped, Name, @_DocPos);
     TLapeType_Enum(Result).MemberMap.Assign(FMemberMap);
   end
   else
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FMemberMap, Name, @_DocPos);
+    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FMemberMap, Scoped, Name, @_DocPos);
 
   with TLapeType_Enum(Result) do
   begin
@@ -732,7 +751,7 @@ end;
 
 constructor TLapeType_Boolean.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
-  inherited Create(ACompiler, nil, AName, ADocPos);
+  inherited Create(ACompiler, nil, False, AName, ADocPos);
   addMember('False');
   addMember('True');
   FBaseType := ltBoolean;
