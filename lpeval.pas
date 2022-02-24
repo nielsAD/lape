@@ -142,7 +142,7 @@ var
 
   _LapeToString_Set: lpString =
     'function _%sSetToString(ASet: ConstPointer;'                                        + LineEnding +
-    '  AToString: private function(constref Enum): string;'                              + LineEnding +
+    '  AToString: private function(constref AEnum): string;'                              + LineEnding +
     '  Lo, Hi: SizeInt): string;'                                                        + LineEnding +
     'type'                                                                               + LineEnding +
     '  TEnum = (se0, se1 = %d);'                                                         + LineEnding +

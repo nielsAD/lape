@@ -150,7 +150,7 @@ type
     function ParseMethod(FuncForwards: TLapeFuncForwards; FuncHeader: TLapeType_Method; FuncName: lpString; isExternal: Boolean): TLapeTree_Method; overload; virtual;
     function ParseMethod(FuncForwards: TLapeFuncForwards; FuncHeader: TLapeType_Method; FuncName: lpString): TLapeTree_Method; overload; virtual;
     function ParseMethod(FuncForwards: TLapeFuncForwards; isExternal: Boolean = False): TLapeTree_Method; overload; virtual;
-    function ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False; ScopedEnums: Boolean = False): TLapeType; virtual;
+    function ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False): TLapeType; virtual;
     procedure ParseTypeBlock; virtual;
     procedure ParseLabelBlock; virtual;
     function ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList; virtual;
@@ -2278,7 +2278,7 @@ begin
   end;
 end;
 
-function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False; ScopedEnums: Boolean = False): TLapeType;
+function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwner: Boolean = False): TLapeType;
   procedure ParseArray;
   var
     TypeExpr: TLapeTree_Base;
@@ -2295,14 +2295,14 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         Range := EnsureConstantRange(TypeExpr);
         Expect(tk_sym_BracketClose, False, False);
         Expect(tk_kw_Of, True, False);
-        Result := addManagedType(TLapeType_StaticArray.Create(Range, ParseType(nil, addToStackOwner, ScopedEnums), Self, '', @DocPos));
+        Result := addManagedType(TLapeType_StaticArray.Create(Range, ParseType(nil, addToStackOwner), Self, '', @DocPos));
       finally
         if (TypeExpr <> nil) then
           TypeExpr.Free();
       end;
     end
     else
-      Result := addManagedType(TLapeType_DynArray.Create(ParseType(nil, addToStackOwner, ScopedEnums), Self, '', @DocPos));
+      Result := addManagedType(TLapeType_DynArray.Create(ParseType(nil, addToStackOwner), Self, '', @DocPos));
   end;
 
   procedure ParseRecord(IsPacked: Boolean = False);
@@ -2321,7 +2321,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     Next();
     if (Tokenizer.Tok = tk_sym_ParenthesisOpen) then
     begin
-      FieldType := ParseType(nil, addToStackOwner, ScopedEnums);
+      FieldType := ParseType(nil, addToStackOwner);
       if (not (FieldType is TLapeType_Record)) or (IsRecord <> (FieldType.BaseType = ltRecord)) then
         LapeException(lpeUnknownParent, Tokenizer.DocPos);
       Tokenizer.Expect(tk_sym_ParenthesisClose, True, True);
@@ -2381,7 +2381,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
 
         Identifiers := ParseIdentifierList();
         Expect(tk_sym_Colon, False, False);
-        FieldType := ParseType(nil, addToStackOwner, ScopedEnums);
+        FieldType := ParseType(nil, addToStackOwner);
         Expect(tk_sym_SemiColon, True, False);
         for i := 0 to High(Identifiers) do
         begin
@@ -2406,7 +2406,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     SetType: TLapeType;
   begin
     Expect(tk_kw_Of, True, False);
-    SetType := EnsureRange(ParseType(nil, addToStackOwner, ScopedEnums));
+    SetType := EnsureRange(ParseType(nil, addToStackOwner));
     if (not (SetType is TLapeType_SubRange)) then
       LapeException(lpeInvalidRange, Tokenizer.DocPos);
 
@@ -2456,14 +2456,19 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     Default: TLapeGlobalVar;
     StackOwner: TLapeStackInfo;
     Val: Int64;
+    Scoped: Boolean;
   begin
-    Enum := TLapeType_Enum.Create(Self, nil, '', getPDocPos());
+    Scoped := (lcoScopedEnums in FOptions) or (Tokenizer.Tok = tk_kw_Enum);
+    if Scoped and (Tokenizer.Tok = tk_kw_Enum) then
+      Expect(tk_sym_ParenthesisOpen, True, False);
+
+    Enum := TLapeType_Enum.Create(Self, nil, Scoped, '', getPDocPos());
     if (FStackInfo = nil) or (not addToStackOwner) then
       StackOwner := FStackInfo
     else
       StackOwner := FStackInfo.Owner;
 
-    if ScopedEnums then
+    if Scoped then
       Result := addManagedType(Enum)
     else
       Result := addManagedDecl(Enum) as TLapeType;
@@ -2471,8 +2476,8 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     repeat
       Expect(tk_Identifier, True, False);
       Name := Tokenizer.TokString;
-      if (ScopedEnums and Enum.hasMember(Name)) or
-         ((not ScopedEnums) and hasDeclaration(Name, StackOwner, True))
+      if (Scoped and Enum.hasMember(Name)) or
+         ((not Scoped) and hasDeclaration(Name, StackOwner, True))
       then
         LapeExceptionFmt(lpeDuplicateDeclaration, [Name], Tokenizer.DocPos);
 
@@ -2501,7 +2506,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       else
         Val := Enum.addMember(Name);
 
-      if (not ScopedEnums) then
+      if (not Scoped) then
         TLapeGlobalVar(addLocalDecl(Enum.NewGlobalVar(Val, Name), StackOwner)).isConstant := True;
 
     until (Tokenizer.Tok in [tk_NULL, tk_sym_ParenthesisClose]);
@@ -2627,7 +2632,7 @@ begin
           ParseRecord(True);
         end;
       tk_sym_Caret: ParsePointer();
-      tk_sym_ParenthesisOpen: ParseEnum();
+      tk_kw_Enum, tk_sym_ParenthesisOpen: ParseEnum();
       tk_kw_Function, tk_kw_Procedure, tk_kw_Operator,
       tk_kw_External, {tk_kw_Export,} tk_kw_Private: ParseMethodType();
       tk_kw_Type: ParseTypeType();
@@ -2660,7 +2665,7 @@ begin
         LapeExceptionFmt(lpeDuplicateDeclaration, [Name], Tokenizer.DocPos);
       Expect(tk_sym_Equals, True, False);
 
-      Typ := ParseType(TypeForwards, False, lcoScopedEnums in FOptions);
+      Typ := ParseType(TypeForwards, False);
       if ((Typ.DeclarationList <> nil) or (Typ.Name <> '')) and (not TypeForwards.ExistsItem(Typ)) then
         Typ := Typ.CreateCopy();
       Typ.Name := Name;
@@ -4168,7 +4173,7 @@ begin
   Result := nil;
 
   try
-     Decl := getDeclaration(AName, AStackInfo, LocalOnly);
+    Decl := getDeclaration(AName, AStackInfo, LocalOnly);
   except on E: lpException do
     if (Pos = nil) then
       LapeException(lpString(E.Message))

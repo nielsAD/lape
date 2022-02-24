@@ -1,0 +1,14 @@
+{$assertions on}
+
+type
+  EEnum = (testA, testB);
+  EScopedEnum = enum(testA, testB);
+
+var
+  e: EEnum = testB;
+  scoped: EScopedEnum = EScopedEnum.testB;
+
+begin
+  Assert(ToString(e) = 'testB');
+  Assert(ToString(scoped) = 'EScopedEnum.testB');
+end;
