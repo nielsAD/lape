@@ -710,6 +710,7 @@ function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
 
+function GetMethodName(VarType: TLapeType): lpString;
 function MethodOfObject(VarType: TLapeType): Boolean;
 function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload;
 function ValidFieldName(Field: TResVar): Boolean; overload;
@@ -807,6 +808,22 @@ begin
   Arr[ltUnicodeString] := TLapeType_UnicodeString.Create(Compiler, LapeTypeToString(ltUnicodeString));
   Arr[ltVariant] := TLapeType_Variant.Create(Compiler, LapeTypeToString(ltVariant));
   Arr[ltPointer] := TLapeType_Pointer.Create(Compiler, nil, False, LapeTypeToString(ltPointer));
+end;
+
+function GetMethodName(VarType: TLapeType): lpString;
+begin
+  Result := '';
+
+  if (VarType is TLapeType_OverloadedMethod) and (VarType.ManagedDeclarations.Count > 0) then
+    VarType := TLapeGlobalVar(VarType.ManagedDeclarations[0]).VarType;
+
+  if (VarType is TLapeType_Method) then
+  begin
+    if (VarType is TLapeType_MethodOfType) then
+      Result := TLapeType_MethodOfType(VarType).ObjectType.Name + '.' + VarType.Name
+    else
+      Result := VarType.Name;
+  end;
 end;
 
 function MethodOfObject(VarType: TLapeType): Boolean;

@@ -1,0 +1,18 @@
+procedure Int32.Test;
+begin
+end;
+
+procedure Int32.TestStatic; static;
+begin
+end;
+
+var
+  i: Integer;
+
+begin
+  i.Test();
+  i.TestStatic();
+
+  Int32.TestStatic();
+  Int32.Test(); // Compilation error: "Variable expected. "Int32.Test" is not a static method at line 17, column 8"
+end;

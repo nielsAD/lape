@@ -3486,6 +3486,9 @@ begin
 
       if (IdentVar.VarType is TLapeType_MethodOfObject) and (IdentVar.VarPos.MemPos <> mpStack) then
       begin
+        if (IdentVar.VarType is TLapeType_MethodOfType) and (FExpr is TLapeTree_GlobalVar) then
+          LapeExceptionFmt(lpeStaticMethodExpected, [GetMethodName(TLapeTree_GlobalVar(FExpr).GlobalVar.VarType)], Expr.DocPos);
+
         if (IdentVar.VarType is TLapeType_MethodOfType) and
            (not (TLapeType_MethodOfType(IdentVar.VarType).SelfParam in Lape_ValParams)) and
            (not IdentVar.Readable) then

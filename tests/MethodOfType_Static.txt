@@ -1,0 +1,1 @@
+Variable expected. "Int32.Test" is not a static method at line 17, column 8 in file "MethodOfType_Static.lap"

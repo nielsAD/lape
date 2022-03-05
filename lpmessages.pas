@@ -109,6 +109,7 @@ const
   lpeParentOutOfScope = 'Parent declaration is out of scope';
   lpeRuntime = 'Runtime error: "%s"';
   lpeStatementNotAllowed = 'Statement not allowed here';
+  lpeStaticMethodExpected = 'Variable expected. "%s" is not a static method';
   lpeTooMuchParameters = 'Too many parameters found';
   lpeTypeExpected = 'Type expected';
   lpeUnClosedComment = 'Unclosed comment';
