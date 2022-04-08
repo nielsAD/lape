@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lptree, lpvartypes;
+  lptypes, lptree, lpvartypes, lpvartypes_helper;
 
 type
   TLapeType_DynArray = class(TLapeType_Pointer)
@@ -37,6 +37,9 @@ type
     function EvalRes(Op: EOperator; ARight: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+
+    procedure addArrayHelper(Helper: TLapeType_HelperClass; AName: String); virtual;
+    procedure addArrayHelpers; virtual;
   end;
 
   TLapeType_StaticArray = class(TLapeType_DynArray)
@@ -60,6 +63,8 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
     procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); override;
 
+    procedure addArrayHelpers; override;
+
     property Range: TLapeRange read FRange;
   end;
 
@@ -78,6 +83,8 @@ type
 
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+
+    procedure addArrayHelpers; override;
   end;
 
   TLapeType_AnsiString = class(TLapeType_String)
@@ -122,7 +129,10 @@ end;
 constructor TLapeType_DynArray.Create(ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited Create(ACompiler, ArrayType, False, AName, ADocPos);
+
   FBaseType := ltDynArray;
+
+  addArrayHelpers();
 end;
 
 function TLapeType_DynArray.CreateCopy(DeepCopy: Boolean = False): TLapeType;
@@ -783,6 +793,44 @@ begin
     Result := inherited;
 end;
 
+procedure TLapeType_DynArray.addArrayHelper(Helper: TLapeType_HelperClass; AName: String);
+begin
+  if (not (lcoArrayHelpers in FCompiler.Options)) or HasChild(AName) then
+    Exit;
+
+  FManagedDecls.addDeclaration(
+    TLapeType_Helper(FCompiler.addManagedType(Helper.Create(FCompiler))).NewGlobalVar(AName)
+  );
+end;
+
+procedure TLapeType_DynArray.addArrayHelpers;
+begin
+  addArrayHelper(TLapeType_ArrayHelper_Low, 'Low');
+  addArrayHelper(TLapeType_ArrayHelper_High, 'High');
+  addArrayHelper(TLapeType_ArrayHelper_Contains, 'Contains');
+  addArrayHelper(TLapeType_ArrayHelper_Remove, 'Remove');
+  addArrayHelper(TLapeType_ArrayHelper_Delete, 'Delete');
+  addArrayHelper(TLapeType_ArrayHelper_Insert, 'Insert');
+  addArrayHelper(TLapeType_ArrayHelper_Swap, 'Swap');
+  addArrayHelper(TLapeType_ArrayHelper_Unique, 'Unique');
+  addArrayHelper(TLapeType_ArrayHelper_IndexOf, 'IndexOf');
+  addArrayHelper(TLapeType_ArrayHelper_IndicesOf, 'IndicesOf');
+  addArrayHelper(TLapeType_ArrayHelper_Sort, 'Sort');
+  addArrayHelper(TLapeType_ArrayHelper_Sorted, 'Sorted');
+  addArrayHelper(TLapeType_ArrayHelper_SetLength, 'SetLength');
+  addArrayHelper(TLapeType_ArrayHelper_Length, 'Length');
+  addArrayHelper(TLapeType_ArrayHelper_Copy, 'Copy');
+  addArrayHelper(TLapeType_ArrayHelper_First, 'First');
+  addArrayHelper(TLapeType_ArrayHelper_Last, 'Last');
+  addArrayHelper(TLapeType_ArrayHelper_Pop, 'Pop');
+  addArrayHelper(TLapeType_ArrayHelper_RandomValue, 'RandomValue');
+  addArrayHelper(TLapeType_ArrayHelper_Reverse, 'Reverse');
+  addArrayHelper(TLapeType_ArrayHelper_Reversed, 'Reversed');
+  addArrayHelper(TLapeType_ArrayHelper_Clear, 'Clear');
+  addArrayHelper(TLapeType_ArrayHelper_Append, 'Append');
+  addArrayHelper(TLapeType_ArrayHelper_Extend, 'Extend');
+end;
+
 function TLapeType_StaticArray.getPadding: SizeInt;
 begin
   if HasType() then
@@ -1138,6 +1186,24 @@ begin
     end;
 end;
 
+procedure TLapeType_StaticArray.addArrayHelpers;
+begin
+  addArrayHelper(TLapeType_ArrayHelper_Low, 'Low');
+  addArrayHelper(TLapeType_ArrayHelper_High, 'High');
+  addArrayHelper(TLapeType_ArrayHelper_Contains, 'Contains');
+  addArrayHelper(TLapeType_ArrayHelper_Swap, 'Swap');
+  addArrayHelper(TLapeType_ArrayHelper_Unique, 'Unique');
+  addArrayHelper(TLapeType_ArrayHelper_IndexOf, 'IndexOf');
+  addArrayHelper(TLapeType_ArrayHelper_IndicesOf, 'IndicesOf');
+  addArrayHelper(TLapeType_ArrayHelper_Sorted, 'Sorted');
+  addArrayHelper(TLapeType_ArrayHelper_Length, 'Length');
+  addArrayHelper(TLapeType_ArrayHelper_Copy, 'Copy');
+  addArrayHelper(TLapeType_ArrayHelper_First, 'First');
+  addArrayHelper(TLapeType_ArrayHelper_Last, 'Last');
+  addArrayHelper(TLapeType_ArrayHelper_RandomValue, 'RandomValue');
+  addArrayHelper(TLapeType_ArrayHelper_Reversed, 'Reversed');
+end;
+
 function TLapeType_String.VarToString(AVar: Pointer): lpString;
 begin
   if (FBaseType = ltAnsiString) then
@@ -1252,6 +1318,22 @@ begin
       LapeException(lpeImpossible);
     Result.DecOffset(FPType.Size);
   end;
+end;
+
+procedure TLapeType_String.addArrayHelpers;
+begin
+  addArrayHelper(TLapeType_ArrayHelper_SetLength, 'SetLength');
+  addArrayHelper(TLapeType_ArrayHelper_Length, 'Length');
+  addArrayHelper(TLapeType_ArrayHelper_Copy, 'Copy');
+  addArrayHelper(TLapeType_ArrayHelper_First, 'First');
+  addArrayHelper(TLapeType_ArrayHelper_Last, 'Last');
+  addArrayHelper(TLapeType_ArrayHelper_Pop, 'Pop');
+  addArrayHelper(TLapeType_ArrayHelper_RandomValue, 'RandomValue');
+  addArrayHelper(TLapeType_ArrayHelper_Reverse, 'Reverse');
+  addArrayHelper(TLapeType_ArrayHelper_Reversed, 'Reversed');
+  addArrayHelper(TLapeType_ArrayHelper_Clear, 'Clear');
+  addArrayHelper(TLapeType_ArrayHelper_Append, 'Append');
+  addArrayHelper(TLapeType_ArrayHelper_Extend, 'Extend');
 end;
 
 constructor TLapeType_AnsiString.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);

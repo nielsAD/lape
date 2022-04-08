@@ -399,8 +399,10 @@ var
     'end;';
 
     _LapeSort: lpString =
+    'type _TCompareFunc = private function(constref A, B): Int32;'                       + LineEnding +
+    ''                                                                                   + LineEnding +
     'procedure _Sort(p: Pointer; ElSize, Hi: SizeInt;'                                   + LineEnding +
-    '  Compare: private function(constref A, B): Int32); overload;'                      + LineEnding +
+    '  Compare: _TCompareFunc); overload;'                                               + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -412,7 +414,7 @@ var
     ''                                                                                   + LineEnding +
     '  if (Hi = -1) then'                                                                + LineEnding +
     '    Hi := PSizeInt(p)[-1]^;'                                                        + LineEnding +
-
+    ''                                                                                   + LineEnding +
     '  Item := GetMem(ElSize);'                                                          + LineEnding +
     '  for I := 1 to Hi do'                                                              + LineEnding +
     '  begin'                                                                            + LineEnding +
@@ -429,8 +431,10 @@ var
     'end;';
 
     _LapeIndexOf: lpString =
+    'type _TEqualsFunc = private function(constref A, B): EvalBool;'                      + LineEnding +
+    ''                                                                                   + LineEnding +
     'function _IndexOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'              + LineEnding +
-    '  Equals: private function(constref A, B): EvalBool): SizeInt; overload;'           + LineEnding +
+    '  Equals: _TEqualsFunc): SizeInt; overload;'                                        + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -452,7 +456,7 @@ var
     'end;'                                                                               + LineEnding +
     ''                                                                                   + LineEnding +
     'function _IndicesOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'            + LineEnding +
-    '  Equals: private function(constref A, B): EvalBool): array of Int32; overload;'    + LineEnding +
+    '  Equals: _TEqualsFunc): array of Int32; overload;'                                 + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -486,8 +490,7 @@ var
     'end;';
 
     _LapeUnique: lpString =
-    'procedure _Unique(var p: Pointer; ElSize: SizeInt;'                                 + LineEnding +
-    '  Equals: private function(constref A, B): EvalBool;'                               + LineEnding +
+    'procedure _Unique(var p: Pointer; ElSize: SizeInt; Equals: _TEqualsFunc;'           + LineEnding +
     '  Dispose: private procedure(p: Pointer)); overload;'                               + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +

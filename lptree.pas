@@ -1131,8 +1131,6 @@ function TLapeTree_InternalMethod_Sort.Compile(var Offset: Integer): TResVar;
     end;
   end;
 
-const
-  CompareParameter: TLapeParameter = (ParType: lptConstRef; VarType: TLapeType(nil); Default: TLapeVar(nil));
 var
   ArrayVar, CompareVar, ArrayPointer: TResVar;
   ArrayType, ResultType: TLapeType;
@@ -1183,13 +1181,7 @@ begin
         LapeException(lpeInvalidCompareMethod, DocPos);
     end;
 
-    CompareVar.VarType := FCompiler.addManagedType(CompareVar.VarType.CreateCopy(True));
-    with TLapeType_Method(CompareVar.VarType) do
-    begin
-      Params.Clear();
-      Params.Add(CompareParameter);
-      Params.Add(CompareParameter);
-    end;
+    CompareVar.VarType := FCompiler.getGlobalType('_TCompareFunc');
   end else
     CompareVar := GetMagicMethodOrNil(FCompiler, '_Compare', [ArrayType, ArrayType], ResultType);
 
@@ -1221,7 +1213,7 @@ begin
   end;
 
   try
-    // _Sort(p: Pointer; ElSize, Hi: SizeInt; Compare: function(constref p, B): Int32);
+    // _Sort(p: Pointer; ElSize, Hi: SizeInt; Compare: function(constref A, B): Int32);
     with TLapeTree_Invoke.Create('_Sort', Self) do
     try
       addParam(TLapeTree_ResVar.Create(ArrayPointer.IncLock(), Self));
@@ -1416,7 +1408,7 @@ end;
 function TLapeTree_InternalMethod_IndicesOf.resType: TLapeType;
 begin
   if (FResType = nil) then
-    FResType := FCompiler.addManagedType(TLapeType_DynArray.Create(FCompiler.getBaseType(ltInt32), FCompiler));
+    FResType := FCompiler.getIntegerArray();
 
   Result := inherited;
 end;
@@ -2705,8 +2697,13 @@ function TLapeTree_Invoke.ResolveOverload(Overloaded: TLapeType_OverloadedMethod
 var
   MethodIndex: Integer;
   IndexOperator: TLapeTree_Operator;
+  ObjectType: TLapeType;
 begin
-  MethodIndex := Overloaded.getMethodIndex(getParamTypes(), ExpectType);
+  ObjectType := nil;
+  if (FExpr is TLapeTree_Operator) and (TLapeTree_Operator(FExpr).Left <> nil) then
+    ObjectType := TLapeTree_Operator(FExpr).Left.resType();
+
+  MethodIndex := Overloaded.getMethodIndex(getParamTypes(), ExpectType, ObjectType);
   if (MethodIndex < 0) then
     MethodIndex := CastOpenArrays();
 
