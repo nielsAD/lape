@@ -1,0 +1,41 @@
+{$assertions on}
+
+procedure TestString;
+var
+  Str: String = 'Hello';
+begin
+  Assert(Str.First() = 'H');
+  Assert(Str.Last() = 'o');
+
+  Str.Append(' ');
+  Str.Extend('World');
+
+  Assert(Str = 'Hello World');
+  while (Str.Length() > 0) do
+    Assert(Str.Last() = Str.Pop());
+end;
+
+type
+  TIntegerArray = array of Int32;
+
+function TIntegerArray.RandomValue: Int32; override;
+begin
+  Result := 123;
+end;
+
+var
+  Arr: TIntegerArray = [3,2,1];
+begin
+  Arr.SetLength(10);
+
+  Assert(Arr.Length() = 10);
+  Assert(Arr.IndexOf(2) = 1);
+  Assert(Arr.First() = 3);
+  Assert(Arr.Reversed().Last() = 3);
+  Assert(Arr.Pop(1) = 2);
+  Assert(Arr.IndexOf(3) = 0);
+  Assert(Arr.IndexOf(1) = 1);
+  Assert(Arr.RandomValue() = 123);
+
+  TestString();
+end;
