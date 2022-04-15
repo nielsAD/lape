@@ -31,15 +31,16 @@ type
     lcoHints,                          // {$H} {$HINTS}
     lcoCOperators,                     //      {$COPERATORS}
     lcoAutoObjectify,                  //      {$AUTOOBJECTIFY}
-    lcoArrayHelpers,                   //      {$ARRAYHELPERS}
+    lcoExplictSelf,                    //      {$EXPLICTSELF}
     lcoDuplicateLocalNameHints,        //
+    lcoArrayHelpers,                   //
     lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoArrayHelpers, lcoAutoObjectify, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
+  Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
   Lape_PackRecordsDef = 8;
 
 type
@@ -4011,8 +4012,8 @@ var
 begin
   inherited Create();
 
-  FBaseOptions := Lape_OptionsDef;
-  FBaseOptions_PackRecords := Lape_PackRecordsDef;
+  Options := Lape_OptionsDef;
+  Options_PackRecords := Lape_PackRecordsDef;
 
   FOnHint := nil;
   FStackInfo := nil;

@@ -155,7 +155,8 @@ function TLapeType_Helper.FunctionNotFound(Sender: TLapeType_OverloadedMethod; A
 begin
   OnFunctionNotFound := nil;
 
-  CreateFunctions(AObjectType);
+  if (AObjectType <> nil) then
+    CreateFunctions(AObjectType);
   if (FManagedDecls.Count = 0) then
     LapeException(lpeImpossible);
 

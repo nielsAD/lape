@@ -795,8 +795,7 @@ end;
 
 procedure TLapeType_DynArray.addArrayHelper(Helper: TLapeType_HelperClass; AName: String);
 begin
-  if (not (lcoArrayHelpers in FCompiler.Options)) or HasChild(AName) then
-    Exit;
+  Assert(lcoArrayHelpers in FCompiler.Options);
 
   FManagedDecls.addDeclaration(
     TLapeType_Helper(FCompiler.addManagedType(Helper.Create(FCompiler))).NewGlobalVar(AName)
@@ -805,6 +804,9 @@ end;
 
 procedure TLapeType_DynArray.addArrayHelpers;
 begin
+  if (not (lcoArrayHelpers in FCompiler.Options)) then
+    Exit;
+
   addArrayHelper(TLapeType_ArrayHelper_Low, 'Low');
   addArrayHelper(TLapeType_ArrayHelper_High, 'High');
   addArrayHelper(TLapeType_ArrayHelper_Contains, 'Contains');
@@ -1188,6 +1190,9 @@ end;
 
 procedure TLapeType_StaticArray.addArrayHelpers;
 begin
+  if (not (lcoArrayHelpers in FCompiler.Options)) then
+    Exit;
+
   addArrayHelper(TLapeType_ArrayHelper_Low, 'Low');
   addArrayHelper(TLapeType_ArrayHelper_High, 'High');
   addArrayHelper(TLapeType_ArrayHelper_Contains, 'Contains');
@@ -1322,6 +1327,9 @@ end;
 
 procedure TLapeType_String.addArrayHelpers;
 begin
+  if (not (lcoArrayHelpers in FCompiler.Options)) then
+    Exit;
+
   addArrayHelper(TLapeType_ArrayHelper_SetLength, 'SetLength');
   addArrayHelper(TLapeType_ArrayHelper_Length, 'Length');
   addArrayHelper(TLapeType_ArrayHelper_Copy, 'Copy');

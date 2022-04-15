@@ -1198,9 +1198,6 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (Name = 'assertions') then
       Result := (lcoAssertions in FOptions)
     else
-    if (Name = 'arrayhelpers') then
-      Result := (lcoArrayHelpers in FOptions)
-    else
     if (Name = 'rangechecks') then
       Result := (lcoRangeCheck in FOptions)
     else
@@ -1239,6 +1236,9 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     else
     if (Name = 'autoobjectify') then
       Result := (lcoAutoObjectify in FOptions)
+    else
+    if (Name = 'explictself') then
+      Result := (lcoExplictSelf in FOptions)
     else
     if (Name = 'duplicatelocalnamehints') then
       Result := (lcoDuplicateLocalNameHints in FOptions);
@@ -1517,14 +1517,14 @@ begin
     if (Directive = 'h') or (Directive = 'hints') then
       setOption(lcoHints)
     else
-    if (Directive = 'arrayhelpers') then
-      setOption(lcoArrayHelpers)
-    else
     if (Directive = 'coperators') then
       setOption(lcoCOperators)
     else
     if (Directive = 'autoobjectify') then
       setOption(lcoAutoObjectify)
+    else
+    if (Directive = 'explictself') then
+      setOption(lcoExplictSelf)
     else
     if (Directive = 'duplicatelocalnamehints') then
       setOption(lcoDuplicateLocalNameHints)
@@ -2055,9 +2055,14 @@ begin
       if (FuncHeader is TLapeType_MethodOfType) then
       begin
         Result.SelfVar := _ResVar.New(FStackInfo.Vars[0]);
-        SelfWith.WithType := TLapeType_MethodOfType(FuncHeader).ObjectType;
-        SelfWith.WithVar := @Result.SelfVar;
-        FStackInfo.Owner.addWith(SelfWith);
+
+        if (not (lcoExplictSelf in FOptions)) then
+        begin
+          SelfWith.WithType := TLapeType_MethodOfType(FuncHeader).ObjectType;
+          SelfWith.WithVar := @Result.SelfVar;
+
+          FStackInfo.Owner.addWith(SelfWith);
+        end;
       end;
     end;
 
@@ -2223,6 +2228,13 @@ begin
 
       if (FuncForwards <> nil) and (OldDeclaration is TLapeGlobalVar) then
         FuncForwards.DeleteItem(TLapeGlobalVar(OldDeclaration));
+
+      if (lcoExplictSelf in FOptions) and ResetStack then
+      begin
+        SetStackOwner(nil).Free();
+
+        ResetStack := False;
+      end;
 
       Next();
       Result.Statements := ParseBlockList();
@@ -4049,28 +4061,11 @@ function TLapeCompiler.Compile: Boolean;
     end;
   end;
 
-  // Can be created before CompilerOptions are set
-  procedure ArrayHelpers;
-  var
-    BaseType: ELapeBaseType;
-    Decls: TLapeDeclArray;
-    i: Integer;
-  begin
-    for BaseType in LapeBaseTypes do
-      if FBaseTypes[BaseType] is TLapeType_DynArray then
-        TLapeType_DynArray(FBaseTypes[BaseType]).addArrayHelpers();
-
-    Decls := GlobalDeclarations.GetByClass(TLapeType_DynArray, bFalse);
-    for i := 0 to High(Decls) do
-      TLapeType_DynArray(Decls[i]).addArrayHelpers();
-  end;
-
 begin
   Result := False;
   try
 
     Reset();
-    ArrayHelpers();
     IncStackInfo(True);
     FTree := ParseFile();
     if (FTree = nil) and (FDelayedTree.GlobalCount(False) <= 0) then
