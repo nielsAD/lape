@@ -1,0 +1,30 @@
+{$assertions on}
+
+type
+  TPoint = record X, Y: Int32; end;
+  TPointArray = array of TPoint;
+
+operator < (l,r:TPoint): Boolean;
+begin
+  Result := (l.x < r.x) and (l.y < r.y);
+end;
+
+operator > (l,r:TPoint): Boolean;
+begin
+  Result := (l.x > r.x) and (l.y > r.y);
+end;
+
+var
+  Arr: array of Int32 = [1,1,2,2,2,2,4,4,1,1,2,4,4];
+  Stat: array[-4..1] of Int32 = [10,2,3,4,5,6];
+  Points: TPointArray = [[0,0],[5,5],[-100,-100],[6,6]];
+begin
+  Assert(ArrayMin(Arr) = 1);
+  Assert(ArrayMax(Arr) = 4);
+
+  Assert(ArrayMin(Points) = [-100,-100]);
+  Assert(ArrayMax(Points) = [6,6]);
+
+  Assert(ArrayMin(Stat) = 2);
+  Assert(ArrayMax(Stat) = 10);
+end;

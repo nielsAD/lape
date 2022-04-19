@@ -113,6 +113,10 @@ type
     function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetCompareMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+
+    function GetGreaterThanMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetLessThanMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+
     function GetEqualsMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetIsEnumGapMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
@@ -687,6 +691,48 @@ begin
   end;
 end;
 
+function TLapeCompiler.GetGreaterThanMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Method: TLapeTree_Method;
+  Header: TLapeType_Method;
+begin
+  Result := nil;
+  if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult = nil) then
+    Exit;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getBaseType(ltEvalBool))) as TLapeType_Method;
+  Method := addGlobalFunc(Header,
+    'GreaterThanMethod',
+    'begin'                        + LineEnding +
+    '  Result := Param0 > Param1;' + LineEnding +
+    'end;');
+
+  Result := Method.Method;
+
+  Sender.addMethod(Result);
+end;
+
+function TLapeCompiler.GetLessThanMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Method: TLapeTree_Method;
+  Header: TLapeType_Method;
+begin
+  Result := nil;
+  if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult = nil) then
+    Exit;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getBaseType(ltEvalBool))) as TLapeType_Method;
+  Method := addGlobalFunc(Header,
+    'LessThanMethod',
+    'begin'                        + LineEnding +
+    '  Result := Param0 < Param1;' + LineEnding +
+    'end;');
+
+  Result := Method.Method;
+
+  Sender.addMethod(Result);
+end;
+
 function TLapeCompiler.GetEqualsMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Method: TLapeTree_Method;
@@ -1034,6 +1080,8 @@ begin
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCompareMethod).NewGlobalVar('_Compare'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetLessThanMethod).NewGlobalVar('_LessThan'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetGreaterThanMethod).NewGlobalVar('_GreaterThan'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetEqualsMethod).NewGlobalVar('_Equals'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetIsEnumGapMethod).NewGlobalVar('_IsEnumGap'));
 
@@ -1057,7 +1105,8 @@ begin
     _LapeSort +
     _LapeIndexOf +
     _LapeUnique +
-    _LapeArrayMode,
+    _LapeArrayMode +
+    _LapeArrayMinMax,
     '!addDelayedCore'
   );
 
@@ -3793,6 +3842,8 @@ begin
   FInternalMethodMap['Objectify'] := TLapeTree_InternalMethod_Objectify;
   FInternalMethodMap['IsEnumGap'] := TLapeTree_InternalMethod_IsEnumGap;
 
+  FInternalMethodMap['ArrayMin'] := TLapeTree_InternalMethod_ArrayMin;
+  FInternalMethodMap['ArrayMax'] := TLapeTree_InternalMethod_ArrayMax;
   FInternalMethodMap['ArrayMedian'] := TLapeTree_InternalMethod_ArrayMedian;
   FInternalMethodMap['ArrayMode'] := TLapeTree_InternalMethod_ArrayMode;
 
