@@ -96,6 +96,7 @@ const
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';
   lpeNoOverloadedMethod = 'Don''t know which overloaded method to call with params (%s)';
   lpeOperatorExpected = 'Operator expected';
+  lpeOperatorRequiredForType = 'Operator "%s" is required for type "%s"';
   lpeOutOfStackRange = 'Out of stack range';
   lpeOutOfTypeRange  = 'Out of type range';
   lpeOutOfTypeRange1 = 'Out of type range (value:%d, low:%d, high:%d)';

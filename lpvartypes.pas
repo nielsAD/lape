@@ -711,6 +711,7 @@ type
     property OnHint: TLapeHint read FOnHint write FOnHint;
   end;
 
+procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; Typ: TLapeType; DocPos: TDocPos);
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
@@ -751,6 +752,43 @@ uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_array, lptree,
   lpmessages, lpeval, lpinterpreter;
+
+procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; Typ: TLapeType; DocPos: TDocPos);
+
+  function HasOperatorOverload(op: EOperator): Boolean;
+  var
+    tmpVar: TResVar;
+  begin
+    Result := False;
+
+    try
+      with TLapeTree_InternalMethod_Operator.Create(op, Compiler) do
+      try
+        tmpVar := NullResVar;
+        tmpVar.VarType := Typ;
+        addParam(TLapeTree_ResVar.Create(tmpVar, Compiler));
+        addParam(TLapeTree_ResVar.Create(tmpVar, Compiler));
+
+        Result := resType() <> nil;
+      finally
+        Free();
+      end;
+    except
+    end;
+  end;
+
+var
+  i: Integer;
+begin
+  for i := 0 to High(ops) do
+  begin
+    if (Typ.EvalRes(ops[i], Typ) = nil) and (not HasOperatorOverload(ops[i])) then
+      if (Typ.Name <> '') then
+        LapeExceptionFmt(lpeOperatorRequiredForType, [op_str[ops[i]], Typ.Name], DocPos)
+      else
+        LapeExceptionFmt(lpeOperatorRequiredForType, [op_str[ops[i]], Typ.AsString], DocPos);
+  end;
+end;
 
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
 begin

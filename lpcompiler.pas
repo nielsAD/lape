@@ -289,6 +289,7 @@ uses
   Variants,
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
+  lpinternalmethods_algorithm,
   lpmessages, lpeval, lpinterpreter;
 
 function TLapeCompiler.getPDocPos: PDocPos;
@@ -1055,7 +1056,8 @@ begin
     _LapeInsert +
     _LapeSort +
     _LapeIndexOf +
-    _LapeUnique,
+    _LapeUnique +
+    _LapeArrayMode,
     '!addDelayedCore'
   );
 
@@ -3790,6 +3792,9 @@ begin
 
   FInternalMethodMap['Objectify'] := TLapeTree_InternalMethod_Objectify;
   FInternalMethodMap['IsEnumGap'] := TLapeTree_InternalMethod_IsEnumGap;
+
+  FInternalMethodMap['ArrayMedian'] := TLapeTree_InternalMethod_ArrayMedian;
+  FInternalMethodMap['ArrayMode'] := TLapeTree_InternalMethod_ArrayMode;
 
   setTokenizer(ATokenizer);
   Reset();
