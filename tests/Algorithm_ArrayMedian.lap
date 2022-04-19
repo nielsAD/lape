@@ -1,0 +1,23 @@
+{$assertions on}
+
+type
+  TPoint = record X, Y: Int32; end;
+  TPointArray = array of TPoint;
+
+operator < (l,r:TPoint): Boolean;
+begin
+  Result := Int64(l) < Int64(r);
+end;
+
+operator > (l,r:TPoint): Boolean;
+begin
+  Result := Int64(l) > Int64(r);
+end;
+
+var
+  Arr: array of Int32 = [1,1,2,2,2,2,4,4,1,1,2];
+  TPA: TPointArray = [[5,5],[5,5],[1,1],[5,5],[1,1],[4,4],[1,1]];
+begin
+  Assert(ArrayMedian(Arr)=2);
+  Assert(ArrayMedian(TPA)=[4,4]);
+end;
