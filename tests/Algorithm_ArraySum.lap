@@ -1,0 +1,21 @@
+{$assertions on}
+
+type
+  TPoint = record
+    x, y: Integer;
+  end;
+  TPointArray = array of TPoint;
+
+operator +(l,r: TPoint): TPoint;
+begin
+  Result.x := l.x+r.x;
+  Result.y := l.y+r.y;
+end;
+
+var
+  Arr: array of Int32 = [10,10,-10,5];
+  Points: TPointArray = [[5,5],[15,15],[5,0]];
+begin
+  Assert(ArraySum(Arr)=15);
+  Assert(ArraySum(Points)=[25,20]);
+end;

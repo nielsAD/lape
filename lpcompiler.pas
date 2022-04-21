@@ -3846,6 +3846,7 @@ begin
   FInternalMethodMap['ArrayMax'] := TLapeTree_InternalMethod_ArrayMax;
   FInternalMethodMap['ArrayMedian'] := TLapeTree_InternalMethod_ArrayMedian;
   FInternalMethodMap['ArrayMode'] := TLapeTree_InternalMethod_ArrayMode;
+  FInternalMethodMap['ArraySum'] := TLapeTree_InternalMethod_ArraySum;
 
   setTokenizer(ATokenizer);
   Reset();
