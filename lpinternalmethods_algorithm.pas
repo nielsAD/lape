@@ -116,7 +116,12 @@ begin
     begin
       Typ := FParams[0].resType();
       if (Typ is TLapeType_DynArray) then
-        FResType := TLapeType_DynArray(Typ).PType;
+      begin
+        if (TLapeType_DynArray(Typ).PType.BaseType in LapeIntegerTypes+LapeRealTypes) then
+          FResType := FCompiler.getBaseType(ltDouble)
+        else
+          FResType := TLapeType_DynArray(Typ).PType;
+      end;
     end;
 
   Result := inherited;
@@ -124,7 +129,7 @@ end;
 
 function TLapeTree_InternalMethod_ArrayMedian.Compile(var Offset: Integer): TResVar;
 var
-  ArrayVar, LengthVar: TResVar;
+  LengthVar, ArrayVar, ArraySortedVar, MiddleIndexVar: TResVar;
   ArrayType: TLapeType;
 begin
   Result := NullResVar;
@@ -137,7 +142,8 @@ begin
   if (ArrayType = nil) or (not FParams[0].CompileToTempVar(Offset, ArrayVar, 1)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  RequireOperators(FCompiler, [op_cmp_Equal, op_cmp_LessThan, op_cmp_GreaterThan], ArrayType, DocPos);
+  RequireOperators(FCompiler, [op_cmp_Equal, op_cmp_LessThan, op_cmp_GreaterThan, op_Plus, op_Minus], ArrayType, DocPos);
+  RequireOperators(FCompiler, [op_Divide], ArrayType, FCompiler.getBaseType(ltDouble), DocPos);
 
   with TLapeTree_InternalMethod_Length.Create(Self) do
   try
@@ -148,47 +154,80 @@ begin
     Free();
   end;
 
-  Result := _ResVar.New(FCompiler.getTempVar(ArrayType));
+  Result := _ResVar.New(FCompiler.getTempVar(resType));
+  ArraySortedVar := _ResVar.New(FCompiler.getTempVar(ArrayVar.VarType));
+  MiddleIndexVar := _ResVar.New(FCompiler.getTempVar(ltDouble));
 
-  // if LengthVar > 0 then
-  //   Result := Sorted(ArrayVar)[LengthVar div 2]
-  // else
-  //   Result := 0;
   with TLapeTree_If.Create(Self) do
   try
     Condition := TLapeTree_ResVar.Create(LengthVar.IncLock(), Self);
-    Body := TLapeTree_Operator.Create(op_Assign, Self);
-    with TLapeTree_Operator(Body) do
+    Body := TLapeTree_StatementList.Create(Self);
+    with TLapeTree_StatementList(Body) do
     begin
-      Left := TLapeTree_ResVar.Create(Result.IncLock(), Self);
-      Right := TLapeTree_Operator.Create(op_Index, Self);
-      with TLapeTree_Operator(Right) do
+      // SortedArrayVar := Sorted(ArrayVar)
+      addStatement(TLapeTree_Operator.Create(op_Assign, Self));
+      with TLapeTree_Operator(Statements[0]) do
       begin
-        Left := TLapeTree_InternalMethod_Sorted.Create(Self);
-        with TLapeTree_InternalMethod_Sorted(Left) do
+        Left := TLapeTree_ResVar.Create(ArraySortedVar.IncLock(), Self);
+        Right := TLapeTree_InternalMethod_Sorted.Create(Self);
+        with TLapeTree_InternalMethod_Sorted(Right) do
           addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
+      end;
 
-        Right := TLapeTree_Operator.Create(op_DIV, Self);
+      // MiddleIndexVar := (LengthVar - 1) / 2
+      addStatement(TLapeTree_Operator.Create(op_Assign, Self));
+      with TLapeTree_Operator(Statements[1]) do
+      begin
+        Left := TLapeTree_ResVar.Create(MiddleIndexVar.IncLock(), Self);
+        Right := TLapeTree_Operator.Create(op_Divide, Self);
         with TLapeTree_Operator(Right) do
         begin
-          Left := TLapeTree_ResVar.Create(LengthVar.IncLock(), Self);
+          Left := TLapeTree_Operator.Create(op_Minus, Self);
+          with TLapeTree_Operator(Left) do
+          begin
+            Left := TLapeTree_ResVar.Create(LengthVar.IncLock(), Self);
+            Right := TLapeTree_Integer.Create(1, Self);
+          end;
           Right := TLapeTree_Integer.Create(2, Self);
         end;
       end;
-    end;
 
-    if (not (lcoAlwaysInitialize in FCompilerOptions)) then
-    begin
-      ElseBody := TLapeTree_Operator.Create(op_Assign, Self);
-      with TLapeTree_Operator(ElseBody) do
+      // Result := (SortedArrayVar[Trunc(MiddleIndexVar)] + SortedArrayVar[Ceil(High(MiddleIndexVar)]) / 2
+      addStatement(TLapeTree_Operator.Create(op_Assign, Self));
+      with TLapeTree_Operator(Statements[2]) do
       begin
         Left := TLapeTree_ResVar.Create(Result.IncLock(), Self);
-        Right := TLapeTree_Integer.Create(0, Self);
+        Right := TLapeTree_Operator.Create(op_Divide, Self);
+
+        TLapeTree_Operator(Right).Left := TLapeTree_Operator.Create(op_Plus, Self);
+        with TLapeTree_Operator(TLapeTree_Operator(Right).Left) do
+        begin
+          Left := TLapeTree_Operator.Create(op_Index, Self);
+          with TLapeTree_Operator(Left) do
+          begin
+            Left := TLapeTree_ResVar.Create(ArraySortedVar.IncLock(), Self);
+            Right := TLapeTree_Invoke.Create('Trunc', Self);
+            with TLapeTree_Invoke(Right) do
+              TLapeTree_Invoke(Right).addParam(TLapeTree_ResVar.Create(MiddleIndexVar.IncLock(), Self));
+          end;
+
+          Right := TLapeTree_Operator.Create(op_Index, Self);
+          with TLapeTree_Operator(Right) do
+          begin
+            Left := TLapeTree_ResVar.Create(ArraySortedVar.IncLock(), Self);
+            Right := TLapeTree_Invoke.Create('Ceil', Self);
+            with TLapeTree_Invoke(Right) do
+              TLapeTree_Invoke(Right).addParam(TLapeTree_ResVar.Create(MiddleIndexVar.IncLock(), Self));
+          end;
+        end;
+
+        TLapeTree_Operator(Right).Right := TLapeTree_Integer.Create(2, Self);
       end;
     end;
 
     Compile(Offset);
   finally
+    ArraySortedVar.Spill(2);
     LengthVar.Spill(1);
 
     Free();

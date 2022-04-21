@@ -711,7 +711,8 @@ type
     property OnHint: TLapeHint read FOnHint write FOnHint;
   end;
 
-procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; Typ: TLapeType; DocPos: TDocPos);
+procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; Typ: TLapeType; DocPos: TDocPos); overload;
+procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; LeftType, RightType: TLapeType; DocPos: TDocPos); overload;
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
@@ -753,21 +754,24 @@ uses
   lpvartypes_ord, lpvartypes_array, lptree,
   lpmessages, lpeval, lpinterpreter;
 
-procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; Typ: TLapeType; DocPos: TDocPos);
+procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; LeftType, RightType: TLapeType; DocPos: TDocPos);
 
   function HasOperatorOverload(op: EOperator): Boolean;
   var
-    tmpVar: TResVar;
+    Left, Right: TResVar;
   begin
     Result := False;
 
     try
       with TLapeTree_InternalMethod_Operator.Create(op, Compiler) do
       try
-        tmpVar := NullResVar;
-        tmpVar.VarType := Typ;
-        addParam(TLapeTree_ResVar.Create(tmpVar, Compiler));
-        addParam(TLapeTree_ResVar.Create(tmpVar, Compiler));
+        Left := NullResVar;
+        Left.VarType := LeftType;
+        addParam(TLapeTree_ResVar.Create(Left, Compiler));
+
+        Right := NullResVar;
+        Right.VarType := RightType;
+        addParam(TLapeTree_ResVar.Create(Right, Compiler));
 
         Result := resType() <> nil;
       finally
@@ -782,12 +786,17 @@ var
 begin
   for i := 0 to High(ops) do
   begin
-    if (Typ.EvalRes(ops[i], Typ) = nil) and (not HasOperatorOverload(ops[i])) then
-      if (Typ.Name <> '') then
-        LapeExceptionFmt(lpeOperatorRequiredForType, [op_str[ops[i]], Typ.Name], DocPos)
+    if (LeftType.EvalRes(ops[i], RightType) = nil) and (not HasOperatorOverload(ops[i])) then
+      if (LeftType.Name <> '') then
+        LapeExceptionFmt(lpeOperatorRequiredForType, [op_str[ops[i]], LeftType.Name], DocPos)
       else
-        LapeExceptionFmt(lpeOperatorRequiredForType, [op_str[ops[i]], Typ.AsString], DocPos);
+        LapeExceptionFmt(lpeOperatorRequiredForType, [op_str[ops[i]], LeftType.AsString], DocPos);
   end;
+end;
+
+procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; Typ: TLapeType; DocPos: TDocPos);
+begin
+  RequireOperators(Compiler, ops, Typ, Typ, DocPos);
 end;
 
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
