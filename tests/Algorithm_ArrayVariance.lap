@@ -3,5 +3,5 @@
 var
   Arr: array of Double = [1,4.5,7,2,10.2];
 begin
-  Assert(FormatFloat('0.00', ArrayVariance(Arr)) = '11.25');
+  Assert(Round(ArrayVariance(Arr)) = 11);
 end;
