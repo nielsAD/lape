@@ -3849,6 +3849,7 @@ begin
   FInternalMethodMap['ArraySum'] := TLapeTree_InternalMethod_ArraySum;
   FInternalMethodMap['ArrayMean'] := TLapeTree_InternalMethod_ArrayMean;
   FInternalMethodMap['ArrayVariance'] := TLapeTree_InternalMethod_ArrayVariance;
+  FInternalMethodMap['ArrayStdev'] := TLapeTree_InternalMethod_ArrayStdev;
 
   setTokenizer(ATokenizer);
   Reset();

@@ -22,6 +22,6 @@ var
   Arr: array of Int32 = [10,10,5,1,10];
   Points: TPointArray = [[10,10], [20,10]];
 begin
-  Assert(FormatFloat('0.0', ArrayMean(Arr))='7.2');
+  Assert(Round(ArrayMean(Arr))=7);
   Assert(ArrayMean(Points)=[15,10]);
 end;

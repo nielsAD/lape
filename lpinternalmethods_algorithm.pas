@@ -56,6 +56,12 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_ArrayStdev = class(TLapeTree_InternalMethod)
+  public
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
 const
   _LapeArrayMode: lpString =
     'function _ArrayMode(p: Pointer; ElSize, Len: SizeInt;'         + LineEnding +
@@ -804,6 +810,53 @@ begin
   end;
 
   Result.isConstant := True;
+end;
+
+function TLapeTree_InternalMethod_ArrayStdev.resType: TLapeType;
+var
+  Typ: TLapeType;
+begin
+  if (FResType = nil) then
+    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    begin
+      Typ := FParams[0].resType();
+
+      if (Typ is TLapeType_DynArray) then
+      begin
+        if (TLapeType_DynArray(Typ).PType.BaseType in LapeRealTypes+LapeIntegerTypes) then
+          FResType := FCompiler.getBaseType(ltDouble)
+        else
+          FResType := TLapeType_DynArray(Typ).PType;
+      end;
+    end;
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_ArrayStdev.Compile(var Offset: Integer): TResVar;
+var
+  Variance: TLapeTree_InternalMethod_ArrayVariance;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  if (FParams.Count <> 1) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  if (resType = nil) then
+    LapeException(lpeExpectedArray, DocPos);
+
+  with TLapeTree_Invoke.Create('Sqrt', Self) do
+  try
+    Variance := TLapeTree_InternalMethod_ArrayVariance.Create(Self);
+    Variance.addParam(Self.Params[0]);
+
+    addParam(Variance);
+
+    Result := Compile(Offset);
+  finally
+    Free();
+  end;
 end;
 
 end.
