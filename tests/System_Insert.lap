@@ -5,6 +5,7 @@ var
   d: array of string = ['0', '1', '2', '3', '4'];
   e: array of string;
   f: array of record a: string; b: Int32; end = [['7', 7], ['8', 8], ['9', 9]];
+  g: array of Int32;
 begin
   Insert('23', a, 2, 10);
   Insert('45', b, 2, 10);
@@ -26,4 +27,11 @@ begin
   Insert(['6', 6], f);
   Insert(['7.5', 7], f, 1, 2);
   WriteLn(f);
+
+  Insert(Int8(8), g, 0);
+  Insert(Int16(16), g, 1);
+  Insert(Int32(32), g, 2);
+  Insert(Int64(64), g, 3);
+
+  WriteLn(g);
 end;
