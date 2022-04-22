@@ -1106,7 +1106,8 @@ begin
     _LapeIndexOf +
     _LapeUnique +
     _LapeArrayMode +
-    _LapeArrayMinMax,
+    _LapeArrayMinMax +
+    _LapeArraySlice,
     '!addDelayedCore'
   );
 
@@ -3850,6 +3851,8 @@ begin
   FInternalMethodMap['ArrayMean'] := TLapeTree_InternalMethod_ArrayMean;
   FInternalMethodMap['ArrayVariance'] := TLapeTree_InternalMethod_ArrayVariance;
   FInternalMethodMap['ArrayStdev'] := TLapeTree_InternalMethod_ArrayStdev;
+
+  FInternalMethodMap['Slice'] := TLapeTree_InternalMethod_Slice;
 
   setTokenizer(ATokenizer);
   Reset();
