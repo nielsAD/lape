@@ -398,7 +398,7 @@ var
     '  _ArraySetLength(Dst, LenDst + LenSrc - Count, ElSize, nil, nil);'                 + LineEnding +
     'end;';
 
-    _LapeSort: lpString =
+  _LapeSort: lpString =
     'type _TCompareFunc = private function(constref A, B): Int32;'                       + LineEnding +
     ''                                                                                   + LineEnding +
     'procedure _Sort(p: Pointer; ElSize, Hi: SizeInt;'                                   + LineEnding +
@@ -430,7 +430,7 @@ var
     '  FreeMem(Item);'                                                                   + LineEnding +
     'end;';
 
-    _LapeIndexOf: lpString =
+  _LapeIndexOf: lpString =
     'type _TEqualsFunc = private function(constref A, B): EvalBool;'                      + LineEnding +
     ''                                                                                   + LineEnding +
     'function _IndexOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'              + LineEnding +
@@ -489,7 +489,7 @@ var
     '  SetLength(Result, Count);'                                                        + LineEnding +
     'end;';
 
-    _LapeUnique: lpString =
+  _LapeUnique: lpString =
     'procedure _Unique(var p: Pointer; ElSize: SizeInt; Equals: _TEqualsFunc;'           + LineEnding +
     '  Dispose: private procedure(p: Pointer)); overload;'                               + LineEnding +
     'type'                                                                               + LineEnding +
@@ -519,6 +519,62 @@ var
     '  end;'                                                                             + LineEnding +
     ''                                                                                   + LineEnding +
     '  _ArraySetLength(p, Len, ElSize, Dispose, nil);'                                   + LineEnding +
+    'end;';
+
+  _LapeArraySlice: lpString =
+    'procedure _ArraySlice(p: Pointer; ElSize, Len: SizeInt;'                         + LineEnding +
+    '                      Start, Stop, Step: SizeInt;'                               + LineEnding +
+    '                      Copy: private procedure(Src: ConstPointer; Dst: Pointer);' + LineEnding +
+    '                      out Result: Pointer);'                                     + LineEnding +
+    'var'                                                                             + LineEnding +
+    '  i, PtrInc: SizeInt;'                                                           + LineEnding +
+    '  Upper: PtrUInt;'                                                               + LineEnding +
+    '  Src, Dest: Pointer;'                                                           + LineEnding +
+    'begin'                                                                           + LineEnding +
+    '  if (Len = 0) then'                                                             + LineEnding +
+    '    Exit;'                                                                       + LineEnding +
+    ''                                                                                + LineEnding +
+    '  if (step > 0) and (stop >= len)  then'                                         + LineEnding +
+    '    Stop  := Len;   // not inclusive'                                            + LineEnding +
+    '  if (step < 0) and (start >= len) then'                                         + LineEnding +
+    '    Start := Len-1; // inclusive'                                                + LineEnding +
+    '  if ((stop  < 0) and ((Abs(Stop) > Abs(Start)) or (Step > 0))) then'            + LineEnding +
+    '    Stop  := Len+Stop;'                                                          + LineEnding +
+    '  if (start < 0) then'                                                           + LineEnding +
+    '    Start := Len+Start;'                                                         + LineEnding +
+    ''                                                                                + LineEnding +
+    '  Len := Max(0, Ceil((Stop-Start) / Step));'                                     + LineEnding +
+    '  if (Len = 0) then'                                                             + LineEnding +
+    '    Exit;'                                                                       + LineEnding +
+    ''                                                                                + LineEnding +
+    '  _ArraySetLength(Result, Len, ElSize, nil, nil);'                               + LineEnding +
+    ''                                                                                + LineEnding +
+    '  Src := p[Start * ElSize];'                                                     + LineEnding +
+    '  Dest := Result;'                                                               + LineEnding +
+    '  Upper := PtrUInt(Result[(Len - 1) * ElSize]);'                                 + LineEnding +
+    '  PtrInc := ElSize * Abs(Step);'                                                 + LineEnding +
+    '  if (Step < 0) then'                                                            + LineEnding +
+    '    PtrInc := -PtrInc;'                                                          + LineEnding +
+    ''                                                                                + LineEnding +
+    '  if (Pointer(Copy) = nil) then'                                                 + LineEnding +
+    '  begin'                                                                         + LineEnding +
+    '    while (PtrUInt(Dest) <= Upper) do'                                           + LineEnding +
+    '    begin'                                                                       + LineEnding +
+    '      Move(Src^, Dest^, ElSize);'                                                + LineEnding +
+    ''                                                                                + LineEnding +
+    '      Inc(Dest, ElSize);'                                                        + LineEnding +
+    '      Inc(Src, PtrInc);'                                                         + LineEnding +
+    '    end;'                                                                        + LineEnding +
+    '  end else'                                                                      + LineEnding +
+    '  begin'                                                                         + LineEnding +
+    '    while (PtrUInt(Dest) <= Upper) do'                                           + LineEnding +
+    '    begin'                                                                       + LineEnding +
+    '      Copy(Src^, Dest^);'                                                        + LineEnding +
+    ''                                                                                + LineEnding +
+    '      Inc(Dest, ElSize);'                                                        + LineEnding +
+    '      Inc(Src, PtrInc);'                                                         + LineEnding +
+    '    end;'                                                                        + LineEnding +
+    '  end;'                                                                          + LineEnding +
     'end;';
 
 implementation
