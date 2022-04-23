@@ -616,79 +616,28 @@ end;
 function TLapeCompiler.GetCompareMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Method: TLapeTree_Method;
-  Statement: TLapeTree_If;
-  Assign: TLapeTree_Operator;
-  LeftVar, RightVar, ResultVar: TResVar;
+  Header: TLapeType_Method;
 begin
   Result := nil;
-  Method := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult = nil) then
     Exit;
 
-  if (AType = nil) then
-    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+  Method := addGlobalFunc(Header,
+    'CompareMethod',
+    'begin'                     + LineEnding +
+    '  if Param0 > Param1 then' + LineEnding +
+    '    Result := 1'           + LineEnding +
+    '  else'                    + LineEnding +
+    '  if Param0 < Param1 then' + LineEnding +
+    '    Result := -1'          + LineEnding +
+    '  else'                    + LineEnding +
+    '    Result := 0;'          + LineEnding +
+    'end;');
 
-  IncStackInfo();
-  try
-    Result := AType.NewGlobalVar(EndJump);
-    Sender.addMethod(Result);
+  Result := Method.Method;
 
-    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
-    Method.Statements := TLapeTree_StatementList.Create(Self);
-
-    LeftVar := _ResVar.New(FStackInfo.addVar(lptConstRef, nil, 'Left')).IncLock();
-    RightVar := _ResVar.New(FStackInfo.addVar(lptConstRef, nil, 'Right')).IncLock();
-    ResultVar := _ResVar.New(FStackInfo.addVar(lptOut, AResult, 'Result')).IncLock();
-
-    LeftVar.VarType := AParams[0];
-    RightVar.VarType := AParams[1];
-
-    // op_cmp_LessThan
-    Statement := TLapeTree_If.Create(Self);
-    Statement.Condition := TLapeTree_Operator.Create(op_cmp_LessThan, Self);
-    with TLapeTree_Operator(Statement.Condition) do
-    begin
-      Left := TLapeTree_ResVar.Create(LeftVar.IncLock(), Self);
-      Right := TLapeTree_ResVar.Create(RightVar.IncLock(), Self);
-    end;
-    Statement.Body := TLapeTree_InternalMethod_Exit.Create(Method);
-    with TLapeTree_InternalMethod_Exit(Statement.Body) do
-      addParam(TLapeTree_Integer.Create(-1, Statement.Body));
-
-    Method.Statements.addStatement(Statement);
-
-    // op_cmp_GreaterThan
-    Statement := TLapeTree_If.Create(Self);
-    Statement.Condition := TLapeTree_Operator.Create(op_cmp_GreaterThan, Self);
-    with TLapeTree_Operator(Statement.Condition) do
-    begin
-      Left := TLapeTree_ResVar.Create(LeftVar.IncLock(), Self);
-      Right := TLapeTree_ResVar.Create(RightVar.IncLock(), Self);
-    end;
-    Statement.Body := TLapeTree_InternalMethod_Exit.Create(Method);
-    with TLapeTree_InternalMethod_Exit(Statement.Body) do
-      addParam(TLapeTree_Integer.Create(1, Statement.Body));
-
-    Method.Statements.addStatement(Statement);
-
-    // op_cmp_Equal
-    if (not (lcoAlwaysInitialize in Method.CompilerOptions)) then
-    begin
-      Assign := TLapeTree_Operator.Create(op_Assign, Self);
-      with Assign do
-      begin
-        Left := TLapeTree_ResVar.Create(ResultVar.IncLock(), Self);
-        Right := TLapeTree_Integer.Create(0, Assign);
-      end;
-
-      Method.Statements.addStatement(Assign);
-    end;
-
-    addDelayedExpression(Method);
-  finally
-    DecStackInfo(True, False, Method = nil);
-  end;
+  Sender.addMethod(Result);
 end;
 
 function TLapeCompiler.GetGreaterThanMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
@@ -1093,6 +1042,7 @@ begin
 
   addDelayedCode(
     LapeDelayedFlags +
+    LapeDelayedTypes +
     _LapeToString_Enum +
     Format(_LapeToString_Set, ['Small', Ord(High(ELapeSmallEnum))]) +
     Format(_LapeToString_Set, ['Large', Ord(High(ELapeLargeEnum))]) +
