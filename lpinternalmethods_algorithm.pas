@@ -91,8 +91,43 @@ type
   end;
 
 const
+  _LapeSort: lpString =
+    'procedure _Sort(p: Pointer; ElSize, Hi: SizeInt; Compare: _LapeCompareFunc); overload;' + LineEnding +
+    'type'                                                                                   + LineEnding +
+    '  PSizeInt = ^SizeInt;'                                                                 + LineEnding +
+    'const'                                                                                  + LineEnding +
+    '  GAPS = [835387, 392925, 184011, 85764, 39744, 18298, 8359,'                           + LineEnding +
+    '          3785, 1695, 701, 301, 132, 57, 23, 10, 4, 1];'                                + LineEnding +
+    'var'                                                                                    + LineEnding +
+    '  Gap, i, j: SizeInt;'                                                                  + LineEnding +
+    '  Item: Pointer;'                                                                       + LineEnding +
+    'begin'                                                                                  + LineEnding +
+    '  if (@Compare = nil) then'                                                             + LineEnding +
+    '    raise "Sort: Compare function is nil";'                                             + LineEnding +
+    ''                                                                                       + LineEnding +
+    '  Item := GetMem(ElSize);'                                                              + LineEnding +
+    '  if (Hi = -1) then'                                                                    + LineEnding +
+    '    Hi := PSizeInt(p)[-1]^;'                                                            + LineEnding +
+    ''                                                                                       + LineEnding +
+    '  for Gap in GAPS do'                                                                   + LineEnding +
+    '    for i := Gap to Hi do'                                                              + LineEnding +
+    '    begin'                                                                              + LineEnding +
+    '      Move(p[i * ElSize]^, Item^, ElSize);'                                             + LineEnding +
+    ''                                                                                       + LineEnding +
+    '      j := i;'                                                                          + LineEnding +
+    '      while (j >= Gap) and (Compare(p[(j-Gap) * ElSize]^, Item^) > 0) do'               + LineEnding +
+    '      begin'                                                                            + LineEnding +
+    '        Move(p[(j-Gap) * ElSize]^, p[j * ElSize]^, ElSize);'                            + LineEnding +
+    '        Move(Item^, p[(j-Gap) * ElSize]^, ElSize);'                                     + LineEnding +
+    '        j := j - Gap;'                                                                  + LineEnding +
+    '      end;'                                                                             + LineEnding +
+    '    end;'                                                                               + LineEnding +
+    ''                                                                                       + LineEnding +
+    '  FreeMem(Item);'                                                                       + LineEnding +
+    'end;';
+
   _LapeArrayUnique: lpString =
-    'procedure _Unique(var p: Pointer; ElSize: SizeInt; Equals: _TEqualsFunc;'               + LineEnding +
+    'procedure _Unique(var p: Pointer; ElSize: SizeInt; Equals: _LapeEqualsFunc;'            + LineEnding +
     '                  Dispose: private procedure(p: Pointer);'                              + LineEnding +
     '                  Copy: private procedure(Src: ConstPointer; Dst: Pointer)); overload;' + LineEnding +
     'type'                                                                                   + LineEnding +
@@ -133,45 +168,45 @@ const
     'end;';
 
   _LapeArrayMode: lpString =
-    'function _ArrayMode(p: Pointer; ElSize, Len: SizeInt;'         + LineEnding +
-    '                    Equals: _TEqualsFunc): SizeInt; overload;' + LineEnding +
-    'var'                                                           + LineEnding +
-    '  i, Hits, Best, Index: SizeInt;'                              + LineEnding +
-    '  Cur: Pointer;'                                               + LineEnding +
-    'begin'                                                         + LineEnding +
-    '  Result := 0;'                                                + LineEnding +
-    '  Index := 0;'                                                 + LineEnding +
-    '  Hits := 1;'                                                  + LineEnding +
-    ''                                                              + LineEnding +
-    '  Cur := p;'                                                   + LineEnding +
-    '  Inc(p, ElSize);'                                             + LineEnding +
-    ''                                                              + LineEnding +
-    '  for i := 1 to Len - 1 do'                                    + LineEnding +
-    '  begin'                                                       + LineEnding +
-    '    if not Equals(p^, Cur^) then'                              + LineEnding +
-    '    begin'                                                     + LineEnding +
-    '      if (Hits > Best) then'                                   + LineEnding +
-    '      begin'                                                   + LineEnding +
-    '        Best := Hits;'                                         + LineEnding +
-    '        Result := Index;'                                      + LineEnding +
-    '      end;'                                                    + LineEnding +
-    ''                                                              + LineEnding +
-    '      Index := i;'                                             + LineEnding +
-    '      Hits := 0;'                                              + LineEnding +
-    '      Cur := p;'                                               + LineEnding +
-    '    end;'                                                      + LineEnding +
-    ''                                                              + LineEnding +
-    '    Inc(Hits);'                                                + LineEnding +
-    '    Inc(p, ElSize);'                                           + LineEnding +
-    '  end;'                                                        + LineEnding +
-    ''                                                              + LineEnding +
-    '  if (Hits > Best) then'                                       + LineEnding +
-    '    Result := Index;'                                          + LineEnding +
+    'function _ArrayMode(p: Pointer; ElSize, Len: SizeInt;'            + LineEnding +
+    '                    Equals: _LapeEqualsFunc): SizeInt; overload;' + LineEnding +
+    'var'                                                              + LineEnding +
+    '  i, Hits, Best, Index: SizeInt;'                                 + LineEnding +
+    '  Cur: Pointer;'                                                  + LineEnding +
+    'begin'                                                            + LineEnding +
+    '  Result := 0;'                                                   + LineEnding +
+    '  Index := 0;'                                                    + LineEnding +
+    '  Hits := 1;'                                                     + LineEnding +
+    ''                                                                 + LineEnding +
+    '  Cur := p;'                                                      + LineEnding +
+    '  Inc(p, ElSize);'                                                + LineEnding +
+    ''                                                                 + LineEnding +
+    '  for i := 1 to Len - 1 do'                                       + LineEnding +
+    '  begin'                                                          + LineEnding +
+    '    if not Equals(p^, Cur^) then'                                 + LineEnding +
+    '    begin'                                                        + LineEnding +
+    '      if (Hits > Best) then'                                      + LineEnding +
+    '      begin'                                                      + LineEnding +
+    '        Best := Hits;'                                            + LineEnding +
+    '        Result := Index;'                                         + LineEnding +
+    '      end;'                                                       + LineEnding +
+    ''                                                                 + LineEnding +
+    '      Index := i;'                                                + LineEnding +
+    '      Hits := 0;'                                                 + LineEnding +
+    '      Cur := p;'                                                  + LineEnding +
+    '    end;'                                                         + LineEnding +
+    ''                                                                 + LineEnding +
+    '    Inc(Hits);'                                                   + LineEnding +
+    '    Inc(p, ElSize);'                                              + LineEnding +
+    '  end;'                                                           + LineEnding +
+    ''                                                                 + LineEnding +
+    '  if (Hits > Best) then'                                          + LineEnding +
+    '    Result := Index;'                                             + LineEnding +
     'end;';
 
   _LapeArrayMinMax: lpString =
     'function _ArrayMinMax(p: Pointer; ElSize, Start, Len: SizeInt;' + LineEnding +
-    '                      Func: _TEqualsFunc): SizeInt;'            + LineEnding +
+    '                      Func: _LapeEqualsFunc): SizeInt;'         + LineEnding +
     'var'                                                            + LineEnding +
     '  i: SizeInt;'                                                  + LineEnding +
     '  Cur: Pointer;'                                                + LineEnding +
@@ -323,7 +358,7 @@ begin
         LapeException(lpeInvalidCompareMethod, DocPos);
     end;
 
-    CompareVar.VarType := FCompiler.getGlobalType('_TCompareFunc');
+    CompareVar.VarType := FCompiler.getGlobalType('_LapeCompareFunc');
   end else
     CompareVar := GetMagicMethodOrNil(FCompiler, '_Compare', [ArrayType, ArrayType], ResultType);
 
