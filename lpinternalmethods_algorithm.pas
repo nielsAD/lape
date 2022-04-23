@@ -935,6 +935,10 @@ begin
   if (ArrayType = nil) or (not FParams[0].CompileToTempVar(Offset, ArrayVar, 1)) then
     LapeException(lpeExpectedArray, DocPos);
 
+  // Check if user defined `_ArrayMin` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_ArrayMin', Result, Offset) then
+    Exit;
+
   RequireOperators(FCompiler, [op_cmp_LessThan], ArrayType, DocPos);
 
   if (ArrayVar.VarType.BaseType = ltDynArray) then
@@ -1025,6 +1029,10 @@ begin
   ArrayType := resType();
   if (ArrayType = nil) or (not FParams[0].CompileToTempVar(Offset, ArrayVar, 1)) then
     LapeException(lpeExpectedArray, DocPos);
+
+  // Check if user defined `_ArrayMax` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_ArrayMax', Result, Offset) then
+    Exit;
 
   RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayType, DocPos);
 
@@ -1122,6 +1130,10 @@ begin
 
   if (resType() = nil) or (not FParams[0].CompileToTempVar(Offset, ArrayVar, 1)) then
     LapeException(lpeExpectedArray, DocPos);
+
+  // Check if user defined `_ArraySum` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_ArraySum', Result, Offset) then
+    Exit;
 
   RequireOperators(FCompiler, [op_Plus], TLapeType_DynArray(ArrayVar.VarType).PType, DocPos);
 
@@ -1388,6 +1400,10 @@ begin
 
   if (resType = nil) then
     LapeException(lpeExpectedArray, DocPos);
+
+  // Check if user defined `_ArrayStdev` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_ArrayStdev', Result, Offset) then
+    Exit;
 
   with TLapeTree_Invoke.Create('Sqrt', Self) do
   try

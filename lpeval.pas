@@ -133,6 +133,12 @@ var
     '  _LapeCompareFunc = private function(constref A, B): Int32;'    + LineEnding +
     '  _LapeEqualsFunc  = private function(constref A, B): EvalBool;' + LineEnding;
 
+  LapeDelayedForwards: lpString =
+    'procedure _ArrayMin; overload; begin end;'   + LineEnding +
+    'procedure _ArrayMax; overload; begin end;'   + LineEnding +
+    'procedure _ArraySum; overload; begin end;'   + LineEnding +
+    'procedure _ArrayStdev; overload; begin end;';
+
   _LapeToString_Enum: lpString =
     'function _EnumToString(s: ^const string; Index, Lo, Hi: SizeInt): string;'          + LineEnding +
     'begin'                                                                              + LineEnding +

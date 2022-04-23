@@ -1043,6 +1043,7 @@ begin
   addDelayedCode(
     LapeDelayedFlags +
     LapeDelayedTypes +
+    LapeDelayedForwards +
     _LapeToString_Enum +
     Format(_LapeToString_Set, ['Small', Ord(High(ELapeSmallEnum))]) +
     Format(_LapeToString_Set, ['Large', Ord(High(ELapeLargeEnum))]) +
