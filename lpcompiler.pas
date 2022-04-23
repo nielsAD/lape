@@ -1104,7 +1104,7 @@ begin
     _LapeInsert +
     _LapeSort +
     _LapeIndexOf +
-    _LapeUnique +
+    _LapeArrayUnique +
     _LapeArrayMode +
     _LapeArrayMinMax +
     _LapeArraySlice,
