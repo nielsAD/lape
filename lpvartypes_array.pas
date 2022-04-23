@@ -831,6 +831,15 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Clear, 'Clear');
   addArrayHelper(TLapeType_ArrayHelper_Append, 'Append');
   addArrayHelper(TLapeType_ArrayHelper_Extend, 'Extend');
+
+  addArrayHelper(TLapeType_ArrayHelper_Median, 'Median');
+  addArrayHelper(TLapeType_ArrayHelper_Mode, 'Mode');
+  addArrayHelper(TLapeType_ArrayHelper_Min, 'Min');
+  addArrayHelper(TLapeType_ArrayHelper_Max, 'Max');
+  addArrayHelper(TLapeType_ArrayHelper_Sum, 'Sum');
+  addArrayHelper(TLapeType_ArrayHelper_Mean, 'Mean');
+  addArrayHelper(TLapeType_ArrayHelper_Variance, 'Variance');
+  addArrayHelper(TLapeType_ArrayHelper_Stddev, 'Stddev');
 end;
 
 function TLapeType_StaticArray.getPadding: SizeInt;
@@ -1207,6 +1216,15 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Last, 'Last');
   addArrayHelper(TLapeType_ArrayHelper_RandomValue, 'RandomValue');
   addArrayHelper(TLapeType_ArrayHelper_Reversed, 'Reversed');
+
+  addArrayHelper(TLapeType_ArrayHelper_Median, 'Median');
+  addArrayHelper(TLapeType_ArrayHelper_Mode, 'Mode');
+  addArrayHelper(TLapeType_ArrayHelper_Min, 'Min');
+  addArrayHelper(TLapeType_ArrayHelper_Max, 'Max');
+  addArrayHelper(TLapeType_ArrayHelper_Sum, 'Sum');
+  addArrayHelper(TLapeType_ArrayHelper_Mean, 'Mean');
+  addArrayHelper(TLapeType_ArrayHelper_Variance, 'Variance');
+  addArrayHelper(TLapeType_ArrayHelper_Stddev, 'Stddev');
 end;
 
 function TLapeType_String.VarToString(AVar: Pointer): lpString;

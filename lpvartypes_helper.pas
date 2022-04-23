@@ -145,6 +145,46 @@ type
     procedure CreateFunctions(VarType: TLapeType); override;
   end;
 
+  TLapeType_ArrayHelper_Median = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType); override;
+  end;
+
+  TLapeType_ArrayHelper_Mode = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType); override;
+  end;
+
+  TLapeType_ArrayHelper_Min = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType); override;
+  end;
+
+  TLapeType_ArrayHelper_Max = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType); override;
+  end;
+
+  TLapeType_ArrayHelper_Sum = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType); override;
+  end;
+
+  TLapeType_ArrayHelper_Mean = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType); override;
+  end;
+
+  TLapeType_ArrayHelper_Variance = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType); override;
+  end;
+
+  TLapeType_ArrayHelper_Stddev = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType); override;
+  end;
+
 implementation
 
 uses
@@ -569,6 +609,140 @@ begin
     'end;',
     VarType,
     [VarType]
+  );
+end;
+
+procedure TLapeType_ArrayHelper_Median.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
+begin
+  if (TLapeType_DynArray(VarType).PType.BaseType in LapeIntegerTypes + LapeRealTypes) then
+    ResType := FCompiler.getBaseType(ltDouble)
+  else
+    ResType := TLapeType_DynArray(VarType).PType;
+
+  CreateFunction(
+    'begin'                                 + LineEnding +
+    '  Result := System.ArrayMedian(Self);' + LineEnding +
+    'end;',
+    VarType,
+    [],
+    ResType
+  );
+end;
+
+procedure TLapeType_ArrayHelper_Mode.CreateFunctions(VarType: TLapeType);
+begin
+  CreateFunction(
+    'begin'                               + LineEnding +
+    '  Result := System.ArrayMode(Self);' + LineEnding +
+    'end;',
+    VarType,
+    [],
+    TLapeType_DynArray(VarType).PType
+  );
+end;
+
+procedure TLapeType_ArrayHelper_Min.CreateFunctions(VarType: TLapeType);
+begin
+  CreateFunction(
+    'begin'                              + LineEnding +
+    '  Result := System.ArrayMin(Self);' + LineEnding +
+    'end;',
+    VarType,
+    [],
+    TLapeType_DynArray(VarType).PType
+  );
+end;
+
+procedure TLapeType_ArrayHelper_Max.CreateFunctions(VarType: TLapeType);
+begin
+  CreateFunction(
+    'begin'                              + LineEnding +
+    '  Result := System.ArrayMax(Self);' + LineEnding +
+    'end;',
+    VarType,
+    [],
+    TLapeType_DynArray(VarType).PType
+  );
+end;
+
+procedure TLapeType_ArrayHelper_Sum.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
+begin
+  if (TLapeType_DynArray(VarType).PType.BaseType in LapeRealTypes) then
+    ResType := FCompiler.getBaseType(ltDouble)
+  else
+  if (TLapeType_DynArray(VarType).PType.BaseType in LapeIntegerTypes) then
+    ResType := FCompiler.getBaseType(ltInt64)
+  else
+    ResType := TLapeType_DynArray(VarType).PType;
+
+  CreateFunction(
+    'begin'                              + LineEnding +
+    '  Result := System.ArraySum(Self);' + LineEnding +
+    'end;',
+    VarType,
+    [],
+    ResType
+  );
+end;
+
+procedure TLapeType_ArrayHelper_Mean.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
+begin
+  if (TLapeType_DynArray(VarType).PType.BaseType in LapeRealTypes+LapeIntegerTypes) then
+    ResType := FCompiler.getBaseType(ltDouble)
+  else
+    ResType := TLapeType_DynArray(VarType).PType;
+
+  CreateFunction(
+    'begin'                               + LineEnding +
+    '  Result := System.ArrayMean(Self);' + LineEnding +
+    'end;',
+    VarType,
+    [],
+    ResType
+  );
+end;
+
+procedure TLapeType_ArrayHelper_Variance.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
+begin
+  if (TLapeType_DynArray(VarType).PType.BaseType in LapeRealTypes+LapeIntegerTypes) then
+    ResType := FCompiler.getBaseType(ltDouble)
+  else
+    ResType := TLapeType_DynArray(VarType).PType;
+
+  CreateFunction(
+    'begin'                                   + LineEnding +
+    '  Result := System.ArrayVariance(Self);' + LineEnding +
+    'end;',
+    VarType,
+    [],
+    ResType
+  );
+end;
+
+procedure TLapeType_ArrayHelper_Stddev.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
+begin
+  if (TLapeType_DynArray(VarType).PType.BaseType in LapeRealTypes+LapeIntegerTypes) then
+    ResType := FCompiler.getBaseType(ltDouble)
+  else
+    ResType := TLapeType_DynArray(VarType).PType;
+
+  CreateFunction(
+    'begin'                                + LineEnding +
+    '  Result := System.ArrayStdev(Self);' + LineEnding +
+    'end;',
+    VarType,
+    [],
+    ResType
   );
 end;
 
