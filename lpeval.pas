@@ -489,38 +489,6 @@ var
     '  SetLength(Result, Count);'                                                        + LineEnding +
     'end;';
 
-  _LapeUnique: lpString =
-    'procedure _Unique(var p: Pointer; ElSize: SizeInt; Equals: _TEqualsFunc;'           + LineEnding +
-    '  Dispose: private procedure(p: Pointer)); overload;'                               + LineEnding +
-    'type'                                                                               + LineEnding +
-    '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
-    'var'                                                                                + LineEnding +
-    '  i, j, Len: SizeInt;'                                                              + LineEnding +
-    'begin'                                                                              + LineEnding +
-    '  if (p = nil) then'                                                                + LineEnding +
-    '    Exit;'                                                                          + LineEnding +
-    ''                                                                                   + LineEnding +
-    '  Len := PSizeInt(p)[-1]^' {$IFDEF FPC}+'+1'{$ENDIF}+';'                            + LineEnding +
-    '  while (i < Len) do'                                                               + LineEnding +
-    '  begin'                                                                            + LineEnding +
-    '    j := i + 1;'                                                                    + LineEnding +
-    '    while (j < Len) do'                                                             + LineEnding +
-    '    begin'                                                                          + LineEnding +
-    '      if Equals(p[i * ElSize]^, p[j * ElSize]^) then'                               + LineEnding +
-    '      begin'                                                                        + LineEnding +
-    '        Move(p[(Len-1) * ElSize]^, p[j * ElSize]^, ElSize);'                        + LineEnding +
-    ''                                                                                   + LineEnding +
-    '        Dec(Len);'                                                                  + LineEnding +
-    '        Dec(j);'                                                                    + LineEnding +
-    '      end;'                                                                         + LineEnding +
-    '      Inc(j);'                                                                      + LineEnding +
-    '    end;'                                                                           + LineEnding +
-    '    Inc(i);'                                                                        + LineEnding +
-    '  end;'                                                                             + LineEnding +
-    ''                                                                                   + LineEnding +
-    '  _ArraySetLength(p, Len, ElSize, Dispose, nil);'                                   + LineEnding +
-    'end;';
-
   _LapeArraySlice: lpString =
     'procedure _ArraySlice(p: Pointer; ElSize, Len: SizeInt;'                         + LineEnding +
     '                      Start, Stop, Step: SizeInt;'                               + LineEnding +
@@ -534,13 +502,13 @@ var
     '  if (Len = 0) then'                                                             + LineEnding +
     '    Exit;'                                                                       + LineEnding +
     ''                                                                                + LineEnding +
-    '  if (step > 0) and (stop >= len)  then'                                         + LineEnding +
+    '  if (Step > 0) and (Stop >= Len)  then'                                         + LineEnding +
     '    Stop  := Len;   // not inclusive'                                            + LineEnding +
-    '  if (step < 0) and (start >= len) then'                                         + LineEnding +
+    '  if (Step < 0) and (Start >= Len) then'                                         + LineEnding +
     '    Start := Len-1; // inclusive'                                                + LineEnding +
-    '  if ((stop  < 0) and ((Abs(Stop) > Abs(Start)) or (Step > 0))) then'            + LineEnding +
+    '  if ((Stop  < 0) and ((Abs(Stop) > Abs(Start)) or (Step > 0))) then'            + LineEnding +
     '    Stop  := Len+Stop;'                                                          + LineEnding +
-    '  if (start < 0) then'                                                           + LineEnding +
+    '  if (Start < 0) then'                                                           + LineEnding +
     '    Start := Len+Start;'                                                         + LineEnding +
     ''                                                                                + LineEnding +
     '  Len := Max(0, Ceil((Stop-Start) / Step));'                                     + LineEnding +
