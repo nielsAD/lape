@@ -1,10 +1,21 @@
-// Issue #80
+// Issue #80 and #180
 {$assertions on}
 
 type
   EBar = (bar1=3,bar2,bar3);
+  {$scopedenums on}
+  EBarScoped = (bar1=3,bar2,bar3);
+  {$scopedenums off}
 begin
   Assert(Ord(bar1) = 3);
   Assert(Ord(bar2) = 4);
   Assert(Ord(bar3) = 5);
+
+  Assert(Ord(EBar.bar1) = 3);
+  Assert(Ord(EBar.bar2) = 4);
+  Assert(Ord(EBar.bar3) = 5);
+
+  Assert(Ord(EBarScoped.bar1) = 3);
+  Assert(Ord(EBarScoped.bar2) = 4);
+  Assert(Ord(EBarScoped.bar3) = 5);
 end.

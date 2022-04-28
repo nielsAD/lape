@@ -645,7 +645,7 @@ begin
   if (Str <> '') and (AnsiChar(Str[1]) in ['-', '0'..'9']) then
     Result := NewGlobalVar(StrToInt64(string(Str)), AName, ADocPos)
   else
-    Result := NewGlobalVar(FMemberMap.IndexOf(string(Str)), AName, ADocPos);
+    Result := NewGlobalVar(FRange.Lo + FMemberMap.IndexOf(string(Str)), AName, ADocPos);
 end;
 
 function TLapeType_Enum.EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean;
