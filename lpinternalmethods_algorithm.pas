@@ -360,7 +360,11 @@ begin
 
     CompareVar.VarType := FCompiler.getGlobalType('_LapeCompareFunc');
   end else
+  begin
+    RequireOperators(FCompiler, [op_cmp_LessThan, op_cmp_GreaterThan], ArrayType, DocPos);
+
     CompareVar := GetMagicMethodOrNil(FCompiler, '_Compare', [ArrayType, ArrayType], ResultType);
+  end;
 
   case ArrayVar.VarType.BaseType of
     ltStaticArray:

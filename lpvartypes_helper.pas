@@ -188,11 +188,15 @@ type
 implementation
 
 uses
-  lpcompiler, lpmessages,
+  lpcompiler, lpmessages, lpparser,
   lpvartypes_array;
 
 function TLapeType_Helper.FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
+  Assert(FCompiler is TLapeCompiler);
+  if (TLapeCompiler(FCompiler).Tokenizer.LastTok = tk_kw_Overload) then // Don't generate on overload. Will still fail nicely later on if invalid overload.
+    Exit(nil);
+
   OnFunctionNotFound := nil;
 
   if (AObjectType <> nil) then

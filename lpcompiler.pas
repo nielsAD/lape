@@ -3908,7 +3908,7 @@ begin
   if (not hasTokenizer()) then
     SetLength(FTokenizers, 1);
 
-  if Importing and ((FTokenizers[0] = nil) or (FTokenizers[0].PeekNoJunk() in [tk_NULL, tk_sym_SemiColon])) then
+  if Importing and (FTokenizers[0] = nil) then
     Result := nil
   else
   begin
