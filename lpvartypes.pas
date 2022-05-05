@@ -616,6 +616,7 @@ type
 
   TLapeHint = procedure(Sender: TLapeCompilerBase; Msg: lpString) of object;
   TLapeBaseTypesDictionary = {$IFDEF FPC}specialize{$ENDIF}TLapeUniqueStringDictionary<TLapeType>;
+  TLapeCachedTypeVars = {$IFDEF FPC}specialize{$ENDIF}TLapeKeyValueList<Pointer, TLapeGlobalVar>;
 
   TLapeCompilerBase = class(TLapeBaseDeclClass)
   protected
@@ -627,6 +628,7 @@ type
     FGlobalDeclarations: TLapeDeclarationList;
     FManagedDeclarations: TLapeDeclarationList;
     FCachedDeclarations: array[ELapeBaseType] of TLapeVarMap;
+    FCachedTypeVars: TLapeCachedTypeVars;
 
     FBaseOptions: ECompilerOptionsSet;
     FBaseOptions_PackRecords: UInt8;
@@ -4072,6 +4074,7 @@ begin
 
   FGlobalDeclarations := TLapeDeclarationList.Create(nil);
   FManagedDeclarations := TLapeDeclarationList.Create(nil);
+  FCachedTypeVars := TLapeCachedTypeVars.Create(nil, nil, dupAccept);
   for BaseType in LapeBaseTypes do
     FCachedDeclarations[BaseType] := TLapeVarMap.Create(nil, dupIgnore, True, '', True);
 
@@ -4096,6 +4099,7 @@ begin
   FreeAndNil(FBaseTypesDictionary);
   FreeAndNil(FGlobalDeclarations);
   FreeAndNil(FManagedDeclarations);
+  FreeAndNil(FCachedTypeVars);
   for BaseType in LapeBaseTypes do
     FreeAndNil(FCachedDeclarations[BaseType]);
 
@@ -4521,14 +4525,18 @@ begin
 end;
 
 function TLapeCompilerBase.getTypeVar(AType: TLapeType): TLapeGlobalVar;
-var
-  TType: TLapeTTypeClass;
 begin
-  if (AType is TLapeType_Enum) then
-    TType := TLapeType_TypeEnum
-  else
-    TType := TLapeType_Type;
-  Result := addManagedDecl(addManagedType(TType.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
+  Result := FCachedTypeVars[AType];
+
+  if (Result = nil) then
+  begin
+    if (AType is TLapeType_Enum) then
+      Result := addManagedDecl(addManagedType(TLapeType_TypeEnum.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar
+    else
+      Result := addManagedDecl(addManagedType(TLapeType_Type.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
+
+    FCachedTypeVars[AType] := Result;
+  end;
 end;
 
 function TLapeCompilerBase.getGlobalVar(AName: lpString): TLapeGlobalVar;

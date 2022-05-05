@@ -316,6 +316,25 @@ type
     property Sorted: Boolean read getSorted write setSorted;
   end;
 
+  {$IFDEF FPC}generic{$ENDIF} TLapeKeyValueList<_K, _V> = class(TLapeBaseClass)
+  public type
+    TTKeyList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<_K>;
+    TTValueList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<_V>;
+  protected
+    FKeyList: TTKeyList;
+    FValueList: TTValueList;
+
+    procedure setValue(Key: _K; Value: _V); virtual;
+    function getValue(Key: _K): _V; virtual;
+  public
+    constructor Create(InvalidKey: _K; InvalidValue: _V; ADuplicates: TDuplicates); reintroduce; virtual;
+    destructor Destroy; override;
+
+    procedure Clear; virtual;
+
+    property Value[Key: _K]: _V read getValue write setValue; default;
+  end;
+
   TLapeList_String = {$IFDEF FPC}specialize{$ENDIF} TLapeList<lpString>;
   TLapeList_UInt32 = {$IFDEF FPC}specialize{$ENDIF} TLapeList<UInt32>;
 
@@ -1707,6 +1726,44 @@ begin
     Result[i] := FItems[i];
 end;
 
+function TLapeKeyValueList{$IFNDEF FPC}<_K, _V>{$ENDIF}.getValue(Key: _K): _V;
+var
+  i: Integer;
+begin
+  i := FKeyList.IndexOf(Key);
+  if (i > -1) then
+    Result := FValueList[i]
+  else
+    Result := FValueList.InvalidVal;
+end;
+
+procedure TLapeKeyValueList{$IFNDEF FPC}<_K, _V>{$ENDIF}.setValue(Key: _K; Value: _V);
+begin
+  FValueList.Insert(Value, FKeyList.Add(Key));
+end;
+
+constructor TLapeKeyValueList{$IFNDEF FPC}<_K, _V>{$ENDIF}.Create(InvalidKey: _K; InvalidValue: _V; ADuplicates: TDuplicates);
+begin
+  inherited Create();
+
+  FKeyList := TTKeyList.Create(InvalidKey, ADuplicates, True);
+  FValueList := TTValueList.Create(InvalidValue, ADuplicates, False);
+end;
+
+destructor TLapeKeyValueList{$IFNDEF FPC}<_K, _V>{$ENDIF}.Destroy;
+begin
+  FKeyList.Free();
+  FValueList.Free();
+
+  inherited Destroy();
+end;
+
+procedure TLapeKeyValueList{$IFNDEF FPC}<_K, _V>{$ENDIF}.Clear;
+begin
+  FKeyList.Clear();
+  FValueList.Clear();
+end;
+
 function TLapeStringList.getSorted: Boolean;
 begin
   Result := FHashList.Sorted;
@@ -1908,14 +1965,14 @@ end;
 destructor TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Destroy;
 begin
   FStringList.Free();
-  FItems.Free;
+  FItems.Free();
   inherited;
 end;
 
 procedure TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.Clear;
 begin
   FStringList.Clear();
-  FItems.Clear;
+  FItems.Clear();
   FCount := 0;
 end;
 
