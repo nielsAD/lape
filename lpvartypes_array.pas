@@ -831,6 +831,7 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Clear, 'Clear');
   addArrayHelper(TLapeType_ArrayHelper_Append, 'Append');
   addArrayHelper(TLapeType_ArrayHelper_Extend, 'Extend');
+  addArrayHelper(TLapeType_ArrayHelper_Slice, 'Slice');
 
   addArrayHelper(TLapeType_ArrayHelper_Median, 'Median');
   addArrayHelper(TLapeType_ArrayHelper_Mode, 'Mode');
@@ -1216,6 +1217,7 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Last, 'Last');
   addArrayHelper(TLapeType_ArrayHelper_RandomValue, 'RandomValue');
   addArrayHelper(TLapeType_ArrayHelper_Reversed, 'Reversed');
+  addArrayHelper(TLapeType_ArrayHelper_Slice, 'Slice');
 
   addArrayHelper(TLapeType_ArrayHelper_Median, 'Median');
   addArrayHelper(TLapeType_ArrayHelper_Mode, 'Mode');

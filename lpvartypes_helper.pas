@@ -185,6 +185,11 @@ type
     procedure CreateFunctions(VarType: TLapeType); override;
   end;
 
+  TLapeType_ArrayHelper_Slice = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType); override;
+  end;
+
 implementation
 
 uses
@@ -320,14 +325,21 @@ begin
 end;
 
 procedure TLapeType_ArrayHelper_Copy.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
 begin
+  if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
+    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+  else
+    ResType := VarType;
+
   CreateFunction(
     'begin'                                          + LineEnding +
     '  Result := System.Copy(Self, Param0, Param1);' + LineEnding +
     'end;',
     VarType,
     [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)],
-    VarType
+    ResType
   );
 
   CreateFunction(
@@ -336,7 +348,7 @@ begin
     'end;',
     VarType,
     [FCompiler.getBaseType(ltSizeInt)],
-    VarType
+    ResType
   );
 
   CreateFunction(
@@ -345,7 +357,7 @@ begin
     'end;',
     VarType,
     [],
-    VarType
+    ResType
   );
 end;
 
@@ -462,26 +474,40 @@ begin
 end;
 
 procedure TLapeType_ArrayHelper_Reversed.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
 begin
+  if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
+    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+  else
+    ResType := VarType;
+
   CreateFunction(
     'begin'                              + LineEnding +
     '  Result := System.Reversed(Self);' + LineEnding +
     'end;',
     VarType,
     [],
-    VarType
+    ResType
   );
 end;
 
 procedure TLapeType_ArrayHelper_Unique.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
 begin
+  if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
+    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+  else
+    ResType := VarType;
+
   CreateFunction(
     'begin'                            + LineEnding +
     '  Result := System.Unique(Self);' + LineEnding +
     'end;',
     VarType,
     [],
-    VarType
+    ResType
   );
 end;
 
@@ -545,14 +571,21 @@ begin
 end;
 
 procedure TLapeType_ArrayHelper_Sorted.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
 begin
+  if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
+    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+  else
+    ResType := VarType;
+
   CreateFunction(
     'begin'                            + LineEnding +
     '  Result := System.Sorted(Self);' + LineEnding +
     'end;',
     VarType,
     [],
-    VarType
+    ResType
   );
 
   CreateFunction(
@@ -561,7 +594,7 @@ begin
     'end;',
     VarType,
     [FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [TLapeType_DynArray(VarType).PType, TLapeType_DynArray(VarType).PType], [lptConstRef, lptConstRef], [nil, nil], FCompiler.getBaseType(ltInt32)))],
-    VarType
+    ResType
   );
 
   CreateFunction(
@@ -570,7 +603,7 @@ begin
     'end;',
     VarType,
     [FCompiler.getIntegerArray(), FCompiler.getBaseType(ltEvalBool)],
-    VarType
+    ResType
   );
 
   CreateFunction(
@@ -579,7 +612,7 @@ begin
     'end;',
     VarType,
     [FCompiler.getFloatArray(), FCompiler.getBaseType(ltEvalBool)],
-    VarType
+    ResType
   );
 end;
 
@@ -746,6 +779,25 @@ begin
     'end;',
     VarType,
     [],
+    ResType
+  );
+end;
+
+procedure TLapeType_ArrayHelper_Slice.CreateFunctions(VarType: TLapeType);
+var
+  ResType: TLapeType;
+begin
+  if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
+    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+  else
+    ResType := VarType;
+
+  CreateFunction(
+    'begin'                                                   + LineEnding +
+    '  Result := System.Slice(Self, Param0, Param1, Param2);' + LineEnding +
+    'end;',
+    VarType,
+    [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)],
     ResType
   );
 end;
