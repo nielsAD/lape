@@ -20,183 +20,185 @@ type
     function FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     procedure CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType = nil);
-    procedure CreateFunctions(VarType: TLapeType); virtual; abstract;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); virtual; abstract;
   public
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; override;
   end;
 
   TLapeType_ArrayHelper_SetLength = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Length = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Contains = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Remove = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Low = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_High = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Copy = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Delete = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Insert = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_First = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Last = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Pop = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Swap = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_RandomValue = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Reverse = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Reversed = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Unique = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_IndexOf = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_IndicesOf = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Sort = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Sorted = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Clear = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Append = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Extend = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Median = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Mode = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Min = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Max = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Sum = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Mean = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Variance = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Stddev = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
   TLapeType_ArrayHelper_Slice = class(TLapeType_Helper)
   protected
-    procedure CreateFunctions(VarType: TLapeType); override;
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
 implementation
 
 uses
-  lpcompiler, lpmessages, lpparser,
+  lpcompiler, lpparser,
   lpvartypes_array;
 
 function TLapeType_Helper.FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  i: Integer;
 begin
   Assert(FCompiler is TLapeCompiler);
   if (TLapeCompiler(FCompiler).Tokenizer.LastTok = tk_kw_Overload) then // Don't generate on overload. Will still fail nicely later on if invalid overload.
@@ -205,9 +207,20 @@ begin
   OnFunctionNotFound := nil;
 
   if (AObjectType <> nil) then
-    CreateFunctions(AObjectType);
-  if (FManagedDecls.Count = 0) then
-    LapeException(lpeImpossible);
+  begin
+    if (AType <> nil) then
+    begin
+      if (AType.Params.Count > 0) then
+      begin
+        SetLength(AParams, AType.Params.Count);
+        for i := 0 to AType.Params.Count - 1 do
+          AParams[i] := AType.Params[i].VarType;
+      end;
+      AResult := AType.Res;
+    end;
+
+    CreateFunctions(AObjectType, AParams, AResult);
+  end;
 
   Result := getMethod(AParams, AResult);
 end;
@@ -253,7 +266,7 @@ begin
   OnFunctionNotFound := @FunctionNotFound;
 end;
 
-procedure TLapeType_ArrayHelper_SetLength.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_SetLength.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                             + LineEnding +
@@ -264,7 +277,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Length.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Length.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                            + LineEnding +
@@ -276,7 +289,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Contains.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Contains.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                                      + LineEnding +
@@ -288,7 +301,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Remove.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Remove.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                                    + LineEnding +
@@ -300,7 +313,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Low.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Low.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                         + LineEnding +
@@ -312,7 +325,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_High.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_High.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                          + LineEnding +
@@ -324,7 +337,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Copy.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Copy.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin
@@ -361,7 +374,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Delete.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Delete.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                                  + LineEnding +
@@ -380,7 +393,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Insert.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Insert.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                                  + LineEnding +
@@ -391,7 +404,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_First.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_First.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                               + LineEnding +
@@ -403,7 +416,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Last.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Last.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                                + LineEnding +
@@ -415,7 +428,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Pop.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Pop.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'var Index: Integer := System.Length(Self);' + LineEnding +
@@ -439,7 +452,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Swap.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Swap.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                                      + LineEnding +
@@ -450,7 +463,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_RandomValue.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_RandomValue.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                                                                 + LineEnding +
@@ -462,7 +475,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Reverse.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Reverse.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                   + LineEnding +
@@ -473,7 +486,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Reversed.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Reversed.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin
@@ -492,7 +505,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Unique.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Unique.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin
@@ -511,7 +524,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_IndexOf.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_IndexOf.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                                     + LineEnding +
@@ -523,7 +536,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_IndicesOf.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_IndicesOf.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                                       + LineEnding +
@@ -535,42 +548,53 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Sort.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Sort.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
-  CreateFunction(
-    'begin'                + LineEnding +
-    '  System.Sort(Self);' + LineEnding +
-    'end;',
-    VarType,
-    []
-  );
+  case Length(AParams) of
+    0:
+      begin
+        CreateFunction(
+          'begin'                + LineEnding +
+          '  System.Sort(Self);' + LineEnding +
+          'end;',
+          VarType,
+          []
+        );
+      end;
 
-  CreateFunction(
-    'begin'                         + LineEnding +
-    '  System.Sort(Self, @Param0);' + LineEnding +
-    'end;',
-    VarType,
-    [FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [TLapeType_DynArray(VarType).PType, TLapeType_DynArray(VarType).PType], [lptConstRef, lptConstRef], [nil, nil], FCompiler.getBaseType(ltInt32)))]
-    );
+    1:
+      begin
+        CreateFunction(
+          'begin'                         + LineEnding +
+          '  System.Sort(Self, @Param0);' + LineEnding +
+          'end;',
+          VarType,
+          [FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [TLapeType_DynArray(VarType).PType, TLapeType_DynArray(VarType).PType], [lptConstRef, lptConstRef], [nil, nil], FCompiler.getBaseType(ltInt32)))]
+        );
+      end;
 
-  CreateFunction(
-    'begin'                                + LineEnding +
-    '  System.Sort(Self, Param0, Param1);' + LineEnding +
-    'end;',
-    VarType,
-    [FCompiler.getIntegerArray(), FCompiler.getBaseType(ltEvalBool)]
-  );
+   2:
+     begin
+       CreateFunction(
+         'begin'                                + LineEnding +
+         '  System.Sort(Self, Param0, Param1);' + LineEnding +
+         'end;',
+         VarType,
+         [FCompiler.getIntegerArray(), FCompiler.getBaseType(ltEvalBool)]
+       );
 
-  CreateFunction(
-    'begin'                                + LineEnding +
-    '  System.Sort(Self, Param0, Param1);' + LineEnding +
-    'end;',
-    VarType,
-    [FCompiler.getFloatArray(), FCompiler.getBaseType(ltEvalBool)]
-  );
+       CreateFunction(
+         'begin'                                + LineEnding +
+         '  System.Sort(Self, Param0, Param1);' + LineEnding +
+         'end;',
+         VarType,
+         [FCompiler.getFloatArray(), FCompiler.getBaseType(ltEvalBool)]
+       );
+    end;
+  end;
 end;
 
-procedure TLapeType_ArrayHelper_Sorted.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Sorted.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin
@@ -579,44 +603,55 @@ begin
   else
     ResType := VarType;
 
-  CreateFunction(
-    'begin'                            + LineEnding +
-    '  Result := System.Sorted(Self);' + LineEnding +
-    'end;',
-    VarType,
-    [],
-    ResType
-  );
+  case Length(AParams) of
+    0:
+      begin
+        CreateFunction(
+          'begin'                            + LineEnding +
+          '  Result := System.Sorted(Self);' + LineEnding +
+          'end;',
+          VarType,
+          [],
+          ResType
+        );
+      end;
 
-  CreateFunction(
-    'begin'                                     + LineEnding +
-    '  Result := System.Sorted(Self, @Param0);' + LineEnding +
-    'end;',
-    VarType,
-    [FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [TLapeType_DynArray(VarType).PType, TLapeType_DynArray(VarType).PType], [lptConstRef, lptConstRef], [nil, nil], FCompiler.getBaseType(ltInt32)))],
-    ResType
-  );
+    1:
+      begin
+        CreateFunction(
+          'begin'                                     + LineEnding +
+          '  Result := System.Sorted(Self, @Param0);' + LineEnding +
+          'end;',
+          VarType,
+          [FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [TLapeType_DynArray(VarType).PType, TLapeType_DynArray(VarType).PType], [lptConstRef, lptConstRef], [nil, nil], FCompiler.getBaseType(ltInt32)))],
+          ResType
+        );
+      end;
 
-  CreateFunction(
-    'begin'                                            + LineEnding +
-    '  Result := System.Sorted(Self, Param0, Param1);' + LineEnding +
-    'end;',
-    VarType,
-    [FCompiler.getIntegerArray(), FCompiler.getBaseType(ltEvalBool)],
-    ResType
-  );
+    2:
+      begin
+        CreateFunction(
+          'begin'                                            + LineEnding +
+          '  Result := System.Sorted(Self, Param0, Param1);' + LineEnding +
+          'end;',
+          VarType,
+          [FCompiler.getIntegerArray(), FCompiler.getBaseType(ltEvalBool)],
+          ResType
+        );
 
-  CreateFunction(
-    'begin'                                            + LineEnding +
-    '  Result := System.Sorted(Self, Param0, Param1);' + LineEnding +
-    'end;',
-    VarType,
-    [FCompiler.getFloatArray(), FCompiler.getBaseType(ltEvalBool)],
-    ResType
-  );
+        CreateFunction(
+          'begin'                                            + LineEnding +
+          '  Result := System.Sorted(Self, Param0, Param1);' + LineEnding +
+          'end;',
+          VarType,
+          [FCompiler.getFloatArray(), FCompiler.getBaseType(ltEvalBool)],
+          ResType
+        );
+      end;
+  end;
 end;
 
-procedure TLapeType_ArrayHelper_Clear.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Clear.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'         + LineEnding +
@@ -627,7 +662,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Append.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Append.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                    + LineEnding +
@@ -638,7 +673,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Extend.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Extend.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                    + LineEnding +
@@ -649,7 +684,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Median.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Median.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin
@@ -668,7 +703,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Mode.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Mode.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                               + LineEnding +
@@ -680,7 +715,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Min.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Min.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                              + LineEnding +
@@ -692,7 +727,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Max.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Max.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 begin
   CreateFunction(
     'begin'                              + LineEnding +
@@ -704,7 +739,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Sum.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Sum.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin
@@ -726,7 +761,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Mean.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Mean.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin
@@ -745,7 +780,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Variance.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Variance.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin
@@ -764,7 +799,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Stddev.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Stddev.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin
@@ -783,7 +818,7 @@ begin
   );
 end;
 
-procedure TLapeType_ArrayHelper_Slice.CreateFunctions(VarType: TLapeType);
+procedure TLapeType_ArrayHelper_Slice.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
 var
   ResType: TLapeType;
 begin

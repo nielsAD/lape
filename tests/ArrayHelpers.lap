@@ -16,6 +16,21 @@ begin
 end;
 
 type
+  TBox = record X1, Y1, X2, Y2: Integer; end;
+  TBoxArray = array of TBox;
+
+procedure TestBox;
+var
+  Arr: TBoxArray;
+  Weights: array of Int32;
+begin
+  Weights.SetLength(5);
+
+  Arr.SetLength(5);
+  Arr.Sort(Weights, True);
+end;
+
+type
   TIntegerArray = array of Int32;
 
 function TIntegerArray.RandomValue: Int32; override;
@@ -38,4 +53,5 @@ begin
   Assert(Arr.RandomValue() = 123);
 
   TestString();
+  TestBox();
 end;
