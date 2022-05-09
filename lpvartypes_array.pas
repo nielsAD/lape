@@ -811,6 +811,7 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_High, 'High');
   addArrayHelper(TLapeType_ArrayHelper_Contains, 'Contains');
   addArrayHelper(TLapeType_ArrayHelper_Remove, 'Remove');
+  addArrayHelper(TLapeType_ArrayHelper_RemoveAll, 'RemoveAll');
   addArrayHelper(TLapeType_ArrayHelper_Delete, 'Delete');
   addArrayHelper(TLapeType_ArrayHelper_Insert, 'Insert');
   addArrayHelper(TLapeType_ArrayHelper_Swap, 'Swap');

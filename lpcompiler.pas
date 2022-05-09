@@ -1052,6 +1052,8 @@ begin
     _LapeSetLength +
     _LapeCopy +
     _LapeDelete +
+    _LapeDeleteIndex +
+    _LapeDeleteIndices +
     _LapeInsert +
     _LapeSort +
     _LapeIndexOf +
@@ -3779,6 +3781,7 @@ begin
   FInternalMethodMap['IndicesOf'] := TLapeTree_InternalMethod_IndicesOf;
   FInternalMethodMap['Contains'] := TLapeTree_InternalMethod_Contains;
   FInternalMethodMap['Remove'] := TLapeTree_InternalMethod_Remove;
+  FInternalMethodMap['RemoveAll'] := TLapeTree_InternalMethod_RemoveAll;
 
   FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
   FInternalMethodMap['Succ'] := TLapeTree_InternalMethod_Succ;

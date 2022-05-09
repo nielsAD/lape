@@ -10,4 +10,6 @@ begin
 
   Assert(Remove(TPoint([2,2]), Arr) = True);
   Assert(ToString(Arr) = '[{X = 0, Y = 0}, {X = 1, Y = 1}, {X = 1, Y = 1}]');
+  Assert(RemoveAll(TPoint([1,1]), Arr) = 2);
+  Assert(ToString(Arr) = '[{X = 0, Y = 0}]');
 end;

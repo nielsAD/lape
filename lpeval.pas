@@ -410,7 +410,7 @@ var
 
   _LapeIndexOf: lpString =
     'function _IndexOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'              + LineEnding +
-    '  Equals: _LapeEqualsFunc): SizeInt; overload;'                                        + LineEnding +
+    '  Equals: _LapeEqualsFunc): Int32; overload;'                                       + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -432,7 +432,7 @@ var
     'end;'                                                                               + LineEnding +
     ''                                                                                   + LineEnding +
     'function _IndicesOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'            + LineEnding +
-    '  Equals: _LapeEqualsFunc): array of Int32; overload;'                                 + LineEnding +
+    '  Equals: _LapeEqualsFunc): array of Int32; overload;'                              + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
@@ -519,6 +519,30 @@ var
     '      Inc(Src, PtrInc);'                                                         + LineEnding +
     '    end;'                                                                        + LineEnding +
     '  end;'                                                                          + LineEnding +
+    'end;';
+
+  _LapeDeleteIndex: lpString =
+    'function _ArrayDeleteIndex(Index: Int32;'                              + LineEnding +
+    '  var p: Pointer; ElSize: SizeInt;'                                    + LineEnding +
+    '  Dispose: private procedure(p: Pointer);'                             + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer)): Boolean;' + LineEnding +
+    'begin'                                                                 + LineEnding +
+    '  Result := Index > -1;'                                               + LineEnding +
+    '  if Result then'                                                      + LineEnding +
+    '    _ArrayDelete(p, Index, 1, ElSize, Dispose, Copy);'                 + LineEnding +
+    'end;';
+
+  _LapeDeleteIndices: lpString =
+    'function _ArrayDeleteIndices(Indices: array of Int32;'                 + LineEnding +
+    '  var p: Pointer; ElSize: SizeInt;'                                    + LineEnding +
+    '  Dispose: private procedure(p: Pointer);'                             + LineEnding +
+    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer)): SizeInt;' + LineEnding +
+    'var'                                                                   + LineEnding +
+    '  i: SizeInt;'                                                         + LineEnding +
+    'begin'                                                                 + LineEnding +
+    '  Result := Length(Indices);'                                          + LineEnding +
+    '  for i := High(Indices) downto 0 do'                                  + LineEnding +
+    '    _ArrayDelete(p, Indices[i], 1, ElSize, Dispose, Copy);'            + LineEnding +
     'end;';
 
 implementation

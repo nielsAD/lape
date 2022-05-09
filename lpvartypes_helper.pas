@@ -45,6 +45,11 @@ type
     procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
   end;
 
+  TLapeType_ArrayHelper_RemoveAll = class(TLapeType_Helper)
+  protected
+    procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
+  end;
+
   TLapeType_ArrayHelper_Low = class(TLapeType_Helper)
   protected
     procedure CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType); override;
@@ -310,6 +315,18 @@ begin
     VarType,
     [TLapeType_DynArray(VarType).PType],
     FCompiler.getBaseType(ltEvalBool)
+  );
+end;
+
+procedure TLapeType_ArrayHelper_RemoveAll.CreateFunctions(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType);
+begin
+  CreateFunction(
+    'begin'                                       + LineEnding +
+    '  Result := System.RemoveAll(Param0, Self);' + LineEnding +
+    'end;',
+    VarType,
+    [TLapeType_DynArray(VarType).PType],
+    FCompiler.getBaseType(ltSizeInt)
   );
 end;
 
