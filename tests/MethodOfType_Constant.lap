@@ -1,34 +1,54 @@
 {$assertions on}
 
 type
-  TPoint = record
-    X, Y: Integer;
+  TRec = record
+    Number: Integer;
+    Str: String;
   end;
 
-procedure TPoint.Swap;
+procedure TRec.Inc;
 begin
-  Assert(Self = [1, 2]);
+  Assert(Self.Number = 1);
+  Assert(Self.Str = '1');
 
-  System.Swap(Self.X, Self.Y);
+  Self.Number := Self.Number + 1;
+  Self.Str := IntToStr(Self.Number);
 end;
 
-function GetPoint: TPoint;
+procedure Integer.Next;
 begin
-  Result := [1, 2];
+  Self := Self + 1;
+end;
+
+function GetRec: TRec;
+begin
+  Result := [1, '1'];
 end;
 
 const
-  A: TPoint = [1, 2];
+  i: Integer = 0;
+  r: TRec = [1, '1'];
 
 var
-  B: TPoint = [1, 2];
+  ii: Integer = 0;
+  rr: TRec = [1, '1'];
 
 begin
-  A.Swap();
-  Assert(A = [1, 2]);
+  i.Next();
+  Assert(ToString(i) = '0');
 
-  B.Swap();
-  Assert(B = [2, 1]);
+  ii.Next();
+  Assert(ToString(ii) = '1');
 
-  GetPoint().Swap();
+  r.Inc();
+
+  Assert(r.Number = 1);
+  Assert(r.Str = '1');
+
+  rr.Inc();
+
+  Assert(rr.Number = 2);
+  Assert(rr.Str = '2');
+
+  GetRec().Inc();
 end;
