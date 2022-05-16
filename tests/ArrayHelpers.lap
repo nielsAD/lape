@@ -1,5 +1,11 @@
 {$assertions on}
 
+type
+  TIntegerArray = array of Int32;
+  TExtendedArray = array of Extended;
+  TPoint = record X, Y: Integer; end;
+  TPointArray = array of TPoint;
+
 procedure TestString;
 var
   Str: String = 'Hello';
@@ -15,23 +21,62 @@ begin
     Assert(Str.Last() = Str.Pop());
 end;
 
-type
-  TBox = record X1, Y1, X2, Y2: Integer; end;
-  TBoxArray = array of TBox;
-
-procedure TestBox;
+procedure TestSort;
 var
-  Arr: TBoxArray;
-  Weights: array of Int32;
+  Arr: TIntegerArray = [1,2,3,4,5];
 begin
-  Weights.SetLength(5);
+  Arr.Sort(TIntegerArray([5,4,3,2,1]), True);
+  Assert(ToString(Arr) = '[5, 4, 3, 2, 1]');
 
-  Arr.SetLength(5);
-  Arr.Sort(Weights, True);
+  Arr.Sort(TExtendedArray([0.1, 0.2, 0.3, 0.4, 0.5]), False);
+  Assert(ToString(Arr) = '[1, 2, 3, 4, 5]');
+
+  Arr.Sort();
+  Assert(ToString(Arr) = '[1, 2, 3, 4, 5]');
 end;
 
-type
-  TIntegerArray = array of Int32;
+procedure TestSorted;
+var
+  Arr: TIntegerArray = [1,2,3,4,5];
+begin
+  Assert(
+    ToString(Arr.Sorted(TIntegerArray([5,4,3,2,1]), True)) =
+    ToString(Arr.Sorted(TExtendedArray([0.1,0.2,0.3,0.4,0.5]), False))
+  );
+
+  Assert(ToString(Arr.Sorted()) = '[1, 2, 3, 4, 5]');
+end;
+
+procedure TestCopy;
+var
+  Arr: TIntegerArray = [1,2,3,4,5,6];
+begin
+  Assert(ToString(Arr.Copy(2,2) + Arr.Copy() + Arr.Copy(4)) = '[3, 4, 1, 2, 3, 4, 5, 6, 5, 6]');
+end;
+
+procedure TestPop;
+var
+  Arr: TIntegerArray = [1,2,3,4,5,6];
+begin
+  Assert(Arr.Pop(0) = 1);
+  Assert(Arr.Pop() = 6);
+  Assert(Arr.Length() = 4);
+end;
+
+procedure TestDelayed;
+var
+  Points: TPointArray;
+  P: TPoint;
+begin
+  Points := [];
+  P := [5, 15];
+  Assert(Points.Sorted(P)[0] = P); // Sorted(From: TPoint) not declared yet
+end;
+
+function TPointArray.Sorted(From: TPoint): TPointArray; overload;
+begin
+  Result := [From];
+end;
 
 function TIntegerArray.RandomValue: Int32; override;
 begin
@@ -53,5 +98,9 @@ begin
   Assert(Arr.RandomValue() = 123);
 
   TestString();
-  TestBox();
+  TestSort();
+  TestSorted();
+  TestCopy();
+  TestPop();
+  TestDelayed();
 end;

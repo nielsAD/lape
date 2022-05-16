@@ -14,6 +14,11 @@ uses
   lptypes, lptree, lpvartypes;
 
 type
+  TLapeTree_InternalMethod_SortWeighted = class(TLapeTree_InternalMethod)
+  public
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_InternalMethod_Sort = class(TLapeTree_InternalMethod)
   public
     function Compile(var Offset: Integer): TResVar; override;
@@ -92,38 +97,36 @@ type
 
 const
   _LapeSort: lpString =
-    'procedure _Sort(p: Pointer; ElSize, Hi: SizeInt; Compare: _LapeCompareFunc); overload;' + LineEnding +
-    'type'                                                                                   + LineEnding +
-    '  PSizeInt = ^SizeInt;'                                                                 + LineEnding +
-    'const'                                                                                  + LineEnding +
-    '  GAPS = [835387, 392925, 184011, 85764, 39744, 18298, 8359,'                           + LineEnding +
-    '          3785, 1695, 701, 301, 132, 57, 23, 10, 4, 1];'                                + LineEnding +
-    'var'                                                                                    + LineEnding +
-    '  Gap, i, j: SizeInt;'                                                                  + LineEnding +
-    '  Item: Pointer;'                                                                       + LineEnding +
-    'begin'                                                                                  + LineEnding +
-    '  if (@Compare = nil) then'                                                             + LineEnding +
-    '    raise "Sort: Compare function is nil";'                                             + LineEnding +
-    ''                                                                                       + LineEnding +
-    '  Item := GetMem(ElSize);'                                                              + LineEnding +
-    '  if (Hi = -1) then'                                                                    + LineEnding +
-    '    Hi := PSizeInt(p)[-1]^;'                                                            + LineEnding +
-    ''                                                                                       + LineEnding +
-    '  for Gap in GAPS do'                                                                   + LineEnding +
-    '    for i := Gap to Hi do'                                                              + LineEnding +
-    '    begin'                                                                              + LineEnding +
-    '      Move(p[i * ElSize]^, Item^, ElSize);'                                             + LineEnding +
-    ''                                                                                       + LineEnding +
-    '      j := i;'                                                                          + LineEnding +
-    '      while (j >= Gap) and (Compare(p[(j-Gap) * ElSize]^, Item^) > 0) do'               + LineEnding +
-    '      begin'                                                                            + LineEnding +
-    '        Move(p[(j-Gap) * ElSize]^, p[j * ElSize]^, ElSize);'                            + LineEnding +
-    '        Move(Item^, p[(j-Gap) * ElSize]^, ElSize);'                                     + LineEnding +
-    '        j := j - Gap;'                                                                  + LineEnding +
-    '      end;'                                                                             + LineEnding +
-    '    end;'                                                                               + LineEnding +
-    ''                                                                                       + LineEnding +
-    '  FreeMem(Item);'                                                                       + LineEnding +
+    'procedure _Sort(p: Pointer; ElSize, Len: SizeInt; Compare: _LapeCompareFunc); overload;' + LineEnding +
+    'const'                                                                                   + LineEnding +
+    '  ShellSortGaps = [835387, 392925, 184011, 85764, 39744, 18298, 8359,'                   + LineEnding +
+    '                   3785, 1695, 701, 301, 132, 57, 23, 10, 4, 1];'                        + LineEnding +
+    'var'                                                                                     + LineEnding +
+    '  Gap, Hi, i, j: SizeInt;'                                                               + LineEnding +
+    '  Item, Src: Pointer;'                                                                   + LineEnding +
+    'begin'                                                                                   + LineEnding +
+    '  Item := GetMem(ElSize);'                                                               + LineEnding +
+    '  Hi := Len - 1;'                                                                        + LineEnding +
+    ''                                                                                        + LineEnding +
+    '  for Gap in ShellSortGaps do'                                                           + LineEnding +
+    '    for i := Gap to Hi do'                                                               + LineEnding +
+    '    begin'                                                                               + LineEnding +
+    '      Move(p[i * ElSize]^, Item^, ElSize);'                                              + LineEnding +
+    ''                                                                                        + LineEnding +
+    '      j := i;'                                                                           + LineEnding +
+    '      while (j >= Gap) do'                                                               + LineEnding +
+    '      begin'                                                                             + LineEnding +
+    '        Src := p[(j - Gap) * ElSize];'                                                   + LineEnding +
+    '        if (Compare(Src^, Item^) <= 0) then'                                             + LineEnding +
+    '          Break;'                                                                        + LineEnding +
+    ''                                                                                        + LineEnding +
+    '        Move(Src^, p[j * ElSize]^, ElSize);'                                             + LineEnding +
+    '        Move(Item^, Src^, ElSize);'                                                      + LineEnding +
+    '        j := j - Gap;'                                                                   + LineEnding +
+    '      end;'                                                                              + LineEnding +
+    '    end;'                                                                                + LineEnding +
+    ''                                                                                        + LineEnding +
+    '  FreeMem(Item);'                                                                        + LineEnding +
     'end;';
 
   _LapeArrayUnique: lpString =
@@ -235,105 +238,110 @@ implementation
 uses
   lpparser, lpvartypes_array, lpmessages;
 
-function TLapeTree_InternalMethod_Sort.Compile(var Offset: Integer): TResVar;
+function TLapeTree_InternalMethod_SortWeighted.Compile(var Offset: Integer): TResVar;
+var
+  ArrayVar, ArrayPointerVar, LengthVar, TempVar, WeightsVar: TResVar;
+  ArrayType: TLapeType;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+  TempVar := NullResVar;
 
-  function SortWeighted(ArrayVar, WeightsVar: TResVar): TResVar;
-  var
-    ArrayPointer: TResVar;
-    ArrayType: TLapeType;
-    WeightsCopy: TLapeTree_InternalMethod_Copy;
-    ArrayLength: TLapeTree_InternalMethod_Length;
+  if (not FParams[0].CompileToTempVar(Offset, ArrayVar)) then
+    LapeException(lpeInvalidEvaluation, DocPos);
+  if (not (ArrayVar.VarType is TLapeType_DynArray)) then
+    LapeException(lpeExpectedArray, DocPos);
+
+  ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
+
+  if (ArrayVar.VarType.BaseType = ltDynArray) then
   begin
-    Result := NullResVar;
-    Dest := NullResVar;
+    ArrayPointerVar := ArrayVar;
+    ArrayPointerVar.VarType := FCompiler.getBaseType(ltPointer);
+  end else
+    ArrayPointerVar := ArrayVar.VarType.Eval(op_Addr, TempVar, ArrayVar, NullResVar, [], Offset, @_DocPos); // ltStaticArray
 
-    if (not (WeightsVar.VarType is TLapeType_DynArray)) then
-      LapeException(lpeExpectedArray, DocPos);
-    if (FParams.Count <> 3) then
-      LapeExceptionFmt(lpeWrongNumberParams, [3], DocPos);
+  with TLapeTree_InternalMethod_Copy.Create(Self) do
+  try
+    addParam(Self.Params[1]);
 
-    ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
-
-    case ArrayVar.VarType.BaseType of
-      ltStaticArray:
-        begin
-          with TLapeTree_Operator.Create(op_Addr, Self) do
-          try
-            Left := TLapeTree_Operator.Create(op_Index, Self);
-
-            TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
-            TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
-
-            ArrayPointer := Compile(Offset);
-          finally
-            ArrayVar.DecLock(1);
-
-            Free();
-          end;
-        end;
-
-      ltDynArray:
-        begin
-          ArrayPointer := ArrayVar;
-          ArrayPointer.VarType := FCompiler.getBaseType(ltPointer);
-        end;
-      else
-        LapeException(lpeExpectedArray, DocPos);
-    end;
-
-    WeightsCopy := TLapeTree_InternalMethod_Copy.Create(Self);
-    WeightsCopy.addParam(TLapeTree_ResVar.Create(WeightsVar.IncLock(), Self));
-
-    ArrayLength := TLapeTree_InternalMethod_Length.Create(Self);
-    ArrayLength.addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
-
-    try
-      // procedure _SortWeighted(A: Pointer; ElSize: SizeInt; Weights: array of Int32; SortUp: EvalBool)
-      with TLapeTree_Invoke.Create('_SortWeighted', Self) do
-      try
-        addParam(TLapeTree_ResVar.Create(ArrayPointer.IncLock(), Self));
-        addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
-        addParam(ArrayLength);
-        addParam(WeightsCopy);
-        addParam(Self.Params[2]); // SortUp
-
-        Compile(Offset).Spill(1);
-      finally
-        Free();
-      end;
-    finally
-      WeightsVar.Spill(1);
-      ArrayPointer.Spill(1);
-      ArrayVar.Spill(1);
-    end;
+    WeightsVar := Compile(Offset);
+  finally
+    Free();
   end;
 
+  with TLapeTree_InternalMethod_Length.Create(Self) do
+  try
+    addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
+
+    LengthVar := FoldConstants(False).Compile(Offset);
+  finally
+    Free();
+  end;
+
+  // if Length(ArrayVar) > 0 then
+  //   _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: EvalBool)
+  with TLapeTree_If.Create(Self) do
+  try
+    Condition := TLapeTree_ResVar.Create(LengthVar.IncLock(), Self);
+    Body := TLapeTree_Invoke.Create('_SortWeighted', Self);
+    with TLapeTree_Invoke(Body) do
+    begin
+      addParam(TLapeTree_ResVar.Create(ArrayPointerVar.IncLock(), Self));
+      addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
+      addParam(TLapeTree_ResVar.Create(LengthVar.IncLock(), Self));
+      addParam(TLapeTree_ResVar.Create(WeightsVar.IncLock(), Self));
+      addParam(Self.Params[1]);
+    end;
+
+    Compile(Offset).Spill(1);
+  finally
+    ArrayVar.Spill(1);
+    ArrayPointerVar.Spill(1);
+    LengthVar.Spill(1);
+    WeightsVar.Spill(1);
+
+    Free();
+  end;
+end;
+
+function TLapeTree_InternalMethod_Sort.Compile(var Offset: Integer): TResVar;
 var
-  ArrayVar, CompareVar, ArrayPointer: TResVar;
+  ArrayVar, ArrayPointerVar, CompareVar, LengthVar, TempVar: TResVar;
   ArrayType, ResultType: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
-
-  if (not (Params.Count in [1..3])) then
-    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
-
-  if (not FParams[0].CompileToTempVar(Offset, ArrayVar)) or ((FParams.Count > 1) and
-     (not FParams[1].CompileToTempVar(Offset, CompareVar))) then
-    LapeException(lpeInvalidEvaluation, DocPos);
-
-  if (not (ArrayVar.VarType is TLapeType_DynArray)) then
-    LapeException(lpeExpectedArray, DocPos);
+  TempVar := NullResVar;
 
   // Check if user defined `_Sort` exists. Useful for providing a native method
   if InvokeMagicMethod(Self, '_Sort', Result, Offset) then
     Exit;
 
-  if (FParams.Count > 1) and (CompareVar.VarType is TLapeType_DynArray) then
+  if (not (FParams.Count in [1..3])) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  if (FParams.Count = 3) then
+    with TLapeTree_InternalMethod_SortWeighted.Create(Self) do
+    try
+      while Self.Params.Count > 0 do
+        addParam(Self.Params[0]);
+
+      Result := Compile(Offset);
+      Exit;
+    finally
+      Free();
+    end;
+
+  if (not FParams[0].CompileToTempVar(Offset, ArrayVar)) then
+    LapeException(lpeInvalidEvaluation, DocPos);
+
+  if (ArrayVar.VarType.BaseType = ltDynArray) then
   begin
-    Result := SortWeighted(ArrayVar, CompareVar);
-    Exit;
-  end;
+    ArrayPointerVar := ArrayVar;
+    ArrayPointerVar.VarType := FCompiler.getBaseType(ltPointer);
+  end else
+    ArrayPointerVar := ArrayVar.VarType.Eval(op_Addr, TempVar, ArrayVar, NullResVar, [], Offset, @_DocPos); // ltStaticArray
 
   ResultType := FCompiler.getBaseType(ltInt32);
   ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
@@ -341,7 +349,7 @@ begin
   if (FParams.Count > 1) then
   begin
     if (not FParams[1].CompileToTempVar(Offset, CompareVar)) then
-      LapeException(lpeInvalidCompareMethod, DocPos);
+      LapeException(lpeInvalidEvaluation, DocPos);
     if (not (CompareVar.VarType is TLapeType_Method)) then
       LapeException(lpeInvalidCompareMethod, DocPos);
 
@@ -366,59 +374,37 @@ begin
     CompareVar := GetMagicMethodOrNil(FCompiler, '_Compare', [ArrayType, ArrayType], ResultType);
   end;
 
-  case ArrayVar.VarType.BaseType of
-    ltStaticArray:
-      begin
-        with TLapeTree_Operator.Create(op_Addr, Self) do
-        try
-          Left := TLapeTree_Operator.Create(op_Index, Self);
+  with TLapeTree_InternalMethod_Length.Create(Self) do
+  try
+    addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
 
-          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
-          TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
-
-          ArrayPointer := Compile(Offset);
-        finally
-          ArrayVar.DecLock(1);
-
-          Free();
-        end;
-      end;
-
-    ltDynArray:
-      begin
-        ArrayPointer := ArrayVar;
-        ArrayPointer.VarType := FCompiler.getBaseType(ltPointer);
-      end;
-    else
-      LapeException(lpeExpectedArray, DocPos);
+    LengthVar := FoldConstants(False).Compile(Offset);
+  finally
+    Free();
   end;
 
+  // if Length(ArrayVar) > 0 then
+  //   _Sort(p: Pointer; ElSize, Len: SizeInt; Compare: function(constref A, B): Int32);
+  with TLapeTree_If.Create(Self) do
   try
-    // _Sort(p: Pointer; ElSize, Hi: SizeInt; Compare: function(constref A, B): Int32);
-    with TLapeTree_Invoke.Create('_Sort', Self) do
-    try
-      addParam(TLapeTree_ResVar.Create(ArrayPointer.IncLock(), Self));
+    Condition := TLapeTree_ResVar.Create(LengthVar.IncLock(), Self);
+    Body := TLapeTree_Invoke.Create('_Sort', Self);
+    with TLapeTree_Invoke(Body) do
+    begin
+      addParam(TLapeTree_ResVar.Create(ArrayPointerVar.IncLock(), Self));
       addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
-
-      case ArrayVar.VarType.BaseType of
-        ltStaticArray:
-          with TLapeType_StaticArray(ArrayVar.VarType) do
-            addParam(TLapeTree_Integer.Create(Range.Hi - Range.Lo, Self));
-
-        ltDynArray:
-          addParam(TLapeTree_Integer.Create(-1, Self));
-      end;
-
+      addParam(TLapeTree_ResVar.Create(LengthVar.IncLock(), Self));
       addParam(TLapeTree_ResVar.Create(CompareVar.IncLock(), Self));
-
-      Compile(Offset).Spill(1);
-    finally
-      Free();
     end;
+
+    Compile(Offset);
   finally
-    CompareVar.Spill(1);
-    ArrayPointer.Spill(1);
     ArrayVar.Spill(1);
+    ArrayPointerVar.Spill(1);
+    LengthVar.Spill(1);
+    CompareVar.Spill(1);
+
+    Free();
   end;
 end;
 
