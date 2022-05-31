@@ -12,11 +12,7 @@ var
 begin
   Assert(Str.First() = 'H');
   Assert(Str.Last() = 'o');
-
-  Str.Append(' ');
-  Str.Extend('World');
-
-  Assert(Str = 'Hello World');
+  Assert(Str = 'Hello');
   while (Str.Length() > 0) do
     Assert(Str.Last() = Str.Pop());
 end;

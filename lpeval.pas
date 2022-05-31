@@ -409,51 +409,37 @@ var
     'end;';
 
   _LapeIndexOf: lpString =
-    'function _IndexOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'              + LineEnding +
+    'function _IndexOf(p: Pointer; ElSize, Lo, Len: SizeInt; Item: Pointer;'             + LineEnding +
     '  Equals: _LapeEqualsFunc): Int32; overload;'                                       + LineEnding +
-    'type'                                                                               + LineEnding +
-    '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
     '  i: SizeInt;'                                                                      + LineEnding +
     'begin'                                                                              + LineEnding +
-    '  if (p = nil) then'                                                                + LineEnding +
-    '    Exit;'                                                                          + LineEnding +
+    '  Result := -1;'                                                                    + LineEnding +
     ''                                                                                   + LineEnding +
-    '  if (Hi = -1) then'                                                                + LineEnding +
-    '    Hi := PSizeInt(p)[-1]^;'                                                        + LineEnding +
-    '  for i := 0 to Hi do'                                                              + LineEnding +
+    '  for i := 0 to Len - 1 do'                                                         + LineEnding +
     '  begin'                                                                            + LineEnding +
     '    if Equals(Item^, p^) then'                                                      + LineEnding +
-    '      Exit(Lo+i);'                                                                  + LineEnding +
+    '      Exit(Lo + i);'                                                                + LineEnding +
     '    Inc(p, ElSize);'                                                                + LineEnding +
     '  end;'                                                                             + LineEnding +
-    ''                                                                                   + LineEnding +
-    '  Result := -1;'                                                                    + LineEnding +
     'end;'                                                                               + LineEnding +
     ''                                                                                   + LineEnding +
-    'function _IndicesOf(p: Pointer; ElSize, Lo, Hi: SizeInt; Item: Pointer;'            + LineEnding +
+    'function _IndicesOf(p: Pointer; ElSize, Lo, Len: SizeInt; Item: Pointer;'           + LineEnding +
     '  Equals: _LapeEqualsFunc): array of Int32; overload;'                              + LineEnding +
-    'type'                                                                               + LineEnding +
-    '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
     'var'                                                                                + LineEnding +
-    '  i, Count, Len: SizeInt;'                                                          + LineEnding +
+    '  i, Count, Size: SizeInt;'                                                         + LineEnding +
     'begin'                                                                              + LineEnding +
-    '  if (p = nil) then'                                                                + LineEnding +
-    '    Exit;'                                                                          + LineEnding +
+    '  Count := 0;'                                                                      + LineEnding +
+    '  Size := 0;'                                                                       + LineEnding +
     ''                                                                                   + LineEnding +
-    '  Len := 4;'                                                                        + LineEnding +
-    '  SetLength(Result, Len);'                                                          + LineEnding +
-    ''                                                                                   + LineEnding +
-    '  if (Hi = -1) then'                                                                + LineEnding +
-    '    Hi := PSizeInt(p)[-1]^;'                                                        + LineEnding +
-    '  for i := 0 to Hi do'                                                              + LineEnding +
+    '  for i := 0 to Len - 1 do'                                                         + LineEnding +
     '  begin'                                                                            + LineEnding +
     '    if Equals(Item^, p^) then'                                                      + LineEnding +
     '    begin'                                                                          + LineEnding +
-    '      if (Count = Len) then'                                                        + LineEnding +
+    '      if (Count = Size) then'                                                       + LineEnding +
     '      begin'                                                                        + LineEnding +
-    '        Len := Len * 2;'                                                            + LineEnding +
-    '        SetLength(Result, Len);'                                                    + LineEnding +
+    '        Size := 4 + (Size * 2);'                                                    + LineEnding +
+    '        SetLength(Result, Size);'                                                   + LineEnding +
     '      end;'                                                                         + LineEnding +
     ''                                                                                   + LineEnding +
     '      Result[Count] := Lo+i;'                                                       + LineEnding +

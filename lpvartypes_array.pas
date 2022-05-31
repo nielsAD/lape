@@ -1361,8 +1361,7 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Reverse, 'Reverse');
   addArrayHelper(TLapeType_ArrayHelper_Reversed, 'Reversed');
   addArrayHelper(TLapeType_ArrayHelper_Clear, 'Clear');
-  addArrayHelper(TLapeType_ArrayHelper_Append, 'Append');
-  addArrayHelper(TLapeType_ArrayHelper_Extend, 'Extend');
+  addArrayHelper(TLapeType_ArrayHelper_Delete, 'Delete');
 end;
 
 constructor TLapeType_AnsiString.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
