@@ -264,6 +264,7 @@ var
   Header: TLapeType_Method;
   Param: TLapeParameter;
   i: Integer;
+  Pos: TDocPos;
 begin
   Assert(FCompiler is TLapeCompiler);
 
@@ -286,7 +287,8 @@ begin
       Header.addParam(Param);
     end;
 
-    Result := addGlobalFunc(Header, '!Helper', Body).Method;
+    Pos := DocPos;
+    Result := addGlobalFunc(Header, '!Helper', Body, @Pos).Method;
 
     addMethod(Result);
   end;

@@ -942,7 +942,7 @@ begin
   begin
     Method := Compiler[Name];
     if (Method <> nil) and (Method.VarType is TLapeType_OverloadedMethod) then
-      Method := TLapeType_OverloadedMethod(Method.VarType).getMethod(getParamTypes())
+      Method := TLapeType_OverloadedMethod(Method.VarType).getMethod(getParamTypes(), resType())
     else
       Method := nil;
 
@@ -1127,17 +1127,31 @@ begin
 end;
 
 constructor TLapeTree_InternalMethod_IndexOf.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+var
+  _IndexOf: TLapeGlobalVar;
 begin
   inherited;
 
-  setExpr(TLapeTree_GlobalVar.Create(ACompiler['_IndexOf'], Self));
+  _IndexOf := ACompiler['_IndexOf'];
+  if (_IndexOf <> nil) and (_IndexOf.VarType is TLapeType_OverloadedMethod) then
+    _IndexOf := _IndexOf.VarType.ManagedDeclarations[0] as TLapeGlobalVar;
+  Assert(_IndexOf <> nil);
+
+  setExpr(TLapeTree_GlobalVar.Create(_IndexOf, Self));
 end;
 
 constructor TLapeTree_InternalMethod_IndicesOf.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+var
+  _IndicesOf: TLapeGlobalVar;
 begin
   inherited;
 
-  setExpr(TLapeTree_GlobalVar.Create(ACompiler['_IndicesOf'], Self));
+  _IndicesOf := ACompiler['_IndicesOf'];
+  if (_IndicesOf <> nil) and (_IndicesOf.VarType is TLapeType_OverloadedMethod) then
+    _IndicesOf := _IndicesOf.VarType.ManagedDeclarations[0] as TLapeGlobalVar;
+  Assert(_IndicesOf <> nil);
+
+  setExpr(TLapeTree_GlobalVar.Create(_IndicesOf, Self));
 end;
 
 function TLapeTree_InternalMethod_IndicesOf.resType: TLapeType;

@@ -31,7 +31,7 @@ type
     lcoHints,                          // {$H} {$HINTS}
     lcoCOperators,                     //      {$COPERATORS}
     lcoAutoObjectify,                  //      {$AUTOOBJECTIFY}
-    lcoExplictSelf,                    //      {$EXPLICTSELF}
+    lcoExplicitSelf,                   //      {$EXPLICITSELF}
     lcoDuplicateLocalNameHints,        //
     lcoArrayHelpers,                   //
     lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)

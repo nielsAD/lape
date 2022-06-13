@@ -3,7 +3,7 @@
 type
   TIntegerArray = array of Int32;
 
-{$explictself on}
+{$explicitself on}
 
 procedure TIntegerArray.Test1();
 var
@@ -15,7 +15,7 @@ begin
   Self.SetLength(1);
 end;
 
-{$explictself off}
+{$explicitself off}
 
 procedure TIntegerArray.Test2();
 var

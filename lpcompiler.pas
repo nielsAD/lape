@@ -248,7 +248,7 @@ type
     function addGlobalType(Str: lpString; AName: lpString): TLapeType; overload; virtual;
 
     function addGlobalFunc(AHeader: lpString; Value: Pointer): TLapeGlobalVar; overload; virtual;
-    function addGlobalFunc(AHeader: TLapeType_Method; AName, Body: lpString): TLapeTree_Method; overload; virtual;
+    function addGlobalFunc(AHeader: TLapeType_Method; AName, Body: lpString; Pos: PDocPos = nil): TLapeTree_Method; overload; virtual;
     function addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
 
@@ -1242,8 +1242,8 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (Name = 'autoobjectify') then
       Result := (lcoAutoObjectify in FOptions)
     else
-    if (Name = 'explictself') then
-      Result := (lcoExplictSelf in FOptions)
+    if (Name = 'explicitself') then
+      Result := (lcoExplicitSelf in FOptions)
     else
     if (Name = 'duplicatelocalnamehints') then
       Result := (lcoDuplicateLocalNameHints in FOptions);
@@ -1528,8 +1528,8 @@ begin
     if (Directive = 'autoobjectify') then
       setOption(lcoAutoObjectify)
     else
-    if (Directive = 'explictself') then
-      setOption(lcoExplictSelf)
+    if (Directive = 'explicitself') then
+      setOption(lcoExplicitSelf)
     else
     if (Directive = 'duplicatelocalnamehints') then
       setOption(lcoDuplicateLocalNameHints)
@@ -2061,7 +2061,7 @@ begin
       begin
         Result.SelfVar := _ResVar.New(FStackInfo.Vars[0]);
 
-        if (not (lcoExplictSelf in FOptions)) then
+        if (not (lcoExplicitSelf in FOptions)) then
         begin
           SelfWith.WithType := TLapeType_MethodOfType(FuncHeader).ObjectType;
           SelfWith.WithVar := @Result.SelfVar;
@@ -2234,7 +2234,7 @@ begin
       if (FuncForwards <> nil) and (OldDeclaration is TLapeGlobalVar) then
         FuncForwards.DeleteItem(TLapeGlobalVar(OldDeclaration));
 
-      if (lcoExplictSelf in FOptions) and ResetStack then
+      if (lcoExplicitSelf in FOptions) and ResetStack then
       begin
         SetStackOwner(nil).Free();
 
@@ -4556,11 +4556,13 @@ begin
   end;
 end;
 
-function TLapeCompiler.addGlobalFunc(AHeader: TLapeType_Method; AName, Body: lpString): TLapeTree_Method;
+function TLapeCompiler.addGlobalFunc(AHeader: TLapeType_Method; AName, Body: lpString; Pos: PDocPos): TLapeTree_Method;
 var
   OldState: Pointer;
 begin
   OldState := getTempTokenizerState(Body, '!addGlobalFuncBdy::' + AName);
+  Tokenizer.OverridePos := Pos;
+
   try
     Result := ParseMethod(nil, AHeader, AName);
     CheckAfterCompile();
