@@ -32,6 +32,7 @@ type
     lcoCOperators,                     //      {$COPERATORS}
     lcoAutoObjectify,                  //      {$AUTOOBJECTIFY}
     lcoExplicitSelf,                   //      {$EXPLICITSELF}
+    lcoVerboseCompile,                 //      {$VERBOSECOMPILE}
     lcoDuplicateLocalNameHints,        //
     lcoArrayHelpers,                   //
     lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)

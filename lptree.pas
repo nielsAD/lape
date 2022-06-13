@@ -6012,6 +6012,10 @@ var
   i, fo, mo, co: Integer;
 begin
   Assert(Method <> nil);
+
+  if (lcoVerboseCompile in FCompilerOptions) then
+    FCompiler.Hint('Compiling: "%s"', [GetMethodName(Method.VarType)], DocPos);
+
   FExitStatements.Clear();
 
   Result := NullResVar;

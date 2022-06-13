@@ -17,6 +17,8 @@ type
   TLapeType_HelperClass = class of TLapeType_Helper;
   TLapeType_Helper = class(TLapeType_OverloadedMethod)
   protected
+    FHelperName: lpString;
+
     function FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     function CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType = nil): TLapeGlobalVar;
@@ -289,6 +291,7 @@ begin
 
     Pos := DocPos;
     Result := addGlobalFunc(Header, '!Helper', Body, @Pos).Method;
+    Result.VarType.Name := FHelperName;
 
     addMethod(Result);
   end;
@@ -296,7 +299,9 @@ end;
 
 constructor TLapeType_Helper.Create(ACompiler: TLapeCompilerBase; AName: lpString; ADocPos: PDocPos);
 begin
-  inherited Create(ACompiler, AName, ADocPos);
+  inherited Create(ACompiler, '', ADocPos);
+
+  FHelperName := AName;
 
   OnFunctionNotFound := @FunctionNotFound;
 end;

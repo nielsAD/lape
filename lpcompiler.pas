@@ -523,6 +523,7 @@ begin
 
   try
     Result := addManagedDecl(AType.NewGlobalVar(EndJump)) as TLapeGlobalVar;
+    Result.VarType.Name := '_Objectify';
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Method);
@@ -568,6 +569,7 @@ begin
   IncStackInfo();
   try
     Result := AType.NewGlobalVar(EndJump);
+    Result.VarType.Name := '_Dispose';
     Sender.addMethod(Result);
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
@@ -598,6 +600,7 @@ begin
   IncStackInfo();
   try
     Result := AType.NewGlobalVar(EndJump);
+    Result.VarType.Name := '_Assign';
     Sender.addMethod(Result);
 
     Assignment := TLapeTree_Operator.Create(op_Assign, Self);
@@ -636,6 +639,7 @@ begin
     'end;');
 
   Result := Method.Method;
+  Result.VarType.Name := '_Compare';
 
   Sender.addMethod(Result);
 end;
@@ -657,6 +661,7 @@ begin
     'end;');
 
   Result := Method.Method;
+  Result.VarType.Name := '_GreaterThan';
 
   Sender.addMethod(Result);
 end;
@@ -678,6 +683,7 @@ begin
     'end;');
 
   Result := Method.Method;
+  Result.VarType.Name := '_LessThan';
 
   Sender.addMethod(Result);
 end;
@@ -700,6 +706,7 @@ begin
   IncStackInfo();
   try
     Result := AType.NewGlobalVar(EndJump);
+    Result.VarType.Name := '_Equals';
     Sender.addMethod(Result);
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
@@ -746,6 +753,7 @@ begin
     AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConstRef], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
   Result := AType.NewGlobalVar(@_LapeToString_Unknown);
+  Result.VarType.Name := '_ToString';
   Sender.addMethod(Result);
 
   Body := AParams[0].VarToStringBody(Sender);
@@ -798,6 +806,7 @@ begin
   IncStackInfo();
   try
     Result := AType.NewGlobalVar(EndJump);
+    Result.VarType.Name := '_IsEnumGap';
     Sender.addMethod(Result);
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
@@ -1246,7 +1255,10 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
       Result := (lcoExplicitSelf in FOptions)
     else
     if (Name = 'duplicatelocalnamehints') then
-      Result := (lcoDuplicateLocalNameHints in FOptions);
+      Result := (lcoDuplicateLocalNameHints in FOptions)
+    else
+    if (Name = 'verbosecompile') then
+      Result := (lcoVerboseCompile in FOptions);
   end;
 
   procedure switchConditional;
@@ -1533,6 +1545,9 @@ begin
     else
     if (Directive = 'duplicatelocalnamehints') then
       setOption(lcoDuplicateLocalNameHints)
+    else
+    if (Directive = 'verbosecompile') then
+      setOption(lcoVerboseCompile)
     else
       Result := False;
   end;

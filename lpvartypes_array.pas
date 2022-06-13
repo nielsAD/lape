@@ -798,7 +798,7 @@ begin
   Assert(lcoArrayHelpers in FCompiler.Options);
 
   FManagedDecls.addDeclaration(
-    TLapeType_Helper(FCompiler.addManagedType(Helper.Create(FCompiler))).NewGlobalVar(AName)
+    TLapeType_Helper(FCompiler.addManagedType(Helper.Create(FCompiler, AName))).NewGlobalVar(AName)
   );
 end;
 
