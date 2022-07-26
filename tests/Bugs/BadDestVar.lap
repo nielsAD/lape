@@ -1,0 +1,22 @@
+// Issue 182
+type TVec3 = packed record X,Y,Z: Byte; end; // Force CompareMem usage (Size <> 4,8,16,32) on record op_Equal
+
+function Buggy: Boolean;
+var
+  Test: record A, B: TVec3; end;
+begin
+  Result := False or (Test.A <> Test.B);
+
+  WriteLn(Result);                       // True ??
+  WriteLn(False or (Test.A <> Test.B));  // False - Correct
+end;
+
+begin
+  Buggy();
+end;
+
+var x: array of Integer := [1,2,3,4];
+begin
+  x := [0] + x; // [0, 0] ??
+  WriteLn(x);
+end.

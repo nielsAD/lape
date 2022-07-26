@@ -759,15 +759,18 @@ begin
   end
   else if (op = op_Plus) and (BaseType = ltDynArray) and CompatibleWith(ARight.VarType) then
   begin
-    Result := NullResVar;
-    Result.VarType := Self;
-    FCompiler.getDestVar(Dest, Result, op);
+    //Result := NullResVar;
+    //Result.VarType := Self;
+    //FCompiler.getDestVar(Dest, Result, op);
+    //
+    //if (Result.VarPos.MemPos = mpStack) then
+    //begin
+    //  tmpVar := FCompiler.getTempVar(Self);
+    //  Result := _ResVar.New(tmpVar);
+    //end;
 
-    if (Result.VarPos.MemPos = mpStack) then
-    begin
-      tmpVar := FCompiler.getTempVar(Self);
-      Result := _ResVar.New(tmpVar);
-    end;
+    Result :=  _ResVar.New(FCompiler.getTempVar(Self));
+    Dest := NullResVar;
 
     wasConstant := not Result.Writeable;
     if wasConstant then Result.Writeable := True;

@@ -466,9 +466,6 @@ begin
       begin
         Assert(op in [op_cmp_Equal, op_cmp_NotEqual]);
 
-        Dest := NullResVar;
-        Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
-
         RightVar := _ResVar.New(FCompiler.getConstant(Size, ltSizeInt));
         tmpVar := Compiler.getTempStackVar(ltPointer);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
@@ -477,8 +474,10 @@ begin
 
         //Result := NullResVar;
         //Result.VarType := Compiler.getBaseType(ltEvalBool);
-
         //FCompiler.getDestVar(Dest, Result, op);
+
+        Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
+        Dest := NullResVar;
 
         FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!cmp']), Result, SizeOf(Pointer) * 3, Offset, @Self._DocPos);
         if (op = op_cmp_NotEqual) then
