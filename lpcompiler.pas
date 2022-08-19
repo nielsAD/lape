@@ -2013,7 +2013,8 @@ var
         tk_kw_Deprecated:
           begin
             Include(HintDirectives, lhdDeprecated);
-            if (Tokenizer.Expect([tk_typ_String, tk_sym_SemiColon]) = tk_typ_String) then
+
+            if (Tokenizer.Expect([tk_typ_String, tk_typ_HereString, tk_sym_SemiColon]) in [tk_typ_HereString, tk_typ_String]) then
               DeprecatedHint := lpString(Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2));
           end;
         tk_kw_UnImplemented:
