@@ -7,14 +7,61 @@
 }
 {%MainUnit lpeval.pas}
 
+procedure _LapeFindAllFiles(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  procedure Find(Directory: lpString; Recursive: Boolean; var Files: TStringArray);
+  var
+    List: TStringList;
+    Info: TSearchRec;
+    FileName: lpString;
+    Len, i: Integer;
+  begin
+    List := TStringList.Create();
+    Directory := IncludeTrailingPathDelimiter(ExpandFileName(Directory));
+
+    if (FindFirst(Directory + '*', faAnyFile, Info) = 0) then
+    begin
+      repeat
+        if (Info.Name = '.') or (Info.Name = '..') then
+          Continue;
+
+        FileName := Directory + Info.Name;
+        if (Info.Attr and faDirectory <> 0) then
+        begin
+          if Recursive then
+            Find(IncludeTrailingPathDelimiter(FileName), Recursive, Files);
+
+          Continue;
+        end;
+
+        List.Add(FileName);
+      until (FindNext(Info) <> 0);
+
+      SysUtils.FindClose(Info);
+    end;
+
+    Len := Length(Files);
+    SetLength(Files, Len + List.Count);
+    for i := 0 to List.Count - 1 do
+      Files[Len + i] := List[i];
+
+    List.Free();
+  end;
+
+begin
+  Find(PlpString(Params^[0])^, PBoolean(Params^[1])^, PStringArray(Result)^);
+end;
+
 procedure _LapeFindFiles(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
   procedure Find(Directory: lpString; Extensions: TStringArray; Recursive: Boolean; var Files: TStringArray);
   var
+    List: TStringList;
     Info: TSearchRec;
     FileName, FileExtension: lpString;
-    i: Integer;
+    Len, i: Integer;
   begin
+    List := TStringList.Create();
     Directory := IncludeTrailingPathDelimiter(ExpandFileName(Directory));
 
     if (FindFirst(Directory + '*', faAnyFile, Info) = 0) then
@@ -29,7 +76,7 @@ procedure _LapeFindFiles(const Params: PParamArray; const Result: Pointer); {$IF
         if (Info.Attr and faDirectory <> 0) then
         begin
           if Recursive then
-            Find(FileName, Extensions,  Recursive, Files);
+            Find(FileName, Extensions, Recursive, Files);
 
           Continue;
         end;
@@ -37,8 +84,7 @@ procedure _LapeFindFiles(const Params: PParamArray; const Result: Pointer); {$IF
         for i := 0 to High(Extensions) do
           if (Extensions[i] = '*') or (Extensions[i] = FileExtension) or ('.' + Extensions[i] = FileExtension) then
           begin
-            SetLength(Files, Length(Files) + 1);
-            Files[High(Files)] := FileName;
+            List.Add(FileName);
 
             Break;
           end;
@@ -46,6 +92,13 @@ procedure _LapeFindFiles(const Params: PParamArray; const Result: Pointer); {$IF
 
       SysUtils.FindClose(Info);
     end;
+
+    Len := Length(Files);
+    SetLength(Files, Len + List.Count);
+    for i := 0 to List.Count - 1 do
+      Files[Len + i] := List[i];
+
+    List.Free();
   end;
 
 begin
@@ -56,9 +109,12 @@ procedure _LapeFindDirectories(const Params: PParamArray; const Result: Pointer)
 
   procedure Find(Directory: String; Recursive: Boolean; var Directories: TStringArray);
   var
+    List: TStringList;
     Info: TSearchRec;
     FileName: lpString;
+    Len, i: Integer;
   begin
+    List := TStringList.Create();
     Directory := IncludeTrailingPathDelimiter(ExpandFileName(Directory));
 
     if (FindFirst(Directory + '*', faAnyFile, Info) = 0) then
@@ -71,8 +127,7 @@ procedure _LapeFindDirectories(const Params: PParamArray; const Result: Pointer)
 
         if (Info.Attr and faDirectory <> 0) then
         begin
-          SetLength(Directories, Length(Directories) + 1);
-          Directories[High(Directories)] := FileName;
+          List.Add(FileName);
 
           if Recursive then
             Find(FileName, Recursive, Directories);
@@ -81,15 +136,22 @@ procedure _LapeFindDirectories(const Params: PParamArray; const Result: Pointer)
 
       SysUtils.FindClose(Info);
     end;
+
+    Len := Length(Directories);
+    SetLength(Directories, Len + List.Count);
+    for i := 0 to List.Count - 1 do
+      Directories[Len + i] := List[i];
+
+    List.Free();
   end;
 
 begin
   Find(PlpString(Params^[0])^, PBoolean(Params^[1])^, PStringArray(Result)^);
 end;
 
-procedure _LapeWriteFileContents(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeAppendFileContents(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-  function WriteFileContents(const FileName: lpString; const Text: lpString; Append: Boolean): Boolean;
+  function AppendFileContents(const FileName: lpString; const Text: lpString): Boolean;
   var
     Stream: TFileStream;
   begin
@@ -103,10 +165,7 @@ procedure _LapeWriteFileContents(const Params: PParamArray; const Result: Pointe
       Stream := TFileStream.Create(FileName, fmCreate or fmShareDenyWrite);
 
     try
-      if Append then
-        Stream.Seek(0, soEnd)
-      else
-        Stream.Size := 0;
+      Stream.Seek(0, soEnd);
 
       Result := Stream.Write(Text[1], Length(Text)) = Length(Text);
     finally
@@ -115,7 +174,35 @@ procedure _LapeWriteFileContents(const Params: PParamArray; const Result: Pointe
   end;
 
 begin
-  PBoolean(Result)^ := WriteFileContents(PlpString(Params^[0])^, PlpString(Params^[1])^, PBoolean(Params^[2])^);
+  PBoolean(Result)^ := AppendFileContents(PlpString(Params^[0])^, PlpString(Params^[1])^);
+end;
+
+procedure _LapeWriteFileContents(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function WriteFileContents(const FileName: lpString; const Text: lpString): Boolean;
+  var
+    Stream: TFileStream;
+  begin
+    Result := False;
+    if (Length(Text) = 0) then
+      Exit;
+
+    if FileExists(FileName) then
+      Stream := TFileStream.Create(FileName, fmOpenReadWrite or fmShareDenyWrite)
+    else
+      Stream := TFileStream.Create(FileName, fmCreate or fmShareDenyWrite);
+
+    try
+      Stream.Size := 0;
+
+      Result := Stream.Write(Text[1], Length(Text)) = Length(Text);
+    finally
+      Stream.Free();
+    end;
+  end;
+
+begin
+  PBoolean(Result)^ := WriteFileContents(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
 procedure _LapeReadFileContents(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -192,6 +279,28 @@ begin
   PBoolean(Result)^ := DeleteDirectory(PlpString(Params^[0])^, PBoolean(Params^[1])^);
 end;
 
+procedure _LapeCreateFile(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function CreateFile(const FileName: String): Boolean;
+  const
+    INVALID_FILE_HANDLE = THandle(-1);
+  var
+    Handle: THandle;
+  begin
+    if FileExists(FileName) then
+      Exit(True);
+
+    Handle := FileCreate(FileName);
+
+    Result := Handle <> INVALID_FILE_HANDLE;
+    if Result then
+      FileClose(Handle);
+  end;
+
+begin
+  PBoolean(Result)^ := CreateFile(PlpString(Params^[0])^);
+end;
+
 procedure _LapeDeleteFile(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PBoolean(Result)^ := SysUtils.DeleteFile(PlpString(Params^[0])^);
@@ -241,6 +350,28 @@ end;
 procedure _LapeDirectoryExists(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PBoolean(Result)^ := DirectoryExists(PlpString(Params^[0])^);
+end;
+
+procedure _LapeFileSize(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function FileSize(const FileName: String): Int64;
+  var
+    Stream: TFileStream;
+  begin
+    Result := -1;
+    if not FileExists(FileName) then
+      Exit;
+
+    Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+    try
+      Result := Stream.Seek(0, soEnd);
+    finally
+      Stream.Free();
+    end;
+  end;
+
+begin
+  PInt64(Result)^ := FileSize(PlpString(Params^[0])^);
 end;
 
 procedure _LapeFileAge(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -338,3 +469,49 @@ begin
   PlpString(Result)^ := ExcludeLeadingPathDelimiter(PlpString(Params^[0])^);
 end;
 
+procedure _LapeChangeFileExtension(const Params: PParamArray; const Result: Pointer);
+begin
+  PlpString(Result)^ := ChangeFileExt(PlpString(Params^[0])^, PlpString(Params^[1])^);
+end;
+
+procedure _LapeSetPathSeperators(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function SetPathSeparators(const Path: lpString): lpString;
+  var
+    i: Integer;
+  begin
+    Result := Path;
+    for i := 1 to Length(Result) do
+      if (Result[I] in ['\', '/']) then
+        Result[I] := DirectorySeparator;
+  end;
+
+begin
+  PlpString(Result)^ := SetPathSeparators(PlpString(Params^[0])^);
+end;
+
+procedure _LapeJoinPaths(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function ExcludeLeadingPathDelimiter(const Path: lpString): lpString;
+  begin
+    Result := Path;
+    If (Length(Result) > 0) and (Result[1] = DirectorySeparator) then
+      Delete(Result, 1, 1);
+  end;
+
+  function JoinPaths(const Paths: TStringArray): lpString;
+  var
+    I: Integer;
+  begin
+    if Length(Paths) > 0 then
+    begin
+      Result := Paths[0];
+      for I := 1 to Length(Paths) - 1 do
+        Result := IncludeTrailingPathDelimiter(Result) + ExcludeLeadingPathDelimiter(Paths[I]);
+    end else
+      Result := '';
+  end;
+
+begin
+  PlpString(Result)^ := JoinPaths(PStringArray(Params^[0])^);
+end;
