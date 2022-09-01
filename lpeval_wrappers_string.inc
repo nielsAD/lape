@@ -7,6 +7,26 @@
 }
 {%MainUnit lpeval.pas}
 
+procedure _LapeUTF8EncodeW(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PlpString(Result)^ := UTF8Encode(PWideString(Params^[0])^);
+end;
+
+procedure _LapeUTF8EncodeU(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PlpString(Result)^ := UTF8Encode(PUnicodeString(Params^[0])^);
+end;
+
+procedure _LapeUTF8DecodeW(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PWideString(Result)^ := UTF8Encode(PlpString(Params^[0])^);
+end;
+
+procedure _LapeUTF8DecodeU(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PUnicodeString(Result)^ := UTF8Encode(PlpString(Params^[0])^);
+end;
+
 procedure _LapeUpperCase(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := UpperCase(PlpString(Params^[0])^);
@@ -72,6 +92,36 @@ begin
   PEvalBool(Result)^ := AnsiSameStr(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
+procedure _LapeWideUpperCase(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PlpString(Result)^ := WideUpperCase(PWideString(Params^[0])^);
+end;
+
+procedure _LapeWideLowerCase(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PlpString(Result)^ := WideLowerCase(PWideString(Params^[0])^);
+end;
+
+procedure _LapeWideCompareStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt32(Result)^ := WideCompareStr(PWideString(Params^[0])^, PWideString(Params^[1])^);
+end;
+
+procedure _LapeWideCompareText(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PInt32(Result)^ := WideCompareText(PWideString(Params^[0])^, PWideString(Params^[1])^);
+end;
+
+procedure _LapeWideSameText(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PEvalBool(Result)^ := WideSameText(PWideString(Params^[0])^, PWideString(Params^[1])^);
+end;
+
+procedure _LapeWideSameStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PEvalBool(Result)^ := WideSameStr(PWideString(Params^[0])^, PWideString(Params^[1])^);
+end;
+
 procedure _LapeTrim(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := Trim(PlpString(Params^[0])^);
@@ -100,30 +150,6 @@ end;
 procedure _LapeQuotedStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := QuotedStr(PlpString(Params^[0])^);
-end;
-
-procedure _LapeAnsiQuotedStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PlpString(Result)^ := AnsiQuotedStr(PlpString(Params^[0])^, lpChar(PlpChar(Params^[1])^));
-end;
-
-procedure _LapeAnsiDequotedStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PlpString(Result)^ := AnsiDequotedStr(PlpString(Params^[0])^, lpChar(PlpChar(Params^[1])^));
-end;
-
-type
-  TAnsiCharSet = set of AnsiChar;
-  PAnsiCharSet = ^TAnsiCharSet;
-
-procedure _LapeWrapText(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PlpString(Result)^ := lpString(WrapText(string(PlpString(Params^[0])^), string(PlpString(Params^[1])^), PAnsiCharSet(Params^[2])^, PInt32(Params^[3])^));
-end;
-
-procedure _LapeAdjustLineBreaks(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PlpString(Result)^ := lpString(AdjustLineBreaks(string(PlpString(Params^[0])^), TTextLineBreakStyle(PLapeSmallEnum(Params^[1])^)));
 end;
 
 procedure _LapeIntToHex(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -232,14 +258,34 @@ begin
   PlpString(Result)^ := StringReplace(PlpString(Params^[0])^, PlpString(Params^[1])^, PlpString(Params^[2])^, TReplaceFlags(PLapeSmallEnum(Params^[3])^));
 end;
 
+procedure _LapeWideStringReplace(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PWideString(Result)^ := WideStringReplace(PWideString(Params^[0])^, PWideString(Params^[1])^, PWideString(Params^[2])^, TReplaceFlags(PLapeSmallEnum(Params^[3])^));
+end;
+
+procedure _LapeUnicodeStringReplace(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PUnicodeString(Result)^ := UnicodeStringReplace(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, PUnicodeString(Params^[2])^, TReplaceFlags(PLapeSmallEnum(Params^[3])^));
+end;
+
 procedure _LapeIsDelimiter(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PEvalBool(Result)^ := IsDelimiter(PlpString(Params^[0])^, PlpString(Params^[1])^, PSizeInt(Params^[2])^);
 end;
 
-procedure _LapePos(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapePosA(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PSizeInt(Result)^ := Pos(PlpString(Params^[0])^, PlpString(Params^[1])^);
+end;
+
+procedure _LapePosW(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PSizeInt(Result)^ := Pos(PWideString(Params^[0])^, PWideString(Params^[1])^);
+end;
+
+procedure _LapePosU(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PSizeInt(Result)^ := Pos(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^);
 end;
 
 procedure _LapeStringOfChar(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

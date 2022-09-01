@@ -469,7 +469,7 @@ begin
   PlpString(Result)^ := ExcludeLeadingPathDelimiter(PlpString(Params^[0])^);
 end;
 
-procedure _LapeChangeFileExtension(const Params: PParamArray; const Result: Pointer);
+procedure _LapeChangeFileExtension(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PlpString(Result)^ := ChangeFileExt(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
@@ -492,12 +492,14 @@ end;
 
 procedure _LapeJoinPaths(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
+  {$IFNDEF FPC}
   function ExcludeLeadingPathDelimiter(const Path: lpString): lpString;
   begin
     Result := Path;
     If (Length(Result) > 0) and (Result[1] = DirectorySeparator) then
       Delete(Result, 1, 1);
   end;
+  {$ENDIF}
 
   function JoinPaths(const Paths: TStringArray): lpString;
   var

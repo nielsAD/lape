@@ -7,9 +7,14 @@
 }
 {%MainUnit lpeval.pas}
 
-addGlobalType('(tlbsLF, tlbsCRLF, tlbsCR)', 'TTextLineBreakStyle');
 addGlobalType('set of (rfReplaceAll, rfIgnoreCase)', 'TReplaceFlags');
 
+addGlobalFunc('function UTF8Encode(s: WideString): String; overload;', @_LapeUTF8EncodeW);
+addGlobalFunc('function UTF8Encode(s: UnicodeString): String; overload;', @_LapeUTF8EncodeU);
+addGlobalFunc('function UTF8Decode(s: String): WideString; overload;', @_LapeUTF8DecodeW);
+addGlobalFunc('function UTF8Decode(s: String): UnicodeString; overload;', @_LapeUTF8DecodeU);
+
+// locale independent
 addGlobalFunc('function UpperCase(s: string): string;', @_LapeUpperCase);
 addGlobalFunc('function LowerCase(s: string): string;', @_LapeLowerCase);
 addGlobalFunc('function UpCase(c: AnsiChar): AnsiChar; overload;', @_LapeUpCaseA);
@@ -19,6 +24,7 @@ addGlobalFunc('function CompareStr(s1, s2: string): Int32;', @_LapeCompareStr);
 addGlobalFunc('function CompareText(s1, s2: string): Int32;', @_LapeCompareText);
 addGlobalFunc('function SameText(s1, s2: string): EvalBool;', @_LapeSameText);
 
+// Uses current user locale
 addGlobalFunc('function AnsiUpperCase(s: string): string;', @_LapeAnsiUpperCase);
 addGlobalFunc('function AnsiLowerCase(s: string): string;', @_LapeAnsiLowerCase);
 addGlobalFunc('function AnsiCompareStr(s1, s2: string): Int32;', @_LapeAnsiCompareStr);
@@ -26,17 +32,28 @@ addGlobalFunc('function AnsiCompareText(s1, s2: string): Int32;', @_LapeAnsiComp
 addGlobalFunc('function AnsiSameText(s1,s2: string): EvalBool;', @_LapeAnsiSameText);
 addGlobalFunc('function AnsiSameStr(s1,s2: string): EvalBool;', @_LapeAnsiSameStr);
 
+// Uses current user locale
+addGlobalFunc('function WideUpperCase(s: WideString): string;', @_LapeWideUpperCase);
+addGlobalFunc('function WideLowerCase(s: WideString): string;', @_LapeWideLowerCase);
+addGlobalFunc('function WideCompareStr(s1, s2: WideString): Int32;', @_LapeWideCompareStr);
+addGlobalFunc('function WideCompareText(s1, s2: WideString): Int32;', @_LapeWideCompareText);
+addGlobalFunc('function WideSameText(s1,s2: WideString): EvalBool;', @_LapeWideSameText);
+addGlobalFunc('function WideSameStr(s1,s2: WideString): EvalBool;', @_LapeWideSameStr);
+
+addGlobalFunc('function Pos(Substr, Source: AnsiString): SizeInt; overload;', @_LapePosA);
+addGlobalFunc('function Pos(Substr, Source: WideString): SizeInt; overload;', @_LapePosW);
+addGlobalFunc('function Pos(Substr, Source: UnicodeString): SizeInt; overload;', @_LapePosU);
+
+addGlobalFunc('function StringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags): string;', @_LapeStringReplace);
+addGlobalFunc('function UnicodeStringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags): string;', @_LapeUnicodeStringReplace);
+addGlobalFunc('function WideStringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags): string;', @_LapeWideStringReplace);
+
 addGlobalFunc('function Trim(s: string): string;', @_LapeTrim);
 addGlobalFunc('function TrimLeft(s: string): string;', @_LapeTrimLeft);
 addGlobalFunc('function TrimRight(s: string): string;', @_LapeTrimRight);
 addGlobalFunc('function PadL(s: string; Len: SizeInt; c: Char = '' ''): string;', @_LapePadL);
 addGlobalFunc('function PadR(s: string; Len: SizeInt; c: Char = '' ''): string;', @_LapePadR);
 addGlobalFunc('function QuotedStr(s: string): string;', @_LapeQuotedStr);
-addGlobalFunc('function AnsiQuotedStr(s: string; Quote: Char): string;', @_LapeAnsiQuotedStr);
-addGlobalFunc('function AnsiDequotedStr(s: string; AQuote: Char): string;', @_LapeAnsiDequotedStr);
-
-addGlobalFunc('function WrapText(Line, BreakStr: string; BreakChars: set of AnsiChar; MaxCol: Int32): string;', @_LapeWrapText);
-addGlobalFunc('function AdjustLineBreaks(s: string; Style: TTextLineBreakStyle): string;', @_LapeAdjustLineBreaks);
 
 addGlobalFunc('function IntToHex(Value: Int64; Digits: Int32 = 1): string; overload;', @_LapeIntToHex);
 addGlobalFunc('function IntToHex(Value: UInt64; Digits: Int32 = 1): string; overload;', @_LapeUIntToHex);
@@ -63,10 +80,8 @@ addGlobalFunc('function FormatFloat(Format: string; Value: Extended): string;', 
 addGlobalFunc('function FormatCurr(Format: string; Value: Currency): string;', @_LapeFormatCurr);
 
 addGlobalFunc('function LastDelimiter(Delimiters, s: string): SizeInt;', @_LapeLastDelimiter);
-addGlobalFunc('function StringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags): string;', @_LapeStringReplace);
 addGlobalFunc('Function IsDelimiter(Delimiters, s: string; Index: SizeInt): EvalBool;', @_LapeIsDelimiter);
 
-addGlobalFunc('function Pos(Substr: string; Source: string): SizeInt;', @_LapePos);
 addGlobalFunc('function StringOfChar(c: Char; l: SizeInt): string;', @_LapeStringOfChar);
 
 addDelayedCode(LapeDelayedFlags +
