@@ -470,12 +470,16 @@ end;
 
 function TLapeType_ArrayHelper_Insert.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
+  Result := nil;
+  if Length(AParams) = 0 then
+    Exit;
+
   Result := CreateFunction(
     'begin'                                  + LineEnding +
     '  System.Insert(Param0, Self, Param1);' + LineEnding +
     'end;',
     VarType,
-    [TLapeType_DynArray(VarType).PType, FCompiler.getBaseType(ltSizeInt)]
+    [AParams[0], FCompiler.getBaseType(ltSizeInt)]
   );
 end;
 
