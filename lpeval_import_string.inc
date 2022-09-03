@@ -44,9 +44,9 @@ addGlobalFunc('function Pos(Substr, Source: AnsiString): SizeInt; overload;', @_
 addGlobalFunc('function Pos(Substr, Source: WideString): SizeInt; overload;', @_LapePosW);
 addGlobalFunc('function Pos(Substr, Source: UnicodeString): SizeInt; overload;', @_LapePosU);
 
-addGlobalFunc('function StringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags): string;', @_LapeStringReplace);
-addGlobalFunc('function UnicodeStringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags): string;', @_LapeUnicodeStringReplace);
-addGlobalFunc('function WideStringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags): string;', @_LapeWideStringReplace);
+addGlobalFunc('function StringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags = [rfReplaceAll]): string;', @_LapeStringReplace);
+addGlobalFunc('function UnicodeStringReplace(S, OldPattern, NewPattern: UnicodeString; Flags: TReplaceFlags = [rfReplaceAll]): string;', @_LapeUnicodeStringReplace);
+addGlobalFunc('function WideStringReplace(S, OldPattern, NewPattern: WideString; Flags: TReplaceFlags = [rfReplaceAll]): string;', @_LapeWideStringReplace);
 
 addGlobalFunc('function Trim(s: string): string;', @_LapeTrim);
 addGlobalFunc('function TrimLeft(s: string): string;', @_LapeTrimLeft);
@@ -87,5 +87,5 @@ addGlobalFunc('function StringOfChar(c: Char; l: SizeInt): string;', @_LapeStrin
 addDelayedCode(LapeDelayedFlags +
   'function Chr(IntValue: UInt8):  AnsiChar; overload; begin Result := AnsiChar(IntValue); end;' + LineEnding +
   'function Chr(IntValue: UInt16): WideChar; overload; begin Result := WideChar(IntValue); end;'
-,  '!addDelayedString');
+,  '!addDelayedCode::Chr');
 
