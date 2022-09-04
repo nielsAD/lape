@@ -1,0 +1,40 @@
+{$assertions on}
+
+type
+  TPoint = record
+  class const
+    z = 15;
+    w = 25;
+  var
+    x, y: Integer;
+  end;
+  TPointArray = array of TPoint;
+
+{$explicitself on}
+function TPoint.GetZ: Integer; static;
+begin
+  Result := Self.z;
+end;
+
+procedure TPoint.TestZ; static;
+begin
+  Assert(Self.z = 15);
+  Assert(Self.GetZ() = 15);
+end;
+
+{$explicitself off}
+function TPoint.GetW: Integer; static;
+begin
+  Result := w;
+end;
+
+procedure TPoint.TestW; static;
+begin
+  Assert(w = 25);
+  Assert(GetW() = 25);
+end;
+
+begin
+  TPoint.TestZ();
+  TPoint.TestW();
+end.

@@ -1900,6 +1900,12 @@ var
     begin
       Assert(FStackInfo.Vars[0].Name = 'Self');
       FStackInfo.Delete(FStackInfo.Vars[0], True);
+
+      // Add reference to the to reference static methods or class variables
+      if (FuncHeader is TLapeType_MethodOfType) and TLapeType_MethodOfType(FuncHeader).ObjectType.CanHaveChild() then
+        FStackInfo.addDeclaration(
+          addManagedDecl(TLapeType_Type.Create(TLapeType_MethodOfType(FuncHeader).ObjectType, Self, 'Self'))
+        );
     end;
   end;
 
