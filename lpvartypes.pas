@@ -2931,7 +2931,14 @@ begin
   else
   try
     if CompatibleWith(Right.VarType) then
-      Right.VarType := FMethodRecord;
+      Right.VarType := FMethodRecord
+    else
+    if Right.HasType() and (Right.VarType is TLapeType_Pointer) and (TLapeType_Pointer(Right.VarType).PType = FMethodRecord) then
+    begin
+      tmpRes := NullResVar;
+      Right := Right.VarType.Eval(op_Deref, tmpRes, Right, NullResVar, [], Offset, Pos);
+    end;
+
     Result := FMethodRecord.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
     if (Result.VarType = FMethodRecord) then
       Result.VarType := Self;

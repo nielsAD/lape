@@ -1,0 +1,15 @@
+{$assertions on}
+
+procedure Pointer.Test;
+var
+  p: procedure of object;
+begin
+  p := @Self.Hello;
+end;
+
+procedure Pointer.Hello;
+begin
+end;
+
+begin
+end;
