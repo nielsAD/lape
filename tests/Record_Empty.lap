@@ -1,0 +1,37 @@
+{$assertions on}
+
+type
+  TEmptyRec = record
+  class const
+    X = 10;
+    Y = 20;
+  end;
+
+  TEmptyInheritedRec = record(TMethod);
+
+procedure TEmptyRec.Test; static;
+begin
+  Assert(X = 10);
+  Assert(Y = 20);
+end;
+
+procedure TEmptyInheritedRec.Test;
+begin
+  Assert(Self.Method = Pointer(123));
+  Assert(Self.Self = Pointer(456));
+end;
+
+var
+  Empty: TEmptyRec;
+  EmptyInherited: TEmptyInheritedRec;
+
+begin
+  Assert(Empty.X = 10);
+  Assert(Empty.Y = 20);
+
+  EmptyInherited.Method := Pointer(123);
+  EmptyInherited.Self := Pointer(456);
+
+  Empty.Test();
+  EmptyInherited.Test();
+end.
