@@ -1,0 +1,1 @@
+Duplicate declaration "UNKNOWN" at line 4, column 16 in file "EnumDuplicateName.lap"

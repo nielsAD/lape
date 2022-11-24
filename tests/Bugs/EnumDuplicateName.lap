@@ -1,0 +1,7 @@
+// The bug is that that lape would blow up when cleaning up, after the duplicate declaration
+type
+  EFoo = (FOO, UNKNOWN);
+  EBar = (BAR, UNKNOWN);
+
+begin
+end;

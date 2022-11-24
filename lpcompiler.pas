@@ -2530,7 +2530,11 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       if (Scoped and Enum.hasMember(Name)) or
          ((not Scoped) and hasDeclaration(Name, StackOwner, True))
       then
+      begin
+        Result := nil; // Do not free type, because enum members rely on it
+
         LapeExceptionFmt(lpeDuplicateDeclaration, [Name], Tokenizer.DocPos);
+      end;
 
       Expect([tk_sym_Comma, tk_sym_ParenthesisClose, tk_sym_Equals], True, False);
       if (Tokenizer.Tok = tk_cmp_Equal) then
@@ -2548,10 +2552,12 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         finally
           Member.Free();
         end;
-      except on E: lpException do
+      except
+        on E: lpException do
         begin
-          LapeException(lpString(E.Message), Tokenizer.DocPos);
           Result := nil; // Do not free type, because enum members rely on it
+
+          LapeException(lpString(E.Message), Tokenizer.DocPos);
         end
       end
       else
@@ -2692,7 +2698,7 @@ begin
 
   except
     if (Result <> nil) then
-      Result.Free();
+      FreeAndNil(Result);
     raise;
   end;
 end;
