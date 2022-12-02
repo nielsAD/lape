@@ -3447,6 +3447,7 @@ var
   Node: TLapeTree_Base;
   FoundNode: ILapeTree_CanExit;
   ResultDecl: TLapeDeclaration;
+  ResultVar: TLapeVar absolute ResultDecl;
 begin
   Result := NullResVar;
   Dest := NullResVar;
@@ -3464,8 +3465,10 @@ begin
       if (ResultDecl = nil) or (not (ResultDecl is TLapeParameterVar)) then
         LapeExceptionFmt(lpeWrongNumberParams, [0], DocPos);
       ResultDecl.Used := duTrue;
-      Left := TLapeTree_ResVar.Create(_ResVar.New(ResultDecl as TLapeVar), FParams[0]);
-      Right := TLapeTree_ResVar.Create(FParams[0].Compile(Offset), FParams[0]);
+
+      Left := TLapeTree_ResVar.Create(_ResVar.New(ResultVar), FParams[0]);
+      Right := FParams[0].setExpectedType(ResultVar.VarType) as TLapeTree_ExprBase;
+
       Compile(Offset);
     finally
       Free();

@@ -1,0 +1,23 @@
+{$assertions on}
+
+type
+  TPoint = record
+    X, Y: Integer;
+  end;
+  TPointArray = array of TPoint;
+
+function Point(X, Y: Integer): TPoint;
+begin
+  Exit([X, Y]);
+end;
+
+function Points(X, Y: Integer): TPointArray;
+begin
+  Exit([Point(X, Y), Point(X, Y)]);
+end;
+
+begin
+  Assert(Point(100, 200) = [100,200]);
+  Assert(Points(1000, 2000)[0] = [1000,2000]);
+  Assert(Points(10000, 20000)[1] = [10000,20000]);
+end.
