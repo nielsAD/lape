@@ -20,7 +20,6 @@ const
   ParserToken_BlockEnd = [tk_kw_End, tk_kw_Finally, tk_kw_Except, tk_kw_Until];
 
 type
-  TLapeTreeMethodMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeTree_Method>;
   TLapeInternalMethodMap = {$IFDEF FPC}specialize{$ENDIF} TLapeUniqueStringDictionary<TLapeTree_InternalMethodClass>;
   TLapeTypeForwards = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeType>;
   TLapeFuncForwards = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeGlobalVar>;
@@ -77,7 +76,6 @@ type
     FTokenizers: TLapeTokenizerArray;
     FTokenizer: Integer;
 
-    FTreeMethodMap: TLapeTreeMethodMap;
     FInternalMethodMap: TLapeInternalMethodMap;
     FTree: TLapeTree_Base;
     FDelayedTree: TLapeTree_DelayedStatementList;
@@ -369,8 +367,6 @@ begin
 
   if (FDelayedTree <> nil) then
     FDelayedTree.Clean();
-  if (FTreeMethodMap <> nil) then
-    FTreeMethodMap.Clear();
 
   if (FIncludes <> nil) then
     FIncludes.Clear();
@@ -1920,15 +1916,15 @@ var
 
   procedure SwapMethodTree(varFrom, varTo: TLapeGlobalVar);
   var
-    Method: TLapeTree_Method;
+    i: Integer;
   begin
-    Method := FTreeMethodMap[lpString(IntToStr(PtrUInt(varFrom)))];
-    if (Method <> nil) then
-    begin
-      varTo.isConstant := True;
-      Method.Method := varTo;
-      FTreeMethodMap[lpString(IntToStr(PtrUInt(varTo)))] := Method;
-    end;
+    for i := 0 to FDelayedTree.Statements.Count - 1 do
+      if (FDelayedTree.Statements[i] is TLapeTree_Method) and (TLapeTree_Method(FDelayedTree.Statements[I]).Method = varFrom) then
+      begin
+        TLapeTree_Method(FDelayedTree.Statements[I]).Method := varTo;
+
+        Exit;
+      end;
   end;
 
   procedure InheritVarStack(AMethod: TLapeType_Method; AStackInfo: TLapeStackInfo; Count: Integer; addToScope: Boolean);
@@ -2093,6 +2089,8 @@ begin
       end;
     end;
 
+    Result.Method.setReadWrite(False, False);
+
     try
       if (Tokenizer.Tok = tk_kw_Overload) or (FuncHeader.isOperator and (Tokenizer.Tok <> tk_kw_Override)) then
       begin
@@ -2215,8 +2213,6 @@ begin
         Result.Method.Name := FuncName;
       end;
 
-      Result.Method.setReadWrite(False, False);
-
       if (Tokenizer.Tok = tk_kw_External) then
         if ({$IFNDEF FPC}@{$ENDIF}FOnHandleExternal = nil) then
           LapeException(lpeBlockExpected, Tokenizer.DocPos)
@@ -2265,7 +2261,6 @@ begin
 
       Next();
       Result.Statements := ParseBlockList();
-      FTreeMethodMap[lpString(IntToStr(PtrUInt(Result.Method)))] := Result;
 
       if (Result.Statements = nil) or (not (Result.Statements.Statements[Result.Statements.Statements.Count - 1] is TLapeTree_StatementList)) then
         Expect(tk_kw_Begin, False, False);
@@ -3775,7 +3770,6 @@ begin
   FOnFindMacro := nil;
   FAfterParsing := TLapeCompilerNotification.Create();
 
-  FTreeMethodMap := TLapeTreeMethodMap.Create(nil, dupError, True);
   FInternalMethodMap := TLapeInternalMethodMap.Create(nil);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
   FInternalMethodMap['WriteLn'] := TLapeTree_InternalMethod_WriteLn;
@@ -3857,7 +3851,6 @@ begin
   FreeAndNil(FIncludes);
   FreeAndNil(FConditionalStack);
   FreeAndNil(FAfterParsing);
-  FreeAndNil(FTreeMethodMap);
   FreeAndNil(FInternalMethodMap);
   inherited;
 end;
@@ -4034,8 +4027,6 @@ begin
   if (Node = nil) or (FDelayedTree = nil) then
     Exit;
   FDelayedTree.addStatement(Node, AfterCompilation, IsGlobal);
-  if (Node is TLapeTree_Method) then
-    FTreeMethodMap[lpString(IntToStr(PtrUInt(TLapeTree_Method(Node).Method)))] := Node as TLapeTree_Method;
 end;
 
 function TLapeCompiler.ParseFile: TLapeTree_Base;

@@ -1,0 +1,14 @@
+{$assertions on}
+
+procedure Foo; 
+begin
+end;
+
+procedure Foo; override;
+begin
+  Assert(PtrUInt(@inherited) <> PtrUInt(-1));
+end;
+
+begin
+  Foo();
+end;
