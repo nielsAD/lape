@@ -1,0 +1,17 @@
+{$assertions on}
+
+procedure _Swap(var A,B; Size: SizeInt); override;
+begin
+  Assert(PtrUInt(@inherited) <> PtrUInt(-1));
+
+  inherited();
+end;
+
+var i: Integer = 1;
+var j: Integer = 2;
+begin
+  _Swap(i, j, SizeOf(Integer));
+
+  Assert(i=2);
+  Assert(j=1);
+end;
