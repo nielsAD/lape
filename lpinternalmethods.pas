@@ -32,16 +32,19 @@ type
   end;
 
   TLapeTree_InternalMethod_Assert = class(TLapeTree_InternalMethod)
+  public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
   TLapeTree_InternalMethod_IsScriptMethod = class(TLapeTree_InternalMethod)
+  public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
-   TLapeTree_InternalMethod_GetExceptionMessage = class(TLapeTree_InternalMethod)
+  TLapeTree_InternalMethod_GetExceptionMessage = class(TLapeTree_InternalMethod)
+  public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
@@ -262,6 +265,28 @@ type
   public
     function resType: TLapeType; override;
     function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_GetCallerLocation = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_GetCallerLocationStr = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+  end;
+
+  TLapeTree_InternalMethod_GetExceptionLocation = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_GetExceptionLocationStr = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
   end;
 
 implementation
@@ -2502,12 +2527,16 @@ begin
     FCompiler.Emitter._ReRaiseException(Offset, @_DocPos);
   end else
   begin
-    if (FParams.Count <> 1) then
+    if (FParams.Count > 2) then
       LapeException(lpeTooMuchParameters, _DocPos);
 
     Invoke := TLapeTree_Invoke.Create('RaiseException', Self);
+    Invoke.Parent := Self;
     try
-      Invoke.addParam(FParams[0]);
+      if (FParams.Count = 1) and (FParams[0].resType() <> nil) and (FParams[0].resType.BaseType = ltPointer) then
+        Invoke.addParam(TLapeTree_InternalMethod_GetExceptionMessage.Create(Self));
+      while (FParams.Count > 0) do
+        Invoke.addParam(FParams[0]);
 
       Result := Invoke.Compile(Offset);
     finally
@@ -2614,6 +2643,82 @@ begin
 
     Result.isConstant := True;
   end;
+end;
+
+constructor TLapeTree_InternalMethod_GetCallerLocation.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FResType := ACompiler.getBaseType(ltPointer);
+end;
+
+function TLapeTree_InternalMethod_GetCallerLocation.Compile(var Offset: Integer): TResVar;
+begin
+  Result := NullResVar;
+
+  FCompiler.Emitter._GetCallerLocation(Offset, @_DocPos);
+  Result.VarPos.MemPos := mpStack;
+  Result.VarType := resType();
+
+  if (FDest.VarPos.MemPos = mpVar) and ((not FDest.HasType()) or FDest.VarType.Equals(Result.VarType)) then
+  begin
+    if (not FDest.HasType()) then
+    begin
+      Dest := _ResVar.New(Compiler.getTempVar(Result.VarType));
+      Dest.isConstant := True;
+    end;
+
+    FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
+    Result := FDest;
+  end
+  else
+    Dest := NullResVar;
+end;
+
+constructor TLapeTree_InternalMethod_GetCallerLocationStr.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited Create('_LocationToStr', ACompiler, ADocPos);
+
+  FResType := ACompiler.getBaseType(ltString);
+
+  addParam(TLapeTree_InternalMethod_GetCallerLocation.Create(Self));
+end;
+
+constructor TLapeTree_InternalMethod_GetExceptionLocation.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FResType := ACompiler.getBaseType(ltPointer);
+end;
+
+function TLapeTree_InternalMethod_GetExceptionLocation.Compile(var Offset: Integer): TResVar;
+begin
+  Result := NullResVar;
+
+  FCompiler.Emitter._GetExceptionLocation(Offset, @_DocPos);
+  Result.VarPos.MemPos := mpStack;
+  Result.VarType := resType();
+
+  if (FDest.VarPos.MemPos = mpVar) and ((not FDest.HasType()) or FDest.VarType.Equals(Result.VarType)) then
+  begin
+    if (not FDest.HasType()) then
+    begin
+      Dest := _ResVar.New(Compiler.getTempVar(Result.VarType));
+      Dest.isConstant := True;
+    end;
+
+    FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
+    Result := FDest;
+  end
+  else
+    Dest := NullResVar;
+end;
+
+constructor TLapeTree_InternalMethod_GetExceptionLocationStr.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited Create('_LocationToStr', ACompiler, ADocPos);
+
+  FResType := ACompiler.getBaseType(ltString);
+
+  addParam(TLapeTree_InternalMethod_GetExceptionLocation.Create(Self));
 end;
 
 end.

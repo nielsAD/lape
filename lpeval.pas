@@ -22,12 +22,14 @@ type
   TGetEvalRes = function(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType;
   TGetEvalProc = function(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc;
 
+procedure _LapeLocationToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
 procedure _LapeWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeWriteLn(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
 procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeRaise(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeRaiseString(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeRaiseStringWithDocPos(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAssert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAssertMsg(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeRangeCheck(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -545,6 +547,21 @@ uses
 type
   PBoolean = ^Boolean; //Make sure it's not ^Byte
 
+procedure _LapeLocationToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function LocationToStr(DocPos: TDocPos): String;
+  begin
+    Result := '';
+    if (DocPos.Line > 0) and (DocPos.Col > 0) then
+      Result := 'Line ' + IntToStr(DocPos.Line) + ', Column ' + IntToStr(DocPos.Col);
+    if (DocPos.FileName <> '') then
+      Result := Result + ' in file "' + DocPos.FileName + '"';
+  end;
+
+begin
+  PlpString(Result)^ := LocationToStr(PDocPos(Params^[0]^)^);
+end;
+
 procedure _LapeWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   Write(PlpString(Params^[0])^);
@@ -560,14 +577,14 @@ begin
   PEvalBool(Result)^ := Assigned(Params^[0]) and Assigned(PPointer(Params^[0])^);
 end;
 
-procedure _LapeRaise(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  raise Exception(Params^[0]^);
-end;
-
 procedure _LapeRaiseString(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   LapeException(PlpString(Params^[0])^);
+end;
+
+procedure _LapeRaiseStringWithDocPos(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  LapeException(PlpString(Params^[0])^, PDocPos(Params^[1]^)^);
 end;
 
 procedure _LapeAssert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

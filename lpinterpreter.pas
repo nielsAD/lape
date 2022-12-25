@@ -23,6 +23,8 @@ type
     ocNone,
     ocIsInternal,                                              //IsInternal
     ocGetExceptionMessage,                                     //GetExceptionMessage
+    ocGetExceptionLocation,
+    ocGetCallerLocation,
     ocInitStackLen,                                            //InitStackLen TStackOffset
     ocInitVarLen,                                              //InitVarLen TStackOffset
     ocInitStack,                                               //InitStack TStackOffset
@@ -150,6 +152,7 @@ var
 
   CallStack: array of record
     CalledFrom: PByte;
+    JumpBack: PByte;
     StackP, VarStackP: UInt32;
     Jump: TInJump;
   end;
@@ -288,14 +291,31 @@ var
     Inc(Code, ocSize);
   end;
 
-  procedure DoGetExceptionMessage; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure DoGetExceptionMessage;
   begin
     PShortString(@Stack[StackPos])^ := TryStack[TryStackPos].ExceptionMessage;
+
     Inc(StackPos, SizeOf(ShortString));
     Inc(Code, ocSize);
   end;
 
-  procedure DoReRaiseException; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure DoGetExceptionLocation;
+  begin
+    PPointer(@Stack[StackPos])^ := @TryStack[TryStackPos].ExceptionLocation;
+
+    Inc(StackPos, SizeOf(Pointer));
+    Inc(Code, ocSize);
+  end;
+
+  procedure DoGetCallerLocation;
+  begin
+    PPointer(@Stack[StackPos])^ := CallStack[CallStackPos - 1].CalledFrom + SizeOf(opCodeType);
+
+    Inc(StackPos, SizeOf(Pointer));
+    Inc(Code, ocSize);
+  end;
+
+  procedure DoReRaiseException;
   var
     Pos: Int32;
   begin
@@ -496,7 +516,8 @@ var
 
     with CallStack[CallStackPos] do
     begin
-      CalledFrom := PByte(PtrInt(Code) + ocSize + RecSize);
+      CalledFrom := Code;
+      JumpBack := PByte(PtrInt(Code) + ocSize + RecSize);
       VarStackP := VarStackPos;
       PushToVar(ParamSize);
       StackP := StackPos + UInt32(StackPosOffset);
@@ -518,7 +539,7 @@ var
       Dec(CallStackPos);
       with CallStack[CallStackPos] do
       begin
-        Code := CalledFrom;
+        Code := JumpBack;
         VarStackPos := VarStackP;
         StackPos := StackP;
         MergeJumps(InJump, Jump);

@@ -79,6 +79,20 @@ var
     Inc(Code, ocSize);
   end;
 
+  procedure DoGetExceptionLocation;
+  begin
+    _WriteLn('GetExceptionLocation');
+    _WriteLn('IncStack %d', [SizeOf(Pointer)]);
+    Inc(Code, ocSize);
+  end;
+
+  procedure DoGetCallerLocation;
+  begin
+    _WriteLn('GetCallerLocation');
+    _WriteLn('IncStack %d', [SizeOf(Pointer)]);
+    Inc(Code, ocSize);
+  end;
+
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('InitStackLen %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
