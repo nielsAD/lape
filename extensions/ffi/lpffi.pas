@@ -97,7 +97,7 @@ implementation
 
 uses
   {$IFDEF FPC}dynlibs{$ELSE}Windows{$ENDIF},
-  lpmessages;
+  lpmessages, lpinternalmethods;
 
 {$IFNDEF FPC}
 type

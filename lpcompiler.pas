@@ -291,7 +291,7 @@ uses
   Variants,
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
-  lpinternalmethods_algorithm,
+  lpinternalmethods, lpinternalmethods_algorithm,
   lpmessages, lpeval, lpinterpreter;
 
 function TLapeCompiler.getPDocPos: PDocPos;

@@ -114,7 +114,7 @@ type
 implementation
 
 uses
-  lpparser, lpeval, lpmessages;
+  lpparser, lpeval, lpmessages, lpinternalmethods;
 
 function TLapeType_DynArray.getAsString: lpString;
 begin

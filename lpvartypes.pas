@@ -754,7 +754,7 @@ implementation
 
 uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
-  lpvartypes_ord, lpvartypes_array, lptree,
+  lpvartypes_ord, lpvartypes_array, lptree, lpinternalmethods,
   lpmessages, lpeval, lpinterpreter;
 
 procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; LeftType, RightType: TLapeType; DocPos: TDocPos);

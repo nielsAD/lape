@@ -236,7 +236,7 @@ const
 implementation
 
 uses
-  lpparser, lpvartypes_array, lpmessages;
+  lpparser, lpvartypes_array, lpmessages, lpinternalmethods;
 
 function TLapeTree_InternalMethod_SortWeighted.Compile(var Offset: Integer): TResVar;
 var
