@@ -980,6 +980,8 @@ begin
     '!BaseDefinitionsDelayedCode'
   );
 
+  addGlobalFunc('function _LocationToStr(DocPos: Pointer): string;', @_LapeLocationToStr);
+
   addGlobalFunc('procedure _Write(s: string);', @_LapeWrite);
   addGlobalFunc('procedure _WriteLn();', @_LapeWriteLn);
 
@@ -1022,8 +1024,9 @@ begin
   addGlobalFunc('function CompareMem(constref p1, p2; Length: SizeInt): EvalBool;', @_LapeCompareMem);
 
   addGlobalFunc('function Assigned(constref p): EvalBool;', @_LapeAssigned);
-  //addGlobalFunc('procedure RaiseException(Ex: TExceptionObject); overload;', @_LapeRaise);
-  addGlobalFunc('procedure RaiseException(Ex: string); overload;', @_LapeRaiseString);
+
+  addGlobalFunc('procedure RaiseException(Message: string); overload;', @_LapeRaiseString);
+  addGlobalFunc('procedure RaiseException(Message: String; DocPos: Pointer); overload;', @_LapeRaiseStringWithDocPos);
 
   addGlobalFunc('procedure UniqueString(var Str: AnsiString); overload;', @_LapeAStr_Unique);
   addGlobalFunc('procedure UniqueString(var Str: WideString); overload;', @_LapeWStr_Unique);
@@ -3255,7 +3258,11 @@ begin
               else
               begin
                 if (Method is TLapeTree_InternalMethod) and (TLapeTree_InternalMethod(Method).ForceParam and (not (Tokenizer.Tok in ReturnOn))) then
-                  Method.addParam(EnsureExpression(ParseExpression(ReturnOn, False)));
+                begin
+                  Method.addParam(EnsureExpression(ParseExpression(ReturnOn, Tokenizer.Tok = tk_kw_At)));
+                  if (Method is TLapeTree_InternalMethod_Raise) and (Tokenizer.Tok = tk_kw_At) then
+                    Method.addParam(EnsureExpression(ParseExpression(ReturnOn, True)));
+                end;
 
                 VarStack.Push(Method);
                 Method := nil;
@@ -3778,6 +3785,10 @@ begin
   FInternalMethodMap['Assert'] := TLapeTree_InternalMethod_Assert;
   FInternalMethodMap['IsScriptMethod'] := TLapeTree_InternalMethod_IsScriptMethod;
   FInternalMethodMap['GetExceptionMessage'] := TLapeTree_InternalMethod_GetExceptionMessage;
+  FInternalMethodMap['GetExceptionLocation'] := TLapeTree_InternalMethod_GetExceptionLocation;
+  FInternalMethodMap['GetExceptionLocationStr'] := TLapeTree_InternalMethod_GetExceptionLocationStr;
+  FInternalMethodMap['GetCallerLocation'] := TLapeTree_InternalMethod_GetCallerLocation;
+  FInternalMethodMap['GetCallerLocationStr'] := TLapeTree_InternalMethod_GetCallerLocationStr;
   FInternalMethodMap['Break'] := TLapeTree_InternalMethod_Break;
   FInternalMethodMap['Continue'] := TLapeTree_InternalMethod_Continue;
   FInternalMethodMap['FallThrough'] := TLapeTree_InternalMethod_FallThrough;

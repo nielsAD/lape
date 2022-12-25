@@ -113,6 +113,10 @@ type
     function _IsInternal(Pos: PDocPos = nil): Integer; overload;
     function _GetExceptionMessage(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _GetExceptionMessage(Pos: PDocPos = nil): Integer; overload;
+    function _GetExceptionLocation(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _GetExceptionLocation(Pos: PDocPos = nil): Integer; overload;
+    function _GetCallerLocation(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _GetCallerLocation(Pos: PDocPos = nil): Integer; overload;
     function _ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _ReRaiseException(Pos: PDocPos = nil): Integer; overload;
     function _InitStackLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
@@ -503,6 +507,18 @@ begin
   IncStack(SizeOf(ShortString));
 end;
 
+function TLapeCodeEmitterBase._GetExceptionLocation(var Offset: Integer; Pos: PDocPos = nil): Integer;
+begin
+  Result := _op(ocGetExceptionLocation, Offset, Pos);
+  IncStack(SizeOf(Pointer));
+end;
+
+function TLapeCodeEmitterBase._GetCallerLocation(var Offset: Integer; Pos: PDocPos = nil): Integer;
+begin
+  Result := _op(ocGetCallerLocation, Offset, Pos);
+  IncStack(SizeOf(Pointer));
+end;
+
 function TLapeCodeEmitterBase._ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocReRaiseException, Offset, Pos);
@@ -657,6 +673,10 @@ function TLapeCodeEmitterBase._IsInternal(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _IsInternal(o, Pos); end;
 function TLapeCodeEmitterBase._GetExceptionMessage(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _GetExceptionMessage(o, Pos); end;
+function TLapeCodeEmitterBase._GetExceptionLocation(Pos: PDocPos = nil): Integer;
+  var o: Integer; begin o := -1; Result := _GetExceptionLocation(o, Pos); end;
+function TLapeCodeEmitterBase._GetCallerLocation(Pos: PDocPos = nil): Integer;
+  var o: Integer; begin o := -1; Result := _GetCallerLocation(o, Pos); end;
 function TLapeCodeEmitterBase._ReRaiseException(Pos: PDocPos): Integer;
   var o: Integer; begin o := -1; Result := _ReRaiseException(o, Pos); end;
 

@@ -1,0 +1,61 @@
+{$assertions on}
+
+const
+  CURRENT_FILE = {$MACRO CURRENT_FILE};
+
+procedure Foo(AtCaller: Boolean);
+begin
+  if AtCaller then
+    raise 'Foo' at GetCallerLocation()
+  else
+    raise 'Foo';
+end;
+
+procedure Bar(AtCaller: Boolean);
+begin
+  Foo(AtCaller);
+end;
+
+begin
+  try
+    Bar(False);
+  except
+    Assert(GetExceptionMessage() = 'Foo');
+    Assert(GetExceptionLocationStr() = 'Line 11, Column 5 in file "' + CURRENT_FILE + '"');
+  end;
+
+  try
+    Bar(True);
+  except
+    Assert(GetExceptionMessage() = 'Foo');
+    Assert(GetExceptionLocationStr() = 'Line 16, Column 6 in file "' + CURRENT_FILE + '"');
+  end;
+end;
+
+procedure ReRaise(AtCaller: Boolean);
+begin
+  try
+    raise 'ReRaise';
+  except
+    if AtCaller then
+      raise at GetCallerLocation
+    else
+      raise;
+  end;
+end;
+
+begin
+  try
+    ReRaise(False);
+  except
+    Assert(GetExceptionMessage() = 'ReRaise');
+    Assert(GetExceptionLocationStr() = 'Line 38, Column 5 in file "' + CURRENT_FILE + '"');
+  end;
+
+  try
+    ReRaise(True);
+  except
+    Assert(GetExceptionMessage() = 'ReRaise');
+    Assert(GetExceptionLocationStr() = 'Line 56, Column 12 in file "' + CURRENT_FILE + '"');
+  end;
+end;
