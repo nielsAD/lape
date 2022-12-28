@@ -289,6 +289,12 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
   end;
 
+  TLapeTree_InternalMethod_GetScriptMethodName = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
 implementation
 
 uses
@@ -2719,6 +2725,52 @@ begin
   FResType := ACompiler.getBaseType(ltString);
 
   addParam(TLapeTree_InternalMethod_GetExceptionLocation.Create(Self));
+end;
+
+constructor TLapeTree_InternalMethod_GetScriptMethodName.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FResType := ACompiler.getBaseType(ltShortString);
+end;
+
+function TLapeTree_InternalMethod_GetScriptMethodName.Compile(var Offset: Integer): TResVar;
+var
+  tmpVar, DestVar, Param: TResVar;
+begin
+  Result := NullResVar;
+  if (FParams.Count <> 1) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+  tmpVar := NullResVar;
+  Param := FParams[0].Compile(Offset);
+  if (not Param.HasType()) or (not (Param.VarType.BaseType in [ltPointer, ltScriptMethod])) then
+    LapeException(lpeInvalidCondition, DocPos);
+
+  DestVar := NullResVar;
+  DestVar.VarPos.MemPos := mpStack;
+  DestVar.VarType := FCompiler.getBaseType(ltPointer);
+
+  Param.VarType := FCompiler.getBaseType(ltPointer);
+  Param.VarType.Eval(op_Assign, tmpVar, DestVar, Param, [], Offset, @_DocPos);
+  Param.Spill(1);
+
+  FCompiler.Emitter._GetScriptMethodName(Offset, @_DocPos);
+  Result.VarPos.MemPos := mpStack;
+  Result.VarType := resType();
+
+  if (FDest.VarPos.MemPos = mpVar) and ((not FDest.HasType()) or FDest.VarType.Equals(Result.VarType)) then
+  begin
+    if (not FDest.HasType()) then
+    begin
+      Dest := _ResVar.New(Compiler.getTempVar(Result.VarType));
+      Dest.isConstant := True;
+    end;
+
+    FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
+    Result := FDest;
+  end
+  else
+    Dest := NullResVar;
 end;
 
 end.

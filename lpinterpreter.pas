@@ -25,6 +25,7 @@ type
     ocGetExceptionMessage,                                     //GetExceptionMessage
     ocGetExceptionLocation,
     ocGetCallerLocation,
+    ocGetScriptMethodName,
     ocInitStackLen,                                            //InitStackLen TStackOffset
     ocInitVarLen,                                              //InitVarLen TStackOffset
     ocInitStack,                                               //InitStack TStackOffset
@@ -101,6 +102,9 @@ type
 type
   TLapeCodeRunner = class(TLapeBaseClass)
   protected
+  type
+    TMethodMap = {$IFDEF FPC}specialize{$ENDIF} TLapePointerMap<lpString>;
+  protected
     FCode: PByte;
     FCodeBase: PByte;
     FCodeUpper: PByte;
@@ -130,11 +134,14 @@ type
       Jump: TInJump;
     end;
     FCallStackPos: UInt32;
+
+    FMethodMap: TMethodMap;
   public
     DoContinue: TInitBool;
 
     constructor Create(CodeBase: PByte; CodeLen: Integer); reintroduce; overload;
     constructor Create(Emitter: TLapeBaseClass); reintroduce; overload;
+    destructor Destroy; override;
 
     procedure Run(InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0);
   end;
@@ -169,6 +176,8 @@ constructor TLapeCodeRunner.Create(CodeBase: PByte; CodeLen: Integer);
 begin
   inherited Create();
 
+  FMethodMap := TMethodMap.Create();
+
   SetLength(FStack, StackSize);
   SetLength(FTryStack, TryStackSize);
   SetLength(FCallStack, CallStackSize);
@@ -179,14 +188,26 @@ begin
 end;
 
 constructor TLapeCodeRunner.Create(Emitter: TLapeBaseClass);
+var
+  i: Integer;
+  CodeEmitter: TLapeCodeEmitter absolute Emitter;
 begin
   if (not (Emitter is TLapeCodeEmitter)) then
     LapeException(lpeImpossible);
 
-  Create(
-    TLapeCodeEmitter(Emitter).Code,
-    TLapeCodeEmitter(Emitter).CodeLen
-  );
+  Create(CodeEmitter.Code, CodeEmitter.CodeLen);
+
+  with CodeEmitter.CodePointers do
+    for i := 0 to Count - 1 do
+      FMethodMap.Items[Pointer(PtrUInt(Items[i].Pos^))] := Items[i].Name;
+end;
+
+destructor TLapeCodeRunner.Destroy;
+begin
+  if (FMethodMap <> nil) then
+    FreeAndNil(FMethodMap);
+
+  inherited Destroy();
 end;
 
 procedure TLapeCodeRunner.Run(InitialVarStack: TByteArray; InitialJump: TCodePos);
@@ -237,7 +258,7 @@ procedure TLapeCodeRunner.Run(InitialVarStack: TByteArray; InitialJump: TCodePos
         with FVarStackStack[FVarStackIndex - 1] do
         begin
           Dec(Pos, OldLen);
-          Move(FStack[Pos], FVarStack[0], OldLen);
+          Move(Stack[Pos], FVarStack[0], OldLen);
         end;
       end
     else
@@ -345,6 +366,14 @@ procedure TLapeCodeRunner.Run(InitialVarStack: TByteArray; InitialJump: TCodePos
     PPointer(@FStack[FStackPos])^ := FCallStack[FCallStackPos - 1].CalledFrom + SizeOf(opCodeType);
 
     Inc(FStackPos, SizeOf(Pointer));
+    Inc(FCode, ocSize);
+  end;
+
+  procedure DoGetScriptMethodName;
+  begin
+    PShortString(@FStack[FStackPos - SizeOf(Pointer)])^ := FMethodMap[PPointer(@FStack[FStackPos - SizeOf(Pointer)])^];
+
+    Dec(FStackPos, SizeOf(Pointer) - SizeOf(ShortString));
     Inc(FCode, ocSize);
   end;
 
