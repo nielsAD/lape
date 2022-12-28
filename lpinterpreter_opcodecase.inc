@@ -13,6 +13,7 @@ case opCode(opCodeTypeP(FCode)^) of
   ocGetExceptionMessage: DoGetExceptionMessage();
   ocGetExceptionLocation: DoGetExceptionLocation();
   ocGetCallerLocation: DoGetCallerLocation();
+  ocGetScriptMethodName: DoGetScriptMethodName();
   ocInitStackLen: DoInitStackLen();
   ocInitVarLen: DoInitVarLen();
   ocInitStack: DoInitStack();
