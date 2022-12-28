@@ -85,9 +85,12 @@ var
   t: UInt64;
   Parser: TLapeTokenizerBase;
   Compiler: TLapeCompiler;
+  Runner: TLapeCodeRunner;
 begin
   Parser := nil;
   Compiler := nil;
+  Runner := nil;
+
   with Form1 do
   try
     Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND});
@@ -124,7 +127,9 @@ begin
       if Run then
       begin
         t := GetTickCount64();
-        RunCode(Compiler.Emitter.Code, Compiler.Emitter.CodeLen);
+        Runner := TLapeCodeRunner.Create(Compiler.Emitter);
+        Runner.Run();
+
         m.Lines.Add('Running Time: ' + IntToStr(GetTickCount64() - t) + 'ms.');
       end;
     except
@@ -136,6 +141,8 @@ begin
       Compiler.Free()
     else if (Parser <> nil) then
       Parser.Free();
+    if (Runner <> nil) then
+      Runner.Free();
   end;
 end;
 

@@ -7,7 +7,7 @@
 }
 {%MainUnit lpinterpreter.pas}
 
-case opCode(opCodeTypeP(Code)^) of
+case opCode(opCodeTypeP(FCode)^) of
   ocNone: Break;
   ocIsInternal: DoCheckInternal();
   ocGetExceptionMessage: DoGetExceptionMessage();
