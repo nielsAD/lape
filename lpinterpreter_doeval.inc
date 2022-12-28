@@ -8,648 +8,648 @@
 {%MainUnit lpinterpreter.pas}
 
 procedure DoEval__PtrD_PtrL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PtrL_PtrR(PtrUInt(Code) + ocSize)^ do
+  with POC_Eval__PtrD_PtrL_PtrR(PtrUInt(FCode) + ocSize)^ do
     Proc(PtrD, PtrL, PtrR);
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PtrL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PtrL_PtrR) + ocSize);
 end;
 procedure DoEval__PtrD_PtrL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PtrL_VarR(PtrUInt(Code) + ocSize)^ do
-    Proc(PtrD, PtrL, @VarStack[VarStackPos + VOffsetR]);
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PtrL_VarR) + ocSize);
+  with POC_Eval__PtrD_PtrL_VarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(PtrD, PtrL, @FVarStack[FVarStackPos + VOffsetR]);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PtrL_VarR) + ocSize);
 end;
 procedure DoEval__PtrD_PtrL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PtrL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, PtrL, @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PtrD_PtrL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, PtrL, @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PtrL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PtrL_StkR) + ocSize);
 end;
 procedure DoEval__PtrD_PtrL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PtrL_PVarR(PtrUInt(Code) + ocSize)^ do
-    Proc(PtrD, PtrL, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PtrL_PVarR) + ocSize);
+  with POC_Eval__PtrD_PtrL_PVarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(PtrD, PtrL, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PtrL_PVarR) + ocSize);
 end;
 procedure DoEval__PtrD_PtrL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PtrL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, PtrL, PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PtrD_PtrL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, PtrL, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PtrL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PtrL_PStkR) + ocSize);
 end;
 procedure DoEval__PtrD_VarL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_VarL_PtrR(PtrUInt(Code) + ocSize)^ do
-    Proc(PtrD, @VarStack[VarStackPos + VOffsetL], PtrR);
-  Inc(Code, SizeOf(TOC_Eval__PtrD_VarL_PtrR) + ocSize);
+  with POC_Eval__PtrD_VarL_PtrR(PtrUInt(FCode) + ocSize)^ do
+    Proc(PtrD, @FVarStack[FVarStackPos + VOffsetL], PtrR);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_VarL_PtrR) + ocSize);
 end;
 procedure DoEval__PtrD_VarL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_VarL_VarR(PtrUInt(Code) + ocSize)^ do
-    Proc(PtrD, @VarStack[VarStackPos + VOffsetL], @VarStack[VarStackPos + VOffsetR]);
-  Inc(Code, SizeOf(TOC_Eval__PtrD_VarL_VarR) + ocSize);
+  with POC_Eval__PtrD_VarL_VarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(PtrD, @FVarStack[FVarStackPos + VOffsetL], @FVarStack[FVarStackPos + VOffsetR]);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_VarL_VarR) + ocSize);
 end;
 procedure DoEval__PtrD_VarL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_VarL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, @VarStack[VarStackPos + VOffsetL], @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PtrD_VarL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, @FVarStack[FVarStackPos + VOffsetL], @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_VarL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_VarL_StkR) + ocSize);
 end;
 procedure DoEval__PtrD_VarL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_VarL_PVarR(PtrUInt(Code) + ocSize)^ do
-    Proc(PtrD, @VarStack[VarStackPos + VOffsetL], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-  Inc(Code, SizeOf(TOC_Eval__PtrD_VarL_PVarR) + ocSize);
+  with POC_Eval__PtrD_VarL_PVarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(PtrD, @FVarStack[FVarStackPos + VOffsetL], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_VarL_PVarR) + ocSize);
 end;
 procedure DoEval__PtrD_VarL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_VarL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, @VarStack[VarStackPos + VOffsetL], PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PtrD_VarL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, @FVarStack[FVarStackPos + VOffsetL], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_VarL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_VarL_PStkR) + ocSize);
 end;
 procedure DoEval__PtrD_StkL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_StkL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, @Stack[StackPos - SOffsetL], PtrR);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PtrD_StkL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, @FStack[FStackPos - SOffsetL], PtrR);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_StkL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_StkL_PtrR) + ocSize);
 end;
 procedure DoEval__PtrD_StkL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_StkL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, @Stack[StackPos - SOffsetL], @VarStack[VarStackPos + VOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PtrD_StkL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, @FStack[FStackPos - SOffsetL], @FVarStack[FVarStackPos + VOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_StkL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_StkL_VarR) + ocSize);
 end;
 procedure DoEval__PtrD_StkL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_StkL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, @Stack[StackPos - SOffsetL], @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PtrD_StkL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, @FStack[FStackPos - SOffsetL], @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_StkL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_StkL_StkR) + ocSize);
 end;
 procedure DoEval__PtrD_StkL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_StkL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, @Stack[StackPos - SOffsetL], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Inc(StackPos, StackInc);
+  with POC_Eval__PtrD_StkL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, @FStack[FStackPos - SOffsetL], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_StkL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_StkL_PVarR) + ocSize);
 end;
 procedure DoEval__PtrD_StkL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_StkL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, @Stack[StackPos - SOffsetL], PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PtrD_StkL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, @FStack[FStackPos - SOffsetL], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_StkL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_StkL_PStkR) + ocSize);
 end;
 procedure DoEval__PtrD_PVarL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PVarL_PtrR(PtrUInt(Code) + ocSize)^ do
-    Proc(PtrD, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), PtrR);
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PVarL_PtrR) + ocSize);
+  with POC_Eval__PtrD_PVarL_PtrR(PtrUInt(FCode) + ocSize)^ do
+    Proc(PtrD, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), PtrR);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PVarL_PtrR) + ocSize);
 end;
 procedure DoEval__PtrD_PVarL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PVarL_VarR(PtrUInt(Code) + ocSize)^ do
-    Proc(PtrD, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), @VarStack[VarStackPos + VOffsetR]);
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PVarL_VarR) + ocSize);
+  with POC_Eval__PtrD_PVarL_VarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(PtrD, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), @FVarStack[FVarStackPos + VOffsetR]);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PVarL_VarR) + ocSize);
 end;
 procedure DoEval__PtrD_PVarL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PVarL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PtrD_PVarL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PVarL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PVarL_StkR) + ocSize);
 end;
 procedure DoEval__PtrD_PVarL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PVarL_PVarR(PtrUInt(Code) + ocSize)^ do
-    Proc(PtrD, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PVarL_PVarR) + ocSize);
+  with POC_Eval__PtrD_PVarL_PVarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(PtrD, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PVarL_PVarR) + ocSize);
 end;
 procedure DoEval__PtrD_PVarL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PVarL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PtrD_PVarL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PVarL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PVarL_PStkR) + ocSize);
 end;
 procedure DoEval__PtrD_PStkL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PStkL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, PPointer(@Stack[StackPos - SizeOf(Pointer)])^, PtrR);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PtrD_PStkL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, PtrR);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PStkL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PStkL_PtrR) + ocSize);
 end;
 procedure DoEval__PtrD_PStkL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PStkL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, PPointer(@Stack[StackPos - SizeOf(Pointer)])^, @VarStack[VarStackPos + VOffsetR]);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PtrD_PStkL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, @FVarStack[FVarStackPos + VOffsetR]);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PStkL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PStkL_VarR) + ocSize);
 end;
 procedure DoEval__PtrD_PStkL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PStkL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, PPointer(@Stack[StackPos - SOffsetL])^, @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PtrD_PStkL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, PPointer(@FStack[FStackPos - SOffsetL])^, @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PStkL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PStkL_StkR) + ocSize);
 end;
 procedure DoEval__PtrD_PStkL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PStkL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, PPointer(@Stack[StackPos - SizeOf(Pointer)])^, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PtrD_PStkL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PStkL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PStkL_PVarR) + ocSize);
 end;
 procedure DoEval__PtrD_PStkL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PtrD_PStkL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(PtrD, PPointer(@Stack[StackPos - 2*SizeOf(Pointer)])^, PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, 2*SizeOf(Pointer));
+  with POC_Eval__PtrD_PStkL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(PtrD, PPointer(@FStack[FStackPos - 2*SizeOf(Pointer)])^, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, 2*SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PtrD_PStkL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PtrD_PStkL_PStkR) + ocSize);
 end;
 procedure DoEval__VarD_PtrL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PtrL_PtrR(PtrUInt(Code) + ocSize)^ do
-    Proc(@VarStack[VarStackPos + VOffsetD], PtrL, PtrR);
-  Inc(Code, SizeOf(TOC_Eval__VarD_PtrL_PtrR) + ocSize);
+  with POC_Eval__VarD_PtrL_PtrR(PtrUInt(FCode) + ocSize)^ do
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PtrL, PtrR);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PtrL_PtrR) + ocSize);
 end;
 procedure DoEval__VarD_PtrL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PtrL_VarR(PtrUInt(Code) + ocSize)^ do
-    Proc(@VarStack[VarStackPos + VOffsetD], PtrL, @VarStack[VarStackPos + VOffsetR]);
-  Inc(Code, SizeOf(TOC_Eval__VarD_PtrL_VarR) + ocSize);
+  with POC_Eval__VarD_PtrL_VarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PtrL, @FVarStack[FVarStackPos + VOffsetR]);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PtrL_VarR) + ocSize);
 end;
 procedure DoEval__VarD_PtrL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PtrL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], PtrL, @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__VarD_PtrL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PtrL, @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_PtrL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PtrL_StkR) + ocSize);
 end;
 procedure DoEval__VarD_PtrL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PtrL_PVarR(PtrUInt(Code) + ocSize)^ do
-    Proc(@VarStack[VarStackPos + VOffsetD], PtrL, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-  Inc(Code, SizeOf(TOC_Eval__VarD_PtrL_PVarR) + ocSize);
+  with POC_Eval__VarD_PtrL_PVarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PtrL, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PtrL_PVarR) + ocSize);
 end;
 procedure DoEval__VarD_PtrL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PtrL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], PtrL, PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__VarD_PtrL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PtrL, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_PtrL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PtrL_PStkR) + ocSize);
 end;
 procedure DoEval__VarD_VarL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_VarL_PtrR(PtrUInt(Code) + ocSize)^ do
-    Proc(@VarStack[VarStackPos + VOffsetD], @VarStack[VarStackPos + VOffsetL], PtrR);
-  Inc(Code, SizeOf(TOC_Eval__VarD_VarL_PtrR) + ocSize);
+  with POC_Eval__VarD_VarL_PtrR(PtrUInt(FCode) + ocSize)^ do
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FVarStack[FVarStackPos + VOffsetL], PtrR);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_VarL_PtrR) + ocSize);
 end;
 procedure DoEval__VarD_VarL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_VarL_VarR(PtrUInt(Code) + ocSize)^ do
-    Proc(@VarStack[VarStackPos + VOffsetD], @VarStack[VarStackPos + VOffsetL], @VarStack[VarStackPos + VOffsetR]);
-  Inc(Code, SizeOf(TOC_Eval__VarD_VarL_VarR) + ocSize);
+  with POC_Eval__VarD_VarL_VarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FVarStack[FVarStackPos + VOffsetL], @FVarStack[FVarStackPos + VOffsetR]);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_VarL_VarR) + ocSize);
 end;
 procedure DoEval__VarD_VarL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_VarL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], @VarStack[VarStackPos + VOffsetL], @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__VarD_VarL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FVarStack[FVarStackPos + VOffsetL], @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_VarL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_VarL_StkR) + ocSize);
 end;
 procedure DoEval__VarD_VarL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_VarL_PVarR(PtrUInt(Code) + ocSize)^ do
-    Proc(@VarStack[VarStackPos + VOffsetD], @VarStack[VarStackPos + VOffsetL], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-  Inc(Code, SizeOf(TOC_Eval__VarD_VarL_PVarR) + ocSize);
+  with POC_Eval__VarD_VarL_PVarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FVarStack[FVarStackPos + VOffsetL], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+  Inc(FCode, SizeOf(TOC_Eval__VarD_VarL_PVarR) + ocSize);
 end;
 procedure DoEval__VarD_VarL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_VarL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], @VarStack[VarStackPos + VOffsetL], PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__VarD_VarL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FVarStack[FVarStackPos + VOffsetL], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_VarL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_VarL_PStkR) + ocSize);
 end;
 procedure DoEval__VarD_StkL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_StkL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], @Stack[StackPos - SOffsetL], PtrR);
-    Inc(StackPos, StackInc);
+  with POC_Eval__VarD_StkL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FStack[FStackPos - SOffsetL], PtrR);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_StkL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_StkL_PtrR) + ocSize);
 end;
 procedure DoEval__VarD_StkL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_StkL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], @Stack[StackPos - SOffsetL], @VarStack[VarStackPos + VOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__VarD_StkL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FStack[FStackPos - SOffsetL], @FVarStack[FVarStackPos + VOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_StkL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_StkL_VarR) + ocSize);
 end;
 procedure DoEval__VarD_StkL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_StkL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], @Stack[StackPos - SOffsetL], @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__VarD_StkL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FStack[FStackPos - SOffsetL], @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_StkL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_StkL_StkR) + ocSize);
 end;
 procedure DoEval__VarD_StkL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_StkL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], @Stack[StackPos - SOffsetL], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Inc(StackPos, StackInc);
+  with POC_Eval__VarD_StkL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FStack[FStackPos - SOffsetL], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_StkL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_StkL_PVarR) + ocSize);
 end;
 procedure DoEval__VarD_StkL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_StkL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], @Stack[StackPos - SOffsetL], PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Inc(StackPos, StackInc);
+  with POC_Eval__VarD_StkL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], @FStack[FStackPos - SOffsetL], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_StkL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_StkL_PStkR) + ocSize);
 end;
 procedure DoEval__VarD_PVarL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PVarL_PtrR(PtrUInt(Code) + ocSize)^ do
-    Proc(@VarStack[VarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), PtrR);
-  Inc(Code, SizeOf(TOC_Eval__VarD_PVarL_PtrR) + ocSize);
+  with POC_Eval__VarD_PVarL_PtrR(PtrUInt(FCode) + ocSize)^ do
+    Proc(@FVarStack[FVarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), PtrR);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PVarL_PtrR) + ocSize);
 end;
 procedure DoEval__VarD_PVarL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PVarL_VarR(PtrUInt(Code) + ocSize)^ do
-    Proc(@VarStack[VarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), @VarStack[VarStackPos + VOffsetR]);
-  Inc(Code, SizeOf(TOC_Eval__VarD_PVarL_VarR) + ocSize);
+  with POC_Eval__VarD_PVarL_VarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(@FVarStack[FVarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), @FVarStack[FVarStackPos + VOffsetR]);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PVarL_VarR) + ocSize);
 end;
 procedure DoEval__VarD_PVarL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PVarL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__VarD_PVarL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_PVarL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PVarL_StkR) + ocSize);
 end;
 procedure DoEval__VarD_PVarL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PVarL_PVarR(PtrUInt(Code) + ocSize)^ do
-    Proc(@VarStack[VarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-  Inc(Code, SizeOf(TOC_Eval__VarD_PVarL_PVarR) + ocSize);
+  with POC_Eval__VarD_PVarL_PVarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(@FVarStack[FVarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PVarL_PVarR) + ocSize);
 end;
 procedure DoEval__VarD_PVarL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PVarL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__VarD_PVarL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_PVarL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PVarL_PStkR) + ocSize);
 end;
 procedure DoEval__VarD_PStkL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PStkL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], PPointer(@Stack[StackPos - SizeOf(Pointer)])^, PtrR);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__VarD_PStkL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, PtrR);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_PStkL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PStkL_PtrR) + ocSize);
 end;
 procedure DoEval__VarD_PStkL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PStkL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], PPointer(@Stack[StackPos - SizeOf(Pointer)])^, @VarStack[VarStackPos + VOffsetR]);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__VarD_PStkL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, @FVarStack[FVarStackPos + VOffsetR]);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_PStkL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PStkL_VarR) + ocSize);
 end;
 procedure DoEval__VarD_PStkL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PStkL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], PPointer(@Stack[StackPos - SOffsetL])^, @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__VarD_PStkL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PPointer(@FStack[FStackPos - SOffsetL])^, @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_PStkL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PStkL_StkR) + ocSize);
 end;
 procedure DoEval__VarD_PStkL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PStkL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], PPointer(@Stack[StackPos - SizeOf(Pointer)])^, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__VarD_PStkL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_PStkL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PStkL_PVarR) + ocSize);
 end;
 procedure DoEval__VarD_PStkL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__VarD_PStkL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@VarStack[VarStackPos + VOffsetD], PPointer(@Stack[StackPos - 2*SizeOf(Pointer)])^, PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, 2*SizeOf(Pointer));
+  with POC_Eval__VarD_PStkL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FVarStack[FVarStackPos + VOffsetD], PPointer(@FStack[FStackPos - 2*SizeOf(Pointer)])^, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, 2*SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__VarD_PStkL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__VarD_PStkL_PStkR) + ocSize);
 end;
 procedure DoEval__StkD_PtrL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PtrL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos], PtrL, PtrR);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PtrL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos], PtrL, PtrR);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PtrL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PtrL_PtrR) + ocSize);
 end;
 procedure DoEval__StkD_PtrL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PtrL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos], PtrL, @VarStack[VarStackPos + VOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PtrL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos], PtrL, @FVarStack[FVarStackPos + VOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PtrL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PtrL_VarR) + ocSize);
 end;
 procedure DoEval__StkD_PtrL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PtrL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SOffsetR], PtrL, @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PtrL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SOffsetR], PtrL, @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PtrL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PtrL_StkR) + ocSize);
 end;
 procedure DoEval__StkD_PtrL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PtrL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos], PtrL, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PtrL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos], PtrL, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PtrL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PtrL_PVarR) + ocSize);
 end;
 procedure DoEval__StkD_PtrL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PtrL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SizeOf(Pointer)], PtrL, PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PtrL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SizeOf(Pointer)], PtrL, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PtrL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PtrL_PStkR) + ocSize);
 end;
 procedure DoEval__StkD_VarL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_VarL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos], @VarStack[VarStackPos + VOffsetL], PtrR);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_VarL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos], @FVarStack[FVarStackPos + VOffsetL], PtrR);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_VarL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_VarL_PtrR) + ocSize);
 end;
 procedure DoEval__StkD_VarL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_VarL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos], @VarStack[VarStackPos + VOffsetL], @VarStack[VarStackPos + VOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_VarL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos], @FVarStack[FVarStackPos + VOffsetL], @FVarStack[FVarStackPos + VOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_VarL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_VarL_VarR) + ocSize);
 end;
 procedure DoEval__StkD_VarL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_VarL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SOffsetR], @VarStack[VarStackPos + VOffsetL], @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_VarL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SOffsetR], @FVarStack[FVarStackPos + VOffsetL], @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_VarL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_VarL_StkR) + ocSize);
 end;
 procedure DoEval__StkD_VarL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_VarL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos], @VarStack[VarStackPos + VOffsetL], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_VarL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos], @FVarStack[FVarStackPos + VOffsetL], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_VarL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_VarL_PVarR) + ocSize);
 end;
 procedure DoEval__StkD_VarL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_VarL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SizeOf(Pointer)], @VarStack[VarStackPos + VOffsetL], PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_VarL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SizeOf(Pointer)], @FVarStack[FVarStackPos + VOffsetL], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_VarL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_VarL_PStkR) + ocSize);
 end;
 procedure DoEval__StkD_StkL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_StkL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SOffsetL], @Stack[StackPos - SOffsetL], PtrR);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_StkL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SOffsetL], @FStack[FStackPos - SOffsetL], PtrR);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_StkL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_StkL_PtrR) + ocSize);
 end;
 procedure DoEval__StkD_StkL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_StkL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SOffsetL], @Stack[StackPos - SOffsetL], @VarStack[VarStackPos + VOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_StkL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SOffsetL], @FStack[FStackPos - SOffsetL], @FVarStack[FVarStackPos + VOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_StkL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_StkL_VarR) + ocSize);
 end;
 procedure DoEval__StkD_StkL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_StkL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SOffsetL], @Stack[StackPos - SOffsetL], @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_StkL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SOffsetL], @FStack[FStackPos - SOffsetL], @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_StkL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_StkL_StkR) + ocSize);
 end;
 procedure DoEval__StkD_StkL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_StkL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SOffsetL], @Stack[StackPos - SOffsetL], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_StkL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SOffsetL], @FStack[FStackPos - SOffsetL], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_StkL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_StkL_PVarR) + ocSize);
 end;
 procedure DoEval__StkD_StkL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_StkL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SOffsetL], @Stack[StackPos - SOffsetL], PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_StkL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SOffsetL], @FStack[FStackPos - SOffsetL], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_StkL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_StkL_PStkR) + ocSize);
 end;
 procedure DoEval__StkD_PVarL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PVarL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), PtrR);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PVarL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), PtrR);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PVarL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PVarL_PtrR) + ocSize);
 end;
 procedure DoEval__StkD_PVarL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PVarL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), @VarStack[VarStackPos + VOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PVarL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), @FVarStack[FVarStackPos + VOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PVarL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PVarL_VarR) + ocSize);
 end;
 procedure DoEval__StkD_PVarL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PVarL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SOffsetR], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PVarL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SOffsetR], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PVarL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PVarL_StkR) + ocSize);
 end;
 procedure DoEval__StkD_PVarL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PVarL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PVarL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PVarL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PVarL_PVarR) + ocSize);
 end;
 procedure DoEval__StkD_PVarL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PVarL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SizeOf(Pointer)], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PVarL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SizeOf(Pointer)], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PVarL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PVarL_PStkR) + ocSize);
 end;
 procedure DoEval__StkD_PStkL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PStkL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SizeOf(Pointer)], PPointer(@Stack[StackPos - SizeOf(Pointer)])^, PtrR);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PStkL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SizeOf(Pointer)], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, PtrR);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PStkL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PStkL_PtrR) + ocSize);
 end;
 procedure DoEval__StkD_PStkL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PStkL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SizeOf(Pointer)], PPointer(@Stack[StackPos - SizeOf(Pointer)])^, @VarStack[VarStackPos + VOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PStkL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SizeOf(Pointer)], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, @FVarStack[FVarStackPos + VOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PStkL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PStkL_VarR) + ocSize);
 end;
 procedure DoEval__StkD_PStkL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PStkL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SOffsetL], PPointer(@Stack[StackPos - SOffsetL])^, @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PStkL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SOffsetL], PPointer(@FStack[FStackPos - SOffsetL])^, @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PStkL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PStkL_StkR) + ocSize);
 end;
 procedure DoEval__StkD_PStkL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PStkL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - SizeOf(Pointer)], PPointer(@Stack[StackPos - SizeOf(Pointer)])^, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PStkL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - SizeOf(Pointer)], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PStkL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PStkL_PVarR) + ocSize);
 end;
 procedure DoEval__StkD_PStkL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__StkD_PStkL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(@Stack[StackPos - 2*SizeOf(Pointer)], PPointer(@Stack[StackPos - 2*SizeOf(Pointer)])^, PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Inc(StackPos, StackInc);
+  with POC_Eval__StkD_PStkL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(@FStack[FStackPos - 2*SizeOf(Pointer)], PPointer(@FStack[FStackPos - 2*SizeOf(Pointer)])^, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__StkD_PStkL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__StkD_PStkL_PStkR) + ocSize);
 end;
 procedure DoEval__PVarD_PtrL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PtrL_PtrR(PtrUInt(Code) + ocSize)^ do
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PtrL, PtrR);
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PtrL_PtrR) + ocSize);
+  with POC_Eval__PVarD_PtrL_PtrR(PtrUInt(FCode) + ocSize)^ do
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PtrL, PtrR);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PtrL_PtrR) + ocSize);
 end;
 procedure DoEval__PVarD_PtrL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PtrL_VarR(PtrUInt(Code) + ocSize)^ do
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PtrL, @VarStack[VarStackPos + VOffsetR]);
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PtrL_VarR) + ocSize);
+  with POC_Eval__PVarD_PtrL_VarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PtrL, @FVarStack[FVarStackPos + VOffsetR]);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PtrL_VarR) + ocSize);
 end;
 procedure DoEval__PVarD_PtrL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PtrL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PtrL, @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PVarD_PtrL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PtrL, @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PtrL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PtrL_StkR) + ocSize);
 end;
 procedure DoEval__PVarD_PtrL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PtrL_PVarR(PtrUInt(Code) + ocSize)^ do
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PtrL, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PtrL_PVarR) + ocSize);
+  with POC_Eval__PVarD_PtrL_PVarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PtrL, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PtrL_PVarR) + ocSize);
 end;
 procedure DoEval__PVarD_PtrL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PtrL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PtrL, PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PVarD_PtrL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PtrL, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PtrL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PtrL_PStkR) + ocSize);
 end;
 procedure DoEval__PVarD_VarL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_VarL_PtrR(PtrUInt(Code) + ocSize)^ do
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @VarStack[VarStackPos + VOffsetL], PtrR);
-  Inc(Code, SizeOf(TOC_Eval__PVarD_VarL_PtrR) + ocSize);
+  with POC_Eval__PVarD_VarL_PtrR(PtrUInt(FCode) + ocSize)^ do
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FVarStack[FVarStackPos + VOffsetL], PtrR);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_VarL_PtrR) + ocSize);
 end;
 procedure DoEval__PVarD_VarL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_VarL_VarR(PtrUInt(Code) + ocSize)^ do
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @VarStack[VarStackPos + VOffsetL], @VarStack[VarStackPos + VOffsetR]);
-  Inc(Code, SizeOf(TOC_Eval__PVarD_VarL_VarR) + ocSize);
+  with POC_Eval__PVarD_VarL_VarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FVarStack[FVarStackPos + VOffsetL], @FVarStack[FVarStackPos + VOffsetR]);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_VarL_VarR) + ocSize);
 end;
 procedure DoEval__PVarD_VarL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_VarL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @VarStack[VarStackPos + VOffsetL], @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PVarD_VarL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FVarStack[FVarStackPos + VOffsetL], @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_VarL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_VarL_StkR) + ocSize);
 end;
 procedure DoEval__PVarD_VarL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_VarL_PVarR(PtrUInt(Code) + ocSize)^ do
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @VarStack[VarStackPos + VOffsetL], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-  Inc(Code, SizeOf(TOC_Eval__PVarD_VarL_PVarR) + ocSize);
+  with POC_Eval__PVarD_VarL_PVarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FVarStack[FVarStackPos + VOffsetL], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_VarL_PVarR) + ocSize);
 end;
 procedure DoEval__PVarD_VarL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_VarL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @VarStack[VarStackPos + VOffsetL], PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PVarD_VarL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FVarStack[FVarStackPos + VOffsetL], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_VarL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_VarL_PStkR) + ocSize);
 end;
 procedure DoEval__PVarD_StkL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_StkL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @Stack[StackPos - SOffsetL], PtrR);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PVarD_StkL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FStack[FStackPos - SOffsetL], PtrR);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_StkL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_StkL_PtrR) + ocSize);
 end;
 procedure DoEval__PVarD_StkL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_StkL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @Stack[StackPos - SOffsetL], @VarStack[VarStackPos + VOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PVarD_StkL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FStack[FStackPos - SOffsetL], @FVarStack[FVarStackPos + VOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_StkL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_StkL_VarR) + ocSize);
 end;
 procedure DoEval__PVarD_StkL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_StkL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @Stack[StackPos - SOffsetL], @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PVarD_StkL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FStack[FStackPos - SOffsetL], @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_StkL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_StkL_StkR) + ocSize);
 end;
 procedure DoEval__PVarD_StkL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_StkL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @Stack[StackPos - SOffsetL], Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Inc(StackPos, StackInc);
+  with POC_Eval__PVarD_StkL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FStack[FStackPos - SOffsetL], Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_StkL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_StkL_PVarR) + ocSize);
 end;
 procedure DoEval__PVarD_StkL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_StkL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), @Stack[StackPos - SOffsetL], PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PVarD_StkL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), @FStack[FStackPos - SOffsetL], PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_StkL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_StkL_PStkR) + ocSize);
 end;
 procedure DoEval__PVarD_PVarL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PVarL_PtrR(PtrUInt(Code) + ocSize)^ do
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), PtrR);
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PVarL_PtrR) + ocSize);
+  with POC_Eval__PVarD_PVarL_PtrR(PtrUInt(FCode) + ocSize)^ do
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), PtrR);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PVarL_PtrR) + ocSize);
 end;
 procedure DoEval__PVarD_PVarL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PVarL_VarR(PtrUInt(Code) + ocSize)^ do
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), @VarStack[VarStackPos + VOffsetR]);
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PVarL_VarR) + ocSize);
+  with POC_Eval__PVarD_PVarL_VarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), @FVarStack[FVarStackPos + VOffsetR]);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PVarL_VarR) + ocSize);
 end;
 procedure DoEval__PVarD_PVarL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PVarL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PVarD_PVarL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PVarL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PVarL_StkR) + ocSize);
 end;
 procedure DoEval__PVarD_PVarL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PVarL_PVarR(PtrUInt(Code) + ocSize)^ do
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PVarL_PVarR) + ocSize);
+  with POC_Eval__PVarD_PVarL_PVarR(PtrUInt(FCode) + ocSize)^ do
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PVarL_PVarR) + ocSize);
 end;
 procedure DoEval__PVarD_PVarL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PVarL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetL])^) + PLeftOffset), PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PVarD_PVarL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetL])^) + PLeftOffset), PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PVarL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PVarL_PStkR) + ocSize);
 end;
 procedure DoEval__PVarD_PStkL_PtrR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PStkL_PtrR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PPointer(@Stack[StackPos - SizeOf(Pointer)])^, PtrR);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PVarD_PStkL_PtrR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, PtrR);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PStkL_PtrR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PStkL_PtrR) + ocSize);
 end;
 procedure DoEval__PVarD_PStkL_VarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PStkL_VarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PPointer(@Stack[StackPos - SizeOf(Pointer)])^, @VarStack[VarStackPos + VOffsetR]);
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PVarD_PStkL_VarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, @FVarStack[FVarStackPos + VOffsetR]);
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PStkL_VarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PStkL_VarR) + ocSize);
 end;
 procedure DoEval__PVarD_PStkL_StkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PStkL_StkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PPointer(@Stack[StackPos - SOffsetL])^, @Stack[StackPos - SOffsetR]);
-    Inc(StackPos, StackInc);
+  with POC_Eval__PVarD_PStkL_StkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PPointer(@FStack[FStackPos - SOffsetL])^, @FStack[FStackPos - SOffsetR]);
+    Inc(FStackPos, StackInc);
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PStkL_StkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PStkL_StkR) + ocSize);
 end;
 procedure DoEval__PVarD_PStkL_PVarR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PStkL_PVarR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PPointer(@Stack[StackPos - SizeOf(Pointer)])^, Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetR])^) + PRightOffset));
-    Dec(StackPos, SizeOf(Pointer));
+  with POC_Eval__PVarD_PStkL_PVarR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PPointer(@FStack[FStackPos - SizeOf(Pointer)])^, Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetR])^) + PRightOffset));
+    Dec(FStackPos, SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PStkL_PVarR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PStkL_PVarR) + ocSize);
 end;
 procedure DoEval__PVarD_PStkL_PStkR; {$IFDEF Lape_Inline}inline;{$ENDIF} begin
-  with POC_Eval__PVarD_PStkL_PStkR(PtrUInt(Code) + ocSize)^ do begin
-    Proc(Pointer(PtrInt(PPointer(@VarStack[VarStackPos + VOffsetD])^) + PDestOffset), PPointer(@Stack[StackPos - 2*SizeOf(Pointer)])^, PPointer(@Stack[StackPos - SizeOf(Pointer)])^);
-    Dec(StackPos, 2*SizeOf(Pointer));
+  with POC_Eval__PVarD_PStkL_PStkR(PtrUInt(FCode) + ocSize)^ do begin
+    Proc(Pointer(PtrInt(PPointer(@FVarStack[FVarStackPos + VOffsetD])^) + PDestOffset), PPointer(@FStack[FStackPos - 2*SizeOf(Pointer)])^, PPointer(@FStack[FStackPos - SizeOf(Pointer)])^);
+    Dec(FStackPos, 2*SizeOf(Pointer));
   end;
-  Inc(Code, SizeOf(TOC_Eval__PVarD_PStkL_PStkR) + ocSize);
+  Inc(FCode, SizeOf(TOC_Eval__PVarD_PStkL_PStkR) + ocSize);
 end;
