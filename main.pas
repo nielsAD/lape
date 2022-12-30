@@ -134,7 +134,11 @@ begin
       end;
     except
       on E: Exception do
+      begin
         m.Lines.Add(E.Message);
+        if (Runner <> nil) then
+          m.Lines.Add(Runner.ExceptionStackTrace);
+      end;
     end;
   finally
     if (Compiler <> nil) then
