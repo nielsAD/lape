@@ -145,8 +145,8 @@ type
     FMethodMap: TMethodMap;
     FExceptionStackTrace: String;
 
-    function GetScriptMethodName(CodePos: TCodePos): String;
-    function GetStackTrace: lpString;
+    function GetScriptMethodName(const CodePos: TCodePos): String;
+    function GetExceptionStackTrace: lpString;
   public
     DoContinue: TInitBool;
 
@@ -185,12 +185,12 @@ begin
     AJump.JumpSafe := Merge.JumpSafe;
 end;
 
-function IsLapeException(E: Exception): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function IsLapeException(const E: Exception): Boolean;
 begin
-  Result := (E <> nil) and (E.ClassType = lpException) and (lpException(e).DocPos.Col <> NullDocPos.Col) and (lpException(e).DocPos.Line <> NullDocPos.Line);
+  Result := (E <> nil) and (E.ClassType = lpException) and HasDocPos(lpException(e).DocPos);
 end;
 
-function TLapeCodeRunner.GetScriptMethodName(CodePos: TCodePos): String;
+function TLapeCodeRunner.GetScriptMethodName(const CodePos: TCodePos): String;
 begin
   Result := FMethodMap[Pointer(PtrUInt(CodePos))];
 end;
@@ -233,37 +233,43 @@ begin
   inherited Destroy();
 end;
 
-function TLapeCodeRunner.GetStackTrace: lpString;
+function TLapeCodeRunner.GetExceptionStackTrace: lpString;
 
   function FormatLine(Number: Integer; FuncName: String; DocPos: TDocPos): lpString;
   begin
-    if (FuncName <> 'Main') then
+    if (FuncName = 'main') then
+      FuncName := '"' + FuncName + '"'
+    else
       FuncName := 'function "' + FuncName + '"';
 
-    Result := '  ' + IntToStr(Number) + ') Line ' + IntToStr(DocPos.Line) + ' in ' + FuncName;
-    if (DocPos.FileName <> '') then
-      Result := Result + ' in file "' + DocPos.FileName + '"';
+    if HasDocPos(DocPos) then
+    begin
+      Result := LineEnding + '  ' + IntToStr(Number) + ') Line ' + IntToStr(DocPos.Line) + ' in ' + FuncName;
+      if (DocPos.FileName <> '') then
+        Result := Result + ' in file "' + DocPos.FileName + '"';
+    end else
+      Result := LineEnding + '  ' + IntToStr(Number) + ') ' + FuncName;
   end;
 
 var
   i, Number: Integer;
   DocPos: TDocPos;
 begin
-  Result := 'Exception stack trace:' + LineEnding;
+  Result := 'Stack trace:';
 
   Number := 1;
   with FInJump.JumpException do
   begin
-    Result := FormatLine(0, GetScriptMethodName(StackTraceInfo[High(StackTraceInfo)].Address), Pos^);
+    Result := Result + FormatLine(0, GetScriptMethodName(StackTraceInfo[High(StackTraceInfo)].Address), Pos^);
 
     for i := High(StackTraceInfo) downto 0 do
     begin
       DocPos := PDocPos(StackTraceInfo[i].CalledFrom + SizeOf(opCodeType))^;
 
       if (i > 0) then
-        Result := Result + LineEnding + FormatLine(Number, GetScriptMethodName(StackTraceInfo[i-1].Address), DocPos)
+        Result := Result + FormatLine(Number, GetScriptMethodName(StackTraceInfo[i - 1].Address), DocPos)
       else
-        Result := Result + LineEnding + FormatLine(Number, 'Main', DocPos);
+        Result := Result + FormatLine(Number, 'main', DocPos);
 
       Inc(Number);
     end;
@@ -272,7 +278,7 @@ end;
 
 procedure TLapeCodeRunner.Run(InitialVarStack: TByteArray; InitialJump: TCodePos);
 
-  procedure ExpandVarStack(Size: UInt32); {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure ExpandVarStack(const Size: UInt32); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     if (FVarStackLen + Size > UInt32(Length(FVarStack))) then
     begin
@@ -766,7 +772,7 @@ begin
   except
     on E: Exception do
     begin
-      FExceptionStackTrace := GetStackTrace();
+      FExceptionStackTrace := GetExceptionStackTrace();
 
       if IsLapeException(E) then
         LapeExceptionFmt(lpeRunTime, [lpException(E).Error], lpException(E).DocPos)

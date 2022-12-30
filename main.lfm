@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = 854
+  Left = 1576
   Height = 900
-  Top = 175
+  Top = 77
   Width = 800
   Caption = 'Lape'
   ClientHeight = 900
@@ -9,7 +9,7 @@ object Form1: TForm1
   Color = clWindow
   DesignTimePPI = 120
   Position = poScreenCenter
-  LCLVersion = '2.0.12.0'
+  LCLVersion = '2.2.4.0'
   inline e: TSynEdit
     Left = 0
     Height = 650
@@ -706,39 +706,8 @@ object Form1: TForm1
     ParentColor = False
     ParentFont = False
     TabOrder = 0
-    object btnEvalRes: TButton
-      AnchorSideRight.Control = btnEvalArr
-      Left = 625
-      Height = 30
-      Top = 7
-      Width = 76
-      Anchors = [akTop, akRight]
-      AutoSize = True
-      BorderSpacing.Top = 6
-      BorderSpacing.Right = 6
-      BorderSpacing.Bottom = 6
-      Caption = 'EvalRes'
-      OnClick = btnEvalResClick
-      ParentFont = False
-      TabOrder = 3
-    end
-    object btnEvalArr: TButton
-      Left = 707
-      Height = 30
-      Top = 7
-      Width = 86
-      Align = alRight
-      BorderSpacing.Top = 6
-      BorderSpacing.Right = 6
-      BorderSpacing.Bottom = 6
-      Caption = 'EvalArr'
-      OnClick = btnEvalArrClick
-      ParentFont = False
-      TabOrder = 4
-    end
     object btnMemLeaks: TButton
-      AnchorSideRight.Control = btnEvalRes
-      Left = 523
+      Left = 688
       Height = 30
       Top = 7
       Width = 96
@@ -796,6 +765,7 @@ object Form1: TForm1
     DirectiveAttri.Foreground = clOlive
     CompilerMode = pcmObjFPC
     NestedComments = True
+    TypeHelpers = False
     Left = 910
     Top = 80
   end

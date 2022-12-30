@@ -836,6 +836,7 @@ function LapeHashPointer(const Ptr: Pointer): UInt32; {$IFDEF Lape_Inline}inline
 function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
+function HasDocPos(const DocPos: TDocPos): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function PointerToString(const p: Pointer): lpString;
 {$IF NOT(DECLARED(UIntToStr))}
 function UIntToStr(i: UInt32): lpString; inline; overload;
@@ -957,6 +958,11 @@ function LapeOperatorToString(Token: EOperator): lpString;
 begin
   Result := lpString(getEnumName(TypeInfo(EOperator), Ord(Token)));
   Delete(Result, 1, 3);
+end;
+
+function HasDocPos(const DocPos: TDocPos): Boolean;
+begin
+  Result := (DocPos.Col <> NullDocPos.Col) and (DocPos.Line <> NullDocPos.Line);
 end;
 
 function PointerToString(const p: Pointer): lpString;
