@@ -517,24 +517,6 @@ type
     function ExportToArray: TItemArray;
   end;
 
-  {$IFDEF FPC}generic{$ENDIF} TLapePointerMap<_T> = class(TLapeBaseClass)
-  protected type
-    TItem = record Ptr: Pointer; Value: _T; end;
-    TDictionary = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TItem>;
-  protected
-    FDictionary: TDictionary;
-
-    function getItem(Ptr: Pointer): _T;
-    procedure setItem(Ptr: Pointer; AValue: _T);
-  public
-    constructor Create; override;
-    destructor Destroy; override;
-
-    procedure Clear;
-
-    property Items[Ptr: Pointer]: _T read getItem write setItem; default;
-  end;
-
   TLapeDeclaration = class;
   TLapeDeclarationClass = class of TLapeDeclaration;
   TLapeDeclArray = array of TLapeDeclaration;
@@ -832,11 +814,9 @@ var
 function LapeCase(const Str: lpString): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeHash(Data: Pointer; Len: UInt32; const Seed: UInt32 = 0): UInt32; overload;
 function LapeHash(const Str: lpString): UInt32; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function LapeHashPointer(const Ptr: Pointer): UInt32; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
-function HasDocPos(const DocPos: TDocPos): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function PointerToString(const p: Pointer): lpString;
 {$IF NOT(DECLARED(UIntToStr))}
 function UIntToStr(i: UInt32): lpString; inline; overload;
@@ -935,19 +915,6 @@ begin
   Result := LapeHash(PChar(Str), Length(Str) * SizeOf(lpChar), 0);
 end;
 
-// https://stackoverflow.com/questions/664014/what-integer-hash-function-are-good-that-accepts-an-integer-hash-key/12996028#12996028
-function LapeHashPointer(const Ptr: Pointer): UInt32;
-begin
-  {$UNDEF REDO_Q}{$IFOPT Q+}{$Q-}{$DEFINE REDO_Q}{$ENDIF}
-  {$UNDEF REDO_R}{$IFOPT R+}{$R-}{$DEFINE REDO_R}{$ENDIF}
-  Result := UInt32(Ptr); // by design. If 64bit only use lower bits.
-  Result := ((Result shr 16) xor Result) * $45D9F3B;
-  Result := ((Result shr 16) xor Result) * $45D9F3B;
-  Result := ((Result shr 16) xor Result);
-  {$IFDEF REDO_Q}{$Q+}{$ENDIF}
-  {$IFDEF REDO_R}{$R+}{$ENDIF}
-end;
-
 function LapeTypeToString(Token: ELapeBaseType): lpString;
 begin
   Result := lpString(getEnumName(TypeInfo(ELapeBaseType), Ord(Token)));
@@ -958,11 +925,6 @@ function LapeOperatorToString(Token: EOperator): lpString;
 begin
   Result := lpString(getEnumName(TypeInfo(EOperator), Ord(Token)));
   Delete(Result, 1, 3);
-end;
-
-function HasDocPos(const DocPos: TDocPos): Boolean;
-begin
-  Result := (DocPos.Col <> NullDocPos.Col) and (DocPos.Line <> NullDocPos.Line);
 end;
 
 function PointerToString(const p: Pointer): lpString;
@@ -2420,54 +2382,6 @@ begin
 
     Assert(Count = FCount);
   end;
-end;
-
-function TLapePointerMap{$IFNDEF FPC}<_T>{$ENDIF}.getItem(Ptr: Pointer): _T;
-var
-  i: Integer;
-begin
-  if (FDictionary.FSize > 0) then
-    with FDictionary.GetBucket(LapeHashPointer(Ptr))^ do
-    begin
-      for i := 0 to Count - 1 do
-        if (Items[i].Item.Ptr = Ptr) then
-        begin
-          Result := Items[i].Item.Value;
-          Exit;
-        end;
-    end;
-
-  Result := Default(_T);
-end;
-
-procedure TLapePointerMap{$IFNDEF FPC}<_T>{$ENDIF}.setItem(Ptr: Pointer; AValue: _T);
-var
-  Item: TItem;
-begin
-  Item.Ptr := Ptr;
-  Item.Value := AValue;
-
-  FDictionary.Add(LapeHashPointer(Ptr), Item);
-end;
-
-constructor TLapePointerMap{$IFNDEF FPC}<_T>{$ENDIF}.Create;
-begin
-  inherited Create();
-
-  FDictionary := TDictionary.Create();
-end;
-
-destructor TLapePointerMap{$IFNDEF FPC}<_T>{$ENDIF}.Destroy;
-begin
-  if (FDictionary <> nil) then
-    FreeAndNil(FDictionary);
-
-  inherited Destroy();
-end;
-
-procedure TLapePointerMap{$IFNDEF FPC}<_T>{$ENDIF}.Clear;
-begin
-  FDictionary.Clear();
 end;
 
 procedure TLapeDeclCollection_Dictionary.NameChanged(Decl: TLapeDeclaration);

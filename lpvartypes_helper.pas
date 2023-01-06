@@ -200,7 +200,7 @@ type
 implementation
 
 uses
-  lpcompiler, lpparser, lptree,
+  lpcompiler, lpparser,
   lpvartypes_array;
 
 function TLapeType_Helper.FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
@@ -266,7 +266,7 @@ var
   Header: TLapeType_Method;
   Param: TLapeParameter;
   i: Integer;
-  Method: TLapeTree_Method;
+  Pos: TDocPos;
 begin
   Assert(FCompiler is TLapeCompiler);
 
@@ -289,18 +289,8 @@ begin
       Header.addParam(Param);
     end;
 
-    Method := addGlobalFunc(Header, '!Helper',
-      '{$X+}'                             + LineEnding +
-      'begin'                             + LineEnding +
-      '  try'                             + LineEnding +
-      '    ' + Body                       + LineEnding +
-      '  except'                          + LineEnding +
-      '    raise at GetCallerLocation();' + LineEnding +
-      '  end;'                            + LineEnding +
-      'end;',
-      @NullDocPos);
-
-    Result := Method.Method;
+    Pos := DocPos;
+    Result := addGlobalFunc(Header, '!Helper', Body, @Pos).Method;
     Result.VarType.Name := FHelperName;
 
     addMethod(Result);
@@ -319,7 +309,9 @@ end;
 function TLapeType_ArrayHelper_SetLength.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'System.SetLength(Self, Param0);',
+    'begin'                             + LineEnding +
+    '  System.SetLength(Self, Param0);' + LineEnding +
+    'end;',
     VarType,
     [FCompiler.getBaseType(ltSizeInt)]
   );
@@ -328,7 +320,9 @@ end;
 function TLapeType_ArrayHelper_Length.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.Length(Self);',
+    'begin'                            + LineEnding +
+    '  Result := System.Length(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     FCompiler.getBaseType(ltSizeInt)
@@ -338,7 +332,9 @@ end;
 function TLapeType_ArrayHelper_Contains.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.Contains(Param0, Self);',
+    'begin'                                      + LineEnding +
+    '  Result := System.Contains(Param0, Self);' + LineEnding +
+    'end;',
     VarType,
     [TLapeType_DynArray(VarType).PType],
     FCompiler.getBaseType(ltEvalBool)
@@ -348,7 +344,9 @@ end;
 function TLapeType_ArrayHelper_Remove.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.Remove(Param0, Self);',
+    'begin'                                    + LineEnding +
+    '  Result := System.Remove(Param0, Self);' + LineEnding +
+    'end;',
     VarType,
     [TLapeType_DynArray(VarType).PType],
     FCompiler.getBaseType(ltEvalBool)
@@ -358,7 +356,9 @@ end;
 function TLapeType_ArrayHelper_RemoveAll.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.RemoveAll(Param0, Self);',
+    'begin'                                       + LineEnding +
+    '  Result := System.RemoveAll(Param0, Self);' + LineEnding +
+    'end;',
     VarType,
     [TLapeType_DynArray(VarType).PType],
     FCompiler.getBaseType(ltSizeInt)
@@ -368,7 +368,9 @@ end;
 function TLapeType_ArrayHelper_Low.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.Low(Self);',
+    'begin'                         + LineEnding +
+    '  Result := System.Low(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     FCompiler.getBaseType(ltSizeInt)
@@ -378,7 +380,9 @@ end;
 function TLapeType_ArrayHelper_High.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.High(Self);',
+    'begin'                          + LineEnding +
+    '  Result := System.High(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     FCompiler.getBaseType(ltSizeInt)
@@ -400,7 +404,9 @@ begin
     0:
       begin
         Result := CreateFunction(
-          'Result := System.Copy(Self);',
+          'begin'                          + LineEnding +
+          '  Result := System.Copy(Self);' + LineEnding +
+          'end;',
           VarType,
           [],
           ResType
@@ -410,7 +416,9 @@ begin
     1:
       begin
         Result := CreateFunction(
-          'Result := System.Copy(Self, Param0);',
+          'begin'                                  + LineEnding +
+          '  Result := System.Copy(Self, Param0);' + LineEnding +
+          'end;',
           VarType,
           [FCompiler.getBaseType(ltSizeInt)],
           ResType
@@ -420,7 +428,9 @@ begin
     2:
       begin
         Result := CreateFunction(
-          'Result := System.Copy(Self, Param0, Param1);',
+          'begin'                                          + LineEnding +
+          '  Result := System.Copy(Self, Param0, Param1);' + LineEnding +
+          'end;',
           VarType,
           [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)],
           ResType
@@ -437,7 +447,9 @@ begin
     1:
       begin
         Result := CreateFunction(
-          'System.Delete(Self, Param0);',
+          'begin'                          + LineEnding +
+          '  System.Delete(Self, Param0);' + LineEnding +
+          'end;',
           VarType,
           [FCompiler.getBaseType(ltSizeInt)]
         );
@@ -446,7 +458,9 @@ begin
     2:
       begin
         Result := CreateFunction(
-          'System.Delete(Self, Param0, Param1);',
+          'begin'                                  + LineEnding +
+          '  System.Delete(Self, Param0, Param1);' + LineEnding +
+          'end;',
           VarType,
           [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)]
         );
@@ -461,7 +475,9 @@ begin
     Exit;
 
   Result := CreateFunction(
-    'System.Insert(Param0, Self, Param1);',
+    'begin'                                  + LineEnding +
+    '  System.Insert(Param0, Self, Param1);' + LineEnding +
+    'end;',
     VarType,
     [AParams[0], FCompiler.getBaseType(ltSizeInt)]
   );
@@ -470,7 +486,9 @@ end;
 function TLapeType_ArrayHelper_First.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := Self[System.Low(Self)];',
+    'begin'                               + LineEnding +
+    '  Result := Self[System.Low(Self)];' + LineEnding +
+    'end;',
     VarType,
     [],
     TLapeType_DynArray(VarType).PType
@@ -480,7 +498,9 @@ end;
 function TLapeType_ArrayHelper_Last.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := Self[System.High(Self)];',
+    'begin'                                + LineEnding +
+    '  Result := Self[System.High(Self)];' + LineEnding +
+    'end;',
     VarType,
     [],
     TLapeType_DynArray(VarType).PType
@@ -497,8 +517,10 @@ begin
       begin
         Result := CreateFunction(
           'var Index: Integer := System.Length(Self);' + LineEnding +
-          'Result := Self[Index];'                   + LineEnding +
-          'System.SetLength(Self, Index - 1);',
+          'begin'                                      + LineEnding +
+          '  Result := Self[Index];'                   + LineEnding +
+          '  System.SetLength(Self, Index - 1);'       + LineEnding +
+          'end;',
           VarType,
           [],
           TLapeType_DynArray(VarType).PType
@@ -507,8 +529,10 @@ begin
       begin
         Result := CreateFunction(
           'var Index: Integer := System.High(Self);' + LineEnding +
-          'Result := Self[Index];'                 + LineEnding +
-          'System.SetLength(Self, Index);',
+          'begin'                                    + LineEnding +
+          '  Result := Self[Index];'                 + LineEnding +
+          '  System.SetLength(Self, Index);'         + LineEnding +
+          'end;',
           VarType,
           [],
           TLapeType_DynArray(VarType).PType
@@ -518,8 +542,10 @@ begin
     1:
       begin
         Result := CreateFunction(
-          '  Result := Self[Param0];' + LineEnding +
-          '  System.Delete(Self, Param0, 1);',
+          'begin'                             + LineEnding +
+          '  Result := Self[Param0];'         + LineEnding +
+          '  System.Delete(Self, Param0, 1);' + LineEnding +
+          'end;',
           VarType,
           [FCompiler.getBaseType(ltSizeInt)],
           TLapeType_DynArray(VarType).PType
@@ -531,7 +557,9 @@ end;
 function TLapeType_ArrayHelper_Swap.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'System.Swap(Self[Param0], Self[Param1]);',
+    'begin'                                      + LineEnding +
+    '  System.Swap(Self[Param0], Self[Param1]);' + LineEnding +
+    'end;',
     VarType,
     [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)]
   );
@@ -540,7 +568,9 @@ end;
 function TLapeType_ArrayHelper_RandomValue.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := Self[System.Random(System.Low(Self), System.High(Self))];',
+    'begin'                                                                 + LineEnding +
+    '  Result := Self[System.Random(System.Low(Self), System.High(Self))];' + LineEnding +
+    'end;',
     VarType,
     [],
     TLapeType_DynArray(VarType).PType
@@ -550,7 +580,9 @@ end;
 function TLapeType_ArrayHelper_Reverse.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'System.Reverse(Self);',
+    'begin'                   + LineEnding +
+    '  System.Reverse(Self);' + LineEnding +
+    'end;',
     VarType,
     []
   );
@@ -566,7 +598,9 @@ begin
     ResType := VarType;
 
   Result := CreateFunction(
-    'Result := System.Reversed(Self);',
+    'begin'                              + LineEnding +
+    '  Result := System.Reversed(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     ResType
@@ -583,7 +617,9 @@ begin
     ResType := VarType;
 
   Result := CreateFunction(
-    'Result := System.Unique(Self);',
+    'begin'                            + LineEnding +
+    '  Result := System.Unique(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     ResType
@@ -593,7 +629,9 @@ end;
 function TLapeType_ArrayHelper_IndexOf.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.IndexOf(Param0, Self);',
+    'begin'                                     + LineEnding +
+    '  Result := System.IndexOf(Param0, Self);' + LineEnding +
+    'end;',
     VarType,
     [TLapeType_DynArray(VarType).PType],
     FCompiler.getBaseType(ltInt32)
@@ -603,7 +641,9 @@ end;
 function TLapeType_ArrayHelper_IndicesOf.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.IndicesOf(Param0, Self);',
+    'begin'                                       + LineEnding +
+    '  Result := System.IndicesOf(Param0, Self);' + LineEnding +
+    'end;',
     VarType,
     [TLapeType_DynArray(VarType).PType],
     FCompiler.getIntegerArray()
@@ -620,7 +660,9 @@ begin
     0:
       begin
         Result := CreateFunction(
-          'System.Sort(Self);',
+          'begin'                + LineEnding +
+          '  System.Sort(Self);' + LineEnding +
+          'end;',
           VarType,
           []
         );
@@ -629,7 +671,9 @@ begin
     1:
       begin
         Result := CreateFunction(
-          'System.Sort(Self, @Param0);',
+          'begin'                         + LineEnding +
+          '  System.Sort(Self, @Param0);' + LineEnding +
+          'end;',
           VarType,
           [FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [TLapeType_DynArray(VarType).PType, TLapeType_DynArray(VarType).PType], [lptConstRef, lptConstRef], [nil, nil], FCompiler.getBaseType(ltInt32)))]
         );
@@ -643,7 +687,9 @@ begin
        if (WeightType.BaseType in LapeIntegerTypes) then
        begin
          Result := CreateFunction(
-           'System.Sort(Self, Param0, Param1);',
+           'begin'                                + LineEnding +
+           '  System.Sort(Self, Param0, Param1);' + LineEnding +
+           'end;',
            VarType,
            [FCompiler.getIntegerArray(), FCompiler.getBaseType(ltEvalBool)]
          );
@@ -652,7 +698,9 @@ begin
        if (WeightType.BaseType in LapeRealTypes) then
        begin
          Result := CreateFunction(
-           'System.Sort(Self, Param0, Param1);',
+           'begin'                                + LineEnding +
+           '  System.Sort(Self, Param0, Param1);' + LineEnding +
+           'end;',
            VarType,
            [FCompiler.getFloatArray(), FCompiler.getBaseType(ltEvalBool)]
          );
@@ -676,7 +724,9 @@ begin
     0:
       begin
         Result := CreateFunction(
-          'Result := System.Sorted(Self);',
+          'begin'                            + LineEnding +
+          '  Result := System.Sorted(Self);' + LineEnding +
+          'end;',
           VarType,
           [],
           ResType
@@ -686,7 +736,9 @@ begin
     1:
       begin
         Result := CreateFunction(
-          'Result := System.Sorted(Self, @Param0);',
+          'begin'                                     + LineEnding +
+          '  Result := System.Sorted(Self, @Param0);' + LineEnding +
+          'end;',
           VarType,
           [FCompiler.addManagedType(TLapeType_Method.Create(FCompiler, [TLapeType_DynArray(VarType).PType, TLapeType_DynArray(VarType).PType], [lptConstRef, lptConstRef], [nil, nil], FCompiler.getBaseType(ltInt32)))],
           ResType
@@ -701,7 +753,9 @@ begin
         if (WeightType.BaseType in LapeIntegerTypes) then
         begin
           Result := CreateFunction(
-            'Result := System.Sorted(Self, Param0, Param1);',
+            'begin'                                           + LineEnding +
+            '  Result := System.Sorted(Self, Param0, Param1);' + LineEnding +
+            'end;',
             VarType,
             [FCompiler.getIntegerArray(), FCompiler.getBaseType(ltEvalBool)],
             ResType
@@ -711,7 +765,9 @@ begin
         if (WeightType.BaseType in LapeRealTypes) then
         begin
           Result := CreateFunction(
-            'Result := System.Sorted(Self, Param0, Param1);',
+            'begin'                                           + LineEnding +
+            '  Result := System.Sorted(Self, Param0, Param1);' + LineEnding +
+            'end;',
             VarType,
             [FCompiler.getFloatArray(), FCompiler.getBaseType(ltEvalBool)],
             ResType
@@ -724,7 +780,9 @@ end;
 function TLapeType_ArrayHelper_Clear.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Self := [];',
+    'begin'         + LineEnding +
+    '  Self := [];' + LineEnding +
+    'end;',
     VarType,
     []
   );
@@ -733,7 +791,9 @@ end;
 function TLapeType_ArrayHelper_Append.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Self := Self + Param0;',
+    'begin'                    + LineEnding +
+    '  Self := Self + Param0;' + LineEnding +
+    'end;',
     VarType,
     [TLapeType_DynArray(VarType).PType]
   );
@@ -742,7 +802,9 @@ end;
 function TLapeType_ArrayHelper_Extend.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Self := Self + Param0;',
+    'begin'                    + LineEnding +
+    '  Self := Self + Param0;' + LineEnding +
+    'end;',
     VarType,
     [VarType]
   );
@@ -758,7 +820,9 @@ begin
     ResType := TLapeType_DynArray(VarType).PType;
 
   Result := CreateFunction(
-    'Result := System.ArrayMedian(Self);',
+    'begin'                                 + LineEnding +
+    '  Result := System.ArrayMedian(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     ResType
@@ -768,7 +832,9 @@ end;
 function TLapeType_ArrayHelper_Mode.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.ArrayMode(Self);',
+    'begin'                               + LineEnding +
+    '  Result := System.ArrayMode(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     TLapeType_DynArray(VarType).PType
@@ -778,7 +844,9 @@ end;
 function TLapeType_ArrayHelper_Min.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.ArrayMin(Self);',
+    'begin'                              + LineEnding +
+    '  Result := System.ArrayMin(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     TLapeType_DynArray(VarType).PType
@@ -788,7 +856,9 @@ end;
 function TLapeType_ArrayHelper_Max.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
-    'Result := System.ArrayMax(Self);',
+    'begin'                              + LineEnding +
+    '  Result := System.ArrayMax(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     TLapeType_DynArray(VarType).PType
@@ -808,7 +878,9 @@ begin
     ResType := TLapeType_DynArray(VarType).PType;
 
   Result := CreateFunction(
-    'Result := System.ArraySum(Self);',
+    'begin'                              + LineEnding +
+    '  Result := System.ArraySum(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     ResType
@@ -825,7 +897,9 @@ begin
     ResType := TLapeType_DynArray(VarType).PType;
 
   Result := CreateFunction(
-    'Result := System.ArrayMean(Self);',
+    'begin'                               + LineEnding +
+    '  Result := System.ArrayMean(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     ResType
@@ -842,7 +916,9 @@ begin
     ResType := TLapeType_DynArray(VarType).PType;
 
   Result := CreateFunction(
-    'Result := System.ArrayVariance(Self);',
+    'begin'                                   + LineEnding +
+    '  Result := System.ArrayVariance(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     ResType
@@ -859,7 +935,9 @@ begin
     ResType := TLapeType_DynArray(VarType).PType;
 
   Result := CreateFunction(
-    'Result := System.ArrayStdev(Self);',
+    'begin'                                + LineEnding +
+    '  Result := System.ArrayStdev(Self);' + LineEnding +
+    'end;',
     VarType,
     [],
     ResType
@@ -876,7 +954,9 @@ begin
     ResType := VarType;
 
   Result := CreateFunction(
-    'Result := System.Slice(Self, Param0, Param1, Param2);',
+    'begin'                                                   + LineEnding +
+    '  Result := System.Slice(Self, Param0, Param1, Param2);' + LineEnding +
+    'end;',
     VarType,
     [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)],
     ResType
@@ -884,5 +964,4 @@ begin
 end;
 
 end.
-
 

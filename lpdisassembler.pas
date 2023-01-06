@@ -21,19 +21,18 @@ uses
 type
   TLapeDisassemblerPointerMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<string>;
 
-procedure DisassembleCode(ACode: PByte; PointerNames: TLapeDisassemblerPointerMap); overload;
-procedure DisassembleCode(ACode: PByte; PointerNames: TLapeCompilerBase); overload;
-procedure DisassembleCode(ACode: PByte; PointerNames: array of TLapeDeclArray); overload;
+procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap); overload;
+procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase); overload;
+procedure DisassembleCode(Code: PByte; PointerNames: TLapeDeclArray = nil); overload;
 
 implementation
 
 uses
   lpmessages, lpinterpreter, lpeval, lputils;
 
-procedure DisassembleCode(ACode: PByte; PointerNames: TLapeDisassemblerPointerMap);
+procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap);
 var
-  FCode: PByte;
-  FCodeBase: PByte;
+  CodeBase: PByte;
   {$IFDEF Lape_EmitPos}p: TDocPos;{$ENDIF}
 
   function IntToStr(i: Int64): string; overload;
@@ -58,7 +57,7 @@ var
 
   procedure _WriteLn(s: string); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    WriteLn('$', IntToHex(FCode - FCodeBase, 8), ' :: ', s);
+    WriteLn('$', IntToHex(Code - CodeBase, 8), ' :: ', s);
   end;
 
   procedure _WriteLn(s: string; args: array of const); overload;
@@ -70,175 +69,168 @@ var
   begin
     _WriteLn('IsInternal');
     _WriteLn('IncStack %d', [SizeOf(EvalBool) - SizeOf(Pointer)]);
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
-  procedure DoGetExceptionMessage;
+  procedure DoGetExceptionMessage; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('GetExceptionMessage');
     _WriteLn('IncStack %d', [SizeOf(ShortString)]);
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoGetExceptionLocation;
   begin
     _WriteLn('GetExceptionLocation');
     _WriteLn('IncStack %d', [SizeOf(Pointer)]);
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoGetCallerLocation;
   begin
     _WriteLn('GetCallerLocation');
     _WriteLn('IncStack %d', [SizeOf(Pointer)]);
-    Inc(FCode, ocSize);
-  end;
-
-  procedure DoGetScriptMethodName;
-  begin
-    _WriteLn('GetScriptMethodName');
-    _WriteLn('IncStack %d', [SizeOf(ShortString) - SizeOf(Pointer)]);
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('InitStackLen %d', [PStackOffset(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, SizeOf(TStackOffset) + ocSize);
+    _WriteLn('InitStackLen %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoInitVarLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('InitVarStackLen %d', [PStackOffset(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, SizeOf(TStackOffset) + ocSize);
+    _WriteLn('InitVarStackLen %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoInitStack; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('InitStack %d', [PStackOffset(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, SizeOf(TStackOffset) + ocSize);
+    _WriteLn('InitStack %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoGrowStack; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('GrowStack %d', [PStackOffset(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, SizeOf(TStackOffset) + ocSize);
+    _WriteLn('GrowStack %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoExpandVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('ExpandVarStack %d', [PStackOffset(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, SizeOf(TStackOffset) + ocSize);
+    _WriteLn('ExpandVarStack %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoExpandVarAndInit; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('ExpandVarStackAndInit %d', [PStackOffset(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, SizeOf(TStackOffset) + ocSize);
+    _WriteLn('ExpandVarStackAndInit %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoGrowVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('GrowVarStack %d', [PStackOffset(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, SizeOf(TStackOffset) + ocSize);
+    _WriteLn('GrowVarStack %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoGrowVarAndInit; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('GrowVarStackAndInit %d', [PStackOffset(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, SizeOf(TStackOffset) + ocSize);
+    _WriteLn('GrowVarStackAndInit %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('PopVarStack');
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoPopStackToVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    with POC_PopStackToVar(PtrUInt(FCode) + ocSize)^ do
+    with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
       _WriteLn('PopStackToVar %d %d', [Size, VOffset]);
       _WriteLn('DecStackPos %d', [Size]);
     end;
-    Inc(FCode, ocSize + SizeOf(TOC_PopStackToVar));
+    Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
   end;
 
   procedure DoPopVarToStack; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    with POC_PopStackToVar(PtrUInt(FCode) + ocSize)^ do
+    with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
       _WriteLn('PopVarToStack %d %d', [Size, VOffset]);
       _WriteLn('IncStackPos %d', [Size]);
     end;
-    Inc(FCode, ocSize + SizeOf(TOC_PopStackToVar));
+    Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
   end;
 
   procedure DoJmpVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('JmpVar');
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoJmpSafe; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('JmpSafe $%x', [PCodePos(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, ocSize + SizeOf(TCodePos));
+    _WriteLn('JmpSafe $%x', [PCodePos(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, ocSize + SizeOf(TCodePos));
   end;
 
   procedure DoJmpSafeR; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('JmpSafeR $%x', [PtrInt(FCode - FCodeBase) + PCodeOffset(PtrUInt(FCode) + ocSize)^]);
-    Inc(FCode, ocSize + SizeOf(TCodeOffset));
+    _WriteLn('JmpSafeR $%x', [PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
+    Inc(Code, ocSize + SizeOf(TCodeOffset));
   end;
 
   procedure DoIncTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    with POC_IncTry(PtrUInt(FCode) + ocSize)^ do
+    with POC_IncTry(PtrUInt(Code) + ocSize)^ do
       if (JmpFinally = Try_NoFinally) then
-        _WriteLn('IncTry $%x (NoFinally)', [PtrInt(FCode - FCodeBase) + Jmp])
+        _WriteLn('IncTry $%x (NoFinally)', [PtrInt(Code - CodeBase) + Jmp])
       else if (JmpFinally = Try_NoExcept) then
-        _WriteLn('IncTry $%x (NoExcept)',  [PtrInt(FCode - FCodeBase) + Jmp])
+        _WriteLn('IncTry $%x (NoExcept)',  [PtrInt(Code - CodeBase) + Jmp])
       else
-        _WriteLn('IncTry $%x $%x', [PtrInt(FCode - FCodeBase) + Jmp, PtrInt(FCode - FCodeBase) + Jmp + Int32(JmpFinally)]);
-    Inc(FCode, ocSize + SizeOf(TOC_IncTry));
+        _WriteLn('IncTry $%x $%x', [PtrInt(Code - CodeBase) + Jmp, PtrInt(Code - CodeBase) + Jmp + Int32(JmpFinally)]);
+    Inc(Code, ocSize + SizeOf(TOC_IncTry));
   end;
 
   procedure DoDecTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('DecTry');
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoEndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('EndTry');
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoCatchException; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('CatchException');
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoReRaiseException; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('ReRaiseException');
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoDecCall; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('DecCall');
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   procedure DoDecCall_EndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('DecCall_EndTry');
-    Inc(FCode, ocSize);
+    Inc(Code, ocSize);
   end;
 
   {$I lpdisassembler_doinvoke.inc}
@@ -246,8 +238,7 @@ var
   {$I lpdisassembler_doeval.inc}
 
 begin
-  FCode := ACode;
-  FCodeBase := ACode;
+  CodeBase := Code;
 
   {$IFDEF Lape_EmitPos}
   p.Line := 0;
@@ -258,7 +249,7 @@ begin
     while True do
     begin
       {$IFDEF Lape_EmitPos}
-      with PDocPos(PtrUInt(FCode) + SizeOf(opCodeType))^ do
+      with PDocPos(PtrUInt(Code) + SizeOf(opCodeType))^ do
         if (p.FileName <> FileName) or (p.Line <> Line) or (p.Col <> Col) then
         begin
           p.FileName := FileName;
@@ -271,7 +262,7 @@ begin
     end;
   except
     on E: Exception do
-      LapeExceptionFmt(lpeRuntime, [E.Message] {$IFDEF Lape_EmitPos}, PDocPos(PtrUInt(FCode) + SizeOf(opCodeType))^ {$ENDIF});
+      LapeExceptionFmt(lpeRuntime, [E.Message] {$IFDEF Lape_EmitPos}, PDocPos(PtrUInt(Code) + SizeOf(opCodeType))^ {$ENDIF});
   end;
 end;
 
@@ -310,7 +301,7 @@ begin
     TLapeDisassemblerPointerMap(Arg)[lpString(IntToHex(PtrUInt(v.Ptr), 0))] := string(AName);
 end;
 
-procedure DisassembleCode(ACode: PByte; PointerNames: TLapeCompilerBase);
+procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase);
 var
   pMap: TLapeDisassemblerPointerMap;
 begin
@@ -318,31 +309,30 @@ begin
   try
     Disassemble__EvalProcs(pMap);
     TraverseGlobals(PointerNames, @Disassemble__PointerMap, pMap);
-    DisassembleCode(ACode, pMap);
+    DisassembleCode(Code, pMap);
   finally
     pMap.Free();
   end;
 end;
 
-procedure DisassembleCode(ACode: PByte; PointerNames: array of TLapeDeclArray);
+procedure DisassembleCode(Code: PByte; PointerNames: TLapeDeclArray = nil);
 var
   pMap: TLapeDisassemblerPointerMap;
-  i,j: Integer;
+  i: Integer;
 begin
   pMap := TLapeDisassemblerPointerMap.Create('', dupIgnore, True);
   try
     Disassemble__EvalProcs(pMap);
 
     for i := 0 to High(PointerNames) do
-      for j := 0 to High(PointerNames) do
-        if (PointerNames[i][j].Name = '') and (PointerNames[i][j] is TLapeGlobalVar) then
-          pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i][j]).Ptr), 0))] := string(TLapeGlobalVar(PointerNames[i][j]).AsString)
-        else if (PointerNames[i][j] is TLapeGlobalVar) then
-          pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i][j]).Ptr), 0))] := string(PointerNames[i][j].Name)
-        else
-          pMap[lpString(IntToHex(PtrUInt(PointerNames[i][j]), 0))] := string(PointerNames[i][j].Name);
+      if (PointerNames[i].Name = '') and (PointerNames[i] is TLapeGlobalVar) then
+        pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0))] := string(TLapeGlobalVar(PointerNames[i]).AsString)
+      else if (PointerNames[i] is TLapeGlobalVar) then
+        pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0))] := string(PointerNames[i].Name)
+      else
+        pMap[lpString(IntToHex(PtrUInt(PointerNames[i]), 0))] := string(PointerNames[i].Name);
 
-    DisassembleCode(ACode, pMap);
+    DisassembleCode(Code, pMap);
   finally
     pMap.Free();
   end;

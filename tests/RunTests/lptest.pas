@@ -93,14 +93,9 @@ begin
 
     try
       if (not Compile()) then
-        LapeException('Error compiling file');
-
-      with TLapeCodeRunner.Create(Emitter) do
-      try
-        Run();
-      finally
-        Free();
-      end;
+        LapeException('Error compiling file')
+      else
+        RunCode(Emitter.Code, Emitter.CodeLen);
     except
       on E: Exception do
       begin

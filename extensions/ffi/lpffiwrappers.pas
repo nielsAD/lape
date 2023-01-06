@@ -1033,12 +1033,7 @@ begin
         PPointer(@VarStack[b])^ := Res;
       end;
 
-      with TLapeCodeRunner.Create(CodeBase^, CodeLen^) do
-      try
-        Run(VarStack, CodePos^);
-      finally
-        Free();
-      end;
+    RunCode(CodeBase^, CodeLen^, VarStack, CodePos^);
 
     if (NativeCif.Res <> nil) and ({$IFNDEF FPC}@{$ENDIF}ParamInfo[High(ParamInfo)].Eval <> nil) then
       ParamInfo[High(ParamInfo)].Eval(Res, @r, nil);

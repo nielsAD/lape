@@ -7,13 +7,12 @@
 }
 {%MainUnit lpinterpreter.pas}
 
-case opCode(opCodeTypeP(FCode)^) of
+case opCode(opCodeTypeP(Code)^) of
   ocNone: Break;
   ocIsInternal: DoCheckInternal();
   ocGetExceptionMessage: DoGetExceptionMessage();
   ocGetExceptionLocation: DoGetExceptionLocation();
   ocGetCallerLocation: DoGetCallerLocation();
-  ocGetScriptMethodName: DoGetScriptMethodName();
   ocInitStackLen: DoInitStackLen();
   ocInitVarLen: DoInitVarLen();
   ocInitStack: DoInitStack();

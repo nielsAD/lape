@@ -1,1 +1,0 @@
-Runtime error: "Index out of range (index:0, low:0, high:-1)" at line 11, column 13 in file "ArrayHelperExceptionLoc.lap"
