@@ -292,7 +292,7 @@ uses
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
   lpinternalmethods, lpinternalmethods_algorithm,
-  lpmessages, lpeval, lpinterpreter;
+  lpmessages, lpeval, lpinterpreter_types;
 
 function TLapeCompiler.getPDocPos: PDocPos;
 begin

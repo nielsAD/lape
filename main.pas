@@ -124,7 +124,7 @@ begin
       if Run then
       begin
         t := GetTickCount64();
-        RunCode(Compiler.Emitter.Code, Compiler.Emitter.CodeLen);
+        RunCode(Compiler.Emitter);
         m.Lines.Add('Running Time: ' + IntToStr(GetTickCount64() - t) + 'ms.');
       end;
     except
@@ -158,7 +158,7 @@ procedure TForm1.btnMemLeaksClick(Sender: TObject);
 var
   i: Integer;
 begin
-  WriteLn(Ord(Low(opCode)), '..', Ord(High(opCode)));
+  //WriteLn(Ord(Low(opCode)), '..', Ord(High(opCode)));
   {$IFDEF Lape_TrackObjects}
   for i := 0 to lpgList.Count - 1 do
     WriteLn('unfreed: ', TLapeBaseClass(lpgList[i]).ClassName, ' -- [',  PtrInt(lpgList[i]), ']');

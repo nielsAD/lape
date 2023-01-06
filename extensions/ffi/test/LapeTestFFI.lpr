@@ -983,7 +983,7 @@ begin
       e := LapeExportWrapper(m.Method, ExportABI);
 
       Write(Format('Testing  %-6s :: %8s <-> %-8s :: ', [v.Name, ABIToStr(ImportABI), ABIToStr(ExportABI)]));
-      RunCode(Emitter.Code, Emitter.CodeLen);
+      RunCode(Emitter);
       Result := RunFun(e.Func);
 
       if Result then

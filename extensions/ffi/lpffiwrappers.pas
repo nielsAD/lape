@@ -147,12 +147,9 @@ type
 
   PExportClosureData = ^TExportClosureData;
   TExportClosureData = packed record
-    _CodeBase: PByte;
+    Emitter: TLapeCodeEmitter;
     _CodePos: TCodePos;
-    _CodeLen: Integer;
-    CodeBase: PPByte;
     CodePos: PCodePos;
-    CodeLen: PInteger;
     NativeCif: TFFICifManager;
     ParamInfo: array of TExportClosureParamInfo;
     TotalParamSize: Integer;
@@ -180,10 +177,10 @@ function LapeImportWrapper(Func: Pointer; NativeCif: TFFICifManager): TImportClo
 function LapeImportWrapper(Func: Pointer; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
 function LapeImportWrapper(Func: Pointer; Compiler: TLapeCompiler; Header: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI): TImportClosure; overload;
 
-function LapeExportWrapper(Code: PPByte; CodeLen: PInteger; Func: PCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure; overload;
-function LapeExportWrapper(Code: PByte;  CodeLen: Integer; Func: TCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure; overload;
-function LapeExportWrapper(Code: PPByte; CodeLen: PInteger; Func: PCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
-function LapeExportWrapper(Code: PByte;  CodeLen: Integer; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
+function LapeExportWrapper(Emitter: TLapeCodeEmitter; Func: PCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure; overload;
+function LapeExportWrapper(Emitter: TLapeCodeEmitter; Func: TCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure; overload;
+function LapeExportWrapper(Emitter: TLapeCodeEmitter; Func: PCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
+function LapeExportWrapper(Emitter: TLapeCodeEmitter; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
 function LapeExportWrapper(Func: TLapeGlobalVar; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure; overload;
 
 function _ParseMethodHeader(Compiler: TLapeCompiler; Header: lpString): TLapeType_Method;
@@ -191,7 +188,7 @@ function _ParseMethodHeader(Compiler: TLapeCompiler; Header: lpString): TLapeTyp
 implementation
 
 uses
-  lpmessages, lpparser, lpeval, lpinterpreter, lpvartypes_array, lpvartypes_record, lpffi;
+  lpmessages, lpparser, lpeval, lpinterpreter_types, lpinterpreter, lpvartypes_array, lpvartypes_record, lpffi;
 
 const
   PowerTwoRegs = [SizeOf(UInt8), SizeOf(UInt16), SizeOf(UInt32), SizeOf(UInt64)];
@@ -799,7 +796,7 @@ begin
     if (ABI = FFI_UNIX64) and (Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType = ltRecord) and (Param.VarType.Size = SizeOf(Pointer) * 2) then
       Exit(False);
   {$IFEND}
-  
+
   {$IF DECLARED(FFI_SYSV)}
     if (ABI = FFI_SYSV) and (Param.ParType in Lape_ConstParams) and (Param.VarType.BaseType = ltRecord) and (Param.VarType.Size = SizeOf(Pointer) * 2) then
       Exit(False);
@@ -1033,14 +1030,14 @@ begin
         PPointer(@VarStack[b])^ := Res;
       end;
 
-    RunCode(CodeBase^, CodeLen^, VarStack, CodePos^);
+    RunCode(Emitter, VarStack, CodePos^);
 
     if (NativeCif.Res <> nil) and ({$IFNDEF FPC}@{$ENDIF}ParamInfo[High(ParamInfo)].Eval <> nil) then
       ParamInfo[High(ParamInfo)].Eval(Res, @r, nil);
   end;
 end;
 
-function LapeExportWrapper(Code: PPByte; CodeLen: PInteger; Func: PCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure;
+function LapeExportWrapper(Emitter: TLapeCodeEmitter; Func: PCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure;
 var
   i: Integer;
 begin
@@ -1048,9 +1045,8 @@ begin
 
   Result := TExportClosure.Create(NativeCif, @LapeExportBinder);
   try
-    Result.UserData.CodeBase := Code;
+    Result.UserData.Emitter := Emitter;
     Result.UserData.CodePos := Func;
-    Result.UserData.CodeLen := CodeLen;
     Result.UserData.NativeCif := NativeCif;
     Result.UserData.TotalParamSize := 0;
 
@@ -1068,18 +1064,14 @@ begin
   end;
 end;
 
-function LapeExportWrapper(Code: PByte; CodeLen: Int32; Func: TCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure;
+function LapeExportWrapper(Emitter: TLapeCodeEmitter; Func: TCodePos; NativeCif: TFFICifManager; ParamInfo: array of TExportClosureParamInfo): TExportClosure;
 begin
-  Result := LapeExportWrapper(nil, nil, nil, NativeCif, ParamInfo);
-  Result.UserData._CodeBase := Code;
+  Result := LapeExportWrapper(Emitter, nil, NativeCif, ParamInfo);
   Result.UserData._CodePos := Func;
-  Result.UserData._CodeLen := CodeLen;
-  Result.UserData.CodeBase := @Result.UserData._CodeBase;
   Result.UserData.CodePos := @Result.UserData._CodePos;
-  Result.UserData.CodeLen := @Result.UserData._CodeLen;
 end;
 
-function LapeExportWrapper(Code: PPByte; CodeLen: PInteger; Func: PCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
+function LapeExportWrapper(Emitter: TLapeCodeEmitter; Func: PCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
 const
   RefPar: TExportClosureParamInfo = (Size: -1; Eval: nil);
 var
@@ -1133,18 +1125,14 @@ begin
     {$ENDIF}
   end;
 
-  Result := LapeExportWrapper(Code, CodeLen, Func, LapeHeaderToFFICif(Header, ABI), ParInfo);
+  Result := LapeExportWrapper(Emitter, Func, LapeHeaderToFFICif(Header, ABI), ParInfo);
 end;
 
-function LapeExportWrapper(Code: PByte; CodeLen: Integer; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
+function LapeExportWrapper(Emitter: TLapeCodeEmitter; Func: TCodePos; Header: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
 begin
-  Result := LapeExportWrapper(nil, nil, nil, Header, ABI);
-  Result.UserData._CodeBase := Code;
+  Result := LapeExportWrapper(Emitter, nil, Header, ABI);
   Result.UserData._CodePos := Func;
-  Result.UserData._CodeLen := CodeLen;
-  Result.UserData.CodeBase := @Result.UserData._CodeBase;
   Result.UserData.CodePos := @Result.UserData._CodePos;
-  Result.UserData.CodeLen := @Result.UserData._CodeLen;
 end;
 
 function LapeExportWrapper(Func: TLapeGlobalVar; ABI: TFFIABI = FFI_DEFAULT_ABI): TExportClosure;
@@ -1156,8 +1144,7 @@ begin
     Exit(nil);
 
   Result := LapeExportWrapper(
-    Func.VarType.Compiler.Emitter.PCode,
-    Func.VarType.Compiler.Emitter.PCodeLen,
+    Func.VarType.Compiler.Emitter,
     PCodePos(Func.Ptr),
     Func.VarType as TLapeType_Method,
     ABI);

@@ -292,7 +292,7 @@ type
 implementation
 
 uses
-  lpparser, lpvartypes_array, lpmessages, lpeval, lpvartypes_ord, lpinterpreter;
+  lpparser, lpvartypes_array, lpmessages, lpeval, lpvartypes_ord, lpinterpreter_types;
 
 type
   __TLapeTree_Operator = class(TLapeTree_Operator);

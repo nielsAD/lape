@@ -28,7 +28,7 @@ procedure DisassembleCode(Code: PByte; PointerNames: TLapeDeclArray = nil); over
 implementation
 
 uses
-  lpmessages, lpinterpreter, lpeval, lputils;
+  lpmessages, lpinterpreter_types, lpeval, lputils;
 
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap);
 var
@@ -249,7 +249,7 @@ begin
     while True do
     begin
       {$IFDEF Lape_EmitPos}
-      with PDocPos(PtrUInt(Code) + SizeOf(opCodeType))^ do
+      with PDocPos(PtrUInt(Code) + SizeOf(opCode))^ do
         if (p.FileName <> FileName) or (p.Line <> Line) or (p.Col <> Col) then
         begin
           p.FileName := FileName;
@@ -262,7 +262,7 @@ begin
     end;
   except
     on E: Exception do
-      LapeExceptionFmt(lpeRuntime, [E.Message] {$IFDEF Lape_EmitPos}, PDocPos(PtrUInt(Code) + SizeOf(opCodeType))^ {$ENDIF});
+      LapeExceptionFmt(lpeRuntime, [E.Message] {$IFDEF Lape_EmitPos}, PDocPos(PtrUInt(Code) + SizeOf(opCode))^ {$ENDIF});
   end;
 end;
 

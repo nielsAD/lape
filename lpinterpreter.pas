@@ -15,82 +15,19 @@ unit lpinterpreter;
 interface
 
 uses
-  SysUtils,
-  lptypes;
-
-type
-  opCode = (
-    ocNone,
-    ocIsInternal,                                              //IsInternal
-    ocGetExceptionMessage,                                     //GetExceptionMessage
-    ocGetExceptionLocation,
-    ocGetCallerLocation,
-    ocInitStackLen,                                            //InitStackLen TStackOffset
-    ocInitVarLen,                                              //InitVarLen TStackOffset
-    ocInitStack,                                               //InitStack TStackOffset
-    ocGrowStack,                                               //GrowStack TStackOffset
-    ocExpandVar,                                               //ExpandVar TStackOffset
-    ocExpandVarAndInit,                                        //ExpandVarAndInit TStackOffset
-    ocGrowVar,                                                 //GrowVar TStackOffset
-    ocGrowVarAndInit,                                          //GrowVarAndInit TStackOffset
-    ocPopStackToVar,                                           //PopStackToVar TStackOffset TVarStackOffset
-    ocPopVarToStack,                                           //PopVarToStack TStackOffset TVarStackOffset
-    ocPopVar,                                                  //PopVar
-    ocJmpVar,                                                  //JmpVar
-    ocJmpSafe,                                                 //JmpSafe TCodePos
-    ocJmpSafeR,                                                //JmpSafeR TCodeOffset
-
-    ocIncTry,                                                  //IncTry TCodeOffset UInt32
-    ocDecTry,                                                  //DecTry
-    ocEndTry,                                                  //EndTry
-    ocCatchException,                                          //CatchException
-    ocReRaiseException,                                        //ReRaiseException
-
-    ocDecCall,                                                 //DecCall
-    ocDecCall_EndTry,                                          //DecCall_EndTry
-
-    {$I lpinterpreter_invokeopcodes.inc}
-    {$I lpinterpreter_jumpopcodes.inc}
-    {$I lpinterpreter_evalopcodes.inc}
-  );
-  opCodeTypeP = ^opCodeType;
-  {$IFDEF Lape_SmallCode}
-  opCodeType = Byte;
-  {$ELSE}
-  opCodeType = Integer; //Better alignment
-  {$ENDIF}
-
-  POC_PopStackToVar = ^TOC_PopStackToVar;
-  TOC_PopStackToVar = record
-    Size: TStackOffset;
-    VOffset: TVarStackOffset;
-  end;
-
-  POC_IncTry = ^TOC_IncTry;
-  TOC_IncTry = record
-    Jmp: TCodeOffset;
-    JmpFinally: UInt32;
-  end;
-
-  {$I lpinterpreter_invokerecords.inc}
-  {$I lpinterpreter_jumprecords.inc}
-  {$I lpinterpreter_evalrecords.inc}
+  Classes, SysUtils,
+  lptypes, lpvartypes,
+  lpinterpreter_types;
 
 const
-  ocSize = SizeOf(opCodeType) {$IFDEF Lape_EmitPos}+SizeOf(TDocPos){$ENDIF};
-
-  Try_NoFinally: UInt32 = UInt32(-1);
-  Try_NoExcept: UInt32 = UInt32(-2);
-  EndJump: TCodePos = TCodePos(-1);
-
   StackSize = 2048 * SizeOf(Pointer);
   VarStackSize = 512 * SizeOf(Pointer);
   VarStackStackSize = 32;
   TryStackSize = 512;
   CallStackSize = 512;
 
-procedure RunCode(Code: PByte; CodeLen: Integer; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
-procedure RunCode(Code: PByte; CodeLen: Integer; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
+procedure RunCode(Emitter: TLapeCodeEmitter; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
+procedure RunCode(Emitter: TLapeCodeEmitter; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
 
 implementation
 
@@ -125,10 +62,11 @@ begin
     AJump.JumpSafe := Merge.JumpSafe;
 end;
 
-procedure RunCode(Code: PByte; CodeLen: Integer; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0);
+procedure RunCode(Emitter: TLapeCodeEmitter; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0);
 const
-  opNone: opCodeType = opCodeType(ocNone);
+  opNone: opCode = ocNone;
 var
+  Code: PByte;
   CodeBase: PByte;
   CodeUpper: PByte;
   Stack: TByteArray;
@@ -286,7 +224,7 @@ var
     Check: PtrUInt;
   begin
     Check := PtrUInt(CodeBase) + PtrUInt(PCodePos(@Stack[StackPos - SizeOf(Pointer)])^);
-    PEvalBool(@Stack[StackPos - SizeOf(Pointer)])^ := (Check >= PtrUInt(CodeBase)) and (Check < PtrUInt(CodeUpper)) and (opCodeTypeP(Check)^ = opCodeType(ocIncTry));
+    PEvalBool(@Stack[StackPos - SizeOf(Pointer)])^ := (Check >= PtrUInt(CodeBase)) and (Check < PtrUInt(CodeUpper)) and (opCodeP(Check)^ = ocIncTry);
     Dec(StackPos, SizeOf(Pointer) - SizeOf(EvalBool));
     Inc(Code, ocSize);
   end;
@@ -309,7 +247,7 @@ var
 
   procedure DoGetCallerLocation;
   begin
-    PPointer(@Stack[StackPos])^ := CallStack[CallStackPos - 1].CalledFrom + SizeOf(opCodeType);
+    PPointer(@Stack[StackPos])^ := CallStack[CallStackPos - 1].CalledFrom + SizeOf(opCode);
 
     Inc(StackPos, SizeOf(Pointer));
     Inc(Code, ocSize);
@@ -339,13 +277,6 @@ var
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     if (StackPos + InitStackSize > UInt32(Length(Stack))) then
       SetLength(Stack, StackPos + InitStackSize + (StackSize div 2));
-    Inc(Code, SizeOf(TStackOffset) + ocSize);
-  end;
-
-  procedure DoInitVarLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
-  begin
-    SetLength(VarStack, PStackOffset(PtrUInt(Code) + ocSize)^);
-    VarStackStack[VarStackIndex].Stack := VarStack;
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -591,7 +522,7 @@ var
     except
       {$IFDEF Lape_EmitPos}
       if (ExceptObject <> InJump.JumpException.Obj) then
-        InJump.JumpException.Pos := PDocPos(PtrUInt(Code) + SizeOf(opCodeType));
+        InJump.JumpException.Pos := PDocPos(PtrUInt(Code) + SizeOf(opCode));
       {$ENDIF}
 
       InJump.JumpException.Obj := Exception(AcquireExceptionObject());
@@ -617,8 +548,8 @@ var
   end;
 
 begin
-  CodeBase := Code;
-  CodeUpper := PByte(PtrUInt(CodeBase) + CodeLen * SizeOf(Byte));
+  CodeBase := Emitter.Code;
+  CodeUpper := Emitter.Code + Emitter.CodeLen;
   SetLength(Stack, StackSize);
   SetLength(TryStack, TryStackSize);
   SetLength(CallStack, CallStackSize);
@@ -655,12 +586,12 @@ begin
   end;
 end;
 
-procedure RunCode(Code: PByte; CodeLen: Integer; InitialVarStack: TByteArray; InitialJump: TCodePos);
+procedure RunCode(Emitter: TLapeCodeEmitter; InitialVarStack: TByteArray; InitialJump: TCodePos);
 var
   DoContinue: TInitBool;
 begin
   DoContinue := bTrue;
-  RunCode(Code, CodeLen, DoContinue, InitialVarStack, InitialJump);
+  RunCode(Emitter, DoContinue, InitialVarStack, InitialJump);
 end;
 
 end.

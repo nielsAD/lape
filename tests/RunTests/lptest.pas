@@ -95,7 +95,7 @@ begin
       if (not Compile()) then
         LapeException('Error compiling file')
       else
-        RunCode(Emitter.Code, Emitter.CodeLen);
+        RunCode(Emitter);
     except
       on E: Exception do
       begin

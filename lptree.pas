@@ -635,7 +635,7 @@ uses
   Math,
   {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
-  lpmessages, lpeval, lpinterpreter, lpinternalmethods;
+  lpmessages, lpeval, lpinterpreter_types, lpinternalmethods;
 
 function getFlowStatement(Offset: Integer; Pos: PDocPos = nil; JumpSafe: Boolean = False): TLapeFlowStatement;
 begin
