@@ -260,6 +260,14 @@ var
     Inc(Code, ocSize);
   end;
 
+  procedure DoGetScriptMethodName;
+  begin
+    PShortString(@Stack[StackPos - SizeOf(Pointer)])^ := Emitter.CodePointerName[PCodePos(@Stack[StackPos - SizeOf(Pointer)])^];
+
+    Dec(StackPos, SizeOf(Pointer) - SizeOf(ShortString));
+    Inc(Code, ocSize);
+  end;
+
   procedure DoReRaiseException;
   begin
     Inc(Code, ocSize);

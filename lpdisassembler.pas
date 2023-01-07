@@ -72,7 +72,14 @@ var
     Inc(Code, ocSize);
   end;
 
-  procedure DoGetExceptionMessage; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure DoGetScriptMethodName;
+  begin
+    _WriteLn('GetScriptMethodName');
+    _WriteLn('IncStack %d', [SizeOf(ShortString) - SizeOf(Pointer)]);
+    Inc(Code, ocSize);
+  end;
+
+  procedure DoGetExceptionMessage;
   begin
     _WriteLn('GetExceptionMessage');
     _WriteLn('IncStack %d', [SizeOf(ShortString)]);

@@ -26,6 +26,7 @@ type
     FCodeCur: Integer;
     FCodeSize: Integer;
     FCodePointers: TLapeCodePointers;
+    FCodePointerNames: TLapeList_String;
 
     FMaxStack: Integer;
     FStackPos: Integer;
@@ -53,6 +54,8 @@ type
 
     procedure IncStack(Size: TStackInc); virtual;
     procedure DecStack(Size: TStackInc); virtual;
+
+    function GetCodePointerName(CodePos: TCodePos): lpString;
   public
     CodeGrowSize: Word;
     FullEmit: Boolean;
@@ -61,7 +64,7 @@ type
     destructor Destroy; override;
     procedure Reset; virtual;
 
-    function addCodePointer(p: PCodePos): Integer; virtual;
+    function addCodePointer(p: PCodePos; Name: lpString = ''): Integer; virtual;
     procedure deleteCodePointer(i: Integer); overload; virtual;
     procedure deleteCodePointer(p: PCodePos); overload; virtual;
     procedure adjustCodePointers(Pos, Offset: Integer); virtual;
@@ -115,6 +118,8 @@ type
     function _GetExceptionLocation(Pos: PDocPos = nil): Integer; overload;
     function _GetCallerLocation(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _GetCallerLocation(Pos: PDocPos = nil): Integer; overload;
+    function _GetScriptMethodName(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _GetScriptMethodName(Pos: PDocPos = nil): Integer; overload;
     function _ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _ReRaiseException(Pos: PDocPos = nil): Integer; overload;
     function _InitStackLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
@@ -165,6 +170,8 @@ type
     property Code: PByte read FCodePtr;
     property CodeLen: Integer read FCodeCur;
     property MaxStack: Integer read FMaxStack;
+
+    property CodePointerName[Pos: TCodePos]: lpString read GetCodePointerName;
   end;
 
 implementation
@@ -210,11 +217,28 @@ begin
   IncStack(-Size);
 end;
 
+function TLapeCodeEmitterBase.GetCodePointerName(CodePos: TCodePos): lpString;
+var
+  i: Integer;
+begin
+  Assert(FCodePointers.Count = FCodePointerNames.Count);
+
+  for i := 0 to FCodePointers.Count - 1 do
+    if (FCodePointers[i]^ = CodePos) then
+    begin
+      Result := FCodePointerNames[i];
+      Exit;
+    end;
+
+  Result := '';
+end;
+
 constructor TLapeCodeEmitterBase.Create;
 begin
   inherited;
 
-  FCodePointers := TLapeCodePointers.Create(nil, dupIgnore, False);
+  FCodePointers := TLapeCodePointers.Create(nil, dupAccept, False);
+  FCodePointerNames := TLapeList_String.Create('', dupAccept, False);
   CodeGrowSize := 256;
   FullEmit := True;
   Reset();
@@ -223,6 +247,8 @@ end;
 destructor TLapeCodeEmitterBase.Destroy;
 begin
   FCodePointers.Free();
+  FCodePointerNames.Free();
+
   inherited;
 end;
 
@@ -231,16 +257,19 @@ begin
   FCodeSize := CodeGrowSize;
   SetLength(FCode, FCodeSize);
   FCodePointers.Clear();
+  FCodePointerNames.Clear();
   FCodeCur := 0;
   FCodePtr := @FCode[0];
   NewStack();
 end;
 
-function TLapeCodeEmitterBase.addCodePointer(p: PCodePos): Integer;
+function TLapeCodeEmitterBase.addCodePointer(p: PCodePos; Name: lpString): Integer;
 begin
   if (p <> nil) then
-    Result := FCodePointers.Add(p)
-  else
+  begin
+    Result := FCodePointers.Add(p);
+              FCodePointerNames.Add(Name);
+  end else
     Result := -1;
 end;
 
@@ -503,6 +532,12 @@ begin
   IncStack(SizeOf(Pointer));
 end;
 
+function TLapeCodeEmitterBase._GetScriptMethodName(var Offset: Integer; Pos: PDocPos = nil): Integer;
+begin
+  Result := _op(ocGetScriptMethodName, Offset, Pos);
+  DecStack(SizeOf(Pointer) - SizeOf(ShortString));
+end;
+
 function TLapeCodeEmitterBase._ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocReRaiseException, Offset, Pos);
@@ -655,6 +690,8 @@ function TLapeCodeEmitterBase._GetExceptionLocation(Pos: PDocPos = nil): Integer
   var o: Integer; begin o := -1; Result := _GetExceptionLocation(o, Pos); end;
 function TLapeCodeEmitterBase._GetCallerLocation(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _GetCallerLocation(o, Pos); end;
+function TLapeCodeEmitterBase._GetScriptMethodName(Pos: PDocPos = nil): Integer;
+  var o: Integer; begin o := -1; Result := _GetScriptMethodName(o, Pos); end;
 function TLapeCodeEmitterBase._ReRaiseException(Pos: PDocPos): Integer;
   var o: Integer; begin o := -1; Result := _ReRaiseException(o, Pos); end;
 

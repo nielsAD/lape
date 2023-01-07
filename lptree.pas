@@ -3433,7 +3433,7 @@ begin
   mo := FCompiler.Emitter.getCodeOffset(Offset);
 
   PCodePos(Method.Ptr)^ := mo;
-  FCompiler.Emitter.addCodePointer(Method.Ptr);
+  FCompiler.Emitter.addCodePointer(Method.Ptr, GetMethodName(Method.VarType));
 
   FCompiler.IncStackInfo(FStackInfo, Offset, True, @_DocPos);
   try

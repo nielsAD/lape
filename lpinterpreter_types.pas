@@ -20,6 +20,7 @@ type
     ocGetExceptionMessage,                                     //GetExceptionMessage
     ocGetExceptionLocation,
     ocGetCallerLocation,
+    ocGetScriptMethodName,
     ocInitStackLen,                                            //InitStackLen TStackOffset
     ocInitStack,                                               //InitStack TStackOffset
     ocGrowStack,                                               //GrowStack TStackOffset
