@@ -254,7 +254,14 @@ var
 
   procedure DoGetCallerLocation;
   begin
-    PPointer(@Stack[StackPos])^ := CallStack[CallStackPos - 1].CalledFrom + SizeOf(opCode);
+    {$IFDEF Lape_EmitPos}
+    if (CallStackPos > 0) then
+      PPointer(@Stack[StackPos])^ := PPointer(CallStack[CallStackPos - 1].CalledFrom + SizeOf(opCode))^
+    else
+      PPointer(@Stack[StackPos])^ := nil;
+    {$ELSE}
+    PPointer(@Stack[StackPos])^ := nil;
+    {$ENDIF}
 
     Inc(StackPos, SizeOf(Pointer));
     Inc(Code, ocSize);
@@ -264,7 +271,7 @@ var
   begin
     PShortString(@Stack[StackPos - SizeOf(Pointer)])^ := Emitter.CodePointerName[PCodePos(@Stack[StackPos - SizeOf(Pointer)])^];
 
-    Dec(StackPos, SizeOf(Pointer) - SizeOf(ShortString));
+    Inc(StackPos, SizeOf(ShortString) - SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
@@ -552,7 +559,7 @@ var
     except
       {$IFDEF Lape_EmitPos}
       if (ExceptObject <> InJump.JumpException.Obj) then
-        InJump.JumpException.Pos := PDocPos(PtrUInt(Code) + SizeOf(opCode));
+        InJump.JumpException.Pos := PPointer(PtrUInt(Code) + SizeOf(opCode))^;
       {$ENDIF}
 
       InJump.JumpException.Obj := Exception(AcquireExceptionObject());

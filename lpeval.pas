@@ -559,7 +559,10 @@ procedure _LapeLocationToStr(const Params: PParamArray; const Result: Pointer); 
   end;
 
 begin
-  PlpString(Result)^ := LocationToStr(PDocPos(Params^[0]^)^);
+  if ((Params^[0] = nil) or (PPointer(Params^[0])^ = nil)) then
+    PlpString(Result)^ := 'Unknown'
+  else
+    PlpString(Result)^ := LocationToStr(PDocPos(Params^[0]^)^);
 end;
 
 procedure _LapeWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

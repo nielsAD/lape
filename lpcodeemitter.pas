@@ -21,12 +21,16 @@ type
 
   TLapeCodeEmitterBase = class(TLapeBaseClass)
   protected
+  type
+    TDocPosList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<PDocPos>;
+  protected
     FCode: TCodeArray;
     FCodePtr: PByte;
     FCodeCur: Integer;
     FCodeSize: Integer;
     FCodePointers: TLapeCodePointers;
     FCodePointerNames: TLapeList_String;
+    FDocPosList: TDocPosList;
 
     FMaxStack: Integer;
     FStackPos: Integer;
@@ -55,6 +59,7 @@ type
     procedure IncStack(Size: TStackInc); virtual;
     procedure DecStack(Size: TStackInc); virtual;
 
+    function GetDocPos(DocPos: TDocPos): PDocPos;
     function GetCodePointerName(CodePos: TCodePos): lpString;
   public
     CodeGrowSize: Word;
@@ -104,8 +109,6 @@ type
     function _DocPos(Pos: TDocPos): Integer; overload;
     function _DocPos(Pos: PDocPos; var Offset: Integer): Integer; overload;
     function _DocPos(Pos: PDocPos): Integer; overload;
-    function _DocPos(var Offset: Integer): Integer; overload;
-    function _DocPos: Integer; overload;
 
     function _op(op: opCode; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _op(op: opCode; Pos: PDocPos = nil): Integer; overload;
@@ -217,6 +220,14 @@ begin
   IncStack(-Size);
 end;
 
+function TLapeCodeEmitterBase.GetDocPos(DocPos: TDocPos): PDocPos;
+begin
+  New(Result);
+  Result^ := DocPos;
+
+  FDocPosList.Add(Result);
+end;
+
 function TLapeCodeEmitterBase.GetCodePointerName(CodePos: TCodePos): lpString;
 var
   i: Integer;
@@ -239,6 +250,8 @@ begin
 
   FCodePointers := TLapeCodePointers.Create(nil, dupAccept, False);
   FCodePointerNames := TLapeList_String.Create('', dupAccept, False);
+  FDocPosList := TDocPosList.Create(nil, dupAccept, False);
+
   CodeGrowSize := 256;
   FullEmit := True;
   Reset();
@@ -246,18 +259,29 @@ end;
 
 destructor TLapeCodeEmitterBase.Destroy;
 begin
+  Reset();
+
   FCodePointers.Free();
   FCodePointerNames.Free();
+  FDocPosList.Free();
 
   inherited;
 end;
 
 procedure TLapeCodeEmitterBase.Reset;
+var
+  i: Integer;
 begin
   FCodeSize := CodeGrowSize;
   SetLength(FCode, FCodeSize);
   FCodePointers.Clear();
   FCodePointerNames.Clear();
+
+  for i := 0 to FDocPosList.Count - 1 do
+    if (FDocPosList[i] <> nil) then
+      Dispose(FDocPosList[I]);
+  FDocPosList.Clear();
+
   FCodeCur := 0;
   FCodePtr := @FCode[0];
   NewStack();
@@ -482,24 +506,16 @@ end;
 function TLapeCodeEmitterBase._DocPos(Pos: TDocPos; var Offset: Integer): Integer;
 begin
 {$IFDEF Lape_EmitPos}
-  Result := CheckOffset(Offset, SizeOf(TDocPos));
-  Pointer(PDocPos(@FCode[Offset])^.FileName) := nil;
-  PDocPos(@FCode[Offset])^ := Pos;
-  Inc(Offset, SizeOf(TDocPos));
+  Result := _Pointer(GetDocPos(Pos), Offset)
 {$ENDIF}
 end;
 
 function TLapeCodeEmitterBase._DocPos(Pos: PDocPos; var Offset: Integer): Integer;
 begin
   if (Pos = nil) then
-    Result := _DocPos(Offset)
+    Result := _DocPos(NullDocPos, Offset)
   else
     Result := _DocPos(Pos^, Offset);
-end;
-
-function TLapeCodeEmitterBase._DocPos(var Offset: Integer): Integer;
-begin
-  Result := _DocPos(NullDocPos, Offset);
 end;
 
 function TLapeCodeEmitterBase._op(op: opCode; var Offset: Integer; Pos: PDocPos = nil): Integer;
@@ -678,8 +694,6 @@ function TLapeCodeEmitterBase._DocPos(Pos: TDocPos): Integer;
   var o: Integer; begin o := -1; Result := _DocPos(Pos, o); end;
 function TLapeCodeEmitterBase._DocPos(Pos: PDocPos): Integer;
   var o: Integer; begin o := -1; Result := _DocPos(Pos, o); end;
-function TLapeCodeEmitterBase._DocPos: Integer;
-  var o: Integer; begin o := -1; Result := _DocPos(o); end;
 function TLapeCodeEmitterBase._op(op: opCode; Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _op(op, o, Pos); end;
 function TLapeCodeEmitterBase._IsInternal(Pos: PDocPos = nil): Integer;

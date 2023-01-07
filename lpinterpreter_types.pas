@@ -66,7 +66,7 @@ type
   {$I lpinterpreter_evalrecords.inc}
 
 const
-  ocSize = SizeOf(opCode) {$IFDEF Lape_EmitPos}+SizeOf(TDocPos){$ENDIF};
+  ocSize = SizeOf(opCode) {$IFDEF Lape_EmitPos}+SizeOf(Pointer){$ENDIF};
 
   Try_NoFinally: UInt32 = UInt32(-1);
   Try_NoExcept: UInt32 = UInt32(-2);

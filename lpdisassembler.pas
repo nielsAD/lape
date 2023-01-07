@@ -256,7 +256,7 @@ begin
     while True do
     begin
       {$IFDEF Lape_EmitPos}
-      with PDocPos(PtrUInt(Code) + SizeOf(opCode))^ do
+      with PDocPos(PPointer(PtrUInt(Code) + SizeOf(opCode))^)^ do
         if (p.FileName <> FileName) or (p.Line <> Line) or (p.Col <> Col) then
         begin
           p.FileName := FileName;
@@ -269,7 +269,7 @@ begin
     end;
   except
     on E: Exception do
-      LapeExceptionFmt(lpeRuntime, [E.Message] {$IFDEF Lape_EmitPos}, PDocPos(PtrUInt(Code) + SizeOf(opCode))^ {$ENDIF});
+      LapeExceptionFmt(lpeRuntime, [E.Message] {$IFDEF Lape_EmitPos}, PDocPos(PPointer(PtrUInt(Code) + SizeOf(opCode))^)^ {$ENDIF});
   end;
 end;
 
