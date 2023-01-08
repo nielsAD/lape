@@ -37,23 +37,76 @@ uses
 {$OverFlowChecks Off}
 
 type
-  TInJump = record
-    JumpException: record
-      Obj: Exception;
-      Pos: PDocPos;
+  TJumpException = class
+    Obj: Exception;
+    Pos: PDocPos;
+    StackTraceInfo: array of record
+      Address: TCodePos;
+      CalledFrom: PByte;
     end;
+  end;
+
+  TInJump = record
+    JumpException: TJumpException;
     JumpSafe: PByte;
   end;
 
 const
-  InEmptyJump: TInJump = (JumpException: (Obj: nil; Pos: nil); JumpSafe: nil);
+  InEmptyJump: TInJump = (JumpException: nil; JumpSafe: nil);
+
+function GetExceptionStackTrace(Emitter: TLapeCodeEmitter; Ex: TJumpException): lpString;
+
+  function FormatLine(Number: Integer; FuncName: String; DocPos: TDocPos): lpString;
+  begin
+    if (FuncName = 'main') then
+      FuncName := '"' + FuncName + '"'
+    else
+      FuncName := 'function "' + FuncName + '"';
+
+    if (DocPos.Col <> NullDocPos.Col) and (DocPos.Line <> NullDocPos.Line) then
+    begin
+      Result := LineEnding + '  ' + IntToStr(Number) + ') Line ' + IntToStr(DocPos.Line) + ' in ' + FuncName;
+      if (DocPos.FileName <> '') then
+        Result := Result + ' in file "' + DocPos.FileName + '"';
+    end else
+      Result := LineEnding + '  ' + IntToStr(Number) + ') ' + FuncName;
+  end;
+
+var
+  i, Number: Integer;
+  DocPos: TDocPos;
+begin
+  Result := 'Stack trace:';
+
+  Number := 1;
+  with Ex do
+  begin
+    Result := Result + FormatLine(0, Emitter.CodePointerName[StackTraceInfo[High(StackTraceInfo)].Address], Pos^);
+
+    for i := High(StackTraceInfo) downto 0 do
+    begin
+      {$IFDEF Lape_EmitPos}
+      DocPos := PDocPos(PPointer(StackTraceInfo[i].CalledFrom + SizeOf(opCode))^)^;
+      {$ELSE}
+      DocPos := NullDocPos;
+      {$ENDIF}
+
+      if (i > 0) then
+        Result := Result + FormatLine(Number, Emitter.CodePointerName[StackTraceInfo[i - 1].Address], DocPos)
+      else
+        Result := Result + FormatLine(Number, 'main', DocPos);
+
+      Inc(Number);
+    end;
+  end;
+end;
 
 procedure MergeJumps(var AJump: TInJump; const Merge: TInJump);
 begin
-  if (Merge.JumpException.Obj <> nil) then
+  if (Merge.JumpException <> nil) then
   begin
-    if (AJump.JumpException.Obj <> nil) and (AJump.JumpException.Obj <> Merge.JumpException.Obj) then
-      Merge.JumpException.Obj.Free()
+    if (AJump.JumpException <> nil) and (AJump.JumpException <> Merge.JumpException) then
+      Merge.JumpException.Free()
     else
       AJump.JumpException := Merge.JumpException;
   end;
@@ -92,6 +145,7 @@ var
   InJump: TInJump;
 
   CallStack: array of record
+    Address: TCodePos;
     CalledFrom: PByte;
     JumpBack: PByte;
     StackP, VarStackP: UInt32;
@@ -284,7 +338,7 @@ var
 
   procedure DoCatchException;
   begin
-    if (InJump.JumpException.Obj <> nil) then
+    if (InJump.JumpException <> nil) then
     begin
       if IsLapeException(InJump.JumpException.Obj) then
       begin
@@ -297,7 +351,9 @@ var
           PreviousException.Loc := InJump.JumpException.Pos^;
       end;
 
-      FreeAndNil(InJump.JumpException.Obj);
+      InJump.JumpException.Obj.Free();
+
+      FreeAndNil(InJump.JumpException);
     end;
 
     Inc(Code, ocSize);
@@ -466,7 +522,7 @@ var
 
   procedure DoEndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (InJump.JumpException.Obj <> nil) then
+    if (InJump.JumpException <> nil) then
       HandleException()
     else if (InJump.JumpSafe <> nil) then
       HandleSafeJump()
@@ -484,6 +540,7 @@ var
 
     with CallStack[CallStackPos] do
     begin
+      Address := Jmp;
       CalledFrom := Code;
       JumpBack := PByte(PtrInt(Code) + ocSize + RecSize);
       VarStackP := VarStackPos;
@@ -521,7 +578,7 @@ var
   begin
     tmp := InJump;
     DoDecCall();
-    if (tmp.JumpException.Obj = InJump.JumpException.Obj) and (InJump.JumpException.Obj <> nil) then
+    if (tmp.JumpException = InJump.JumpException) and (InJump.JumpException <> nil) then
       HandleException()
     else if (tmp.JumpSafe = InJump.JumpSafe) and (InJump.JumpSafe <> nil) then
       HandleSafeJump();
@@ -548,6 +605,7 @@ var
   procedure DaLoop; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
     GoBack: Boolean;
+    i: Integer;
   label
     Start;
   begin
@@ -557,12 +615,24 @@ var
     try
       while (DoContinue = bTrue) do {$I lpinterpreter_opcodecase.inc}
     except
-      {$IFDEF Lape_EmitPos}
-      if (ExceptObject <> InJump.JumpException.Obj) then
-        InJump.JumpException.Pos := PPointer(PtrUInt(Code) + SizeOf(opCode))^;
-      {$ENDIF}
+      if (InJump.JumpException = nil) or (ExceptObject <> InJump.JumpException.Obj) then
+      begin
+        if (InJump.JumpException = nil) then
+          InJump.JumpException := TJumpException.Create();
 
+        SetLength(InJump.JumpException.StackTraceInfo, CallStackPos);
+        for i := 0 to CallStackPos - 1 do
+        begin
+          InJump.JumpException.StackTraceInfo[i].Address    := CallStack[i].Address;
+          InJump.JumpException.StackTraceInfo[i].CalledFrom := CallStack[i].CalledFrom;
+        end;
+
+        {$IFDEF Lape_EmitPos}
+        InJump.JumpException.Pos := PPointer(PtrUInt(Code) + SizeOf(opCode))^;
+        {$ENDIF}
+      end;
       InJump.JumpException.Obj := Exception(AcquireExceptionObject());
+
       HandleException();
       GoBack := True;
     end;
@@ -584,7 +654,10 @@ var
       goto Start;
   end;
 
+var
+  StackTrace: lpString;
 begin
+  Code := PByte(PtrUInt(Emitter.Code) + InitialJump);
   CodeBase := Emitter.Code;
   CodeUpper := Emitter.Code + Emitter.CodeLen;
   SetLength(Stack, StackSize);
@@ -610,18 +683,19 @@ begin
   InJump := InEmptyJump;
 
   try
-    Code := PByte(PtrUInt(CodeBase) + InitialJump);
     DaLoop();
   except
     on E: Exception do
     begin
+      StackTrace := GetExceptionStackTrace(Emitter, InJump.JumpException);
+
       if IsLapeException(E) then
-        LapeExceptionFmt(lpeRuntime, [lpException(E).Error], lpException(E).DocPos)
+        LapeExceptionRuntime(E as lpException, StackTrace)
       else
-      if (E = InJump.JumpException.Obj) and (InJump.JumpException.Pos <> nil) then
-        LapeExceptionFmt(lpeRuntime, [E.Message], InJump.JumpException.Pos^)
+      if (InJump.JumpException <> nil) and (E = InJump.JumpException.Obj) and (InJump.JumpException.Pos <> nil) then
+        LapeExceptionRuntime(E, StackTrace, InJump.JumpException.Pos^)
       else
-        LapeExceptionFmt(lpeRuntime, [E.Message]);
+        LapeExceptionRuntime(E, StackTrace, NullDocPos);
     end;
   end;
 end;
