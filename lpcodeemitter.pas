@@ -17,19 +17,19 @@ uses
 
 type
   PLapeEvalProc = ^TLapeEvalProc;
-  TLapeCodePointers = {$IFDEF FPC}specialize{$ENDIF} TLapeList<PCodePos>;
 
   TLapeCodeEmitterBase = class(TLapeBaseClass)
   protected
   type
+    TCodePosList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<PCodePos>;
+    TCodePosNameList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<lpString>;
     TDocPosList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<PDocPos>;
   protected
     FCode: TCodeArray;
     FCodePtr: PByte;
     FCodeCur: Integer;
-    FCodeSize: Integer;
-    FCodePointers: TLapeCodePointers;
-    FCodePointerNames: TLapeList_String;
+    FCodePointers: TCodePosList;
+    FCodePointerNames: TCodePosNameList;
     FDocPosList: TDocPosList;
 
     FMaxStack: Integer;
@@ -62,7 +62,6 @@ type
     function GetDocPos(DocPos: TDocPos): PDocPos;
     function GetCodePointerName(CodePos: TCodePos): lpString;
   public
-    CodeGrowSize: Word;
     FullEmit: Boolean;
 
     constructor Create; override;
@@ -70,14 +69,12 @@ type
     procedure Reset; virtual;
 
     function addCodePointer(p: PCodePos; Name: lpString = ''): Integer; virtual;
-    procedure deleteCodePointer(i: Integer); overload; virtual;
-    procedure deleteCodePointer(p: PCodePos); overload; virtual;
     procedure adjustCodePointers(Pos, Offset: Integer); virtual;
 
     procedure Delete(StartOffset, Len: Integer); overload; virtual;
     procedure Delete(StartOffset, Len: Integer; var Offset: Integer); overload; virtual;
 
-    procedure EnsureCodeGrowth(Len: Word); virtual;
+    procedure EnsureCodeGrowth(Len: Integer); virtual;
     function getCodeOffset(Offset: Integer): Integer; virtual;
     function CheckOffset(var Offset: Integer; Len: Word = 0): Integer; overload; virtual;
     function CheckOffset(Len: Word = 0): Integer; overload; virtual;
@@ -248,11 +245,10 @@ constructor TLapeCodeEmitterBase.Create;
 begin
   inherited;
 
-  FCodePointers := TLapeCodePointers.Create(nil, dupAccept, False);
-  FCodePointerNames := TLapeList_String.Create('', dupAccept, False);
+  FCodePointers := TCodePosList.Create(nil, dupAccept, False);
+  FCodePointerNames := TCodePosNameList.Create('', dupAccept, False);
   FDocPosList := TDocPosList.Create(nil, dupAccept, False);
 
-  CodeGrowSize := 256;
   FullEmit := True;
   Reset();
 end;
@@ -272,8 +268,7 @@ procedure TLapeCodeEmitterBase.Reset;
 var
   i: Integer;
 begin
-  FCodeSize := CodeGrowSize;
-  SetLength(FCode, FCodeSize);
+  FCodeCur := 0;
   FCodePointers.Clear();
   FCodePointerNames.Clear();
 
@@ -281,9 +276,8 @@ begin
     if (FDocPosList[i] <> nil) then
       Dispose(FDocPosList[I]);
   FDocPosList.Clear();
-
-  FCodeCur := 0;
-  FCodePtr := @FCode[0];
+  
+  EnsureCodeGrowth(0);
   NewStack();
 end;
 
@@ -295,16 +289,6 @@ begin
               FCodePointerNames.Add(Name);
   end else
     Result := -1;
-end;
-
-procedure TLapeCodeEmitterBase.deleteCodePointer(i: Integer);
-begin
-  FCodePointers.Delete(i);
-end;
-
-procedure TLapeCodeEmitterBase.deleteCodePointer(p: PCodePos);
-begin
-  FCodePointers.DeleteItem(p);
 end;
 
 procedure TLapeCodeEmitterBase.adjustCodePointers(Pos, Offset: Integer);
@@ -336,16 +320,15 @@ begin
     Dec(Offset, Len);
 end;
 
-procedure TLapeCodeEmitterBase.EnsureCodeGrowth(Len: Word);
+procedure TLapeCodeEmitterBase.EnsureCodeGrowth(Len: Integer);
 begin
-  if (FCodeCur + Len >= FCodeSize) then
+  if (FCodeCur + Len >= Length(FCode)) then
   begin
-    if (Len > CodeGrowSize) then
-      FCodeSize := FCodeSize + Len
+    if (Length(FCode) = 0) then
+      SetLength(FCode, 32768)
     else
-      FCodeSize := FCodeSize + CodeGrowSize;
+      SetLength(FCode, Length(FCode) * 2);
 
-    SetLength(FCode, FCodeSize);
     FCodePtr := @FCode[0];
   end;
 end;
