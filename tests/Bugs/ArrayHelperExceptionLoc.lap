@@ -1,0 +1,19 @@
+type
+  TIntArray = array of Int32;
+
+procedure TIntArray.Foo;
+begin
+  Self.First();
+end;
+
+procedure TIntArray.Bar;
+begin
+  Self.First();
+end;
+
+var
+  Arr: TIntArray;
+
+begin
+  Arr.Bar();
+end;
