@@ -54,49 +54,53 @@ type
 const
   InEmptyJump: TInJump = (JumpException: nil; JumpSafe: nil);
 
-function GetExceptionStackTrace(Emitter: TLapeCodeEmitter; Ex: TJumpException): lpString;
+function GetExceptionStackTrace(Emitter: TLapeCodeEmitter; JumpException: TJumpException): lpString;
 
-  function FormatLine(Number: Integer; FuncName: String; DocPos: TDocPos): lpString;
+  function FormatLine(Number: Integer; FuncName: String; Pos: PDocPos): lpString;
   begin
     if (FuncName = 'main') then
       FuncName := '"' + FuncName + '"'
     else
       FuncName := 'function "' + FuncName + '"';
 
-    if (DocPos.Col <> NullDocPos.Col) and (DocPos.Line <> NullDocPos.Line) then
+    if (Pos <> nil) and (Pos^.Col <> NullDocPos.Col) and (Pos^.Line <> NullDocPos.Line) then
     begin
-      Result := LineEnding + '  ' + IntToStr(Number) + ') Line ' + IntToStr(DocPos.Line) + ' in ' + FuncName;
-      if (DocPos.FileName <> '') then
-        Result := Result + ' in file "' + DocPos.FileName + '"';
+      Result := LineEnding + '  ' + IntToStr(Number) + ') Line ' + IntToStr(Pos^.Line) + ' in ' + FuncName;
+      if (Pos^.FileName <> '') then
+        Result := Result + ' in file "' + Pos^.FileName + '"';
     end else
       Result := LineEnding + '  ' + IntToStr(Number) + ') ' + FuncName;
   end;
 
 var
   i, Number: Integer;
-  DocPos: TDocPos;
+  DocPos: PDocPos;
 begin
   Result := 'Stack trace:';
 
-  Number := 1;
-  with Ex do
+  with JumpException do
   begin
-    Result := Result + FormatLine(0, Emitter.CodePointerName[StackTraceInfo[High(StackTraceInfo)].Address], Pos^);
-
-    for i := High(StackTraceInfo) downto 0 do
+    if (Length(StackTraceInfo) = 0) then
+      Result := Result + FormatLine(0, 'main', Pos)
+    else
     begin
-      {$IFDEF Lape_EmitPos}
-      DocPos := PDocPos(PPointer(StackTraceInfo[i].CalledFrom + SizeOf(opCode))^)^;
-      {$ELSE}
-      DocPos := NullDocPos;
-      {$ENDIF}
+      Result := Result + FormatLine(0, Emitter.CodePointerName[StackTraceInfo[High(StackTraceInfo)].Address], Pos);
 
-      if (i > 0) then
-        Result := Result + FormatLine(Number, Emitter.CodePointerName[StackTraceInfo[i - 1].Address], DocPos)
-      else
-        Result := Result + FormatLine(Number, 'main', DocPos);
+      Number := 1;
+      for i := High(StackTraceInfo) downto 0 do
+      begin
+        DocPos := @NullDocPos;
+        {$IFDEF Lape_EmitPos}
+        DocPos := PPointer(StackTraceInfo[i].CalledFrom + SizeOf(opCode))^;
+        {$ENDIF}
 
-      Inc(Number);
+        if (i > 0) then
+          Result := Result + FormatLine(Number, Emitter.CodePointerName[StackTraceInfo[i - 1].Address], DocPos)
+        else
+          Result := Result + FormatLine(Number, 'main', DocPos);
+
+        Inc(Number);
+      end;
     end;
   end;
 end;
