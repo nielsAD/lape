@@ -3404,7 +3404,7 @@ begin
   Method := AMethod;
   SelfVar := NullResVar;
   FStackInfo := AStackInfo;
-  FExitStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
+  FExitStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
 end;
 
 destructor TLapeTree_Method.Destroy;
@@ -3975,7 +3975,7 @@ begin
   inherited Create(ACompiler, ADocPos);
 
   FValues := TLapeStatementList.Create(nil, dupAccept, False);
-  FFallThroughStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, False);
+  FFallThroughStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, False);
 end;
 
 destructor TLapeTree_CaseBranch.Destroy;
@@ -4217,8 +4217,8 @@ end;
 constructor TLapeTree_While.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
-  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
+  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
+  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
 end;
 
 destructor TLapeTree_While.Destroy;
@@ -4620,8 +4620,8 @@ begin
   FCondition := nil;
   FBody := nil;
 
-  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
-  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupIgnore, True);
+  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
+  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
 end;
 
 destructor TLapeTree_Repeat.Destroy;

@@ -21,6 +21,7 @@ type
     ocGetExceptionLocation,
     ocGetCallerLocation,
     ocGetScriptMethodName,
+    ocDumpCallStack,
     ocInitStackLen,                                            //InitStackLen TStackOffset
     ocInitStack,                                               //InitStack TStackOffset
     ocGrowStack,                                               //GrowStack TStackOffset

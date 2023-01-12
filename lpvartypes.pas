@@ -3545,8 +3545,8 @@ begin
   inherited Create(nil, False);
 
   Owner := AOwner;
-  FVarStack := TLapeVarStack.Create(nil, dupIgnore, False);
-  FWithStack := TLapeWithDeclarationList.Create(NullWithDecl, dupIgnore, False);
+  FVarStack := TLapeVarStack.Create(nil, dupAccept, False);
+  FWithStack := TLapeWithDeclarationList.Create(NullWithDecl, dupAccept, False);
   FreeVars := ManageVars;
   CodePos := -1;
 

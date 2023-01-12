@@ -14,6 +14,7 @@ case opCodeP(Code)^ of
   ocGetExceptionLocation: DoGetExceptionLocation();
   ocGetCallerLocation: DoGetCallerLocation();
   ocGetScriptMethodName: DoGetScriptMethodName();
+  ocDumpCallStack: DoDumpCallStack();
   ocInitStackLen: DoInitStackLen();
   ocInitStack: DoInitStack();
   ocGrowStack: DoGrowStack();

@@ -36,7 +36,7 @@ var
 implementation
 
 uses
-  lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, {_lpgenerateevalfunctions,}
+  lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, lpmessages,
   ffi, lpffi, lpffiwrappers;
 
 {$R *.lfm}
@@ -128,6 +128,12 @@ begin
         m.Lines.Add('Running Time: ' + IntToStr(GetTickCount64() - t) + 'ms.');
       end;
     except
+      on E: lpException do
+      begin
+        m.Lines.Add(E.Message);
+        if (E.StackTrace <> '') then
+          m.Lines.Add(E.StackTrace);
+      end;
       on E: Exception do
         m.Lines.Add(E.Message);
     end;

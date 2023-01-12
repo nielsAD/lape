@@ -120,6 +120,8 @@ type
     function _GetCallerLocation(Pos: PDocPos = nil): Integer; overload;
     function _GetScriptMethodName(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _GetScriptMethodName(Pos: PDocPos = nil): Integer; overload;
+    function _DumpCallStack(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _DumpCallStack(Pos: PDocPos = nil): Integer; overload;
     function _ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _ReRaiseException(Pos: PDocPos = nil): Integer; overload;
     function _InitStackLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
@@ -537,6 +539,12 @@ begin
   DecStack(SizeOf(Pointer) - SizeOf(ShortString));
 end;
 
+function TLapeCodeEmitterBase._DumpCallStack(var Offset: Integer; Pos: PDocPos = nil): Integer;
+begin
+  Result := _op(ocDumpCallStack, Offset, Pos);
+  IncStack(SizeOf(lpString));
+end;
+
 function TLapeCodeEmitterBase._ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocReRaiseException, Offset, Pos);
@@ -689,6 +697,8 @@ function TLapeCodeEmitterBase._GetCallerLocation(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _GetCallerLocation(o, Pos); end;
 function TLapeCodeEmitterBase._GetScriptMethodName(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _GetScriptMethodName(o, Pos); end;
+function TLapeCodeEmitterBase._DumpCallStack(Pos: PDocPos = nil): Integer;
+  var o: Integer; begin o := -1; Result := _DumpCallStack(o, Pos); end;
 function TLapeCodeEmitterBase._ReRaiseException(Pos: PDocPos): Integer;
   var o: Integer; begin o := -1; Result := _ReRaiseException(o, Pos); end;
 

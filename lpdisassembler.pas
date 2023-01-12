@@ -72,6 +72,13 @@ var
     Inc(Code, ocSize);
   end;
 
+  procedure DoDumpCallStack;
+  begin
+    _WriteLn('DumpCallStack');
+    _WriteLn('IncStack %d', [SizeOf(lpString)]);
+    Inc(Code, ocSize);
+  end;
+
   procedure DoGetScriptMethodName;
   begin
     _WriteLn('GetScriptMethodName');

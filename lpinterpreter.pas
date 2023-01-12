@@ -37,13 +37,15 @@ uses
 {$OverFlowChecks Off}
 
 type
+  TStackTraceInfo = array of record
+    Address: TCodePos;
+    CalledFrom: PByte;
+  end;
+
   TJumpException = class
     Obj: Exception;
     Pos: PDocPos;
-    StackTraceInfo: array of record
-      Address: TCodePos;
-      CalledFrom: PByte;
-    end;
+    StackTraceInfo: TStackTraceInfo;
   end;
 
   TInJump = record
@@ -54,7 +56,7 @@ type
 const
   InEmptyJump: TInJump = (JumpException: nil; JumpSafe: nil);
 
-function GetExceptionStackTrace(Emitter: TLapeCodeEmitter; JumpException: TJumpException): lpString;
+function GetStackTrace(Emitter: TLapeCodeEmitter; StackTraceInfo: TStackTraceInfo; Pos: PDocPos): lpString;
 
   function FormatLine(Number: Integer; FuncName: String; Pos: PDocPos): lpString;
   begin
@@ -76,31 +78,28 @@ var
   i, Number: Integer;
   DocPos: PDocPos;
 begin
-  Result := 'Stack trace:';
+  Result := 'Stack Trace:';
 
-  with JumpException do
+  if (Length(StackTraceInfo) = 0) then
+    Result := Result + FormatLine(0, 'main', Pos)
+  else
   begin
-    if (Length(StackTraceInfo) = 0) then
-      Result := Result + FormatLine(0, 'main', Pos)
-    else
+    Result := Result + FormatLine(0, Emitter.CodePointerName[StackTraceInfo[High(StackTraceInfo)].Address], Pos);
+
+    Number := 1;
+    for i := High(StackTraceInfo) downto 0 do
     begin
-      Result := Result + FormatLine(0, Emitter.CodePointerName[StackTraceInfo[High(StackTraceInfo)].Address], Pos);
+      DocPos := @NullDocPos;
+      {$IFDEF Lape_EmitPos}
+      DocPos := PPointer(StackTraceInfo[i].CalledFrom + SizeOf(opCode))^;
+      {$ENDIF}
 
-      Number := 1;
-      for i := High(StackTraceInfo) downto 0 do
-      begin
-        DocPos := @NullDocPos;
-        {$IFDEF Lape_EmitPos}
-        DocPos := PPointer(StackTraceInfo[i].CalledFrom + SizeOf(opCode))^;
-        {$ENDIF}
+      if (i > 0) then
+        Result := Result + FormatLine(Number, Emitter.CodePointerName[StackTraceInfo[i - 1].Address], DocPos)
+      else
+        Result := Result + FormatLine(Number, 'main', DocPos);
 
-        if (i > 0) then
-          Result := Result + FormatLine(Number, Emitter.CodePointerName[StackTraceInfo[i - 1].Address], DocPos)
-        else
-          Result := Result + FormatLine(Number, 'main', DocPos);
-
-        Inc(Number);
-      end;
+      Inc(Number);
     end;
   end;
 end;
@@ -322,6 +321,23 @@ var
     {$ENDIF}
 
     Inc(StackPos, SizeOf(Pointer));
+    Inc(Code, ocSize);
+  end;
+
+  procedure DoDumpCallStack;
+  var
+    StackTraceInfo: TStackTraceInfo;
+    i: Integer;
+  begin
+    SetLength(StackTraceInfo, CallStackPos);
+    for i := 0 to High(StackTraceInfo) do
+    begin
+      StackTraceInfo[i].Address := CallStack[i].Address;
+      StackTraceInfo[i].CalledFrom := CallStack[i].CalledFrom;
+    end;
+    PlpString(@Stack[StackPos])^ := GetStackTrace(Emitter, StackTraceInfo, PPointer(Code + SizeOf(opCode))^);
+
+    Inc(StackPos, SizeOf(lpString));
     Inc(Code, ocSize);
   end;
 
@@ -691,7 +707,7 @@ begin
   except
     on E: Exception do
     begin
-      StackTrace := GetExceptionStackTrace(Emitter, InJump.JumpException);
+      StackTrace := GetStackTrace(Emitter, InJump.JumpException.StackTraceInfo, InJump.JumpException.Pos);
 
       if IsLapeException(E) then
         LapeExceptionRuntime(E as lpException, StackTrace)

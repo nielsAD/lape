@@ -295,6 +295,12 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_DumpCallStack = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
 implementation
 
 uses
@@ -2771,6 +2777,33 @@ begin
     Result := FDest;
   end
   else
+    Dest := NullResVar;
+end;
+
+constructor TLapeTree_InternalMethod_DumpCallStack.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FResType := ACompiler.getBaseType(ltString);
+end;
+
+function TLapeTree_InternalMethod_DumpCallStack.Compile(var Offset: Integer): TResVar;
+begin
+  Result := NullResVar;
+
+  FCompiler.Emitter._DumpCallStack(Offset, @_DocPos);
+
+  Result.VarPos.MemPos := mpStack;
+  Result.VarType := resType();
+
+  if (FDest.VarPos.MemPos = mpVar) then
+  begin
+    Dest := _ResVar.New(Compiler.getTempVar(Result.VarType));
+    Dest.isConstant := True;
+
+    FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
+
+    Result := FDest;
+  end else
     Dest := NullResVar;
 end;
 
