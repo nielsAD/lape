@@ -23,7 +23,7 @@ type
 
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap); overload;
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase); overload;
-procedure DisassembleCode(Code: PByte; PointerNames: TLapeDeclArray = nil); overload;
+procedure DisassembleCode(Code: PByte; PointerNames: array of TLapeDeclArray); overload;
 
 implementation
 
@@ -329,22 +329,23 @@ begin
   end;
 end;
 
-procedure DisassembleCode(Code: PByte; PointerNames: TLapeDeclArray = nil);
+procedure DisassembleCode(Code: PByte; PointerNames: array of TLapeDeclArray);
 var
   pMap: TLapeDisassemblerPointerMap;
-  i: Integer;
+  i,j: Integer;
 begin
   pMap := TLapeDisassemblerPointerMap.Create('', dupIgnore, True);
   try
     Disassemble__EvalProcs(pMap);
 
     for i := 0 to High(PointerNames) do
-      if (PointerNames[i].Name = '') and (PointerNames[i] is TLapeGlobalVar) then
-        pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0))] := string(TLapeGlobalVar(PointerNames[i]).AsString)
-      else if (PointerNames[i] is TLapeGlobalVar) then
-        pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i]).Ptr), 0))] := string(PointerNames[i].Name)
-      else
-        pMap[lpString(IntToHex(PtrUInt(PointerNames[i]), 0))] := string(PointerNames[i].Name);
+      for j := 0 to High(PointerNames[i]) do
+        if (PointerNames[i][j].Name = '') and (PointerNames[i][j] is TLapeGlobalVar) then
+          pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i][j]).Ptr), 0))] := string(TLapeGlobalVar(PointerNames[i][j]).AsString)
+        else if (PointerNames[i][j] is TLapeGlobalVar) then
+          pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i][j]).Ptr), 0))] := string(PointerNames[i][j].Name)
+        else
+          pMap[lpString(IntToHex(PtrUInt(PointerNames[i][j]), 0))] := string(PointerNames[i][j].Name);
 
     DisassembleCode(Code, pMap);
   finally

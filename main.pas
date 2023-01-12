@@ -12,9 +12,6 @@ uses
 type
   TForm1 = class(TForm)
     btnRun: TButton;
-    btnMemLeaks: TButton;
-    btnEvalRes: TButton;
-    btnEvalArr: TButton;
     btnDisassemble: TButton;
     e: TSynEdit;
     m: TMemo;
@@ -22,9 +19,6 @@ type
     Splitter1: TSplitter;
     PasSyn: TSynFreePascalSyn;
     procedure btnDisassembleClick(Sender: TObject);
-    procedure btnMemLeaksClick(Sender: TObject);
-    procedure btnEvalResClick(Sender: TObject);
-    procedure btnEvalArrClick(Sender: TObject);
     procedure btnRunClick(Sender: TObject);
   private
     procedure WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
@@ -36,8 +30,7 @@ var
 implementation
 
 uses
-  lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, lpmessages,
-  ffi, lpffi, lpffiwrappers;
+  lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, lpmessages, lpffi, ffi;
 
 {$R *.lfm}
 
@@ -60,27 +53,7 @@ begin
   WriteLn();
 end;
 
-procedure MyStupidProc(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-var
-  x: TIntegerArray;
-begin
-  SetLength(x, 5);
-  TIntegerArray(Result^) := x;
-end;
-
 procedure Compile(Run, Disassemble: Boolean);
-
-  function CombineDeclArray(a, b: TLapeDeclArray): TLapeDeclArray;
-  var
-    i, l: Integer;
-  begin
-    Result := a;
-    l := Length(a);
-    SetLength(Result, l + Length(b));
-    for i := High(b) downto 0 do
-      Result[l + i] := b[i];
-  end;
-
 var
   t: UInt64;
   Parser: TLapeTokenizerBase;
@@ -96,12 +69,9 @@ begin
 
     InitializeFFI(Compiler);
     InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
-    ExposeGlobals(Compiler);
 
-    Compiler.StartImporting();
-    Compiler.addGlobalMethod('procedure _write(s: string); override;', @MyWrite, Form1);
-    Compiler.addGlobalMethod('procedure _writeln; override;', @MyWriteLn, Form1);
-    Compiler.addGlobalFunc('function MyStupidProc: array of integer', @MyStupidProc);
+    Compiler.addGlobalMethod('procedure _Write(s: string); override;', @MyWrite, Form1);
+    Compiler.addGlobalMethod('procedure _WriteLn; override;', @MyWriteLn, Form1);
 
     try
       t := GetTickCount64();
@@ -119,7 +89,7 @@ begin
 
     try
       if Disassemble then
-        DisassembleCode(Compiler.Emitter.Code, CombineDeclArray(Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue)));
+        DisassembleCode(Compiler.Emitter.Code, [Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue)]);
 
       if Run then
       begin
@@ -158,70 +128,6 @@ end;
 procedure TForm1.btnDisassembleClick(Sender: TObject);
 begin
   Compile(True, True);
-end;
-
-procedure TForm1.btnMemLeaksClick(Sender: TObject);
-var
-  i: Integer;
-begin
-  //WriteLn(Ord(Low(opCode)), '..', Ord(High(opCode)));
-  {$IFDEF Lape_TrackObjects}
-  for i := 0 to lpgList.Count - 1 do
-    WriteLn('unfreed: ', TLapeBaseClass(lpgList[i]).ClassName, ' -- [',  PtrInt(lpgList[i]), ']');
-  {$ENDIF}
-end;
-
-procedure TForm1.btnEvalResClick(Sender: TObject);
-begin
-  e.ClearAll;
-  //LapePrintEvalRes;
-end;
-
-type
-  ttest = array of string;
-
-function testHoi(a: string): ttest; cdecl;
-begin
-  SetLength(Result, 3);
-  Result[0] := 'Hello ' + a;
-end;
-
-const
-  header = 'function testHoi(a: string): array of string;';
-
-procedure testCall;
-var
-  Compiler: TLapeCompiler;
-  Cif: TFFICifManager;
-  Arg1: string;
-  Res: ttest;
-begin
-  Arg1 := 'hoi';
-  //Res := testHoi(Arg1);
-  //Dec(PPtrInt(PtrInt(Arg1) - SizeOf(Pointer))^);
-  //res := 'hoi';
-
-  Compiler := TLapeCompiler.Create(nil);
-  try
-    Cif := LapeHeaderToFFICif(Compiler, header);
-    try
-      Cif.Call(@testHoi, @res, [@arg1]);
-      WriteLn('Result: ', Res[0], ' :: ', Arg1, ' :: ');
-      WriteLn(Res[0], PPtrInt(PtrInt(Res) - SizeOf(Pointer)*2)^);
-    finally
-      Cif.Free();
-    end;
-  finally
-    Compiler.Free();
-  end;
-end;
-
-procedure TForm1.btnEvalArrClick(Sender: TObject);
-begin
-  //m.Clear;
-  //LapePrintEvalArr;
-
-  testCall();
 end;
 
 {$IF DEFINED(MSWINDOWS) AND DECLARED(LoadFFI)}

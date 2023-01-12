@@ -1,3 +1,10 @@
+{
+  Author: Niels A.D
+  Project: Lape (https://github.com/nielsAD/lape)
+  License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
+
+  Interpreter types and opcodes.
+}
 unit lpinterpreter_types;
 
 {$I lape.inc}
