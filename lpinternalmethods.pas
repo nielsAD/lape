@@ -887,12 +887,12 @@ end;
 constructor TLapeTree_InternalMethod_GetExceptionMessage.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FResType := ACompiler.getBaseType(ltShortString);
+  FResType := ACompiler.getBaseType(ltString);
 end;
 
 function TLapeTree_InternalMethod_GetExceptionMessage.Compile(var Offset: Integer): TResVar;
 
-  function InTry: Boolean;
+  function InExceptBlock: Boolean;
   var
     Node: TLapeTree_Base;
   begin
@@ -902,7 +902,7 @@ function TLapeTree_InternalMethod_GetExceptionMessage.Compile(var Offset: Intege
     begin
       if (Node.Parent is TLapeTree_Try) then
         with Node.Parent as TLapeTree_Try do
-          if (Node = ExceptBody) or (Node = FinallyBody) then
+          if (Node = ExceptBody) then
             Exit(True);
 
       Node := Node.Parent;
@@ -911,30 +911,27 @@ function TLapeTree_InternalMethod_GetExceptionMessage.Compile(var Offset: Intege
     Result := False;
   end;
 
+var
+  TempVar, DestVar: TResVar;
 begin
+  Dest := NullResVar;
   Result := NullResVar;
+  TempVar := NullResVar;
 
-  if (not InTry()) then
-    LapeException(lpeOutsideExceptionBlock, _DocPos);
+  if (not InExceptBlock()) then
+    LapeException(lpeOutsideExceptBlock, DocPos);
+
+  Result := _ResVar.New(FCompiler.getTempVar(ltString));
+  FCompiler.VarToDefault(Result, Offset);
+
+  DestVar := NullResVar;
+  DestVar.VarPos.MemPos := mpStack;
+  DestVar.VarType := FCompiler.getBaseType(ltPointer);
+  DestVar.VarType.Eval(op_Assign, TempVar, DestVar, Result.VarType.Eval(op_Addr, TempVar, Result, NullResVar, [], Offset), [], Offset, @_DocPos);
 
   FCompiler.Emitter._GetExceptionMessage(Offset, @_DocPos);
 
-  Result.VarPos.MemPos := mpStack;
-  Result.VarType := resType();
-
-  if (FDest.VarPos.MemPos = mpVar) and ((not FDest.HasType()) or FDest.VarType.Equals(Result.VarType)) then
-  begin
-    if (not FDest.HasType()) then
-    begin
-      Dest := _ResVar.New(Compiler.getTempVar(Result.VarType));
-      Dest.isConstant := True;
-    end;
-
-    FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
-    Result := FDest;
-  end
-  else
-    Dest := NullResVar;
+  Result.isConstant := True;
 end;
 
 function TLapeTree_InternalMethod_Break.Compile(var Offset: Integer): TResVar;
@@ -2787,24 +2784,47 @@ begin
 end;
 
 function TLapeTree_InternalMethod_DumpCallStack.Compile(var Offset: Integer): TResVar;
+var
+  TempVar, DestVar, ParamVar, OffsetVar: TResVar;
 begin
+  Dest := NullResVar;
   Result := NullResVar;
+  TempVar := NullResVar;
+
+  if (Params.Count > 1) then
+    LapeException(lpeTooMuchParameters, DocPos);
+
+  if isEmpty(FParams[0]) then
+    OffsetVar := _ResVar.New(FCompiler.getConstant(0, ltInt32))
+  else
+  begin
+    if (not FParams[0].CompileToTempVar(Offset, ParamVar)) or (not (ParamVar.VarType.BaseType in LapeIntegerTypes)) then
+      LapeExceptionFmt(lpeExpected, ['Integer'], DocPos);
+
+    OffsetVar := _ResVar.New(FCompiler.getTempVar(ltInt32));
+    OffsetVar := OffsetVar.VarType.Eval(op_Assign, TempVar, OffsetVar, ParamVar, [], Offset);
+
+    ParamVar.Spill(1);
+  end;
+
+  DestVar := NullResVar;
+  DestVar.VarPos.MemPos := mpStack;
+  DestVar.VarType := OffsetVar.VarType;
+
+  OffsetVar.VarType.Eval(op_Assign, TempVar, DestVar, OffsetVar, [], Offset, @_DocPos);
+  OffsetVar.Spill(1);
+
+  Result := _ResVar.New(FCompiler.getTempVar(ltString));
+  FCompiler.VarToDefault(Result, Offset);
+
+  DestVar := NullResVar;
+  DestVar.VarPos.MemPos := mpStack;
+  DestVar.VarType := FCompiler.getBaseType(ltPointer);
+  DestVar.VarType.Eval(op_Assign, TempVar, DestVar, Result.VarType.Eval(op_Addr, TempVar, Result, NullResVar, [], Offset), [], Offset, @_DocPos);
 
   FCompiler.Emitter._DumpCallStack(Offset, @_DocPos);
 
-  Result.VarPos.MemPos := mpStack;
-  Result.VarType := resType();
-
-  if (FDest.VarPos.MemPos = mpVar) then
-  begin
-    Dest := _ResVar.New(Compiler.getTempVar(Result.VarType));
-    Dest.isConstant := True;
-
-    FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
-
-    Result := FDest;
-  end else
-    Dest := NullResVar;
+  Result.isConstant := True;
 end;
 
 end.

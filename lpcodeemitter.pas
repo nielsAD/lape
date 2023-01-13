@@ -518,7 +518,7 @@ end;
 function TLapeCodeEmitterBase._GetExceptionMessage(var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocGetExceptionMessage, Offset, Pos);
-  IncStack(SizeOf(ShortString));
+  DecStack(SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._GetExceptionLocation(var Offset: Integer; Pos: PDocPos = nil): Integer;
@@ -542,7 +542,7 @@ end;
 function TLapeCodeEmitterBase._DumpCallStack(var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocDumpCallStack, Offset, Pos);
-  IncStack(SizeOf(lpString));
+  DecStack(SizeOf(Int32) + SizeOf(Pointer));
 end;
 
 function TLapeCodeEmitterBase._ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer;

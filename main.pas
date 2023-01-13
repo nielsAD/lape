@@ -34,11 +34,6 @@ uses
 
 {$R *.lfm}
 
-procedure IntTest(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PInt32(Params^[0])^ := PInt32(Params^[0])^ + 1;
-end;
-
 procedure MyWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   with TForm1(Params^[0]) do

@@ -26,8 +26,8 @@ const
   TryStackSize = 512;
   CallStackSize = 512;
 
-procedure RunCode(Emitter: TLapeCodeEmitter; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
-procedure RunCode(Emitter: TLapeCodeEmitter; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0); overload;
+procedure RunCode(const Emitter: TLapeCodeEmitter; var DoContinue: TInitBool; const InitialVarStack: TByteArray = nil; const InitialJump: TCodePos = 0); overload;
+procedure RunCode(const Emitter: TLapeCodeEmitter; const InitialVarStack: TByteArray = nil; const InitialJump: TCodePos = 0); overload;
 
 implementation
 
@@ -104,7 +104,7 @@ begin
   end;
 end;
 
-procedure MergeJumps(var AJump: TInJump; const Merge: TInJump);
+procedure MergeJumps(var AJump: TInJump; const Merge: TInJump); {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   if (Merge.JumpException <> nil) then
   begin
@@ -123,7 +123,7 @@ begin
   Result := (E <> nil) and (E.ClassType = lpException) and (lpException(e).DocPos.Col <> NullDocPos.Col) and (lpException(e).DocPos.Line <> NullDocPos.Line);
 end;
 
-procedure RunCode(Emitter: TLapeCodeEmitter; var DoContinue: TInitBool; InitialVarStack: TByteArray = nil; InitialJump: TCodePos = 0);
+procedure RunCode(const Emitter: TLapeCodeEmitter; var DoContinue: TInitBool; const InitialVarStack: TByteArray; const InitialJump: TCodePos);
 const
   opNone: opCode = ocNone;
 var
@@ -157,6 +157,7 @@ var
   CallStackPos: UInt32;
 
   PreviousException: record
+    Exists: Boolean;
     Msg: lpString;
     Loc: TDocPos;
   end;
@@ -295,15 +296,21 @@ var
 
   procedure DoGetExceptionMessage;
   begin
-    PShortString(@Stack[StackPos])^ := PreviousException.Msg;
+    if PreviousException.Exists then
+      PlpString(PPointer(@Stack[StackPos - SizeOf(Pointer)])^)^ := PreviousException.Msg
+    else
+      PlpString(PPointer(@Stack[StackPos - SizeOf(Pointer)])^)^ := '';
 
-    Inc(StackPos, SizeOf(ShortString));
+    Dec(StackPos, SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetExceptionLocation;
   begin
-    PPointer(@Stack[StackPos])^ := @PreviousException.Loc;
+    if PreviousException.Exists then
+      PPointer(@Stack[StackPos])^ := @PreviousException.Loc
+    else
+      PPointer(@Stack[StackPos])^ := nil;
 
     Inc(StackPos, SizeOf(Pointer));
     Inc(Code, ocSize);
@@ -327,17 +334,33 @@ var
   procedure DoDumpCallStack;
   var
     StackTraceInfo: TStackTraceInfo;
-    i: Integer;
+    Offset, i: Integer;
+    Pos: PDocPos;
   begin
-    SetLength(StackTraceInfo, CallStackPos);
-    for i := 0 to High(StackTraceInfo) do
-    begin
-      StackTraceInfo[i].Address := CallStack[i].Address;
-      StackTraceInfo[i].CalledFrom := CallStack[i].CalledFrom;
-    end;
-    PlpString(@Stack[StackPos])^ := GetStackTrace(Emitter, StackTraceInfo, PPointer(Code + SizeOf(opCode))^);
+    Offset := PInt32(@Stack[StackPos - (SizeOf(Pointer) + SizeOf(Int32))])^;
 
-    Inc(StackPos, SizeOf(lpString));
+    if (Offset >= 0) and (Offset <= CallStackPos) then
+    begin
+      SetLength(StackTraceInfo, CallStackPos - Offset);
+      for i := 0 to High(StackTraceInfo) do
+      begin
+        StackTraceInfo[i].Address := CallStack[i].Address;
+        StackTraceInfo[i].CalledFrom := CallStack[i].CalledFrom;
+      end;
+
+      {$IFDEF Lape_EmitPos}
+      if (Offset > 0) then
+        Pos := PPointer(CallStack[CallStackPos - Offset].CalledFrom + SizeOf(opCode))^
+      else
+        Pos := PPointer(Code + SizeOf(opCode))^;
+      {$ELSE}
+      Pos := nil;
+      {$ENDIF}
+
+      PlpString(PPointer(@Stack[StackPos - SizeOf(Pointer)])^)^ := GetStackTrace(Emitter, StackTraceInfo, Pos);
+    end;
+
+    Dec(StackPos, SizeOf(Int32) + SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
@@ -353,13 +376,18 @@ var
   begin
     Inc(Code, ocSize);
 
-    LapeException(PreviousException.Msg, PreviousException.Loc);
+    if (not PreviousException.Exists) then
+      LapeException(lpeImpossible)
+    else
+      LapeException(PreviousException.Msg, PreviousException.Loc);
   end;
 
   procedure DoCatchException;
   begin
     if (InJump.JumpException <> nil) then
     begin
+      PreviousException.Exists := True;
+
       if IsLapeException(InJump.JumpException.Obj) then
       begin
         PreviousException.Msg := lpException(InJump.JumpException.Obj).Error;
@@ -549,8 +577,7 @@ var
     else
       Inc(Code, ocSize);
 
-    PreviousException.Msg := '';
-    PreviousException.Loc := NullDocPos;
+    PreviousException.Exists := False;
   end;
 
   procedure DoIncCall(const RecSize: Integer; const Jmp: TCodePos; const ParamSize: TParamSize; const StackPosOffset: TStackInc = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -687,12 +714,13 @@ begin
   VarStackIndex := 0;
   SetLength(VarStackStack, VarStackStackSize);
 
-  VarStackLen := Length(InitialVarStack);
-  if (VarStackLen < VarStackSize) then
-    SetLength(InitialVarStack, VarStackSize);
   VarStackStack[0].Stack := InitialVarStack;
+  if (Length(VarStackStack[0].Stack) < VarStackSize) then
+    SetLength(VarStackStack[0].Stack, VarStackSize);
   VarStack := VarStackStack[0].Stack;
+  VarStackLen := Length(VarStack);
 
+  PreviousException.Exists := False;
   PreviousException.Msg := '';
   PreviousException.Loc := NullDocPos;
 
@@ -720,11 +748,10 @@ begin
   end;
 end;
 
-procedure RunCode(Emitter: TLapeCodeEmitter; InitialVarStack: TByteArray; InitialJump: TCodePos);
+procedure RunCode(const Emitter: TLapeCodeEmitter; const InitialVarStack: TByteArray; const InitialJump: TCodePos);
 var
-  DoContinue: TInitBool;
+  DoContinue: TInitBool = bTrue;
 begin
-  DoContinue := bTrue;
   RunCode(Emitter, DoContinue, InitialVarStack, InitialJump);
 end;
 

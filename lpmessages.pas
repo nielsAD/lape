@@ -102,7 +102,6 @@ const
   lpeOutOfTypeRange1 = 'Out of type range (value:%d, low:%d, high:%d)';
   lpeOutOfTypeRangeLow  = 'Out of type range (value:%d, low:%d)';
   lpeOutOfTypeRangeHigh = 'Out of type range (value:%d, high:%d)';
-  lpeOutsideExceptionBlock = 'Can only be used in an except/finally block';
   lpeOutsideExceptBlock = 'Can only be used in an except block';
   lpeIndexOutOfRange = 'Index out of range (index:%d, low:%d, high:%d)';
   lpeIndexOutOfRangeLow  = 'Index out of range (index:%d, low:%d)';
