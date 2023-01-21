@@ -27,6 +27,7 @@ type
     ocGetExceptionMessage,                                     //GetExceptionMessage
     ocGetExceptionLocation,
     ocGetCallerLocation,
+    ocGetCallerAddress,
     ocGetScriptMethodName,
     ocDumpCallStack,
     ocInitStackLen,                                            //InitStackLen TStackOffset

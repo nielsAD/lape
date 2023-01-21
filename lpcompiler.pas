@@ -3787,6 +3787,7 @@ begin
   FInternalMethodMap['GetExceptionMessage'] := TLapeTree_InternalMethod_GetExceptionMessage;
   FInternalMethodMap['GetExceptionLocation'] := TLapeTree_InternalMethod_GetExceptionLocation;
   FInternalMethodMap['GetExceptionLocationStr'] := TLapeTree_InternalMethod_GetExceptionLocationStr;
+  FInternalMethodMap['GetCallerAddress'] := TLapeTree_InternalMethod_GetCallerAddress;
   FInternalMethodMap['GetCallerLocation'] := TLapeTree_InternalMethod_GetCallerLocation;
   FInternalMethodMap['GetCallerLocationStr'] := TLapeTree_InternalMethod_GetCallerLocationStr;
   FInternalMethodMap['GetScriptMethodName'] := TLapeTree_InternalMethod_GetScriptMethodName;

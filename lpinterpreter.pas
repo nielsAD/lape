@@ -331,6 +331,17 @@ var
     Inc(Code, ocSize);
   end;
 
+  procedure DoGetCallerAddress;
+  begin
+    if (CallStackPos < 1) then
+      PPointer(@Stack[StackPos])^ := nil
+    else
+      PPointer(@Stack[StackPos])^ := Pointer(CallStack[CallStackPos - 1].Address);
+
+    Inc(StackPos, SizeOf(Pointer));
+    Inc(Code, ocSize);
+  end;
+
   procedure DoDumpCallStack;
   var
     StackTraceInfo: TStackTraceInfo;

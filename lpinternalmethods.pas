@@ -267,6 +267,12 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_GetCallerAddress = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
   TLapeTree_InternalMethod_GetCallerLocation = class(TLapeTree_InternalMethod)
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
@@ -2654,6 +2660,35 @@ begin
   end;
 end;
 
+constructor TLapeTree_InternalMethod_GetCallerAddress.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+  FResType := ACompiler.getBaseType(ltPointer);
+end;
+
+function TLapeTree_InternalMethod_GetCallerAddress.Compile(var Offset: Integer): TResVar;
+begin
+  Result := NullResVar;
+
+  FCompiler.Emitter._GetCallerAddress(Offset, @_DocPos);
+  Result.VarPos.MemPos := mpStack;
+  Result.VarType := resType();
+
+  if (FDest.VarPos.MemPos = mpVar) and ((not FDest.HasType()) or FDest.VarType.Equals(Result.VarType)) then
+  begin
+    if (not FDest.HasType()) then
+    begin
+      Dest := _ResVar.New(Compiler.getTempVar(Result.VarType));
+      Dest.isConstant := True;
+    end;
+
+    FCompiler.Emitter._PopStackToVar(Result.VarType.Size, FDest.VarPos.StackVar.Offset, Offset, @_DocPos);
+    Result := FDest;
+  end
+  else
+    Dest := NullResVar;
+end;
+
 constructor TLapeTree_InternalMethod_GetCallerLocation.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
@@ -2746,7 +2781,7 @@ begin
 
   tmpVar := NullResVar;
   Param := FParams[0].Compile(Offset);
-  if (not Param.HasType()) or (not (Param.VarType is TLapeType_Method)) then
+  if (not Param.HasType()) or (not (Param.VarType.BaseType in [ltScriptMethod, ltPointer])) then
     LapeException(lpeInvalidCondition, DocPos);
 
   DestVar := NullResVar;

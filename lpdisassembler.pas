@@ -107,6 +107,13 @@ var
     Inc(Code, ocSize);
   end;
 
+  procedure DoGetCallerAddress;
+  begin
+    _WriteLn('GetCallerAddress');
+    _WriteLn('IncStack %d', [SizeOf(Pointer)]);
+    Inc(Code, ocSize);
+  end;
+
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('InitStackLen %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
