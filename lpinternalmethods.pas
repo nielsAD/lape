@@ -301,6 +301,11 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_GetCallerName = class(TLapeTree_InternalMethod_GetScriptMethodName)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+  end;
+
   TLapeTree_InternalMethod_DumpCallStack = class(TLapeTree_InternalMethod)
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
@@ -2687,6 +2692,13 @@ begin
   end
   else
     Dest := NullResVar;
+end;
+
+constructor TLapeTree_InternalMethod_GetCallerName.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+
+  addParam(TLapeTree_InternalMethod_GetCallerAddress.Create(Self));
 end;
 
 constructor TLapeTree_InternalMethod_GetCallerLocation.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

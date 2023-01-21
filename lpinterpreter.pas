@@ -333,10 +333,10 @@ var
 
   procedure DoGetCallerAddress;
   begin
-    if (CallStackPos < 1) then
+    if (CallStackPos < 2) then
       PPointer(@Stack[StackPos])^ := nil
     else
-      PPointer(@Stack[StackPos])^ := Pointer(CallStack[CallStackPos - 1].Address);
+      PPointer(@Stack[StackPos])^ := Pointer(CallStack[CallStackPos - 2].Address);
 
     Inc(StackPos, SizeOf(Pointer));
     Inc(Code, ocSize);
