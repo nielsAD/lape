@@ -153,6 +153,7 @@ type
   TLapeTokenizerBase = class(TLapeBaseDeclClass)
   protected
     FFileName: lpString;
+    FFileNameRelative: lpString;
     FLastTok: EParserToken;
     FTok: EParserToken;
     FTokStart: Integer;
@@ -179,6 +180,7 @@ type
     procedure setPos(APos: Integer); virtual;
     function getDocPos: TDocPos; override;
   public
+    RelativeFileNames: Boolean;
     OverridePos: PDocPos;
     NullPos: TDocPos;
 
@@ -1147,8 +1149,12 @@ begin
   else
     Result.Col := NullPos.Col + UInt32(FTokStart) - FDocPos.Col;
   if (FFileName <> '') then
-    Result.FileName := FFileName
-  else
+  begin
+    if RelativeFileNames then
+      Result.FileName := FFileNameRelative
+    else
+      Result.FileName := FFileName;
+  end else
     Result.FileName := NullPos.FileName;
 end;
 
@@ -1157,6 +1163,7 @@ begin
   inherited Create();
 
   FFileName := AFileName;
+  FFileNameRelative := ExtractRelativePath(IncludeTrailingPathDelimiter(GetCurrentDir()), FFileName);
   FOnParseDirective := nil;
   FOnHandleDirective := nil;
 

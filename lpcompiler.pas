@@ -431,8 +431,12 @@ begin
   Inc(FTokenizer);
   setTokenizer(ATokenizer);
 
-  if InPeek and (ATokenizer <> nil) then
-    __LapeTokenizerBase(Tokenizer).FInPeek := True;
+  if (ATokenizer <> nil) then
+  begin
+    ATokenizer.RelativeFileNames := (lcoRelativeFileNames in FOptions);
+    if InPeek then
+      __LapeTokenizerBase(Tokenizer).FInPeek := True;
+  end;
 end;
 
 function TLapeCompiler.popTokenizer: TLapeTokenizerBase;
@@ -1257,7 +1261,10 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
       Result := (lcoDuplicateLocalNameHints in FOptions)
     else
     if (Name = 'verbosecompile') then
-      Result := (lcoVerboseCompile in FOptions);
+      Result := (lcoVerboseCompile in FOptions)
+    else
+    if (Name = 'relativefilenames') then
+      Result := (lcoRelativeFileNames in FOptions);
   end;
 
   procedure switchConditional;
@@ -1547,6 +1554,9 @@ begin
     else
     if (Directive = 'verbosecompile') then
       setOption(lcoVerboseCompile)
+    else
+    if (Directive = 'relativefilenames') then
+      setOption(lcoRelativeFileNames)
     else
       Result := False;
   end;

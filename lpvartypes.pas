@@ -35,6 +35,7 @@ type
     lcoVerboseCompile,                 //      {$VERBOSECOMPILE}
     lcoDuplicateLocalNameHints,        //
     lcoArrayHelpers,                   //
+    lcoRelativeFileNames,              //
     lcoInitExternalResult              // Ensure empty result for external calls (useful for ffi)
   );
   ECompilerOptionsSet = set of ECompilerOption;
