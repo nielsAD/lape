@@ -1,0 +1,111 @@
+// LOOSEMETHODDECLARATION should be on by default
+type
+  SomeTypeT = record
+    SomeInt: Int32;
+  end;
+
+  TFoo = procedure;
+  TFoo2 = procedure();
+  TBar = function: Boolean;
+  TBar2 = function(): Boolean;
+
+procedure On_Proc_NoParas;
+begin
+end;
+
+procedure On_Proc_WithParas();
+begin
+end;
+
+procedure On_Proc_WithArg(I: Int32);
+begin
+end;
+
+procedure On_Proc_WithTwoArgs(I, H: Int32);
+begin
+end;
+
+procedure On_Proc_WithThreeArgs(I, H: Int32; S: String);
+begin
+end;
+
+procedure On_Proc_NoParas; override;
+begin
+end;
+
+procedure On_Proc_NoParas(); override;
+begin
+end;
+
+procedure On_Proc_WithArg; overload;
+begin
+end;
+
+procedure On_Proc_WithTwoArgs(); overload;
+begin
+end;
+
+function On_Func_NoParas: Boolean;
+begin
+end;
+
+function On_Func_WithParas(): Boolean;
+begin
+end;
+
+procedure SomeTypeT.On_Proc_NoParas;
+begin
+end;
+
+procedure SomeTypeT.On_Proc_WithParas();
+begin
+end;
+
+{$LOOSEMETHODDECLARATION off}
+type
+  TFoo3 = procedure();
+  TBar3 = function(): Boolean
+
+procedure Off_Proc_NoArgs();
+begin
+end;
+
+procedure Off_Proc_WithArg(I: Int32);
+begin
+end;
+
+procedure Off_Proc_WithTwoArgs(I, H: Int32);
+begin
+end;
+
+procedure Off_Proc_WithThreeArgs(I, H: Int32; S: String);
+begin
+end;
+
+procedure Off_Proc_NoArgs(); override;
+begin
+end;
+
+procedure Off_Proc_WithArg(); overload;
+begin
+end;
+
+procedure On_Proc_NoParas(); override;
+begin
+end;
+
+function Off_Func_NoArgs(): Boolean;
+begin
+end;
+
+procedure SomeTypeT.Off_Proc_WithParas();
+begin
+end;
+
+procedure SomeTypeT.On_Proc_NoParas(); override;
+begin
+end;
+{$LOOSEMETHODDECLARATION on}
+
+begin
+end;

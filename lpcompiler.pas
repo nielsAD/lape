@@ -1264,7 +1264,10 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
       Result := (lcoVerboseCompile in FOptions)
     else
     if (Name = 'relativefilenames') then
-      Result := (lcoRelativeFileNames in FOptions);
+      Result := (lcoRelativeFileNames in FOptions)
+    else
+    if (Name = 'loosemethoddeclaration') then
+      Result := (lcoLooseMethodDeclaration in FOptions);
   end;
 
   procedure switchConditional;
@@ -1558,6 +1561,9 @@ begin
     if (Directive = 'relativefilenames') then
       setOption(lcoRelativeFileNames)
     else
+    if (Directive = 'loosemethoddeclaration') then
+      setOption(lcoLooseMethodDeclaration)
+    else
       Result := False;
   end;
 end;
@@ -1816,55 +1822,62 @@ begin
     end;
 
     if (Token = tk_sym_ParenthesisOpen) or ((Token = tk_NULL) and isNext([tk_sym_ParenthesisOpen])) then
-    repeat
-      Param := NullParameter;
+    begin
+      repeat
+        Param := NullParameter;
 
-      case Next() of
-        tk_NULL: Break;
-        tk_sym_ParenthesisClose:
-          begin
-            if (Tokenizer.LastTok <> tk_sym_ParenthesisOpen) then
-              Expect(tk_sym_SemiColon, False, False);
-            Break;
-          end;
-        tk_kw_Const:    Param.ParType := lptConst;
-        tk_kw_ConstRef: Param.ParType := lptConstRef;
-        tk_kw_Out:   Param.ParType := lptOut;
-        tk_kw_Var:   Param.ParType := lptVar;
-      end;
-
-      Identifiers := ParseIdentifierList(Param.ParType <> NullParameter.ParType);
-      Expect([tk_sym_Colon, tk_sym_SemiColon, tk_sym_ParenthesisClose], False, False);
-      if (Tokenizer.Tok = tk_sym_Colon) then
-      begin
-        Param.VarType := ParseType(nil, True);
-        Param.VarType._DocPos := Tokenizer.DocPos;
-        if (Param.VarType = nil) then
-          LapeException(lpeTypeExpected, Tokenizer.DocPos);
-        Expect([tk_sym_Equals, tk_sym_SemiColon, tk_sym_ParenthesisClose], True, False);
-
-        if (Tokenizer.Tok = tk_sym_Equals) then
-        begin
-          Default := ParseExpression([tk_sym_ParenthesisClose], True, False).setExpectedType(Param.VarType) as TLapeTree_ExprBase;
-          try
-            Param.Default := Default.Evaluate();
-            if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or (not Param.Default.Writeable)) then
-              LapeException(lpeVariableExpected, Default.DocPos);
-          finally
-            Default.Free();
-          end;
-          Expect([tk_sym_SemiColon, tk_sym_ParenthesisClose], False, False);
+        case Next() of
+          tk_NULL: Break;
+          tk_sym_ParenthesisClose:
+            begin
+              if (Tokenizer.LastTok <> tk_sym_ParenthesisOpen) then
+                Expect(tk_sym_SemiColon, False, False);
+              Break;
+            end;
+          tk_kw_Const:    Param.ParType := lptConst;
+          tk_kw_ConstRef: Param.ParType := lptConstRef;
+          tk_kw_Out:   Param.ParType := lptOut;
+          tk_kw_Var:   Param.ParType := lptVar;
         end;
-      end
-      else if (not (Param.ParType in Lape_RefParams)) then
-        Expect(tk_sym_Colon, False, False);
 
-      for i := 0 to High(Identifiers) do
-      begin
-        addVar(Param.ParType, Param.VarType, Identifiers[i]);
-        Result.addParam(Param);
-      end;
-    until (Tokenizer.Tok = tk_sym_ParenthesisClose);
+        Identifiers := ParseIdentifierList(Param.ParType <> NullParameter.ParType);
+        Expect([tk_sym_Colon, tk_sym_SemiColon, tk_sym_ParenthesisClose], False, False);
+        if (Tokenizer.Tok = tk_sym_Colon) then
+        begin
+          Param.VarType := ParseType(nil, True);
+          Param.VarType._DocPos := Tokenizer.DocPos;
+          if (Param.VarType = nil) then
+            LapeException(lpeTypeExpected, Tokenizer.DocPos);
+          Expect([tk_sym_Equals, tk_sym_SemiColon, tk_sym_ParenthesisClose], True, False);
+
+          if (Tokenizer.Tok = tk_sym_Equals) then
+          begin
+            Default := ParseExpression([tk_sym_ParenthesisClose], True, False).setExpectedType(Param.VarType) as TLapeTree_ExprBase;
+            try
+              Param.Default := Default.Evaluate();
+              if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or (not Param.Default.Writeable)) then
+                LapeException(lpeVariableExpected, Default.DocPos);
+            finally
+              Default.Free();
+            end;
+            Expect([tk_sym_SemiColon, tk_sym_ParenthesisClose], False, False);
+          end;
+        end
+        else if (not (Param.ParType in Lape_RefParams)) then
+          Expect(tk_sym_Colon, False, False);
+
+        for i := 0 to High(Identifiers) do
+        begin
+          addVar(Param.ParType, Param.VarType, Identifiers[i]);
+          Result.addParam(Param);
+        end;
+      until (Tokenizer.Tok = tk_sym_ParenthesisClose);
+    end
+    else if not (lcoLooseMethodDeclaration in FOptions) then
+    begin
+      Next();
+      Expect(tk_sym_ParenthesisOpen, False, False);
+    end;
 
     if Result.isOperator then
     begin
