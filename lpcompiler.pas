@@ -1266,8 +1266,8 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (Name = 'relativefilenames') then
       Result := (lcoRelativeFileNames in FOptions)
     else
-    if (Name = 'loosemethoddeclaration') then
-      Result := (lcoLooseMethodDeclaration in FOptions);
+    if (Name = 'methoddeclarationparentheses') then
+      Result := (lcoMethodDeclarationParentheses in FOptions);
   end;
 
   procedure switchConditional;
@@ -1561,8 +1561,8 @@ begin
     if (Directive = 'relativefilenames') then
       setOption(lcoRelativeFileNames)
     else
-    if (Directive = 'loosemethoddeclaration') then
-      setOption(lcoLooseMethodDeclaration)
+    if (Directive = 'methoddeclarationparentheses') then
+      setOption(lcoMethodDeclarationParentheses)
     else
       Result := False;
   end;
@@ -1873,7 +1873,7 @@ begin
         end;
       until (Tokenizer.Tok = tk_sym_ParenthesisClose);
     end
-    else if not (lcoLooseMethodDeclaration in FOptions) then
+    else if lcoMethodDeclarationParentheses in FOptions then
     begin
       Next();
       LapeException(lpeMethodDeclarationParenthesesExpected, Tokenizer.DocPos);

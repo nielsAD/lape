@@ -37,13 +37,13 @@ type
     lcoArrayHelpers,                   //
     lcoRelativeFileNames,              //
     lcoInitExternalResult,             // Ensure empty result for external calls (useful for ffi)
-    lcoLooseMethodDeclaration          //      {$LOOSEMETHODDECLARATION}
+    lcoMethodDeclarationParentheses    //      {$METHODDECLARATIONPARENTHESES}
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress, lcoLooseMethodDeclaration];
+  Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
   Lape_PackRecordsDef = 8;
 
 type

@@ -1,4 +1,4 @@
-// LOOSEMETHODDECLARATION should be on by default
+// METHODDECLARATIONPARENTHESES should be off by default
 type
   SomeTypeT = record
     SomeInt: Int32;
@@ -8,6 +8,10 @@ type
   TFoo2 = procedure();
   TBar = function: Boolean;
   TBar2 = function(): Boolean;
+  TFoo3 = procedure of object;
+  TFoo4 = procedure() of object;
+  TBar3 = function: Boolean of object;
+  TBar4 = function(): Boolean of object;
 
 procedure On_Proc_NoParas;
 begin
@@ -63,12 +67,14 @@ end;
 
 operator +(Left, Right: SomeTypeT): SomeTypeT;
 begin
-end;  
+end;
 
-{$LOOSEMETHODDECLARATION off}
+{$METHODDECLARATIONPARENTHESES on}
 type
-  TFoo3 = procedure();
-  TBar3 = function(): Boolean;
+  TFoo5 = procedure();
+  TBar5 = function(): Boolean;
+  TFoo6 = procedure() of object;
+  TBar6 = function(): Boolean of object;
 
 procedure Off_Proc_NoArgs();
 begin
@@ -112,8 +118,8 @@ end;
 
 operator *(Left, Right: SomeTypeT): SomeTypeT;
 begin
-end; 
-{$LOOSEMETHODDECLARATION on}
+end;
+{$METHODDECLARATIONPARENTHESES off}
 
 begin
 end;
