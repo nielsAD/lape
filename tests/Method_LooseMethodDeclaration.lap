@@ -1,0 +1,125 @@
+// METHODDECLARATIONPARENTHESES should be off by default
+type
+  SomeTypeT = record
+    SomeInt: Int32;
+  end;
+
+  TFoo = procedure;
+  TFoo2 = procedure();
+  TBar = function: Boolean;
+  TBar2 = function(): Boolean;
+  TFoo3 = procedure of object;
+  TFoo4 = procedure() of object;
+  TBar3 = function: Boolean of object;
+  TBar4 = function(): Boolean of object;
+
+procedure On_Proc_NoParas;
+begin
+end;
+
+procedure On_Proc_WithParas();
+begin
+end;
+
+procedure On_Proc_WithArg(I: Int32);
+begin
+end;
+
+procedure On_Proc_WithTwoArgs(I, H: Int32);
+begin
+end;
+
+procedure On_Proc_WithThreeArgs(I, H: Int32; S: String);
+begin
+end;
+
+procedure On_Proc_NoParas; override;
+begin
+end;
+
+procedure On_Proc_NoParas(); override;
+begin
+end;
+
+procedure On_Proc_WithArg; overload;
+begin
+end;
+
+procedure On_Proc_WithTwoArgs(); overload;
+begin
+end;
+
+function On_Func_NoParas: Boolean;
+begin
+end;
+
+function On_Func_WithParas(): Boolean;
+begin
+end;
+
+procedure SomeTypeT.On_Proc_NoParas;
+begin
+end;
+
+procedure SomeTypeT.On_Proc_WithParas();
+begin
+end;
+
+operator +(Left, Right: SomeTypeT): SomeTypeT;
+begin
+end;
+
+{$METHODDECLARATIONPARENTHESES on}
+type
+  TFoo5 = procedure();
+  TBar5 = function(): Boolean;
+  TFoo6 = procedure() of object;
+  TBar6 = function(): Boolean of object;
+
+procedure Off_Proc_NoArgs();
+begin
+end;
+
+procedure Off_Proc_WithArg(I: Int32);
+begin
+end;
+
+procedure Off_Proc_WithTwoArgs(I, H: Int32);
+begin
+end;
+
+procedure Off_Proc_WithThreeArgs(I, H: Int32; S: String);
+begin
+end;
+
+procedure Off_Proc_NoArgs(); override;
+begin
+end;
+
+procedure Off_Proc_WithArg(); overload;
+begin
+end;
+
+procedure On_Proc_NoParas(); override;
+begin
+end;
+
+function Off_Func_NoArgs(): Boolean;
+begin
+end;
+
+procedure SomeTypeT.Off_Proc_WithParas();
+begin
+end;
+
+procedure SomeTypeT.On_Proc_NoParas(); override;
+begin
+end;
+
+operator *(Left, Right: SomeTypeT): SomeTypeT;
+begin
+end;
+{$METHODDECLARATIONPARENTHESES off}
+
+begin
+end;
