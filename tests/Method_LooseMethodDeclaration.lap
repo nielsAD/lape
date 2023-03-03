@@ -64,7 +64,7 @@ end;
 {$LOOSEMETHODDECLARATION off}
 type
   TFoo3 = procedure();
-  TBar3 = function(): Boolean
+  TBar3 = function(): Boolean;
 
 procedure Off_Proc_NoArgs();
 begin
