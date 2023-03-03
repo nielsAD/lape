@@ -37,7 +37,7 @@ type
     lcoArrayHelpers,                   //
     lcoRelativeFileNames,              //
     lcoInitExternalResult,             // Ensure empty result for external calls (useful for ffi)
-    lcoMethodDeclarationParentheses    //      {$METHODDECLARATIONPARENTHESES}
+    lcoMethodDeclarationParentheses    //       {$METHODDECLARATIONPARENTHESES}  Require method declarations to have () if no parameters.
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
