@@ -289,7 +289,6 @@ implementation
 
 uses
   Variants,
-  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
   lpinternalmethods, lpinternalmethods_algorithm,
   lpmessages, lpeval, lpinterpreter_types;

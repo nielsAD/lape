@@ -754,7 +754,6 @@ var
 implementation
 
 uses
-  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_array, lptree, lpinternalmethods,
   lpmessages, lpeval, lpinterpreter_types;
 

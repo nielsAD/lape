@@ -377,7 +377,11 @@ var
 
   procedure DoGetScriptMethodName;
   begin
+    {$IFDEF Delphi}
+    PShortString(@Stack[StackPos - SizeOf(Pointer)])^ := UTF8EncodeToShortString(Emitter.CodePointerName[PCodePos(@Stack[StackPos - SizeOf(Pointer)])^]);
+    {$ELSE}
     PShortString(@Stack[StackPos - SizeOf(Pointer)])^ := Emitter.CodePointerName[PCodePos(@Stack[StackPos - SizeOf(Pointer)])^];
+    {$ENDIF}
 
     Inc(StackPos, SizeOf(ShortString) - SizeOf(Pointer));
     Inc(Code, ocSize);
@@ -761,8 +765,9 @@ end;
 
 procedure RunCode(const Emitter: TLapeCodeEmitter; const InitialVarStack: TByteArray; const InitialJump: TCodePos);
 var
-  DoContinue: TInitBool = bTrue;
+  DoContinue: TInitBool;
 begin
+  DoContinue := bTrue;
   RunCode(Emitter, DoContinue, InitialVarStack, InitialJump);
 end;
 

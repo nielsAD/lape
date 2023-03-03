@@ -70,7 +70,7 @@ begin
 
     try
       T := GetTickCount64();
-      RunCode(Compiler.Emitter.Code, Compiler.Emitter.CodeLen);
+      RunCode(Compiler.Emitter);
       OutputMemo.Lines.Add('Running Time: ' + IntToStr(GetTickCount64() - T) + 'ms.');
     except
       on E: Exception do

@@ -467,6 +467,7 @@ end;
 function TLapeTree_InternalMethod_Reverse.Compile(var Offset: Integer): TResVar;
 var
   ArrayVar, ArrayPointer: TResVar;
+  ArrayHigh: TLapeTree_InternalMethod_High;
   ArrayType: TLapeType;
   ArrayWasConstant: Boolean;
 begin
@@ -515,19 +516,22 @@ begin
     end;
 
     ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
-
     with TLapeTree_Invoke.Create('_Reverse', Self) do
     try
       addParam(TLapeTree_ResVar.Create(ArrayPointer.IncLock(), Self));
       addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
 
       case ArrayVar.VarType.BaseType of
-        ltStaticArray:
-          with TLapeType_StaticArray(ArrayVar.VarType) do
-            addParam(TLapeTree_Integer.Create(Range.Hi - Range.Lo, Self));
-
         ltDynArray:
-          addParam(TLapeTree_Integer.Create(-1, Self));
+          begin
+            ArrayHigh := TLapeTree_InternalMethod_High.Create(Self);
+            ArrayHigh.addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
+
+            addParam(ArrayHigh);
+          end;
+
+        ltStaticArray:
+          addParam(TLapeTree_Integer.Create(TLapeType_StaticArray(ArrayVar.VarType).Range.Hi - TLapeType_StaticArray(ArrayVar.VarType).Range.Lo, Self));
       end;
 
       Compile(Offset).Spill(1);

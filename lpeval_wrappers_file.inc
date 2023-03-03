@@ -482,7 +482,7 @@ procedure _LapeSetPathSeperators(const Params: PParamArray; const Result: Pointe
   begin
     Result := Path;
     for i := 1 to Length(Result) do
-      if (Result[I] in ['\', '/']) then
+      if CharInSet(Result[I], ['\', '/']) then
         Result[I] := DirectorySeparator;
   end;
 

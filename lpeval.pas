@@ -537,8 +537,9 @@ implementation
 
 uses
   Variants, Math, DateUtils,
-  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
-  {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
+  {$IFDEF DELPHI}
+  System.WideStrings, System.WideStrUtils,
+  {$ENDIF}
   lpmessages, lpparser;
 
 {$RangeChecks Off}

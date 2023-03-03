@@ -814,8 +814,8 @@ var
 function LapeCase(const Str: lpString): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeHash(Data: Pointer; Len: UInt32; const Seed: UInt32 = 0): UInt32; overload;
 function LapeHash(const Str: lpString): UInt32; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function LapeTypeToString(Token: ELapeBaseType): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function LapeOperatorToString(Token: EOperator): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function LapeTypeToString(Token: ELapeBaseType): lpString;
+function LapeOperatorToString(Token: EOperator): lpString;
 
 function PointerToString(const p: Pointer): lpString;
 {$IF NOT(DECLARED(UIntToStr))}
@@ -860,7 +860,6 @@ implementation
 
 uses
   typinfo, variants,
-  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpmessages;
 
 function LapeCase(const Str: lpString): lpString;
@@ -1307,9 +1306,6 @@ var
 begin
   if (Arr = nil) then
     Exit;
-
-  if (Len = -1) then
-    Len := PSizeInt(Arr)[-1]; // High
 
   T := GetMemory(ElSize);
 

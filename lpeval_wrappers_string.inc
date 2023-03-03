@@ -9,22 +9,38 @@
 
 procedure _LapeUTF8EncodeW(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
+  {$IFDEF FPC}
   PlpString(Result)^ := UTF8Encode(PWideString(Params^[0])^);
+  {$ELSE}
+  PlpString(Result)^ := UTF8ToString(UTF8Encode(PWideString(Params^[0])^));
+  {$ENDIF}
 end;
 
 procedure _LapeUTF8EncodeU(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
+  {$IFDEF FPC}
   PlpString(Result)^ := UTF8Encode(PUnicodeString(Params^[0])^);
+  {$ELSE}
+  PlpString(Result)^ := UTF8ToString(UTF8Encode(PUnicodeString(Params^[0])^));
+  {$ENDIF}
 end;
 
 procedure _LapeUTF8DecodeW(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
+  {$IFDEF FPC}
   PWideString(Result)^ := UTF8Encode(PlpString(Params^[0])^);
+  {$ELSE}
+  PWideString(Result)^ := UTF8ToWideString(UTF8Encode(PlpString(Params^[0])^));
+  {$ENDIF}
 end;
 
 procedure _LapeUTF8DecodeU(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
+  {$IFDEF FPC}
   PUnicodeString(Result)^ := UTF8Encode(PlpString(Params^[0])^);
+  {$ELSE}
+  PUnicodeString(Result)^ := UTF8ToString(UTF8Encode(PlpString(Params^[0])^));
+  {$ENDIF}
 end;
 
 procedure _LapeUpperCase(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -265,7 +281,11 @@ end;
 
 procedure _LapeUnicodeStringReplace(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
+  {$IFDEF FPC}
   PUnicodeString(Result)^ := UnicodeStringReplace(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, PUnicodeString(Params^[2])^, TReplaceFlags(PLapeSmallEnum(Params^[3])^));
+  {$ELSE}
+  PUnicodeString(Result)^ := StringReplace(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, PUnicodeString(Params^[2])^, TReplaceFlags(PLapeSmallEnum(Params^[3])^));
+  {$ENDIF}
 end;
 
 procedure _LapeIsDelimiter(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
