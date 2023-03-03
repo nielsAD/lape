@@ -403,10 +403,10 @@ const
     {$IFEND};
 {$IFEND}
 
-function LapeTokenToString(Token: EParserToken): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function ParserTokenToOperator(Token: EParserToken): EOperator; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function StrToFloatDot(Str: string): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
-function StrToFloatDotDef(Str: string; Default: Extended): Extended; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function LapeTokenToString(Token: EParserToken): lpString;
+function ParserTokenToOperator(Token: EParserToken): EOperator;
+function StrToFloatDot(Str: string): Extended;
+function StrToFloatDotDef(Str: string; Default: Extended): Extended;
 function StrToUInt64(Str: string): UInt64;
 function StrToUInt64Def(Str: string; const Default: UInt64): UInt64;
 function DetermineIntType(IntType: ELapeBaseType; MinSize: UInt8): ELapeBaseType; overload;
@@ -432,7 +432,6 @@ implementation
 
 uses
   typinfo,
-  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpmessages;
 
 {$WARN WIDECHAR_REDUCED OFF}

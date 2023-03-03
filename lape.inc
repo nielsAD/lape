@@ -19,6 +19,7 @@
   {$MODE objfpc}{$H+}
 {$ELSE}
   {$DEFINE Delphi}
+  {$DEFINE Lape_Unicode} // Delphi: The default string type is UnicodeString.
   {$POINTERMATH ON}
 
   {$IFDEF WIN64}
@@ -27,11 +28,6 @@
     {$DEFINE CPU86}
   {$ENDIF}
 {$ENDIF}
-
-{$IF DEFINED(UNICODE) and not DEFINED(Lape_Unicode)}
-  {$DEFINE Lape_NeedAnsiStringsUnit}
-{$IFEND}
-
 
 // https://bugs.freepascal.org/view.php?id=37305
 {$IF (DEFINED(FPC) and ((FPC_FULLVERSION=30200) or (FPC_FULLVERSION=30201)))}

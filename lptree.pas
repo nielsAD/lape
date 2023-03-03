@@ -633,7 +633,6 @@ implementation
 
 uses
   Math,
-  {$IFDEF Lape_NeedAnsiStringsUnit}AnsiStrings,{$ENDIF}
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
   lpmessages, lpeval, lpinterpreter_types, lpinternalmethods;
 

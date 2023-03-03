@@ -313,7 +313,7 @@ begin
 
   FHelperName := AName;
 
-  OnFunctionNotFound := @FunctionNotFound;
+  OnFunctionNotFound := {$IFDEF FPC}@{$ENDIF}FunctionNotFound;
 end;
 
 function TLapeType_ArrayHelper_SetLength.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
