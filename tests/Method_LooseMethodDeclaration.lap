@@ -61,6 +61,10 @@ procedure SomeTypeT.On_Proc_WithParas();
 begin
 end;
 
+operator +(Left, Right: SomeTypeT): SomeTypeT;
+begin
+end;  
+
 {$LOOSEMETHODDECLARATION off}
 type
   TFoo3 = procedure();
@@ -105,6 +109,10 @@ end;
 procedure SomeTypeT.On_Proc_NoParas(); override;
 begin
 end;
+
+operator *(Left, Right: SomeTypeT): SomeTypeT;
+begin
+end; 
 {$LOOSEMETHODDECLARATION on}
 
 begin

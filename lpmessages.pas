@@ -123,6 +123,7 @@ const
   lpeVariableOfTypeExpected = 'Expected variable of type "%s", got "%s"';
   lpeWrongNumberParams = 'Wrong number of parameters found, expected %d';
   lpeScriptMethodExpected = 'Script method expected';
+  lpeMethodDeclarationParenthesesExpected = 'Missing parentheses in function declaration';
 
   lphVariableNotUsed = 'Variable "%s" not used';
   lphParameterNotUsed = 'Parameter "%s" not used';

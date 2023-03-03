@@ -1876,7 +1876,7 @@ begin
     else if not (lcoLooseMethodDeclaration in FOptions) then
     begin
       Next();
-      Expect(tk_sym_ParenthesisOpen, False, False);
+      LapeException(lpeMethodDeclarationParenthesesExpected, Tokenizer.DocPos);
     end;
 
     if Result.isOperator then
