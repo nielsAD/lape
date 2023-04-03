@@ -9,10 +9,10 @@
 
 addGlobalType('set of (rfReplaceAll, rfIgnoreCase)', 'TReplaceFlags');
 
-addGlobalFunc('function UTF8Encode(s: WideString): String; overload;', @_LapeUTF8EncodeW);
-addGlobalFunc('function UTF8Encode(s: UnicodeString): String; overload;', @_LapeUTF8EncodeU);
-addGlobalFunc('function UTF8Decode(s: String): WideString; overload;', @_LapeUTF8DecodeW);
-addGlobalFunc('function UTF8Decode(s: String): UnicodeString; overload;', @_LapeUTF8DecodeU);
+addGlobalFunc('function UTF8Encode(s: WideString): AnsiString; overload;', @_LapeUTF8EncodeW);
+addGlobalFunc('function UTF8Encode(s: UnicodeString): AnsiString; overload;', @_LapeUTF8EncodeU);
+addGlobalFunc('function UTF8Decode(s: AnsiString): WideString; overload;', @_LapeUTF8DecodeW);
+addGlobalFunc('function UTF8Decode(s: AnsiString): UnicodeString; overload;', @_LapeUTF8DecodeU);
 
 // locale independent
 addGlobalFunc('function UpperCase(s: string): string;', @_LapeUpperCase);

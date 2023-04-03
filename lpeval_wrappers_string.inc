@@ -9,38 +9,22 @@
 
 procedure _LapeUTF8EncodeW(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  {$IFDEF FPC}
-  PlpString(Result)^ := UTF8Encode(PWideString(Params^[0])^);
-  {$ELSE}
-  PlpString(Result)^ := UTF8ToString(UTF8Encode(PWideString(Params^[0])^));
-  {$ENDIF}
+  PAnsiString(Result)^ := UTF8Encode(PWideString(Params^[0])^);
 end;
 
 procedure _LapeUTF8EncodeU(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  {$IFDEF FPC}
-  PlpString(Result)^ := UTF8Encode(PUnicodeString(Params^[0])^);
-  {$ELSE}
-  PlpString(Result)^ := UTF8ToString(UTF8Encode(PUnicodeString(Params^[0])^));
-  {$ENDIF}
+  PAnsiString(Result)^ := UTF8Encode(PUnicodeString(Params^[0])^);
 end;
 
 procedure _LapeUTF8DecodeW(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  {$IFDEF FPC}
-  PWideString(Result)^ := UTF8Encode(PlpString(Params^[0])^);
-  {$ELSE}
-  PWideString(Result)^ := UTF8ToWideString(UTF8Encode(PlpString(Params^[0])^));
-  {$ENDIF}
+  PWideString(Result)^ := UTF8Decode(PAnsiString(Params^[0])^);
 end;
 
 procedure _LapeUTF8DecodeU(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  {$IFDEF FPC}
-  PUnicodeString(Result)^ := UTF8Encode(PlpString(Params^[0])^);
-  {$ELSE}
-  PUnicodeString(Result)^ := UTF8ToString(UTF8Encode(PlpString(Params^[0])^));
-  {$ENDIF}
+  PUnicodeString(Result)^ := UTF8Decode(PAnsiString(Params^[0])^);
 end;
 
 procedure _LapeUpperCase(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
