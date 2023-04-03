@@ -162,6 +162,20 @@ begin
   PInt64(Result)^ := Ceil(PExtended(Params^[0])^);
 end;
 
+procedure _LapeCeilTo(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function CeilTo(const a: Single; const Precision: Int8 = 0): Double;
+  begin
+    if (Precision = 0) then
+      Result := Ceil(a)
+    else
+      Result := RoundTo(a + 0.5 * Power(10, -Double(Precision)), -Precision);
+  end;
+
+begin
+  PExtended(Result)^ := CeilTo(PExtended(Params^[0])^, PInt8(Params^[1])^);
+end;
+
 procedure _LapeFloor(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PInt64(Result)^ := Floor(PExtended(Params^[0])^);
