@@ -541,18 +541,31 @@ end;
 function TLapeType_NativeMethod.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 begin
   Assert((Left = nil) or (Left.VarType = Self));
-  if (Left <> nil) then
-    Left.VarType := FHeader;
 
-  try
+  if (op = op_Assign) and (FHeader <> nil) and (Left <> nil) and (Left.VarType = Self) and (Right <> nil) and (Right.VarType = Self) then
+  begin
+    Left.VarType := FHeader;
+    Right.VarType := FHeader;
     try
       Result := FHeader.EvalConst(Op, Left, Right, Flags);
-    except
-      Result := inherited;
-    end;
-  finally
-    if (Left <> nil) then
+    finally
       Left.VarType := Self;
+      Right.VarType := Self;
+    end;
+  end else
+  begin
+    if (Left <> nil) then
+      Left.VarType := FHeader;
+    try
+      try
+        Result := FHeader.EvalConst(Op, Left, Right, Flags);
+      except
+        Result := inherited;
+      end;
+    finally
+      if (Left <> nil) then
+        Left.VarType := Self;
+    end;
   end;
 end;
 
@@ -561,48 +574,62 @@ var
   m: TLapeGlobalVar;
 begin
   Assert(Left.VarType = Self);
-  Left.VarType := FHeader;
 
-  if Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
+  if (op = op_Assign) and (FHeader <> nil) and (Left.VarType = Self) and (Right.VarType = Self) then
   begin
-    m := TLapeType_OverloadedMethod(Right.VarType).getMethod(FHeader);
-    if (m <> nil) then
-      Right := _ResVar.New(m);
-  end;
+    Left.VarType := FHeader;
+    Right.VarType := FHeader;
+    try
+      Result := FHeader.Eval(op, Dest, Left, Right, Flags, Offset, Pos);
+    finally
+      Left.VarType := Self;
+      Right.VarType := Self;
+    end;
+  end else
+  begin
+    Left.VarType := FHeader;
 
-  if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
-  begin
-    if (Right.VarType is TLapeType_Method) then
+    if Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
     begin
-      if FObjectify then
-        with TLapeTree_InternalMethod_Objectify.Create(FCompiler, Pos) do
+      m := TLapeType_OverloadedMethod(Right.VarType).getMethod(FHeader);
+      if (m <> nil) then
+        Right := _ResVar.New(m);
+    end;
+
+    if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
+    begin
+      if (Right.VarType is TLapeType_Method) then
+      begin
+        if FObjectify then
+          with TLapeTree_InternalMethod_Objectify.Create(FCompiler, Pos) do
+          try
+            addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
+
+            Right := Compile(Offset);
+          finally
+            Free();
+          end;
+
+        with TLapeTree_InternalMethod_Natify.Create(FCompiler, Pos) do
         try
           addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
+          addParam(TLapeTree_GlobalVar.Create(FCompiler['ffi_' + ABIToStr(FABI)], FCompiler));
 
           Right := Compile(Offset);
         finally
           Free();
         end;
-
-      with TLapeTree_InternalMethod_Natify.Create(FCompiler, Pos) do
-      try
-        addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
-        addParam(TLapeTree_GlobalVar.Create(FCompiler['ffi_' + ABIToStr(FABI)], FCompiler));
-
-        Right := Compile(Offset);
-      finally
-        Free();
       end;
+
+      if (Right.VarType is TLapeType_NativeMethod) then
+        Right.VarType := TLapeType_NativeMethod(Right.VarType).Header;
     end;
 
-    if (Right.VarType is TLapeType_NativeMethod) then
-      Right.VarType := TLapeType_NativeMethod(Right.VarType).Header;
-  end;
-
-  try
-    Result := FHeader.Eval(op, Dest, Left, RIght, Flags, Offset, Pos);
-  except
-    Result := inherited;
+    try
+      Result := FHeader.Eval(op, Dest, Left, Right, Flags, Offset, Pos);
+    except
+      Result := inherited;
+    end;
   end;
 end;
 
