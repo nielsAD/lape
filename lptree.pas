@@ -1217,7 +1217,7 @@ function TLapeTree_OpenArray.resType: TLapeType;
       end;
 
       if (Result <> nil) then
-        if (Result is TLapeType_Enum) then
+        if (Result is TLapeType_Enum) and TLapeType_Enum(Result).canSet() then
           Result := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_Enum(Result), FCompiler, '', @_DocPos))
         else if (FRange.Lo < 0) then
           Result := FCompiler.addManagedType(TLapeType_DynArray.Create(Result, FCompiler, '', @_DocPos))

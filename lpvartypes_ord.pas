@@ -115,6 +115,7 @@ type
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
     destructor Destroy; override;
 
+    function canSet: Boolean;
     function hasMember(AName: lpString): Boolean; virtual;
     function addMember(Value: Int64; AName: lpString): Int64; overload; virtual;
     function addMember(AName: lpString): Int64; overload; virtual;
@@ -516,6 +517,11 @@ begin
   inherited;
 end;
 
+function TLapeType_Enum.canSet: Boolean;
+begin
+  Result := FMemberMap.Count < 256; // pascal sets can have a maximum of 256 elements, this includes gaps!
+end;
+
 function TLapeType_Enum.hasMember(AName: lpString): Boolean;
 begin
   Result := FMemberMap.IndexOf(string(AName)) > -1;
@@ -530,7 +536,7 @@ begin
   else if (AName = '') or hasMember(AName) then
     LapeException(lpeDuplicateDeclaration);
 
-  Result:= Value;
+  Result := Value;
   FRange.Hi := Value;
   if (FMemberMap.Count = 0) then
     FRange.Lo := Value
