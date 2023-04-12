@@ -1,0 +1,19 @@
+{$assertions on}
+
+// pascal sets can have a maximum of 256 elements, this includes gaps.
+// Rather than error, just convert to array.
+type
+  ELargeEnum = (Element1 = 200, Element2 = 400, Element3 = 800);
+
+var
+  Dyn: array of ELargeEnum;
+  Stat: array[0..1] of ELargeEnum;
+begin
+  Dyn := [Element1, Element3];
+  Assert(Dyn[0] = Element1);
+  Assert(Dyn[1] = Element3);
+
+  Stat := [Element1, Element3];
+  Assert(Stat[0] = Element1);
+  Assert(Stat[1] = Element3);
+end;
