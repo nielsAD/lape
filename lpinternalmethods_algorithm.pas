@@ -1283,7 +1283,7 @@ begin
   Result := _ResVar.New(FCompiler.getTempVar(ArrayType));
   CounterVar := _ResVar.New(FCompiler.getTempVar(ArrayType));
   SquareVar := _ResVar.New(FCompiler.getTempVar(ArrayType));
-  MeanVar := _ResVar.New(FCompiler.getTempVar(ArrayType));
+  MeanVar := _ResVar.New(FCompiler.getTempVar(ArrayType)).IncLock();
 
   FCompiler.VarToDefault(Result, Offset);
   FCompiler.VarToDefault(SquareVar, Offset);
@@ -1354,6 +1354,7 @@ begin
   finally
     LengthVar.Spill(1);
     CounterVar.Spill(1);
+    MeanVar.Spill(1);
 
     Free();
   end;
