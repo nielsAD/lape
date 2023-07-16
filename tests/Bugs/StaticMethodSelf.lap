@@ -2,10 +2,8 @@
 
 type
   TPoint = record
-  class const
-    z = 15;
-    w = 25;
-  var
+    const z = 15;
+    const w = 25;
     x, y: Integer;
   end;
   TPointArray = array of TPoint;

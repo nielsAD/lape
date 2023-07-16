@@ -35,6 +35,7 @@ type
     lcoVerboseCompile,                 //      {$VERBOSECOMPILE}
     lcoDuplicateLocalNameHints,        //
     lcoArrayHelpers,                   //
+    lcoInheritableRecords,             //
     lcoRelativeFileNames,              //
     lcoInitExternalResult,             // Ensure empty result for external calls (useful for ffi)
     lcoMethodDeclarationParentheses    //       {$METHODDECLARATIONPARENTHESES}  Require method declarations to have () if no parameters.
@@ -43,7 +44,7 @@ type
   PCompilerOptionsSet = ^ECompilerOptionsSet;
 
 const
-  Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress];
+  Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress, lcoInheritableRecords];
   Lape_PackRecordsDef = 8;
 
 type

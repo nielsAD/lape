@@ -1,0 +1,32 @@
+{$assertions on}
+
+type
+  TPoint = record
+    const ABC = 'abc';
+    const XYZ: String = 'xyz';
+    X, Y: Int32;
+  end;
+
+procedure Test;
+type
+  TPoint3D = record(TPoint)
+    Z: Int32;
+  end;
+begin
+  with TPoint3D([100, 200, 300]) do
+  begin
+    Assert(ABC = 'abc');
+    Assert(XYZ = 'xyz');
+  end;
+end;
+
+var p: TPoint;
+begin
+  Assert(TPoint.ABC = 'abc');
+  Assert(TPoint.XYZ = 'xyz');
+
+  Assert(p.ABC = 'abc');
+  Assert(p.XYZ = 'xyz');
+
+  Test();
+end.

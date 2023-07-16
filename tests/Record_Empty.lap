@@ -2,9 +2,8 @@
 
 type
   TEmptyRec = record
-  class const
-    X = 10;
-    Y = 20;
+    const X = 10;
+    const Y = 20;
   end;
 
   TEmptyInheritedRec = record(TMethod);

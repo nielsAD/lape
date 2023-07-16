@@ -2378,14 +2378,14 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     Rec: TLapeType_Record absolute Result;
     FieldType: TLapeType;
     Identifiers: TStringArray;
-    IsConst: Boolean;
     Expression: TLapeTree_ExprBase;
     FieldValue: TLapeGlobalVar;
   begin
     IsRecord := Tokenizer.Tok = tk_kw_Record;
 
     Next();
-    if (Tokenizer.Tok = tk_sym_ParenthesisOpen) then
+
+    if (lcoInheritableRecords in FOptions) and (Tokenizer.Tok = tk_sym_ParenthesisOpen) then
     begin
       FieldType := ParseType(nil, addToStackOwner);
       if (not (FieldType is TLapeType_Record)) or (IsRecord <> (FieldType.BaseType = ltRecord)) then
@@ -2405,51 +2405,31 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       Rec := TLapeType_Union.Create(Self, nil, '', getPDocPos());
 
     repeat
-      if (Tokenizer.Tok = tk_kw_Class) then
+      if (Tokenizer.Tok = tk_kw_Const) then
       begin
-        IsConst := Expect([tk_kw_Var, tk_kw_Const], True, True) = tk_kw_Const;
+        Expression := nil;
+        FieldValue := nil;
+        FieldType := nil;
 
-        repeat
-          Expression := nil;
-          FieldValue := nil;
-          FieldType := nil;
+        Identifiers := ParseIdentifierList(True);
 
-          try
-            Identifiers := ParseIdentifierList();
+        if Expect([tk_sym_Colon, tk_sym_Equals], False, False) = tk_sym_Colon then
+          FieldType := ParseType(nil);
 
-            if Expect([tk_sym_Colon, tk_sym_Equals], False, False) = tk_sym_Colon then
-              FieldType := ParseType(nil);
+        if Expect([tk_sym_SemiColon, tk_sym_Equals], FieldType <> nil, False) = tk_sym_Equals then
+        begin
+          Expression := ParseExpression([tk_sym_SemiColon], True, False).setExpectedType(FieldType) as TLapeTree_ExprBase;
+          if (Expression <> nil) and (not Expression.isConstant()) then
+            LapeException(lpeConstantExpected, Expression.DocPos);
 
-            if Expect([tk_sym_SemiColon, tk_sym_Equals], FieldType <> nil, False) = tk_sym_Equals then
-            begin
-              Expression := ParseExpression([tk_sym_SemiColon], True, False).setExpectedType(FieldType) as TLapeTree_ExprBase;
-              if (Expression <> nil) and (not Expression.isConstant()) then
-                LapeException(lpeConstantExpected, Expression.DocPos);
+          FieldValue := Expression.Evaluate();
+          if (FieldType = nil) then
+            FieldType := FieldValue.VarType;
+        end;
 
-              FieldValue := Expression.Evaluate();
-              if (FieldType = nil) then
-                FieldType := FieldValue.VarType;
-            end;
-
-            for i := 0 to High(Identifiers) do
-            begin
-              if Rec.HasChild(Identifiers[i]) then
-                LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], DocPos);
-
-              Rec.addClassField(FieldType, FieldValue, Identifiers[i], IsConst);
-            end;
-
-            Expect(tk_sym_SemiColon, False, True);
-          finally
-            if Expression <> nil then
-              Expression.Free();
-          end;
-        until (Tokenizer.Tok in [tk_kw_Var, tk_kw_Class, tk_kw_End, tk_NULL]);
+        Rec.addClassField(FieldType, FieldValue, Identifiers[0], True);
       end else
       begin
-        if (Tokenizer.Tok = tk_kw_Var) then
-          Expect(tk_Identifier, True, False);
-
         Identifiers := ParseIdentifierList();
         Expect(tk_sym_Colon, False, False);
         FieldType := ParseType(nil, addToStackOwner);
@@ -2464,9 +2444,8 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
           else
             Rec.addField(FieldType, Identifiers[i], FOptions_PackRecords);
         end;
-
-        Expect(tk_sym_SemiColon, False, True);
       end;
+      Expect(tk_sym_SemiColon, False, True);
     until (Tokenizer.Tok in [tk_NULL, tk_kw_End]);
 
     Result := addManagedType(Rec);
