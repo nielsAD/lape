@@ -693,9 +693,6 @@ type
     function getGlobalVar(AName: lpString): TLapeGlobalVar; virtual;
     function getGlobalType(AName: lpString): TLapeType; virtual;
 
-    function getIntegerArray: TLapeType; virtual;
-    function getFloatArray: TLapeType; virtual;
-
     function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration; overload; virtual;
     function getDeclaration(AName: lpString; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration; overload; virtual;
     function hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): Boolean; overload; virtual;
@@ -853,7 +850,9 @@ begin
   Arr[ltSingle] := TLapeType_Single.Create(Compiler, LapeTypeToString(ltSingle));
   Arr[ltDouble] := TLapeType_Double.Create(Compiler, LapeTypeToString(ltDouble));
   Arr[ltCurrency] := TLapeType_Currency.Create(Compiler, LapeTypeToString(ltCurrency));
+  {$IFNDEF Lape_NoExtended}
   Arr[ltExtended] := TLapeType_Extended.Create(Compiler, LapeTypeToString(ltExtended));
+  {$ENDIF}
   Arr[ltBoolean] := TLapeType_Boolean.Create(Compiler, LapeTypeToString(ltBoolean));
   Arr[ltByteBool] := TLapeType_ByteBool.Create(Compiler, LapeTypeToString(ltByteBool));
   Arr[ltWordBool] := TLapeType_WordBool.Create(Compiler, LapeTypeToString(ltWordBool));
@@ -4096,7 +4095,7 @@ begin
       FBaseTypesDictionary[FBaseTypes[BaseType].Name] := FBaseTypes[BaseType];
 
   addGlobalDecl(TLapeType_DynArray.Create(getBaseType(ltInt32), Self, '!integerarray'));
-  addGlobalDecl(TLapeType_DynArray.Create(getBaseType(ltExtended), Self, '!floatarray'));
+  addGlobalDecl(TLapeType_DynArray.Create(getBaseType(ltFloat), Self, '!floatarray'));
 end;
 
 destructor TLapeCompilerBase.Destroy;
@@ -4565,20 +4564,6 @@ begin
   Result := nil;
   if FGlobalDeclarations.Get(AName, Decl, bFalse) and (Decl is TLapeType) then
     Result := TLapeType(Decl);
-end;
-
-function TLapeCompilerBase.getIntegerArray: TLapeType;
-begin
-  Result := getGlobalType('!integerarray');
-
-  Assert(Result <> nil);
-end;
-
-function TLapeCompilerBase.getFloatArray: TLapeType;
-begin
-  Result := getGlobalType('!floatarray');
-
-  Assert(Result <> nil);
 end;
 
 function TLapeCompilerBase.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration;

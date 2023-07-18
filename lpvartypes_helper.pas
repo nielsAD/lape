@@ -606,7 +606,7 @@ begin
     'Result := System.IndicesOf(Param0, Self);',
     VarType,
     [TLapeType_DynArray(VarType).PType],
-    FCompiler.getIntegerArray()
+    FCompiler.getGlobalType('TIntegerArray')
   );
 end;
 
@@ -645,7 +645,7 @@ begin
          Result := CreateFunction(
            'System.Sort(Self, Param0, Param1);',
            VarType,
-           [FCompiler.getIntegerArray(), FCompiler.getBaseType(ltEvalBool)]
+           [FCompiler.getGlobalType('TIntegerArray'), FCompiler.getBaseType(ltEvalBool)]
          );
        end;
 
@@ -654,7 +654,7 @@ begin
          Result := CreateFunction(
            'System.Sort(Self, Param0, Param1);',
            VarType,
-           [FCompiler.getFloatArray(), FCompiler.getBaseType(ltEvalBool)]
+           [FCompiler.addManagedType(TLapeType_DynArray.Create(WeightType, FCompiler)), FCompiler.getBaseType(ltEvalBool)]
          );
        end;
      end;
@@ -703,7 +703,7 @@ begin
           Result := CreateFunction(
             'Result := System.Sorted(Self, Param0, Param1);',
             VarType,
-            [FCompiler.getIntegerArray(), FCompiler.getBaseType(ltEvalBool)],
+            [FCompiler.getGlobalType('TIntegerArray'), FCompiler.getBaseType(ltEvalBool)],
             ResType
           );
         end;
@@ -713,7 +713,7 @@ begin
           Result := CreateFunction(
             'Result := System.Sorted(Self, Param0, Param1);',
             VarType,
-            [FCompiler.getFloatArray(), FCompiler.getBaseType(ltEvalBool)],
+            [FCompiler.addManagedType(TLapeType_DynArray.Create(WeightType, FCompiler)), FCompiler.getBaseType(ltEvalBool)],
             ResType
           );
         end;

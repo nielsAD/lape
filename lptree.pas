@@ -303,7 +303,7 @@ type
   public
     constructor Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload;
     constructor Create(AStr: lpString; ASource: TLapeTree_Base); overload;
-    constructor Create(AValue: Extended; ASource: TLapeTree_Base); overload;
+    constructor Create(AValue: lpFloat; ASource: TLapeTree_Base); overload;
   end;
 
   TLapeTree_String = class(TLapeTree_GlobalVar)
@@ -3140,7 +3140,7 @@ end;
 constructor TLapeTree_Float.Create(AStr: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
-  inherited Create(ACompiler.getConstant(StringReplace(AStr, lpString('_'), lpString(''), [rfReplaceAll]), ltExtended), ACompiler, ADocPos);
+  inherited Create(ACompiler.getConstant(StringReplace(AStr, lpString('_'), lpString(''), [rfReplaceAll]), ltFloat), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Float.Create(AStr: lpString; ASource: TLapeTree_Base);
@@ -3150,7 +3150,7 @@ begin
   FCompilerOptions := ASource.CompilerOptions;
 end;
 
-constructor TLapeTree_Float.Create(AValue: Extended; ASource: TLapeTree_Base);
+constructor TLapeTree_Float.Create(AValue: lpFloat; ASource: TLapeTree_Base);
 begin
   Create(lpString(FloatToStr(AValue)), ASource);
 end;

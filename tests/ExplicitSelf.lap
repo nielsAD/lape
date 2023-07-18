@@ -1,8 +1,5 @@
 {$assertions on}
 
-type
-  TIntegerArray = array of Int32;
-
 {$explicitself on}
 
 procedure TIntegerArray.Test1();

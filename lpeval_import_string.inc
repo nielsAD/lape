@@ -65,9 +65,15 @@ addGlobalFunc('function StrToInt64(s: string): Int64;', @_LapeStrToInt64);
 addGlobalFunc('function StrToInt64Def(s: string; Def: Int64): Int64;', @_LapeStrToInt64Def);
 addGlobalFunc('function StrToUInt64(s: string): UInt64;', @_LapeStrToUInt64);
 addGlobalFunc('function StrToUInt64Def(s: string; Def: UInt64): UInt64;', @_LapeStrToUInt64Def);
+{$IFDEF Lape_NoExtended}
+addGlobalFunc('function FloatToStr(f: Double): string;', @_LapeToString_Double);
+addGlobalFunc('function StrToFloat(s: string): Double;', @_LapeStrToFloat);
+addGlobalFunc('function StrToFloatDef(s: string; Def: Double): Double;', @_LapeStrToFloatDef);
+{$ELSE}
 addGlobalFunc('function FloatToStr(f: Extended): string;', @_LapeToString_Extended);
 addGlobalFunc('function StrToFloat(s: string): Extended;', @_LapeStrToFloat);
 addGlobalFunc('function StrToFloatDef(s: string; Def: Extended): Extended;', @_LapeStrToFloatDef);
+{$ENDIF}
 addGlobalFunc('function CurrToStr(Value: Currency): string;', @_LapeToString_Currency);
 addGlobalFunc('function StrToCurr(s: string): Currency;', @_LapeStrToCurr);
 addGlobalFunc('function StrToCurrDef(s: string; Def: Currency): Currency;', @_LapeStrToCurrDef);
@@ -76,8 +82,12 @@ addGlobalFunc('function BoolToStr(B: EvalBool; TrueS: string = ''True''; FalseS:
 addGlobalFunc('function StrToBoolDef(s: string; Default: EvalBool): EvalBool;', @_LapeStrToBoolDef);
 
 addGlobalFunc('function Format(Fmt: string; Args: array of Variant): string;', @_LapeFormat);
-addGlobalFunc('function FormatFloat(Format: string; Value: Extended): string;', @_LapeFormatFloat);
 addGlobalFunc('function FormatCurr(Format: string; Value: Currency): string;', @_LapeFormatCurr);
+{$IFDEF Lape_NoExtended}
+addGlobalFunc('function FormatFloat(Format: string; Value: Double): string;', @_LapeFormatFloat);
+{$ELSE}
+addGlobalFunc('function FormatFloat(Format: string; Value: Extended): string;', @_LapeFormatFloat);
+{$ENDIF}
 
 addGlobalFunc('function LastDelimiter(Delimiters, s: string): SizeInt;', @_LapeLastDelimiter);
 addGlobalFunc('Function IsDelimiter(Delimiters, s: string; Index: SizeInt): EvalBool;', @_LapeIsDelimiter);

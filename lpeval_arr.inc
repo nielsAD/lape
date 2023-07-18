@@ -18,7 +18,9 @@ Arr[op_cmp_Equal][ltUInt8][ltInt64] := @lpeUInt8_EQ_Int64;
 Arr[op_cmp_Equal][ltUInt8][ltSingle] := @lpeUInt8_EQ_Single;
 Arr[op_cmp_Equal][ltUInt8][ltDouble] := @lpeUInt8_EQ_Double;
 Arr[op_cmp_Equal][ltUInt8][ltCurrency] := @lpeUInt8_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltUInt8][ltExtended] := @lpeUInt8_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltUInt8][ltVariant] := @lpeUInt8_EQ_Variant;
 Arr[op_cmp_Equal][ltInt8][ltUInt8] := @lpeInt8_EQ_UInt8;
 Arr[op_cmp_Equal][ltInt8][ltInt8] := @lpeInt8_EQ_Int8;
@@ -31,7 +33,9 @@ Arr[op_cmp_Equal][ltInt8][ltInt64] := @lpeInt8_EQ_Int64;
 Arr[op_cmp_Equal][ltInt8][ltSingle] := @lpeInt8_EQ_Single;
 Arr[op_cmp_Equal][ltInt8][ltDouble] := @lpeInt8_EQ_Double;
 Arr[op_cmp_Equal][ltInt8][ltCurrency] := @lpeInt8_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltInt8][ltExtended] := @lpeInt8_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltInt8][ltVariant] := @lpeInt8_EQ_Variant;
 Arr[op_cmp_Equal][ltUInt16][ltUInt8] := @lpeUInt16_EQ_UInt8;
 Arr[op_cmp_Equal][ltUInt16][ltInt8] := @lpeUInt16_EQ_Int8;
@@ -44,7 +48,9 @@ Arr[op_cmp_Equal][ltUInt16][ltInt64] := @lpeUInt16_EQ_Int64;
 Arr[op_cmp_Equal][ltUInt16][ltSingle] := @lpeUInt16_EQ_Single;
 Arr[op_cmp_Equal][ltUInt16][ltDouble] := @lpeUInt16_EQ_Double;
 Arr[op_cmp_Equal][ltUInt16][ltCurrency] := @lpeUInt16_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltUInt16][ltExtended] := @lpeUInt16_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltUInt16][ltVariant] := @lpeUInt16_EQ_Variant;
 Arr[op_cmp_Equal][ltInt16][ltUInt8] := @lpeInt16_EQ_UInt8;
 Arr[op_cmp_Equal][ltInt16][ltInt8] := @lpeInt16_EQ_Int8;
@@ -57,7 +63,9 @@ Arr[op_cmp_Equal][ltInt16][ltInt64] := @lpeInt16_EQ_Int64;
 Arr[op_cmp_Equal][ltInt16][ltSingle] := @lpeInt16_EQ_Single;
 Arr[op_cmp_Equal][ltInt16][ltDouble] := @lpeInt16_EQ_Double;
 Arr[op_cmp_Equal][ltInt16][ltCurrency] := @lpeInt16_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltInt16][ltExtended] := @lpeInt16_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltInt16][ltVariant] := @lpeInt16_EQ_Variant;
 Arr[op_cmp_Equal][ltUInt32][ltUInt8] := @lpeUInt32_EQ_UInt8;
 Arr[op_cmp_Equal][ltUInt32][ltInt8] := @lpeUInt32_EQ_Int8;
@@ -70,7 +78,9 @@ Arr[op_cmp_Equal][ltUInt32][ltInt64] := @lpeUInt32_EQ_Int64;
 Arr[op_cmp_Equal][ltUInt32][ltSingle] := @lpeUInt32_EQ_Single;
 Arr[op_cmp_Equal][ltUInt32][ltDouble] := @lpeUInt32_EQ_Double;
 Arr[op_cmp_Equal][ltUInt32][ltCurrency] := @lpeUInt32_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltUInt32][ltExtended] := @lpeUInt32_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltUInt32][ltVariant] := @lpeUInt32_EQ_Variant;
 Arr[op_cmp_Equal][ltInt32][ltUInt8] := @lpeInt32_EQ_UInt8;
 Arr[op_cmp_Equal][ltInt32][ltInt8] := @lpeInt32_EQ_Int8;
@@ -83,7 +93,9 @@ Arr[op_cmp_Equal][ltInt32][ltInt64] := @lpeInt32_EQ_Int64;
 Arr[op_cmp_Equal][ltInt32][ltSingle] := @lpeInt32_EQ_Single;
 Arr[op_cmp_Equal][ltInt32][ltDouble] := @lpeInt32_EQ_Double;
 Arr[op_cmp_Equal][ltInt32][ltCurrency] := @lpeInt32_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltInt32][ltExtended] := @lpeInt32_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltInt32][ltVariant] := @lpeInt32_EQ_Variant;
 Arr[op_cmp_Equal][ltUInt64][ltUInt8] := @lpeUInt64_EQ_UInt8;
 Arr[op_cmp_Equal][ltUInt64][ltInt8] := @lpeUInt64_EQ_Int8;
@@ -96,7 +108,9 @@ Arr[op_cmp_Equal][ltUInt64][ltInt64] := @lpeUInt64_EQ_Int64;
 Arr[op_cmp_Equal][ltUInt64][ltSingle] := @lpeUInt64_EQ_Single;
 Arr[op_cmp_Equal][ltUInt64][ltDouble] := @lpeUInt64_EQ_Double;
 Arr[op_cmp_Equal][ltUInt64][ltCurrency] := @lpeUInt64_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltUInt64][ltExtended] := @lpeUInt64_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltUInt64][ltVariant] := @lpeUInt64_EQ_Variant;
 Arr[op_cmp_Equal][ltInt64][ltUInt8] := @lpeInt64_EQ_UInt8;
 Arr[op_cmp_Equal][ltInt64][ltInt8] := @lpeInt64_EQ_Int8;
@@ -109,7 +123,9 @@ Arr[op_cmp_Equal][ltInt64][ltInt64] := @lpeInt64_EQ_Int64;
 Arr[op_cmp_Equal][ltInt64][ltSingle] := @lpeInt64_EQ_Single;
 Arr[op_cmp_Equal][ltInt64][ltDouble] := @lpeInt64_EQ_Double;
 Arr[op_cmp_Equal][ltInt64][ltCurrency] := @lpeInt64_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltInt64][ltExtended] := @lpeInt64_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltInt64][ltVariant] := @lpeInt64_EQ_Variant;
 Arr[op_cmp_Equal][ltSingle][ltUInt8] := @lpeSingle_EQ_UInt8;
 Arr[op_cmp_Equal][ltSingle][ltInt8] := @lpeSingle_EQ_Int8;
@@ -122,7 +138,9 @@ Arr[op_cmp_Equal][ltSingle][ltInt64] := @lpeSingle_EQ_Int64;
 Arr[op_cmp_Equal][ltSingle][ltSingle] := @lpeSingle_EQ_Single;
 Arr[op_cmp_Equal][ltSingle][ltDouble] := @lpeSingle_EQ_Double;
 Arr[op_cmp_Equal][ltSingle][ltCurrency] := @lpeSingle_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltSingle][ltExtended] := @lpeSingle_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltSingle][ltVariant] := @lpeSingle_EQ_Variant;
 Arr[op_cmp_Equal][ltDouble][ltUInt8] := @lpeDouble_EQ_UInt8;
 Arr[op_cmp_Equal][ltDouble][ltInt8] := @lpeDouble_EQ_Int8;
@@ -135,7 +153,9 @@ Arr[op_cmp_Equal][ltDouble][ltInt64] := @lpeDouble_EQ_Int64;
 Arr[op_cmp_Equal][ltDouble][ltSingle] := @lpeDouble_EQ_Single;
 Arr[op_cmp_Equal][ltDouble][ltDouble] := @lpeDouble_EQ_Double;
 Arr[op_cmp_Equal][ltDouble][ltCurrency] := @lpeDouble_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltDouble][ltExtended] := @lpeDouble_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltDouble][ltVariant] := @lpeDouble_EQ_Variant;
 Arr[op_cmp_Equal][ltCurrency][ltUInt8] := @lpeCurrency_EQ_UInt8;
 Arr[op_cmp_Equal][ltCurrency][ltInt8] := @lpeCurrency_EQ_Int8;
@@ -148,8 +168,11 @@ Arr[op_cmp_Equal][ltCurrency][ltInt64] := @lpeCurrency_EQ_Int64;
 Arr[op_cmp_Equal][ltCurrency][ltSingle] := @lpeCurrency_EQ_Single;
 Arr[op_cmp_Equal][ltCurrency][ltDouble] := @lpeCurrency_EQ_Double;
 Arr[op_cmp_Equal][ltCurrency][ltCurrency] := @lpeCurrency_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltCurrency][ltExtended] := @lpeCurrency_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltCurrency][ltVariant] := @lpeCurrency_EQ_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltExtended][ltUInt8] := @lpeExtended_EQ_UInt8;
 Arr[op_cmp_Equal][ltExtended][ltInt8] := @lpeExtended_EQ_Int8;
 Arr[op_cmp_Equal][ltExtended][ltUInt16] := @lpeExtended_EQ_UInt16;
@@ -163,6 +186,7 @@ Arr[op_cmp_Equal][ltExtended][ltDouble] := @lpeExtended_EQ_Double;
 Arr[op_cmp_Equal][ltExtended][ltCurrency] := @lpeExtended_EQ_Currency;
 Arr[op_cmp_Equal][ltExtended][ltExtended] := @lpeExtended_EQ_Extended;
 Arr[op_cmp_Equal][ltExtended][ltVariant] := @lpeExtended_EQ_Variant;
+{$ENDIF}
 Arr[op_cmp_Equal][ltVariant][ltUInt8] := @lpeVariant_EQ_UInt8;
 Arr[op_cmp_Equal][ltVariant][ltInt8] := @lpeVariant_EQ_Int8;
 Arr[op_cmp_Equal][ltVariant][ltUInt16] := @lpeVariant_EQ_UInt16;
@@ -174,7 +198,9 @@ Arr[op_cmp_Equal][ltVariant][ltInt64] := @lpeVariant_EQ_Int64;
 Arr[op_cmp_Equal][ltVariant][ltSingle] := @lpeVariant_EQ_Single;
 Arr[op_cmp_Equal][ltVariant][ltDouble] := @lpeVariant_EQ_Double;
 Arr[op_cmp_Equal][ltVariant][ltCurrency] := @lpeVariant_EQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltVariant][ltExtended] := @lpeVariant_EQ_Extended;
+{$ENDIF}
 Arr[op_cmp_Equal][ltVariant][ltVariant] := @lpeVariant_EQ_Variant;
 
 Arr[op_cmp_GreaterThan][ltUInt8][ltUInt8] := @lpeUInt8_GT_UInt8;
@@ -188,7 +214,9 @@ Arr[op_cmp_GreaterThan][ltUInt8][ltInt64] := @lpeUInt8_GT_Int64;
 Arr[op_cmp_GreaterThan][ltUInt8][ltSingle] := @lpeUInt8_GT_Single;
 Arr[op_cmp_GreaterThan][ltUInt8][ltDouble] := @lpeUInt8_GT_Double;
 Arr[op_cmp_GreaterThan][ltUInt8][ltCurrency] := @lpeUInt8_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltUInt8][ltExtended] := @lpeUInt8_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltUInt8][ltVariant] := @lpeUInt8_GT_Variant;
 Arr[op_cmp_GreaterThan][ltInt8][ltUInt8] := @lpeInt8_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltInt8][ltInt8] := @lpeInt8_GT_Int8;
@@ -201,7 +229,9 @@ Arr[op_cmp_GreaterThan][ltInt8][ltInt64] := @lpeInt8_GT_Int64;
 Arr[op_cmp_GreaterThan][ltInt8][ltSingle] := @lpeInt8_GT_Single;
 Arr[op_cmp_GreaterThan][ltInt8][ltDouble] := @lpeInt8_GT_Double;
 Arr[op_cmp_GreaterThan][ltInt8][ltCurrency] := @lpeInt8_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltInt8][ltExtended] := @lpeInt8_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltInt8][ltVariant] := @lpeInt8_GT_Variant;
 Arr[op_cmp_GreaterThan][ltUInt16][ltUInt8] := @lpeUInt16_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltUInt16][ltInt8] := @lpeUInt16_GT_Int8;
@@ -214,7 +244,9 @@ Arr[op_cmp_GreaterThan][ltUInt16][ltInt64] := @lpeUInt16_GT_Int64;
 Arr[op_cmp_GreaterThan][ltUInt16][ltSingle] := @lpeUInt16_GT_Single;
 Arr[op_cmp_GreaterThan][ltUInt16][ltDouble] := @lpeUInt16_GT_Double;
 Arr[op_cmp_GreaterThan][ltUInt16][ltCurrency] := @lpeUInt16_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltUInt16][ltExtended] := @lpeUInt16_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltUInt16][ltVariant] := @lpeUInt16_GT_Variant;
 Arr[op_cmp_GreaterThan][ltInt16][ltUInt8] := @lpeInt16_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltInt16][ltInt8] := @lpeInt16_GT_Int8;
@@ -227,7 +259,9 @@ Arr[op_cmp_GreaterThan][ltInt16][ltInt64] := @lpeInt16_GT_Int64;
 Arr[op_cmp_GreaterThan][ltInt16][ltSingle] := @lpeInt16_GT_Single;
 Arr[op_cmp_GreaterThan][ltInt16][ltDouble] := @lpeInt16_GT_Double;
 Arr[op_cmp_GreaterThan][ltInt16][ltCurrency] := @lpeInt16_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltInt16][ltExtended] := @lpeInt16_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltInt16][ltVariant] := @lpeInt16_GT_Variant;
 Arr[op_cmp_GreaterThan][ltUInt32][ltUInt8] := @lpeUInt32_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltUInt32][ltInt8] := @lpeUInt32_GT_Int8;
@@ -240,7 +274,9 @@ Arr[op_cmp_GreaterThan][ltUInt32][ltInt64] := @lpeUInt32_GT_Int64;
 Arr[op_cmp_GreaterThan][ltUInt32][ltSingle] := @lpeUInt32_GT_Single;
 Arr[op_cmp_GreaterThan][ltUInt32][ltDouble] := @lpeUInt32_GT_Double;
 Arr[op_cmp_GreaterThan][ltUInt32][ltCurrency] := @lpeUInt32_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltUInt32][ltExtended] := @lpeUInt32_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltUInt32][ltVariant] := @lpeUInt32_GT_Variant;
 Arr[op_cmp_GreaterThan][ltInt32][ltUInt8] := @lpeInt32_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltInt32][ltInt8] := @lpeInt32_GT_Int8;
@@ -253,7 +289,9 @@ Arr[op_cmp_GreaterThan][ltInt32][ltInt64] := @lpeInt32_GT_Int64;
 Arr[op_cmp_GreaterThan][ltInt32][ltSingle] := @lpeInt32_GT_Single;
 Arr[op_cmp_GreaterThan][ltInt32][ltDouble] := @lpeInt32_GT_Double;
 Arr[op_cmp_GreaterThan][ltInt32][ltCurrency] := @lpeInt32_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltInt32][ltExtended] := @lpeInt32_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltInt32][ltVariant] := @lpeInt32_GT_Variant;
 Arr[op_cmp_GreaterThan][ltUInt64][ltUInt8] := @lpeUInt64_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltUInt64][ltInt8] := @lpeUInt64_GT_Int8;
@@ -266,7 +304,9 @@ Arr[op_cmp_GreaterThan][ltUInt64][ltInt64] := @lpeUInt64_GT_Int64;
 Arr[op_cmp_GreaterThan][ltUInt64][ltSingle] := @lpeUInt64_GT_Single;
 Arr[op_cmp_GreaterThan][ltUInt64][ltDouble] := @lpeUInt64_GT_Double;
 Arr[op_cmp_GreaterThan][ltUInt64][ltCurrency] := @lpeUInt64_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltUInt64][ltExtended] := @lpeUInt64_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltUInt64][ltVariant] := @lpeUInt64_GT_Variant;
 Arr[op_cmp_GreaterThan][ltInt64][ltUInt8] := @lpeInt64_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltInt64][ltInt8] := @lpeInt64_GT_Int8;
@@ -279,7 +319,9 @@ Arr[op_cmp_GreaterThan][ltInt64][ltInt64] := @lpeInt64_GT_Int64;
 Arr[op_cmp_GreaterThan][ltInt64][ltSingle] := @lpeInt64_GT_Single;
 Arr[op_cmp_GreaterThan][ltInt64][ltDouble] := @lpeInt64_GT_Double;
 Arr[op_cmp_GreaterThan][ltInt64][ltCurrency] := @lpeInt64_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltInt64][ltExtended] := @lpeInt64_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltInt64][ltVariant] := @lpeInt64_GT_Variant;
 Arr[op_cmp_GreaterThan][ltSingle][ltUInt8] := @lpeSingle_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltSingle][ltInt8] := @lpeSingle_GT_Int8;
@@ -292,7 +334,9 @@ Arr[op_cmp_GreaterThan][ltSingle][ltInt64] := @lpeSingle_GT_Int64;
 Arr[op_cmp_GreaterThan][ltSingle][ltSingle] := @lpeSingle_GT_Single;
 Arr[op_cmp_GreaterThan][ltSingle][ltDouble] := @lpeSingle_GT_Double;
 Arr[op_cmp_GreaterThan][ltSingle][ltCurrency] := @lpeSingle_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltSingle][ltExtended] := @lpeSingle_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltSingle][ltVariant] := @lpeSingle_GT_Variant;
 Arr[op_cmp_GreaterThan][ltDouble][ltUInt8] := @lpeDouble_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltDouble][ltInt8] := @lpeDouble_GT_Int8;
@@ -305,7 +349,9 @@ Arr[op_cmp_GreaterThan][ltDouble][ltInt64] := @lpeDouble_GT_Int64;
 Arr[op_cmp_GreaterThan][ltDouble][ltSingle] := @lpeDouble_GT_Single;
 Arr[op_cmp_GreaterThan][ltDouble][ltDouble] := @lpeDouble_GT_Double;
 Arr[op_cmp_GreaterThan][ltDouble][ltCurrency] := @lpeDouble_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltDouble][ltExtended] := @lpeDouble_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltDouble][ltVariant] := @lpeDouble_GT_Variant;
 Arr[op_cmp_GreaterThan][ltCurrency][ltUInt8] := @lpeCurrency_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltCurrency][ltInt8] := @lpeCurrency_GT_Int8;
@@ -318,8 +364,11 @@ Arr[op_cmp_GreaterThan][ltCurrency][ltInt64] := @lpeCurrency_GT_Int64;
 Arr[op_cmp_GreaterThan][ltCurrency][ltSingle] := @lpeCurrency_GT_Single;
 Arr[op_cmp_GreaterThan][ltCurrency][ltDouble] := @lpeCurrency_GT_Double;
 Arr[op_cmp_GreaterThan][ltCurrency][ltCurrency] := @lpeCurrency_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltCurrency][ltExtended] := @lpeCurrency_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltCurrency][ltVariant] := @lpeCurrency_GT_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltExtended][ltUInt8] := @lpeExtended_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltExtended][ltInt8] := @lpeExtended_GT_Int8;
 Arr[op_cmp_GreaterThan][ltExtended][ltUInt16] := @lpeExtended_GT_UInt16;
@@ -333,6 +382,7 @@ Arr[op_cmp_GreaterThan][ltExtended][ltDouble] := @lpeExtended_GT_Double;
 Arr[op_cmp_GreaterThan][ltExtended][ltCurrency] := @lpeExtended_GT_Currency;
 Arr[op_cmp_GreaterThan][ltExtended][ltExtended] := @lpeExtended_GT_Extended;
 Arr[op_cmp_GreaterThan][ltExtended][ltVariant] := @lpeExtended_GT_Variant;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltVariant][ltUInt8] := @lpeVariant_GT_UInt8;
 Arr[op_cmp_GreaterThan][ltVariant][ltInt8] := @lpeVariant_GT_Int8;
 Arr[op_cmp_GreaterThan][ltVariant][ltUInt16] := @lpeVariant_GT_UInt16;
@@ -344,7 +394,9 @@ Arr[op_cmp_GreaterThan][ltVariant][ltInt64] := @lpeVariant_GT_Int64;
 Arr[op_cmp_GreaterThan][ltVariant][ltSingle] := @lpeVariant_GT_Single;
 Arr[op_cmp_GreaterThan][ltVariant][ltDouble] := @lpeVariant_GT_Double;
 Arr[op_cmp_GreaterThan][ltVariant][ltCurrency] := @lpeVariant_GT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltVariant][ltExtended] := @lpeVariant_GT_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltVariant][ltVariant] := @lpeVariant_GT_Variant;
 
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltUInt8] := @lpeUInt8_GTEQ_UInt8;
@@ -358,7 +410,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltInt64] := @lpeUInt8_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltSingle] := @lpeUInt8_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltDouble] := @lpeUInt8_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltCurrency] := @lpeUInt8_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltExtended] := @lpeUInt8_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltVariant] := @lpeUInt8_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltUInt8] := @lpeInt8_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltInt8] := @lpeInt8_GTEQ_Int8;
@@ -371,7 +425,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltInt64] := @lpeInt8_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltSingle] := @lpeInt8_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltDouble] := @lpeInt8_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltCurrency] := @lpeInt8_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltExtended] := @lpeInt8_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltVariant] := @lpeInt8_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltUInt8] := @lpeUInt16_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltInt8] := @lpeUInt16_GTEQ_Int8;
@@ -384,7 +440,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltInt64] := @lpeUInt16_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltSingle] := @lpeUInt16_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltDouble] := @lpeUInt16_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltCurrency] := @lpeUInt16_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltExtended] := @lpeUInt16_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltVariant] := @lpeUInt16_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltUInt8] := @lpeInt16_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltInt8] := @lpeInt16_GTEQ_Int8;
@@ -397,7 +455,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltInt64] := @lpeInt16_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltSingle] := @lpeInt16_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltDouble] := @lpeInt16_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltCurrency] := @lpeInt16_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltExtended] := @lpeInt16_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltVariant] := @lpeInt16_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltUInt8] := @lpeUInt32_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltInt8] := @lpeUInt32_GTEQ_Int8;
@@ -410,7 +470,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltInt64] := @lpeUInt32_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltSingle] := @lpeUInt32_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltDouble] := @lpeUInt32_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltCurrency] := @lpeUInt32_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltExtended] := @lpeUInt32_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltVariant] := @lpeUInt32_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltUInt8] := @lpeInt32_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltInt8] := @lpeInt32_GTEQ_Int8;
@@ -423,7 +485,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltInt64] := @lpeInt32_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltSingle] := @lpeInt32_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltDouble] := @lpeInt32_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltCurrency] := @lpeInt32_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltExtended] := @lpeInt32_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltVariant] := @lpeInt32_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltUInt8] := @lpeUInt64_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltInt8] := @lpeUInt64_GTEQ_Int8;
@@ -436,7 +500,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltInt64] := @lpeUInt64_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltSingle] := @lpeUInt64_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltDouble] := @lpeUInt64_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltCurrency] := @lpeUInt64_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltExtended] := @lpeUInt64_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltVariant] := @lpeUInt64_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltUInt8] := @lpeInt64_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltInt8] := @lpeInt64_GTEQ_Int8;
@@ -449,7 +515,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltInt64] := @lpeInt64_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltSingle] := @lpeInt64_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltDouble] := @lpeInt64_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltCurrency] := @lpeInt64_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltExtended] := @lpeInt64_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltVariant] := @lpeInt64_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltUInt8] := @lpeSingle_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltInt8] := @lpeSingle_GTEQ_Int8;
@@ -462,7 +530,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltInt64] := @lpeSingle_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltSingle] := @lpeSingle_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltDouble] := @lpeSingle_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltCurrency] := @lpeSingle_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltExtended] := @lpeSingle_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltVariant] := @lpeSingle_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltUInt8] := @lpeDouble_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltInt8] := @lpeDouble_GTEQ_Int8;
@@ -475,7 +545,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltInt64] := @lpeDouble_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltSingle] := @lpeDouble_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltDouble] := @lpeDouble_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltCurrency] := @lpeDouble_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltExtended] := @lpeDouble_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltVariant] := @lpeDouble_GTEQ_Variant;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltUInt8] := @lpeCurrency_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltInt8] := @lpeCurrency_GTEQ_Int8;
@@ -488,8 +560,11 @@ Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltInt64] := @lpeCurrency_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltSingle] := @lpeCurrency_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltDouble] := @lpeCurrency_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltCurrency] := @lpeCurrency_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltExtended] := @lpeCurrency_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltVariant] := @lpeCurrency_GTEQ_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltUInt8] := @lpeExtended_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltInt8] := @lpeExtended_GTEQ_Int8;
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltUInt16] := @lpeExtended_GTEQ_UInt16;
@@ -503,6 +578,7 @@ Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltDouble] := @lpeExtended_GTEQ_Double
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltCurrency] := @lpeExtended_GTEQ_Currency;
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltExtended] := @lpeExtended_GTEQ_Extended;
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltVariant] := @lpeExtended_GTEQ_Variant;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltUInt8] := @lpeVariant_GTEQ_UInt8;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltInt8] := @lpeVariant_GTEQ_Int8;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltUInt16] := @lpeVariant_GTEQ_UInt16;
@@ -514,7 +590,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltInt64] := @lpeVariant_GTEQ_Int64;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltSingle] := @lpeVariant_GTEQ_Single;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltDouble] := @lpeVariant_GTEQ_Double;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltCurrency] := @lpeVariant_GTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltExtended] := @lpeVariant_GTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltVariant] := @lpeVariant_GTEQ_Variant;
 
 Arr[op_cmp_LessThan][ltUInt8][ltUInt8] := @lpeUInt8_LT_UInt8;
@@ -528,7 +606,9 @@ Arr[op_cmp_LessThan][ltUInt8][ltInt64] := @lpeUInt8_LT_Int64;
 Arr[op_cmp_LessThan][ltUInt8][ltSingle] := @lpeUInt8_LT_Single;
 Arr[op_cmp_LessThan][ltUInt8][ltDouble] := @lpeUInt8_LT_Double;
 Arr[op_cmp_LessThan][ltUInt8][ltCurrency] := @lpeUInt8_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltUInt8][ltExtended] := @lpeUInt8_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltUInt8][ltVariant] := @lpeUInt8_LT_Variant;
 Arr[op_cmp_LessThan][ltInt8][ltUInt8] := @lpeInt8_LT_UInt8;
 Arr[op_cmp_LessThan][ltInt8][ltInt8] := @lpeInt8_LT_Int8;
@@ -541,7 +621,9 @@ Arr[op_cmp_LessThan][ltInt8][ltInt64] := @lpeInt8_LT_Int64;
 Arr[op_cmp_LessThan][ltInt8][ltSingle] := @lpeInt8_LT_Single;
 Arr[op_cmp_LessThan][ltInt8][ltDouble] := @lpeInt8_LT_Double;
 Arr[op_cmp_LessThan][ltInt8][ltCurrency] := @lpeInt8_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltInt8][ltExtended] := @lpeInt8_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltInt8][ltVariant] := @lpeInt8_LT_Variant;
 Arr[op_cmp_LessThan][ltUInt16][ltUInt8] := @lpeUInt16_LT_UInt8;
 Arr[op_cmp_LessThan][ltUInt16][ltInt8] := @lpeUInt16_LT_Int8;
@@ -554,7 +636,9 @@ Arr[op_cmp_LessThan][ltUInt16][ltInt64] := @lpeUInt16_LT_Int64;
 Arr[op_cmp_LessThan][ltUInt16][ltSingle] := @lpeUInt16_LT_Single;
 Arr[op_cmp_LessThan][ltUInt16][ltDouble] := @lpeUInt16_LT_Double;
 Arr[op_cmp_LessThan][ltUInt16][ltCurrency] := @lpeUInt16_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltUInt16][ltExtended] := @lpeUInt16_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltUInt16][ltVariant] := @lpeUInt16_LT_Variant;
 Arr[op_cmp_LessThan][ltInt16][ltUInt8] := @lpeInt16_LT_UInt8;
 Arr[op_cmp_LessThan][ltInt16][ltInt8] := @lpeInt16_LT_Int8;
@@ -567,7 +651,9 @@ Arr[op_cmp_LessThan][ltInt16][ltInt64] := @lpeInt16_LT_Int64;
 Arr[op_cmp_LessThan][ltInt16][ltSingle] := @lpeInt16_LT_Single;
 Arr[op_cmp_LessThan][ltInt16][ltDouble] := @lpeInt16_LT_Double;
 Arr[op_cmp_LessThan][ltInt16][ltCurrency] := @lpeInt16_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltInt16][ltExtended] := @lpeInt16_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltInt16][ltVariant] := @lpeInt16_LT_Variant;
 Arr[op_cmp_LessThan][ltUInt32][ltUInt8] := @lpeUInt32_LT_UInt8;
 Arr[op_cmp_LessThan][ltUInt32][ltInt8] := @lpeUInt32_LT_Int8;
@@ -580,7 +666,9 @@ Arr[op_cmp_LessThan][ltUInt32][ltInt64] := @lpeUInt32_LT_Int64;
 Arr[op_cmp_LessThan][ltUInt32][ltSingle] := @lpeUInt32_LT_Single;
 Arr[op_cmp_LessThan][ltUInt32][ltDouble] := @lpeUInt32_LT_Double;
 Arr[op_cmp_LessThan][ltUInt32][ltCurrency] := @lpeUInt32_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltUInt32][ltExtended] := @lpeUInt32_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltUInt32][ltVariant] := @lpeUInt32_LT_Variant;
 Arr[op_cmp_LessThan][ltInt32][ltUInt8] := @lpeInt32_LT_UInt8;
 Arr[op_cmp_LessThan][ltInt32][ltInt8] := @lpeInt32_LT_Int8;
@@ -593,7 +681,9 @@ Arr[op_cmp_LessThan][ltInt32][ltInt64] := @lpeInt32_LT_Int64;
 Arr[op_cmp_LessThan][ltInt32][ltSingle] := @lpeInt32_LT_Single;
 Arr[op_cmp_LessThan][ltInt32][ltDouble] := @lpeInt32_LT_Double;
 Arr[op_cmp_LessThan][ltInt32][ltCurrency] := @lpeInt32_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltInt32][ltExtended] := @lpeInt32_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltInt32][ltVariant] := @lpeInt32_LT_Variant;
 Arr[op_cmp_LessThan][ltUInt64][ltUInt8] := @lpeUInt64_LT_UInt8;
 Arr[op_cmp_LessThan][ltUInt64][ltInt8] := @lpeUInt64_LT_Int8;
@@ -606,7 +696,9 @@ Arr[op_cmp_LessThan][ltUInt64][ltInt64] := @lpeUInt64_LT_Int64;
 Arr[op_cmp_LessThan][ltUInt64][ltSingle] := @lpeUInt64_LT_Single;
 Arr[op_cmp_LessThan][ltUInt64][ltDouble] := @lpeUInt64_LT_Double;
 Arr[op_cmp_LessThan][ltUInt64][ltCurrency] := @lpeUInt64_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltUInt64][ltExtended] := @lpeUInt64_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltUInt64][ltVariant] := @lpeUInt64_LT_Variant;
 Arr[op_cmp_LessThan][ltInt64][ltUInt8] := @lpeInt64_LT_UInt8;
 Arr[op_cmp_LessThan][ltInt64][ltInt8] := @lpeInt64_LT_Int8;
@@ -619,7 +711,9 @@ Arr[op_cmp_LessThan][ltInt64][ltInt64] := @lpeInt64_LT_Int64;
 Arr[op_cmp_LessThan][ltInt64][ltSingle] := @lpeInt64_LT_Single;
 Arr[op_cmp_LessThan][ltInt64][ltDouble] := @lpeInt64_LT_Double;
 Arr[op_cmp_LessThan][ltInt64][ltCurrency] := @lpeInt64_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltInt64][ltExtended] := @lpeInt64_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltInt64][ltVariant] := @lpeInt64_LT_Variant;
 Arr[op_cmp_LessThan][ltSingle][ltUInt8] := @lpeSingle_LT_UInt8;
 Arr[op_cmp_LessThan][ltSingle][ltInt8] := @lpeSingle_LT_Int8;
@@ -632,7 +726,9 @@ Arr[op_cmp_LessThan][ltSingle][ltInt64] := @lpeSingle_LT_Int64;
 Arr[op_cmp_LessThan][ltSingle][ltSingle] := @lpeSingle_LT_Single;
 Arr[op_cmp_LessThan][ltSingle][ltDouble] := @lpeSingle_LT_Double;
 Arr[op_cmp_LessThan][ltSingle][ltCurrency] := @lpeSingle_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltSingle][ltExtended] := @lpeSingle_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltSingle][ltVariant] := @lpeSingle_LT_Variant;
 Arr[op_cmp_LessThan][ltDouble][ltUInt8] := @lpeDouble_LT_UInt8;
 Arr[op_cmp_LessThan][ltDouble][ltInt8] := @lpeDouble_LT_Int8;
@@ -645,7 +741,9 @@ Arr[op_cmp_LessThan][ltDouble][ltInt64] := @lpeDouble_LT_Int64;
 Arr[op_cmp_LessThan][ltDouble][ltSingle] := @lpeDouble_LT_Single;
 Arr[op_cmp_LessThan][ltDouble][ltDouble] := @lpeDouble_LT_Double;
 Arr[op_cmp_LessThan][ltDouble][ltCurrency] := @lpeDouble_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltDouble][ltExtended] := @lpeDouble_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltDouble][ltVariant] := @lpeDouble_LT_Variant;
 Arr[op_cmp_LessThan][ltCurrency][ltUInt8] := @lpeCurrency_LT_UInt8;
 Arr[op_cmp_LessThan][ltCurrency][ltInt8] := @lpeCurrency_LT_Int8;
@@ -658,8 +756,11 @@ Arr[op_cmp_LessThan][ltCurrency][ltInt64] := @lpeCurrency_LT_Int64;
 Arr[op_cmp_LessThan][ltCurrency][ltSingle] := @lpeCurrency_LT_Single;
 Arr[op_cmp_LessThan][ltCurrency][ltDouble] := @lpeCurrency_LT_Double;
 Arr[op_cmp_LessThan][ltCurrency][ltCurrency] := @lpeCurrency_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltCurrency][ltExtended] := @lpeCurrency_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltCurrency][ltVariant] := @lpeCurrency_LT_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltExtended][ltUInt8] := @lpeExtended_LT_UInt8;
 Arr[op_cmp_LessThan][ltExtended][ltInt8] := @lpeExtended_LT_Int8;
 Arr[op_cmp_LessThan][ltExtended][ltUInt16] := @lpeExtended_LT_UInt16;
@@ -673,6 +774,7 @@ Arr[op_cmp_LessThan][ltExtended][ltDouble] := @lpeExtended_LT_Double;
 Arr[op_cmp_LessThan][ltExtended][ltCurrency] := @lpeExtended_LT_Currency;
 Arr[op_cmp_LessThan][ltExtended][ltExtended] := @lpeExtended_LT_Extended;
 Arr[op_cmp_LessThan][ltExtended][ltVariant] := @lpeExtended_LT_Variant;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltVariant][ltUInt8] := @lpeVariant_LT_UInt8;
 Arr[op_cmp_LessThan][ltVariant][ltInt8] := @lpeVariant_LT_Int8;
 Arr[op_cmp_LessThan][ltVariant][ltUInt16] := @lpeVariant_LT_UInt16;
@@ -684,7 +786,9 @@ Arr[op_cmp_LessThan][ltVariant][ltInt64] := @lpeVariant_LT_Int64;
 Arr[op_cmp_LessThan][ltVariant][ltSingle] := @lpeVariant_LT_Single;
 Arr[op_cmp_LessThan][ltVariant][ltDouble] := @lpeVariant_LT_Double;
 Arr[op_cmp_LessThan][ltVariant][ltCurrency] := @lpeVariant_LT_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltVariant][ltExtended] := @lpeVariant_LT_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltVariant][ltVariant] := @lpeVariant_LT_Variant;
 
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltUInt8] := @lpeUInt8_LTEQ_UInt8;
@@ -698,7 +802,9 @@ Arr[op_cmp_LessThanOrEqual][ltUInt8][ltInt64] := @lpeUInt8_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltSingle] := @lpeUInt8_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltDouble] := @lpeUInt8_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltCurrency] := @lpeUInt8_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltExtended] := @lpeUInt8_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltVariant] := @lpeUInt8_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltUInt8] := @lpeInt8_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltInt8] := @lpeInt8_LTEQ_Int8;
@@ -711,7 +817,9 @@ Arr[op_cmp_LessThanOrEqual][ltInt8][ltInt64] := @lpeInt8_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltSingle] := @lpeInt8_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltDouble] := @lpeInt8_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltCurrency] := @lpeInt8_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltExtended] := @lpeInt8_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltVariant] := @lpeInt8_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltUInt8] := @lpeUInt16_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltInt8] := @lpeUInt16_LTEQ_Int8;
@@ -724,7 +832,9 @@ Arr[op_cmp_LessThanOrEqual][ltUInt16][ltInt64] := @lpeUInt16_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltSingle] := @lpeUInt16_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltDouble] := @lpeUInt16_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltCurrency] := @lpeUInt16_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltExtended] := @lpeUInt16_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltVariant] := @lpeUInt16_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltUInt8] := @lpeInt16_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltInt8] := @lpeInt16_LTEQ_Int8;
@@ -737,7 +847,9 @@ Arr[op_cmp_LessThanOrEqual][ltInt16][ltInt64] := @lpeInt16_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltSingle] := @lpeInt16_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltDouble] := @lpeInt16_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltCurrency] := @lpeInt16_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltExtended] := @lpeInt16_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltVariant] := @lpeInt16_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltUInt8] := @lpeUInt32_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltInt8] := @lpeUInt32_LTEQ_Int8;
@@ -750,7 +862,9 @@ Arr[op_cmp_LessThanOrEqual][ltUInt32][ltInt64] := @lpeUInt32_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltSingle] := @lpeUInt32_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltDouble] := @lpeUInt32_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltCurrency] := @lpeUInt32_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltExtended] := @lpeUInt32_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltVariant] := @lpeUInt32_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltUInt8] := @lpeInt32_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltInt8] := @lpeInt32_LTEQ_Int8;
@@ -763,7 +877,9 @@ Arr[op_cmp_LessThanOrEqual][ltInt32][ltInt64] := @lpeInt32_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltSingle] := @lpeInt32_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltDouble] := @lpeInt32_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltCurrency] := @lpeInt32_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltExtended] := @lpeInt32_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltVariant] := @lpeInt32_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltUInt8] := @lpeUInt64_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltInt8] := @lpeUInt64_LTEQ_Int8;
@@ -776,7 +892,9 @@ Arr[op_cmp_LessThanOrEqual][ltUInt64][ltInt64] := @lpeUInt64_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltSingle] := @lpeUInt64_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltDouble] := @lpeUInt64_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltCurrency] := @lpeUInt64_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltExtended] := @lpeUInt64_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltVariant] := @lpeUInt64_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltUInt8] := @lpeInt64_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltInt8] := @lpeInt64_LTEQ_Int8;
@@ -789,7 +907,9 @@ Arr[op_cmp_LessThanOrEqual][ltInt64][ltInt64] := @lpeInt64_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltSingle] := @lpeInt64_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltDouble] := @lpeInt64_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltCurrency] := @lpeInt64_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltExtended] := @lpeInt64_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltVariant] := @lpeInt64_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltUInt8] := @lpeSingle_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltInt8] := @lpeSingle_LTEQ_Int8;
@@ -802,7 +922,9 @@ Arr[op_cmp_LessThanOrEqual][ltSingle][ltInt64] := @lpeSingle_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltSingle] := @lpeSingle_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltDouble] := @lpeSingle_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltCurrency] := @lpeSingle_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltExtended] := @lpeSingle_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltVariant] := @lpeSingle_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltUInt8] := @lpeDouble_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltInt8] := @lpeDouble_LTEQ_Int8;
@@ -815,7 +937,9 @@ Arr[op_cmp_LessThanOrEqual][ltDouble][ltInt64] := @lpeDouble_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltSingle] := @lpeDouble_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltDouble] := @lpeDouble_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltCurrency] := @lpeDouble_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltExtended] := @lpeDouble_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltVariant] := @lpeDouble_LTEQ_Variant;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltUInt8] := @lpeCurrency_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltInt8] := @lpeCurrency_LTEQ_Int8;
@@ -828,8 +952,11 @@ Arr[op_cmp_LessThanOrEqual][ltCurrency][ltInt64] := @lpeCurrency_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltSingle] := @lpeCurrency_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltDouble] := @lpeCurrency_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltCurrency] := @lpeCurrency_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltExtended] := @lpeCurrency_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltVariant] := @lpeCurrency_LTEQ_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltUInt8] := @lpeExtended_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltInt8] := @lpeExtended_LTEQ_Int8;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltUInt16] := @lpeExtended_LTEQ_UInt16;
@@ -843,6 +970,7 @@ Arr[op_cmp_LessThanOrEqual][ltExtended][ltDouble] := @lpeExtended_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltCurrency] := @lpeExtended_LTEQ_Currency;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltExtended] := @lpeExtended_LTEQ_Extended;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltVariant] := @lpeExtended_LTEQ_Variant;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltUInt8] := @lpeVariant_LTEQ_UInt8;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltInt8] := @lpeVariant_LTEQ_Int8;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltUInt16] := @lpeVariant_LTEQ_UInt16;
@@ -854,7 +982,9 @@ Arr[op_cmp_LessThanOrEqual][ltVariant][ltInt64] := @lpeVariant_LTEQ_Int64;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltSingle] := @lpeVariant_LTEQ_Single;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltDouble] := @lpeVariant_LTEQ_Double;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltCurrency] := @lpeVariant_LTEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltExtended] := @lpeVariant_LTEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltVariant] := @lpeVariant_LTEQ_Variant;
 
 Arr[op_cmp_NotEqual][ltUInt8][ltUInt8] := @lpeUInt8_NEQ_UInt8;
@@ -868,7 +998,9 @@ Arr[op_cmp_NotEqual][ltUInt8][ltInt64] := @lpeUInt8_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltUInt8][ltSingle] := @lpeUInt8_NEQ_Single;
 Arr[op_cmp_NotEqual][ltUInt8][ltDouble] := @lpeUInt8_NEQ_Double;
 Arr[op_cmp_NotEqual][ltUInt8][ltCurrency] := @lpeUInt8_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltUInt8][ltExtended] := @lpeUInt8_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltUInt8][ltVariant] := @lpeUInt8_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltInt8][ltUInt8] := @lpeInt8_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltInt8][ltInt8] := @lpeInt8_NEQ_Int8;
@@ -881,7 +1013,9 @@ Arr[op_cmp_NotEqual][ltInt8][ltInt64] := @lpeInt8_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltInt8][ltSingle] := @lpeInt8_NEQ_Single;
 Arr[op_cmp_NotEqual][ltInt8][ltDouble] := @lpeInt8_NEQ_Double;
 Arr[op_cmp_NotEqual][ltInt8][ltCurrency] := @lpeInt8_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltInt8][ltExtended] := @lpeInt8_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltInt8][ltVariant] := @lpeInt8_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltUInt16][ltUInt8] := @lpeUInt16_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltUInt16][ltInt8] := @lpeUInt16_NEQ_Int8;
@@ -894,7 +1028,9 @@ Arr[op_cmp_NotEqual][ltUInt16][ltInt64] := @lpeUInt16_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltUInt16][ltSingle] := @lpeUInt16_NEQ_Single;
 Arr[op_cmp_NotEqual][ltUInt16][ltDouble] := @lpeUInt16_NEQ_Double;
 Arr[op_cmp_NotEqual][ltUInt16][ltCurrency] := @lpeUInt16_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltUInt16][ltExtended] := @lpeUInt16_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltUInt16][ltVariant] := @lpeUInt16_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltInt16][ltUInt8] := @lpeInt16_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltInt16][ltInt8] := @lpeInt16_NEQ_Int8;
@@ -907,7 +1043,9 @@ Arr[op_cmp_NotEqual][ltInt16][ltInt64] := @lpeInt16_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltInt16][ltSingle] := @lpeInt16_NEQ_Single;
 Arr[op_cmp_NotEqual][ltInt16][ltDouble] := @lpeInt16_NEQ_Double;
 Arr[op_cmp_NotEqual][ltInt16][ltCurrency] := @lpeInt16_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltInt16][ltExtended] := @lpeInt16_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltInt16][ltVariant] := @lpeInt16_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltUInt32][ltUInt8] := @lpeUInt32_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltUInt32][ltInt8] := @lpeUInt32_NEQ_Int8;
@@ -920,7 +1058,9 @@ Arr[op_cmp_NotEqual][ltUInt32][ltInt64] := @lpeUInt32_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltUInt32][ltSingle] := @lpeUInt32_NEQ_Single;
 Arr[op_cmp_NotEqual][ltUInt32][ltDouble] := @lpeUInt32_NEQ_Double;
 Arr[op_cmp_NotEqual][ltUInt32][ltCurrency] := @lpeUInt32_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltUInt32][ltExtended] := @lpeUInt32_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltUInt32][ltVariant] := @lpeUInt32_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltInt32][ltUInt8] := @lpeInt32_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltInt32][ltInt8] := @lpeInt32_NEQ_Int8;
@@ -933,7 +1073,9 @@ Arr[op_cmp_NotEqual][ltInt32][ltInt64] := @lpeInt32_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltInt32][ltSingle] := @lpeInt32_NEQ_Single;
 Arr[op_cmp_NotEqual][ltInt32][ltDouble] := @lpeInt32_NEQ_Double;
 Arr[op_cmp_NotEqual][ltInt32][ltCurrency] := @lpeInt32_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltInt32][ltExtended] := @lpeInt32_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltInt32][ltVariant] := @lpeInt32_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltUInt64][ltUInt8] := @lpeUInt64_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltUInt64][ltInt8] := @lpeUInt64_NEQ_Int8;
@@ -946,7 +1088,9 @@ Arr[op_cmp_NotEqual][ltUInt64][ltInt64] := @lpeUInt64_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltUInt64][ltSingle] := @lpeUInt64_NEQ_Single;
 Arr[op_cmp_NotEqual][ltUInt64][ltDouble] := @lpeUInt64_NEQ_Double;
 Arr[op_cmp_NotEqual][ltUInt64][ltCurrency] := @lpeUInt64_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltUInt64][ltExtended] := @lpeUInt64_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltUInt64][ltVariant] := @lpeUInt64_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltInt64][ltUInt8] := @lpeInt64_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltInt64][ltInt8] := @lpeInt64_NEQ_Int8;
@@ -959,7 +1103,9 @@ Arr[op_cmp_NotEqual][ltInt64][ltInt64] := @lpeInt64_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltInt64][ltSingle] := @lpeInt64_NEQ_Single;
 Arr[op_cmp_NotEqual][ltInt64][ltDouble] := @lpeInt64_NEQ_Double;
 Arr[op_cmp_NotEqual][ltInt64][ltCurrency] := @lpeInt64_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltInt64][ltExtended] := @lpeInt64_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltInt64][ltVariant] := @lpeInt64_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltSingle][ltUInt8] := @lpeSingle_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltSingle][ltInt8] := @lpeSingle_NEQ_Int8;
@@ -972,7 +1118,9 @@ Arr[op_cmp_NotEqual][ltSingle][ltInt64] := @lpeSingle_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltSingle][ltSingle] := @lpeSingle_NEQ_Single;
 Arr[op_cmp_NotEqual][ltSingle][ltDouble] := @lpeSingle_NEQ_Double;
 Arr[op_cmp_NotEqual][ltSingle][ltCurrency] := @lpeSingle_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltSingle][ltExtended] := @lpeSingle_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltSingle][ltVariant] := @lpeSingle_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltDouble][ltUInt8] := @lpeDouble_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltDouble][ltInt8] := @lpeDouble_NEQ_Int8;
@@ -985,7 +1133,9 @@ Arr[op_cmp_NotEqual][ltDouble][ltInt64] := @lpeDouble_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltDouble][ltSingle] := @lpeDouble_NEQ_Single;
 Arr[op_cmp_NotEqual][ltDouble][ltDouble] := @lpeDouble_NEQ_Double;
 Arr[op_cmp_NotEqual][ltDouble][ltCurrency] := @lpeDouble_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltDouble][ltExtended] := @lpeDouble_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltDouble][ltVariant] := @lpeDouble_NEQ_Variant;
 Arr[op_cmp_NotEqual][ltCurrency][ltUInt8] := @lpeCurrency_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltCurrency][ltInt8] := @lpeCurrency_NEQ_Int8;
@@ -998,8 +1148,11 @@ Arr[op_cmp_NotEqual][ltCurrency][ltInt64] := @lpeCurrency_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltCurrency][ltSingle] := @lpeCurrency_NEQ_Single;
 Arr[op_cmp_NotEqual][ltCurrency][ltDouble] := @lpeCurrency_NEQ_Double;
 Arr[op_cmp_NotEqual][ltCurrency][ltCurrency] := @lpeCurrency_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltCurrency][ltExtended] := @lpeCurrency_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltCurrency][ltVariant] := @lpeCurrency_NEQ_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltExtended][ltUInt8] := @lpeExtended_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltExtended][ltInt8] := @lpeExtended_NEQ_Int8;
 Arr[op_cmp_NotEqual][ltExtended][ltUInt16] := @lpeExtended_NEQ_UInt16;
@@ -1013,6 +1166,7 @@ Arr[op_cmp_NotEqual][ltExtended][ltDouble] := @lpeExtended_NEQ_Double;
 Arr[op_cmp_NotEqual][ltExtended][ltCurrency] := @lpeExtended_NEQ_Currency;
 Arr[op_cmp_NotEqual][ltExtended][ltExtended] := @lpeExtended_NEQ_Extended;
 Arr[op_cmp_NotEqual][ltExtended][ltVariant] := @lpeExtended_NEQ_Variant;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltVariant][ltUInt8] := @lpeVariant_NEQ_UInt8;
 Arr[op_cmp_NotEqual][ltVariant][ltInt8] := @lpeVariant_NEQ_Int8;
 Arr[op_cmp_NotEqual][ltVariant][ltUInt16] := @lpeVariant_NEQ_UInt16;
@@ -1024,7 +1178,9 @@ Arr[op_cmp_NotEqual][ltVariant][ltInt64] := @lpeVariant_NEQ_Int64;
 Arr[op_cmp_NotEqual][ltVariant][ltSingle] := @lpeVariant_NEQ_Single;
 Arr[op_cmp_NotEqual][ltVariant][ltDouble] := @lpeVariant_NEQ_Double;
 Arr[op_cmp_NotEqual][ltVariant][ltCurrency] := @lpeVariant_NEQ_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltVariant][ltExtended] := @lpeVariant_NEQ_Extended;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltVariant][ltVariant] := @lpeVariant_NEQ_Variant;
 
 Arr[op_AND][ltUInt8][ltUInt8] := @lpeUInt8_AND_UInt8;
@@ -1192,7 +1348,9 @@ Arr[op_Assign][ltSingle][ltInt64] := @lpeSingle_ASGN_Int64;
 Arr[op_Assign][ltSingle][ltSingle] := @lpeSingle_ASGN_Single;
 Arr[op_Assign][ltSingle][ltDouble] := @lpeSingle_ASGN_Double;
 Arr[op_Assign][ltSingle][ltCurrency] := @lpeSingle_ASGN_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Assign][ltSingle][ltExtended] := @lpeSingle_ASGN_Extended;
+{$ENDIF}
 Arr[op_Assign][ltSingle][ltVariant] := @lpeSingle_ASGN_Variant;
 Arr[op_Assign][ltDouble][ltUInt8] := @lpeDouble_ASGN_UInt8;
 Arr[op_Assign][ltDouble][ltInt8] := @lpeDouble_ASGN_Int8;
@@ -1205,7 +1363,9 @@ Arr[op_Assign][ltDouble][ltInt64] := @lpeDouble_ASGN_Int64;
 Arr[op_Assign][ltDouble][ltSingle] := @lpeDouble_ASGN_Single;
 Arr[op_Assign][ltDouble][ltDouble] := @lpeDouble_ASGN_Double;
 Arr[op_Assign][ltDouble][ltCurrency] := @lpeDouble_ASGN_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Assign][ltDouble][ltExtended] := @lpeDouble_ASGN_Extended;
+{$ENDIF}
 Arr[op_Assign][ltDouble][ltVariant] := @lpeDouble_ASGN_Variant;
 Arr[op_Assign][ltCurrency][ltUInt8] := @lpeCurrency_ASGN_UInt8;
 Arr[op_Assign][ltCurrency][ltInt8] := @lpeCurrency_ASGN_Int8;
@@ -1218,8 +1378,11 @@ Arr[op_Assign][ltCurrency][ltInt64] := @lpeCurrency_ASGN_Int64;
 Arr[op_Assign][ltCurrency][ltSingle] := @lpeCurrency_ASGN_Single;
 Arr[op_Assign][ltCurrency][ltDouble] := @lpeCurrency_ASGN_Double;
 Arr[op_Assign][ltCurrency][ltCurrency] := @lpeCurrency_ASGN_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Assign][ltCurrency][ltExtended] := @lpeCurrency_ASGN_Extended;
+{$ENDIF}
 Arr[op_Assign][ltCurrency][ltVariant] := @lpeCurrency_ASGN_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Assign][ltExtended][ltUInt8] := @lpeExtended_ASGN_UInt8;
 Arr[op_Assign][ltExtended][ltInt8] := @lpeExtended_ASGN_Int8;
 Arr[op_Assign][ltExtended][ltUInt16] := @lpeExtended_ASGN_UInt16;
@@ -1233,6 +1396,7 @@ Arr[op_Assign][ltExtended][ltDouble] := @lpeExtended_ASGN_Double;
 Arr[op_Assign][ltExtended][ltCurrency] := @lpeExtended_ASGN_Currency;
 Arr[op_Assign][ltExtended][ltExtended] := @lpeExtended_ASGN_Extended;
 Arr[op_Assign][ltExtended][ltVariant] := @lpeExtended_ASGN_Variant;
+{$ENDIF}
 Arr[op_Assign][ltVariant][ltUInt8] := @lpeVariant_ASGN_UInt8;
 Arr[op_Assign][ltVariant][ltInt8] := @lpeVariant_ASGN_Int8;
 Arr[op_Assign][ltVariant][ltUInt16] := @lpeVariant_ASGN_UInt16;
@@ -1244,7 +1408,9 @@ Arr[op_Assign][ltVariant][ltInt64] := @lpeVariant_ASGN_Int64;
 Arr[op_Assign][ltVariant][ltSingle] := @lpeVariant_ASGN_Single;
 Arr[op_Assign][ltVariant][ltDouble] := @lpeVariant_ASGN_Double;
 Arr[op_Assign][ltVariant][ltCurrency] := @lpeVariant_ASGN_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Assign][ltVariant][ltExtended] := @lpeVariant_ASGN_Extended;
+{$ENDIF}
 Arr[op_Assign][ltVariant][ltVariant] := @lpeVariant_ASGN_Variant;
 
 Arr[op_DIV][ltUInt8][ltUInt8] := @lpeUInt8_IDIV_UInt8;
@@ -1340,7 +1506,9 @@ Arr[op_Divide][ltUInt8][ltInt64] := @lpeUInt8_DIV_Int64;
 Arr[op_Divide][ltUInt8][ltSingle] := @lpeUInt8_DIV_Single;
 Arr[op_Divide][ltUInt8][ltDouble] := @lpeUInt8_DIV_Double;
 Arr[op_Divide][ltUInt8][ltCurrency] := @lpeUInt8_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltUInt8][ltExtended] := @lpeUInt8_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltUInt8][ltVariant] := @lpeUInt8_DIV_Variant;
 Arr[op_Divide][ltInt8][ltUInt8] := @lpeInt8_DIV_UInt8;
 Arr[op_Divide][ltInt8][ltInt8] := @lpeInt8_DIV_Int8;
@@ -1353,7 +1521,9 @@ Arr[op_Divide][ltInt8][ltInt64] := @lpeInt8_DIV_Int64;
 Arr[op_Divide][ltInt8][ltSingle] := @lpeInt8_DIV_Single;
 Arr[op_Divide][ltInt8][ltDouble] := @lpeInt8_DIV_Double;
 Arr[op_Divide][ltInt8][ltCurrency] := @lpeInt8_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltInt8][ltExtended] := @lpeInt8_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltInt8][ltVariant] := @lpeInt8_DIV_Variant;
 Arr[op_Divide][ltUInt16][ltUInt8] := @lpeUInt16_DIV_UInt8;
 Arr[op_Divide][ltUInt16][ltInt8] := @lpeUInt16_DIV_Int8;
@@ -1366,7 +1536,9 @@ Arr[op_Divide][ltUInt16][ltInt64] := @lpeUInt16_DIV_Int64;
 Arr[op_Divide][ltUInt16][ltSingle] := @lpeUInt16_DIV_Single;
 Arr[op_Divide][ltUInt16][ltDouble] := @lpeUInt16_DIV_Double;
 Arr[op_Divide][ltUInt16][ltCurrency] := @lpeUInt16_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltUInt16][ltExtended] := @lpeUInt16_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltUInt16][ltVariant] := @lpeUInt16_DIV_Variant;
 Arr[op_Divide][ltInt16][ltUInt8] := @lpeInt16_DIV_UInt8;
 Arr[op_Divide][ltInt16][ltInt8] := @lpeInt16_DIV_Int8;
@@ -1379,7 +1551,9 @@ Arr[op_Divide][ltInt16][ltInt64] := @lpeInt16_DIV_Int64;
 Arr[op_Divide][ltInt16][ltSingle] := @lpeInt16_DIV_Single;
 Arr[op_Divide][ltInt16][ltDouble] := @lpeInt16_DIV_Double;
 Arr[op_Divide][ltInt16][ltCurrency] := @lpeInt16_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltInt16][ltExtended] := @lpeInt16_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltInt16][ltVariant] := @lpeInt16_DIV_Variant;
 Arr[op_Divide][ltUInt32][ltUInt8] := @lpeUInt32_DIV_UInt8;
 Arr[op_Divide][ltUInt32][ltInt8] := @lpeUInt32_DIV_Int8;
@@ -1392,7 +1566,9 @@ Arr[op_Divide][ltUInt32][ltInt64] := @lpeUInt32_DIV_Int64;
 Arr[op_Divide][ltUInt32][ltSingle] := @lpeUInt32_DIV_Single;
 Arr[op_Divide][ltUInt32][ltDouble] := @lpeUInt32_DIV_Double;
 Arr[op_Divide][ltUInt32][ltCurrency] := @lpeUInt32_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltUInt32][ltExtended] := @lpeUInt32_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltUInt32][ltVariant] := @lpeUInt32_DIV_Variant;
 Arr[op_Divide][ltInt32][ltUInt8] := @lpeInt32_DIV_UInt8;
 Arr[op_Divide][ltInt32][ltInt8] := @lpeInt32_DIV_Int8;
@@ -1405,7 +1581,9 @@ Arr[op_Divide][ltInt32][ltInt64] := @lpeInt32_DIV_Int64;
 Arr[op_Divide][ltInt32][ltSingle] := @lpeInt32_DIV_Single;
 Arr[op_Divide][ltInt32][ltDouble] := @lpeInt32_DIV_Double;
 Arr[op_Divide][ltInt32][ltCurrency] := @lpeInt32_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltInt32][ltExtended] := @lpeInt32_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltInt32][ltVariant] := @lpeInt32_DIV_Variant;
 Arr[op_Divide][ltUInt64][ltUInt8] := @lpeUInt64_DIV_UInt8;
 Arr[op_Divide][ltUInt64][ltInt8] := @lpeUInt64_DIV_Int8;
@@ -1418,7 +1596,9 @@ Arr[op_Divide][ltUInt64][ltInt64] := @lpeUInt64_DIV_Int64;
 Arr[op_Divide][ltUInt64][ltSingle] := @lpeUInt64_DIV_Single;
 Arr[op_Divide][ltUInt64][ltDouble] := @lpeUInt64_DIV_Double;
 Arr[op_Divide][ltUInt64][ltCurrency] := @lpeUInt64_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltUInt64][ltExtended] := @lpeUInt64_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltUInt64][ltVariant] := @lpeUInt64_DIV_Variant;
 Arr[op_Divide][ltInt64][ltUInt8] := @lpeInt64_DIV_UInt8;
 Arr[op_Divide][ltInt64][ltInt8] := @lpeInt64_DIV_Int8;
@@ -1431,7 +1611,9 @@ Arr[op_Divide][ltInt64][ltInt64] := @lpeInt64_DIV_Int64;
 Arr[op_Divide][ltInt64][ltSingle] := @lpeInt64_DIV_Single;
 Arr[op_Divide][ltInt64][ltDouble] := @lpeInt64_DIV_Double;
 Arr[op_Divide][ltInt64][ltCurrency] := @lpeInt64_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltInt64][ltExtended] := @lpeInt64_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltInt64][ltVariant] := @lpeInt64_DIV_Variant;
 Arr[op_Divide][ltSingle][ltUInt8] := @lpeSingle_DIV_UInt8;
 Arr[op_Divide][ltSingle][ltInt8] := @lpeSingle_DIV_Int8;
@@ -1444,7 +1626,9 @@ Arr[op_Divide][ltSingle][ltInt64] := @lpeSingle_DIV_Int64;
 Arr[op_Divide][ltSingle][ltSingle] := @lpeSingle_DIV_Single;
 Arr[op_Divide][ltSingle][ltDouble] := @lpeSingle_DIV_Double;
 Arr[op_Divide][ltSingle][ltCurrency] := @lpeSingle_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltSingle][ltExtended] := @lpeSingle_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltSingle][ltVariant] := @lpeSingle_DIV_Variant;
 Arr[op_Divide][ltDouble][ltUInt8] := @lpeDouble_DIV_UInt8;
 Arr[op_Divide][ltDouble][ltInt8] := @lpeDouble_DIV_Int8;
@@ -1457,7 +1641,9 @@ Arr[op_Divide][ltDouble][ltInt64] := @lpeDouble_DIV_Int64;
 Arr[op_Divide][ltDouble][ltSingle] := @lpeDouble_DIV_Single;
 Arr[op_Divide][ltDouble][ltDouble] := @lpeDouble_DIV_Double;
 Arr[op_Divide][ltDouble][ltCurrency] := @lpeDouble_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltDouble][ltExtended] := @lpeDouble_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltDouble][ltVariant] := @lpeDouble_DIV_Variant;
 Arr[op_Divide][ltCurrency][ltUInt8] := @lpeCurrency_DIV_UInt8;
 Arr[op_Divide][ltCurrency][ltInt8] := @lpeCurrency_DIV_Int8;
@@ -1470,8 +1656,11 @@ Arr[op_Divide][ltCurrency][ltInt64] := @lpeCurrency_DIV_Int64;
 Arr[op_Divide][ltCurrency][ltSingle] := @lpeCurrency_DIV_Single;
 Arr[op_Divide][ltCurrency][ltDouble] := @lpeCurrency_DIV_Double;
 Arr[op_Divide][ltCurrency][ltCurrency] := @lpeCurrency_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltCurrency][ltExtended] := @lpeCurrency_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltCurrency][ltVariant] := @lpeCurrency_DIV_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltExtended][ltUInt8] := @lpeExtended_DIV_UInt8;
 Arr[op_Divide][ltExtended][ltInt8] := @lpeExtended_DIV_Int8;
 Arr[op_Divide][ltExtended][ltUInt16] := @lpeExtended_DIV_UInt16;
@@ -1485,6 +1674,7 @@ Arr[op_Divide][ltExtended][ltDouble] := @lpeExtended_DIV_Double;
 Arr[op_Divide][ltExtended][ltCurrency] := @lpeExtended_DIV_Currency;
 Arr[op_Divide][ltExtended][ltExtended] := @lpeExtended_DIV_Extended;
 Arr[op_Divide][ltExtended][ltVariant] := @lpeExtended_DIV_Variant;
+{$ENDIF}
 Arr[op_Divide][ltVariant][ltUInt8] := @lpeVariant_DIV_UInt8;
 Arr[op_Divide][ltVariant][ltInt8] := @lpeVariant_DIV_Int8;
 Arr[op_Divide][ltVariant][ltUInt16] := @lpeVariant_DIV_UInt16;
@@ -1496,7 +1686,9 @@ Arr[op_Divide][ltVariant][ltInt64] := @lpeVariant_DIV_Int64;
 Arr[op_Divide][ltVariant][ltSingle] := @lpeVariant_DIV_Single;
 Arr[op_Divide][ltVariant][ltDouble] := @lpeVariant_DIV_Double;
 Arr[op_Divide][ltVariant][ltCurrency] := @lpeVariant_DIV_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltVariant][ltExtended] := @lpeVariant_DIV_Extended;
+{$ENDIF}
 Arr[op_Divide][ltVariant][ltVariant] := @lpeVariant_DIV_Variant;
 
 Arr[op_Minus][ltUInt8][ltUInt8] := @lpeUInt8_SUB_UInt8;
@@ -1510,7 +1702,9 @@ Arr[op_Minus][ltUInt8][ltInt64] := @lpeUInt8_SUB_Int64;
 Arr[op_Minus][ltUInt8][ltSingle] := @lpeUInt8_SUB_Single;
 Arr[op_Minus][ltUInt8][ltDouble] := @lpeUInt8_SUB_Double;
 Arr[op_Minus][ltUInt8][ltCurrency] := @lpeUInt8_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltUInt8][ltExtended] := @lpeUInt8_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltUInt8][ltVariant] := @lpeUInt8_SUB_Variant;
 Arr[op_Minus][ltInt8][ltUInt8] := @lpeInt8_SUB_UInt8;
 Arr[op_Minus][ltInt8][ltInt8] := @lpeInt8_SUB_Int8;
@@ -1523,7 +1717,9 @@ Arr[op_Minus][ltInt8][ltInt64] := @lpeInt8_SUB_Int64;
 Arr[op_Minus][ltInt8][ltSingle] := @lpeInt8_SUB_Single;
 Arr[op_Minus][ltInt8][ltDouble] := @lpeInt8_SUB_Double;
 Arr[op_Minus][ltInt8][ltCurrency] := @lpeInt8_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltInt8][ltExtended] := @lpeInt8_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltInt8][ltVariant] := @lpeInt8_SUB_Variant;
 Arr[op_Minus][ltUInt16][ltUInt8] := @lpeUInt16_SUB_UInt8;
 Arr[op_Minus][ltUInt16][ltInt8] := @lpeUInt16_SUB_Int8;
@@ -1536,7 +1732,9 @@ Arr[op_Minus][ltUInt16][ltInt64] := @lpeUInt16_SUB_Int64;
 Arr[op_Minus][ltUInt16][ltSingle] := @lpeUInt16_SUB_Single;
 Arr[op_Minus][ltUInt16][ltDouble] := @lpeUInt16_SUB_Double;
 Arr[op_Minus][ltUInt16][ltCurrency] := @lpeUInt16_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltUInt16][ltExtended] := @lpeUInt16_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltUInt16][ltVariant] := @lpeUInt16_SUB_Variant;
 Arr[op_Minus][ltInt16][ltUInt8] := @lpeInt16_SUB_UInt8;
 Arr[op_Minus][ltInt16][ltInt8] := @lpeInt16_SUB_Int8;
@@ -1549,7 +1747,9 @@ Arr[op_Minus][ltInt16][ltInt64] := @lpeInt16_SUB_Int64;
 Arr[op_Minus][ltInt16][ltSingle] := @lpeInt16_SUB_Single;
 Arr[op_Minus][ltInt16][ltDouble] := @lpeInt16_SUB_Double;
 Arr[op_Minus][ltInt16][ltCurrency] := @lpeInt16_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltInt16][ltExtended] := @lpeInt16_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltInt16][ltVariant] := @lpeInt16_SUB_Variant;
 Arr[op_Minus][ltUInt32][ltUInt8] := @lpeUInt32_SUB_UInt8;
 Arr[op_Minus][ltUInt32][ltInt8] := @lpeUInt32_SUB_Int8;
@@ -1562,7 +1762,9 @@ Arr[op_Minus][ltUInt32][ltInt64] := @lpeUInt32_SUB_Int64;
 Arr[op_Minus][ltUInt32][ltSingle] := @lpeUInt32_SUB_Single;
 Arr[op_Minus][ltUInt32][ltDouble] := @lpeUInt32_SUB_Double;
 Arr[op_Minus][ltUInt32][ltCurrency] := @lpeUInt32_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltUInt32][ltExtended] := @lpeUInt32_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltUInt32][ltVariant] := @lpeUInt32_SUB_Variant;
 Arr[op_Minus][ltInt32][ltUInt8] := @lpeInt32_SUB_UInt8;
 Arr[op_Minus][ltInt32][ltInt8] := @lpeInt32_SUB_Int8;
@@ -1575,7 +1777,9 @@ Arr[op_Minus][ltInt32][ltInt64] := @lpeInt32_SUB_Int64;
 Arr[op_Minus][ltInt32][ltSingle] := @lpeInt32_SUB_Single;
 Arr[op_Minus][ltInt32][ltDouble] := @lpeInt32_SUB_Double;
 Arr[op_Minus][ltInt32][ltCurrency] := @lpeInt32_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltInt32][ltExtended] := @lpeInt32_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltInt32][ltVariant] := @lpeInt32_SUB_Variant;
 Arr[op_Minus][ltUInt64][ltUInt8] := @lpeUInt64_SUB_UInt8;
 Arr[op_Minus][ltUInt64][ltInt8] := @lpeUInt64_SUB_Int8;
@@ -1588,7 +1792,9 @@ Arr[op_Minus][ltUInt64][ltInt64] := @lpeUInt64_SUB_Int64;
 Arr[op_Minus][ltUInt64][ltSingle] := @lpeUInt64_SUB_Single;
 Arr[op_Minus][ltUInt64][ltDouble] := @lpeUInt64_SUB_Double;
 Arr[op_Minus][ltUInt64][ltCurrency] := @lpeUInt64_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltUInt64][ltExtended] := @lpeUInt64_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltUInt64][ltVariant] := @lpeUInt64_SUB_Variant;
 Arr[op_Minus][ltInt64][ltUInt8] := @lpeInt64_SUB_UInt8;
 Arr[op_Minus][ltInt64][ltInt8] := @lpeInt64_SUB_Int8;
@@ -1601,7 +1807,9 @@ Arr[op_Minus][ltInt64][ltInt64] := @lpeInt64_SUB_Int64;
 Arr[op_Minus][ltInt64][ltSingle] := @lpeInt64_SUB_Single;
 Arr[op_Minus][ltInt64][ltDouble] := @lpeInt64_SUB_Double;
 Arr[op_Minus][ltInt64][ltCurrency] := @lpeInt64_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltInt64][ltExtended] := @lpeInt64_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltInt64][ltVariant] := @lpeInt64_SUB_Variant;
 Arr[op_Minus][ltSingle][ltUInt8] := @lpeSingle_SUB_UInt8;
 Arr[op_Minus][ltSingle][ltInt8] := @lpeSingle_SUB_Int8;
@@ -1614,7 +1822,9 @@ Arr[op_Minus][ltSingle][ltInt64] := @lpeSingle_SUB_Int64;
 Arr[op_Minus][ltSingle][ltSingle] := @lpeSingle_SUB_Single;
 Arr[op_Minus][ltSingle][ltDouble] := @lpeSingle_SUB_Double;
 Arr[op_Minus][ltSingle][ltCurrency] := @lpeSingle_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltSingle][ltExtended] := @lpeSingle_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltSingle][ltVariant] := @lpeSingle_SUB_Variant;
 Arr[op_Minus][ltDouble][ltUInt8] := @lpeDouble_SUB_UInt8;
 Arr[op_Minus][ltDouble][ltInt8] := @lpeDouble_SUB_Int8;
@@ -1627,7 +1837,9 @@ Arr[op_Minus][ltDouble][ltInt64] := @lpeDouble_SUB_Int64;
 Arr[op_Minus][ltDouble][ltSingle] := @lpeDouble_SUB_Single;
 Arr[op_Minus][ltDouble][ltDouble] := @lpeDouble_SUB_Double;
 Arr[op_Minus][ltDouble][ltCurrency] := @lpeDouble_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltDouble][ltExtended] := @lpeDouble_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltDouble][ltVariant] := @lpeDouble_SUB_Variant;
 Arr[op_Minus][ltCurrency][ltUInt8] := @lpeCurrency_SUB_UInt8;
 Arr[op_Minus][ltCurrency][ltInt8] := @lpeCurrency_SUB_Int8;
@@ -1640,8 +1852,11 @@ Arr[op_Minus][ltCurrency][ltInt64] := @lpeCurrency_SUB_Int64;
 Arr[op_Minus][ltCurrency][ltSingle] := @lpeCurrency_SUB_Single;
 Arr[op_Minus][ltCurrency][ltDouble] := @lpeCurrency_SUB_Double;
 Arr[op_Minus][ltCurrency][ltCurrency] := @lpeCurrency_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltCurrency][ltExtended] := @lpeCurrency_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltCurrency][ltVariant] := @lpeCurrency_SUB_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltExtended][ltUInt8] := @lpeExtended_SUB_UInt8;
 Arr[op_Minus][ltExtended][ltInt8] := @lpeExtended_SUB_Int8;
 Arr[op_Minus][ltExtended][ltUInt16] := @lpeExtended_SUB_UInt16;
@@ -1655,6 +1870,7 @@ Arr[op_Minus][ltExtended][ltDouble] := @lpeExtended_SUB_Double;
 Arr[op_Minus][ltExtended][ltCurrency] := @lpeExtended_SUB_Currency;
 Arr[op_Minus][ltExtended][ltExtended] := @lpeExtended_SUB_Extended;
 Arr[op_Minus][ltExtended][ltVariant] := @lpeExtended_SUB_Variant;
+{$ENDIF}
 Arr[op_Minus][ltVariant][ltUInt8] := @lpeVariant_SUB_UInt8;
 Arr[op_Minus][ltVariant][ltInt8] := @lpeVariant_SUB_Int8;
 Arr[op_Minus][ltVariant][ltUInt16] := @lpeVariant_SUB_UInt16;
@@ -1666,7 +1882,9 @@ Arr[op_Minus][ltVariant][ltInt64] := @lpeVariant_SUB_Int64;
 Arr[op_Minus][ltVariant][ltSingle] := @lpeVariant_SUB_Single;
 Arr[op_Minus][ltVariant][ltDouble] := @lpeVariant_SUB_Double;
 Arr[op_Minus][ltVariant][ltCurrency] := @lpeVariant_SUB_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltVariant][ltExtended] := @lpeVariant_SUB_Extended;
+{$ENDIF}
 Arr[op_Minus][ltVariant][ltVariant] := @lpeVariant_SUB_Variant;
 
 Arr[op_MOD][ltUInt8][ltUInt8] := @lpeUInt8_MOD_UInt8;
@@ -1762,7 +1980,9 @@ Arr[op_Multiply][ltUInt8][ltInt64] := @lpeUInt8_MUL_Int64;
 Arr[op_Multiply][ltUInt8][ltSingle] := @lpeUInt8_MUL_Single;
 Arr[op_Multiply][ltUInt8][ltDouble] := @lpeUInt8_MUL_Double;
 Arr[op_Multiply][ltUInt8][ltCurrency] := @lpeUInt8_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltUInt8][ltExtended] := @lpeUInt8_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltUInt8][ltVariant] := @lpeUInt8_MUL_Variant;
 Arr[op_Multiply][ltInt8][ltUInt8] := @lpeInt8_MUL_UInt8;
 Arr[op_Multiply][ltInt8][ltInt8] := @lpeInt8_MUL_Int8;
@@ -1775,7 +1995,9 @@ Arr[op_Multiply][ltInt8][ltInt64] := @lpeInt8_MUL_Int64;
 Arr[op_Multiply][ltInt8][ltSingle] := @lpeInt8_MUL_Single;
 Arr[op_Multiply][ltInt8][ltDouble] := @lpeInt8_MUL_Double;
 Arr[op_Multiply][ltInt8][ltCurrency] := @lpeInt8_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltInt8][ltExtended] := @lpeInt8_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltInt8][ltVariant] := @lpeInt8_MUL_Variant;
 Arr[op_Multiply][ltUInt16][ltUInt8] := @lpeUInt16_MUL_UInt8;
 Arr[op_Multiply][ltUInt16][ltInt8] := @lpeUInt16_MUL_Int8;
@@ -1788,7 +2010,9 @@ Arr[op_Multiply][ltUInt16][ltInt64] := @lpeUInt16_MUL_Int64;
 Arr[op_Multiply][ltUInt16][ltSingle] := @lpeUInt16_MUL_Single;
 Arr[op_Multiply][ltUInt16][ltDouble] := @lpeUInt16_MUL_Double;
 Arr[op_Multiply][ltUInt16][ltCurrency] := @lpeUInt16_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltUInt16][ltExtended] := @lpeUInt16_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltUInt16][ltVariant] := @lpeUInt16_MUL_Variant;
 Arr[op_Multiply][ltInt16][ltUInt8] := @lpeInt16_MUL_UInt8;
 Arr[op_Multiply][ltInt16][ltInt8] := @lpeInt16_MUL_Int8;
@@ -1801,7 +2025,9 @@ Arr[op_Multiply][ltInt16][ltInt64] := @lpeInt16_MUL_Int64;
 Arr[op_Multiply][ltInt16][ltSingle] := @lpeInt16_MUL_Single;
 Arr[op_Multiply][ltInt16][ltDouble] := @lpeInt16_MUL_Double;
 Arr[op_Multiply][ltInt16][ltCurrency] := @lpeInt16_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltInt16][ltExtended] := @lpeInt16_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltInt16][ltVariant] := @lpeInt16_MUL_Variant;
 Arr[op_Multiply][ltUInt32][ltUInt8] := @lpeUInt32_MUL_UInt8;
 Arr[op_Multiply][ltUInt32][ltInt8] := @lpeUInt32_MUL_Int8;
@@ -1814,7 +2040,9 @@ Arr[op_Multiply][ltUInt32][ltInt64] := @lpeUInt32_MUL_Int64;
 Arr[op_Multiply][ltUInt32][ltSingle] := @lpeUInt32_MUL_Single;
 Arr[op_Multiply][ltUInt32][ltDouble] := @lpeUInt32_MUL_Double;
 Arr[op_Multiply][ltUInt32][ltCurrency] := @lpeUInt32_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltUInt32][ltExtended] := @lpeUInt32_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltUInt32][ltVariant] := @lpeUInt32_MUL_Variant;
 Arr[op_Multiply][ltInt32][ltUInt8] := @lpeInt32_MUL_UInt8;
 Arr[op_Multiply][ltInt32][ltInt8] := @lpeInt32_MUL_Int8;
@@ -1827,7 +2055,9 @@ Arr[op_Multiply][ltInt32][ltInt64] := @lpeInt32_MUL_Int64;
 Arr[op_Multiply][ltInt32][ltSingle] := @lpeInt32_MUL_Single;
 Arr[op_Multiply][ltInt32][ltDouble] := @lpeInt32_MUL_Double;
 Arr[op_Multiply][ltInt32][ltCurrency] := @lpeInt32_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltInt32][ltExtended] := @lpeInt32_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltInt32][ltVariant] := @lpeInt32_MUL_Variant;
 Arr[op_Multiply][ltUInt64][ltUInt8] := @lpeUInt64_MUL_UInt8;
 Arr[op_Multiply][ltUInt64][ltInt8] := @lpeUInt64_MUL_Int8;
@@ -1840,7 +2070,9 @@ Arr[op_Multiply][ltUInt64][ltInt64] := @lpeUInt64_MUL_Int64;
 Arr[op_Multiply][ltUInt64][ltSingle] := @lpeUInt64_MUL_Single;
 Arr[op_Multiply][ltUInt64][ltDouble] := @lpeUInt64_MUL_Double;
 Arr[op_Multiply][ltUInt64][ltCurrency] := @lpeUInt64_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltUInt64][ltExtended] := @lpeUInt64_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltUInt64][ltVariant] := @lpeUInt64_MUL_Variant;
 Arr[op_Multiply][ltInt64][ltUInt8] := @lpeInt64_MUL_UInt8;
 Arr[op_Multiply][ltInt64][ltInt8] := @lpeInt64_MUL_Int8;
@@ -1853,7 +2085,9 @@ Arr[op_Multiply][ltInt64][ltInt64] := @lpeInt64_MUL_Int64;
 Arr[op_Multiply][ltInt64][ltSingle] := @lpeInt64_MUL_Single;
 Arr[op_Multiply][ltInt64][ltDouble] := @lpeInt64_MUL_Double;
 Arr[op_Multiply][ltInt64][ltCurrency] := @lpeInt64_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltInt64][ltExtended] := @lpeInt64_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltInt64][ltVariant] := @lpeInt64_MUL_Variant;
 Arr[op_Multiply][ltSingle][ltUInt8] := @lpeSingle_MUL_UInt8;
 Arr[op_Multiply][ltSingle][ltInt8] := @lpeSingle_MUL_Int8;
@@ -1866,7 +2100,9 @@ Arr[op_Multiply][ltSingle][ltInt64] := @lpeSingle_MUL_Int64;
 Arr[op_Multiply][ltSingle][ltSingle] := @lpeSingle_MUL_Single;
 Arr[op_Multiply][ltSingle][ltDouble] := @lpeSingle_MUL_Double;
 Arr[op_Multiply][ltSingle][ltCurrency] := @lpeSingle_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltSingle][ltExtended] := @lpeSingle_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltSingle][ltVariant] := @lpeSingle_MUL_Variant;
 Arr[op_Multiply][ltDouble][ltUInt8] := @lpeDouble_MUL_UInt8;
 Arr[op_Multiply][ltDouble][ltInt8] := @lpeDouble_MUL_Int8;
@@ -1879,7 +2115,9 @@ Arr[op_Multiply][ltDouble][ltInt64] := @lpeDouble_MUL_Int64;
 Arr[op_Multiply][ltDouble][ltSingle] := @lpeDouble_MUL_Single;
 Arr[op_Multiply][ltDouble][ltDouble] := @lpeDouble_MUL_Double;
 Arr[op_Multiply][ltDouble][ltCurrency] := @lpeDouble_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltDouble][ltExtended] := @lpeDouble_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltDouble][ltVariant] := @lpeDouble_MUL_Variant;
 Arr[op_Multiply][ltCurrency][ltUInt8] := @lpeCurrency_MUL_UInt8;
 Arr[op_Multiply][ltCurrency][ltInt8] := @lpeCurrency_MUL_Int8;
@@ -1892,8 +2130,11 @@ Arr[op_Multiply][ltCurrency][ltInt64] := @lpeCurrency_MUL_Int64;
 Arr[op_Multiply][ltCurrency][ltSingle] := @lpeCurrency_MUL_Single;
 Arr[op_Multiply][ltCurrency][ltDouble] := @lpeCurrency_MUL_Double;
 Arr[op_Multiply][ltCurrency][ltCurrency] := @lpeCurrency_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltCurrency][ltExtended] := @lpeCurrency_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltCurrency][ltVariant] := @lpeCurrency_MUL_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltExtended][ltUInt8] := @lpeExtended_MUL_UInt8;
 Arr[op_Multiply][ltExtended][ltInt8] := @lpeExtended_MUL_Int8;
 Arr[op_Multiply][ltExtended][ltUInt16] := @lpeExtended_MUL_UInt16;
@@ -1907,6 +2148,7 @@ Arr[op_Multiply][ltExtended][ltDouble] := @lpeExtended_MUL_Double;
 Arr[op_Multiply][ltExtended][ltCurrency] := @lpeExtended_MUL_Currency;
 Arr[op_Multiply][ltExtended][ltExtended] := @lpeExtended_MUL_Extended;
 Arr[op_Multiply][ltExtended][ltVariant] := @lpeExtended_MUL_Variant;
+{$ENDIF}
 Arr[op_Multiply][ltVariant][ltUInt8] := @lpeVariant_MUL_UInt8;
 Arr[op_Multiply][ltVariant][ltInt8] := @lpeVariant_MUL_Int8;
 Arr[op_Multiply][ltVariant][ltUInt16] := @lpeVariant_MUL_UInt16;
@@ -1918,7 +2160,9 @@ Arr[op_Multiply][ltVariant][ltInt64] := @lpeVariant_MUL_Int64;
 Arr[op_Multiply][ltVariant][ltSingle] := @lpeVariant_MUL_Single;
 Arr[op_Multiply][ltVariant][ltDouble] := @lpeVariant_MUL_Double;
 Arr[op_Multiply][ltVariant][ltCurrency] := @lpeVariant_MUL_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltVariant][ltExtended] := @lpeVariant_MUL_Extended;
+{$ENDIF}
 Arr[op_Multiply][ltVariant][ltVariant] := @lpeVariant_MUL_Variant;
 
 Arr[op_Power][ltUInt8][ltUInt8] := @lpeUInt8_POW_UInt8;
@@ -1932,7 +2176,9 @@ Arr[op_Power][ltUInt8][ltInt64] := @lpeUInt8_POW_Int64;
 Arr[op_Power][ltUInt8][ltSingle] := @lpeUInt8_POW_Single;
 Arr[op_Power][ltUInt8][ltDouble] := @lpeUInt8_POW_Double;
 Arr[op_Power][ltUInt8][ltCurrency] := @lpeUInt8_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltUInt8][ltExtended] := @lpeUInt8_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltUInt8][ltVariant] := @lpeUInt8_POW_Variant;
 Arr[op_Power][ltInt8][ltUInt8] := @lpeInt8_POW_UInt8;
 Arr[op_Power][ltInt8][ltInt8] := @lpeInt8_POW_Int8;
@@ -1945,7 +2191,9 @@ Arr[op_Power][ltInt8][ltInt64] := @lpeInt8_POW_Int64;
 Arr[op_Power][ltInt8][ltSingle] := @lpeInt8_POW_Single;
 Arr[op_Power][ltInt8][ltDouble] := @lpeInt8_POW_Double;
 Arr[op_Power][ltInt8][ltCurrency] := @lpeInt8_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltInt8][ltExtended] := @lpeInt8_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltInt8][ltVariant] := @lpeInt8_POW_Variant;
 Arr[op_Power][ltUInt16][ltUInt8] := @lpeUInt16_POW_UInt8;
 Arr[op_Power][ltUInt16][ltInt8] := @lpeUInt16_POW_Int8;
@@ -1958,7 +2206,9 @@ Arr[op_Power][ltUInt16][ltInt64] := @lpeUInt16_POW_Int64;
 Arr[op_Power][ltUInt16][ltSingle] := @lpeUInt16_POW_Single;
 Arr[op_Power][ltUInt16][ltDouble] := @lpeUInt16_POW_Double;
 Arr[op_Power][ltUInt16][ltCurrency] := @lpeUInt16_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltUInt16][ltExtended] := @lpeUInt16_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltUInt16][ltVariant] := @lpeUInt16_POW_Variant;
 Arr[op_Power][ltInt16][ltUInt8] := @lpeInt16_POW_UInt8;
 Arr[op_Power][ltInt16][ltInt8] := @lpeInt16_POW_Int8;
@@ -1971,7 +2221,9 @@ Arr[op_Power][ltInt16][ltInt64] := @lpeInt16_POW_Int64;
 Arr[op_Power][ltInt16][ltSingle] := @lpeInt16_POW_Single;
 Arr[op_Power][ltInt16][ltDouble] := @lpeInt16_POW_Double;
 Arr[op_Power][ltInt16][ltCurrency] := @lpeInt16_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltInt16][ltExtended] := @lpeInt16_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltInt16][ltVariant] := @lpeInt16_POW_Variant;
 Arr[op_Power][ltUInt32][ltUInt8] := @lpeUInt32_POW_UInt8;
 Arr[op_Power][ltUInt32][ltInt8] := @lpeUInt32_POW_Int8;
@@ -1984,7 +2236,9 @@ Arr[op_Power][ltUInt32][ltInt64] := @lpeUInt32_POW_Int64;
 Arr[op_Power][ltUInt32][ltSingle] := @lpeUInt32_POW_Single;
 Arr[op_Power][ltUInt32][ltDouble] := @lpeUInt32_POW_Double;
 Arr[op_Power][ltUInt32][ltCurrency] := @lpeUInt32_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltUInt32][ltExtended] := @lpeUInt32_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltUInt32][ltVariant] := @lpeUInt32_POW_Variant;
 Arr[op_Power][ltInt32][ltUInt8] := @lpeInt32_POW_UInt8;
 Arr[op_Power][ltInt32][ltInt8] := @lpeInt32_POW_Int8;
@@ -1997,7 +2251,9 @@ Arr[op_Power][ltInt32][ltInt64] := @lpeInt32_POW_Int64;
 Arr[op_Power][ltInt32][ltSingle] := @lpeInt32_POW_Single;
 Arr[op_Power][ltInt32][ltDouble] := @lpeInt32_POW_Double;
 Arr[op_Power][ltInt32][ltCurrency] := @lpeInt32_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltInt32][ltExtended] := @lpeInt32_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltInt32][ltVariant] := @lpeInt32_POW_Variant;
 Arr[op_Power][ltUInt64][ltUInt8] := @lpeUInt64_POW_UInt8;
 Arr[op_Power][ltUInt64][ltInt8] := @lpeUInt64_POW_Int8;
@@ -2010,7 +2266,9 @@ Arr[op_Power][ltUInt64][ltInt64] := @lpeUInt64_POW_Int64;
 Arr[op_Power][ltUInt64][ltSingle] := @lpeUInt64_POW_Single;
 Arr[op_Power][ltUInt64][ltDouble] := @lpeUInt64_POW_Double;
 Arr[op_Power][ltUInt64][ltCurrency] := @lpeUInt64_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltUInt64][ltExtended] := @lpeUInt64_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltUInt64][ltVariant] := @lpeUInt64_POW_Variant;
 Arr[op_Power][ltInt64][ltUInt8] := @lpeInt64_POW_UInt8;
 Arr[op_Power][ltInt64][ltInt8] := @lpeInt64_POW_Int8;
@@ -2023,7 +2281,9 @@ Arr[op_Power][ltInt64][ltInt64] := @lpeInt64_POW_Int64;
 Arr[op_Power][ltInt64][ltSingle] := @lpeInt64_POW_Single;
 Arr[op_Power][ltInt64][ltDouble] := @lpeInt64_POW_Double;
 Arr[op_Power][ltInt64][ltCurrency] := @lpeInt64_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltInt64][ltExtended] := @lpeInt64_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltInt64][ltVariant] := @lpeInt64_POW_Variant;
 Arr[op_Power][ltSingle][ltUInt8] := @lpeSingle_POW_UInt8;
 Arr[op_Power][ltSingle][ltInt8] := @lpeSingle_POW_Int8;
@@ -2036,7 +2296,9 @@ Arr[op_Power][ltSingle][ltInt64] := @lpeSingle_POW_Int64;
 Arr[op_Power][ltSingle][ltSingle] := @lpeSingle_POW_Single;
 Arr[op_Power][ltSingle][ltDouble] := @lpeSingle_POW_Double;
 Arr[op_Power][ltSingle][ltCurrency] := @lpeSingle_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltSingle][ltExtended] := @lpeSingle_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltSingle][ltVariant] := @lpeSingle_POW_Variant;
 Arr[op_Power][ltDouble][ltUInt8] := @lpeDouble_POW_UInt8;
 Arr[op_Power][ltDouble][ltInt8] := @lpeDouble_POW_Int8;
@@ -2049,7 +2311,9 @@ Arr[op_Power][ltDouble][ltInt64] := @lpeDouble_POW_Int64;
 Arr[op_Power][ltDouble][ltSingle] := @lpeDouble_POW_Single;
 Arr[op_Power][ltDouble][ltDouble] := @lpeDouble_POW_Double;
 Arr[op_Power][ltDouble][ltCurrency] := @lpeDouble_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltDouble][ltExtended] := @lpeDouble_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltDouble][ltVariant] := @lpeDouble_POW_Variant;
 Arr[op_Power][ltCurrency][ltUInt8] := @lpeCurrency_POW_UInt8;
 Arr[op_Power][ltCurrency][ltInt8] := @lpeCurrency_POW_Int8;
@@ -2062,8 +2326,11 @@ Arr[op_Power][ltCurrency][ltInt64] := @lpeCurrency_POW_Int64;
 Arr[op_Power][ltCurrency][ltSingle] := @lpeCurrency_POW_Single;
 Arr[op_Power][ltCurrency][ltDouble] := @lpeCurrency_POW_Double;
 Arr[op_Power][ltCurrency][ltCurrency] := @lpeCurrency_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltCurrency][ltExtended] := @lpeCurrency_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltCurrency][ltVariant] := @lpeCurrency_POW_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltExtended][ltUInt8] := @lpeExtended_POW_UInt8;
 Arr[op_Power][ltExtended][ltInt8] := @lpeExtended_POW_Int8;
 Arr[op_Power][ltExtended][ltUInt16] := @lpeExtended_POW_UInt16;
@@ -2077,6 +2344,7 @@ Arr[op_Power][ltExtended][ltDouble] := @lpeExtended_POW_Double;
 Arr[op_Power][ltExtended][ltCurrency] := @lpeExtended_POW_Currency;
 Arr[op_Power][ltExtended][ltExtended] := @lpeExtended_POW_Extended;
 Arr[op_Power][ltExtended][ltVariant] := @lpeExtended_POW_Variant;
+{$ENDIF}
 Arr[op_Power][ltVariant][ltUInt8] := @lpeVariant_POW_UInt8;
 Arr[op_Power][ltVariant][ltInt8] := @lpeVariant_POW_Int8;
 Arr[op_Power][ltVariant][ltUInt16] := @lpeVariant_POW_UInt16;
@@ -2088,7 +2356,9 @@ Arr[op_Power][ltVariant][ltInt64] := @lpeVariant_POW_Int64;
 Arr[op_Power][ltVariant][ltSingle] := @lpeVariant_POW_Single;
 Arr[op_Power][ltVariant][ltDouble] := @lpeVariant_POW_Double;
 Arr[op_Power][ltVariant][ltCurrency] := @lpeVariant_POW_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltVariant][ltExtended] := @lpeVariant_POW_Extended;
+{$ENDIF}
 Arr[op_Power][ltVariant][ltVariant] := @lpeVariant_POW_Variant;
 
 Arr[op_NOT][ltUInt8][ltUnknown] := @lpeUInt8_NOT;
@@ -2194,7 +2464,9 @@ Arr[op_Plus][ltUInt8][ltInt64] := @lpeUInt8_ADD_Int64;
 Arr[op_Plus][ltUInt8][ltSingle] := @lpeUInt8_ADD_Single;
 Arr[op_Plus][ltUInt8][ltDouble] := @lpeUInt8_ADD_Double;
 Arr[op_Plus][ltUInt8][ltCurrency] := @lpeUInt8_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltUInt8][ltExtended] := @lpeUInt8_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltUInt8][ltVariant] := @lpeUInt8_ADD_Variant;
 Arr[op_Plus][ltInt8][ltUInt8] := @lpeInt8_ADD_UInt8;
 Arr[op_Plus][ltInt8][ltInt8] := @lpeInt8_ADD_Int8;
@@ -2207,7 +2479,9 @@ Arr[op_Plus][ltInt8][ltInt64] := @lpeInt8_ADD_Int64;
 Arr[op_Plus][ltInt8][ltSingle] := @lpeInt8_ADD_Single;
 Arr[op_Plus][ltInt8][ltDouble] := @lpeInt8_ADD_Double;
 Arr[op_Plus][ltInt8][ltCurrency] := @lpeInt8_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltInt8][ltExtended] := @lpeInt8_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltInt8][ltVariant] := @lpeInt8_ADD_Variant;
 Arr[op_Plus][ltUInt16][ltUInt8] := @lpeUInt16_ADD_UInt8;
 Arr[op_Plus][ltUInt16][ltInt8] := @lpeUInt16_ADD_Int8;
@@ -2220,7 +2494,9 @@ Arr[op_Plus][ltUInt16][ltInt64] := @lpeUInt16_ADD_Int64;
 Arr[op_Plus][ltUInt16][ltSingle] := @lpeUInt16_ADD_Single;
 Arr[op_Plus][ltUInt16][ltDouble] := @lpeUInt16_ADD_Double;
 Arr[op_Plus][ltUInt16][ltCurrency] := @lpeUInt16_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltUInt16][ltExtended] := @lpeUInt16_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltUInt16][ltVariant] := @lpeUInt16_ADD_Variant;
 Arr[op_Plus][ltInt16][ltUInt8] := @lpeInt16_ADD_UInt8;
 Arr[op_Plus][ltInt16][ltInt8] := @lpeInt16_ADD_Int8;
@@ -2233,7 +2509,9 @@ Arr[op_Plus][ltInt16][ltInt64] := @lpeInt16_ADD_Int64;
 Arr[op_Plus][ltInt16][ltSingle] := @lpeInt16_ADD_Single;
 Arr[op_Plus][ltInt16][ltDouble] := @lpeInt16_ADD_Double;
 Arr[op_Plus][ltInt16][ltCurrency] := @lpeInt16_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltInt16][ltExtended] := @lpeInt16_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltInt16][ltVariant] := @lpeInt16_ADD_Variant;
 Arr[op_Plus][ltUInt32][ltUInt8] := @lpeUInt32_ADD_UInt8;
 Arr[op_Plus][ltUInt32][ltInt8] := @lpeUInt32_ADD_Int8;
@@ -2246,7 +2524,9 @@ Arr[op_Plus][ltUInt32][ltInt64] := @lpeUInt32_ADD_Int64;
 Arr[op_Plus][ltUInt32][ltSingle] := @lpeUInt32_ADD_Single;
 Arr[op_Plus][ltUInt32][ltDouble] := @lpeUInt32_ADD_Double;
 Arr[op_Plus][ltUInt32][ltCurrency] := @lpeUInt32_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltUInt32][ltExtended] := @lpeUInt32_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltUInt32][ltVariant] := @lpeUInt32_ADD_Variant;
 Arr[op_Plus][ltInt32][ltUInt8] := @lpeInt32_ADD_UInt8;
 Arr[op_Plus][ltInt32][ltInt8] := @lpeInt32_ADD_Int8;
@@ -2259,7 +2539,9 @@ Arr[op_Plus][ltInt32][ltInt64] := @lpeInt32_ADD_Int64;
 Arr[op_Plus][ltInt32][ltSingle] := @lpeInt32_ADD_Single;
 Arr[op_Plus][ltInt32][ltDouble] := @lpeInt32_ADD_Double;
 Arr[op_Plus][ltInt32][ltCurrency] := @lpeInt32_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltInt32][ltExtended] := @lpeInt32_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltInt32][ltVariant] := @lpeInt32_ADD_Variant;
 Arr[op_Plus][ltUInt64][ltUInt8] := @lpeUInt64_ADD_UInt8;
 Arr[op_Plus][ltUInt64][ltInt8] := @lpeUInt64_ADD_Int8;
@@ -2272,7 +2554,9 @@ Arr[op_Plus][ltUInt64][ltInt64] := @lpeUInt64_ADD_Int64;
 Arr[op_Plus][ltUInt64][ltSingle] := @lpeUInt64_ADD_Single;
 Arr[op_Plus][ltUInt64][ltDouble] := @lpeUInt64_ADD_Double;
 Arr[op_Plus][ltUInt64][ltCurrency] := @lpeUInt64_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltUInt64][ltExtended] := @lpeUInt64_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltUInt64][ltVariant] := @lpeUInt64_ADD_Variant;
 Arr[op_Plus][ltInt64][ltUInt8] := @lpeInt64_ADD_UInt8;
 Arr[op_Plus][ltInt64][ltInt8] := @lpeInt64_ADD_Int8;
@@ -2285,7 +2569,9 @@ Arr[op_Plus][ltInt64][ltInt64] := @lpeInt64_ADD_Int64;
 Arr[op_Plus][ltInt64][ltSingle] := @lpeInt64_ADD_Single;
 Arr[op_Plus][ltInt64][ltDouble] := @lpeInt64_ADD_Double;
 Arr[op_Plus][ltInt64][ltCurrency] := @lpeInt64_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltInt64][ltExtended] := @lpeInt64_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltInt64][ltVariant] := @lpeInt64_ADD_Variant;
 Arr[op_Plus][ltSingle][ltUInt8] := @lpeSingle_ADD_UInt8;
 Arr[op_Plus][ltSingle][ltInt8] := @lpeSingle_ADD_Int8;
@@ -2298,7 +2584,9 @@ Arr[op_Plus][ltSingle][ltInt64] := @lpeSingle_ADD_Int64;
 Arr[op_Plus][ltSingle][ltSingle] := @lpeSingle_ADD_Single;
 Arr[op_Plus][ltSingle][ltDouble] := @lpeSingle_ADD_Double;
 Arr[op_Plus][ltSingle][ltCurrency] := @lpeSingle_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltSingle][ltExtended] := @lpeSingle_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltSingle][ltVariant] := @lpeSingle_ADD_Variant;
 Arr[op_Plus][ltDouble][ltUInt8] := @lpeDouble_ADD_UInt8;
 Arr[op_Plus][ltDouble][ltInt8] := @lpeDouble_ADD_Int8;
@@ -2311,7 +2599,9 @@ Arr[op_Plus][ltDouble][ltInt64] := @lpeDouble_ADD_Int64;
 Arr[op_Plus][ltDouble][ltSingle] := @lpeDouble_ADD_Single;
 Arr[op_Plus][ltDouble][ltDouble] := @lpeDouble_ADD_Double;
 Arr[op_Plus][ltDouble][ltCurrency] := @lpeDouble_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltDouble][ltExtended] := @lpeDouble_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltDouble][ltVariant] := @lpeDouble_ADD_Variant;
 Arr[op_Plus][ltCurrency][ltUInt8] := @lpeCurrency_ADD_UInt8;
 Arr[op_Plus][ltCurrency][ltInt8] := @lpeCurrency_ADD_Int8;
@@ -2324,8 +2614,11 @@ Arr[op_Plus][ltCurrency][ltInt64] := @lpeCurrency_ADD_Int64;
 Arr[op_Plus][ltCurrency][ltSingle] := @lpeCurrency_ADD_Single;
 Arr[op_Plus][ltCurrency][ltDouble] := @lpeCurrency_ADD_Double;
 Arr[op_Plus][ltCurrency][ltCurrency] := @lpeCurrency_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltCurrency][ltExtended] := @lpeCurrency_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltCurrency][ltVariant] := @lpeCurrency_ADD_Variant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltExtended][ltUInt8] := @lpeExtended_ADD_UInt8;
 Arr[op_Plus][ltExtended][ltInt8] := @lpeExtended_ADD_Int8;
 Arr[op_Plus][ltExtended][ltUInt16] := @lpeExtended_ADD_UInt16;
@@ -2339,6 +2632,7 @@ Arr[op_Plus][ltExtended][ltDouble] := @lpeExtended_ADD_Double;
 Arr[op_Plus][ltExtended][ltCurrency] := @lpeExtended_ADD_Currency;
 Arr[op_Plus][ltExtended][ltExtended] := @lpeExtended_ADD_Extended;
 Arr[op_Plus][ltExtended][ltVariant] := @lpeExtended_ADD_Variant;
+{$ENDIF}
 Arr[op_Plus][ltVariant][ltUInt8] := @lpeVariant_ADD_UInt8;
 Arr[op_Plus][ltVariant][ltInt8] := @lpeVariant_ADD_Int8;
 Arr[op_Plus][ltVariant][ltUInt16] := @lpeVariant_ADD_UInt16;
@@ -2350,7 +2644,9 @@ Arr[op_Plus][ltVariant][ltInt64] := @lpeVariant_ADD_Int64;
 Arr[op_Plus][ltVariant][ltSingle] := @lpeVariant_ADD_Single;
 Arr[op_Plus][ltVariant][ltDouble] := @lpeVariant_ADD_Double;
 Arr[op_Plus][ltVariant][ltCurrency] := @lpeVariant_ADD_Currency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltVariant][ltExtended] := @lpeVariant_ADD_Extended;
+{$ENDIF}
 Arr[op_Plus][ltVariant][ltVariant] := @lpeVariant_ADD_Variant;
 
 Arr[op_SHL][ltUInt8][ltUInt8] := @lpeUInt8_SHL_UInt8;
@@ -2610,7 +2906,9 @@ Arr[op_UnaryMinus][ltInt64][ltUnknown] := @lpeInt64_UMIN;
 Arr[op_UnaryMinus][ltSingle][ltUnknown] := @lpeSingle_UMIN;
 Arr[op_UnaryMinus][ltDouble][ltUnknown] := @lpeDouble_UMIN;
 Arr[op_UnaryMinus][ltCurrency][ltUnknown] := @lpeCurrency_UMIN;
+{$IFNDEF Lape_NoExtended}
 Arr[op_UnaryMinus][ltExtended][ltUnknown] := @lpeExtended_UMIN;
+{$ENDIF}
 Arr[op_UnaryMinus][ltVariant][ltUnknown] := @lpeVariant_UMIN;
 
 //Variant
@@ -3306,3 +3604,4 @@ Arr[op_Assign][ltLargeSet][ltLargeSet] := @lpeLSet_ASGN_LSet;
 Arr[op_Plus][ltLargeSet][ltLargeSet] := @lpeLSet_ADD_LSet;
 Arr[op_Minus][ltLargeSet][ltLargeSet] := @lpeLSet_SUB_LSet;
 Arr[op_Multiply][ltLargeSet][ltLargeSet] := @lpeLSet_MUL_LSet;
+

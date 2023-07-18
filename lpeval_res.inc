@@ -19,7 +19,9 @@ Arr[op_cmp_Equal][ltUInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltUInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt8][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt8][ltUInt16] := ltEvalBool;
@@ -32,7 +34,9 @@ Arr[op_cmp_Equal][ltInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltUInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt16][ltUInt16] := ltEvalBool;
@@ -45,7 +49,9 @@ Arr[op_cmp_Equal][ltUInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltUInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt16][ltUInt16] := ltEvalBool;
@@ -58,7 +64,9 @@ Arr[op_cmp_Equal][ltInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltUInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt32][ltUInt16] := ltEvalBool;
@@ -71,7 +79,9 @@ Arr[op_cmp_Equal][ltUInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltUInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt32][ltUInt16] := ltEvalBool;
@@ -84,7 +94,9 @@ Arr[op_cmp_Equal][ltInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltUInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt64][ltUInt16] := ltEvalBool;
@@ -97,7 +109,9 @@ Arr[op_cmp_Equal][ltUInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltUInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltUInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt64][ltUInt16] := ltEvalBool;
@@ -110,7 +124,9 @@ Arr[op_cmp_Equal][ltInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltVariant][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltVariant][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltVariant][ltUInt16] := ltEvalBool;
@@ -123,7 +139,9 @@ Arr[op_cmp_Equal][ltVariant][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltVariant][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltVariant][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltVariant][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltVariant][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltSingle][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltSingle][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltSingle][ltUInt16] := ltEvalBool;
@@ -136,7 +154,9 @@ Arr[op_cmp_Equal][ltSingle][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltSingle][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltSingle][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltSingle][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltSingle][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltDouble][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltDouble][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltDouble][ltUInt16] := ltEvalBool;
@@ -149,7 +169,9 @@ Arr[op_cmp_Equal][ltDouble][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltDouble][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltDouble][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltDouble][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltDouble][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_Equal][ltCurrency][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltCurrency][ltInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltCurrency][ltUInt16] := ltEvalBool;
@@ -162,6 +184,7 @@ Arr[op_cmp_Equal][ltCurrency][ltVariant] := ltEvalBool;
 Arr[op_cmp_Equal][ltCurrency][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltCurrency][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltCurrency][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_Equal][ltCurrency][ltExtended] := ltEvalBool;
 Arr[op_cmp_Equal][ltExtended][ltUInt8] := ltEvalBool;
 Arr[op_cmp_Equal][ltExtended][ltInt8] := ltEvalBool;
@@ -176,6 +199,7 @@ Arr[op_cmp_Equal][ltExtended][ltSingle] := ltEvalBool;
 Arr[op_cmp_Equal][ltExtended][ltDouble] := ltEvalBool;
 Arr[op_cmp_Equal][ltExtended][ltCurrency] := ltEvalBool;
 Arr[op_cmp_Equal][ltExtended][ltExtended] := ltEvalBool;
+{$ENDIF}
 
 Arr[op_cmp_GreaterThan][ltUInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt8][ltInt8] := ltEvalBool;
@@ -189,7 +213,9 @@ Arr[op_cmp_GreaterThan][ltUInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltUInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt8][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt8][ltUInt16] := ltEvalBool;
@@ -202,7 +228,9 @@ Arr[op_cmp_GreaterThan][ltInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltUInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt16][ltUInt16] := ltEvalBool;
@@ -215,7 +243,9 @@ Arr[op_cmp_GreaterThan][ltUInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltUInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt16][ltUInt16] := ltEvalBool;
@@ -228,7 +258,9 @@ Arr[op_cmp_GreaterThan][ltInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltUInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt32][ltUInt16] := ltEvalBool;
@@ -241,7 +273,9 @@ Arr[op_cmp_GreaterThan][ltUInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltUInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt32][ltUInt16] := ltEvalBool;
@@ -254,7 +288,9 @@ Arr[op_cmp_GreaterThan][ltInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltUInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt64][ltUInt16] := ltEvalBool;
@@ -267,7 +303,9 @@ Arr[op_cmp_GreaterThan][ltUInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltUInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltUInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt64][ltUInt16] := ltEvalBool;
@@ -280,7 +318,9 @@ Arr[op_cmp_GreaterThan][ltInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltVariant][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltVariant][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltVariant][ltUInt16] := ltEvalBool;
@@ -293,7 +333,9 @@ Arr[op_cmp_GreaterThan][ltVariant][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltVariant][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltVariant][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltVariant][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltVariant][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltSingle][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltSingle][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltSingle][ltUInt16] := ltEvalBool;
@@ -306,7 +348,9 @@ Arr[op_cmp_GreaterThan][ltSingle][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltSingle][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltSingle][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltSingle][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltSingle][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltDouble][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltDouble][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltDouble][ltUInt16] := ltEvalBool;
@@ -319,7 +363,9 @@ Arr[op_cmp_GreaterThan][ltDouble][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltDouble][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltDouble][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltDouble][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltDouble][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThan][ltCurrency][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltCurrency][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltCurrency][ltUInt16] := ltEvalBool;
@@ -332,6 +378,7 @@ Arr[op_cmp_GreaterThan][ltCurrency][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltCurrency][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltCurrency][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltCurrency][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThan][ltCurrency][ltExtended] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltExtended][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltExtended][ltInt8] := ltEvalBool;
@@ -346,6 +393,7 @@ Arr[op_cmp_GreaterThan][ltExtended][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltExtended][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltExtended][ltCurrency] := ltEvalBool;
 Arr[op_cmp_GreaterThan][ltExtended][ltExtended] := ltEvalBool;
+{$ENDIF}
 
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltInt8] := ltEvalBool;
@@ -359,7 +407,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltUInt16] := ltEvalBool;
@@ -372,7 +422,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltUInt16] := ltEvalBool;
@@ -385,7 +437,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltUInt16] := ltEvalBool;
@@ -398,7 +452,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltUInt16] := ltEvalBool;
@@ -411,7 +467,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltUInt16] := ltEvalBool;
@@ -424,7 +482,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltUInt16] := ltEvalBool;
@@ -437,7 +497,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltUInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltUInt16] := ltEvalBool;
@@ -450,7 +512,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltUInt16] := ltEvalBool;
@@ -463,7 +527,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltVariant][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltUInt16] := ltEvalBool;
@@ -476,7 +542,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltSingle][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltUInt16] := ltEvalBool;
@@ -489,7 +557,9 @@ Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltDouble][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltUInt16] := ltEvalBool;
@@ -502,6 +572,7 @@ Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltVariant] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_GreaterThanOrEqual][ltCurrency][ltExtended] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltUInt8] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltInt8] := ltEvalBool;
@@ -516,6 +587,7 @@ Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltSingle] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltDouble] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltCurrency] := ltEvalBool;
 Arr[op_cmp_GreaterThanOrEqual][ltExtended][ltExtended] := ltEvalBool;
+{$ENDIF}
 
 Arr[op_cmp_LessThan][ltUInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt8][ltInt8] := ltEvalBool;
@@ -529,7 +601,9 @@ Arr[op_cmp_LessThan][ltUInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltUInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt8][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt8][ltUInt16] := ltEvalBool;
@@ -542,7 +616,9 @@ Arr[op_cmp_LessThan][ltInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltUInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt16][ltUInt16] := ltEvalBool;
@@ -555,7 +631,9 @@ Arr[op_cmp_LessThan][ltUInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltUInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt16][ltUInt16] := ltEvalBool;
@@ -568,7 +646,9 @@ Arr[op_cmp_LessThan][ltInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltUInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt32][ltUInt16] := ltEvalBool;
@@ -581,7 +661,9 @@ Arr[op_cmp_LessThan][ltUInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltUInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt32][ltUInt16] := ltEvalBool;
@@ -594,7 +676,9 @@ Arr[op_cmp_LessThan][ltInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltUInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt64][ltUInt16] := ltEvalBool;
@@ -607,7 +691,9 @@ Arr[op_cmp_LessThan][ltUInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltUInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltUInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt64][ltUInt16] := ltEvalBool;
@@ -620,7 +706,9 @@ Arr[op_cmp_LessThan][ltInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltVariant][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltVariant][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltVariant][ltUInt16] := ltEvalBool;
@@ -633,7 +721,9 @@ Arr[op_cmp_LessThan][ltVariant][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltVariant][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltVariant][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltVariant][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltVariant][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltSingle][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltSingle][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltSingle][ltUInt16] := ltEvalBool;
@@ -646,7 +736,9 @@ Arr[op_cmp_LessThan][ltSingle][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltSingle][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltSingle][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltSingle][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltSingle][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltDouble][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltDouble][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltDouble][ltUInt16] := ltEvalBool;
@@ -659,7 +751,9 @@ Arr[op_cmp_LessThan][ltDouble][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltDouble][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltDouble][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltDouble][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltDouble][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThan][ltCurrency][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltCurrency][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltCurrency][ltUInt16] := ltEvalBool;
@@ -672,6 +766,7 @@ Arr[op_cmp_LessThan][ltCurrency][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThan][ltCurrency][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltCurrency][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltCurrency][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThan][ltCurrency][ltExtended] := ltEvalBool;
 Arr[op_cmp_LessThan][ltExtended][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThan][ltExtended][ltInt8] := ltEvalBool;
@@ -686,6 +781,7 @@ Arr[op_cmp_LessThan][ltExtended][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThan][ltExtended][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThan][ltExtended][ltCurrency] := ltEvalBool;
 Arr[op_cmp_LessThan][ltExtended][ltExtended] := ltEvalBool;
+{$ENDIF}
 
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltInt8] := ltEvalBool;
@@ -699,7 +795,9 @@ Arr[op_cmp_LessThanOrEqual][ltUInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltUInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltUInt16] := ltEvalBool;
@@ -712,7 +810,9 @@ Arr[op_cmp_LessThanOrEqual][ltInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltUInt16] := ltEvalBool;
@@ -725,7 +825,9 @@ Arr[op_cmp_LessThanOrEqual][ltUInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltUInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltUInt16] := ltEvalBool;
@@ -738,7 +840,9 @@ Arr[op_cmp_LessThanOrEqual][ltInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltUInt16] := ltEvalBool;
@@ -751,7 +855,9 @@ Arr[op_cmp_LessThanOrEqual][ltUInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltUInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltUInt16] := ltEvalBool;
@@ -764,7 +870,9 @@ Arr[op_cmp_LessThanOrEqual][ltInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltUInt16] := ltEvalBool;
@@ -777,7 +885,9 @@ Arr[op_cmp_LessThanOrEqual][ltUInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltUInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltUInt16] := ltEvalBool;
@@ -790,7 +900,9 @@ Arr[op_cmp_LessThanOrEqual][ltInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltUInt16] := ltEvalBool;
@@ -803,7 +915,9 @@ Arr[op_cmp_LessThanOrEqual][ltVariant][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltVariant][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltUInt16] := ltEvalBool;
@@ -816,7 +930,9 @@ Arr[op_cmp_LessThanOrEqual][ltSingle][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltSingle][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltUInt16] := ltEvalBool;
@@ -829,7 +945,9 @@ Arr[op_cmp_LessThanOrEqual][ltDouble][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltDouble][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltUInt16] := ltEvalBool;
@@ -842,6 +960,7 @@ Arr[op_cmp_LessThanOrEqual][ltCurrency][ltVariant] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_LessThanOrEqual][ltCurrency][ltExtended] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltUInt8] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltInt8] := ltEvalBool;
@@ -856,6 +975,7 @@ Arr[op_cmp_LessThanOrEqual][ltExtended][ltSingle] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltDouble] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltCurrency] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltExtended][ltExtended] := ltEvalBool;
+{$ENDIF}
 
 Arr[op_cmp_NotEqual][ltUInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt8][ltInt8] := ltEvalBool;
@@ -869,7 +989,9 @@ Arr[op_cmp_NotEqual][ltUInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltUInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltInt8][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt8][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt8][ltUInt16] := ltEvalBool;
@@ -882,7 +1004,9 @@ Arr[op_cmp_NotEqual][ltInt8][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt8][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt8][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt8][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltInt8][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltUInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt16][ltUInt16] := ltEvalBool;
@@ -895,7 +1019,9 @@ Arr[op_cmp_NotEqual][ltUInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltUInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltInt16][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt16][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt16][ltUInt16] := ltEvalBool;
@@ -908,7 +1034,9 @@ Arr[op_cmp_NotEqual][ltInt16][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt16][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt16][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt16][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltInt16][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltUInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt32][ltUInt16] := ltEvalBool;
@@ -921,7 +1049,9 @@ Arr[op_cmp_NotEqual][ltUInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltUInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltInt32][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt32][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt32][ltUInt16] := ltEvalBool;
@@ -934,7 +1064,9 @@ Arr[op_cmp_NotEqual][ltInt32][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt32][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt32][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt32][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltInt32][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltUInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt64][ltUInt16] := ltEvalBool;
@@ -947,7 +1079,9 @@ Arr[op_cmp_NotEqual][ltUInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltUInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltUInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltInt64][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt64][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt64][ltUInt16] := ltEvalBool;
@@ -960,7 +1094,9 @@ Arr[op_cmp_NotEqual][ltInt64][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt64][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt64][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltInt64][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltInt64][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltVariant][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltVariant][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltVariant][ltUInt16] := ltEvalBool;
@@ -973,7 +1109,9 @@ Arr[op_cmp_NotEqual][ltVariant][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltVariant][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltVariant][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltVariant][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltVariant][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltSingle][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltSingle][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltSingle][ltUInt16] := ltEvalBool;
@@ -986,7 +1124,9 @@ Arr[op_cmp_NotEqual][ltSingle][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltSingle][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltSingle][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltSingle][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltSingle][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltDouble][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltDouble][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltDouble][ltUInt16] := ltEvalBool;
@@ -999,7 +1139,9 @@ Arr[op_cmp_NotEqual][ltDouble][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltDouble][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltDouble][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltDouble][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltDouble][ltExtended] := ltEvalBool;
+{$ENDIF}
 Arr[op_cmp_NotEqual][ltCurrency][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltCurrency][ltInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltCurrency][ltUInt16] := ltEvalBool;
@@ -1012,6 +1154,7 @@ Arr[op_cmp_NotEqual][ltCurrency][ltVariant] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltCurrency][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltCurrency][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltCurrency][ltCurrency] := ltEvalBool;
+{$IFNDEF Lape_NoExtended}
 Arr[op_cmp_NotEqual][ltCurrency][ltExtended] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltExtended][ltUInt8] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltExtended][ltInt8] := ltEvalBool;
@@ -1026,6 +1169,7 @@ Arr[op_cmp_NotEqual][ltExtended][ltSingle] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltExtended][ltDouble] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltExtended][ltCurrency] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltExtended][ltExtended] := ltEvalBool;
+{$ENDIF}
 
 Arr[op_Plus][ltUInt8][ltUInt8] := ltUInt32;
 Arr[op_Plus][ltUInt8][ltInt8] := ltInt32;
@@ -1039,7 +1183,9 @@ Arr[op_Plus][ltUInt8][ltVariant] := ltVariant;
 Arr[op_Plus][ltUInt8][ltSingle] := ltSingle;
 Arr[op_Plus][ltUInt8][ltDouble] := ltDouble;
 Arr[op_Plus][ltUInt8][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltUInt8][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltUInt8][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltInt8][ltUInt8] := ltInt32;
 Arr[op_Plus][ltInt8][ltInt8] := ltInt32;
 Arr[op_Plus][ltInt8][ltUInt16] := ltInt32;
@@ -1052,7 +1198,9 @@ Arr[op_Plus][ltInt8][ltVariant] := ltVariant;
 Arr[op_Plus][ltInt8][ltSingle] := ltSingle;
 Arr[op_Plus][ltInt8][ltDouble] := ltDouble;
 Arr[op_Plus][ltInt8][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltInt8][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltInt8][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltUInt16][ltUInt8] := ltUInt32;
 Arr[op_Plus][ltUInt16][ltInt8] := ltInt32;
 Arr[op_Plus][ltUInt16][ltUInt16] := ltUInt32;
@@ -1065,7 +1213,9 @@ Arr[op_Plus][ltUInt16][ltVariant] := ltVariant;
 Arr[op_Plus][ltUInt16][ltSingle] := ltSingle;
 Arr[op_Plus][ltUInt16][ltDouble] := ltDouble;
 Arr[op_Plus][ltUInt16][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltUInt16][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltUInt16][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltInt16][ltUInt8] := ltInt32;
 Arr[op_Plus][ltInt16][ltInt8] := ltInt32;
 Arr[op_Plus][ltInt16][ltUInt16] := ltInt32;
@@ -1078,7 +1228,9 @@ Arr[op_Plus][ltInt16][ltVariant] := ltVariant;
 Arr[op_Plus][ltInt16][ltSingle] := ltSingle;
 Arr[op_Plus][ltInt16][ltDouble] := ltDouble;
 Arr[op_Plus][ltInt16][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltInt16][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltInt16][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltUInt32][ltUInt8] := ltUInt32;
 Arr[op_Plus][ltUInt32][ltInt8] := ltInt64;
 Arr[op_Plus][ltUInt32][ltUInt16] := ltUInt32;
@@ -1091,7 +1243,9 @@ Arr[op_Plus][ltUInt32][ltVariant] := ltVariant;
 Arr[op_Plus][ltUInt32][ltSingle] := ltSingle;
 Arr[op_Plus][ltUInt32][ltDouble] := ltDouble;
 Arr[op_Plus][ltUInt32][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltUInt32][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltUInt32][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltInt32][ltUInt8] := ltInt32;
 Arr[op_Plus][ltInt32][ltInt8] := ltInt32;
 Arr[op_Plus][ltInt32][ltUInt16] := ltInt32;
@@ -1104,7 +1258,9 @@ Arr[op_Plus][ltInt32][ltVariant] := ltVariant;
 Arr[op_Plus][ltInt32][ltSingle] := ltSingle;
 Arr[op_Plus][ltInt32][ltDouble] := ltDouble;
 Arr[op_Plus][ltInt32][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltInt32][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltInt32][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltUInt64][ltUInt8] := ltUInt64;
 Arr[op_Plus][ltUInt64][ltInt8] := ltUInt64;
 Arr[op_Plus][ltUInt64][ltUInt16] := ltUInt64;
@@ -1117,7 +1273,9 @@ Arr[op_Plus][ltUInt64][ltVariant] := ltVariant;
 Arr[op_Plus][ltUInt64][ltSingle] := ltSingle;
 Arr[op_Plus][ltUInt64][ltDouble] := ltDouble;
 Arr[op_Plus][ltUInt64][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltUInt64][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltUInt64][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltInt64][ltUInt8] := ltInt64;
 Arr[op_Plus][ltInt64][ltInt8] := ltInt64;
 Arr[op_Plus][ltInt64][ltUInt16] := ltInt64;
@@ -1130,7 +1288,9 @@ Arr[op_Plus][ltInt64][ltVariant] := ltVariant;
 Arr[op_Plus][ltInt64][ltSingle] := ltSingle;
 Arr[op_Plus][ltInt64][ltDouble] := ltDouble;
 Arr[op_Plus][ltInt64][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltInt64][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltInt64][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltVariant][ltUInt8] := ltVariant;
 Arr[op_Plus][ltVariant][ltInt8] := ltVariant;
 Arr[op_Plus][ltVariant][ltUInt16] := ltVariant;
@@ -1143,7 +1303,9 @@ Arr[op_Plus][ltVariant][ltVariant] := ltVariant;
 Arr[op_Plus][ltVariant][ltSingle] := ltVariant;
 Arr[op_Plus][ltVariant][ltDouble] := ltVariant;
 Arr[op_Plus][ltVariant][ltCurrency] := ltVariant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltVariant][ltExtended] := ltVariant;
+{$ENDIF}
 Arr[op_Plus][ltSingle][ltUInt8] := ltSingle;
 Arr[op_Plus][ltSingle][ltInt8] := ltSingle;
 Arr[op_Plus][ltSingle][ltUInt16] := ltSingle;
@@ -1156,7 +1318,9 @@ Arr[op_Plus][ltSingle][ltVariant] := ltVariant;
 Arr[op_Plus][ltSingle][ltSingle] := ltSingle;
 Arr[op_Plus][ltSingle][ltDouble] := ltDouble;
 Arr[op_Plus][ltSingle][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltSingle][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltSingle][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltDouble][ltUInt8] := ltDouble;
 Arr[op_Plus][ltDouble][ltInt8] := ltDouble;
 Arr[op_Plus][ltDouble][ltUInt16] := ltDouble;
@@ -1169,7 +1333,9 @@ Arr[op_Plus][ltDouble][ltVariant] := ltVariant;
 Arr[op_Plus][ltDouble][ltSingle] := ltDouble;
 Arr[op_Plus][ltDouble][ltDouble] := ltDouble;
 Arr[op_Plus][ltDouble][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltDouble][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Plus][ltDouble][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Plus][ltCurrency][ltUInt8] := ltCurrency;
 Arr[op_Plus][ltCurrency][ltInt8] := ltCurrency;
 Arr[op_Plus][ltCurrency][ltUInt16] := ltCurrency;
@@ -1182,20 +1348,22 @@ Arr[op_Plus][ltCurrency][ltVariant] := ltVariant;
 Arr[op_Plus][ltCurrency][ltSingle] := ltCurrency;
 Arr[op_Plus][ltCurrency][ltDouble] := ltCurrency;
 Arr[op_Plus][ltCurrency][ltCurrency] := ltCurrency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Plus][ltCurrency][ltExtended] := ltCurrency;
-Arr[op_Plus][ltExtended][ltUInt8] := ltExtended;
-Arr[op_Plus][ltExtended][ltInt8] := ltExtended;
-Arr[op_Plus][ltExtended][ltUInt16] := ltExtended;
-Arr[op_Plus][ltExtended][ltInt16] := ltExtended;
-Arr[op_Plus][ltExtended][ltUInt32] := ltExtended;
-Arr[op_Plus][ltExtended][ltInt32] := ltExtended;
-Arr[op_Plus][ltExtended][ltUInt64] := ltExtended;
-Arr[op_Plus][ltExtended][ltInt64] := ltExtended;
+Arr[op_Plus][ltExtended][ltUInt8] := ltFloat;
+Arr[op_Plus][ltExtended][ltInt8] := ltFloat;
+Arr[op_Plus][ltExtended][ltUInt16] := ltFloat;
+Arr[op_Plus][ltExtended][ltInt16] := ltFloat;
+Arr[op_Plus][ltExtended][ltUInt32] := ltFloat;
+Arr[op_Plus][ltExtended][ltInt32] := ltFloat;
+Arr[op_Plus][ltExtended][ltUInt64] := ltFloat;
+Arr[op_Plus][ltExtended][ltInt64] := ltFloat;
 Arr[op_Plus][ltExtended][ltVariant] := ltVariant;
-Arr[op_Plus][ltExtended][ltSingle] := ltExtended;
-Arr[op_Plus][ltExtended][ltDouble] := ltExtended;
+Arr[op_Plus][ltExtended][ltSingle] := ltFloat;
+Arr[op_Plus][ltExtended][ltDouble] := ltFloat;
 Arr[op_Plus][ltExtended][ltCurrency] := ltCurrency;
-Arr[op_Plus][ltExtended][ltExtended] := ltExtended;
+Arr[op_Plus][ltExtended][ltExtended] := ltFloat;
+{$ENDIF}
 
 Arr[op_Minus][ltUInt8][ltUInt8] := ltInt32;
 Arr[op_Minus][ltUInt8][ltInt8] := ltInt32;
@@ -1209,7 +1377,9 @@ Arr[op_Minus][ltUInt8][ltVariant] := ltVariant;
 Arr[op_Minus][ltUInt8][ltSingle] := ltSingle;
 Arr[op_Minus][ltUInt8][ltDouble] := ltDouble;
 Arr[op_Minus][ltUInt8][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltUInt8][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltUInt8][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltInt8][ltUInt8] := ltInt32;
 Arr[op_Minus][ltInt8][ltInt8] := ltInt32;
 Arr[op_Minus][ltInt8][ltUInt16] := ltInt32;
@@ -1222,7 +1392,9 @@ Arr[op_Minus][ltInt8][ltVariant] := ltVariant;
 Arr[op_Minus][ltInt8][ltSingle] := ltSingle;
 Arr[op_Minus][ltInt8][ltDouble] := ltDouble;
 Arr[op_Minus][ltInt8][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltInt8][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltInt8][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltUInt16][ltUInt8] := ltInt32;
 Arr[op_Minus][ltUInt16][ltInt8] := ltInt32;
 Arr[op_Minus][ltUInt16][ltUInt16] := ltInt32;
@@ -1235,7 +1407,9 @@ Arr[op_Minus][ltUInt16][ltVariant] := ltVariant;
 Arr[op_Minus][ltUInt16][ltSingle] := ltSingle;
 Arr[op_Minus][ltUInt16][ltDouble] := ltDouble;
 Arr[op_Minus][ltUInt16][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltUInt16][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltUInt16][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltInt16][ltUInt8] := ltInt32;
 Arr[op_Minus][ltInt16][ltInt8] := ltInt32;
 Arr[op_Minus][ltInt16][ltUInt16] := ltInt32;
@@ -1248,7 +1422,9 @@ Arr[op_Minus][ltInt16][ltVariant] := ltVariant;
 Arr[op_Minus][ltInt16][ltSingle] := ltSingle;
 Arr[op_Minus][ltInt16][ltDouble] := ltDouble;
 Arr[op_Minus][ltInt16][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltInt16][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltInt16][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltUInt32][ltUInt8] := ltInt64;
 Arr[op_Minus][ltUInt32][ltInt8] := ltInt64;
 Arr[op_Minus][ltUInt32][ltUInt16] := ltInt64;
@@ -1261,7 +1437,9 @@ Arr[op_Minus][ltUInt32][ltVariant] := ltVariant;
 Arr[op_Minus][ltUInt32][ltSingle] := ltSingle;
 Arr[op_Minus][ltUInt32][ltDouble] := ltDouble;
 Arr[op_Minus][ltUInt32][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltUInt32][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltUInt32][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltInt32][ltUInt8] := ltInt32;
 Arr[op_Minus][ltInt32][ltInt8] := ltInt32;
 Arr[op_Minus][ltInt32][ltUInt16] := ltInt32;
@@ -1274,7 +1452,9 @@ Arr[op_Minus][ltInt32][ltVariant] := ltVariant;
 Arr[op_Minus][ltInt32][ltSingle] := ltSingle;
 Arr[op_Minus][ltInt32][ltDouble] := ltDouble;
 Arr[op_Minus][ltInt32][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltInt32][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltInt32][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltUInt64][ltUInt8] := ltUInt64;
 Arr[op_Minus][ltUInt64][ltInt8] := ltUInt64;
 Arr[op_Minus][ltUInt64][ltUInt16] := ltUInt64;
@@ -1287,7 +1467,9 @@ Arr[op_Minus][ltUInt64][ltVariant] := ltVariant;
 Arr[op_Minus][ltUInt64][ltSingle] := ltSingle;
 Arr[op_Minus][ltUInt64][ltDouble] := ltDouble;
 Arr[op_Minus][ltUInt64][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltUInt64][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltUInt64][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltInt64][ltUInt8] := ltInt64;
 Arr[op_Minus][ltInt64][ltInt8] := ltInt64;
 Arr[op_Minus][ltInt64][ltUInt16] := ltInt64;
@@ -1300,7 +1482,9 @@ Arr[op_Minus][ltInt64][ltVariant] := ltVariant;
 Arr[op_Minus][ltInt64][ltSingle] := ltSingle;
 Arr[op_Minus][ltInt64][ltDouble] := ltDouble;
 Arr[op_Minus][ltInt64][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltInt64][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltInt64][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltVariant][ltUInt8] := ltVariant;
 Arr[op_Minus][ltVariant][ltInt8] := ltVariant;
 Arr[op_Minus][ltVariant][ltUInt16] := ltVariant;
@@ -1313,7 +1497,9 @@ Arr[op_Minus][ltVariant][ltVariant] := ltVariant;
 Arr[op_Minus][ltVariant][ltSingle] := ltVariant;
 Arr[op_Minus][ltVariant][ltDouble] := ltVariant;
 Arr[op_Minus][ltVariant][ltCurrency] := ltVariant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltVariant][ltExtended] := ltVariant;
+{$ENDIF}
 Arr[op_Minus][ltSingle][ltUInt8] := ltSingle;
 Arr[op_Minus][ltSingle][ltInt8] := ltSingle;
 Arr[op_Minus][ltSingle][ltUInt16] := ltSingle;
@@ -1326,7 +1512,9 @@ Arr[op_Minus][ltSingle][ltVariant] := ltVariant;
 Arr[op_Minus][ltSingle][ltSingle] := ltSingle;
 Arr[op_Minus][ltSingle][ltDouble] := ltDouble;
 Arr[op_Minus][ltSingle][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltSingle][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltSingle][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltDouble][ltUInt8] := ltDouble;
 Arr[op_Minus][ltDouble][ltInt8] := ltDouble;
 Arr[op_Minus][ltDouble][ltUInt16] := ltDouble;
@@ -1339,7 +1527,9 @@ Arr[op_Minus][ltDouble][ltVariant] := ltVariant;
 Arr[op_Minus][ltDouble][ltSingle] := ltDouble;
 Arr[op_Minus][ltDouble][ltDouble] := ltDouble;
 Arr[op_Minus][ltDouble][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltDouble][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Minus][ltDouble][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Minus][ltCurrency][ltUInt8] := ltCurrency;
 Arr[op_Minus][ltCurrency][ltInt8] := ltCurrency;
 Arr[op_Minus][ltCurrency][ltUInt16] := ltCurrency;
@@ -1352,20 +1542,22 @@ Arr[op_Minus][ltCurrency][ltVariant] := ltVariant;
 Arr[op_Minus][ltCurrency][ltSingle] := ltCurrency;
 Arr[op_Minus][ltCurrency][ltDouble] := ltCurrency;
 Arr[op_Minus][ltCurrency][ltCurrency] := ltCurrency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Minus][ltCurrency][ltExtended] := ltCurrency;
-Arr[op_Minus][ltExtended][ltUInt8] := ltExtended;
-Arr[op_Minus][ltExtended][ltInt8] := ltExtended;
-Arr[op_Minus][ltExtended][ltUInt16] := ltExtended;
-Arr[op_Minus][ltExtended][ltInt16] := ltExtended;
-Arr[op_Minus][ltExtended][ltUInt32] := ltExtended;
-Arr[op_Minus][ltExtended][ltInt32] := ltExtended;
-Arr[op_Minus][ltExtended][ltUInt64] := ltExtended;
-Arr[op_Minus][ltExtended][ltInt64] := ltExtended;
+Arr[op_Minus][ltExtended][ltUInt8] := ltFloat;
+Arr[op_Minus][ltExtended][ltInt8] := ltFloat;
+Arr[op_Minus][ltExtended][ltUInt16] := ltFloat;
+Arr[op_Minus][ltExtended][ltInt16] := ltFloat;
+Arr[op_Minus][ltExtended][ltUInt32] := ltFloat;
+Arr[op_Minus][ltExtended][ltInt32] := ltFloat;
+Arr[op_Minus][ltExtended][ltUInt64] := ltFloat;
+Arr[op_Minus][ltExtended][ltInt64] := ltFloat;
 Arr[op_Minus][ltExtended][ltVariant] := ltVariant;
-Arr[op_Minus][ltExtended][ltSingle] := ltExtended;
-Arr[op_Minus][ltExtended][ltDouble] := ltExtended;
+Arr[op_Minus][ltExtended][ltSingle] := ltFloat;
+Arr[op_Minus][ltExtended][ltDouble] := ltFloat;
 Arr[op_Minus][ltExtended][ltCurrency] := ltCurrency;
-Arr[op_Minus][ltExtended][ltExtended] := ltExtended;
+Arr[op_Minus][ltExtended][ltExtended] := ltFloat;
+{$ENDIF}
 
 Arr[op_Multiply][ltUInt8][ltUInt8] := ltUInt32;
 Arr[op_Multiply][ltUInt8][ltInt8] := ltInt32;
@@ -1379,7 +1571,9 @@ Arr[op_Multiply][ltUInt8][ltVariant] := ltVariant;
 Arr[op_Multiply][ltUInt8][ltSingle] := ltSingle;
 Arr[op_Multiply][ltUInt8][ltDouble] := ltDouble;
 Arr[op_Multiply][ltUInt8][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltUInt8][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltUInt8][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltInt8][ltUInt8] := ltInt32;
 Arr[op_Multiply][ltInt8][ltInt8] := ltInt32;
 Arr[op_Multiply][ltInt8][ltUInt16] := ltInt32;
@@ -1392,7 +1586,9 @@ Arr[op_Multiply][ltInt8][ltVariant] := ltVariant;
 Arr[op_Multiply][ltInt8][ltSingle] := ltSingle;
 Arr[op_Multiply][ltInt8][ltDouble] := ltDouble;
 Arr[op_Multiply][ltInt8][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltInt8][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltInt8][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltUInt16][ltUInt8] := ltUInt32;
 Arr[op_Multiply][ltUInt16][ltInt8] := ltInt32;
 Arr[op_Multiply][ltUInt16][ltUInt16] := ltUInt32;
@@ -1405,7 +1601,9 @@ Arr[op_Multiply][ltUInt16][ltVariant] := ltVariant;
 Arr[op_Multiply][ltUInt16][ltSingle] := ltSingle;
 Arr[op_Multiply][ltUInt16][ltDouble] := ltDouble;
 Arr[op_Multiply][ltUInt16][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltUInt16][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltUInt16][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltInt16][ltUInt8] := ltInt32;
 Arr[op_Multiply][ltInt16][ltInt8] := ltInt32;
 Arr[op_Multiply][ltInt16][ltUInt16] := ltInt32;
@@ -1418,7 +1616,9 @@ Arr[op_Multiply][ltInt16][ltVariant] := ltVariant;
 Arr[op_Multiply][ltInt16][ltSingle] := ltSingle;
 Arr[op_Multiply][ltInt16][ltDouble] := ltDouble;
 Arr[op_Multiply][ltInt16][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltInt16][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltInt16][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltUInt32][ltUInt8] := ltUInt32;
 Arr[op_Multiply][ltUInt32][ltInt8] := ltInt64;
 Arr[op_Multiply][ltUInt32][ltUInt16] := ltUInt32;
@@ -1431,7 +1631,9 @@ Arr[op_Multiply][ltUInt32][ltVariant] := ltVariant;
 Arr[op_Multiply][ltUInt32][ltSingle] := ltSingle;
 Arr[op_Multiply][ltUInt32][ltDouble] := ltDouble;
 Arr[op_Multiply][ltUInt32][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltUInt32][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltUInt32][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltInt32][ltUInt8] := ltInt32;
 Arr[op_Multiply][ltInt32][ltInt8] := ltInt32;
 Arr[op_Multiply][ltInt32][ltUInt16] := ltInt32;
@@ -1444,7 +1646,9 @@ Arr[op_Multiply][ltInt32][ltVariant] := ltVariant;
 Arr[op_Multiply][ltInt32][ltSingle] := ltSingle;
 Arr[op_Multiply][ltInt32][ltDouble] := ltDouble;
 Arr[op_Multiply][ltInt32][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltInt32][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltInt32][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltUInt64][ltUInt8] := ltUInt64;
 Arr[op_Multiply][ltUInt64][ltInt8] := ltUInt64;
 Arr[op_Multiply][ltUInt64][ltUInt16] := ltUInt64;
@@ -1457,7 +1661,9 @@ Arr[op_Multiply][ltUInt64][ltVariant] := ltVariant;
 Arr[op_Multiply][ltUInt64][ltSingle] := ltSingle;
 Arr[op_Multiply][ltUInt64][ltDouble] := ltDouble;
 Arr[op_Multiply][ltUInt64][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltUInt64][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltUInt64][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltInt64][ltUInt8] := ltInt64;
 Arr[op_Multiply][ltInt64][ltInt8] := ltInt64;
 Arr[op_Multiply][ltInt64][ltUInt16] := ltInt64;
@@ -1470,7 +1676,9 @@ Arr[op_Multiply][ltInt64][ltVariant] := ltVariant;
 Arr[op_Multiply][ltInt64][ltSingle] := ltSingle;
 Arr[op_Multiply][ltInt64][ltDouble] := ltDouble;
 Arr[op_Multiply][ltInt64][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltInt64][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltInt64][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltVariant][ltUInt8] := ltVariant;
 Arr[op_Multiply][ltVariant][ltInt8] := ltVariant;
 Arr[op_Multiply][ltVariant][ltUInt16] := ltVariant;
@@ -1483,7 +1691,9 @@ Arr[op_Multiply][ltVariant][ltVariant] := ltVariant;
 Arr[op_Multiply][ltVariant][ltSingle] := ltVariant;
 Arr[op_Multiply][ltVariant][ltDouble] := ltVariant;
 Arr[op_Multiply][ltVariant][ltCurrency] := ltVariant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltVariant][ltExtended] := ltVariant;
+{$ENDIF}
 Arr[op_Multiply][ltSingle][ltUInt8] := ltSingle;
 Arr[op_Multiply][ltSingle][ltInt8] := ltSingle;
 Arr[op_Multiply][ltSingle][ltUInt16] := ltSingle;
@@ -1496,7 +1706,9 @@ Arr[op_Multiply][ltSingle][ltVariant] := ltVariant;
 Arr[op_Multiply][ltSingle][ltSingle] := ltSingle;
 Arr[op_Multiply][ltSingle][ltDouble] := ltDouble;
 Arr[op_Multiply][ltSingle][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltSingle][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltSingle][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltDouble][ltUInt8] := ltDouble;
 Arr[op_Multiply][ltDouble][ltInt8] := ltDouble;
 Arr[op_Multiply][ltDouble][ltUInt16] := ltDouble;
@@ -1509,7 +1721,9 @@ Arr[op_Multiply][ltDouble][ltVariant] := ltVariant;
 Arr[op_Multiply][ltDouble][ltSingle] := ltDouble;
 Arr[op_Multiply][ltDouble][ltDouble] := ltDouble;
 Arr[op_Multiply][ltDouble][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltDouble][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Multiply][ltDouble][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Multiply][ltCurrency][ltUInt8] := ltCurrency;
 Arr[op_Multiply][ltCurrency][ltInt8] := ltCurrency;
 Arr[op_Multiply][ltCurrency][ltUInt16] := ltCurrency;
@@ -1522,125 +1736,143 @@ Arr[op_Multiply][ltCurrency][ltVariant] := ltVariant;
 Arr[op_Multiply][ltCurrency][ltSingle] := ltCurrency;
 Arr[op_Multiply][ltCurrency][ltDouble] := ltCurrency;
 Arr[op_Multiply][ltCurrency][ltCurrency] := ltCurrency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Multiply][ltCurrency][ltExtended] := ltCurrency;
-Arr[op_Multiply][ltExtended][ltUInt8] := ltExtended;
-Arr[op_Multiply][ltExtended][ltInt8] := ltExtended;
-Arr[op_Multiply][ltExtended][ltUInt16] := ltExtended;
-Arr[op_Multiply][ltExtended][ltInt16] := ltExtended;
-Arr[op_Multiply][ltExtended][ltUInt32] := ltExtended;
-Arr[op_Multiply][ltExtended][ltInt32] := ltExtended;
-Arr[op_Multiply][ltExtended][ltUInt64] := ltExtended;
-Arr[op_Multiply][ltExtended][ltInt64] := ltExtended;
+Arr[op_Multiply][ltExtended][ltUInt8] := ltFloat;
+Arr[op_Multiply][ltExtended][ltInt8] := ltFloat;
+Arr[op_Multiply][ltExtended][ltUInt16] := ltFloat;
+Arr[op_Multiply][ltExtended][ltInt16] := ltFloat;
+Arr[op_Multiply][ltExtended][ltUInt32] := ltFloat;
+Arr[op_Multiply][ltExtended][ltInt32] := ltFloat;
+Arr[op_Multiply][ltExtended][ltUInt64] := ltFloat;
+Arr[op_Multiply][ltExtended][ltInt64] := ltFloat;
 Arr[op_Multiply][ltExtended][ltVariant] := ltVariant;
-Arr[op_Multiply][ltExtended][ltSingle] := ltExtended;
-Arr[op_Multiply][ltExtended][ltDouble] := ltExtended;
+Arr[op_Multiply][ltExtended][ltSingle] := ltFloat;
+Arr[op_Multiply][ltExtended][ltDouble] := ltFloat;
 Arr[op_Multiply][ltExtended][ltCurrency] := ltCurrency;
-Arr[op_Multiply][ltExtended][ltExtended] := ltExtended;
+Arr[op_Multiply][ltExtended][ltExtended] := ltFloat;
+{$ENDIF}
 
 Arr[op_Power][ltUInt8][ltUInt8] := ltUInt32;
-Arr[op_Power][ltUInt8][ltInt8] := ltExtended;
+Arr[op_Power][ltUInt8][ltInt8] := ltFloat;
 Arr[op_Power][ltUInt8][ltUInt16] := ltUInt32;
-Arr[op_Power][ltUInt8][ltInt16] := ltExtended;
+Arr[op_Power][ltUInt8][ltInt16] := ltFloat;
 Arr[op_Power][ltUInt8][ltUInt32] := ltUInt32;
-Arr[op_Power][ltUInt8][ltInt32] := ltExtended;
+Arr[op_Power][ltUInt8][ltInt32] := ltFloat;
 Arr[op_Power][ltUInt8][ltUInt64] := ltUInt64;
-Arr[op_Power][ltUInt8][ltInt64] := ltExtended;
+Arr[op_Power][ltUInt8][ltInt64] := ltFloat;
 Arr[op_Power][ltUInt8][ltVariant] := ltVariant;
 Arr[op_Power][ltUInt8][ltSingle] := ltSingle;
 Arr[op_Power][ltUInt8][ltDouble] := ltDouble;
 Arr[op_Power][ltUInt8][ltCurrency] := ltCurrency;
-Arr[op_Power][ltUInt8][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltUInt8][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltInt8][ltUInt8] := ltInt32;
-Arr[op_Power][ltInt8][ltInt8] := ltExtended;
+Arr[op_Power][ltInt8][ltInt8] := ltFloat;
 Arr[op_Power][ltInt8][ltUInt16] := ltInt32;
-Arr[op_Power][ltInt8][ltInt16] := ltExtended;
+Arr[op_Power][ltInt8][ltInt16] := ltFloat;
 Arr[op_Power][ltInt8][ltUInt32] := ltInt32;
-Arr[op_Power][ltInt8][ltInt32] := ltExtended;
+Arr[op_Power][ltInt8][ltInt32] := ltFloat;
 Arr[op_Power][ltInt8][ltUInt64] := ltUInt64;
-Arr[op_Power][ltInt8][ltInt64] := ltExtended;
+Arr[op_Power][ltInt8][ltInt64] := ltFloat;
 Arr[op_Power][ltInt8][ltVariant] := ltVariant;
 Arr[op_Power][ltInt8][ltSingle] := ltSingle;
 Arr[op_Power][ltInt8][ltDouble] := ltDouble;
 Arr[op_Power][ltInt8][ltCurrency] := ltCurrency;
-Arr[op_Power][ltInt8][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltInt8][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltUInt16][ltUInt8] := ltUInt32;
-Arr[op_Power][ltUInt16][ltInt8] := ltExtended;
+Arr[op_Power][ltUInt16][ltInt8] := ltFloat;
 Arr[op_Power][ltUInt16][ltUInt16] := ltUInt32;
-Arr[op_Power][ltUInt16][ltInt16] := ltExtended;
+Arr[op_Power][ltUInt16][ltInt16] := ltFloat;
 Arr[op_Power][ltUInt16][ltUInt32] := ltUInt32;
-Arr[op_Power][ltUInt16][ltInt32] := ltExtended;
+Arr[op_Power][ltUInt16][ltInt32] := ltFloat;
 Arr[op_Power][ltUInt16][ltUInt64] := ltUInt64;
-Arr[op_Power][ltUInt16][ltInt64] := ltExtended;
+Arr[op_Power][ltUInt16][ltInt64] := ltFloat;
 Arr[op_Power][ltUInt16][ltVariant] := ltVariant;
 Arr[op_Power][ltUInt16][ltSingle] := ltSingle;
 Arr[op_Power][ltUInt16][ltDouble] := ltDouble;
 Arr[op_Power][ltUInt16][ltCurrency] := ltCurrency;
-Arr[op_Power][ltUInt16][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltUInt16][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltInt16][ltUInt8] := ltInt32;
-Arr[op_Power][ltInt16][ltInt8] := ltExtended;
+Arr[op_Power][ltInt16][ltInt8] := ltFloat;
 Arr[op_Power][ltInt16][ltUInt16] := ltInt32;
-Arr[op_Power][ltInt16][ltInt16] := ltExtended;
+Arr[op_Power][ltInt16][ltInt16] := ltFloat;
 Arr[op_Power][ltInt16][ltUInt32] := ltInt64;
-Arr[op_Power][ltInt16][ltInt32] := ltExtended;
+Arr[op_Power][ltInt16][ltInt32] := ltFloat;
 Arr[op_Power][ltInt16][ltUInt64] := ltUInt64;
-Arr[op_Power][ltInt16][ltInt64] := ltExtended;
+Arr[op_Power][ltInt16][ltInt64] := ltFloat;
 Arr[op_Power][ltInt16][ltVariant] := ltVariant;
 Arr[op_Power][ltInt16][ltSingle] := ltSingle;
 Arr[op_Power][ltInt16][ltDouble] := ltDouble;
 Arr[op_Power][ltInt16][ltCurrency] := ltCurrency;
-Arr[op_Power][ltInt16][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltInt16][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltUInt32][ltUInt8] := ltUInt32;
-Arr[op_Power][ltUInt32][ltInt8] := ltExtended;
+Arr[op_Power][ltUInt32][ltInt8] := ltFloat;
 Arr[op_Power][ltUInt32][ltUInt16] := ltUInt32;
-Arr[op_Power][ltUInt32][ltInt16] := ltExtended;
+Arr[op_Power][ltUInt32][ltInt16] := ltFloat;
 Arr[op_Power][ltUInt32][ltUInt32] := ltUInt32;
-Arr[op_Power][ltUInt32][ltInt32] := ltExtended;
+Arr[op_Power][ltUInt32][ltInt32] := ltFloat;
 Arr[op_Power][ltUInt32][ltUInt64] := ltUInt64;
-Arr[op_Power][ltUInt32][ltInt64] := ltExtended;
+Arr[op_Power][ltUInt32][ltInt64] := ltFloat;
 Arr[op_Power][ltUInt32][ltVariant] := ltVariant;
 Arr[op_Power][ltUInt32][ltSingle] := ltSingle;
 Arr[op_Power][ltUInt32][ltDouble] := ltDouble;
 Arr[op_Power][ltUInt32][ltCurrency] := ltCurrency;
-Arr[op_Power][ltUInt32][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltUInt32][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltInt32][ltUInt8] := ltInt32;
-Arr[op_Power][ltInt32][ltInt8] := ltExtended;
+Arr[op_Power][ltInt32][ltInt8] := ltFloat;
 Arr[op_Power][ltInt32][ltUInt16] := ltInt32;
-Arr[op_Power][ltInt32][ltInt16] := ltExtended;
+Arr[op_Power][ltInt32][ltInt16] := ltFloat;
 Arr[op_Power][ltInt32][ltUInt32] := ltInt64;
-Arr[op_Power][ltInt32][ltInt32] := ltExtended;
+Arr[op_Power][ltInt32][ltInt32] := ltFloat;
 Arr[op_Power][ltInt32][ltUInt64] := ltUInt64;
-Arr[op_Power][ltInt32][ltInt64] := ltExtended;
+Arr[op_Power][ltInt32][ltInt64] := ltFloat;
 Arr[op_Power][ltInt32][ltVariant] := ltVariant;
 Arr[op_Power][ltInt32][ltSingle] := ltSingle;
 Arr[op_Power][ltInt32][ltDouble] := ltDouble;
 Arr[op_Power][ltInt32][ltCurrency] := ltCurrency;
-Arr[op_Power][ltInt32][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltInt32][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltUInt64][ltUInt8] := ltUInt64;
-Arr[op_Power][ltUInt64][ltInt8] := ltExtended;
+Arr[op_Power][ltUInt64][ltInt8] := ltFloat;
 Arr[op_Power][ltUInt64][ltUInt16] := ltUInt64;
-Arr[op_Power][ltUInt64][ltInt16] := ltExtended;
+Arr[op_Power][ltUInt64][ltInt16] := ltFloat;
 Arr[op_Power][ltUInt64][ltUInt32] := ltUInt64;
-Arr[op_Power][ltUInt64][ltInt32] := ltExtended;
+Arr[op_Power][ltUInt64][ltInt32] := ltFloat;
 Arr[op_Power][ltUInt64][ltUInt64] := ltUInt64;
-Arr[op_Power][ltUInt64][ltInt64] := ltExtended;
+Arr[op_Power][ltUInt64][ltInt64] := ltFloat;
 Arr[op_Power][ltUInt64][ltVariant] := ltVariant;
 Arr[op_Power][ltUInt64][ltSingle] := ltSingle;
 Arr[op_Power][ltUInt64][ltDouble] := ltDouble;
 Arr[op_Power][ltUInt64][ltCurrency] := ltCurrency;
-Arr[op_Power][ltUInt64][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltUInt64][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltInt64][ltUInt8] := ltInt64;
-Arr[op_Power][ltInt64][ltInt8] := ltExtended;
+Arr[op_Power][ltInt64][ltInt8] := ltFloat;
 Arr[op_Power][ltInt64][ltUInt16] := ltInt64;
-Arr[op_Power][ltInt64][ltInt16] := ltExtended;
+Arr[op_Power][ltInt64][ltInt16] := ltFloat;
 Arr[op_Power][ltInt64][ltUInt32] := ltInt64;
-Arr[op_Power][ltInt64][ltInt32] := ltExtended;
+Arr[op_Power][ltInt64][ltInt32] := ltFloat;
 Arr[op_Power][ltInt64][ltUInt64] := ltInt64;
-Arr[op_Power][ltInt64][ltInt64] := ltExtended;
+Arr[op_Power][ltInt64][ltInt64] := ltFloat;
 Arr[op_Power][ltInt64][ltVariant] := ltVariant;
 Arr[op_Power][ltInt64][ltSingle] := ltSingle;
 Arr[op_Power][ltInt64][ltDouble] := ltDouble;
 Arr[op_Power][ltInt64][ltCurrency] := ltCurrency;
-Arr[op_Power][ltInt64][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltInt64][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltVariant][ltUInt8] := ltVariant;
 Arr[op_Power][ltVariant][ltInt8] := ltVariant;
 Arr[op_Power][ltVariant][ltUInt16] := ltVariant;
@@ -1653,7 +1885,9 @@ Arr[op_Power][ltVariant][ltVariant] := ltVariant;
 Arr[op_Power][ltVariant][ltSingle] := ltVariant;
 Arr[op_Power][ltVariant][ltDouble] := ltVariant;
 Arr[op_Power][ltVariant][ltCurrency] := ltVariant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltVariant][ltExtended] := ltVariant;
+{$ENDIF}
 Arr[op_Power][ltSingle][ltUInt8] := ltSingle;
 Arr[op_Power][ltSingle][ltInt8] := ltSingle;
 Arr[op_Power][ltSingle][ltUInt16] := ltSingle;
@@ -1666,7 +1900,9 @@ Arr[op_Power][ltSingle][ltVariant] := ltVariant;
 Arr[op_Power][ltSingle][ltSingle] := ltSingle;
 Arr[op_Power][ltSingle][ltDouble] := ltDouble;
 Arr[op_Power][ltSingle][ltCurrency] := ltCurrency;
-Arr[op_Power][ltSingle][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltSingle][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltDouble][ltUInt8] := ltDouble;
 Arr[op_Power][ltDouble][ltInt8] := ltDouble;
 Arr[op_Power][ltDouble][ltUInt16] := ltDouble;
@@ -1679,7 +1915,9 @@ Arr[op_Power][ltDouble][ltVariant] := ltVariant;
 Arr[op_Power][ltDouble][ltSingle] := ltDouble;
 Arr[op_Power][ltDouble][ltDouble] := ltDouble;
 Arr[op_Power][ltDouble][ltCurrency] := ltCurrency;
-Arr[op_Power][ltDouble][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Power][ltDouble][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Power][ltCurrency][ltUInt8] := ltCurrency;
 Arr[op_Power][ltCurrency][ltInt8] := ltCurrency;
 Arr[op_Power][ltCurrency][ltUInt16] := ltCurrency;
@@ -1692,125 +1930,143 @@ Arr[op_Power][ltCurrency][ltVariant] := ltVariant;
 Arr[op_Power][ltCurrency][ltSingle] := ltCurrency;
 Arr[op_Power][ltCurrency][ltDouble] := ltCurrency;
 Arr[op_Power][ltCurrency][ltCurrency] := ltCurrency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Power][ltCurrency][ltExtended] := ltCurrency;
-Arr[op_Power][ltExtended][ltUInt8] := ltExtended;
-Arr[op_Power][ltExtended][ltInt8] := ltExtended;
-Arr[op_Power][ltExtended][ltUInt16] := ltExtended;
-Arr[op_Power][ltExtended][ltInt16] := ltExtended;
-Arr[op_Power][ltExtended][ltUInt32] := ltExtended;
-Arr[op_Power][ltExtended][ltInt32] := ltExtended;
-Arr[op_Power][ltExtended][ltUInt64] := ltExtended;
-Arr[op_Power][ltExtended][ltInt64] := ltExtended;
+Arr[op_Power][ltExtended][ltUInt8] := ltFloat;
+Arr[op_Power][ltExtended][ltInt8] := ltFloat;
+Arr[op_Power][ltExtended][ltUInt16] := ltFloat;
+Arr[op_Power][ltExtended][ltInt16] := ltFloat;
+Arr[op_Power][ltExtended][ltUInt32] := ltFloat;
+Arr[op_Power][ltExtended][ltInt32] := ltFloat;
+Arr[op_Power][ltExtended][ltUInt64] := ltFloat;
+Arr[op_Power][ltExtended][ltInt64] := ltFloat;
 Arr[op_Power][ltExtended][ltVariant] := ltVariant;
-Arr[op_Power][ltExtended][ltSingle] := ltExtended;
-Arr[op_Power][ltExtended][ltDouble] := ltExtended;
+Arr[op_Power][ltExtended][ltSingle] := ltFloat;
+Arr[op_Power][ltExtended][ltDouble] := ltFloat;
 Arr[op_Power][ltExtended][ltCurrency] := ltCurrency;
-Arr[op_Power][ltExtended][ltExtended] := ltExtended;
+Arr[op_Power][ltExtended][ltExtended] := ltFloat;
+{$ENDIF}
 
-Arr[op_Divide][ltUInt8][ltUInt8] := ltExtended;
-Arr[op_Divide][ltUInt8][ltInt8] := ltExtended;
-Arr[op_Divide][ltUInt8][ltUInt16] := ltExtended;
-Arr[op_Divide][ltUInt8][ltInt16] := ltExtended;
-Arr[op_Divide][ltUInt8][ltUInt32] := ltExtended;
-Arr[op_Divide][ltUInt8][ltInt32] := ltExtended;
-Arr[op_Divide][ltUInt8][ltUInt64] := ltExtended;
-Arr[op_Divide][ltUInt8][ltInt64] := ltExtended;
+Arr[op_Divide][ltUInt8][ltUInt8] := ltFloat;
+Arr[op_Divide][ltUInt8][ltInt8] := ltFloat;
+Arr[op_Divide][ltUInt8][ltUInt16] := ltFloat;
+Arr[op_Divide][ltUInt8][ltInt16] := ltFloat;
+Arr[op_Divide][ltUInt8][ltUInt32] := ltFloat;
+Arr[op_Divide][ltUInt8][ltInt32] := ltFloat;
+Arr[op_Divide][ltUInt8][ltUInt64] := ltFloat;
+Arr[op_Divide][ltUInt8][ltInt64] := ltFloat;
 Arr[op_Divide][ltUInt8][ltVariant] := ltVariant;
 Arr[op_Divide][ltUInt8][ltSingle] := ltSingle;
 Arr[op_Divide][ltUInt8][ltDouble] := ltDouble;
 Arr[op_Divide][ltUInt8][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltUInt8][ltExtended] := ltExtended;
-Arr[op_Divide][ltInt8][ltUInt8] := ltExtended;
-Arr[op_Divide][ltInt8][ltInt8] := ltExtended;
-Arr[op_Divide][ltInt8][ltUInt16] := ltExtended;
-Arr[op_Divide][ltInt8][ltInt16] := ltExtended;
-Arr[op_Divide][ltInt8][ltUInt32] := ltExtended;
-Arr[op_Divide][ltInt8][ltInt32] := ltExtended;
-Arr[op_Divide][ltInt8][ltUInt64] := ltExtended;
-Arr[op_Divide][ltInt8][ltInt64] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltUInt8][ltExtended] := ltFloat;
+{$ENDIF}
+Arr[op_Divide][ltInt8][ltUInt8] := ltFloat;
+Arr[op_Divide][ltInt8][ltInt8] := ltFloat;
+Arr[op_Divide][ltInt8][ltUInt16] := ltFloat;
+Arr[op_Divide][ltInt8][ltInt16] := ltFloat;
+Arr[op_Divide][ltInt8][ltUInt32] := ltFloat;
+Arr[op_Divide][ltInt8][ltInt32] := ltFloat;
+Arr[op_Divide][ltInt8][ltUInt64] := ltFloat;
+Arr[op_Divide][ltInt8][ltInt64] := ltFloat;
 Arr[op_Divide][ltInt8][ltVariant] := ltVariant;
 Arr[op_Divide][ltInt8][ltSingle] := ltSingle;
 Arr[op_Divide][ltInt8][ltDouble] := ltDouble;
 Arr[op_Divide][ltInt8][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltInt8][ltExtended] := ltExtended;
-Arr[op_Divide][ltUInt16][ltUInt8] := ltExtended;
-Arr[op_Divide][ltUInt16][ltInt8] := ltExtended;
-Arr[op_Divide][ltUInt16][ltUInt16] := ltExtended;
-Arr[op_Divide][ltUInt16][ltInt16] := ltExtended;
-Arr[op_Divide][ltUInt16][ltUInt32] := ltExtended;
-Arr[op_Divide][ltUInt16][ltInt32] := ltExtended;
-Arr[op_Divide][ltUInt16][ltUInt64] := ltExtended;
-Arr[op_Divide][ltUInt16][ltInt64] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltInt8][ltExtended] := ltFloat;
+{$ENDIF}
+Arr[op_Divide][ltUInt16][ltUInt8] := ltFloat;
+Arr[op_Divide][ltUInt16][ltInt8] := ltFloat;
+Arr[op_Divide][ltUInt16][ltUInt16] := ltFloat;
+Arr[op_Divide][ltUInt16][ltInt16] := ltFloat;
+Arr[op_Divide][ltUInt16][ltUInt32] := ltFloat;
+Arr[op_Divide][ltUInt16][ltInt32] := ltFloat;
+Arr[op_Divide][ltUInt16][ltUInt64] := ltFloat;
+Arr[op_Divide][ltUInt16][ltInt64] := ltFloat;
 Arr[op_Divide][ltUInt16][ltVariant] := ltVariant;
 Arr[op_Divide][ltUInt16][ltSingle] := ltSingle;
 Arr[op_Divide][ltUInt16][ltDouble] := ltDouble;
 Arr[op_Divide][ltUInt16][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltUInt16][ltExtended] := ltExtended;
-Arr[op_Divide][ltInt16][ltUInt8] := ltExtended;
-Arr[op_Divide][ltInt16][ltInt8] := ltExtended;
-Arr[op_Divide][ltInt16][ltUInt16] := ltExtended;
-Arr[op_Divide][ltInt16][ltInt16] := ltExtended;
-Arr[op_Divide][ltInt16][ltUInt32] := ltExtended;
-Arr[op_Divide][ltInt16][ltInt32] := ltExtended;
-Arr[op_Divide][ltInt16][ltUInt64] := ltExtended;
-Arr[op_Divide][ltInt16][ltInt64] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltUInt16][ltExtended] := ltFloat;
+{$ENDIF}
+Arr[op_Divide][ltInt16][ltUInt8] := ltFloat;
+Arr[op_Divide][ltInt16][ltInt8] := ltFloat;
+Arr[op_Divide][ltInt16][ltUInt16] := ltFloat;
+Arr[op_Divide][ltInt16][ltInt16] := ltFloat;
+Arr[op_Divide][ltInt16][ltUInt32] := ltFloat;
+Arr[op_Divide][ltInt16][ltInt32] := ltFloat;
+Arr[op_Divide][ltInt16][ltUInt64] := ltFloat;
+Arr[op_Divide][ltInt16][ltInt64] := ltFloat;
 Arr[op_Divide][ltInt16][ltVariant] := ltVariant;
 Arr[op_Divide][ltInt16][ltSingle] := ltSingle;
 Arr[op_Divide][ltInt16][ltDouble] := ltDouble;
 Arr[op_Divide][ltInt16][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltInt16][ltExtended] := ltExtended;
-Arr[op_Divide][ltUInt32][ltUInt8] := ltExtended;
-Arr[op_Divide][ltUInt32][ltInt8] := ltExtended;
-Arr[op_Divide][ltUInt32][ltUInt16] := ltExtended;
-Arr[op_Divide][ltUInt32][ltInt16] := ltExtended;
-Arr[op_Divide][ltUInt32][ltUInt32] := ltExtended;
-Arr[op_Divide][ltUInt32][ltInt32] := ltExtended;
-Arr[op_Divide][ltUInt32][ltUInt64] := ltExtended;
-Arr[op_Divide][ltUInt32][ltInt64] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltInt16][ltExtended] := ltFloat;
+{$ENDIF}
+Arr[op_Divide][ltUInt32][ltUInt8] := ltFloat;
+Arr[op_Divide][ltUInt32][ltInt8] := ltFloat;
+Arr[op_Divide][ltUInt32][ltUInt16] := ltFloat;
+Arr[op_Divide][ltUInt32][ltInt16] := ltFloat;
+Arr[op_Divide][ltUInt32][ltUInt32] := ltFloat;
+Arr[op_Divide][ltUInt32][ltInt32] := ltFloat;
+Arr[op_Divide][ltUInt32][ltUInt64] := ltFloat;
+Arr[op_Divide][ltUInt32][ltInt64] := ltFloat;
 Arr[op_Divide][ltUInt32][ltVariant] := ltVariant;
 Arr[op_Divide][ltUInt32][ltSingle] := ltSingle;
 Arr[op_Divide][ltUInt32][ltDouble] := ltDouble;
 Arr[op_Divide][ltUInt32][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltUInt32][ltExtended] := ltExtended;
-Arr[op_Divide][ltInt32][ltUInt8] := ltExtended;
-Arr[op_Divide][ltInt32][ltInt8] := ltExtended;
-Arr[op_Divide][ltInt32][ltUInt16] := ltExtended;
-Arr[op_Divide][ltInt32][ltInt16] := ltExtended;
-Arr[op_Divide][ltInt32][ltUInt32] := ltExtended;
-Arr[op_Divide][ltInt32][ltInt32] := ltExtended;
-Arr[op_Divide][ltInt32][ltUInt64] := ltExtended;
-Arr[op_Divide][ltInt32][ltInt64] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltUInt32][ltExtended] := ltFloat;
+{$ENDIF}
+Arr[op_Divide][ltInt32][ltUInt8] := ltFloat;
+Arr[op_Divide][ltInt32][ltInt8] := ltFloat;
+Arr[op_Divide][ltInt32][ltUInt16] := ltFloat;
+Arr[op_Divide][ltInt32][ltInt16] := ltFloat;
+Arr[op_Divide][ltInt32][ltUInt32] := ltFloat;
+Arr[op_Divide][ltInt32][ltInt32] := ltFloat;
+Arr[op_Divide][ltInt32][ltUInt64] := ltFloat;
+Arr[op_Divide][ltInt32][ltInt64] := ltFloat;
 Arr[op_Divide][ltInt32][ltVariant] := ltVariant;
 Arr[op_Divide][ltInt32][ltSingle] := ltSingle;
 Arr[op_Divide][ltInt32][ltDouble] := ltDouble;
 Arr[op_Divide][ltInt32][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltInt32][ltExtended] := ltExtended;
-Arr[op_Divide][ltUInt64][ltUInt8] := ltExtended;
-Arr[op_Divide][ltUInt64][ltInt8] := ltExtended;
-Arr[op_Divide][ltUInt64][ltUInt16] := ltExtended;
-Arr[op_Divide][ltUInt64][ltInt16] := ltExtended;
-Arr[op_Divide][ltUInt64][ltUInt32] := ltExtended;
-Arr[op_Divide][ltUInt64][ltInt32] := ltExtended;
-Arr[op_Divide][ltUInt64][ltUInt64] := ltExtended;
-Arr[op_Divide][ltUInt64][ltInt64] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltInt32][ltExtended] := ltFloat;
+{$ENDIF}
+Arr[op_Divide][ltUInt64][ltUInt8] := ltFloat;
+Arr[op_Divide][ltUInt64][ltInt8] := ltFloat;
+Arr[op_Divide][ltUInt64][ltUInt16] := ltFloat;
+Arr[op_Divide][ltUInt64][ltInt16] := ltFloat;
+Arr[op_Divide][ltUInt64][ltUInt32] := ltFloat;
+Arr[op_Divide][ltUInt64][ltInt32] := ltFloat;
+Arr[op_Divide][ltUInt64][ltUInt64] := ltFloat;
+Arr[op_Divide][ltUInt64][ltInt64] := ltFloat;
 Arr[op_Divide][ltUInt64][ltVariant] := ltVariant;
 Arr[op_Divide][ltUInt64][ltSingle] := ltSingle;
 Arr[op_Divide][ltUInt64][ltDouble] := ltDouble;
 Arr[op_Divide][ltUInt64][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltUInt64][ltExtended] := ltExtended;
-Arr[op_Divide][ltInt64][ltUInt8] := ltExtended;
-Arr[op_Divide][ltInt64][ltInt8] := ltExtended;
-Arr[op_Divide][ltInt64][ltUInt16] := ltExtended;
-Arr[op_Divide][ltInt64][ltInt16] := ltExtended;
-Arr[op_Divide][ltInt64][ltUInt32] := ltExtended;
-Arr[op_Divide][ltInt64][ltInt32] := ltExtended;
-Arr[op_Divide][ltInt64][ltUInt64] := ltExtended;
-Arr[op_Divide][ltInt64][ltInt64] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltUInt64][ltExtended] := ltFloat;
+{$ENDIF}
+Arr[op_Divide][ltInt64][ltUInt8] := ltFloat;
+Arr[op_Divide][ltInt64][ltInt8] := ltFloat;
+Arr[op_Divide][ltInt64][ltUInt16] := ltFloat;
+Arr[op_Divide][ltInt64][ltInt16] := ltFloat;
+Arr[op_Divide][ltInt64][ltUInt32] := ltFloat;
+Arr[op_Divide][ltInt64][ltInt32] := ltFloat;
+Arr[op_Divide][ltInt64][ltUInt64] := ltFloat;
+Arr[op_Divide][ltInt64][ltInt64] := ltFloat;
 Arr[op_Divide][ltInt64][ltVariant] := ltVariant;
 Arr[op_Divide][ltInt64][ltSingle] := ltSingle;
 Arr[op_Divide][ltInt64][ltDouble] := ltDouble;
 Arr[op_Divide][ltInt64][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltInt64][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltInt64][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Divide][ltVariant][ltUInt8] := ltVariant;
 Arr[op_Divide][ltVariant][ltInt8] := ltVariant;
 Arr[op_Divide][ltVariant][ltUInt16] := ltVariant;
@@ -1823,7 +2079,9 @@ Arr[op_Divide][ltVariant][ltVariant] := ltVariant;
 Arr[op_Divide][ltVariant][ltSingle] := ltVariant;
 Arr[op_Divide][ltVariant][ltDouble] := ltVariant;
 Arr[op_Divide][ltVariant][ltCurrency] := ltVariant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltVariant][ltExtended] := ltVariant;
+{$ENDIF}
 Arr[op_Divide][ltSingle][ltUInt8] := ltSingle;
 Arr[op_Divide][ltSingle][ltInt8] := ltSingle;
 Arr[op_Divide][ltSingle][ltUInt16] := ltSingle;
@@ -1836,7 +2094,9 @@ Arr[op_Divide][ltSingle][ltVariant] := ltVariant;
 Arr[op_Divide][ltSingle][ltSingle] := ltSingle;
 Arr[op_Divide][ltSingle][ltDouble] := ltDouble;
 Arr[op_Divide][ltSingle][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltSingle][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltSingle][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Divide][ltDouble][ltUInt8] := ltDouble;
 Arr[op_Divide][ltDouble][ltInt8] := ltDouble;
 Arr[op_Divide][ltDouble][ltUInt16] := ltDouble;
@@ -1849,7 +2109,9 @@ Arr[op_Divide][ltDouble][ltVariant] := ltVariant;
 Arr[op_Divide][ltDouble][ltSingle] := ltDouble;
 Arr[op_Divide][ltDouble][ltDouble] := ltDouble;
 Arr[op_Divide][ltDouble][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltDouble][ltExtended] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_Divide][ltDouble][ltExtended] := ltFloat;
+{$ENDIF}
 Arr[op_Divide][ltCurrency][ltUInt8] := ltCurrency;
 Arr[op_Divide][ltCurrency][ltInt8] := ltCurrency;
 Arr[op_Divide][ltCurrency][ltUInt16] := ltCurrency;
@@ -1862,20 +2124,22 @@ Arr[op_Divide][ltCurrency][ltVariant] := ltVariant;
 Arr[op_Divide][ltCurrency][ltSingle] := ltCurrency;
 Arr[op_Divide][ltCurrency][ltDouble] := ltCurrency;
 Arr[op_Divide][ltCurrency][ltCurrency] := ltCurrency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Divide][ltCurrency][ltExtended] := ltCurrency;
-Arr[op_Divide][ltExtended][ltUInt8] := ltExtended;
-Arr[op_Divide][ltExtended][ltInt8] := ltExtended;
-Arr[op_Divide][ltExtended][ltUInt16] := ltExtended;
-Arr[op_Divide][ltExtended][ltInt16] := ltExtended;
-Arr[op_Divide][ltExtended][ltUInt32] := ltExtended;
-Arr[op_Divide][ltExtended][ltInt32] := ltExtended;
-Arr[op_Divide][ltExtended][ltUInt64] := ltExtended;
-Arr[op_Divide][ltExtended][ltInt64] := ltExtended;
+Arr[op_Divide][ltExtended][ltUInt8] := ltFloat;
+Arr[op_Divide][ltExtended][ltInt8] := ltFloat;
+Arr[op_Divide][ltExtended][ltUInt16] := ltFloat;
+Arr[op_Divide][ltExtended][ltInt16] := ltFloat;
+Arr[op_Divide][ltExtended][ltUInt32] := ltFloat;
+Arr[op_Divide][ltExtended][ltInt32] := ltFloat;
+Arr[op_Divide][ltExtended][ltUInt64] := ltFloat;
+Arr[op_Divide][ltExtended][ltInt64] := ltFloat;
 Arr[op_Divide][ltExtended][ltVariant] := ltVariant;
-Arr[op_Divide][ltExtended][ltSingle] := ltExtended;
-Arr[op_Divide][ltExtended][ltDouble] := ltExtended;
+Arr[op_Divide][ltExtended][ltSingle] := ltFloat;
+Arr[op_Divide][ltExtended][ltDouble] := ltFloat;
 Arr[op_Divide][ltExtended][ltCurrency] := ltCurrency;
-Arr[op_Divide][ltExtended][ltExtended] := ltExtended;
+Arr[op_Divide][ltExtended][ltExtended] := ltFloat;
+{$ENDIF}
 
 Arr[op_AND][ltUInt8][ltUInt8] := ltUInt8;
 Arr[op_AND][ltUInt8][ltInt8] := ltUInt8;
@@ -2463,7 +2727,9 @@ Arr[op_UnaryMinus][ltVariant][ltUnknown] := ltVariant;
 Arr[op_UnaryMinus][ltSingle][ltUnknown] := ltSingle;
 Arr[op_UnaryMinus][ltDouble][ltUnknown] := ltDouble;
 Arr[op_UnaryMinus][ltCurrency][ltUnknown] := ltCurrency;
-Arr[op_UnaryMinus][ltExtended][ltUnknown] := ltExtended;
+{$IFNDEF Lape_NoExtended}
+Arr[op_UnaryMinus][ltExtended][ltUnknown] := ltFloat;
+{$ENDIF}
 
 Arr[op_NOT][ltUInt8][ltUnknown] := ltUInt8;
 Arr[op_NOT][ltInt8][ltUnknown] := ltInt8;
@@ -2559,7 +2825,9 @@ Arr[op_Assign][ltVariant][ltVariant] := ltVariant;
 Arr[op_Assign][ltVariant][ltSingle] := ltVariant;
 Arr[op_Assign][ltVariant][ltDouble] := ltVariant;
 Arr[op_Assign][ltVariant][ltCurrency] := ltVariant;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Assign][ltVariant][ltExtended] := ltVariant;
+{$ENDIF}
 Arr[op_Assign][ltSingle][ltUInt8] := ltSingle;
 Arr[op_Assign][ltSingle][ltInt8] := ltSingle;
 Arr[op_Assign][ltSingle][ltUInt16] := ltSingle;
@@ -2572,7 +2840,9 @@ Arr[op_Assign][ltSingle][ltVariant] := ltSingle;
 Arr[op_Assign][ltSingle][ltSingle] := ltSingle;
 Arr[op_Assign][ltSingle][ltDouble] := ltSingle;
 Arr[op_Assign][ltSingle][ltCurrency] := ltSingle;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Assign][ltSingle][ltExtended] := ltSingle;
+{$ENDIF}
 Arr[op_Assign][ltDouble][ltUInt8] := ltDouble;
 Arr[op_Assign][ltDouble][ltInt8] := ltDouble;
 Arr[op_Assign][ltDouble][ltUInt16] := ltDouble;
@@ -2585,7 +2855,9 @@ Arr[op_Assign][ltDouble][ltVariant] := ltDouble;
 Arr[op_Assign][ltDouble][ltSingle] := ltDouble;
 Arr[op_Assign][ltDouble][ltDouble] := ltDouble;
 Arr[op_Assign][ltDouble][ltCurrency] := ltDouble;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Assign][ltDouble][ltExtended] := ltDouble;
+{$ENDIF}
 Arr[op_Assign][ltCurrency][ltUInt8] := ltCurrency;
 Arr[op_Assign][ltCurrency][ltInt8] := ltCurrency;
 Arr[op_Assign][ltCurrency][ltUInt16] := ltCurrency;
@@ -2598,20 +2870,22 @@ Arr[op_Assign][ltCurrency][ltVariant] := ltCurrency;
 Arr[op_Assign][ltCurrency][ltSingle] := ltCurrency;
 Arr[op_Assign][ltCurrency][ltDouble] := ltCurrency;
 Arr[op_Assign][ltCurrency][ltCurrency] := ltCurrency;
+{$IFNDEF Lape_NoExtended}
 Arr[op_Assign][ltCurrency][ltExtended] := ltCurrency;
-Arr[op_Assign][ltExtended][ltUInt8] := ltExtended;
-Arr[op_Assign][ltExtended][ltInt8] := ltExtended;
-Arr[op_Assign][ltExtended][ltUInt16] := ltExtended;
-Arr[op_Assign][ltExtended][ltInt16] := ltExtended;
-Arr[op_Assign][ltExtended][ltUInt32] := ltExtended;
-Arr[op_Assign][ltExtended][ltInt32] := ltExtended;
-Arr[op_Assign][ltExtended][ltUInt64] := ltExtended;
-Arr[op_Assign][ltExtended][ltInt64] := ltExtended;
-Arr[op_Assign][ltExtended][ltVariant] := ltExtended;
-Arr[op_Assign][ltExtended][ltSingle] := ltExtended;
-Arr[op_Assign][ltExtended][ltDouble] := ltExtended;
-Arr[op_Assign][ltExtended][ltCurrency] := ltExtended;
-Arr[op_Assign][ltExtended][ltExtended] := ltExtended;
+Arr[op_Assign][ltExtended][ltUInt8] := ltFloat;
+Arr[op_Assign][ltExtended][ltInt8] := ltFloat;
+Arr[op_Assign][ltExtended][ltUInt16] := ltFloat;
+Arr[op_Assign][ltExtended][ltInt16] := ltFloat;
+Arr[op_Assign][ltExtended][ltUInt32] := ltFloat;
+Arr[op_Assign][ltExtended][ltInt32] := ltFloat;
+Arr[op_Assign][ltExtended][ltUInt64] := ltFloat;
+Arr[op_Assign][ltExtended][ltInt64] := ltFloat;
+Arr[op_Assign][ltExtended][ltVariant] := ltFloat;
+Arr[op_Assign][ltExtended][ltSingle] := ltFloat;
+Arr[op_Assign][ltExtended][ltDouble] := ltFloat;
+Arr[op_Assign][ltExtended][ltCurrency] := ltFloat;
+Arr[op_Assign][ltExtended][ltExtended] := ltFloat;
+{$ENDIF}
 
 //Variant
 Arr[op_Assign][ltVariant][ltByteBool] := ltVariant;
@@ -3298,3 +3572,4 @@ Arr[op_Assign][ltLargeSet][ltLargeSet] := ltLargeSet;
 Arr[op_Plus][ltLargeSet][ltLargeSet] := ltLargeSet;
 Arr[op_Minus][ltLargeSet][ltLargeSet] := ltLargeSet;
 Arr[op_Multiply][ltLargeSet][ltLargeSet] := ltLargeSet;
+

@@ -963,7 +963,9 @@ begin
   Arr[ltSingle] := @_LapeToString_Single;
   Arr[ltDouble] := @_LapeToString_Double;
   Arr[ltCurrency] := @_LapeToString_Currency;
+  {$IFNDEF Lape_NoExtended}
   Arr[ltExtended] := @_LapeToString_Extended;
+  {$ENDIF}
   Arr[ltBoolean] := @_LapeToString_Boolean;
   Arr[ltByteBool] := @_LapeToString_ByteBool;
   Arr[ltWordBool] := @_LapeToString_WordBool;

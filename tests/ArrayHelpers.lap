@@ -1,8 +1,6 @@
 {$assertions on}
 
 type
-  TIntegerArray = array of Int32;
-  TExtendedArray = array of Extended;
   TPoint = record X, Y: Integer; end;
   TPointArray = array of TPoint;
 
@@ -24,7 +22,7 @@ begin
   Arr.Sort(TIntegerArray([5,4,3,2,1]), True);
   Assert(ToString(Arr) = '[5, 4, 3, 2, 1]');
 
-  Arr.Sort(TExtendedArray([0.1, 0.2, 0.3, 0.4, 0.5]), False);
+  Arr.Sort(TDoubleArray([0.1, 0.2, 0.3, 0.4, 0.5]), False);
   Assert(ToString(Arr) = '[1, 2, 3, 4, 5]');
 
   Arr.Sort();
@@ -37,7 +35,7 @@ var
 begin
   Assert(
     ToString(Arr.Sorted(TIntegerArray([5,4,3,2,1]), True)) =
-    ToString(Arr.Sorted(TExtendedArray([0.1,0.2,0.3,0.4,0.5]), False))
+    ToString(Arr.Sorted(TDoubleArray([0.1,0.2,0.3,0.4,0.5]), False))
   );
 
   Assert(ToString(Arr.Sorted()) = '[1, 2, 3, 4, 5]');

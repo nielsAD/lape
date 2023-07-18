@@ -1,5 +1,7 @@
 program LapeTestFFI;
 
+{$i lape.inc}
+
 uses
   SysUtils, {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF}
   lptypes, lpvartypes, lpcompiler, lptree, lpparser, lpinterpreter, lpmessages,
@@ -95,7 +97,7 @@ begin
   Result := Success;
 end;
 
-procedure Proc4(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: Extended; h: UInt64); {$I cconv.inc}
+procedure Proc4(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: lpFloat; h: UInt64); {$I cconv.inc}
 begin
   Success := (a = 1.5) and (b = 2) and (c = 3.5) and (d = 4)
          and (e = 5.5) and (f = 6) and (g = 7.5) and (h = 8);
@@ -104,7 +106,7 @@ end;
 
 function RunProc4(p: Pointer): Boolean;
 type
-  TP = procedure(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: Extended; h: UInt64); {$I cconv.inc}
+  TP = procedure(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: lpFloat; h: UInt64); {$I cconv.inc}
 begin
   Success := False;
   TP(p)(1.5, 2, 3.5, 4, 5.5, 6, 7.5, 8);
@@ -292,14 +294,14 @@ begin
   Result := TF(f)(5) = 15.0;
 end;
 
-function Func5(const a: Extended): Extended; {$I cconv.inc}
+function Func5(const a: lpFloat): lpFloat; {$I cconv.inc}
 begin
   Result := a * 10.0;
 end;
 
 function RunFunc5(f: Pointer): Boolean;
 type
-  TF = function(const a: Extended): Extended; {$I cconv.inc}
+  TF = function(const a: lpFloat): lpFloat; {$I cconv.inc}
 begin
   Result := TF(f)(10) = 100.0;
 end;
@@ -932,6 +934,8 @@ begin
         'Test'
       );
 
+      addGlobalType({$IFDEF Lape_NoExtended}'Double'{$ELSE}'Extended'{$ENDIF}, 'lpFloat');
+
       addDelayedCode('function LapeCallback: Int32; begin Result := 1989; end;');
       addDelayedCode('function TTest.LapeCallback: Int32; begin Assert(Self.MagicToken = 12345); Result := 1989; end;');
 
@@ -1019,7 +1023,7 @@ const
     (Fun: @Proc1;  Run: @RunProc1;  Str: 'procedure Proc1';                                                                                                        Arg: 'TestMe();'),
     (Fun: @Proc2;  Run: @RunProc2;  Str: 'procedure Proc2(a, b, c, d, e, f, g, h, i, j: NativeInt)';                                                               Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);'),
     (Fun: @Proc3;  Run: @RunProc3;  Str: 'procedure Proc3(a: UInt8; b: Int64; c: UInt32; d: Int16; e: UInt16; f: Int32; g: UInt64; h: Int8)';                      Arg: 'TestMe(1, -2, 3, -4, 5, -6, 7, -8);'),
-    (Fun: @Proc4;  Run: @RunProc4;  Str: 'procedure Proc4(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: Extended; h: UInt64)';             Arg: 'TestMe(1.5, 2, 3.5, 4, 5.5, 6, 7.5, 8);'),
+    (Fun: @Proc4;  Run: @RunProc4;  Str: 'procedure Proc4(a: Single; b: UInt8; c: Double; d: UInt16; e: Currency; f: UInt32; g: lpFloat; h: UInt64)';             Arg: 'TestMe(1.5, 2, 3.5, 4, 5.5, 6, 7.5, 8);'),
     (Fun: @Proc5;  Run: @RunProc5;  Str: 'procedure Proc5(a: ShortString; b: Int8; c: AnsiString; d: Int16; e: WideString; f: Int32; g: UnicodeString; h: Int64)'; Arg: 'TestMe("01", -2, "03", -4, "05", -6, "07", -8);'),
     (Fun: @Proc6;  Run: @RunProc6;  Str: 'procedure Proc6(a: LongBool; b: UInt8; c: WordBool; d: UInt16; e: ByteBool; f: UInt32; g: Boolean; h: UInt64)';          Arg: 'TestMe(True, 2, False, 4, True, 6, False, 8);'),
     (Fun: @Proc7;  Run: @RunProc7;  Str: 'procedure Proc7(a: TSmallEnum; b: TSmallSet; c: TLargeEnum; d: TLargeSet)';                                              Arg: 'TestMe(TSmallEnum(2), [ESmallFirst, ESmallLast], TLargeEnum(4), [ELargeFirst, ELargeLast]);'),
@@ -1031,7 +1035,7 @@ const
     (Fun: @Func2;  Run: @RunFunc2;  Str: 'function Func2(const a, b, c: Int8): UInt8';            Arg: 'Assert(TestMe(15, 14, 13) = 42);'),
     (Fun: @Func3;  Run: @RunFunc3;  Str: 'function Func3(const a: Single): Single';               Arg: 'Assert(TestMe(2.5) = 5);'),
     (Fun: @Func4;  Run: @RunFunc4;  Str: 'function Func4(const a: Double): Double';               Arg: 'Assert(TestMe(5)   = 15);'),
-    (Fun: @Func5;  Run: @RunFunc5;  Str: 'function Func5(const a: Extended): Extended';           Arg: 'Assert(TestMe(10)  = 100);'),
+    (Fun: @Func5;  Run: @RunFunc5;  Str: 'function Func5(const a: lpFloat): lpFloat';             Arg: 'Assert(TestMe(10)  = 100);'),
     (Fun: @Func6;  Run: @RunFunc6;  Str: 'function Func6(const a: Currency): Currency';           Arg: 'Assert(TestMe(8.4) = 4.2);'),
     (Fun: @Func7;  Run: @RunFunc7;  Str: 'function Func7(const a: Boolean): Boolean';             Arg: 'Assert(not TestMe(True));'),
     (Fun: @Func8;  Run: @RunFunc8;  Str: 'function Func8(const a: shortstring): shortstring';     Arg: 'Assert(TestMe("11") = "1111");'),

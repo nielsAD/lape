@@ -144,7 +144,9 @@ procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; AAlig
     else
     case Typ.BaseType of
       ltLargeSet:    Result := SizeOf(UInt8);
+      {$IFNDEF Lape_NoExtended}
       ltExtended:    Result := SizeOf(Extended) and (SizeOf(Double) or (2*SizeOf(Double)));
+      {$ENDIF}
       ltShortString,
       ltStaticArray: Result := AlignmentMask(TLapeType_StaticArray(Typ).PType);
       ltRecord:      Result := TLapeType_Record(Typ).Alignment;

@@ -62,6 +62,13 @@ type
   PlpChar = ^lpChar;
   PlpCharInt = ^lpCharInt;
 
+  {$IFDEF Lape_NoExtended}
+  lpFloat = Double;
+  {$ELSE}
+  lpFloat = Extended;
+  {$ENDIF}
+  PlpFloat = ^lpFloat;
+
   TVarRecArray = array of TVarRec;
   TVarRecContainer = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
     CVar: Variant;
@@ -146,17 +153,17 @@ type
 
   ELapeBaseType = (
     ltUnknown,
-    ltUInt8, ltInt8, ltUInt16, ltInt16, ltUInt32, ltInt32, ltUInt64, ltInt64, //Integer
-    ltCurrency, ltSingle, ltDouble, ltExtended,                               //Real
-    ltBoolean, ltByteBool, ltWordBool, ltLongBool,                            //Boolean
-    ltAnsiChar, ltWideChar,                                                   //Char
-    ltShortString, ltAnsiString, ltWideString, ltUnicodeString,               //String
-    ltVariant,                                                                //Variant
-    ltSmallEnum, ltLargeEnum, ltSmallSet, ltLargeSet,                         //Set
-    ltPointer,                                                                //Pointer
-    ltRecord, ltUnion,                                                        //Struct
-    ltDynArray, ltStaticArray,                                                //Array
-    ltScriptMethod, ltImportedMethod                                          //Methods
+    ltUInt8, ltInt8, ltUInt16, ltInt16, ltUInt32, ltInt32, ltUInt64, ltInt64,    //Integer
+    ltCurrency, ltSingle, ltDouble, {$IFNDEF Lape_NoExtended}ltExtended,{$ENDIF} //Real
+    ltBoolean, ltByteBool, ltWordBool, ltLongBool,                               //Boolean
+    ltAnsiChar, ltWideChar,                                                      //Char
+    ltShortString, ltAnsiString, ltWideString, ltUnicodeString,                  //String
+    ltVariant,                                                                   //Variant
+    ltSmallEnum, ltLargeEnum, ltSmallSet, ltLargeSet,                            //Set
+    ltPointer,                                                                   //Pointer
+    ltRecord, ltUnion,                                                           //Struct
+    ltDynArray, ltStaticArray,                                                   //Array
+    ltScriptMethod, ltImportedMethod                                             //Methods
   );
 
   LapeIntegerTypeRange = ltUInt8..ltInt64;
@@ -736,11 +743,17 @@ const
   ltEvalBool = ltLongBool;
   {$ENDIF}
 
+  {$IFDEF Lape_NoExtended}
+  ltFloat = ltDouble;
+  {$ELSE}
+  ltFloat = ltExtended;
+  {$ENDIF}
+
   LapeTypeSize: array[ELapeBaseType] of Integer = (
     -1,
     SizeOf(UInt8), SizeOf(Int8), SizeOf(UInt16), SizeOf(Int16), SizeOf(UInt32),
     SizeOf(Int32), SizeOf(UInt64), SizeOf(Int64),
-    SizeOf(Currency), SizeOf(Single), SizeOf(Double), SizeOf(Extended),
+    SizeOf(Currency), SizeOf(Single), SizeOf(Double), {$IFNDEF Lape_NoExtended}SizeOf(Extended),{$ENDIF}
     SizeOf(Boolean), SizeOf(ByteBool), SizeOf(WordBool), SizeOf(LongBool),
     SizeOf(AnsiChar), SizeOf(WideChar),
     SizeOf(ShortString), SizeOf(AnsiString), SizeOf(WideString), SizeOf(UnicodeString),
@@ -761,7 +774,7 @@ const
   LapeSignedIntegerTypes = [ltInt8, ltInt16, ltInt32, ltInt64];
   LapeUnsignedIntegerTypes = [ltUInt8, ltUInt16, ltUInt32, ltUInt64];
 
-  LapeRealTypes = [ltCurrency..ltExtended];
+  LapeRealTypes = [ltCurrency..{$IFDEF Lape_NoExtended}ltDouble{$ELSE}ltExtended{$ENDIF}];
   LapeBoolTypes = [ltBoolean..ltLongBool];
   LapeStringTypes = [ltShortString..ltUnicodeString];
   LapeCharTypes = [ltAnsiChar..ltWideChar];

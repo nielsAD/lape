@@ -232,7 +232,7 @@ type
     function addGlobalVar(Value: UInt32; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: Int64; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: UInt64; AName: lpString): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Value: Extended; AName: lpString): TLapeGlobalVar; overload; virtual;
+    function addGlobalVar(Value: lpFloat; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: EvalBool; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: ShortString; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: AnsiString; AName: lpString): TLapeGlobalVar; overload; virtual;
@@ -958,6 +958,9 @@ begin
   {$ELSE}
   addBaseDefine('Lape_Ansi');
   {$ENDIF}
+  {$IFDEF Lape_NoExtended}
+  addBaseDefine('Lape_NoExtended');
+  {$ENDIF}
 
   addCompilerFuncs();
   addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System').isConstant := True;
@@ -975,12 +978,21 @@ begin
   addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrInt), True)).createCopy(), 'PtrInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrUInt), False)).createCopy(), 'PtrUInt');
 
+  addGlobalType('array of String', 'TStringArray');
+  addGlobalType('array of Boolean', 'TBooleanArray');
+  addGlobalType('array of Int32', 'TIntegerArray');
+  addGlobalType('array of Single', 'TSingleArray');
+  addGlobalType('array of Double', 'TDoubleArray');
+  {$IFNDEF Lape_NoExtended}
+  addGlobalType('array of Extended', 'TExtendedArray');
+  {$ENDIF}
+
   addDelayedCode(
-    'const'                  + LineEnding +
-    '  True = EvalBool(1);'  + LineEnding +
-    '  False = EvalBool(0);' + LineEnding +
-    '  nil = Pointer(0);',
-    '!BaseDefinitionsDelayedCode'
+    'const                  ' + LineEnding +
+    '  True  = EvalBool(1); ' + LineEnding +
+    '  False = EvalBool(0); ' + LineEnding +
+    '  nil   = Pointer(0);  ',
+    '!InitBaseDefinitions'
   );
 
   addGlobalFunc('function _LocationToStr(DocPos: Pointer): string;', @_LapeLocationToStr);
@@ -1015,7 +1027,9 @@ begin
   addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int64; SortUp: EvalBool); overload;', @_LapeSortWeighted_Int64);
   addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Single; SortUp: EvalBool); overload;', @_LapeSortWeighted_Single);
   addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Double; SortUp: EvalBool); overload;', @_LapeSortWeighted_Double);
+  {$IFNDEF Lape_NoExtended}
   addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Extended; SortUp: EvalBool); overload;', @_LapeSortWeighted_Extended);
+  {$ENDIF}
 
   addGlobalFunc('procedure _Reverse(A: Pointer; ElSize, Len: SizeInt); overload;', @_LapeReverse);
 
@@ -4474,9 +4488,13 @@ begin
   Result := addGlobalVar(TLapeType_UInt64(FBaseTypes[ltUInt64]).NewGlobalVar(Value), AName);
 end;
 
-function TLapeCompiler.addGlobalVar(Value: Extended; AName: lpString): TLapeGlobalVar;
+function TLapeCompiler.addGlobalVar(Value: lpFloat; AName: lpString): TLapeGlobalVar;
 begin
+  {$IFDEF Lape_NoExtended}
+  Result := addGlobalVar(TLapeType_Double(FBaseTypes[ltDouble]).NewGlobalVar(Value), AName);
+  {$ELSE}
   Result := addGlobalVar(TLapeType_Extended(FBaseTypes[ltExtended]).NewGlobalVar(Value), AName);
+  {$ENDIF}
 end;
 
 function TLapeCompiler.addGlobalVar(Value: EvalBool; AName: lpString): TLapeGlobalVar;

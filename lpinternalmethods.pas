@@ -515,7 +515,7 @@ end;
 function TLapeTree_InternalMethod_IndicesOf.resType: TLapeType;
 begin
   if (FResType = nil) then
-    FResType := FCompiler.getIntegerArray();
+    FResType := FCompiler.getGlobalType('TIntegerArray');
 
   Result := inherited;
 end;

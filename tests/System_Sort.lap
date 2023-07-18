@@ -7,20 +7,16 @@
 // Sorted(const array; compareMethod: function(constref L,R: Type): Integer)): array;
 
 // Sort(var array; const weights: array of Int64);
-// Sort(var array; const weights: array of Extended);
+// Sort(var array; const weights: array of Double);
 
 // Sorted(const array; const weights: array of Int64): array;
-// Sorted(const array; const weights: array of Extended): array;
+// Sorted(const array; const weights: array of Double): array;
 
 type
   TPoint = record X, Y: Int32; end;
   TPointArray = array of TPoint;
 
-  TIntegerArray = array of Int32;
-  TStringArray = array of String;
   TVariantArray = array[2..6] of Variant;
-  TBooleanArray = array of Boolean;
-  TExtendedArray = array of Extended;
 
 // _Sort overloads will be checked before generating a method
 procedure _Sort(var A: TBooleanArray); overload;
@@ -29,7 +25,7 @@ begin
 end;
 
 // ..
-procedure _Sort(var A: TBooleanArray; weights: TExtendedArray; SortUp: Boolean); overload;
+procedure _Sort(var A: TBooleanArray; weights: TDoubleArray; SortUp: Boolean); overload;
 begin
   A[0] := False;
 end;
@@ -43,7 +39,7 @@ begin
     Result := 1;
 end;
 
-function Distance(fromX, fromY, toX, toY: Integer): Extended;
+function Distance(fromX, fromY, toX, toY: Integer): Double;
 begin
   Result := Hypot(fromX - toX, fromY - toY);
 end;
@@ -55,7 +51,7 @@ var
   Variants: TVariantArray = [500, 400, -300, 200, 100];
   Booleans: TBooleanArray = [False];
   I: Int32;
-  Weights: TExtendedArray;
+  Weights: TDoubleArray;
 begin
   // Compare methods
   Assert(ToString(Sorted(Integers))            = '[-100, 0, 5, 100, 16777215]');

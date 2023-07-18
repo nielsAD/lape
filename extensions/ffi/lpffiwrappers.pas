@@ -769,7 +769,9 @@ begin
         ltSingle:      Result.Typ := ffi_type_float;
         ltDouble:      Result.Typ := ffi_type_double;
         ltCurrency:    Result.Typ := ffi_type_uint64;
+        {$IFNDEF Lape_NoExtended}
         ltExtended:    Result.Typ := ffi_type_longdouble;
+        {$ENDIF}
         ltSmallEnum,
         ltLargeEnum,
         ltSmallSet:    Result.Typ := ConvertBaseIntType(DetermineIntType(VarType.Size, False));

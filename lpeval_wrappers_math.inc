@@ -14,7 +14,7 @@ end;
 
 procedure _LapeMinF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Min(PExtended(Params^[0])^, PExtended(Params^[1])^);
+  PlpFloat(Result)^ := Min(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^);
 end;
 
 procedure _LapeMax(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -24,12 +24,12 @@ end;
 
 procedure _LapeMaxF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Max(PExtended(Params^[0])^, PExtended(Params^[1])^);
+  PlpFloat(Result)^ := Max(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^);
 end;
 
 procedure _LapeAbs(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Abs(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Abs(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeAbsI(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -44,17 +44,17 @@ end;
 
 procedure _LapeSignF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt8(Result)^ := Sign(PExtended(Params^[0])^);
+  PInt8(Result)^ := Sign(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapePower(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Power(PExtended(Params^[0])^, PExtended(Params^[1])^);
+  PlpFloat(Result)^ := Power(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^);
 end;
 
 procedure _LapeSqr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Sqr(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Sqr(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeSqrI(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -64,102 +64,102 @@ end;
 
 procedure _LapeSqrt(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Sqrt(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Sqrt(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeArcTan(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := ArcTan(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := ArcTan(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeLn(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Ln(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Ln(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeSin(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Sin(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Sin(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeCos(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Cos(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Cos(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeExp(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Exp(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Exp(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeHypot(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Hypot(PExtended(Params^[0])^, PExtended(Params^[1])^);
+  PlpFloat(Result)^ := Hypot(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^);
 end;
 
 procedure _LapeArcTan2(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := ArcTan2(PExtended(Params^[0])^, PExtended(Params^[1])^);
+  PlpFloat(Result)^ := ArcTan2(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^);
 end;
 
 procedure _LapeTan(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Tan(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Tan(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeArcSin(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := ArcSin(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := ArcSin(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeArcCos(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := ArcCos(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := ArcCos(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeCotan(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Cotan(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Cotan(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeSecant(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Secant(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Secant(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeCosecant(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Cosecant(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Cosecant(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeRound(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt64(Result)^ := Round(PExtended(Params^[0])^);
+  PInt64(Result)^ := Round(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeRoundTo(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := RoundTo(PExtended(Params^[0])^, -PInt8(Params^[1])^);
+  PlpFloat(Result)^ := RoundTo(PlpFloat(Params^[0])^, -PInt8(Params^[1])^);
 end;
 
 procedure _LapeFrac(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Frac(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Frac(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeInt(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Int(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := Int(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeTrunc(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt64(Result)^ := Trunc(PExtended(Params^[0])^);
+  PInt64(Result)^ := Trunc(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeCeil(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt64(Result)^ := Ceil(PExtended(Params^[0])^);
+  PInt64(Result)^ := Ceil(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeCeilTo(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -173,42 +173,42 @@ procedure _LapeCeilTo(const Params: PParamArray; const Result: Pointer); {$IFDEF
   end;
 
 begin
-  PExtended(Result)^ := CeilTo(PExtended(Params^[0])^, PInt8(Params^[1])^);
+  PlpFloat(Result)^ := CeilTo(PlpFloat(Params^[0])^, PInt8(Params^[1])^);
 end;
 
 procedure _LapeFloor(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt64(Result)^ := Floor(PExtended(Params^[0])^);
+  PInt64(Result)^ := Floor(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeCosH(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := CosH(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := CosH(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeSinH(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := SinH(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := SinH(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeTanH(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := TanH(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := TanH(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeArcCosH(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := ArcCosH(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := ArcCosH(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeArcSinH(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := ArcSinH(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := ArcSinH(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeArcTanH(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := ArcTanH(PExtended(Params^[0])^);
+  PlpFloat(Result)^ := ArcTanH(PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeRandomRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -218,7 +218,7 @@ end;
 
 procedure _LapeRandomRangeF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := PExtended(Params^[0])^ + Random() * (PExtended(Params^[1])^ - PExtended(Params^[0])^);
+  PlpFloat(Result)^ := PlpFloat(Params^[0])^ + Random() * (PlpFloat(Params^[1])^ - PlpFloat(Params^[0])^);
 end;
 
 procedure _LapeRandom(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -228,7 +228,7 @@ end;
 
 procedure _LapeRandomF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := Random();
+  PlpFloat(Result)^ := Random();
 end;
 
 procedure _LapeRandomize(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -243,7 +243,7 @@ end;
 
 procedure _LapeEnsureRangeF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := EnsureRange(PExtended(Params^[0])^, PExtended(Params^[1])^, PExtended(Params^[2])^);
+  PlpFloat(Result)^ := EnsureRange(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^, PlpFloat(Params^[2])^);
 end;
 
 procedure _LapeInRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -253,5 +253,5 @@ end;
 
 procedure _LapeInRangeF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := InRange(PExtended(Params^[0])^, PExtended(Params^[1])^, PExtended(Params^[2])^);
+  PEvalBool(Result)^ := InRange(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^, PlpFloat(Params^[2])^);
 end;

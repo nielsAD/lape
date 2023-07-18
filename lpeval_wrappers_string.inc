@@ -194,12 +194,12 @@ end;
 
 procedure _LapeStrToFloat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := StrToFloat(string(PlpString(Params^[0])^));
+  PlpFloat(Result)^ := StrToFloat(string(PlpString(Params^[0])^));
 end;
 
 procedure _LapeStrToFloatDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PExtended(Result)^ := StrToFloatDef(string(PlpString(Params^[0])^), PExtended(Params^[1])^);
+  PlpFloat(Result)^ := StrToFloatDef(string(PlpString(Params^[0])^), PlpFloat(Params^[1])^);
 end;
 
 procedure _LapeStrToCurr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -240,7 +240,7 @@ end;
 
 procedure _LapeFormatFloat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := lpString(FormatFloat(string(PlpString(Params^[0])^), PExtended(Params^[1])^));
+  PlpString(Result)^ := lpString(FormatFloat(string(PlpString(Params^[0])^), PlpFloat(Params^[1])^));
 end;
 
 procedure _LapeFormatCurr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

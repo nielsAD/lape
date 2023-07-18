@@ -78,6 +78,7 @@ begin
   Assert((a * b * (((a + b) - (b + a) + (b / a))) / a) / b = res, 'res');
 end;
 
+{$IFDECL Extended}
 procedure Test_Extended;
 const
   _a: Extended = 2.5;
@@ -116,6 +117,7 @@ begin
 
   Assert((a * b * (((a + b) - (b + a) + (b / a))) / a) / b = res, 'res');
 end;
+{$ENDIF}
 
 procedure Test_Currency;
 const
@@ -159,6 +161,8 @@ end;
 begin
   Test_Single();   WriteLn('Single   :: Passed');
   Test_Double();   WriteLn('Double   :: Passed');
+  {$IFDECL Extended}
   Test_Extended(); WriteLn('Extended :: Passed');
+  {$ENDIF}
   Test_Currency(); WriteLn('Currency :: Passed');
 end;

@@ -18,7 +18,9 @@ procedure lpeUInt8_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeUInt8_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ = PSingle(Right)^; end;
 procedure lpeUInt8_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ = PDouble(Right)^; end;
 procedure lpeUInt8_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ = PVariant(Right)^; end;
 procedure lpeInt8_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ = PUInt8(Right)^; end;
 procedure lpeInt8_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ = PInt8(Right)^; end;
@@ -31,7 +33,9 @@ procedure lpeInt8_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL
 procedure lpeInt8_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ = PSingle(Right)^; end;
 procedure lpeInt8_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ = PDouble(Right)^; end;
 procedure lpeInt8_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ = PVariant(Right)^; end;
 procedure lpeUInt16_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ = PUInt8(Right)^; end;
 procedure lpeUInt16_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ = PInt8(Right)^; end;
@@ -44,7 +48,9 @@ procedure lpeUInt16_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt16_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ = PSingle(Right)^; end;
 procedure lpeUInt16_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ = PDouble(Right)^; end;
 procedure lpeUInt16_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ = PVariant(Right)^; end;
 procedure lpeInt16_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ = PUInt8(Right)^; end;
 procedure lpeInt16_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ = PInt8(Right)^; end;
@@ -57,7 +63,9 @@ procedure lpeInt16_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt16_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ = PSingle(Right)^; end;
 procedure lpeInt16_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ = PDouble(Right)^; end;
 procedure lpeInt16_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ = PVariant(Right)^; end;
 procedure lpeUInt32_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ = PUInt8(Right)^; end;
 procedure lpeUInt32_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ = PInt8(Right)^; end;
@@ -70,7 +78,9 @@ procedure lpeUInt32_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt32_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ = PSingle(Right)^; end;
 procedure lpeUInt32_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ = PDouble(Right)^; end;
 procedure lpeUInt32_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ = PVariant(Right)^; end;
 procedure lpeInt32_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ = PUInt8(Right)^; end;
 procedure lpeInt32_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ = PInt8(Right)^; end;
@@ -83,7 +93,9 @@ procedure lpeInt32_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt32_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ = PSingle(Right)^; end;
 procedure lpeInt32_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ = PDouble(Right)^; end;
 procedure lpeInt32_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ = PVariant(Right)^; end;
 procedure lpeUInt64_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ = PUInt8(Right)^; end;
 procedure lpeUInt64_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ = PInt8(Right)^; end;
@@ -96,7 +108,9 @@ procedure lpeUInt64_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt64_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ = PSingle(Right)^; end;
 procedure lpeUInt64_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ = PDouble(Right)^; end;
 procedure lpeUInt64_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ = PVariant(Right)^; end;
 procedure lpeInt64_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ = PUInt8(Right)^; end;
 procedure lpeInt64_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ = PInt8(Right)^; end;
@@ -109,7 +123,9 @@ procedure lpeInt64_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt64_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ = PSingle(Right)^; end;
 procedure lpeInt64_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ = PDouble(Right)^; end;
 procedure lpeInt64_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ = PVariant(Right)^; end;
 procedure lpeSingle_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ = PUInt8(Right)^; end;
 procedure lpeSingle_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ = PInt8(Right)^; end;
@@ -122,7 +138,9 @@ procedure lpeSingle_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeSingle_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ = PSingle(Right)^; end;
 procedure lpeSingle_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ = PDouble(Right)^; end;
 procedure lpeSingle_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ = PVariant(Right)^; end;
 procedure lpeDouble_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ = PUInt8(Right)^; end;
 procedure lpeDouble_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ = PInt8(Right)^; end;
@@ -135,7 +153,9 @@ procedure lpeDouble_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeDouble_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ = PSingle(Right)^; end;
 procedure lpeDouble_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ = PDouble(Right)^; end;
 procedure lpeDouble_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ = PVariant(Right)^; end;
 procedure lpeCurrency_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ = PUInt8(Right)^; end;
 procedure lpeCurrency_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ = PInt8(Right)^; end;
@@ -148,8 +168,11 @@ procedure lpeCurrency_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeCurrency_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ = PSingle(Right)^; end;
 procedure lpeCurrency_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ = PDouble(Right)^; end;
 procedure lpeCurrency_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ = PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ = PUInt8(Right)^; end;
 procedure lpeExtended_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ = PInt8(Right)^; end;
 procedure lpeExtended_EQ_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ = PUInt16(Right)^; end;
@@ -163,6 +186,7 @@ procedure lpeExtended_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeExtended_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ = PCurrency(Right)^; end;
 procedure lpeExtended_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ = PExtended(Right)^; end;
 procedure lpeExtended_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ = PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_EQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ = PUInt8(Right)^; end;
 procedure lpeVariant_EQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ = PInt8(Right)^; end;
 procedure lpeVariant_EQ_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ = PUInt16(Right)^; end;
@@ -174,7 +198,9 @@ procedure lpeVariant_EQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeVariant_EQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ = PSingle(Right)^; end;
 procedure lpeVariant_EQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ = PDouble(Right)^; end;
 procedure lpeVariant_EQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ = PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_EQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ = PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_EQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ = PVariant(Right)^; end;
 
 procedure lpeUInt8_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ > PUInt8(Right)^; end;
@@ -188,7 +214,9 @@ procedure lpeUInt8_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeUInt8_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ > PSingle(Right)^; end;
 procedure lpeUInt8_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ > PDouble(Right)^; end;
 procedure lpeUInt8_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ > PVariant(Right)^; end;
 procedure lpeInt8_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ > PUInt8(Right)^; end;
 procedure lpeInt8_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ > PInt8(Right)^; end;
@@ -201,7 +229,9 @@ procedure lpeInt8_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL
 procedure lpeInt8_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ > PSingle(Right)^; end;
 procedure lpeInt8_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ > PDouble(Right)^; end;
 procedure lpeInt8_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ > PVariant(Right)^; end;
 procedure lpeUInt16_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ > PUInt8(Right)^; end;
 procedure lpeUInt16_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ > PInt8(Right)^; end;
@@ -214,7 +244,9 @@ procedure lpeUInt16_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt16_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ > PSingle(Right)^; end;
 procedure lpeUInt16_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ > PDouble(Right)^; end;
 procedure lpeUInt16_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ > PVariant(Right)^; end;
 procedure lpeInt16_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ > PUInt8(Right)^; end;
 procedure lpeInt16_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ > PInt8(Right)^; end;
@@ -227,7 +259,9 @@ procedure lpeInt16_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt16_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ > PSingle(Right)^; end;
 procedure lpeInt16_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ > PDouble(Right)^; end;
 procedure lpeInt16_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ > PVariant(Right)^; end;
 procedure lpeUInt32_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ > PUInt8(Right)^; end;
 procedure lpeUInt32_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ > PInt8(Right)^; end;
@@ -240,7 +274,9 @@ procedure lpeUInt32_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt32_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ > PSingle(Right)^; end;
 procedure lpeUInt32_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ > PDouble(Right)^; end;
 procedure lpeUInt32_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ > PVariant(Right)^; end;
 procedure lpeInt32_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ > PUInt8(Right)^; end;
 procedure lpeInt32_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ > PInt8(Right)^; end;
@@ -253,7 +289,9 @@ procedure lpeInt32_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt32_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ > PSingle(Right)^; end;
 procedure lpeInt32_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ > PDouble(Right)^; end;
 procedure lpeInt32_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ > PVariant(Right)^; end;
 procedure lpeUInt64_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ > PUInt8(Right)^; end;
 procedure lpeUInt64_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ > PInt8(Right)^; end;
@@ -266,7 +304,9 @@ procedure lpeUInt64_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt64_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ > PSingle(Right)^; end;
 procedure lpeUInt64_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ > PDouble(Right)^; end;
 procedure lpeUInt64_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ > PVariant(Right)^; end;
 procedure lpeInt64_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ > PUInt8(Right)^; end;
 procedure lpeInt64_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ > PInt8(Right)^; end;
@@ -279,7 +319,9 @@ procedure lpeInt64_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt64_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ > PSingle(Right)^; end;
 procedure lpeInt64_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ > PDouble(Right)^; end;
 procedure lpeInt64_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ > PVariant(Right)^; end;
 procedure lpeSingle_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ > PUInt8(Right)^; end;
 procedure lpeSingle_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ > PInt8(Right)^; end;
@@ -292,7 +334,9 @@ procedure lpeSingle_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeSingle_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ > PSingle(Right)^; end;
 procedure lpeSingle_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ > PDouble(Right)^; end;
 procedure lpeSingle_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ > PVariant(Right)^; end;
 procedure lpeDouble_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ > PUInt8(Right)^; end;
 procedure lpeDouble_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ > PInt8(Right)^; end;
@@ -305,7 +349,9 @@ procedure lpeDouble_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeDouble_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ > PSingle(Right)^; end;
 procedure lpeDouble_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ > PDouble(Right)^; end;
 procedure lpeDouble_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ > PVariant(Right)^; end;
 procedure lpeCurrency_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ > PUInt8(Right)^; end;
 procedure lpeCurrency_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ > PInt8(Right)^; end;
@@ -318,8 +364,11 @@ procedure lpeCurrency_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeCurrency_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ > PSingle(Right)^; end;
 procedure lpeCurrency_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ > PDouble(Right)^; end;
 procedure lpeCurrency_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ > PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ > PUInt8(Right)^; end;
 procedure lpeExtended_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ > PInt8(Right)^; end;
 procedure lpeExtended_GT_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ > PUInt16(Right)^; end;
@@ -333,6 +382,7 @@ procedure lpeExtended_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeExtended_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ > PCurrency(Right)^; end;
 procedure lpeExtended_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ > PExtended(Right)^; end;
 procedure lpeExtended_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ > PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_GT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ > PUInt8(Right)^; end;
 procedure lpeVariant_GT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ > PInt8(Right)^; end;
 procedure lpeVariant_GT_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ > PUInt16(Right)^; end;
@@ -344,7 +394,9 @@ procedure lpeVariant_GT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeVariant_GT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ > PSingle(Right)^; end;
 procedure lpeVariant_GT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ > PDouble(Right)^; end;
 procedure lpeVariant_GT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ > PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_GT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ > PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_GT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ > PVariant(Right)^; end;
 
 procedure lpeUInt8_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ >= PUInt8(Right)^; end;
@@ -358,7 +410,9 @@ procedure lpeUInt8_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt8_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ >= PSingle(Right)^; end;
 procedure lpeUInt8_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ >= PDouble(Right)^; end;
 procedure lpeUInt8_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ >= PVariant(Right)^; end;
 procedure lpeInt8_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ >= PUInt8(Right)^; end;
 procedure lpeInt8_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ >= PInt8(Right)^; end;
@@ -371,7 +425,9 @@ procedure lpeInt8_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt8_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ >= PSingle(Right)^; end;
 procedure lpeInt8_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ >= PDouble(Right)^; end;
 procedure lpeInt8_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ >= PVariant(Right)^; end;
 procedure lpeUInt16_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ >= PUInt8(Right)^; end;
 procedure lpeUInt16_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ >= PInt8(Right)^; end;
@@ -384,7 +440,9 @@ procedure lpeUInt16_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeUInt16_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ >= PSingle(Right)^; end;
 procedure lpeUInt16_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ >= PDouble(Right)^; end;
 procedure lpeUInt16_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ >= PVariant(Right)^; end;
 procedure lpeInt16_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ >= PUInt8(Right)^; end;
 procedure lpeInt16_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ >= PInt8(Right)^; end;
@@ -397,7 +455,9 @@ procedure lpeInt16_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeInt16_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ >= PSingle(Right)^; end;
 procedure lpeInt16_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ >= PDouble(Right)^; end;
 procedure lpeInt16_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ >= PVariant(Right)^; end;
 procedure lpeUInt32_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ >= PUInt8(Right)^; end;
 procedure lpeUInt32_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ >= PInt8(Right)^; end;
@@ -410,7 +470,9 @@ procedure lpeUInt32_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeUInt32_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ >= PSingle(Right)^; end;
 procedure lpeUInt32_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ >= PDouble(Right)^; end;
 procedure lpeUInt32_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ >= PVariant(Right)^; end;
 procedure lpeInt32_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ >= PUInt8(Right)^; end;
 procedure lpeInt32_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ >= PInt8(Right)^; end;
@@ -423,7 +485,9 @@ procedure lpeInt32_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeInt32_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ >= PSingle(Right)^; end;
 procedure lpeInt32_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ >= PDouble(Right)^; end;
 procedure lpeInt32_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ >= PVariant(Right)^; end;
 procedure lpeUInt64_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ >= PUInt8(Right)^; end;
 procedure lpeUInt64_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ >= PInt8(Right)^; end;
@@ -436,7 +500,9 @@ procedure lpeUInt64_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeUInt64_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ >= PSingle(Right)^; end;
 procedure lpeUInt64_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ >= PDouble(Right)^; end;
 procedure lpeUInt64_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ >= PVariant(Right)^; end;
 procedure lpeInt64_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ >= PUInt8(Right)^; end;
 procedure lpeInt64_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ >= PInt8(Right)^; end;
@@ -449,7 +515,9 @@ procedure lpeInt64_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeInt64_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ >= PSingle(Right)^; end;
 procedure lpeInt64_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ >= PDouble(Right)^; end;
 procedure lpeInt64_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ >= PVariant(Right)^; end;
 procedure lpeSingle_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ >= PUInt8(Right)^; end;
 procedure lpeSingle_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ >= PInt8(Right)^; end;
@@ -462,7 +530,9 @@ procedure lpeSingle_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeSingle_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ >= PSingle(Right)^; end;
 procedure lpeSingle_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ >= PDouble(Right)^; end;
 procedure lpeSingle_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ >= PVariant(Right)^; end;
 procedure lpeDouble_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ >= PUInt8(Right)^; end;
 procedure lpeDouble_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ >= PInt8(Right)^; end;
@@ -475,7 +545,9 @@ procedure lpeDouble_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeDouble_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ >= PSingle(Right)^; end;
 procedure lpeDouble_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ >= PDouble(Right)^; end;
 procedure lpeDouble_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ >= PVariant(Right)^; end;
 procedure lpeCurrency_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ >= PUInt8(Right)^; end;
 procedure lpeCurrency_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ >= PInt8(Right)^; end;
@@ -488,8 +560,11 @@ procedure lpeCurrency_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeCurrency_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ >= PSingle(Right)^; end;
 procedure lpeCurrency_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ >= PDouble(Right)^; end;
 procedure lpeCurrency_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ >= PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ >= PUInt8(Right)^; end;
 procedure lpeExtended_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ >= PInt8(Right)^; end;
 procedure lpeExtended_GTEQ_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ >= PUInt16(Right)^; end;
@@ -503,6 +578,7 @@ procedure lpeExtended_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lap
 procedure lpeExtended_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ >= PCurrency(Right)^; end;
 procedure lpeExtended_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ >= PExtended(Right)^; end;
 procedure lpeExtended_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ >= PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_GTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ >= PUInt8(Right)^; end;
 procedure lpeVariant_GTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ >= PInt8(Right)^; end;
 procedure lpeVariant_GTEQ_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ >= PUInt16(Right)^; end;
@@ -514,7 +590,9 @@ procedure lpeVariant_GTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeVariant_GTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ >= PSingle(Right)^; end;
 procedure lpeVariant_GTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ >= PDouble(Right)^; end;
 procedure lpeVariant_GTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ >= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_GTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ >= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_GTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ >= PVariant(Right)^; end;
 
 procedure lpeUInt8_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ < PUInt8(Right)^; end;
@@ -528,7 +606,9 @@ procedure lpeUInt8_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeUInt8_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ < PSingle(Right)^; end;
 procedure lpeUInt8_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ < PDouble(Right)^; end;
 procedure lpeUInt8_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ < PVariant(Right)^; end;
 procedure lpeInt8_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ < PUInt8(Right)^; end;
 procedure lpeInt8_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ < PInt8(Right)^; end;
@@ -541,7 +621,9 @@ procedure lpeInt8_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL
 procedure lpeInt8_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ < PSingle(Right)^; end;
 procedure lpeInt8_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ < PDouble(Right)^; end;
 procedure lpeInt8_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ < PVariant(Right)^; end;
 procedure lpeUInt16_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ < PUInt8(Right)^; end;
 procedure lpeUInt16_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ < PInt8(Right)^; end;
@@ -554,7 +636,9 @@ procedure lpeUInt16_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt16_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ < PSingle(Right)^; end;
 procedure lpeUInt16_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ < PDouble(Right)^; end;
 procedure lpeUInt16_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ < PVariant(Right)^; end;
 procedure lpeInt16_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ < PUInt8(Right)^; end;
 procedure lpeInt16_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ < PInt8(Right)^; end;
@@ -567,7 +651,9 @@ procedure lpeInt16_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt16_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ < PSingle(Right)^; end;
 procedure lpeInt16_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ < PDouble(Right)^; end;
 procedure lpeInt16_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ < PVariant(Right)^; end;
 procedure lpeUInt32_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ < PUInt8(Right)^; end;
 procedure lpeUInt32_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ < PInt8(Right)^; end;
@@ -580,7 +666,9 @@ procedure lpeUInt32_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt32_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ < PSingle(Right)^; end;
 procedure lpeUInt32_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ < PDouble(Right)^; end;
 procedure lpeUInt32_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ < PVariant(Right)^; end;
 procedure lpeInt32_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ < PUInt8(Right)^; end;
 procedure lpeInt32_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ < PInt8(Right)^; end;
@@ -593,7 +681,9 @@ procedure lpeInt32_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt32_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ < PSingle(Right)^; end;
 procedure lpeInt32_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ < PDouble(Right)^; end;
 procedure lpeInt32_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ < PVariant(Right)^; end;
 procedure lpeUInt64_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ < PUInt8(Right)^; end;
 procedure lpeUInt64_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ < PInt8(Right)^; end;
@@ -606,7 +696,9 @@ procedure lpeUInt64_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt64_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ < PSingle(Right)^; end;
 procedure lpeUInt64_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ < PDouble(Right)^; end;
 procedure lpeUInt64_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ < PVariant(Right)^; end;
 procedure lpeInt64_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ < PUInt8(Right)^; end;
 procedure lpeInt64_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ < PInt8(Right)^; end;
@@ -619,7 +711,9 @@ procedure lpeInt64_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt64_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ < PSingle(Right)^; end;
 procedure lpeInt64_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ < PDouble(Right)^; end;
 procedure lpeInt64_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ < PVariant(Right)^; end;
 procedure lpeSingle_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ < PUInt8(Right)^; end;
 procedure lpeSingle_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ < PInt8(Right)^; end;
@@ -632,7 +726,9 @@ procedure lpeSingle_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeSingle_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ < PSingle(Right)^; end;
 procedure lpeSingle_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ < PDouble(Right)^; end;
 procedure lpeSingle_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ < PVariant(Right)^; end;
 procedure lpeDouble_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ < PUInt8(Right)^; end;
 procedure lpeDouble_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ < PInt8(Right)^; end;
@@ -645,7 +741,9 @@ procedure lpeDouble_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeDouble_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ < PSingle(Right)^; end;
 procedure lpeDouble_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ < PDouble(Right)^; end;
 procedure lpeDouble_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ < PVariant(Right)^; end;
 procedure lpeCurrency_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ < PUInt8(Right)^; end;
 procedure lpeCurrency_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ < PInt8(Right)^; end;
@@ -658,8 +756,11 @@ procedure lpeCurrency_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeCurrency_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ < PSingle(Right)^; end;
 procedure lpeCurrency_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ < PDouble(Right)^; end;
 procedure lpeCurrency_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ < PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ < PUInt8(Right)^; end;
 procedure lpeExtended_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ < PInt8(Right)^; end;
 procedure lpeExtended_LT_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ < PUInt16(Right)^; end;
@@ -673,6 +774,7 @@ procedure lpeExtended_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeExtended_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ < PCurrency(Right)^; end;
 procedure lpeExtended_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ < PExtended(Right)^; end;
 procedure lpeExtended_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ < PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_LT_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ < PUInt8(Right)^; end;
 procedure lpeVariant_LT_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ < PInt8(Right)^; end;
 procedure lpeVariant_LT_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ < PUInt16(Right)^; end;
@@ -684,7 +786,9 @@ procedure lpeVariant_LT_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeVariant_LT_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ < PSingle(Right)^; end;
 procedure lpeVariant_LT_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ < PDouble(Right)^; end;
 procedure lpeVariant_LT_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ < PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_LT_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ < PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_LT_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ < PVariant(Right)^; end;
 
 procedure lpeUInt8_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <= PUInt8(Right)^; end;
@@ -698,7 +802,9 @@ procedure lpeUInt8_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt8_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <= PSingle(Right)^; end;
 procedure lpeUInt8_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <= PDouble(Right)^; end;
 procedure lpeUInt8_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <= PVariant(Right)^; end;
 procedure lpeInt8_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <= PUInt8(Right)^; end;
 procedure lpeInt8_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <= PInt8(Right)^; end;
@@ -711,7 +817,9 @@ procedure lpeInt8_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt8_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <= PSingle(Right)^; end;
 procedure lpeInt8_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <= PDouble(Right)^; end;
 procedure lpeInt8_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <= PVariant(Right)^; end;
 procedure lpeUInt16_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <= PUInt8(Right)^; end;
 procedure lpeUInt16_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <= PInt8(Right)^; end;
@@ -724,7 +832,9 @@ procedure lpeUInt16_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeUInt16_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <= PSingle(Right)^; end;
 procedure lpeUInt16_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <= PDouble(Right)^; end;
 procedure lpeUInt16_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <= PVariant(Right)^; end;
 procedure lpeInt16_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <= PUInt8(Right)^; end;
 procedure lpeInt16_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <= PInt8(Right)^; end;
@@ -737,7 +847,9 @@ procedure lpeInt16_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeInt16_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <= PSingle(Right)^; end;
 procedure lpeInt16_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <= PDouble(Right)^; end;
 procedure lpeInt16_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <= PVariant(Right)^; end;
 procedure lpeUInt32_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <= PUInt8(Right)^; end;
 procedure lpeUInt32_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <= PInt8(Right)^; end;
@@ -750,7 +862,9 @@ procedure lpeUInt32_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeUInt32_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <= PSingle(Right)^; end;
 procedure lpeUInt32_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <= PDouble(Right)^; end;
 procedure lpeUInt32_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <= PVariant(Right)^; end;
 procedure lpeInt32_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <= PUInt8(Right)^; end;
 procedure lpeInt32_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <= PInt8(Right)^; end;
@@ -763,7 +877,9 @@ procedure lpeInt32_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeInt32_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <= PSingle(Right)^; end;
 procedure lpeInt32_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <= PDouble(Right)^; end;
 procedure lpeInt32_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <= PVariant(Right)^; end;
 procedure lpeUInt64_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <= PUInt8(Right)^; end;
 procedure lpeUInt64_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <= PInt8(Right)^; end;
@@ -776,7 +892,9 @@ procedure lpeUInt64_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeUInt64_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <= PSingle(Right)^; end;
 procedure lpeUInt64_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <= PDouble(Right)^; end;
 procedure lpeUInt64_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <= PVariant(Right)^; end;
 procedure lpeInt64_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <= PUInt8(Right)^; end;
 procedure lpeInt64_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <= PInt8(Right)^; end;
@@ -789,7 +907,9 @@ procedure lpeInt64_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeInt64_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <= PSingle(Right)^; end;
 procedure lpeInt64_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <= PDouble(Right)^; end;
 procedure lpeInt64_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <= PVariant(Right)^; end;
 procedure lpeSingle_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <= PUInt8(Right)^; end;
 procedure lpeSingle_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <= PInt8(Right)^; end;
@@ -802,7 +922,9 @@ procedure lpeSingle_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeSingle_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <= PSingle(Right)^; end;
 procedure lpeSingle_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <= PDouble(Right)^; end;
 procedure lpeSingle_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <= PVariant(Right)^; end;
 procedure lpeDouble_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <= PUInt8(Right)^; end;
 procedure lpeDouble_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <= PInt8(Right)^; end;
@@ -815,7 +937,9 @@ procedure lpeDouble_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeDouble_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <= PSingle(Right)^; end;
 procedure lpeDouble_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <= PDouble(Right)^; end;
 procedure lpeDouble_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <= PVariant(Right)^; end;
 procedure lpeCurrency_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <= PUInt8(Right)^; end;
 procedure lpeCurrency_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <= PInt8(Right)^; end;
@@ -828,8 +952,11 @@ procedure lpeCurrency_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeCurrency_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <= PSingle(Right)^; end;
 procedure lpeCurrency_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <= PDouble(Right)^; end;
 procedure lpeCurrency_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <= PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <= PUInt8(Right)^; end;
 procedure lpeExtended_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <= PInt8(Right)^; end;
 procedure lpeExtended_LTEQ_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <= PUInt16(Right)^; end;
@@ -843,6 +970,7 @@ procedure lpeExtended_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lap
 procedure lpeExtended_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <= PCurrency(Right)^; end;
 procedure lpeExtended_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <= PExtended(Right)^; end;
 procedure lpeExtended_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <= PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_LTEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <= PUInt8(Right)^; end;
 procedure lpeVariant_LTEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <= PInt8(Right)^; end;
 procedure lpeVariant_LTEQ_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <= PUInt16(Right)^; end;
@@ -854,7 +982,9 @@ procedure lpeVariant_LTEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeVariant_LTEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <= PSingle(Right)^; end;
 procedure lpeVariant_LTEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <= PDouble(Right)^; end;
 procedure lpeVariant_LTEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <= PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_LTEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <= PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_LTEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <= PVariant(Right)^; end;
 
 procedure lpeUInt8_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <> PUInt8(Right)^; end;
@@ -868,7 +998,9 @@ procedure lpeUInt8_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt8_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <> PSingle(Right)^; end;
 procedure lpeUInt8_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <> PDouble(Right)^; end;
 procedure lpeUInt8_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt8(Left)^ <> PVariant(Right)^; end;
 procedure lpeInt8_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <> PUInt8(Right)^; end;
 procedure lpeInt8_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <> PInt8(Right)^; end;
@@ -881,7 +1013,9 @@ procedure lpeInt8_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt8_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <> PSingle(Right)^; end;
 procedure lpeInt8_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <> PDouble(Right)^; end;
 procedure lpeInt8_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt8(Left)^ <> PVariant(Right)^; end;
 procedure lpeUInt16_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <> PUInt8(Right)^; end;
 procedure lpeUInt16_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <> PInt8(Right)^; end;
@@ -894,7 +1028,9 @@ procedure lpeUInt16_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt16_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <> PSingle(Right)^; end;
 procedure lpeUInt16_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <> PDouble(Right)^; end;
 procedure lpeUInt16_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt16(Left)^ <> PVariant(Right)^; end;
 procedure lpeInt16_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <> PUInt8(Right)^; end;
 procedure lpeInt16_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <> PInt8(Right)^; end;
@@ -907,7 +1043,9 @@ procedure lpeInt16_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt16_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <> PSingle(Right)^; end;
 procedure lpeInt16_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <> PDouble(Right)^; end;
 procedure lpeInt16_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt16(Left)^ <> PVariant(Right)^; end;
 procedure lpeUInt32_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <> PUInt8(Right)^; end;
 procedure lpeUInt32_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <> PInt8(Right)^; end;
@@ -920,7 +1058,9 @@ procedure lpeUInt32_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt32_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <> PSingle(Right)^; end;
 procedure lpeUInt32_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <> PDouble(Right)^; end;
 procedure lpeUInt32_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt32(Left)^ <> PVariant(Right)^; end;
 procedure lpeInt32_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <> PUInt8(Right)^; end;
 procedure lpeInt32_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <> PInt8(Right)^; end;
@@ -933,7 +1073,9 @@ procedure lpeInt32_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt32_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <> PSingle(Right)^; end;
 procedure lpeInt32_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <> PDouble(Right)^; end;
 procedure lpeInt32_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt32(Left)^ <> PVariant(Right)^; end;
 procedure lpeUInt64_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <> PUInt8(Right)^; end;
 procedure lpeUInt64_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <> PInt8(Right)^; end;
@@ -946,7 +1088,9 @@ procedure lpeUInt64_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt64_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <> PSingle(Right)^; end;
 procedure lpeUInt64_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <> PDouble(Right)^; end;
 procedure lpeUInt64_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PUInt64(Left)^ <> PVariant(Right)^; end;
 procedure lpeInt64_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <> PUInt8(Right)^; end;
 procedure lpeInt64_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <> PInt8(Right)^; end;
@@ -959,7 +1103,9 @@ procedure lpeInt64_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt64_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <> PSingle(Right)^; end;
 procedure lpeInt64_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <> PDouble(Right)^; end;
 procedure lpeInt64_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PInt64(Left)^ <> PVariant(Right)^; end;
 procedure lpeSingle_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <> PUInt8(Right)^; end;
 procedure lpeSingle_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <> PInt8(Right)^; end;
@@ -972,7 +1118,9 @@ procedure lpeSingle_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeSingle_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <> PSingle(Right)^; end;
 procedure lpeSingle_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <> PDouble(Right)^; end;
 procedure lpeSingle_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PSingle(Left)^ <> PVariant(Right)^; end;
 procedure lpeDouble_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <> PUInt8(Right)^; end;
 procedure lpeDouble_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <> PInt8(Right)^; end;
@@ -985,7 +1133,9 @@ procedure lpeDouble_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeDouble_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <> PSingle(Right)^; end;
 procedure lpeDouble_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <> PDouble(Right)^; end;
 procedure lpeDouble_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PDouble(Left)^ <> PVariant(Right)^; end;
 procedure lpeCurrency_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <> PUInt8(Right)^; end;
 procedure lpeCurrency_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <> PInt8(Right)^; end;
@@ -998,8 +1148,11 @@ procedure lpeCurrency_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeCurrency_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <> PSingle(Right)^; end;
 procedure lpeCurrency_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <> PDouble(Right)^; end;
 procedure lpeCurrency_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PCurrency(Left)^ <> PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <> PUInt8(Right)^; end;
 procedure lpeExtended_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <> PInt8(Right)^; end;
 procedure lpeExtended_NEQ_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <> PUInt16(Right)^; end;
@@ -1013,6 +1166,7 @@ procedure lpeExtended_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeExtended_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <> PCurrency(Right)^; end;
 procedure lpeExtended_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <> PExtended(Right)^; end;
 procedure lpeExtended_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PExtended(Left)^ <> PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_NEQ_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <> PUInt8(Right)^; end;
 procedure lpeVariant_NEQ_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <> PInt8(Right)^; end;
 procedure lpeVariant_NEQ_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <> PUInt16(Right)^; end;
@@ -1024,7 +1178,9 @@ procedure lpeVariant_NEQ_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeVariant_NEQ_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <> PSingle(Right)^; end;
 procedure lpeVariant_NEQ_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <> PDouble(Right)^; end;
 procedure lpeVariant_NEQ_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <> PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_NEQ_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <> PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_NEQ_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PVariant(Left)^ <> PVariant(Right)^; end;
 
 procedure lpeUInt8_AND_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt8(Dest)^ := PUInt8(Left)^ and PUInt8(Right)^; end;
@@ -1192,7 +1348,9 @@ procedure lpeSingle_ASGN_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeSingle_ASGN_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^; end;
 procedure lpeSingle_ASGN_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PDouble(Left)^; end;
 procedure lpeSingle_ASGN_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PCurrency(Left)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_ASGN_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PExtended(Left)^; end;
+{$ENDIF}
 procedure lpeSingle_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PVariant(Left)^; end;
 procedure lpeDouble_ASGN_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt8(Left)^; end;
 procedure lpeDouble_ASGN_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt8(Left)^; end;
@@ -1205,7 +1363,9 @@ procedure lpeDouble_ASGN_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeDouble_ASGN_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PSingle(Left)^; end;
 procedure lpeDouble_ASGN_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^; end;
 procedure lpeDouble_ASGN_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PCurrency(Left)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_ASGN_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PExtended(Left)^; end;
+{$ENDIF}
 procedure lpeDouble_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PVariant(Left)^; end;
 procedure lpeCurrency_ASGN_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt8(Left)^; end;
 procedure lpeCurrency_ASGN_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt8(Left)^; end;
@@ -1218,8 +1378,11 @@ procedure lpeCurrency_ASGN_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeCurrency_ASGN_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PSingle(Left)^; end;
 procedure lpeCurrency_ASGN_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PDouble(Left)^; end;
 procedure lpeCurrency_ASGN_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_ASGN_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PExtended(Left)^; end;
+{$ENDIF}
 procedure lpeCurrency_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PVariant(Left)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_ASGN_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^; end;
 procedure lpeExtended_ASGN_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^; end;
 procedure lpeExtended_ASGN_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^; end;
@@ -1233,6 +1396,7 @@ procedure lpeExtended_ASGN_Double(const Dest, Left, Right: Pointer); {$IFDEF Lap
 procedure lpeExtended_ASGN_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PCurrency(Left)^; end;
 procedure lpeExtended_ASGN_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^; end;
 procedure lpeExtended_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PVariant(Left)^; end;
+{$ENDIF}
 procedure lpeVariant_ASGN_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt8(Left)^; end;
 procedure lpeVariant_ASGN_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt8(Left)^; end;
 procedure lpeVariant_ASGN_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt16(Left)^; end;
@@ -1244,7 +1408,9 @@ procedure lpeVariant_ASGN_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeVariant_ASGN_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PSingle(Left)^; end;
 procedure lpeVariant_ASGN_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PDouble(Left)^; end;
 procedure lpeVariant_ASGN_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PCurrency(Left)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_ASGN_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PExtended(Left)^; end;
+{$ENDIF}
 procedure lpeVariant_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^; end;
 
 procedure lpeUInt8_IDIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PUInt8(Left)^) div Int32(PUInt8(Right)^); end;
@@ -1329,109 +1495,125 @@ procedure lpeVariant_IDIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeVariant_IDIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ div PInt64(Right)^; end;
 procedure lpeVariant_IDIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ div PVariant(Right)^; end;
 
-procedure lpeUInt8_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ / PUInt8(Right)^; end;
-procedure lpeUInt8_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ / PInt8(Right)^; end;
-procedure lpeUInt8_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ / PUInt16(Right)^; end;
-procedure lpeUInt8_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ / PInt16(Right)^; end;
-procedure lpeUInt8_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ / PUInt32(Right)^; end;
-procedure lpeUInt8_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ / PInt32(Right)^; end;
-procedure lpeUInt8_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ / PUInt64(Right)^; end;
-procedure lpeUInt8_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ / PInt64(Right)^; end;
+procedure lpeUInt8_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt8(Left)^ / PUInt8(Right)^; end;
+procedure lpeUInt8_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt8(Left)^ / PInt8(Right)^; end;
+procedure lpeUInt8_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt8(Left)^ / PUInt16(Right)^; end;
+procedure lpeUInt8_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt8(Left)^ / PInt16(Right)^; end;
+procedure lpeUInt8_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt8(Left)^ / PUInt32(Right)^; end;
+procedure lpeUInt8_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt8(Left)^ / PInt32(Right)^; end;
+procedure lpeUInt8_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt8(Left)^ / PUInt64(Right)^; end;
+procedure lpeUInt8_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt8(Left)^ / PInt64(Right)^; end;
 procedure lpeUInt8_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt8(Left)^ / PSingle(Right)^; end;
 procedure lpeUInt8_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt8(Left)^ / PDouble(Right)^; end;
 procedure lpeUInt8_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt8(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt8(Left)^ / PVariant(Right)^; end;
-procedure lpeInt8_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ / PUInt8(Right)^; end;
-procedure lpeInt8_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ / PInt8(Right)^; end;
-procedure lpeInt8_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ / PUInt16(Right)^; end;
-procedure lpeInt8_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ / PInt16(Right)^; end;
-procedure lpeInt8_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ / PUInt32(Right)^; end;
-procedure lpeInt8_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ / PInt32(Right)^; end;
-procedure lpeInt8_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ / PUInt64(Right)^; end;
-procedure lpeInt8_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ / PInt64(Right)^; end;
+procedure lpeInt8_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt8(Left)^ / PUInt8(Right)^; end;
+procedure lpeInt8_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt8(Left)^ / PInt8(Right)^; end;
+procedure lpeInt8_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt8(Left)^ / PUInt16(Right)^; end;
+procedure lpeInt8_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt8(Left)^ / PInt16(Right)^; end;
+procedure lpeInt8_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt8(Left)^ / PUInt32(Right)^; end;
+procedure lpeInt8_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt8(Left)^ / PInt32(Right)^; end;
+procedure lpeInt8_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt8(Left)^ / PUInt64(Right)^; end;
+procedure lpeInt8_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt8(Left)^ / PInt64(Right)^; end;
 procedure lpeInt8_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt8(Left)^ / PSingle(Right)^; end;
 procedure lpeInt8_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt8(Left)^ / PDouble(Right)^; end;
 procedure lpeInt8_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt8(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt8(Left)^ / PVariant(Right)^; end;
-procedure lpeUInt16_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ / PUInt8(Right)^; end;
-procedure lpeUInt16_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ / PInt8(Right)^; end;
-procedure lpeUInt16_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ / PUInt16(Right)^; end;
-procedure lpeUInt16_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ / PInt16(Right)^; end;
-procedure lpeUInt16_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ / PUInt32(Right)^; end;
-procedure lpeUInt16_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ / PInt32(Right)^; end;
-procedure lpeUInt16_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ / PUInt64(Right)^; end;
-procedure lpeUInt16_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ / PInt64(Right)^; end;
+procedure lpeUInt16_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt16(Left)^ / PUInt8(Right)^; end;
+procedure lpeUInt16_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt16(Left)^ / PInt8(Right)^; end;
+procedure lpeUInt16_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt16(Left)^ / PUInt16(Right)^; end;
+procedure lpeUInt16_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt16(Left)^ / PInt16(Right)^; end;
+procedure lpeUInt16_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt16(Left)^ / PUInt32(Right)^; end;
+procedure lpeUInt16_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt16(Left)^ / PInt32(Right)^; end;
+procedure lpeUInt16_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt16(Left)^ / PUInt64(Right)^; end;
+procedure lpeUInt16_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt16(Left)^ / PInt64(Right)^; end;
 procedure lpeUInt16_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt16(Left)^ / PSingle(Right)^; end;
 procedure lpeUInt16_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt16(Left)^ / PDouble(Right)^; end;
 procedure lpeUInt16_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt16(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt16(Left)^ / PVariant(Right)^; end;
-procedure lpeInt16_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ / PUInt8(Right)^; end;
-procedure lpeInt16_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ / PInt8(Right)^; end;
-procedure lpeInt16_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ / PUInt16(Right)^; end;
-procedure lpeInt16_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ / PInt16(Right)^; end;
-procedure lpeInt16_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ / PUInt32(Right)^; end;
-procedure lpeInt16_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ / PInt32(Right)^; end;
-procedure lpeInt16_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ / PUInt64(Right)^; end;
-procedure lpeInt16_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ / PInt64(Right)^; end;
+procedure lpeInt16_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt16(Left)^ / PUInt8(Right)^; end;
+procedure lpeInt16_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt16(Left)^ / PInt8(Right)^; end;
+procedure lpeInt16_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt16(Left)^ / PUInt16(Right)^; end;
+procedure lpeInt16_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt16(Left)^ / PInt16(Right)^; end;
+procedure lpeInt16_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt16(Left)^ / PUInt32(Right)^; end;
+procedure lpeInt16_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt16(Left)^ / PInt32(Right)^; end;
+procedure lpeInt16_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt16(Left)^ / PUInt64(Right)^; end;
+procedure lpeInt16_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt16(Left)^ / PInt64(Right)^; end;
 procedure lpeInt16_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt16(Left)^ / PSingle(Right)^; end;
 procedure lpeInt16_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt16(Left)^ / PDouble(Right)^; end;
 procedure lpeInt16_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt16(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt16(Left)^ / PVariant(Right)^; end;
-procedure lpeUInt32_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ / PUInt8(Right)^; end;
-procedure lpeUInt32_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ / PInt8(Right)^; end;
-procedure lpeUInt32_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ / PUInt16(Right)^; end;
-procedure lpeUInt32_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ / PInt16(Right)^; end;
-procedure lpeUInt32_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ / PUInt32(Right)^; end;
-procedure lpeUInt32_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ / PInt32(Right)^; end;
-procedure lpeUInt32_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ / PUInt64(Right)^; end;
-procedure lpeUInt32_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ / PInt64(Right)^; end;
+procedure lpeUInt32_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt32(Left)^ / PUInt8(Right)^; end;
+procedure lpeUInt32_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt32(Left)^ / PInt8(Right)^; end;
+procedure lpeUInt32_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt32(Left)^ / PUInt16(Right)^; end;
+procedure lpeUInt32_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt32(Left)^ / PInt16(Right)^; end;
+procedure lpeUInt32_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt32(Left)^ / PUInt32(Right)^; end;
+procedure lpeUInt32_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt32(Left)^ / PInt32(Right)^; end;
+procedure lpeUInt32_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt32(Left)^ / PUInt64(Right)^; end;
+procedure lpeUInt32_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt32(Left)^ / PInt64(Right)^; end;
 procedure lpeUInt32_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt32(Left)^ / PSingle(Right)^; end;
 procedure lpeUInt32_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt32(Left)^ / PDouble(Right)^; end;
 procedure lpeUInt32_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt32(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt32(Left)^ / PVariant(Right)^; end;
-procedure lpeInt32_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ / PUInt8(Right)^; end;
-procedure lpeInt32_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ / PInt8(Right)^; end;
-procedure lpeInt32_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ / PUInt16(Right)^; end;
-procedure lpeInt32_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ / PInt16(Right)^; end;
-procedure lpeInt32_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ / PUInt32(Right)^; end;
-procedure lpeInt32_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ / PInt32(Right)^; end;
-procedure lpeInt32_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ / PUInt64(Right)^; end;
-procedure lpeInt32_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ / PInt64(Right)^; end;
+procedure lpeInt32_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt32(Left)^ / PUInt8(Right)^; end;
+procedure lpeInt32_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt32(Left)^ / PInt8(Right)^; end;
+procedure lpeInt32_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt32(Left)^ / PUInt16(Right)^; end;
+procedure lpeInt32_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt32(Left)^ / PInt16(Right)^; end;
+procedure lpeInt32_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt32(Left)^ / PUInt32(Right)^; end;
+procedure lpeInt32_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt32(Left)^ / PInt32(Right)^; end;
+procedure lpeInt32_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt32(Left)^ / PUInt64(Right)^; end;
+procedure lpeInt32_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt32(Left)^ / PInt64(Right)^; end;
 procedure lpeInt32_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt32(Left)^ / PSingle(Right)^; end;
 procedure lpeInt32_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt32(Left)^ / PDouble(Right)^; end;
 procedure lpeInt32_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt32(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt32(Left)^ / PVariant(Right)^; end;
-procedure lpeUInt64_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ / PUInt8(Right)^; end;
-procedure lpeUInt64_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ / PInt8(Right)^; end;
-procedure lpeUInt64_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ / PUInt16(Right)^; end;
-procedure lpeUInt64_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ / PInt16(Right)^; end;
-procedure lpeUInt64_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ / PUInt32(Right)^; end;
-procedure lpeUInt64_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ / PInt32(Right)^; end;
-procedure lpeUInt64_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ / PUInt64(Right)^; end;
-procedure lpeUInt64_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ / PInt64(Right)^; end;
+procedure lpeUInt64_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt64(Left)^ / PUInt8(Right)^; end;
+procedure lpeUInt64_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt64(Left)^ / PInt8(Right)^; end;
+procedure lpeUInt64_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt64(Left)^ / PUInt16(Right)^; end;
+procedure lpeUInt64_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt64(Left)^ / PInt16(Right)^; end;
+procedure lpeUInt64_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt64(Left)^ / PUInt32(Right)^; end;
+procedure lpeUInt64_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt64(Left)^ / PInt32(Right)^; end;
+procedure lpeUInt64_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt64(Left)^ / PUInt64(Right)^; end;
+procedure lpeUInt64_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PUInt64(Left)^ / PInt64(Right)^; end;
 procedure lpeUInt64_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt64(Left)^ / PSingle(Right)^; end;
 procedure lpeUInt64_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt64(Left)^ / PDouble(Right)^; end;
 procedure lpeUInt64_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt64(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt64(Left)^ / PVariant(Right)^; end;
-procedure lpeInt64_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ / PUInt8(Right)^; end;
-procedure lpeInt64_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ / PInt8(Right)^; end;
-procedure lpeInt64_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ / PUInt16(Right)^; end;
-procedure lpeInt64_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ / PInt16(Right)^; end;
-procedure lpeInt64_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ / PUInt32(Right)^; end;
-procedure lpeInt64_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ / PInt32(Right)^; end;
-procedure lpeInt64_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ / PUInt64(Right)^; end;
-procedure lpeInt64_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ / PInt64(Right)^; end;
+procedure lpeInt64_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt64(Left)^ / PUInt8(Right)^; end;
+procedure lpeInt64_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt64(Left)^ / PInt8(Right)^; end;
+procedure lpeInt64_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt64(Left)^ / PUInt16(Right)^; end;
+procedure lpeInt64_DIV_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt64(Left)^ / PInt16(Right)^; end;
+procedure lpeInt64_DIV_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt64(Left)^ / PUInt32(Right)^; end;
+procedure lpeInt64_DIV_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt64(Left)^ / PInt32(Right)^; end;
+procedure lpeInt64_DIV_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt64(Left)^ / PUInt64(Right)^; end;
+procedure lpeInt64_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PlpFloat(Dest)^ := PInt64(Left)^ / PInt64(Right)^; end;
 procedure lpeInt64_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt64(Left)^ / PSingle(Right)^; end;
 procedure lpeInt64_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt64(Left)^ / PDouble(Right)^; end;
 procedure lpeInt64_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt64(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt64(Left)^ / PVariant(Right)^; end;
 procedure lpeSingle_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ / PUInt8(Right)^; end;
 procedure lpeSingle_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ / PInt8(Right)^; end;
@@ -1444,7 +1626,9 @@ procedure lpeSingle_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeSingle_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ / PSingle(Right)^; end;
 procedure lpeSingle_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PSingle(Left)^ / PDouble(Right)^; end;
 procedure lpeSingle_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PSingle(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PSingle(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PSingle(Left)^ / PVariant(Right)^; end;
 procedure lpeDouble_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ / PUInt8(Right)^; end;
 procedure lpeDouble_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ / PInt8(Right)^; end;
@@ -1457,7 +1641,9 @@ procedure lpeDouble_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeDouble_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ / PSingle(Right)^; end;
 procedure lpeDouble_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ / PDouble(Right)^; end;
 procedure lpeDouble_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PDouble(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PDouble(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PDouble(Left)^ / PVariant(Right)^; end;
 procedure lpeCurrency_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ / PUInt8(Right)^; end;
 procedure lpeCurrency_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ / PInt8(Right)^; end;
@@ -1470,8 +1656,11 @@ procedure lpeCurrency_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeCurrency_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ / PSingle(Right)^; end;
 procedure lpeCurrency_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ / PDouble(Right)^; end;
 procedure lpeCurrency_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PCurrency(Left)^ / PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ / PUInt8(Right)^; end;
 procedure lpeExtended_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ / PInt8(Right)^; end;
 procedure lpeExtended_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ / PUInt16(Right)^; end;
@@ -1485,6 +1674,7 @@ procedure lpeExtended_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeExtended_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PExtended(Left)^ / PCurrency(Right)^; end;
 procedure lpeExtended_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ / PExtended(Right)^; end;
 procedure lpeExtended_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PExtended(Left)^ / PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_DIV_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ / PUInt8(Right)^; end;
 procedure lpeVariant_DIV_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ / PInt8(Right)^; end;
 procedure lpeVariant_DIV_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ / PUInt16(Right)^; end;
@@ -1496,7 +1686,9 @@ procedure lpeVariant_DIV_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeVariant_DIV_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ / PSingle(Right)^; end;
 procedure lpeVariant_DIV_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ / PDouble(Right)^; end;
 procedure lpeVariant_DIV_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ / PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_DIV_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ / PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_DIV_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ / PVariant(Right)^; end;
 
 procedure lpeUInt8_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PUInt8(Left)^) - Int32(PUInt8(Right)^); end;
@@ -1510,7 +1702,9 @@ procedure lpeUInt8_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt8_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt8(Left)^ - PSingle(Right)^; end;
 procedure lpeUInt8_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt8(Left)^ - PDouble(Right)^; end;
 procedure lpeUInt8_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt8(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt8(Left)^ - PVariant(Right)^; end;
 procedure lpeInt8_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt8(Left)^) - Int32(PUInt8(Right)^); end;
 procedure lpeInt8_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt8(Left)^) - Int32(PInt8(Right)^); end;
@@ -1523,7 +1717,9 @@ procedure lpeInt8_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt8_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt8(Left)^ - PSingle(Right)^; end;
 procedure lpeInt8_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt8(Left)^ - PDouble(Right)^; end;
 procedure lpeInt8_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt8(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt8(Left)^ - PVariant(Right)^; end;
 procedure lpeUInt16_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PUInt16(Left)^) - Int32(PUInt8(Right)^); end;
 procedure lpeUInt16_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PUInt16(Left)^) - Int32(PInt8(Right)^); end;
@@ -1536,7 +1732,9 @@ procedure lpeUInt16_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt16_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt16(Left)^ - PSingle(Right)^; end;
 procedure lpeUInt16_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt16(Left)^ - PDouble(Right)^; end;
 procedure lpeUInt16_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt16(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt16(Left)^ - PVariant(Right)^; end;
 procedure lpeInt16_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt16(Left)^) - Int32(PUInt8(Right)^); end;
 procedure lpeInt16_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt16(Left)^) - Int32(PInt8(Right)^); end;
@@ -1549,7 +1747,9 @@ procedure lpeInt16_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt16_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt16(Left)^ - PSingle(Right)^; end;
 procedure lpeInt16_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt16(Left)^ - PDouble(Right)^; end;
 procedure lpeInt16_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt16(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt16(Left)^ - PVariant(Right)^; end;
 procedure lpeUInt32_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := Int64(PUInt32(Left)^) - Int64(PUInt8(Right)^); end;
 procedure lpeUInt32_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := Int64(PUInt32(Left)^) - Int64(PInt8(Right)^); end;
@@ -1562,7 +1762,9 @@ procedure lpeUInt32_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt32_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt32(Left)^ - PSingle(Right)^; end;
 procedure lpeUInt32_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt32(Left)^ - PDouble(Right)^; end;
 procedure lpeUInt32_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt32(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt32(Left)^ - PVariant(Right)^; end;
 procedure lpeInt32_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := PInt32(Left)^ - PUInt8(Right)^; end;
 procedure lpeInt32_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := PInt32(Left)^ - PInt8(Right)^; end;
@@ -1575,7 +1777,9 @@ procedure lpeInt32_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt32_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt32(Left)^ - PSingle(Right)^; end;
 procedure lpeInt32_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt32(Left)^ - PDouble(Right)^; end;
 procedure lpeInt32_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt32(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt32(Left)^ - PVariant(Right)^; end;
 procedure lpeUInt64_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt64(Dest)^ := PUInt64(Left)^ - PUInt8(Right)^; end;
 procedure lpeUInt64_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt64(Dest)^ := PUInt64(Left)^ - PInt8(Right)^; end;
@@ -1588,7 +1792,9 @@ procedure lpeUInt64_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt64_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt64(Left)^ - PSingle(Right)^; end;
 procedure lpeUInt64_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt64(Left)^ - PDouble(Right)^; end;
 procedure lpeUInt64_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt64(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt64(Left)^ - PVariant(Right)^; end;
 procedure lpeInt64_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := PInt64(Left)^ - PUInt8(Right)^; end;
 procedure lpeInt64_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := PInt64(Left)^ - PInt8(Right)^; end;
@@ -1601,7 +1807,9 @@ procedure lpeInt64_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt64_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt64(Left)^ - PSingle(Right)^; end;
 procedure lpeInt64_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt64(Left)^ - PDouble(Right)^; end;
 procedure lpeInt64_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt64(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt64(Left)^ - PVariant(Right)^; end;
 procedure lpeSingle_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ - PUInt8(Right)^; end;
 procedure lpeSingle_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ - PInt8(Right)^; end;
@@ -1614,7 +1822,9 @@ procedure lpeSingle_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeSingle_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ - PSingle(Right)^; end;
 procedure lpeSingle_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PSingle(Left)^ - PDouble(Right)^; end;
 procedure lpeSingle_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PSingle(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PSingle(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PSingle(Left)^ - PVariant(Right)^; end;
 procedure lpeDouble_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ - PUInt8(Right)^; end;
 procedure lpeDouble_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ - PInt8(Right)^; end;
@@ -1627,7 +1837,9 @@ procedure lpeDouble_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeDouble_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ - PSingle(Right)^; end;
 procedure lpeDouble_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ - PDouble(Right)^; end;
 procedure lpeDouble_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PDouble(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PDouble(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PDouble(Left)^ - PVariant(Right)^; end;
 procedure lpeCurrency_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ - PUInt8(Right)^; end;
 procedure lpeCurrency_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ - PInt8(Right)^; end;
@@ -1640,8 +1852,11 @@ procedure lpeCurrency_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeCurrency_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ - PSingle(Right)^; end;
 procedure lpeCurrency_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ - PDouble(Right)^; end;
 procedure lpeCurrency_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PCurrency(Left)^ - PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ - PUInt8(Right)^; end;
 procedure lpeExtended_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ - PInt8(Right)^; end;
 procedure lpeExtended_SUB_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ - PUInt16(Right)^; end;
@@ -1655,6 +1870,7 @@ procedure lpeExtended_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeExtended_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PExtended(Left)^ - PCurrency(Right)^; end;
 procedure lpeExtended_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ - PExtended(Right)^; end;
 procedure lpeExtended_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PExtended(Left)^ - PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_SUB_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ - PUInt8(Right)^; end;
 procedure lpeVariant_SUB_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ - PInt8(Right)^; end;
 procedure lpeVariant_SUB_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ - PUInt16(Right)^; end;
@@ -1666,7 +1882,9 @@ procedure lpeVariant_SUB_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeVariant_SUB_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ - PSingle(Right)^; end;
 procedure lpeVariant_SUB_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ - PDouble(Right)^; end;
 procedure lpeVariant_SUB_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ - PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_SUB_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ - PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_SUB_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ - PVariant(Right)^; end;
 
 procedure lpeUInt8_MOD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PUInt8(Left)^) mod Int32(PUInt8(Right)^); end;
@@ -1762,7 +1980,9 @@ procedure lpeUInt8_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt8_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt8(Left)^ * PSingle(Right)^; end;
 procedure lpeUInt8_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt8(Left)^ * PDouble(Right)^; end;
 procedure lpeUInt8_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt8(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt8(Left)^ * PVariant(Right)^; end;
 procedure lpeInt8_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt8(Left)^) * Int32(PUInt8(Right)^); end;
 procedure lpeInt8_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt8(Left)^) * Int32(PInt8(Right)^); end;
@@ -1775,7 +1995,9 @@ procedure lpeInt8_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt8_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt8(Left)^ * PSingle(Right)^; end;
 procedure lpeInt8_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt8(Left)^ * PDouble(Right)^; end;
 procedure lpeInt8_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt8(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt8(Left)^ * PVariant(Right)^; end;
 procedure lpeUInt16_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt32(Dest)^ := UInt32(PUInt16(Left)^) * UInt32(PUInt8(Right)^); end;
 procedure lpeUInt16_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PUInt16(Left)^) * Int32(PInt8(Right)^); end;
@@ -1788,7 +2010,9 @@ procedure lpeUInt16_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt16_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt16(Left)^ * PSingle(Right)^; end;
 procedure lpeUInt16_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt16(Left)^ * PDouble(Right)^; end;
 procedure lpeUInt16_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt16(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt16(Left)^ * PVariant(Right)^; end;
 procedure lpeInt16_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt16(Left)^) * Int32(PUInt8(Right)^); end;
 procedure lpeInt16_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt16(Left)^) * Int32(PInt8(Right)^); end;
@@ -1801,7 +2025,9 @@ procedure lpeInt16_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt16_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt16(Left)^ * PSingle(Right)^; end;
 procedure lpeInt16_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt16(Left)^ * PDouble(Right)^; end;
 procedure lpeInt16_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt16(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt16(Left)^ * PVariant(Right)^; end;
 procedure lpeUInt32_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt32(Dest)^ := PUInt32(Left)^ * PUInt8(Right)^; end;
 procedure lpeUInt32_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := Int64(PUInt32(Left)^) * Int64(PInt8(Right)^); end;
@@ -1814,7 +2040,9 @@ procedure lpeUInt32_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt32_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt32(Left)^ * PSingle(Right)^; end;
 procedure lpeUInt32_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt32(Left)^ * PDouble(Right)^; end;
 procedure lpeUInt32_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt32(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt32(Left)^ * PVariant(Right)^; end;
 procedure lpeInt32_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := PInt32(Left)^ * PUInt8(Right)^; end;
 procedure lpeInt32_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := PInt32(Left)^ * PInt8(Right)^; end;
@@ -1827,7 +2055,9 @@ procedure lpeInt32_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt32_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt32(Left)^ * PSingle(Right)^; end;
 procedure lpeInt32_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt32(Left)^ * PDouble(Right)^; end;
 procedure lpeInt32_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt32(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt32(Left)^ * PVariant(Right)^; end;
 procedure lpeUInt64_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt64(Dest)^ := PUInt64(Left)^ * PUInt8(Right)^; end;
 procedure lpeUInt64_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt64(Dest)^ := PUInt64(Left)^ * PInt8(Right)^; end;
@@ -1840,7 +2070,9 @@ procedure lpeUInt64_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt64_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt64(Left)^ * PSingle(Right)^; end;
 procedure lpeUInt64_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt64(Left)^ * PDouble(Right)^; end;
 procedure lpeUInt64_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt64(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt64(Left)^ * PVariant(Right)^; end;
 procedure lpeInt64_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := PInt64(Left)^ * PUInt8(Right)^; end;
 procedure lpeInt64_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := PInt64(Left)^ * PInt8(Right)^; end;
@@ -1853,7 +2085,9 @@ procedure lpeInt64_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt64_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt64(Left)^ * PSingle(Right)^; end;
 procedure lpeInt64_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt64(Left)^ * PDouble(Right)^; end;
 procedure lpeInt64_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt64(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt64(Left)^ * PVariant(Right)^; end;
 procedure lpeSingle_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ * PUInt8(Right)^; end;
 procedure lpeSingle_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ * PInt8(Right)^; end;
@@ -1866,7 +2100,9 @@ procedure lpeSingle_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeSingle_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ * PSingle(Right)^; end;
 procedure lpeSingle_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PSingle(Left)^ * PDouble(Right)^; end;
 procedure lpeSingle_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PSingle(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PSingle(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PSingle(Left)^ * PVariant(Right)^; end;
 procedure lpeDouble_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ * PUInt8(Right)^; end;
 procedure lpeDouble_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ * PInt8(Right)^; end;
@@ -1879,7 +2115,9 @@ procedure lpeDouble_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeDouble_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ * PSingle(Right)^; end;
 procedure lpeDouble_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ * PDouble(Right)^; end;
 procedure lpeDouble_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PDouble(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PDouble(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PDouble(Left)^ * PVariant(Right)^; end;
 procedure lpeCurrency_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ * PUInt8(Right)^; end;
 procedure lpeCurrency_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ * PInt8(Right)^; end;
@@ -1892,8 +2130,11 @@ procedure lpeCurrency_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeCurrency_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ * PSingle(Right)^; end;
 procedure lpeCurrency_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ * PDouble(Right)^; end;
 procedure lpeCurrency_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PCurrency(Left)^ * PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ * PUInt8(Right)^; end;
 procedure lpeExtended_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ * PInt8(Right)^; end;
 procedure lpeExtended_MUL_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ * PUInt16(Right)^; end;
@@ -1907,6 +2148,7 @@ procedure lpeExtended_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeExtended_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PExtended(Left)^ * PCurrency(Right)^; end;
 procedure lpeExtended_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ * PExtended(Right)^; end;
 procedure lpeExtended_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PExtended(Left)^ * PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_MUL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ * PUInt8(Right)^; end;
 procedure lpeVariant_MUL_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ * PInt8(Right)^; end;
 procedure lpeVariant_MUL_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ * PUInt16(Right)^; end;
@@ -1918,112 +2160,130 @@ procedure lpeVariant_MUL_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeVariant_MUL_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ * PSingle(Right)^; end;
 procedure lpeVariant_MUL_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ * PDouble(Right)^; end;
 procedure lpeVariant_MUL_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ * PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_MUL_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ * PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_MUL_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ * PVariant(Right)^; end;
 
 procedure lpeUInt8_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PUInt32(Dest)^   := Trunc(IntPower(UInt32(PUInt8(Left)^), UInt32(PUInt8(Right)^))); end;
-procedure lpeUInt8_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PExtended(Dest)^ := IntPower(Int32(PUInt8(Left)^), Int32(PInt8(Right)^)); end;
+procedure lpeUInt8_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PlpFloat(Dest)^ := IntPower(Int32(PUInt8(Left)^), Int32(PInt8(Right)^)); end;
 procedure lpeUInt8_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PUInt32(Dest)^   := Trunc(IntPower(UInt32(PUInt8(Left)^), UInt32(PUInt16(Right)^))); end;
-procedure lpeUInt8_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(Int32(PUInt8(Left)^), Int32(PInt16(Right)^)); end;
+procedure lpeUInt8_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(Int32(PUInt8(Left)^), Int32(PInt16(Right)^)); end;
 procedure lpeUInt8_POW_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PUInt32(Dest)^   := Trunc(IntPower(UInt32(PUInt8(Left)^), UInt32(PUInt32(Right)^))); end;
-procedure lpeUInt8_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(Int32(PUInt8(Left)^), Int32(PInt32(Right)^)); end;
+procedure lpeUInt8_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(Int32(PUInt8(Left)^), Int32(PInt32(Right)^)); end;
 procedure lpeUInt8_POW_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PUInt64(Dest)^   := Trunc(IntPower(UInt64(PUInt8(Left)^), UInt64(PUInt64(Right)^))); end;
-procedure lpeUInt8_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(Int64(PUInt8(Left)^), Int64(PInt64(Right)^)); end;
+procedure lpeUInt8_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(Int64(PUInt8(Left)^), Int64(PInt64(Right)^)); end;
 procedure lpeUInt8_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PSingle(Dest)^   := Power(PUInt8(Left)^, PSingle(Right)^); end;
 procedure lpeUInt8_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PDouble(Dest)^   := Power(PUInt8(Left)^, PDouble(Right)^); end;
 procedure lpeUInt8_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PCurrency(Dest)^ := Power(PUInt8(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PExtended(Dest)^ := Power(PUInt8(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeUInt8_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PVariant(Dest)^  := Power(PUInt8(Left)^, PVariant(Right)^); end;
 procedure lpeInt8_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PInt32(Dest)^    := Trunc(IntPower(Int32(PInt8(Left)^), Int32(PUInt8(Right)^))); end;
-procedure lpeInt8_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}       begin PExtended(Dest)^ := IntPower(Int32(PInt8(Left)^), Int32(PInt8(Right)^)); end;
+procedure lpeInt8_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}       begin PlpFloat(Dest)^ := IntPower(Int32(PInt8(Left)^), Int32(PInt8(Right)^)); end;
 procedure lpeInt8_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PInt32(Dest)^    := Trunc(IntPower(Int32(PInt8(Left)^), Int32(PUInt16(Right)^))); end;
-procedure lpeInt8_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PExtended(Dest)^ := IntPower(Int32(PInt8(Left)^), Int32(PInt16(Right)^)); end;
+procedure lpeInt8_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PlpFloat(Dest)^ := IntPower(Int32(PInt8(Left)^), Int32(PInt16(Right)^)); end;
 procedure lpeInt8_POW_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PInt64(Dest)^    := Trunc(IntPower(Int64(PInt8(Left)^), Int64(PUInt32(Right)^))); end;
-procedure lpeInt8_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PExtended(Dest)^ := IntPower(Int32(PInt8(Left)^), Int32(PInt32(Right)^)); end;
+procedure lpeInt8_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PlpFloat(Dest)^ := IntPower(Int32(PInt8(Left)^), Int32(PInt32(Right)^)); end;
 procedure lpeInt8_POW_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PUInt64(Dest)^   := Trunc(IntPower(UInt64(PInt8(Left)^), UInt64(PUInt64(Right)^))); end;
-procedure lpeInt8_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PExtended(Dest)^ := IntPower(Int64(PInt8(Left)^), Int64(PInt64(Right)^)); end;
+procedure lpeInt8_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PlpFloat(Dest)^ := IntPower(Int64(PInt8(Left)^), Int64(PInt64(Right)^)); end;
 procedure lpeInt8_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PSingle(Dest)^   := Power(PInt8(Left)^, PSingle(Right)^); end;
 procedure lpeInt8_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PDouble(Dest)^   := Power(PInt8(Left)^, PDouble(Right)^); end;
 procedure lpeInt8_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PCurrency(Dest)^ := Power(PInt8(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PExtended(Dest)^ := Power(PInt8(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeInt8_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PVariant(Dest)^  := Power(PInt8(Left)^, PVariant(Right)^); end;
 procedure lpeUInt16_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PUInt32(Dest)^   := Trunc(IntPower(UInt32(PUInt16(Left)^), UInt32(PUInt8(Right)^))); end;
-procedure lpeUInt16_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(Int32(PUInt16(Left)^), Int32(PInt8(Right)^)); end;
+procedure lpeUInt16_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(Int32(PUInt16(Left)^), Int32(PInt8(Right)^)); end;
 procedure lpeUInt16_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PUInt32(Dest)^   := Trunc(IntPower(UInt32(PUInt16(Left)^), UInt32(PUInt16(Right)^))); end;
-procedure lpeUInt16_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := IntPower(Int32(PUInt16(Left)^), Int32(PInt16(Right)^)); end;
+procedure lpeUInt16_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PlpFloat(Dest)^ := IntPower(Int32(PUInt16(Left)^), Int32(PInt16(Right)^)); end;
 procedure lpeUInt16_POW_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PUInt32(Dest)^   := Trunc(IntPower(UInt32(PUInt16(Left)^), UInt32(PUInt32(Right)^))); end;
-procedure lpeUInt16_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := IntPower(Int32(PUInt16(Left)^), Int32(PInt32(Right)^)); end;
+procedure lpeUInt16_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PlpFloat(Dest)^ := IntPower(Int32(PUInt16(Left)^), Int32(PInt32(Right)^)); end;
 procedure lpeUInt16_POW_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PUInt64(Dest)^   := Trunc(IntPower(UInt64(PUInt16(Left)^), UInt64(PUInt64(Right)^))); end;
-procedure lpeUInt16_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := IntPower(Int64(PUInt16(Left)^), Int64(PInt64(Right)^)); end;
+procedure lpeUInt16_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PlpFloat(Dest)^ := IntPower(Int64(PUInt16(Left)^), Int64(PInt64(Right)^)); end;
 procedure lpeUInt16_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PSingle(Dest)^   := Power(PUInt16(Left)^, PSingle(Right)^); end;
 procedure lpeUInt16_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PDouble(Dest)^   := Power(PUInt16(Left)^, PDouble(Right)^); end;
 procedure lpeUInt16_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := Power(PUInt16(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := Power(PUInt16(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeUInt16_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PVariant(Dest)^  := Power(PUInt16(Left)^, PVariant(Right)^); end;
 procedure lpeInt16_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PInt32(Dest)^    := Trunc(IntPower(Int32(PInt16(Left)^), Int32(PUInt8(Right)^))); end;
-procedure lpeInt16_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PExtended(Dest)^ := IntPower(Int32(PInt16(Left)^), Int32(PInt8(Right)^)); end;
+procedure lpeInt16_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PlpFloat(Dest)^ := IntPower(Int32(PInt16(Left)^), Int32(PInt8(Right)^)); end;
 procedure lpeInt16_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PInt32(Dest)^    := Trunc(IntPower(Int32(PInt16(Left)^), Int32(PUInt16(Right)^))); end;
-procedure lpeInt16_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(Int32(PInt16(Left)^), Int32(PInt16(Right)^)); end;
+procedure lpeInt16_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(Int32(PInt16(Left)^), Int32(PInt16(Right)^)); end;
 procedure lpeInt16_POW_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PInt64(Dest)^    := Trunc(IntPower(Int64(PInt16(Left)^), Int64(PUInt32(Right)^))); end;
-procedure lpeInt16_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(Int32(PInt16(Left)^), Int32(PInt32(Right)^)); end;
+procedure lpeInt16_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(Int32(PInt16(Left)^), Int32(PInt32(Right)^)); end;
 procedure lpeInt16_POW_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PUInt64(Dest)^   := Trunc(IntPower(UInt64(PInt16(Left)^), UInt64(PUInt64(Right)^))); end;
-procedure lpeInt16_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(Int64(PInt16(Left)^), Int64(PInt64(Right)^)); end;
+procedure lpeInt16_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(Int64(PInt16(Left)^), Int64(PInt64(Right)^)); end;
 procedure lpeInt16_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PSingle(Dest)^   := Power(PInt16(Left)^, PSingle(Right)^); end;
 procedure lpeInt16_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PDouble(Dest)^   := Power(PInt16(Left)^, PDouble(Right)^); end;
 procedure lpeInt16_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PCurrency(Dest)^ := Power(PInt16(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PExtended(Dest)^ := Power(PInt16(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeInt16_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PVariant(Dest)^  := Power(PInt16(Left)^, PVariant(Right)^); end;
 procedure lpeUInt32_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PUInt32(Dest)^   := Trunc(IntPower(PUInt32(Left)^, PUInt8(Right)^)); end;
-procedure lpeUInt32_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(Int64(PUInt32(Left)^), Int64(PInt8(Right)^)); end;
+procedure lpeUInt32_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(Int64(PUInt32(Left)^), Int64(PInt8(Right)^)); end;
 procedure lpeUInt32_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PUInt32(Dest)^   := Trunc(IntPower(PUInt32(Left)^, PUInt16(Right)^)); end;
-procedure lpeUInt32_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := IntPower(Int64(PUInt32(Left)^), Int64(PInt16(Right)^)); end;
+procedure lpeUInt32_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PlpFloat(Dest)^ := IntPower(Int64(PUInt32(Left)^), Int64(PInt16(Right)^)); end;
 procedure lpeUInt32_POW_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PUInt32(Dest)^   := Trunc(IntPower(PUInt32(Left)^, PUInt32(Right)^)); end;
-procedure lpeUInt32_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := IntPower(Int64(PUInt32(Left)^), Int64(PInt32(Right)^)); end;
+procedure lpeUInt32_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PlpFloat(Dest)^ := IntPower(Int64(PUInt32(Left)^), Int64(PInt32(Right)^)); end;
 procedure lpeUInt32_POW_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PUInt64(Dest)^   := Trunc(IntPower(UInt64(PUInt32(Left)^), PUInt64(Right)^)); end;
-procedure lpeUInt32_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := IntPower(Int64(PUInt32(Left)^), Int64(PInt64(Right)^)); end;
+procedure lpeUInt32_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PlpFloat(Dest)^ := IntPower(Int64(PUInt32(Left)^), Int64(PInt64(Right)^)); end;
 procedure lpeUInt32_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PSingle(Dest)^   := Power(PUInt32(Left)^, PSingle(Right)^); end;
 procedure lpeUInt32_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PDouble(Dest)^   := Power(PUInt32(Left)^, PDouble(Right)^); end;
 procedure lpeUInt32_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := Power(PUInt32(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := Power(PUInt32(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeUInt32_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PVariant(Dest)^  := Power(PUInt32(Left)^, PVariant(Right)^); end;
 procedure lpeInt32_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PInt32(Dest)^    := Trunc(IntPower(PInt32(Left)^, PUInt8(Right)^)); end;
-procedure lpeInt32_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PExtended(Dest)^ := IntPower(PInt32(Left)^, PInt8(Right)^); end;
+procedure lpeInt32_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PlpFloat(Dest)^ := IntPower(PInt32(Left)^, PInt8(Right)^); end;
 procedure lpeInt32_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PInt32(Dest)^    := Trunc(IntPower(PInt32(Left)^, PUInt16(Right)^)); end;
-procedure lpeInt32_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(PInt32(Left)^, PInt16(Right)^); end;
+procedure lpeInt32_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(PInt32(Left)^, PInt16(Right)^); end;
 procedure lpeInt32_POW_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PInt64(Dest)^    := Trunc(IntPower(Int64(PInt32(Left)^), Int64(PUInt32(Right)^))); end;
-procedure lpeInt32_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(PInt32(Left)^, PInt32(Right)^); end;
+procedure lpeInt32_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(PInt32(Left)^, PInt32(Right)^); end;
 procedure lpeInt32_POW_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PUInt64(Dest)^   := Trunc(IntPower(UInt64(PInt32(Left)^), PUInt64(Right)^)); end;
-procedure lpeInt32_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(Int64(PInt32(Left)^), PInt64(Right)^); end;
+procedure lpeInt32_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(Int64(PInt32(Left)^), PInt64(Right)^); end;
 procedure lpeInt32_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PSingle(Dest)^   := Power(PInt32(Left)^, PSingle(Right)^); end;
 procedure lpeInt32_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PDouble(Dest)^   := Power(PInt32(Left)^, PDouble(Right)^); end;
 procedure lpeInt32_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PCurrency(Dest)^ := Power(PInt32(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PExtended(Dest)^ := Power(PInt32(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeInt32_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PVariant(Dest)^  := Power(PInt32(Left)^, PVariant(Right)^); end;
 procedure lpeUInt64_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PUInt64(Dest)^   := Trunc(IntPower(PUInt64(Left)^, PUInt8(Right)^)); end;
-procedure lpeUInt64_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(PUInt64(Left)^, PInt8(Right)^); end;
+procedure lpeUInt64_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(PUInt64(Left)^, PInt8(Right)^); end;
 procedure lpeUInt64_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PUInt64(Dest)^   := Trunc(IntPower(PUInt64(Left)^, PUInt16(Right)^)); end;
-procedure lpeUInt64_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := IntPower(PUInt64(Left)^, PInt16(Right)^); end;
+procedure lpeUInt64_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PlpFloat(Dest)^ := IntPower(PUInt64(Left)^, PInt16(Right)^); end;
 procedure lpeUInt64_POW_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PUInt64(Dest)^   := Trunc(IntPower(PUInt64(Left)^, PUInt32(Right)^)); end;
-procedure lpeUInt64_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := IntPower(PUInt64(Left)^, PInt32(Right)^); end;
+procedure lpeUInt64_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PlpFloat(Dest)^ := IntPower(PUInt64(Left)^, PInt32(Right)^); end;
 procedure lpeUInt64_POW_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PUInt64(Dest)^   := Trunc(IntPower(PUInt64(Left)^, PUInt64(Right)^)); end;
-procedure lpeUInt64_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := IntPower(PUInt64(Left)^, PInt64(Right)^); end;
+procedure lpeUInt64_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PlpFloat(Dest)^ := IntPower(PUInt64(Left)^, PInt64(Right)^); end;
 procedure lpeUInt64_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PSingle(Dest)^   := Power(PUInt64(Left)^, PSingle(Right)^); end;
 procedure lpeUInt64_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PDouble(Dest)^   := Power(PUInt64(Left)^, PDouble(Right)^); end;
 procedure lpeUInt64_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := Power(PUInt64(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := Power(PUInt64(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeUInt64_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PVariant(Dest)^  := Power(PUInt64(Left)^, PVariant(Right)^); end;
 procedure lpeInt64_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PInt64(Dest)^    := Trunc(IntPower(PInt64(Left)^, PUInt8(Right)^)); end;
-procedure lpeInt64_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PExtended(Dest)^ := IntPower(PInt64(Left)^, PInt8(Right)^); end;
+procedure lpeInt64_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}      begin PlpFloat(Dest)^ := IntPower(PInt64(Left)^, PInt8(Right)^); end;
 procedure lpeInt64_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PInt64(Dest)^    := Trunc(IntPower(PInt64(Left)^, PUInt16(Right)^)); end;
-procedure lpeInt64_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(PInt64(Left)^, PInt16(Right)^); end;
+procedure lpeInt64_POW_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(PInt64(Left)^, PInt16(Right)^); end;
 procedure lpeInt64_POW_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PInt64(Dest)^    := Trunc(IntPower(PInt64(Left)^, PUInt32(Right)^)); end;
-procedure lpeInt64_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(PInt64(Left)^, PInt32(Right)^); end;
+procedure lpeInt64_POW_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(PInt64(Left)^, PInt32(Right)^); end;
 procedure lpeInt64_POW_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PInt64(Dest)^    := Trunc(IntPower(PInt64(Left)^, PUInt64(Right)^)); end;
-procedure lpeInt64_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PExtended(Dest)^ := IntPower(PInt64(Left)^, PInt64(Right)^); end;
+procedure lpeInt64_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PlpFloat(Dest)^ := IntPower(PInt64(Left)^, PInt64(Right)^); end;
 procedure lpeInt64_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PSingle(Dest)^   := Power(PInt64(Left)^, PSingle(Right)^); end;
 procedure lpeInt64_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PDouble(Dest)^   := Power(PInt64(Left)^, PDouble(Right)^); end;
 procedure lpeInt64_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PCurrency(Dest)^ := Power(PInt64(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PExtended(Dest)^ := Power(PInt64(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeInt64_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PVariant(Dest)^  := Power(PInt64(Left)^, PVariant(Right)^); end;
 procedure lpeSingle_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PSingle(Dest)^ := Power(PSingle(Left)^, PUInt8(Right)^); end;
 procedure lpeSingle_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PSingle(Dest)^ := Power(PSingle(Left)^, PInt8(Right)^); end;
@@ -2036,7 +2296,9 @@ procedure lpeSingle_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeSingle_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PSingle(Dest)^ := Power(PSingle(Left)^, PSingle(Right)^); end;
 procedure lpeSingle_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PDouble(Dest)^ := Power(PSingle(Left)^, PDouble(Right)^); end;
 procedure lpeSingle_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := Power(PSingle(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := Power(PSingle(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeSingle_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PVariant(Dest)^  := Power(PSingle(Left)^, PVariant(Right)^); end;
 procedure lpeDouble_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PDouble(Dest)^ := Power(PDouble(Left)^, PUInt8(Right)^); end;
 procedure lpeDouble_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PDouble(Dest)^ := Power(PDouble(Left)^, PInt8(Right)^); end;
@@ -2049,7 +2311,9 @@ procedure lpeDouble_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeDouble_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PDouble(Dest)^ := Power(PDouble(Left)^, PSingle(Right)^); end;
 procedure lpeDouble_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PDouble(Dest)^ := Power(PDouble(Left)^, PDouble(Right)^); end;
 procedure lpeDouble_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PCurrency(Dest)^ := Power(PDouble(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PExtended(Dest)^ := Power(PDouble(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeDouble_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PVariant(Dest)^  := Power(PDouble(Left)^, PVariant(Right)^); end;
 procedure lpeCurrency_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PCurrency(Dest)^ := Power(PCurrency(Left)^, PUInt8(Right)^); end;
 procedure lpeCurrency_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PCurrency(Dest)^ := Power(PCurrency(Left)^, PInt8(Right)^); end;
@@ -2062,8 +2326,11 @@ procedure lpeCurrency_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeCurrency_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PCurrency(Dest)^ := Power(PCurrency(Left)^, PSingle(Right)^); end;
 procedure lpeCurrency_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PCurrency(Dest)^ := Power(PCurrency(Left)^, PDouble(Right)^); end;
 procedure lpeCurrency_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}begin PCurrency(Dest)^ := Power(PCurrency(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}begin PCurrency(Dest)^ := Power(PCurrency(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeCurrency_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^  := Power(PCurrency(Left)^, PVariant(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PExtended(Dest)^ := Power(PExtended(Left)^, PUInt8(Right)^); end;
 procedure lpeExtended_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PExtended(Dest)^ := Power(PExtended(Left)^, PInt8(Right)^); end;
 procedure lpeExtended_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PExtended(Dest)^ := Power(PExtended(Left)^, PUInt16(Right)^); end;
@@ -2077,6 +2344,7 @@ procedure lpeExtended_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeExtended_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}begin PCurrency(Dest)^ := Power(PExtended(Left)^, PCurrency(Right)^); end;
 procedure lpeExtended_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}begin PExtended(Dest)^ := Power(PExtended(Left)^, PExtended(Right)^); end;
 procedure lpeExtended_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := Power(PExtended(Left)^, PVariant(Right)^); end;
+{$ENDIF}
 procedure lpeVariant_POW_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}    begin PVariant(Dest)^ := Power(PVariant(Left)^, PUInt8(Right)^); end;
 procedure lpeVariant_POW_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}     begin PVariant(Dest)^ := Power(PVariant(Left)^, PInt8(Right)^); end;
 procedure lpeVariant_POW_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PVariant(Dest)^ := Power(PVariant(Left)^, PUInt16(Right)^); end;
@@ -2088,7 +2356,9 @@ procedure lpeVariant_POW_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeVariant_POW_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PVariant(Dest)^ := Power(PVariant(Left)^, PSingle(Right)^); end;
 procedure lpeVariant_POW_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}   begin PVariant(Dest)^ := Power(PVariant(Left)^, PDouble(Right)^); end;
 procedure lpeVariant_POW_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := Power(PVariant(Left)^, PCurrency(Right)^); end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_POW_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := Power(PVariant(Left)^, PExtended(Right)^); end;
+{$ENDIF}
 procedure lpeVariant_POW_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}  begin PVariant(Dest)^ := Power(PVariant(Left)^, PVariant(Right)^); end;
 
 procedure lpeUInt8_NOT(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt8(Dest)^ := not PUInt8(Left)^; end;
@@ -2194,7 +2464,9 @@ procedure lpeUInt8_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeUInt8_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt8(Left)^ + PSingle(Right)^; end;
 procedure lpeUInt8_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt8(Left)^ + PDouble(Right)^; end;
 procedure lpeUInt8_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt8(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt8_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt8(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt8_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt8(Left)^ + PVariant(Right)^; end;
 procedure lpeInt8_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt8(Left)^) + Int32(PUInt8(Right)^); end;
 procedure lpeInt8_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt8(Left)^) + Int32(PInt8(Right)^); end;
@@ -2207,7 +2479,9 @@ procedure lpeInt8_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeInt8_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt8(Left)^ + PSingle(Right)^; end;
 procedure lpeInt8_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt8(Left)^ + PDouble(Right)^; end;
 procedure lpeInt8_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt8(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt8_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt8(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt8_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt8(Left)^ + PVariant(Right)^; end;
 procedure lpeUInt16_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt32(Dest)^ := UInt32(PUInt16(Left)^) + UInt32(PUInt8(Right)^); end;
 procedure lpeUInt16_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PUInt16(Left)^) + Int32(PInt8(Right)^); end;
@@ -2220,7 +2494,9 @@ procedure lpeUInt16_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt16_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt16(Left)^ + PSingle(Right)^; end;
 procedure lpeUInt16_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt16(Left)^ + PDouble(Right)^; end;
 procedure lpeUInt16_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt16(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt16_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt16(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt16_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt16(Left)^ + PVariant(Right)^; end;
 procedure lpeInt16_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt16(Left)^) + Int32(PUInt8(Right)^); end;
 procedure lpeInt16_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := Int32(PInt16(Left)^) + Int32(PInt8(Right)^); end;
@@ -2233,7 +2509,9 @@ procedure lpeInt16_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt16_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt16(Left)^ + PSingle(Right)^; end;
 procedure lpeInt16_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt16(Left)^ + PDouble(Right)^; end;
 procedure lpeInt16_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt16(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt16_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt16(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt16_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt16(Left)^ + PVariant(Right)^; end;
 procedure lpeUInt32_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt32(Dest)^ := PUInt32(Left)^ + PUInt8(Right)^; end;
 procedure lpeUInt32_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := Int64(PUInt32(Left)^) + Int64(PInt8(Right)^); end;
@@ -2246,7 +2524,9 @@ procedure lpeUInt32_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt32_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt32(Left)^ + PSingle(Right)^; end;
 procedure lpeUInt32_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt32(Left)^ + PDouble(Right)^; end;
 procedure lpeUInt32_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt32(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt32_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt32(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt32_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt32(Left)^ + PVariant(Right)^; end;
 procedure lpeInt32_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := PInt32(Left)^ + PUInt8(Right)^; end;
 procedure lpeInt32_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt32(Dest)^ := PInt32(Left)^ + PInt8(Right)^; end;
@@ -2259,7 +2539,9 @@ procedure lpeInt32_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt32_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt32(Left)^ + PSingle(Right)^; end;
 procedure lpeInt32_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt32(Left)^ + PDouble(Right)^; end;
 procedure lpeInt32_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt32(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt32_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt32(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt32_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt32(Left)^ + PVariant(Right)^; end;
 procedure lpeUInt64_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt64(Dest)^ := PUInt64(Left)^ + PUInt8(Right)^; end;
 procedure lpeUInt64_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt64(Dest)^ := PUInt64(Left)^ + PInt8(Right)^; end;
@@ -2272,7 +2554,9 @@ procedure lpeUInt64_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeUInt64_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PUInt64(Left)^ + PSingle(Right)^; end;
 procedure lpeUInt64_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PUInt64(Left)^ + PDouble(Right)^; end;
 procedure lpeUInt64_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PUInt64(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeUInt64_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PUInt64(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeUInt64_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUInt64(Left)^ + PVariant(Right)^; end;
 procedure lpeInt64_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := PInt64(Left)^ + PUInt8(Right)^; end;
 procedure lpeInt64_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PInt64(Dest)^ := PInt64(Left)^ + PInt8(Right)^; end;
@@ -2285,7 +2569,9 @@ procedure lpeInt64_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDE
 procedure lpeInt64_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PInt64(Left)^ + PSingle(Right)^; end;
 procedure lpeInt64_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PInt64(Left)^ + PDouble(Right)^; end;
 procedure lpeInt64_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PInt64(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeInt64_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PInt64(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeInt64_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PInt64(Left)^ + PVariant(Right)^; end;
 procedure lpeSingle_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ + PUInt8(Right)^; end;
 procedure lpeSingle_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ + PInt8(Right)^; end;
@@ -2298,7 +2584,9 @@ procedure lpeSingle_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeSingle_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := PSingle(Left)^ + PSingle(Right)^; end;
 procedure lpeSingle_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PSingle(Left)^ + PDouble(Right)^; end;
 procedure lpeSingle_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PSingle(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeSingle_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PSingle(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeSingle_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PSingle(Left)^ + PVariant(Right)^; end;
 procedure lpeDouble_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ + PUInt8(Right)^; end;
 procedure lpeDouble_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ + PInt8(Right)^; end;
@@ -2311,7 +2599,9 @@ procedure lpeDouble_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CD
 procedure lpeDouble_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ + PSingle(Right)^; end;
 procedure lpeDouble_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := PDouble(Left)^ + PDouble(Right)^; end;
 procedure lpeDouble_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PDouble(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeDouble_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PDouble(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeDouble_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PDouble(Left)^ + PVariant(Right)^; end;
 procedure lpeCurrency_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ + PUInt8(Right)^; end;
 procedure lpeCurrency_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ + PInt8(Right)^; end;
@@ -2324,8 +2614,11 @@ procedure lpeCurrency_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpeCurrency_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ + PSingle(Right)^; end;
 procedure lpeCurrency_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ + PDouble(Right)^; end;
 procedure lpeCurrency_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeCurrency_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PCurrency(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeCurrency_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PCurrency(Left)^ + PVariant(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ + PUInt8(Right)^; end;
 procedure lpeExtended_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ + PInt8(Right)^; end;
 procedure lpeExtended_ADD_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ + PUInt16(Right)^; end;
@@ -2339,6 +2632,7 @@ procedure lpeExtended_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape
 procedure lpeExtended_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := PExtended(Left)^ + PCurrency(Right)^; end;
 procedure lpeExtended_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := PExtended(Left)^ + PExtended(Right)^; end;
 procedure lpeExtended_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PExtended(Left)^ + PVariant(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ + PUInt8(Right)^; end;
 procedure lpeVariant_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ + PInt8(Right)^; end;
 procedure lpeVariant_ADD_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ + PUInt16(Right)^; end;
@@ -2350,7 +2644,9 @@ procedure lpeVariant_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_C
 procedure lpeVariant_ADD_Single(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ + PSingle(Right)^; end;
 procedure lpeVariant_ADD_Double(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ + PDouble(Right)^; end;
 procedure lpeVariant_ADD_Currency(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ + PCurrency(Right)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeVariant_ADD_Extended(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ + PExtended(Right)^; end;
+{$ENDIF}
 procedure lpeVariant_ADD_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PVariant(Left)^ + PVariant(Right)^; end;
 
 procedure lpeUInt8_SHL_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PUInt32(Dest)^ := UInt32(PUInt8(Left)^) shl UInt32(PUInt8(Right)^); end;
@@ -2610,7 +2906,9 @@ procedure lpeInt64_UMIN(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cd
 procedure lpeSingle_UMIN(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PSingle(Dest)^ := -PSingle(Left)^; end;
 procedure lpeDouble_UMIN(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PDouble(Dest)^ := -PDouble(Left)^; end;
 procedure lpeCurrency_UMIN(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PCurrency(Dest)^ := -PCurrency(Left)^; end;
+{$IFNDEF Lape_NoExtended}
 procedure lpeExtended_UMIN(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PExtended(Dest)^ := -PExtended(Left)^; end;
+{$ENDIF}
 procedure lpeVariant_UMIN(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := -PVariant(Left)^; end;
 
 //Variant
@@ -3179,3 +3477,4 @@ procedure lpeLSet_ASGN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDEC
 procedure lpeLSet_ADD_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + PLapeLargeSet(Right)^; end;
 procedure lpeLSet_SUB_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ - PLapeLargeSet(Right)^; end;
 procedure lpeLSet_MUL_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ * PLapeLargeSet(Right)^; end;
+

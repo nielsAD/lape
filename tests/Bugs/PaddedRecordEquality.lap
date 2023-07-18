@@ -4,7 +4,7 @@
 type
   TTest = {packed} record // packed fixes it
     i: Int32;
-    e: Extended;
+    e: {$IFDECL Extended}Extended{$ELSE}Double{$ENDIF};
   end;
 
   TRec = record
