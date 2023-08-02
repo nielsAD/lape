@@ -2491,6 +2491,17 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
   begin
     DocPos := Tokenizer.DocPos;
 
+    if (Tokenizer.Tok = tk_kw_Strict) then
+    begin
+      Expect(tk_Identifier);
+      PointerType := TLapeType(getDeclarationNoWith(Tokenizer.TokString));
+      if (not (PointerType is TLapeType_Pointer)) or TLapeType_Pointer(PointerType).HasType then
+        LapeException(lpeImpossible, Tokenizer.DocPos);
+
+      Result := addManagedType(TLapeType_StrictPointer.Create(Self, nil, False, '', @DocPos));
+      Exit;
+    end;
+
     Expect([tk_kw_Const, tk_Identifier], True, False);
 
     if (Tokenizer.Tok = tk_kw_Const) then
@@ -2703,7 +2714,7 @@ begin
           Expect(tk_kw_Record, True, False);
           ParseRecord(True);
         end;
-      tk_sym_Caret: ParsePointer();
+      tk_sym_Caret, tk_kw_Strict: ParsePointer();
       tk_kw_Enum, tk_sym_ParenthesisOpen: ParseEnum();
       tk_kw_Function, tk_kw_Procedure, tk_kw_Operator,
       tk_kw_External, {tk_kw_Export,} tk_kw_Private: ParseMethodType();

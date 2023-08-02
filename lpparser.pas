@@ -63,6 +63,7 @@ type
     tk_kw_Repeat,
     tk_kw_Set,
     tk_kw_Static,
+    tk_kw_Strict,
     tk_kw_Then,
     tk_kw_To,
     tk_kw_Try,
@@ -254,7 +255,7 @@ const
   ParserToken_Symbols = [tk_sym_BracketClose..tk_sym_SemiColon];
   ParserToken_Types = [tk_typ_Float..tk_typ_Char];
 
-  Lape_Keywords: array[0..54 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
+  Lape_Keywords: array[0..55 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
       (Keyword: 'AND';           Token: tk_op_AND),
       (Keyword: 'DIV';           Token: tk_op_DIV),
       (Keyword: 'IN';            Token: tk_op_IN),
@@ -304,6 +305,7 @@ const
       (Keyword: 'REPEAT';        Token: tk_kw_Repeat),
       (Keyword: 'SET';           Token: tk_kw_Set),
       (Keyword: 'STATIC';        Token: tk_kw_Static),
+      (Keyword: 'STRICT';        Token: tk_kw_Strict),
       (Keyword: 'THEN';          Token: tk_kw_Then),
       (Keyword: 'TO';            Token: tk_kw_To),
       (Keyword: 'TRY';           Token: tk_kw_Try),

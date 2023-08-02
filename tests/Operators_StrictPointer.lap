@@ -1,0 +1,12 @@
+// just a compile test
+type
+  TTest = strict Pointer;
+
+var
+  p1: TTest;
+  p2: TTest;
+  p3: Pointer;
+begin
+  p1 := p2 := TTest(123); // should work
+  p1 := p3; // this shouldn't
+end;

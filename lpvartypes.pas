@@ -352,6 +352,13 @@ type
     property PConst: Boolean read FPConst;
   end;
 
+  TLapeType_StrictPointer = class(TLapeType_Pointer)
+  protected
+    function getAsString: String; override;
+  public
+    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+  end;
+
   TLapeType_Label = class(TLapeType_Pointer)
   public
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
@@ -2438,6 +2445,19 @@ begin
       Result.Writeable := ((op = op_Deref) and (not PConst)) or Result.Writeable;
     end;
   end;
+end;
+
+function TLapeType_StrictPointer.getAsString: String;
+begin
+  Result := 'strict Pointer(' + Name + ')';
+end;
+
+function TLapeType_StrictPointer.EvalRes(Op: EOperator; Right: TLapeType; Flags: ELapeEvalFlags): TLapeType;
+begin
+  if (op = op_Assign) and (Right <> Self) then
+    Result := nil
+  else
+    Result := inherited EvalRes(Op, Right, Flags);
 end;
 
 constructor TLapeType_Label.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);

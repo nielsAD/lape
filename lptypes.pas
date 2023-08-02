@@ -430,7 +430,7 @@ type
     property Sorted: Boolean read getSorted write setSorted;
   end;
 
-  // "Perfect Hashing"
+  // "Perfect Hashing" - Each entry does not share a bucket.
   {$IFDEF FPC}generic{$ENDIF} TLapeUniqueStringDictionary<_T> = class(TLapeBaseClass)
   protected type
     TBucket = record Key: lpString; Value: _T; end;
