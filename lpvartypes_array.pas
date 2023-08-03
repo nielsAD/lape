@@ -384,6 +384,7 @@ var
   Idx: SizeInt;
   Lo, Hi: TLapeGlobalVar;
   Check, Len: TLapeTree_Invoke;
+  TempVar, DestVar, ArrayPtrVar: TResVar;
 begin
   if (not AIndex.HasType()) then
     LapeException(lpeInvalidEvaluation)
@@ -426,29 +427,58 @@ begin
   if (not (lefRangeCheck in Flags)) then
     Exit;
 
-  AIndex.VarType := FCompiler.getBaseType(AIndex.VarType.BaseIntType);
-  if (AIndex.VarPos.MemPos = mpStack) then
+  if (BaseType = ltDynArray) then // Use `ocDynArrayRangeCheck` opcode, much faster
   begin
-    AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
-    FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset, @_DocPos);
-  end;
+    AIndex.VarType := FCompiler.getBaseType(AIndex.VarType.BaseIntType);
+    if (AIndex.VarPos.MemPos = mpStack) then
+    begin
+      AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
+      FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset, @_DocPos);
+    end;
 
-  Check := TLapeTree_Invoke.Create('_RangeCheck', FCompiler, Pos) ;
-  with Check do
-  try
-    addParam(TLapeTree_ResVar.Create(AIndex.IncLock(), Check));
+    TempVar := NullResVar;
 
-    Len := TLapeTree_InternalMethod_Low.Create(FCompiler, Pos);
-    Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Check));
-    addParam(TLapeTree_ExprBase(Len.FoldConstants()));
+    DestVar := NullResVar;
+    DestVar.VarPos.MemPos := mpStack;
+    DestVar.VarType := FCompiler.getBaseType(ltPointer);
 
-    Len := TLapeTree_InternalMethod_High.Create(FCompiler, Pos);
-    Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Check));
-    addParam(TLapeTree_ExprBase(Len.FoldConstants()));
+    ArrayPtrVar := AVar;
+    ArrayPtrVar.VarType := FCompiler.getBaseType(ltPointer);
 
-    Compile(Offset).Spill(1);
-  finally
-    Free();
+    DestVar.VarType.Eval(op_Assign, TempVar, DestVar, ArrayPtrVar, [], Offset, @_DocPos);
+
+    DestVar := NullResVar;
+    DestVar.VarPos.MemPos := mpStack;
+    DestVar.VarType := FCompiler.getBaseType(ltSizeInt);
+    DestVar.VarType.Eval(op_Assign, TempVar, DestVar, AIndex, [], Offset, @_DocPos);
+
+    FCompiler.Emitter._DynArrayRangeCheck(Offset, @_DocPos);
+  end else
+  begin
+    AIndex.VarType := FCompiler.getBaseType(AIndex.VarType.BaseIntType);
+    if (AIndex.VarPos.MemPos = mpStack) then
+    begin
+      AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
+      FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset, @_DocPos);
+    end;
+
+    Check := TLapeTree_Invoke.Create('_RangeCheck', FCompiler, Pos);
+    with Check do
+    try
+      addParam(TLapeTree_ResVar.Create(AIndex.IncLock(), Check));
+
+      Len := TLapeTree_InternalMethod_Low.Create(FCompiler, Pos);
+      Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Check));
+      addParam(TLapeTree_ExprBase(Len.FoldConstants()));
+
+      Len := TLapeTree_InternalMethod_High.Create(FCompiler, Pos);
+      Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Check));
+      addParam(TLapeTree_ExprBase(Len.FoldConstants()));
+
+      Compile(Offset).Spill(1);
+    finally
+      Free();
+    end;
   end;
 end;
 

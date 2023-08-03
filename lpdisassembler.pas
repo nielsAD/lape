@@ -114,6 +114,13 @@ var
     Inc(Code, ocSize);
   end;
 
+  procedure DoDynArrayRangeCheck; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  begin
+    _WriteLn('DynArrayRangeCheck');
+    _WriteLn('IncStack %d', [SizeOf(Pointer) + SizeOf(SizeInt)]);
+    Inc(Code, ocSize);
+  end;
+
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('InitStackLen %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);

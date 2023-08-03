@@ -16,6 +16,7 @@ case opCodeP(Code)^ of
   ocGetCallerAddress: DoGetCallerAddress();
   ocGetScriptMethodName: DoGetScriptMethodName();
   ocDumpCallStack: DoDumpCallStack();
+  ocDynArrayRangeCheck: DoDynArrayRangeCheck();
   ocInitStackLen: DoInitStackLen();
   ocInitStack: DoInitStack();
   ocGrowStack: DoGrowStack();

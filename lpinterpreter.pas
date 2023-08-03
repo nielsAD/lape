@@ -422,6 +422,26 @@ var
     Inc(Code, ocSize);
   end;
 
+  procedure DoDynArrayRangeCheck; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  var
+    Arr: Pointer;
+    Len, Index: SizeInt;
+  begin
+    Dec(StackPos, SizeOf(Pointer) + SizeOf(SizeInt));
+    Inc(Code, ocSize);
+
+    Arr := PPointer(@Stack[StackPos])^;
+    Index := PSizeInt(@Stack[StackPos + SizeOf(SizeInt)])^;
+
+    if Assigned(Arr) then
+      Len := PSizeInt(Arr)[-1] {$IFDEF FPC}+1{$ENDIF}
+    else
+      Len := 0;
+
+    if (Index < 0) or (Index >= Len) then
+      LapeExceptionFmt(lpeIndexOutOfRange, [Index, 0, Len - 1]);
+  end;
+
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
     InitStackSize: TStackOffset;
