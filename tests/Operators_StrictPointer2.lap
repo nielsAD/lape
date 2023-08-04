@@ -1,0 +1,48 @@
+{$assertions on}
+
+type
+  TObject = strict Pointer;
+  TCustomForm = strict TObject;
+  TForm = strict TCustomForm;
+
+function TObject.a: String;
+begin
+  Result := 'TObject.a';
+end;
+
+function TCustomForm.b: String;
+begin
+  Result := 'TCustomForm.b';
+end;
+
+function TForm.a: String; override;
+begin
+  Result := 'TForm.a';
+end;
+
+function TForm.b: String; override;
+begin
+  Result := 'TForm.b';
+end;
+
+function TForm.c: String;
+begin
+  Result := 'TForm.c';
+end;
+
+function TForm.Create: TForm; static;
+begin
+  Result := TForm(Pointer(123));
+end;
+
+var
+  a: TObject;
+  b: TCustomForm;
+  c: TForm;
+
+begin
+  c := TForm.Create();
+  Assert(c.c()='TForm.c');
+  Assert(c.b()='TForm.b');
+  Assert(c.a()='TForm.a');
+end;

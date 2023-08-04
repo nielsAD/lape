@@ -62,6 +62,7 @@ const
   lpeExpectedArrayOfType = 'Array expected of type "%s"';
   lpeExpectedDynamicArray = 'Dynamic array expected';
   lpeExpectedNormalMethod = 'Normal method expected';
+  lpeExpectedPointerType = 'Pointer type expected';
   lpeExpectedOther = 'Found unexpected token "%s", expected "%s"';
   lpeExpressionExpected = 'Expression expected';
   lpeExpectedEnum = 'Enum expected';

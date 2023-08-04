@@ -2477,7 +2477,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       LapeException(lpeInvalidRange, Tokenizer.DocPos);
 
     try
-      Result := addManagedType(TLapeType_Set.Create(TLapeType_SubRange(SetType), Self, '', GetPDocPos));
+      Result := addManagedType(TLapeType_Set.Create(TLapeType_SubRange(SetType), Self, '', getPDocPos));
     except on E: lpException do
       LapeException(lpString(E.Message), Tokenizer.DocPos);
     end;
@@ -2495,10 +2495,14 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     begin
       Expect(tk_Identifier);
       PointerType := TLapeType(getDeclarationNoWith(Tokenizer.TokString));
-      if (not (PointerType is TLapeType_Pointer)) or TLapeType_Pointer(PointerType).HasType then
-        LapeException(lpeImpossible, Tokenizer.DocPos);
+      if not (PointerType is TLapeType_Pointer) then
+        LapeException(lpeExpectedPointerType, DocPos);
 
-      Result := addManagedType(TLapeType_StrictPointer.Create(Self, nil, False, '', @DocPos));
+      if (PointerType.ClassType = TLapeType_Pointer) then
+        Result := addManagedType(TLapeType_StrictPointer.Create(Self, nil, False, '', @DocPos))
+      else
+        Result := addManagedType(PointerType.CreateCopy(True));
+
       Exit;
     end;
 
@@ -2652,7 +2656,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
 
   procedure ParseDef;
   var
-    TypeExpr: TlapeTree_Base;
+    TypeExpr: TLapeTree_Base;
     Range: TLapeRange;
     RangeType: TLapeType;
   begin
