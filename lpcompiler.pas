@@ -964,6 +964,7 @@ begin
 
   addCompilerFuncs();
   addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System').isConstant := True;
+  addGlobalVar(addManagedType(TLapeType_NilPointer.Create(Self, nil, False)).NewGlobalVarP(), 'nil');
 
   addGlobalType(TLapeType_Label.Create(Self), '!label');
   addGlobalType(TLapeType_Pointer.Create(Self, nil, True), 'ConstPointer');
@@ -991,7 +992,7 @@ begin
     'const                  ' + LineEnding +
     '  True  = EvalBool(1); ' + LineEnding +
     '  False = EvalBool(0); ' + LineEnding +
-    '  nil   = Pointer(0);  ',
+    '',
     '!InitBaseDefinitions'
   );
 

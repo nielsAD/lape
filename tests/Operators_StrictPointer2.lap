@@ -30,9 +30,9 @@ begin
   Result := 'TForm.c';
 end;
 
-function TForm.Create: TForm; static;
+function TForm.Create(owner: TForm): TForm; static;
 begin
-  Result := TForm(Pointer(123));
+  Result := TForm(nil);
 end;
 
 var
@@ -41,7 +41,8 @@ var
   c: TForm;
 
 begin
-  c := TForm.Create();
+  c := TForm.Create(nil);
+  Assert(c=nil);
   Assert(c.c()='TForm.c');
   Assert(c.b()='TForm.b');
   Assert(c.a()='TForm.a');

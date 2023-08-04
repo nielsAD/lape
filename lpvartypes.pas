@@ -359,6 +359,8 @@ type
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
   end;
 
+  TLapeType_NilPointer = class(TLapeType_Pointer);
+
   TLapeType_Label = class(TLapeType_Pointer)
   public
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
@@ -2454,7 +2456,7 @@ end;
 
 function TLapeType_StrictPointer.EvalRes(Op: EOperator; Right: TLapeType; Flags: ELapeEvalFlags): TLapeType;
 begin
-  if (op = op_Assign) and (Right <> Self) then
+  if (not (Right is TLapeType_NilPointer)) and (op = op_Assign) and (Right <> Self) then
     Result := nil
   else
     Result := inherited EvalRes(Op, Right, Flags);
