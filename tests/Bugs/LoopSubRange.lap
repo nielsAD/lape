@@ -1,0 +1,25 @@
+type ERange = 0..64;
+type TSet = set of ERange;
+type EFoo = (aaa,bbb,ccc,zzz);
+
+var
+  s: TSet;
+  e: ERange;
+  b: Byte;
+  str: String;
+  foo: EFoo;
+begin
+  for foo in [aaa, ccc..zzz] do
+    WriteLn(foo);
+
+  s := [1..12, 55..56];
+  str := '';
+  for b in s do
+    Write(b, ' ');
+  WriteLn();
+
+  str := '';
+  for e in s do
+    Write(e, ' ');
+  WriteLn();
+end;

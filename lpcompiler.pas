@@ -3624,6 +3624,19 @@ begin
         LapeException(lpeVariableExpected, DocPos);
     end;
 
+    if basicLoopOver then
+    begin
+      if (TLapeTree_Operator(tmpExpr).Right.resType() is TLapeType_Set) then
+        Result.LoopType := loopOverSet
+      else
+      if (TLapeTree_Operator(tmpExpr).Right.resType() is TLapeType_SubRange) or
+         (TLapeTree_Operator(tmpExpr).Right.resType() is TLapeType_TypeEnum) then
+        Result.LoopType := loopOverEnum;
+
+      if Result.LoopType in [loopOverEnum, loopOverSet] then
+        Result.Limit := TLapeTree_Operator(tmpExpr).Right;
+    end;
+
     if (not basicLoopOver) then
       case Tokenizer.LastTok of
         tk_kw_DownTo: Result.LoopType := lptypes.loopDown;
@@ -3635,27 +3648,13 @@ begin
     LimitType := Result.Counter.resType();
     if (Result.LoopType = loopOver) then
     begin
-      if basicLoopOver and (LimitType is TLapeType_Enum) then
-      begin
-        Result.Limit := TLapeTree_Operator(tmpExpr).Right;
-        if Result.Limit.resType() is TLapeType_Set then
-          Result.LoopType := loopOverSet
-        else
-          Result.LoopType := loopOverEnum;
-
-        tmpExpr.Parent := Result;
-      end else
-      begin
-        LimitType := addManagedType(TLapeType_DynArray.Create(LimitType, Self, '', getPDocPos()));
-        if basicLoopOver then
-          with TLapeTree_Operator(tmpExpr).Right do
-          begin
-            Parent := Result;
-            Result.Limit := TLapeTree_ExprBase(setExpectedType(LimitType));
-          end;
-      end;
-
-      tmpExpr.Free();
+      LimitType := addManagedType(TLapeType_DynArray.Create(LimitType, Self, '', getPDocPos()));
+      if basicLoopOver then
+        with TLapeTree_Operator(tmpExpr).Right do
+        begin
+          Parent := Result;
+          Result.Limit := TLapeTree_ExprBase(setExpectedType(LimitType));
+        end;
     end;
 
     if (not basicLoopOver) then //whenever it's not the basic: "for item in array do"
