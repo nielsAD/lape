@@ -2442,6 +2442,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
           FieldValue := Expression.Evaluate();
           if (FieldType = nil) then
             FieldType := FieldValue.VarType;
+          Expression.Free();
         end;
 
         Rec.addClassField(FieldType, FieldValue, Identifiers[0], True);
@@ -3575,12 +3576,55 @@ begin
 end;
 
 function TLapeCompiler.ParseFor(ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_For;
+
+  // for i:=0 to 1000 do/downto
+  // for 1 to 10 do/downto
+  procedure parseForTo(counterExpr: TLapeTree_ExprBase);
+  begin
+    case Tokenizer.Tok of
+      tk_kw_DownTo: Result.LoopType := lptypes.loopDown;
+      tk_kw_To    : Result.LoopType := lptypes.loopUp;
+    end;
+
+    Next;
+
+    Result.Counter := counterExpr;
+    Result.Limit := TLapeTree_ExprBase(ParseExpression([], False).setExpectedType(Result.Counter.resType));
+  end;
+
+  // for i in arr
+  // "i in arr" is TLapeTree_Operator (op=in, left=i, right=arr);
+  procedure parseForOver(counterExpr: TLapeTree_ExprBase);
+  var
+    LimitType: TLapeType;
+  begin
+    Result.Counter := TLapeTree_Operator(counterExpr).Left;
+    Result.LoopType := lptypes.loopOver;
+
+    if (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_Set) then
+      Result.LoopType := loopOverSet
+    else
+    if (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_SubRange) or
+       (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_TypeEnum) then
+      Result.LoopType := loopOverEnum;
+
+    if Result.LoopType in [loopOverEnum, loopOverSet] then
+      Result.Limit := TLapeTree_Operator(counterExpr).Right
+    else
+    begin
+      LimitType := addManagedType(TLapeType_DynArray.Create(Result.Counter.resType(), Self, '', getPDocPos()));
+      with TLapeTree_Operator(counterExpr).Right do
+      begin
+        Parent := Result;
+        Result.Limit := TLapeTree_ExprBase(setExpectedType(LimitType));
+      end;
+    end;
+    counterExpr.Free();
+  end;
+
 var
-  LimitType: TLapeType;
-  tmpExpr:TLapeTree_ExprBase;
-  basicLoopOver:Boolean;
+  Expr: TLapeTree_ExprBase;
 begin
-  basicLoopOver := False;
   Result := TLapeTree_For.Create(Self, getPDocPos());
 
   try
@@ -3608,57 +3652,16 @@ begin
       end;
     end else
     begin
-      tmpExpr := ParseExpression();
-      if Tokenizer.Tok in [tk_kw_To, tk_kw_DownTo] then
-      begin
-        Next;
-        Result.Counter := tmpExpr;
-      end
-      else if (tmpExpr is TLapeTree_Operator) and (TLapeTree_Operator(tmpExpr).OperatorType = op_In) then
-      begin
-        Result.Counter := TLapeTree_Operator(tmpExpr).Left;
-        Result.LoopType := lptypes.loopOver;
-        basicLoopOver := True;
-      end
+      Expr := ParseExpression();
+
+      if (Tokenizer.Tok in [tk_kw_To, tk_kw_DownTo]) then
+        parseForTo(Expr)
+      else
+      if (Expr is TLapeTree_Operator) and (TLapeTree_Operator(Expr).OperatorType = op_In) then
+        parseForOver(Expr)
       else
         LapeException(lpeVariableExpected, DocPos);
     end;
-
-    if basicLoopOver then
-    begin
-      if (TLapeTree_Operator(tmpExpr).Right.resType() is TLapeType_Set) then
-        Result.LoopType := loopOverSet
-      else
-      if (TLapeTree_Operator(tmpExpr).Right.resType() is TLapeType_SubRange) or
-         (TLapeTree_Operator(tmpExpr).Right.resType() is TLapeType_TypeEnum) then
-        Result.LoopType := loopOverEnum;
-
-      if Result.LoopType in [loopOverEnum, loopOverSet] then
-        Result.Limit := TLapeTree_Operator(tmpExpr).Right;
-    end;
-
-    if (not basicLoopOver) then
-      case Tokenizer.LastTok of
-        tk_kw_DownTo: Result.LoopType := lptypes.loopDown;
-        tk_kw_To    : Result.LoopType := lptypes.loopUp;
-        tk_op_In    : Result.LoopType := lptypes.loopOver;
-        else LapeException(lpeImpossible, DocPos);
-      end;
-
-    LimitType := Result.Counter.resType();
-    if (Result.LoopType = loopOver) then
-    begin
-      LimitType := addManagedType(TLapeType_DynArray.Create(LimitType, Self, '', getPDocPos()));
-      if basicLoopOver then
-        with TLapeTree_Operator(tmpExpr).Right do
-        begin
-          Parent := Result;
-          Result.Limit := TLapeTree_ExprBase(setExpectedType(LimitType));
-        end;
-    end;
-
-    if (not basicLoopOver) then //whenever it's not the basic: "for item in array do"
-      Result.Limit := TLapeTree_ExprBase(ParseExpression([], False).setExpectedType(LimitType));
 
     Expect([tk_kw_With, tk_kw_Do], False, False);
     if (Tokenizer.Tok = tk_kw_With) then
@@ -3670,7 +3673,6 @@ begin
     Result.Body := ParseStatement(True, ExprEnd + [tk_kw_Else]);
     if (Tokenizer.LastTok = tk_kw_Else) then
       Result.ElseBody := ParseStatement(False, ExprEnd);
-
   except
     Result.Free();
     raise;
