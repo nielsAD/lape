@@ -55,6 +55,8 @@ addGlobalFunc('function TanH(x: Double): Double;', @_LapeTanH);
 addGlobalFunc('function ArcCosH(x: Double): Double;', @_LapeArcCosH);
 addGlobalFunc('function ArcSinH(x: Double): Double;', @_LapeArcSinH);
 addGlobalFunc('function ArcTanH(x: Double): Double;', @_LapeArcTanH);
+addGlobalFunc('procedure SinCos(theta: Double; out sinus, cosinus: Double);', @_LapeSinCos);
+addGlobalFunc('procedure DivMod(Dividend: UInt32; Divisor: UInt16; var Result, Remainder: UInt16);', @_LapeDivMod);
 
 addGlobalFunc('function Random(min, max: Int64): Int64; overload;', @_LapeRandomRange);
 addGlobalFunc('function Random(min, max: Double): Double; overload;', @_LapeRandomRangeF);
@@ -106,6 +108,8 @@ addGlobalFunc('function TanH(x: Extended): Extended;', @_LapeTanH);
 addGlobalFunc('function ArcCosH(x: Extended): Extended;', @_LapeArcCosH);
 addGlobalFunc('function ArcSinH(x: Extended): Extended;', @_LapeArcSinH);
 addGlobalFunc('function ArcTanH(x: Extended): Extended;', @_LapeArcTanH);
+addGlobalFunc('procedure SinCos(theta: Extended; out sinus, cosinus: Extended);', @_LapeSinCos);
+addGlobalFunc('procedure DivMod(Dividend: UInt32; Divisor: UInt16; var Result, Remainder: UInt16);', @_LapeDivMod);
 
 addGlobalFunc('function Random(min, max: Int64): Int64; overload;', @_LapeRandomRange);
 addGlobalFunc('function Random(min, max: Extended): Extended; overload;', @_LapeRandomRangeF);

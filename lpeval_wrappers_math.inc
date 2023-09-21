@@ -211,6 +211,16 @@ begin
   PlpFloat(Result)^ := ArcTanH(PlpFloat(Params^[0])^);
 end;
 
+procedure _LapeSinCos(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  SinCos(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^, PlpFloat(Params^[2])^);
+end;
+
+procedure _LapeDivMod(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  DivMod(PUInt32(Params^[0])^, PUInt16(Params^[1])^, PUInt16(Params^[2])^, PUInt16(Params^[3])^);
+end;
+
 procedure _LapeRandomRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   Pint64(Result)^ := PInt64(Params^[0])^ + Random(PInt64(Params^[1])^ - PInt64(Params^[0])^ + 1);
