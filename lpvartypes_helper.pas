@@ -267,6 +267,7 @@ var
   Param: TLapeParameter;
   i: Integer;
   Method: TLapeTree_Method;
+  p: TDocPos;
 begin
   Assert(FCompiler is TLapeCompiler);
 
@@ -289,6 +290,7 @@ begin
       Header.addParam(Param);
     end;
 
+    p := DocPos;
     Method := addGlobalFunc(Header, '!Helper',
       '{$X+}'                             + LineEnding +
       'begin'                             + LineEnding +
@@ -298,7 +300,7 @@ begin
       '    raise at GetCallerLocation();' + LineEnding +
       '  end;'                            + LineEnding +
       'end;',
-      @NullDocPos);
+      @p);
 
     Result := Method.Method;
     Result.VarType.Name := FHelperName;
