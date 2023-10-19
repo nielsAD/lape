@@ -659,6 +659,9 @@ type
   end;
 
   EDeclarationUsed = (duFalse, duTrue, duIgnore);
+
+  TLapeDeclarationHintCallback = procedure(Msg: lpString; Args: array of const; ADocPos: TDocPos) of object;
+
   ELapeDeclarationHint = (ldhDeprecated, ldhExperimental, ldhUnImplemented);
   ELapeDeclarationHints = set of ELapeDeclarationHint;
   TLapeDeclarationHints = record
@@ -691,7 +694,9 @@ type
     destructor Destroy; override;
 
     procedure AddHint(Typ: ELapeDeclarationHint; Msg: lpString = ''); virtual;
-    procedure CopyHints(From: TLapeDeclaration);
+    procedure CopyHints(From: TLapeDeclaration); virtual;
+    procedure WriteHints(Callback: TLapeDeclarationHintCallback; ADocPos: TDocPos); virtual;
+    function HasHints: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
     property DeclarationList: TLapeDeclarationList read FList write setList;
     property Name: lpString read FName write setName;
@@ -3008,6 +3013,28 @@ end;
 procedure TLapeDeclaration.CopyHints(From: TLapeDeclaration);
 begin
   FHints := From.Hints;
+end;
+
+procedure TLapeDeclaration.WriteHints(Callback: TLapeDeclarationHintCallback; ADocPos: TDocPos);
+begin
+  Assert(HasHints());
+
+  if (ldhDeprecated in FHints.Types) then
+    if (FHints.Message <> '') then
+      Callback('"%s" is deprecated: "%s"', [FName, FHints.Message], ADocPos)
+    else
+      Callback('"%s" is deprecated', [FName], ADocPos);
+
+  if (ldhExperimental in FHints.Types) then
+    Callback('"%s" is experimental', [FName], ADocPos);
+
+  if (ldhUnImplemented  in FHints.Types) then
+    Callback('"%s" is unimplemented', [FName], ADocPos);
+end;
+
+function TLapeDeclaration.HasHints: Boolean;
+begin
+  Result := FHints.Types <> [];
 end;
 
 constructor TLapeManagingDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil);

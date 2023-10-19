@@ -433,7 +433,8 @@ begin
 end;
 
 function TLapeType_SubRange.CreateCopy(DeepCopy: Boolean = False): TLapeType;
-type TLapeClassType = class of TLapeType_SubRange;
+type
+  TLapeClassType = class of TLapeType_SubRange;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, FVarType, Name, @_DocPos);
   with TLapeType_SubRange(Result) do
@@ -441,6 +442,7 @@ begin
     inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
+    CopyHints(Self);
   end;
 end;
 
@@ -646,6 +648,7 @@ begin
     FRange := Self.Range;
     FSmall := Self.Small;
     FGapCount := Self.GapCount;
+    CopyHints(Self);
   end;
 end;
 
@@ -806,6 +809,7 @@ begin
 
     FRange := Self.Range;
     TLapeType_Boolean(FVarType).FSize := Self.VarType.Size;
+    CopyHints(Self);
   end;
 end;
 
@@ -995,6 +999,7 @@ begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, Name, @_DocPos);
   Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;
+  Result.CopyHints(Self);
 end;
 
 function TLapeType_Set.NewGlobalVar(Values: array of UInt8; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;

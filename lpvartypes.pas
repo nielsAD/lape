@@ -2276,6 +2276,7 @@ begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, FPType, FPConst, Name, @_DocPos);
   Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;
+  Result.CopyHints(Self);
 end;
 
 function TLapeType_Pointer.NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; ADocPos: PDocPos = nil; AsValue: Boolean = True): TLapeGlobalVar;
@@ -3000,6 +3001,7 @@ begin
   Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;
   Result.FBaseType := FBaseType;
+  Result.CopyHints(Self);
 end;
 
 function TLapeType_MethodOfType.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;

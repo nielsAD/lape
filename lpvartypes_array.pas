@@ -145,6 +145,7 @@ begin
     inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
+    CopyHints(Self);
   end;
 end;
 
@@ -963,6 +964,7 @@ begin
     inheritManagedDecls(Self, not DeepCopy);
     TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
+    CopyHints(Self);
   end;
 end;
 

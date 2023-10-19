@@ -258,6 +258,7 @@ begin
     FInit := Self.FInit;
     FSize := Self.FSize;
     FAlignment := Self.FAlignment;
+    CopyHints(Self);
   end;
 end;
 
