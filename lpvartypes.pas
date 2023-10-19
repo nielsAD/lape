@@ -369,9 +369,6 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
   end;
 
-  ELapeHintDirective = (lhdDeprecated, lhdExperimental, lhdUnImplemented);
-  ELapeHintDirectives = set of ELapeHintDirective;
-
   TLapeType_Method = class(TLapeType)
   protected
     FParams: TLapeParameterList;
@@ -385,8 +382,6 @@ type
     ImplicitParams: Integer;
     Res: TLapeType;
     IsOperator: Boolean;
-    HintDirectives: ELapeHintDirectives;
-    DeprecatedHint: lpString;
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -649,6 +644,7 @@ type
     FOptions_PackRecords: UInt8;
 
     FOnHint: TLapeHint;
+    FHints: lpString;
 
     procedure Reset; virtual;
     procedure setEmitter(AEmitter: TLapeCodeEmitter); virtual;
@@ -721,6 +717,7 @@ type
     property Options: ECompilerOptionsSet read FOptions write setOptions default Lape_OptionsDef;
     property Options_PackRecords: UInt8 read FBaseOptions_PackRecords write setPackRecords default Lape_PackRecordsDef;
     property OnHint: TLapeHint read FOnHint write FOnHint;
+    property Hints: lpString read FHints; // if OnHint=nil, this will have them
   end;
 
 procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; Typ: TLapeType; DocPos: TDocPos); overload;
@@ -2574,10 +2571,6 @@ begin
     AParams := TLapeParameterList.Create(NullParameter, dupAccept, False);
   FParams := AParams;
   Res := ARes;
-
-  IsOperator := False;
-  HintDirectives := [];
-  DeprecatedHint := '';
 end;
 
 constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil);
@@ -2606,12 +2599,12 @@ begin
 
   ImplicitParams := AMethod.ImplicitParams;
   IsOperator := AMethod.IsOperator;
-  DeprecatedHint := AMethod.DeprecatedHint;
-  HintDirectives := AMethod.HintDirectives;
 
   inheritManagedDecls(AMethod);
   TypeID := AMethod.TypeID;
   FBaseType := AMethod.FBaseType;
+
+  CopyHints(AMethod);
 end;
 
 function TLapeType_Method.CreateCopy(DeepCopy: Boolean = False): TLapeType;
@@ -2628,12 +2621,11 @@ begin
 
   TLapeType_Method(Result).ImplicitParams := ImplicitParams;
   TLapeType_Method(Result).IsOperator := IsOperator;
-  TLapeType_Method(Result).DeprecatedHint := DeprecatedHint;
-  TLapeType_Method(Result).HintDirectives := HintDirectives;
 
   Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;
   Result.FBaseType := FBaseType;
+  Result.CopyHints(Self);
 end;
 
 destructor TLapeType_Method.Destroy;
@@ -4080,6 +4072,7 @@ procedure TLapeCompilerBase.Reset;
 begin
   FOptions := FBaseOptions;
   FOptions_PackRecords := FBaseOptions_PackRecords;
+  FHints := '';
 
   if (FEmitter <> nil) then
     FEmitter.Reset();
@@ -4671,8 +4664,11 @@ end;
 
 procedure TLapeCompilerBase.Hint(Msg: lpString; Args: array of const; ADocPos: TDocPos);
 begin
+  Msg := FormatLocation(Format(Msg, Args), ADocPos);
   if ({$IFNDEF FPC}@{$ENDIF}FOnHint <> nil) then
-    FOnHint(Self, FormatLocation(Format(Msg, Args), ADocPos));
+    FOnHint(Self, Msg)
+  else
+    FHints := FHints + Msg + LineEnding;
 end;
 
 initialization

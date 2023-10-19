@@ -1,0 +1,7 @@
+Method "Test" is deprecated "Test" at line 26, column 3 in file "Syntax_DirectiveHints.lap"
+Method "Test" is experimental at line 26, column 3 in file "Syntax_DirectiveHints.lap"
+Method "Test" is not implemented at line 26, column 3 in file "Syntax_DirectiveHints.lap"
+Method "TTestInt.Test" is deprecated at line 27, column 10 in file "Syntax_DirectiveHints.lap"
+Parameter "Result" not set at line 3, column 20 in file "Syntax_DirectiveHints.lap"
+Parameter "I" not used at line 7, column 22 in file "Syntax_DirectiveHints.lap"
+Parameter "Result" not set at line 7, column 30 in file "Syntax_DirectiveHints.lap"

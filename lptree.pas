@@ -2312,25 +2312,19 @@ var
 
   procedure DoDirectiveHints(Method: TLapeType_Method);
   var
-    Directive: ELapeHintDirective;
-    Name: String;
+    Typ: ELapeDeclarationHint;
   begin
-    if (Method is TLapeType_MethodOfType) then
-      Name := TLapeType_MethodOfType(Method).ObjectType.Name + '.' + Method.Name
-    else
-      Name := Method.Name;
-
-    for Directive in Method.HintDirectives do
-      case Directive of
-        lhdDeprecated:
-          if (Method.DeprecatedHint <> '') then
-            FCompiler.Hint(lphDeprecatedMethodHint, [Name, Method.DeprecatedHint], IdentExpr.DocPos)
+    for Typ in Method.Hints.Types do
+      case Typ of
+        ldhDeprecated:
+          if (Method.Hints.Message <> '') then
+            FCompiler.Hint(lphDeprecatedMethodHint, [GetMethodName(Method), Method.Hints.Message], IdentExpr.DocPos)
           else
-            FCompiler.Hint(lphDeprecatedMethod, [Name], IdentExpr.DocPos);
-        lhdExperimental:
-          FCompiler.Hint(lphExperimentalMethod, [Name], IdentExpr.DocPos);
-        lhdUnImplemented:
-          FCompiler.Hint(lphUnImplementedMethod, [Name], IdentExpr.DocPos);
+            FCompiler.Hint(lphDeprecatedMethod, [GetMethodName(Method)], IdentExpr.DocPos);
+        ldhExperimental:
+          FCompiler.Hint(lphExperimentalMethod, [GetMethodName(Method)], IdentExpr.DocPos);
+        ldhUnImplemented:
+          FCompiler.Hint(lphUnImplementedMethod, [GetMethodName(Method)], IdentExpr.DocPos);
       end;
   end;
 
@@ -2352,7 +2346,7 @@ begin
 
     IdentVar := IdentExpr.Compile(Offset);
 
-    if (lcoHints in FCompilerOptions) and (IdentVar.VarType is TLapeType_Method) and (TLapeType_Method(IdentVar.VarType).HintDirectives <> []) then
+    if (lcoHints in FCompilerOptions) and (IdentVar.VarType is TLapeType_Method) and (TLapeType_Method(IdentVar.VarType).Hints.Types <> []) then
       DoDirectiveHints(IdentVar.VarType as TLapeType_Method);
 
     if (not IdentVar.HasType()) or (not (IdentVar.VarType is TLapeType_Method)) then

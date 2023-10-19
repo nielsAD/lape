@@ -27,7 +27,7 @@ implementation
 
 uses
   {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF} strutils,
-  lpcompiler, lpparser, lpmessages, lpinterpreter, lputils;
+  lpvartypes, lpcompiler, lpparser, lpmessages, lpinterpreter, lputils;
 
 constructor TLapeTester.Create(AFolder: string = '..'; ADebug: Boolean = False);
 begin
@@ -77,7 +77,10 @@ begin
 
   with TLapeCompiler.Create(TLapeTokenizerFile.Create(lpString(FileName))) do
   try
+    Tokenizer.FileName := ExtractFileName(Tokenizer.FileName);
+    Options := Options - [lcoHints];
     InitializePascalScriptBasics(GetSelf() as TLapeCompiler, [psiTypeAlias]);
+
     addGlobalMethod('procedure _Write(s: string); override;', @_WriteWrap, @Output);
     addGlobalMethod('procedure _WriteLn; override;', @_WriteLnWrap, @Output);
 
@@ -85,7 +88,10 @@ begin
       if (not Compile()) then
         LapeException('Error compiling file')
       else
+      begin
+        Output := Output + Hints;
         RunCode(Emitter);
+      end;
     except
       on E: Exception do
       begin

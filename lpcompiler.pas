@@ -143,6 +143,8 @@ type
     function Expect(Token: EParserToken; NextBefore: Boolean = True; NextAfter: Boolean = False): EParserToken; overload; virtual;
     function Expect(Tokens: EParserTokenSet; NextBefore: Boolean = True; NextAfter: Boolean = False): EParserToken; overload; virtual;
 
+    procedure ParseDeclHint(Decl: TLapeDeclaration; NextBefore: Boolean = False; NextAfter: Boolean = True); virtual;
+
     procedure ParseExpressionEnd(Token: EParserToken; NextBefore: Boolean = False; NextAfter: Boolean = True); overload; virtual;
     procedure ParseExpressionEnd(Tokens: EParserTokenSet = ParserToken_ExpressionEnd; NextBefore: Boolean = False; NextAfter: Boolean = True); overload; virtual;
     function ParseIdentifierList(FirstNext: Boolean = False): TStringArray; virtual;
@@ -1671,6 +1673,42 @@ begin
     Next();
 end;
 
+procedure TLapeCompiler.ParseDeclHint(Decl: TLapeDeclaration; NextBefore: Boolean; NextAfter: Boolean);
+begin
+  if NextBefore then
+    Next();
+  Assert(Tokenizer.Tok in [tk_kw_Deprecated, tk_kw_Experimental, tk_kw_UnImplemented]);
+
+  case Tokenizer.Tok of
+    tk_kw_Deprecated:
+      begin
+        if (Peek() in ParserToken_Strings) then
+        begin
+          Next();
+          Decl.AddHint(ldhDeprecated, Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2));
+        end else
+          Decl.AddHint(ldhDeprecated);
+
+        if NextAfter then
+          Next();
+      end;
+
+    tk_kw_Experimental:
+      begin
+        Decl.AddHint(ldhExperimental);
+        if NextAfter then
+          Next();
+      end;
+
+    tk_kw_UnImplemented:
+      begin
+        Decl.AddHint(ldhUnImplemented);
+        if NextAfter then
+          Next();
+      end;
+  end;
+end;
+
 procedure TLapeCompiler.ParseExpressionEnd(Token: EParserToken; NextBefore: Boolean = False; NextAfter: Boolean = True);
 begin
   if (not (lcoLooseSemicolon in FOptions)) then
@@ -2050,28 +2088,6 @@ var
     end;
   end;
 
-  procedure AddDirectiveHint(Tok: EParserToken);
-  begin
-    with TLapeType_Method(Result.Method.VarType) do
-      case Tok of
-        tk_kw_Deprecated:
-          begin
-            Include(HintDirectives, lhdDeprecated);
-
-            if (Tokenizer.Expect([tk_typ_String, tk_typ_HereString, tk_sym_SemiColon]) in [tk_typ_HereString, tk_typ_String]) then
-              DeprecatedHint := lpString(Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2));
-          end;
-        tk_kw_UnImplemented:
-          Include(HintDirectives, lhdUnImplemented);
-        tk_kw_Experimental:
-          Include(HintDirectives, lhdExperimental);
-      end;
-
-    if (Tokenizer.Tok <> tk_sym_SemiColon) then
-      ParseExpressionEnd(tk_sym_SemiColon, True, False);
-    if (Tokenizer.Tok = tk_sym_SemiColon) and (Tokenizer.PeekNoJunk() in [tk_kw_Deprecated, tk_kw_UnImplemented, tk_kw_Experimental]) then
-      Tokenizer.NextNoJunk();
-  end;
 
 begin
   Result := nil;
@@ -2285,8 +2301,12 @@ begin
         Exit;
       end;
 
-      while (Tokenizer.Tok in [tk_kw_Deprecated, tk_kw_Experimental, tk_kw_UnImplemented]) do
-        AddDirectiveHint(Tokenizer.Tok);
+      while (Tokenizer.Tok in ParserToken_Hints) do
+      begin
+        ParseDeclHint(Result.Method.VarType);
+        if (Peek() in ParserToken_Hints) then
+          Next();
+      end;
 
       if isExternal then
         Exit;

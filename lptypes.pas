@@ -659,6 +659,12 @@ type
   end;
 
   EDeclarationUsed = (duFalse, duTrue, duIgnore);
+  ELapeDeclarationHint = (ldhDeprecated, ldhExperimental, ldhUnImplemented);
+  ELapeDeclarationHints = set of ELapeDeclarationHint;
+  TLapeDeclarationHints = record
+    Types: ELapeDeclarationHints;
+    Message: lpString;
+  end;
 
   TLapeDeclaration = class(TLapeBaseDeclClass)
   protected type
@@ -672,6 +678,8 @@ type
     FNameLapeCase: lpString;
     FNameChangeNotifier: TNameChangeNotifier;
 
+    FHints: TLapeDeclarationHints;
+
     function getDocPos: TDocPos; override;
     procedure setList(AList: TLapeDeclarationList); virtual;
     procedure setName(AName: lpString); virtual;
@@ -682,8 +690,12 @@ type
     constructor Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil); reintroduce; virtual;
     destructor Destroy; override;
 
+    procedure AddHint(Typ: ELapeDeclarationHint; Msg: lpString = ''); virtual;
+    procedure CopyHints(From: TLapeDeclaration);
+
     property DeclarationList: TLapeDeclarationList read FList write setList;
     property Name: lpString read FName write setName;
+    property Hints: TLapeDeclarationHints read FHints;
   end;
 
   TLapeManagingDeclaration = class(TLapeDeclaration)
@@ -2984,6 +2996,18 @@ begin
   setList(nil);
   FNameChangeNotifier.Free();
   inherited;
+end;
+
+procedure TLapeDeclaration.AddHint(Typ: ELapeDeclarationHint; Msg: lpString);
+begin
+  Include(FHints.Types, Typ);
+  if (Msg <> '') then
+    FHints.Message := Msg;
+end;
+
+procedure TLapeDeclaration.CopyHints(From: TLapeDeclaration);
+begin
+  FHints := From.Hints;
 end;
 
 constructor TLapeManagingDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil);

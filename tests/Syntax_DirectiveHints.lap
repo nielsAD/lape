@@ -1,3 +1,5 @@
+{$HINTS ON}
+
 function Test: Int32; overload;
 begin
 end;
