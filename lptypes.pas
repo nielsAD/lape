@@ -660,6 +660,15 @@ type
 
   EDeclarationUsed = (duFalse, duTrue, duIgnore);
 
+  TLapeDeclarationHintCallback = procedure(Msg: lpString; Args: array of const; ADocPos: TDocPos) of object;
+
+  ELapeDeclarationHint = (ldhDeprecated, ldhExperimental, ldhUnImplemented);
+  ELapeDeclarationHints = set of ELapeDeclarationHint;
+  TLapeDeclarationHints = record
+    Types: ELapeDeclarationHints;
+    Message: lpString;
+  end;
+
   TLapeDeclaration = class(TLapeBaseDeclClass)
   protected type
     TNameChangeNotifier = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifierOfObject<TLapeDeclaration>;
@@ -672,6 +681,8 @@ type
     FNameLapeCase: lpString;
     FNameChangeNotifier: TNameChangeNotifier;
 
+    FHints: TLapeDeclarationHints;
+
     function getDocPos: TDocPos; override;
     procedure setList(AList: TLapeDeclarationList); virtual;
     procedure setName(AName: lpString); virtual;
@@ -682,8 +693,14 @@ type
     constructor Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil); reintroduce; virtual;
     destructor Destroy; override;
 
+    procedure AddHint(Typ: ELapeDeclarationHint; Msg: lpString = ''); virtual;
+    procedure CopyHints(From: TLapeDeclaration); virtual;
+    procedure WriteHints(Callback: TLapeDeclarationHintCallback; ADocPos: TDocPos); virtual;
+    function HasHints: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+
     property DeclarationList: TLapeDeclarationList read FList write setList;
     property Name: lpString read FName write setName;
+    property Hints: TLapeDeclarationHints read FHints;
   end;
 
   TLapeManagingDeclaration = class(TLapeDeclaration)
@@ -2984,6 +3001,40 @@ begin
   setList(nil);
   FNameChangeNotifier.Free();
   inherited;
+end;
+
+procedure TLapeDeclaration.AddHint(Typ: ELapeDeclarationHint; Msg: lpString);
+begin
+  Include(FHints.Types, Typ);
+  if (Msg <> '') then
+    FHints.Message := Msg;
+end;
+
+procedure TLapeDeclaration.CopyHints(From: TLapeDeclaration);
+begin
+  FHints := From.Hints;
+end;
+
+procedure TLapeDeclaration.WriteHints(Callback: TLapeDeclarationHintCallback; ADocPos: TDocPos);
+begin
+  Assert(HasHints());
+
+  if (ldhDeprecated in FHints.Types) then
+    if (FHints.Message <> '') then
+      Callback('"%s" is deprecated: "%s"', [FName, FHints.Message], ADocPos)
+    else
+      Callback('"%s" is deprecated', [FName], ADocPos);
+
+  if (ldhExperimental in FHints.Types) then
+    Callback('"%s" is experimental', [FName], ADocPos);
+
+  if (ldhUnImplemented  in FHints.Types) then
+    Callback('"%s" is unimplemented', [FName], ADocPos);
+end;
+
+function TLapeDeclaration.HasHints: Boolean;
+begin
+  Result := FHints.Types <> [];
 end;
 
 constructor TLapeManagingDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil);

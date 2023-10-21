@@ -143,6 +143,8 @@ type
     function Expect(Token: EParserToken; NextBefore: Boolean = True; NextAfter: Boolean = False): EParserToken; overload; virtual;
     function Expect(Tokens: EParserTokenSet; NextBefore: Boolean = True; NextAfter: Boolean = False): EParserToken; overload; virtual;
 
+    procedure ParseDeclHint(Decl: TLapeDeclaration; NextBefore: Boolean = False; NextAfter: Boolean = True); virtual;
+
     procedure ParseExpressionEnd(Token: EParserToken; NextBefore: Boolean = False; NextAfter: Boolean = True); overload; virtual;
     procedure ParseExpressionEnd(Tokens: EParserTokenSet = ParserToken_ExpressionEnd; NextBefore: Boolean = False; NextAfter: Boolean = True); overload; virtual;
     function ParseIdentifierList(FirstNext: Boolean = False): TStringArray; virtual;
@@ -1671,6 +1673,42 @@ begin
     Next();
 end;
 
+procedure TLapeCompiler.ParseDeclHint(Decl: TLapeDeclaration; NextBefore: Boolean; NextAfter: Boolean);
+begin
+  if NextBefore then
+    Next();
+  Assert(Tokenizer.Tok in [tk_kw_Deprecated, tk_kw_Experimental, tk_kw_UnImplemented]);
+
+  case Tokenizer.Tok of
+    tk_kw_Deprecated:
+      begin
+        if (Peek() in ParserToken_Strings) then
+        begin
+          Next();
+          Decl.AddHint(ldhDeprecated, Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2));
+        end else
+          Decl.AddHint(ldhDeprecated);
+
+        if NextAfter then
+          Next();
+      end;
+
+    tk_kw_Experimental:
+      begin
+        Decl.AddHint(ldhExperimental);
+        if NextAfter then
+          Next();
+      end;
+
+    tk_kw_UnImplemented:
+      begin
+        Decl.AddHint(ldhUnImplemented);
+        if NextAfter then
+          Next();
+      end;
+  end;
+end;
+
 procedure TLapeCompiler.ParseExpressionEnd(Token: EParserToken; NextBefore: Boolean = False; NextAfter: Boolean = True);
 begin
   if (not (lcoLooseSemicolon in FOptions)) then
@@ -2050,28 +2088,6 @@ var
     end;
   end;
 
-  procedure AddDirectiveHint(Tok: EParserToken);
-  begin
-    with TLapeType_Method(Result.Method.VarType) do
-      case Tok of
-        tk_kw_Deprecated:
-          begin
-            Include(HintDirectives, lhdDeprecated);
-
-            if (Tokenizer.Expect([tk_typ_String, tk_typ_HereString, tk_sym_SemiColon]) in [tk_typ_HereString, tk_typ_String]) then
-              DeprecatedHint := lpString(Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2));
-          end;
-        tk_kw_UnImplemented:
-          Include(HintDirectives, lhdUnImplemented);
-        tk_kw_Experimental:
-          Include(HintDirectives, lhdExperimental);
-      end;
-
-    if (Tokenizer.Tok <> tk_sym_SemiColon) then
-      ParseExpressionEnd(tk_sym_SemiColon, True, False);
-    if (Tokenizer.Tok = tk_sym_SemiColon) and (Tokenizer.PeekNoJunk() in [tk_kw_Deprecated, tk_kw_UnImplemented, tk_kw_Experimental]) then
-      Tokenizer.NextNoJunk();
-  end;
 
 begin
   Result := nil;
@@ -2091,7 +2107,7 @@ begin
     ResetStack := False;
 
   try
-    isNext([tk_kw_UnImplemented, tk_kw_Experimental, tk_kw_Deprecated, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static]);
+    isNext([tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static] + ParserToken_Hints);
     OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
     LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
 
@@ -2106,7 +2122,7 @@ begin
         RemoveSelfVar();
         FuncHeader := TLapeType_Method(addManagedType(TLapeType_Method.Create(FuncHeader)));
       end;
-      isNext([tk_kw_UnImplemented, tk_kw_Experimental, tk_kw_Deprecated, tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override]);
+      isNext([tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override] + ParserToken_Hints);
     end
     else if (not isExternal) and (not MethodOfObject(FuncHeader)) then
       FuncHeader := InheritMethodStack(FuncHeader, FStackInfo.Owner);
@@ -2161,7 +2177,7 @@ begin
           LapeException(lpString(E.Message), Tokenizer.DocPos);
         end;
 
-        isNext([tk_kw_UnImplemented, tk_kw_Experimental, tk_kw_Deprecated, tk_kw_External, tk_kw_Forward]);
+        isNext([tk_kw_External, tk_kw_Forward] + ParserToken_Hints);
       end
       else if (Tokenizer.Tok = tk_kw_Override) then
       begin
@@ -2285,8 +2301,12 @@ begin
         Exit;
       end;
 
-      while (Tokenizer.Tok in [tk_kw_Deprecated, tk_kw_Experimental, tk_kw_UnImplemented]) do
-        AddDirectiveHint(Tokenizer.Tok);
+      while (Tokenizer.Tok in ParserToken_Hints) do
+      begin
+        ParseDeclHint(Result.Method.VarType);
+        if (Peek() in ParserToken_Hints) then
+          Next();
+      end;
 
       if isExternal then
         Exit;
@@ -2722,12 +2742,19 @@ begin
         end;
       tk_sym_Caret, tk_kw_Strict: ParsePointer();
       tk_kw_Enum, tk_sym_ParenthesisOpen: ParseEnum();
-      tk_kw_Function, tk_kw_Procedure, tk_kw_Operator,
-      tk_kw_External, {tk_kw_Export,} tk_kw_Private: ParseMethodType();
+      tk_kw_Function, tk_kw_Procedure, tk_kw_Operator, tk_kw_External, tk_kw_Private: ParseMethodType();
       tk_kw_Type: ParseTypeType();
       else ParseDef();
     end;
 
+    if (Result <> nil) then
+      if (TypeForwards = nil) and (lcoHints in FOptions) and Result.HasHints() then
+        Result.WriteHints(@Hint, Tokenizer.DocPos)
+      else
+      // TypeForwards<>nil means ParseTypeBlock
+      // type TPoint = record X,Y: Integer deprecated;
+      if (TypeForwards <> nil) and (Peek() in ParserToken_Hints) then
+        ParseDeclHint(Result, True, False);
   except
     if (Result <> nil) then
       FreeAndNil(Result);
@@ -2805,6 +2832,8 @@ var
   DefConst: TLapeGlobalVar;
   VarDecl: TLapeVarDecl;
 begin
+  ValidEnd := ValidEnd + [tk_kw_Deprecated, tk_kw_UnImplemented, tk_kw_Experimental];
+
   Result := TLapeTree_VarList.Create(Self, getPDocPos());
   try
     isConst := (Tokenizer.Tok = tk_kw_Const);
@@ -2890,6 +2919,10 @@ begin
 
         if (VarDecl.VarDecl is TLapeVar) then
           TLapeVar(VarDecl.VarDecl).setReadWrite(isConst and (DefConst <> nil), not isConst);
+
+        // var a: Integer deprecated
+        if (Tokenizer.Tok in ParserToken_Hints) then
+          ParseDeclHint(VarDecl.VarDecl);
 
         Result.addVar(VarDecl);
       end;
@@ -4283,11 +4316,14 @@ begin
 
   try
     Decl := getDeclaration(AName, AStackInfo, LocalOnly);
-  except on E: lpException do
-    if (Pos = nil) then
-      LapeException(lpString(E.Message))
-    else
-      LapeException(lpString(E.Message), Pos^)
+    if (lcoHints in FOptions) and (Decl is TLapeVar) and TLapeVar(Decl).HasHints() then
+      TLapeVar(Decl).WriteHints(@Hint, Tokenizer.DocPos);
+  except
+    on E: lpException do
+      if (Pos = nil) then
+        LapeException(lpString(E.Message))
+      else
+        LapeException(lpString(E.Message), Pos^)
   end;
 
   if (Decl <> nil) then

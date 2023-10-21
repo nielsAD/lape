@@ -1,26 +1,36 @@
-function Test: Int32; overload;
+{$HINTS ON}
+
+type
+  TPoint = record
+    x,y: Integer;
+  end deprecated;
+  TPointArray = array of TPoint;
+  TPoint3D = record
+    p: TPoint;
+    z: Double;
+  end;
+
+var   I_AM_DEPRECATED: Double deprecated;
+const I_AM_EXPERIMENTAL = Int32(5) experimental;
+
+function Test: Int32; overload; deprecated;
+var
+  i: Int32;
 begin
+  I_AM_DEPRECATED += 1;
+  i := I_AM_EXPERIMENTAL;
 end;
 
 function Test(I: Int32): Int32; overload; deprecated 'Test'; experimental; unimplemented;
 begin
-  // Method "Test" is deprecated "Test" at line 10, column 3
-  // Method "Test" is experimental at line 10, column 3
-  // Method "Test" is not implemented at line 10, column 3
 end;
 
-type
-  TTestInt = type Int32;
-
-var
-  TestInt: TTestInt;
-
-procedure TTestInt.Test; deprecated;
+procedure Pointer.Test; deprecated;
 begin
-  // Method "TTestInt.Test" is deprecated at line 25, column 10
 end;
 
 begin
+  Test();
   Test(1);
-  TestInt.Test();
+  Pointer(1).Test();
 end.

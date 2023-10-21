@@ -1,5 +1,5 @@
-{$Include include.inc}
-{$Include_once include.inc}
+{$Include ../include.inc}
+{$Include_once ../include.inc}
 
 begin
   WriteLn('Hi from path: ', {$macro CURRENT_DIRECTORY});
