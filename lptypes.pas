@@ -149,7 +149,8 @@ type
   TLapeImportedProc = procedure(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
   TLapeImportedFunc = procedure(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-  ELoopType = (loopUp, loopDown, loopOver, loopOverEnum, loopOverSet);
+  ELoopType = (loopUp, loopDown, loopOver);
+  ELoopOverWhat = (loopOverArray, loopOverEnum, loopOverSet);
 
   ELapeBaseType = (
     ltUnknown,

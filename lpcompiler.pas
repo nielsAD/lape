@@ -3632,16 +3632,17 @@ function TLapeCompiler.ParseFor(ExprEnd: EParserTokenSet = ParserToken_Expressio
     LimitType: TLapeType;
   begin
     Result.Counter := TLapeTree_Operator(counterExpr).Left;
-    Result.LoopType := lptypes.loopOver;
+    Result.LoopType := loopOver;
+    Result.LoopOverWhat := loopOverArray;
 
     if (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_Set) then
-      Result.LoopType := loopOverSet
+      Result.LoopOverWhat := loopOverSet
     else
     if (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_SubRange) or
        (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_TypeEnum) then
-      Result.LoopType := loopOverEnum;
+      Result.LoopOverWhat := loopOverEnum;
 
-    if Result.LoopType in [loopOverEnum, loopOverSet] then
+    if Result.LoopOverWhat in [loopOverEnum, loopOverSet] then
       Result.Limit := TLapeTree_Operator(counterExpr).Right
     else
     begin

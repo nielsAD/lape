@@ -30,6 +30,7 @@ type
 
     procedure VarSetLength(var AVar: Pointer; ALen: SizeInt); overload; virtual;
     procedure VarSetLength(AVar, ALen: TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
+    procedure VarSetLength(AVar: TLapeGlobalVar; ALen: SizeInt); overload; virtual;
 
     procedure RangeCheck(AVar, AIndex: TLapeGlobalVar; Flags: ELapeEvalFlags); overload; virtual;
     procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
@@ -351,6 +352,19 @@ begin
   finally
     Free();
   end;
+end;
+
+procedure TLapeType_DynArray.VarSetLength(AVar: TLapeGlobalVar; ALen: SizeInt);
+var
+  Arr: Pointer;
+begin
+  if AVar.isNull() then
+    Arr := nil
+  else
+    Arr := PPointer(AVar.Ptr)^;
+
+  VarSetLength(Arr, ALen);
+  PPointer(AVar.Ptr)^ := Arr;
 end;
 
 procedure TLapeType_DynArray.RangeCheck(AVar, AIndex: TLapeGlobalVar; Flags: ELapeEvalFlags);

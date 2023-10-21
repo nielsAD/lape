@@ -84,10 +84,15 @@ type
   protected
     FRange: TLapeRange;
     FVarType: TLapeType;
+    FAsArray: TLapeGlobalVar;
+
     function getAsString: lpString; override;
+    function getAsArray: TLapeGlobalVar; virtual;
   public
     constructor Create(ARange: TLapeRange; ACompiler: TLapeCompilerBase; AVarType: TLapeType; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+
+    procedure ClearCache; override;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -100,6 +105,7 @@ type
 
     property Range: TLapeRange read FRange;
     property VarType: TLapeType read FVarType;
+    property AsArray: TLapeGlobalVar read getAsArray;
   end;
 
   TEnumMap = TStringList;
@@ -111,6 +117,7 @@ type
     FGapCount: Int32;
 
     function getAsString: lpString; override;
+    function getAsArray: TLapeGlobalVar; override;
   public
     FreeMemberMap: Boolean;
     constructor Create(ACompiler: TLapeCompilerBase; AMemberMap: TEnumMap; AScoped: Boolean; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
@@ -198,7 +205,7 @@ implementation
 
 uses
   Variants,
-  lpparser, lpeval, lpmessages;
+  lpparser, lpeval, lpmessages, lpvartypes_array;
 
 function TLapeType_Integer{$IFNDEF FPC}<_Type>{$ENDIF}.NewGlobalVar(Val: _Type; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
@@ -374,6 +381,14 @@ begin
   Result := NewGlobalVar(Str, AName, ADocPos);
 end;
 
+procedure TLapeType_SubRange.ClearCache;
+begin
+  inherited ClearCache();
+
+  if (FAsArray <> nil) then
+    FreeAndNil(FAsArray);
+end;
+
 function TLapeType_SubRange.getAsString: lpString;
 begin
   if (FAsString = '') then
@@ -382,6 +397,45 @@ begin
     else
       FAsString := lpString(IntToStr(FRange.Lo)) + '..' + lpString(IntToStr(FRange.Hi));
   Result := inherited;
+end;
+
+function TLapeType_SubRange.getAsArray: TLapeGlobalVar;
+var
+  CounterVar, ValueVar: Integer;
+  Counter, Value: TLapeGlobalVar;
+  Element: TLapeGlobalVar;
+begin
+  if (FAsArray = nil) then
+  begin
+    with TLapeType_DynArray(FCompiler.addManagedType(TLapeType_DynArray.Create(FVarType, FCompiler))) do
+    begin
+      FAsArray := TLapeGlobalVar(FCompiler.addManagedDecl(NewGlobalVarP()));
+
+      VarSetLength(FAsArray, (FRange.Hi - FRange.Lo) + 1);
+    end;
+
+    CounterVar := 0;
+    Counter := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@CounterVar);
+    Value := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@ValueVar);
+
+    try
+      for ValueVar := FRange.Lo to FRange.Hi do
+      try
+        Element := FAsArray.VarType.EvalConst(op_Index, FAsArray, Counter, []);
+        Element.VarType.EvalConst(op_Assign, Element, Value, [lefAssigning]);
+
+        Inc(CounterVar);
+      finally
+        if (Element <> nil) then
+          FreeAndNil(Element);
+      end;
+    finally
+      Counter.Free();
+      Value.Free();
+    end;
+  end;
+
+  Result := FAsArray;
 end;
 
 constructor TLapeType_SubRange.Create(ARange: TLapeRange; ACompiler: TLapeCompilerBase; AVarType: TLapeType; AName: lpString = ''; ADocPos: PDocPos = nil);
@@ -492,6 +546,61 @@ begin
     FAsString := FAsString + ')';
   end;
   Result := inherited;
+end;
+
+function TLapeType_Enum.getAsArray: TLapeGlobalVar;
+var
+  CounterVar: Integer;
+  Counter, Value: TLapeGlobalVar;
+  Element: TLapeGlobalVar;
+  I: Integer;
+begin
+  if (FAsArray = nil) then
+  begin
+    if (BaseIntType = ltUnknown) then
+      LapeException(lpeImpossible, DocPos);
+
+    with TLapeType_DynArray(FCompiler.addManagedType(TLapeType_DynArray.Create(Self, FCompiler))) do
+    begin
+      FAsArray := TLapeGlobalVar(FCompiler.addManagedDecl(NewGlobalVarP()));
+
+      VarSetLength(FAsArray, FMemberMap.Count - FGapCount);
+    end;
+
+    CounterVar := 0;
+    Counter := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@CounterVar);
+    Value := NewGlobalVarP(nil);
+
+    try
+      for i := 0 to FMemberMap.Count - 1 do
+        if (FMemberMap[i] <> '') then
+        try
+          case BaseIntType of
+            ltInt8:   PInt8(Value.Ptr)^   := FRange.Lo + i;
+            ltUInt8:  PUInt8(Value.Ptr)^  := FRange.Lo + i;
+            ltInt16:  PInt16(Value.Ptr)^  := FRange.Lo + i;
+            ltUInt16: PUInt16(Value.Ptr)^ := FRange.Lo + i;
+            ltInt32:  PInt32(Value.Ptr)^  := FRange.Lo + i;
+            ltUInt32: PUInt32(Value.Ptr)^ := FRange.Lo + i;
+            ltInt64:  PInt64(Value.Ptr)^  := FRange.Lo + i;
+            ltUInt64: PUInt64(Value.Ptr)^ := FRange.Lo + i;
+          end;
+
+          Element := FAsArray.VarType.EvalConst(op_Index, FAsArray, Counter, []);
+          Element.VarType.EvalConst(op_Assign, Element, Value, [lefAssigning]);
+
+          Inc(CounterVar);
+        finally
+          if (Element <> nil) then
+            FreeAndNil(Element);
+        end;
+    finally
+      Counter.Free();
+      Value.Free();
+    end;
+  end;
+
+  Result := FAsArray;
 end;
 
 constructor TLapeType_Enum.Create(ACompiler: TLapeCompilerBase; AMemberMap: TEnumMap; AScoped: Boolean; AName: lpString; ADocPos: PDocPos);

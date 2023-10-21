@@ -563,17 +563,17 @@ type
     procedure setStep(Node: TLapeTree_ExprBase); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
     function CompileBody(var Offset: Integer): TResVar; override;
-    procedure CompileBodyForIn(var Offset: Integer);
-    procedure CompileBodyForInEnum(var Offset: Integer);
+    procedure CompileBodyForIn(var Offset: Integer); virtual;
   public
     LoopType: ELoopType;
+    LoopOverWhat: ELoopOverWhat;
     Container: TResVar;
+    CheckInVar: TResVar; // loopOver optional: if not (item in CheckInVar) then Continue;
 
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
     function Compile(var Offset: Integer): TResVar; override;
-    function CompileForIn(var Offset: Integer): TResVar;
-    function CompileForInEnum(var Offset: Integer): TResVar;
+    function CompileForIn(var Offset: Integer): TResVar; virtual;
     
     property Counter: TLapeTree_ExprBase read FCounter write setCounter;
     property Limit: TLapeTree_ExprBase read FLimit write setLimit;
@@ -4324,10 +4324,8 @@ begin
 
   FStartBodyOffset := FCompiler.Emitter.CheckOffset(Offset);
 
-  case LoopType of
-    loopOver:                  CompileBodyForIn(Offset);
-    loopOverEnum, loopOverSet: CompileBodyForInEnum(Offset);
-  end;
+  if (LoopType = loopOver) then
+    CompileBodyForIn(Offset);
 
   if (FBody <> nil) then
     FBody.CompileToTempVar(Offset, Result)
@@ -4400,52 +4398,21 @@ begin
   finally
     Free();
   end;
-end;
 
-procedure TLapeTree_For.CompileBodyForInEnum(var Offset: Integer);
-var
-  counterVar, limitVar: TResVar;
-begin
-  Assert(LoopType in [loopOverEnum, loopOverSet]);
+  if (CheckInVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+    with TLapeTree_If.Create(FLimit) do
+    try
+      Condition := TLapeTree_Operator.Create(op_IN, Self);
+      TLapeTree_Operator(Condition).Left := TLapeTree_ResVar.Create(counterVar.IncLock(), Self);
+      TLapeTree_Operator(Condition).Right := TLapeTree_ResVar.Create(CheckInVar.IncLock(), Self);
 
-  if (LoopType in [loopOverEnum, loopOverSet]) then
-  begin
-    FCounter.CompileToTempVar(Offset, counterVar);
-    FLimit.CompileToTempVar(Offset, limitVar);
+      ElseBody := TLapeTree_InternalMethod_Continue.Create(Self);
+      ElseBody.FParent := Self;
 
-    if (counterVar.VarType is TLapeType_Enum) and (TLapeType_Enum(counterVar.VarType).GapCount > 0) then
-    begin
-      with TLapeTree_If.Create(FCounter) do
-      try
-        Condition := TLapeTree_InternalMethod_IsEnumGap.Create(Self);
-        TLapeTree_InternalMethod_IsEnumGap(Condition).addParam(TLapeTree_ResVar.Create(counterVar.IncLock(), Self));
-
-        Body := TLapeTree_InternalMethod_Continue.Create(Self);
-        Body.FParent := Self;
-
-        Compile(Offset);
-      finally
-        Free();
-      end;
+      Compile(Offset);
+    finally
+      Free();
     end;
-
-    if (LoopType = loopOverSet) then
-    begin
-      with TLapeTree_If.Create(FLimit) do
-      try
-        Condition := TLapeTree_Operator.Create(op_IN, Self);
-        TLapeTree_Operator(Condition).Left := TLapeTree_ResVar.Create(counterVar.IncLock(), Self);
-        TLapeTree_Operator(Condition).Right := TLapeTree_ResVar.Create(limitVar.IncLock(), Self);
-
-        ElseBody := TLapeTree_InternalMethod_Continue.Create(Self);
-        ElseBody.FParent := Self;
-
-        Compile(Offset);
-      finally
-        Free();
-      end;
-    end;
-  end;
 end;
 
 constructor TLapeTree_For.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
@@ -4475,7 +4442,7 @@ begin
   Assert(FCounter <> nil);
   Assert(FLimit <> nil);
 
-  if LoopType in [LoopOver, loopOverEnum, loopOverSet] then
+  if (LoopType = loopOver) then
     Exit(CompileForIn(Offset));
 
   CounterVar := nil;
@@ -4519,11 +4486,29 @@ begin
   Assert(FCounter <> nil);
   Assert(FLimit <> nil);
 
-  if (LoopType in [loopOverEnum, loopOverSet]) then
-    Exit(CompileForInEnum(Offset));
-
   if (not FLimit.CompileToTempVar(Offset, Container)) or (not Container.HasType()) then
     LapeException(lpeInvalidEvaluation, FLimit.DocPos);
+
+  case loopOverWhat of
+    loopOverSet:
+      begin
+        if (not (Container.VarType is TLapeType_Set)) then
+          LapeException(lpeInvalidEvaluation, FLimit.DocPos);
+
+        CheckInVar := Container;
+        Container := _ResVar.New(TLapeType_Set(Container.VarType).Range.AsArray);
+      end;
+
+    loopOverEnum:
+      begin
+        if (Container.VarType is TLapeType_TypeEnum) then
+          Container.VarType := TLapeType_TypeEnum(Container.VarType).TType;
+        if (not (Container.VarType is TLapeType_SubRange)) then
+          LapeException(lpeInvalidEvaluation, FLimit.DocPos);
+
+        Container := _ResVar.New(TLapeType_SubRange(Container.VarType).AsArray);
+      end;
+  end;
 
   lower := _ResVar.New(FCompiler.getTempVar(ltSizeInt)).IncLock();
   upper := _ResVar.New(FCompiler.getTempVar(ltSizeInt)).IncLock();
@@ -4560,57 +4545,6 @@ begin
     Container.Spill(1);
     lower.Spill(1);
     upper.Spill(1);
-  end;
-end;
-
-function TLapeTree_For.CompileForInEnum(var Offset: Integer): TResVar;
-var
-  Upper: TResVar;
-  LimitType, CounterType: TLapeType;
-  SubRange: TLapeType_SubRange;
-begin
-  Result := NullResVar;
-  Container := NullResVar;
-
-  Assert(FCondition = nil);
-  Assert(FCounter <> nil);
-  Assert(FLimit <> nil);
-  Assert(LoopType in [loopOverEnum, loopOverSet]);
-
-  if (LoopType in [loopOverEnum, loopOverSet]) then
-  begin
-    if (not FCounter.CompileToTempVar(Offset, Container)) then
-      LapeException(lpeInvalidEvaluation, FCounter.DocPos);
-
-    CounterType := FCounter.resType();
-    LimitType := FLimit.resType();
-
-    // for e in `EEnum`
-    if (LimitType is TLapeType_Type) then
-      LimitType := TLapeType_Type(LimitType).TType;
-
-    if (LimitType is TLapeType_Set) then
-      SubRange := TLapeType_Set(LimitType).Range
-    else
-    if (LimitType is TLapeType_SubRange) then
-      SubRange := TLapeType_SubRange(LimitType)
-    else
-      LapeException(lpeInvalidCondition, DocPos);
-
-    if (SubRange.Range.Lo > 0) then
-      Container := CounterType.Eval(op_Assign, Result, Container, _ResVar.New(SubRange.VarLo()), [], Offset, @FCounter._DocPos);
-    Upper := _ResVar.New(SubRange.VarHi()).IncLock();
-
-    try
-      FCondition := TLapeTree_Operator.Create(op_cmp_LessThanOrEqual, Self);
-      TLapeTree_Operator(FCondition).Left := TLapeTree_ResVar.Create(Container.IncLock(), FCounter);
-      TLapeTree_Operator(FCondition).Right := TLapeTree_ResVar.Create(upper.IncLock(), FLimit);
-      Result := inherited Compile(Offset);
-    finally
-      setCondition(nil);
-      Container.Spill(1);
-      Upper.Spill(1);
-    end;
   end;
 end;
 
