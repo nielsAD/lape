@@ -217,12 +217,6 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
-  TLapeTree_InternalMethod_IsEnumGap = class(TLapeTree_InternalMethod)
-  public
-    function resType: TLapeType; override;
-    function Compile(var Offset: Integer): TResVar; override;
-  end;
-
   TLapeTree_InternalMethod_IndexOf = class(TLapeTree_InternalMethod)
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
@@ -366,40 +360,6 @@ begin
       Branch.addFallThroughStatement(False, FCompiler.Emitter._JmpR(0, Offset, @_DocPos), @_DocPos);
   finally
     FCompiler.Emitter.FullEmit := True;
-  end;
-end;
-
-function TLapeTree_InternalMethod_IsEnumGap.resType: TLapeType;
-begin
-  if (FResType = nil) then
-    FResType := FCompiler.getBaseType(ltEvalBool);
-
-  Result := inherited resType();
-end;
-
-function TLapeTree_InternalMethod_IsEnumGap.Compile(var Offset: Integer): TResVar;
-var
-  Method: TLapeGlobalVar;
-  Typ: TLapeType;
-begin
-  Result := NullResVar;
-  Dest := NullResVar;
-
-  if (FParams.Count <> 1) then
-    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
-
-  Typ := FParams[0].resType();
-  if (not (Typ is TLapeType_Enum)) then
-    LapeException(lpeExpectedEnum, DocPos);
-
-  Method := TLapeType_OverloadedMethod(FCompiler['_IsEnumGap'].VarType).getMethod(getTypeArray([Typ]), FCompiler.getBaseType(ltEvalBool));
-  with TLapeTree_Invoke.Create(Method, Self) do
-  try
-    addParam(Self.FParams[0]);
-
-    Result := Compile(Offset);
-  finally
-    Free();
   end;
 end;
 
