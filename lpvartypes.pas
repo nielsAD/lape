@@ -634,7 +634,7 @@ type
     FBaseTypesDictionary: TLapeBaseTypesDictionary;
 
     FGlobalDeclarations: TLapeDeclarationList;
-    FManagedDeclarations: TLapeDeclarationList;
+    FManagedDeclarations: TLapeDeclarationListBase;
     FCachedDeclarations: array[ELapeBaseType] of TLapeVarMap;
     FCachedTypeVars: TLapeCachedTypeVars;
 
@@ -711,7 +711,7 @@ type
     property BaseTypes: TLapeBaseTypes read FBaseTypes;
 
     property GlobalDeclarations: TLapeDeclarationList read FGlobalDeclarations;
-    property ManagedDeclarations: TLapeDeclarationList read FManagedDeclarations;
+    property ManagedDeclarations: TLapeDeclarationListBase read FManagedDeclarations;
     property Globals[AName: lpString]: TLapeGlobalVar read getGlobalVar; default;
     property Emitter: TLapeCodeEmitter read FEmitter write setEmitter;
     property Options: ECompilerOptionsSet read FOptions write setOptions default Lape_OptionsDef;
@@ -3038,7 +3038,7 @@ begin
   inherited Create(ltUnknown, ACompiler, AName, ADocPos);
 
   // Use unsorted list for indexing
-  setManagedDecls(TLapeDeclarationList.Create(TLapeDeclCollection_List.Create(False)), True);
+  //setManagedDecls(TLapeDeclarationList.Create(TLapeDeclCollection_List.Create()), True);
 
   FOfObject := bUnknown;
   FHiddenSelf := bUnknown;
@@ -4098,8 +4098,8 @@ begin
     AEmitter := TLapeCodeEmitter.Create();
   FEmitter := AEmitter;
 
-  FGlobalDeclarations := TLapeDeclarationList.Create(nil);
-  FManagedDeclarations := TLapeDeclarationList.Create(nil);
+  FGlobalDeclarations := TLapeDeclarationList.Create();
+  FManagedDeclarations := TLapeDeclarationListBase.Create();
   FCachedTypeVars := TLapeCachedTypeVars.Create(nil, nil, dupAccept);
   for BaseType in LapeBaseTypes do
     FCachedDeclarations[BaseType] := TLapeVarMap.Create(nil, dupIgnore, True, '', True);
@@ -4110,9 +4110,6 @@ begin
   for BaseType in LapeBaseTypes do
     if (FBaseTypes[BaseType] <> nil) then
       FBaseTypesDictionary[FBaseTypes[BaseType].Name] := FBaseTypes[BaseType];
-
-  addGlobalDecl(TLapeType_DynArray.Create(getBaseType(ltInt32), Self, '!integerarray'));
-  addGlobalDecl(TLapeType_DynArray.Create(getBaseType(ltFloat), Self, '!floatarray'));
 end;
 
 destructor TLapeCompilerBase.Destroy;
@@ -4140,7 +4137,9 @@ var
 begin
   ClearBaseTypes(FBaseTypes, False);
   FGlobalDeclarations.Delete(TLapeVar, True);
+  FGlobalDeclarations.Delete(TLapeType_OverloadedMethod, True);
   FManagedDeclarations.Delete(TLapeVar, True);
+  FManagedDeclarations.Delete(TLapeType_OverloadedMethod, True);
   FGlobalDeclarations.Clear();
   FManagedDeclarations.Clear();
   for BaseType in LapeBaseTypes do

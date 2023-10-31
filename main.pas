@@ -22,7 +22,7 @@ type
     procedure btnRunClick(Sender: TObject);
   private
     procedure WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
-  end; 
+  end;
 
 var
   Form1: TForm1;
@@ -30,9 +30,27 @@ var
 implementation
 
 uses
+  {$IFDEF WINDOWS}Windows,{$ENDIF}
   lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, lpmessages, lpffi, ffi;
 
 {$R *.lfm}
+
+function HighResolutionTime: Double;
+{$IFDEF WINDOWS}
+var
+  Frequency: Int64 = 0;
+  Count: Int64 = 0;
+begin
+  QueryPerformanceFrequency(Frequency);
+  QueryPerformanceCounter(Count);
+
+  Result := Count / Frequency * 1000;
+end;
+{$ELSE}
+begin
+  Result := GetTickCount64();
+end;
+{$ENDIF}
 
 procedure MyWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
@@ -50,7 +68,7 @@ end;
 
 procedure Compile(Run, Disassemble: Boolean);
 var
-  t: UInt64;
+  t: Double;
   Parser: TLapeTokenizerBase;
   Compiler: TLapeCompiler;
 begin
@@ -69,9 +87,9 @@ begin
     Compiler.addGlobalMethod('procedure _WriteLn; override;', @MyWriteLn, Form1);
 
     try
-      t := GetTickCount64();
+      t := HighResolutionTime();
       if Compiler.Compile() then
-        m.Lines.Add('Compiling Time: ' + IntToStr(GetTickCount64() - t) + 'ms.')
+        m.Lines.Add('Compiling Time (no sorting etc): ' + IntToStr(Round(HighResolutionTime() - t)) + 'ms.')
       else
         m.Lines.Add('Error!');
     except
@@ -83,14 +101,14 @@ begin
     end;
 
     try
-      if Disassemble then
-        DisassembleCode(Compiler.Emitter.Code, [Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue)]);
+      //if Disassemble then
+      //  DisassembleCode(Compiler.Emitter.Code, [Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue)]);
 
       if Run then
       begin
-        t := GetTickCount64();
+        t := HighResolutionTime();
         RunCode(Compiler.Emitter);
-        m.Lines.Add('Running Time: ' + IntToStr(GetTickCount64() - t) + 'ms.');
+        m.Lines.Add('Running Time: ' + IntToStr(Round(HighResolutionTime - t)) + 'ms.');
       end;
     except
       on E: lpException do

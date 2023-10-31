@@ -475,58 +475,6 @@ type
     procedure Notify(Sender: _T); virtual;
   end;
 
-  {$IFDEF FPC}generic{$ENDIF} TLapeNotifierOfObject<_T> = class(TLapeBaseClass)
-  public type
-    TNotifyProcOfObject = procedure(Sender: _T) of object;
-    TNotifiers = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TNotifyProcOfObject>;
-  protected
-    FNotifiers: TNotifiers;
-  public
-    constructor Create; reintroduce; virtual;
-    destructor Destroy; override;
-
-    procedure AddProc(const Proc: TNotifyProcOfObject); virtual;
-    procedure DeleteProc(const Proc: TNotifyProcOfObject); virtual;
-
-    procedure Notify(Sender: _T); virtual;
-  end;
-
-  {$IFDEF FPC}generic{$ENDIF} TLapeDictionary<_T> = class(TLapeBaseClass)
-  public
-  type
-    THashBucketItems = array of record
-      Item: _T;
-      Hash: UInt32;
-    end;
-
-    PHashBucket = ^THashBucket;
-    THashBucket = record
-      Count: Integer;
-      Items: THashBucketItems;
-    end;
-    THashBuckets = array of THashBucket;
-
-    TItemArray = array of _T;
-  protected
-    FInitialSize: Integer;
-    FGrowth: Integer;
-    FBuckets: THashBuckets;
-    FCount: Integer;
-    FSize: Integer;
-
-    procedure Grow;
-  public
-    constructor Create(InitialSize: Integer = 32; Growth: Integer = 4); reintroduce;
-
-    function GetBucket(const Hash: UInt32): PHashBucket; inline;
-
-    function Remove(const Hash: UInt32; const Item: _T): Boolean;
-    procedure Add(const Hash: UInt32; const Item: _T; const CanGrow: Boolean = True);
-    procedure Clear;
-
-    function ExportToArray: TItemArray;
-  end;
-
   {$IFDEF FPC}generic{$ENDIF} TLapeSorter<_T> = class
   protected
     class procedure DoQuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: array of _T; iLo, iHi: SizeInt; const SortUp: Boolean);
@@ -538,124 +486,75 @@ type
   TLapeDeclarationClass = class of TLapeDeclaration;
   TLapeDeclArray = array of TLapeDeclaration;
 
-  // Abstract class
   TLapeDeclCollection = class(TLapeBaseClass)
   protected
-    function getItem(Index: Integer): TLapeDeclaration; virtual; abstract;
-    function getCount: Integer; virtual; abstract;
+    FCount: Integer;
+    FItems: TLapeDeclArray;
+
+    function getItem(Index: Integer): TLapeDeclaration;
   public
-    procedure Clear; virtual; abstract;
+    procedure Clear;
+    procedure Add(Decl: TLapeDeclaration);
+    function Delete(Decl: TLapeDeclaration): Boolean;
 
-    procedure Add(Decl: TLapeDeclaration); virtual; abstract;
-    function Delete(Decl: TLapeDeclaration): Boolean; virtual; abstract;
+    function Get(Name: lpString; out Decl: TLapeDeclaration): Boolean;
+    function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean;
+    function GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray;
 
-    function Get(Name: lpString; out Decl: TLapeDeclaration): Boolean; overload; virtual; abstract;
-    function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean; overload; virtual; abstract;
-    function GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray; virtual; abstract;
+    function IndexOf(Decl: TLapeDeclaration): Integer;
+    function Exists(Decl: TLapeDeclaration): Boolean;
 
-    function IndexOf(Decl: TLapeDeclaration): Integer; virtual; abstract;
-    function Exists(Decl: TLapeDeclaration): Boolean; virtual; abstract;
+    function ExportToArray: TLapeDeclArray;
 
-    function ExportToArray: TLapeDeclArray; virtual; abstract;
+    property Count: Integer read FCount;
+    property Items[Index: Integer]: TLapeDeclaration read getItem; default;
+  end;
+
+  // base list, no parents or lookup (by name)
+  TLapeDeclarationListBase = class(TLapeBaseClass)
+  protected
+    FList: TLapeDeclCollection;
+
+    function getItem(Index: Integer): TLapeDeclaration; virtual;
+    function getCount: Integer; virtual;
+  public
+    FreeDecls: Boolean;
+
+    constructor Create(AList: TLapeDeclCollection = nil; ManageDeclarations: Boolean = True); virtual; reintroduce;
+    destructor Destroy; override;
+
+    function IndexOf(Decl: TLapeDeclaration): Integer; virtual;
+
+    procedure Clear; virtual;
+    procedure Delete(Decl: TLapeDeclaration; DoFree: Boolean = False); virtual; overload;
+    procedure Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False); virtual; overload;
+    procedure addDeclaration(Decl: TLapeDeclaration); virtual;
+    function ExportToArray: TLapeDeclArray; virtual;
 
     property Count: Integer read getCount;
     property Items[Index: Integer]: TLapeDeclaration read getItem; default;
   end;
 
-  TLapeDeclCollection_Dictionary = class(TLapeDeclCollection)
+  TLapeDeclarationList = class(TLapeDeclarationListBase)
   protected
-  type
-    TDictionary = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TLapeDeclaration>;
-    TList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeDeclaration>;
-  protected
-    FDictionary: TDictionary;
-    FUnnamedBucket: TList;
-
-    procedure NameChanged(Decl: TLapeDeclaration); virtual;
-
-    function getItem(Index: Integer): TLapeDeclaration; override;
-    function getCount: Integer; override;
-  public
-    constructor Create; override;
-    destructor Destroy; override;
-
-    procedure Clear; override;
-
-    procedure Add(Decl: TLapeDeclaration); override;
-    function Delete(Decl: TLapeDeclaration): Boolean; override;
-
-    function Get(Name: lpString; out Decl: TLapeDeclaration): Boolean; override;
-    function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean; override;
-    function GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray; override;
-
-    function IndexOf(Decl: TLapeDeclaration): Integer; override;
-    function Exists(Decl: TLapeDeclaration): Boolean; override;
-
-    function ExportToArray: TLapeDeclArray; override;
-  end;
-
-  TLapeDeclCollection_List = class(TLapeDeclCollection)
-  protected type
-    TList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeDeclaration>;
-  protected
-    FList: TList;
-
-    function getItem(Index: Integer): TLapeDeclaration; override;
-    function getCount: Integer; override;
-  public
-    constructor Create(Sorted: Boolean); reintroduce; virtual;
-    destructor Destroy; override;
-
-    procedure Clear; override;
-
-    procedure Add(Decl: TLapeDeclaration); override;
-    function Delete(Decl: TLapeDeclaration): Boolean; override;
-
-    function Get(Name: lpString; out Decl: TLapeDeclaration): Boolean; override;
-    function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean; override;
-    function GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray; override;
-
-    function IndexOf(Decl: TLapeDeclaration): Integer; override;
-    function Exists(Decl: TLapeDeclaration): Boolean; override;
-
-    function ExportToArray: TLapeDeclArray; override;
-  end;
-
-  TLapeDeclarationList = class(TLapeBaseClass)
-  protected
-    FList: TLapeDeclCollection;
-
-    function getItem(Index: Integer): TLapeDeclaration; virtual;
     function getItemCount: Integer; virtual;
-    function getCount: Integer; virtual;
   public
     Parent: TLapeDeclarationList;
-    FreeDecls: Boolean;
 
-    constructor Create(AList: TLapeDeclCollection; ManageDeclarations: Boolean = True); reintroduce; virtual;
-    destructor Destroy; override;
+    constructor Create(AList: TLapeDeclCollection = nil; ManageDeclarations: Boolean = True); override;
 
     function HasParent: Boolean; virtual;
-    procedure Clear; virtual;
+    procedure Clear; override;
     procedure ClearSubDeclarations; virtual;
 
-    procedure addDeclaration(Decl: TLapeDeclaration); virtual;
+    procedure addDeclaration(Decl: TLapeDeclaration); override;
     function HasSubDeclaration(Name: lpString; CheckParent: TInitBool): Boolean; overload; virtual;
     function HasSubDeclaration(Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean; overload; virtual;
-
-    function IndexOf(Decl: TLapeDeclaration): Integer; virtual;
-
-    procedure Delete(Decl: TLapeDeclaration; DoFree: Boolean = False); overload; virtual;
-    procedure Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False); overload; virtual;
 
     function Get(Name: lpString; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean; overload; virtual;
     function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean; overload; virtual;
     function GetByClass(AClass: TLapeDeclarationClass; CheckParent: TInitBool): TLapeDeclArray; virtual;
 
-    function ExportToArray: TLapeDeclArray; virtual;
-
-    property Count: Integer read getCount;
-    property Items[Index: Integer]: TLapeDeclaration read getItem; default;
     property ItemCount: Integer read getItemCount;
   end;
 
@@ -671,21 +570,17 @@ type
   end;
 
   TLapeDeclaration = class(TLapeBaseDeclClass)
-  protected type
-    TNameChangeNotifier = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifierOfObject<TLapeDeclaration>;
   protected
-    FList: TLapeDeclarationList;
+    FList: TLapeDeclarationListBase;
 
     FName: lpString;
     FNameHash: UInt32;
-    FNameHashPrevious: UInt32;
     FNameLapeCase: lpString;
-    FNameChangeNotifier: TNameChangeNotifier;
 
     FHints: TLapeDeclarationHints;
 
     function getDocPos: TDocPos; override;
-    procedure setList(AList: TLapeDeclarationList); virtual;
+    procedure setList(AList: TLapeDeclarationListBase); virtual;
     procedure setName(AName: lpString); virtual;
   public
     _DocPos: TDocPos;
@@ -699,7 +594,7 @@ type
     procedure WriteHints(Callback: TLapeDeclarationHintCallback; ADocPos: TDocPos); virtual;
     function HasHints: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
-    property DeclarationList: TLapeDeclarationList read FList write setList;
+    property DeclarationList: TLapeDeclarationListBase read FList write setList;
     property Name: lpString read FName write setName;
     property Hints: TLapeDeclarationHints read FHints;
   end;
@@ -2333,452 +2228,211 @@ begin
   end;
 end;
 
-constructor TLapeNotifierOfObject{$IFNDEF FPC}<_T>{$ENDIF}.Create;
+function TLapeDeclCollection.getItem(Index: Integer): TLapeDeclaration;
 begin
-  inherited;
-
-  FNotifiers := TNotifiers.Create(nil, dupIgnore, False);
-end;
-
-destructor TLapeNotifierOfObject{$IFNDEF FPC}<_T>{$ENDIF}.Destroy;
-begin
-  FNotifiers.Free;
-
-  inherited;
-end;
-
-procedure TLapeNotifierOfObject{$IFNDEF FPC}<_T>{$ENDIF}.AddProc(const Proc: TNotifyProcOfObject);
-begin
-  FNotifiers.Add(Proc);
-end;
-
-procedure TLapeNotifierOfObject{$IFNDEF FPC}<_T>{$ENDIF}.DeleteProc(const Proc: TNotifyProcOfObject);
-var
-  p: TNotifyProcOfObject;
-begin
-  p := FNotifiers.DeleteItem(Proc);
-end;
-
-procedure TLapeNotifierOfObject{$IFNDEF FPC}<_T>{$ENDIF}.Notify(Sender: _T);
-var
-  i: Integer;
-  p: TNotifyProcOfObject;
-begin
-  for i := FNotifiers.Count - 1 downto 0 do
-  begin
-    p := FNotifiers[i];
-    p(Sender);
-  end;
-end;
-
-function TLapeDictionary{$IFNDEF FPC}<_T>{$ENDIF}.GetBucket(const Hash: UInt32): PHashBucket;
-begin
-  Assert(FSize > 0);
-
-  Result := @FBuckets[Hash and FSize];
-end;
-
-procedure TLapeDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Clear;
-begin
-  FSize := 0;
-  FCount := 0;
-  FBuckets := nil;
-end;
-
-procedure TLapeDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Grow;
-var
-  i, j: Integer;
-  OldBuckets: THashBuckets;
-begin
-  FCount := 0;
-  if (FSize = 0) then
-    FSize := FInitialSize - 1
+  if (Index >= 0) and (Index < FCount) then
+    Result := FItems[Index]
   else
-    FSize := (FSize + 1) * FGrowth - 1;
-
-  OldBuckets := FBuckets;
-
-  SetLength(FBuckets, 0);
-  SetLength(FBuckets, FSize + 1);
-
-  for i := 0 to High(OldBuckets) do
-    for j := 0 to OldBuckets[i].Count - 1 do
-      Add(OldBuckets[i].Items[j].Hash, OldBuckets[i].Items[j].Item, False);
+    Result := nil;
 end;
 
-constructor TLapeDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Create(InitialSize: Integer; Growth: Integer);
+procedure TLapeDeclCollection.Clear;
 begin
-  inherited Create();
-
-  FInitialSize := InitialSize;
-  FGrowth := Growth;
+  FCount := 0;
+  // FItems := nil;
 end;
 
-procedure TLapeDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Add(const Hash: UInt32; const Item: _T; const CanGrow: Boolean);
+procedure TLapeDeclCollection.Add(Decl: TLapeDeclaration);
 begin
-  if CanGrow and ((FSize = 0) or (FCount > FSize div 2)) then
-    Grow();
+  if (FCount >= Length(FItems)) then
+    SetLength(FItems, 4 + (Length(FItems) * 2));
 
-  with GetBucket(Hash)^ do
-  begin
-    if (Count = Length(Items)) then
-      SetLength(Items, 4 + (Count * 4));
-
-    Items[Count].Item := Item;
-    Items[Count].Hash := Hash;
-
-    Inc(Count);
-  end;
+  FItems[FCount] := Decl;
 
   Inc(FCount);
 end;
 
-function TLapeDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Remove(const Hash: UInt32; const Item: _T): Boolean;
+function TLapeDeclCollection.Delete(Decl: TLapeDeclaration): Boolean;
 var
   i: Integer;
 begin
-  Result := False;
-
-  with GetBucket(Hash)^ do
+  i := IndexOf(Decl);
+  if (i > -1) then
   begin
-    for i := 0 to Count - 1 do
-      if CompareMem(@Items[i].Item, @Item, SizeOf(_T)) then
-      begin
-        Dec(Count);
-        if (i < Count) then
-          Items[i] := Items[Count];
-
-        Result := True;
-        Break;
-      end;
-  end;
-
-  if Result then
+    if (i < FCount - 1) then
+      Move(FItems[i + 1], FItems[i], (FCount - (i + 1)) * SizeOf(TLapeDeclaration));
     Dec(FCount);
+
+    Result := True;
+  end else
+    Result := False;
 end;
 
-function TLapeDictionary{$IFNDEF FPC}<_T>{$ENDIF}.ExportToArray: TItemArray;
-var
-  i, j: Integer;
-  Count: Integer;
+function TLapeDeclCollection.Get(Name: lpString; out Decl: TLapeDeclaration): Boolean;
 begin
+  Result := Get(Name, nil, Decl);
+end;
+
+function TLapeDeclCollection.Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean;
+var
+  Hash: UInt32;
+  Index: Int32;
+  i: Integer;
+begin
+  Result := False;
+  if (FCount = 0) then
+    Exit;
+
+  Name := LapeCase(Name);
+  Hash := LapeHash(Name);
+
+  for i := 0 to FCount - 1 do
+    if (FItems[i].FNameHash = Hash) then
+    begin
+      Decl := FItems[i];
+      if (Decl.FNameLapeCase = Name) and ((AClass = nil) or (Decl is AClass)) then
+        Exit(True);
+    end;
+end;
+
+function TLapeDeclCollection.GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray;
+var
+  i, Cur: Integer;
+begin
+  Cur := 0;
   SetLength(Result, FCount);
 
-  if (FSize > 0) then
-  begin
-    Count := 0;
-
-    for i := 0 to FSize do
-      for j := 0 to FBuckets[i].Count - 1 do
-      begin
-        Result[Count] := FBuckets[i].Items[j].Item;
-
-        Inc(Count);
-      end;
-
-    Assert(Count = FCount);
-  end;
-end;
-
-procedure TLapeDeclCollection_Dictionary.NameChanged(Decl: TLapeDeclaration);
-begin
-  Assert(Decl <> nil);
-
-  if (Decl.FNameHashPrevious = 0) then
-    FUnnamedBucket.DeleteItem(Decl)
-  else
-    FDictionary.Remove(Decl.FNameHashPrevious, Decl);
-
-  if (Decl.FNameHash = 0) then
-    FUnnamedBucket.Add(Decl)
-  else
-    FDictionary.Add(Decl.FNameHash, Decl);
-end;
-
-function TLapeDeclCollection_Dictionary.getItem(Index: Integer): TLapeDeclaration;
-begin
-  Result := nil;
-
-  LapeExceptionFmt(lpeInvalidDictionaryOperation, ['getItem']);
-end;
-
-function TLapeDeclCollection_Dictionary.getCount: Integer;
-begin
-  Result := FDictionary.FCount + FUnnamedBucket.Count;
-end;
-
-constructor TLapeDeclCollection_Dictionary.Create;
-begin
-  inherited Create;
-
-  FUnnamedBucket := TList.Create(nil, dupAccept, True);
-  FDictionary := TDictionary.Create();
-end;
-
-destructor TLapeDeclCollection_Dictionary.Destroy;
-begin
-  Clear();
-
-  FreeAndNil(FUnnamedBucket);
-  FreeAndNil(FDictionary);
-
-  inherited;
-end;
-
-procedure TLapeDeclCollection_Dictionary.Clear;
-begin
-  FUnnamedBucket.Clear();
-  FDictionary.Clear();
-end;
-
-procedure TLapeDeclCollection_Dictionary.Add(Decl: TLapeDeclaration);
-begin
-  Assert(Decl <> nil);
-
-  if (Decl.FNameHash = 0) then
-    FUnnamedBucket.Add(Decl)
-  else
-    FDictionary.Add(Decl.FNameHash, Decl);
-
-  Decl.FNameChangeNotifier.AddProc({$IFDEF FPC}@{$ENDIF}NameChanged);
-end;
-
-function TLapeDeclCollection_Dictionary.Delete(Decl: TLapeDeclaration): Boolean;
-begin
-  Assert(Decl <> nil);
-
-  if (Decl.FNameHash = 0) then
-    Result := FUnnamedBucket.DeleteItem(Decl) <> nil
-  else
-    Result := FDictionary.Remove(Decl.FNameHash, Decl);
-
-  Decl.FNameChangeNotifier.DeleteProc({$IFDEF FPC}@{$ENDIF}NameChanged);
-end;
-
-function TLapeDeclCollection_Dictionary.Get(Name: lpString; out Decl: TLapeDeclaration): Boolean;
-var
-  i: Integer;
-begin
-  Result := False;
-
-  if (FDictionary.FSize > 0) then
-    with FDictionary.GetBucket(LapeHash(Name))^ do
+  for i := 0 to FCount - 1 do
+    if (FItems[i] is AClass) then
     begin
-      for i := 0 to Count - 1 do
-        if (Items[i].Item.FNameLapeCase = Name) then
-        begin
-          Decl := Items[i].Item;
-
-          Result := True;
-          Break;
-        end;
-    end;
-end;
-
-function TLapeDeclCollection_Dictionary.Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean;
-var
-  i: Integer;
-begin
-  Result := False;
-
-  if (FDictionary.FSize > 0) then
-    with FDictionary.GetBucket(LapeHash(Name))^ do
-    begin
-      for i := 0 to Count - 1 do
-        if (Items[i].Item.FNameLapeCase = Name) and (Items[i].Item is AClass) then
-        begin
-          Decl := Items[i].Item;
-
-          Result := True;
-          Break;
-        end;
-    end;
-end;
-
-function TLapeDeclCollection_Dictionary.GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray;
-var
-  i, Len: Integer;
-  Decls: TLapeDeclArray;
-begin
-  Len := 0;
-  Decls := ExportToArray();
-
-  SetLength(Result, Length(Decls));
-
-  for i := 0 to High(Decls) do
-    if (Decls[i] is AClass) then
-    begin
-      Result[Len] := Decls[i];
-      Inc(Len);
+      Result[Cur] := FItems[i];
+      Inc(Cur);
     end;
 
-  SetLength(Result, Len);
+  SetLength(Result, Cur);
 end;
 
-function TLapeDeclCollection_Dictionary.IndexOf(Decl: TLapeDeclaration): Integer;
+function TLapeDeclCollection.IndexOf(Decl: TLapeDeclaration): Integer;
+var
+  Hash: UInt32;
+  i: Int32;
 begin
   Result := -1;
+  if (Decl = nil) or (FCount = 0) then
+    Exit;
 
-  LapeExceptionFmt(lpeInvalidDictionaryOperation, ['IndexOf']);
+  for i := 0 to FCount - 1 do
+    if (FItems[i] = Decl) then
+      Exit(i);
 end;
 
-function TLapeDeclCollection_Dictionary.Exists(Decl: TLapeDeclaration): Boolean;
+function TLapeDeclCollection.Exists(Decl: TLapeDeclaration): Boolean;
+begin
+  Result := IndexOf(Decl) > -1;
+end;
+
+function TLapeDeclCollection.ExportToArray: TLapeDeclArray;
 var
   i: Integer;
 begin
-  Assert(Decl <> nil);
-
-  if (Decl.FNameHash = 0) then
-  begin
-    Result := FUnnamedBucket.ExistsItem(Decl);
-    Exit;
-  end;
-
-  if (FDictionary.FSize > 0) then
-    with FDictionary.GetBucket(Decl.FNameHash)^ do
-    begin
-      for i := 0 to Count - 1 do
-        if (Items[i].Item = Decl) then
-        begin
-          Result := True;
-          Exit;
-        end;
-    end;
-
-  Result := False;
+  SetLength(Result, FCount);
+  for i := 0 to FCount - 1 do
+    Result[i] := FItems[i];
 end;
 
-function TLapeDeclCollection_Dictionary.ExportToArray: TLapeDeclArray;
-begin
-  Result := TLapeDeclArray(Concat(FDictionary.ExportToArray(), FUnnamedBucket.ExportToArray()));
-end;
-
-function TLapeDeclCollection_List.getItem(Index: Integer): TLapeDeclaration;
+function TLapeDeclarationListBase.getItem(Index: Integer): TLapeDeclaration;
 begin
   Result := FList[Index];
 end;
 
-function TLapeDeclCollection_List.getCount: Integer;
+function TLapeDeclarationListBase.getCount: Integer;
 begin
   Result := FList.Count;
 end;
 
-constructor TLapeDeclCollection_List.Create(Sorted: Boolean);
-begin
-  inherited Create;
-
-  FList := TList.Create(nil, dupAccept, Sorted);
-end;
-
-destructor TLapeDeclCollection_List.Destroy;
-begin
-  FList.Free();
-
-  inherited Destroy;
-end;
-
-procedure TLapeDeclCollection_List.Clear;
-begin
-  FList.Clear();
-end;
-
-procedure TLapeDeclCollection_List.Add(Decl: TLapeDeclaration);
-begin
-  FList.Add(Decl);
-end;
-
-function TLapeDeclCollection_List.Delete(Decl: TLapeDeclaration): Boolean;
-begin
-  Result := FList.DeleteItem(Decl) <> nil;
-end;
-
-function TLapeDeclCollection_List.Get(Name: lpString; out Decl: TLapeDeclaration): Boolean;
-var
-  i: Integer;
-begin
-  for i := 0 to FList.Count - 1 do
-    if (FList[i].FNameLapeCase = Name) then
-    begin
-      Decl := FList[i];
-
-      Result := True;
-      Exit;
-    end;
-
-  Result := False;
-end;
-
-function TLapeDeclCollection_List.Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean;
-var
-  i: Integer;
-begin
-  for i := 0 to FList.Count - 1 do
-    if (FList[i].FNameLapeCase = Name) and (FList[i] is AClass) then
-    begin
-      Decl := FList[i];
-
-      Result := True;
-      Exit;
-    end;
-
-  Result := False;
-end;
-
-function TLapeDeclCollection_List.GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray;
-var
-  Current: Integer;
-  Decl: TLapeDeclaration;
-begin
-  SetLength(Result, FList.Count);
-
-  if (FList.Count > 0) then
-  begin
-    Current := 0;
-
-    for Decl in ExportToArray() do
-      if (Decl is AClass) then
-      begin
-        Result[Current] := Decl;
-        Inc(Current);
-      end;
-
-    SetLength(Result, Current);
-  end;
-end;
-
-function TLapeDeclCollection_List.IndexOf(Decl: TLapeDeclaration): Integer;
-begin
-  Result := FList.IndexOf(Decl);
-end;
-
-function TLapeDeclCollection_List.Exists(Decl: TLapeDeclaration): Boolean;
-begin
-  Result := FList.ExistsItem(Decl);
-end;
-
-function TLapeDeclCollection_List.ExportToArray: TLapeDeclArray;
-begin
-  Result := TLapeDeclArray(FList.ExportToArray());
-end;
-
-constructor TLapeDeclarationList.Create(AList: TLapeDeclCollection; ManageDeclarations: Boolean);
+constructor TLapeDeclarationListBase.Create(AList: TLapeDeclCollection; ManageDeclarations: Boolean);
 begin
   inherited Create();
 
   if (AList = nil) then
-    AList := TLapeDeclCollection_Dictionary.Create();
+    AList := TLapeDeclCollection.Create();
 
   FList := AList;
   FreeDecls := ManageDeclarations;
 end;
 
-destructor TLapeDeclarationList.Destroy;
+destructor TLapeDeclarationListBase.Destroy;
 begin
   Clear();
   if (FList <> nil) then
-    FList.Free();
+    FreeAndNil(FList);
 
-  inherited;
+  inherited Destroy();
+end;
+
+function TLapeDeclarationListBase.IndexOf(Decl: TLapeDeclaration): Integer;
+begin
+  Result := FList.IndexOf(Decl);
+end;
+
+procedure TLapeDeclarationListBase.Clear;
+var
+  Decl: TLapeDeclaration;
+begin
+  if FreeDecls then
+  begin
+    for Decl in FList.ExportToArray() do
+    begin
+      Decl.FList := nil;
+      Decl.Free();
+    end;
+  end;
+
+  FList.Clear();
+end;
+
+procedure TLapeDeclarationListBase.Delete(Decl: TLapeDeclaration; DoFree: Boolean);
+begin
+  if FList.Delete(Decl) then
+    if DoFree then
+      Decl.Free()
+    else
+      Decl.FList := nil;
+end;
+
+procedure TLapeDeclarationListBase.Delete(AClass: TLapeDeclarationClass; DoFree: Boolean);
+var
+  Decl: TLapeDeclaration;
+begin
+  for Decl in ExportToArray() do
+    if (Decl is AClass) then
+      Delete(Decl, DoFree);
+end;
+
+procedure TLapeDeclarationListBase.addDeclaration(Decl: TLapeDeclaration);
+begin
+  if (Decl <> nil) and (Decl.FList <> Self) then
+  begin
+    FList.Add(Decl);
+
+    if (Decl.DeclarationList <> nil) then
+      Decl.DeclarationList := Self
+    else
+      Decl.FList := Self;
+  end;
+end;
+
+function TLapeDeclarationListBase.ExportToArray: TLapeDeclArray;
+begin
+  Result := FList.ExportToArray();
+end;
+
+constructor TLapeDeclarationList.Create(AList: TLapeDeclCollection; ManageDeclarations: Boolean);
+begin
+  if (AList = nil) then
+    AList := TLapeDeclCollection.Create();
+
+  inherited Create(AList, ManageDeclarations);
 end;
 
 function TLapeDeclarationList.HasParent: Boolean;
@@ -2793,49 +2447,22 @@ begin
     Inc(Result, Parent.ItemCount);
 end;
 
-function TLapeDeclarationList.getCount: Integer;
-begin
-  if (FList <> nil) then
-    Result := FList.Count
-  else
-    Result := 0;
-end;
-
-function TLapeDeclarationList.IndexOf(Decl: TLapeDeclaration): Integer;
-begin
-  if (FList <> nil) then
-    Result := FList.IndexOf(Decl)
-  else
-    Result := -1;
-end;
-
-function TLapeDeclarationList.getItem(Index: Integer): TLapeDeclaration;
-begin
-  if (FList <> nil) then
-    Result := FList[Index]
-  else
-    Result := nil;
-end;
-
 procedure TLapeDeclarationList.Clear;
 var
   Decl: TLapeDeclaration;
 begin
-  if (FList <> nil) then
+  if FreeDecls then
   begin
-    if FreeDecls then
+    ClearSubDeclarations();
+
+    for Decl in FList.ExportToArray() do
     begin
-      ClearSubDeclarations();
-
-      for Decl in FList.ExportToArray() do
-      begin
-        Decl.FList := nil;
-        Decl.Free();
-      end;
+      Decl.FList := nil;
+      Decl.Free();
     end;
-
-    FList.Clear();
   end;
+
+  FList.Clear();
 end;
 
 procedure TLapeDeclarationList.ClearSubDeclarations;
@@ -2850,9 +2477,10 @@ end;
 
 procedure TLapeDeclarationList.addDeclaration(Decl: TLapeDeclaration);
 begin
-  if (FList <> nil) and (Decl <> nil) and (not HasSubDeclaration(Decl, bFalse)) then
+  if (Decl <> nil) and (not HasSubDeclaration(Decl, bFalse)) then
   begin
     FList.Add(Decl);
+
     if (Decl.DeclarationList <> nil) then
       Decl.DeclarationList := Self
     else
@@ -2864,7 +2492,7 @@ function TLapeDeclarationList.HasSubDeclaration(Name: lpString; CheckParent: TIn
 var
   Decl: TLapeDeclaration;
 begin
-  Result := Get(Name, Decl, CheckParent);;
+  Result := Get(Name, Decl, CheckParent);
 end;
 
 function TLapeDeclarationList.HasSubDeclaration(Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
@@ -2880,37 +2508,10 @@ begin
       Result := Parent.HasSubDeclaration(Decl, bTrue);
 end;
 
-function TLapeDeclarationList.ExportToArray: TLapeDeclArray;
-begin
-  Result := FList.ExportToArray;
-end;
-
-procedure TLapeDeclarationList.Delete(Decl: TLapeDeclaration; DoFree: Boolean);
-begin
-  if (FList <> nil) and FList.Delete(Decl) then
-    if DoFree then
-      Decl.Free()
-    else
-      Decl.FList := nil;
-end;
-
-procedure TLapeDeclarationList.Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False);
-var
-  ClassItems: TLapeDeclArray;
-  i: Integer;
-begin
-  ClassItems := GetByClass(AClass, bFalse);
-  for i := High(ClassItems) downto 0 do
-    Delete(ClassItems[i], DoFree);
-end;
-
 function TLapeDeclarationList.Get(Name: lpString; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
 begin
-  Result := False;
-
   Name := LapeCase(Name);
-  if (FList <> nil) then
-    Result := FList.Get(Name, Decl);
+  Result := FList.Get(Name, Decl);
 
   if (not Result) and HasParent() then
     if (CheckParent = bUnknown) then
@@ -2921,11 +2522,8 @@ end;
 
 function TLapeDeclarationList.Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
 begin
-  Result := False;
-
   Name := LapeCase(Name);
-  if (FList <> nil) then
-    Result := FList.Get(Name, AClass, Decl);
+  Result := FList.Get(Name, AClass, Decl);
 
   if (not Result) and HasParent() then
     if (CheckParent = bUnknown) then
@@ -2936,10 +2534,7 @@ end;
 
 function TLapeDeclarationList.GetByClass(AClass: TLapeDeclarationClass; CheckParent: TInitBool): TLapeDeclArray;
 begin
-  Result := nil;
-
-  if (FList <> nil) then
-    Result := FList.GetByClass(AClass);
+  Result := FList.GetByClass(AClass);
 
   if (Result = nil) and HasParent() then
     if (CheckParent = bUnknown) then
@@ -2953,7 +2548,7 @@ begin
   Result := _DocPos;
 end;
 
-procedure TLapeDeclaration.setList(AList: TLapeDeclarationList);
+procedure TLapeDeclaration.setList(AList: TLapeDeclarationListBase);
 begin
   if (AList <> FList) then
   begin
@@ -2969,13 +2564,9 @@ procedure TLapeDeclaration.setName(AName: lpString);
 begin
   if (FName <> AName) then
   begin
-    FNameHashPrevious := FNameHash;
-
     FName := AName;
     FNameLapeCase := LapeCase(FName);
     FNameHash := LapeHash(FNameLapeCase);
-
-    FNameChangeNotifier.Notify(Self);
   end;
 end;
 
@@ -2983,8 +2574,6 @@ constructor TLapeDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil
 begin
   inherited Create();
 
-  FNameChangeNotifier := TNameChangeNotifier.Create();
-  FNameHash := 0;
   if (AName <> '') then
     Name := AName;
 
@@ -3000,7 +2589,6 @@ end;
 destructor TLapeDeclaration.Destroy;
 begin
   setList(nil);
-  FNameChangeNotifier.Free();
   inherited;
 end;
 
