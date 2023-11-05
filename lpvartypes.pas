@@ -626,6 +626,18 @@ type
   TLapeBaseTypesDictionary = {$IFDEF FPC}specialize{$ENDIF}TLapeUniqueStringDictionary<TLapeType>;
   TLapeCachedTypeVars = {$IFDEF FPC}specialize{$ENDIF}TLapeKeyValueList<Pointer, TLapeGlobalVar>;
 
+  // no duplicate checking
+  TLapeCompilerManagedDeclList = class(TLapeDeclarationList)
+  public
+    constructor Create; reintroduce;
+    function HasSubDeclaration(Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean; override;
+  end;
+
+  TLapeCompilerGlobalDeclList = class(TLapeDeclarationList)
+  public
+    constructor Create; reintroduce;
+  end;
+
   TLapeCompilerBase = class(TLapeBaseDeclClass)
   protected
     FEmitter: TLapeCodeEmitter;
@@ -634,7 +646,7 @@ type
     FBaseTypesDictionary: TLapeBaseTypesDictionary;
 
     FGlobalDeclarations: TLapeDeclarationList;
-    FManagedDeclarations: TLapeDeclarationListBase;
+    FManagedDeclarations: TLapeDeclarationList;
     FCachedDeclarations: array[ELapeBaseType] of TLapeVarMap;
     FCachedTypeVars: TLapeCachedTypeVars;
 
@@ -711,7 +723,7 @@ type
     property BaseTypes: TLapeBaseTypes read FBaseTypes;
 
     property GlobalDeclarations: TLapeDeclarationList read FGlobalDeclarations;
-    property ManagedDeclarations: TLapeDeclarationListBase read FManagedDeclarations;
+    property ManagedDeclarations: TLapeDeclarationList read FManagedDeclarations;
     property Globals[AName: lpString]: TLapeGlobalVar read getGlobalVar; default;
     property Emitter: TLapeCodeEmitter read FEmitter write setEmitter;
     property Options: ECompilerOptionsSet read FOptions write setOptions default Lape_OptionsDef;
@@ -4049,6 +4061,21 @@ begin
   Result := _Eval(AProc, Dest, Left, Right, Offset, Pos);
 end;
 
+constructor TLapeCompilerManagedDeclList.Create;
+begin
+  inherited Create();
+end;
+
+function TLapeCompilerManagedDeclList.HasSubDeclaration(Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
+begin
+  Result := (Decl.DeclarationList = Self);
+end;
+
+constructor TLapeCompilerGlobalDeclList.Create;
+begin
+  inherited Create(TLapeDeclCollectionDict.Create());
+end;
+
 procedure TLapeCompilerBase.setEmitter(AEmitter: TLapeCodeEmitter);
 begin
   if FreeEmitter and (FEmitter <> nil) then
@@ -4098,8 +4125,8 @@ begin
     AEmitter := TLapeCodeEmitter.Create();
   FEmitter := AEmitter;
 
-  FGlobalDeclarations := TLapeDeclarationList.Create();
-  FManagedDeclarations := TLapeDeclarationListBase.Create();
+  FGlobalDeclarations := TLapeCompilerGlobalDeclList.Create();
+  FManagedDeclarations := TLapeCompilerManagedDeclList.Create();
   FCachedTypeVars := TLapeCachedTypeVars.Create(nil, nil, dupAccept);
   for BaseType in LapeBaseTypes do
     FCachedDeclarations[BaseType] := TLapeVarMap.Create(nil, dupIgnore, True, '', True);
