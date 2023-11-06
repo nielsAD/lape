@@ -58,6 +58,7 @@ const
   lpeExceptionIn = '%s in "%s"';
   lpeExceptionInFile = '%s in file "%s"';
   lpeExpected = '%s expected';
+  lpeExpectedAssignOperator = 'Expected assign operator';
   lpeExpectedArray = 'Array expected';
   lpeExpectedArrayOfType = 'Array expected of type "%s"';
   lpeExpectedDynamicArray = 'Dynamic array expected';

@@ -3423,6 +3423,10 @@ begin
     Next();
     repeat
       Statement := ParseStatement(False);
+      // Fix a simple statement of `something=1` when assignment operator is probably wanted.
+      if (Statement is TLapeTree_Operator) and (TLapeTree_Operator(Statement).OperatorType = op_cmp_Equal) then
+        LapeException(lpeExpectedAssignOperator, DocPos);
+
       if (Statement <> nil) then
       begin
         Result.addStatement(Statement);

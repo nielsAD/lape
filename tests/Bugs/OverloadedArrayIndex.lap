@@ -14,7 +14,7 @@ end;
 var
   Arr: Array of Integer = [0,0];
 begin
-  Arr[Round(0)] = 0;
+  Arr[Round(0)] := 0;
   Arr[GetIndex()] := 1;
   Assert(Arr[Round(0)+1] + Arr[GetIndex()-1] = 1);
 end.
