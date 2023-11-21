@@ -881,7 +881,7 @@ end;
 
 function LapeHash(const Str: lpString): UInt32;
 begin
-  Result := LapeHash(PChar(Str), Length(Str) * SizeOf(lpChar), 0);
+  Result := LapeHash(PChar(Str), Length(Str) * SizeOf(lpChar));
 end;
 
 function LapeTypeToString(Token: ELapeBaseType): lpString;

@@ -959,6 +959,9 @@ begin
   addGlobalFunc('procedure UniqueString(var Str: WideString); overload;', @_LapeWStr_Unique);
   addGlobalFunc('procedure UniqueString(var Str: UnicodeString); overload;', @_LapeUStr_Unique);
 
+  addGlobalFunc('function Hash(constref Data; DataSize: UInt32): UInt32; overload;', @_LapeHash);
+  addGlobalFunc('function Hash(Str: String): UInt32; overload;', @_LapeHashString);
+
   addToString();
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetObjectifyMethod).NewGlobalVar('_Objectify'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
