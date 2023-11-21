@@ -121,6 +121,7 @@ const
   lpeUnknownDirective = 'Unknown compiler directive';
   lpeUnknownOC = 'Unknown opcode';
   lpeUnknownParent = 'Cannot find parent declaration';
+  lpeUserDefinedError = 'User defined error: "%s"';
   lpeVariableExpected = 'Variable expected';
   lpeVariableOfTypeExpected = 'Expected variable of type "%s", got "%s"';
   lpeWrongNumberParams = 'Wrong number of parameters found, expected %d';
@@ -136,6 +137,7 @@ const
   lphUnImplementedMethod = 'Method "%s" is not implemented';
   lphExperimentalMethod = 'Method "%s" is experimental';
   lphDuplicateLocalName = 'Local declaration "%s" exists globally';
+  lphUserDefined = 'User defined hint: "%s"';
 
 procedure LapeException(Msg: lpString); overload;
 procedure LapeException(Msg: lpString; DocPos: TDocPos); overload;

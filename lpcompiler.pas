@@ -1486,6 +1486,13 @@ begin
     if (Directive = 'methoddeclarationparentheses') then
       setOption(lcoMethodDeclarationParentheses)
     else
+    // messages
+    if (Directive = 'hint') then
+      Hint(lphUserDefined, [Argument], Sender.DocPos)
+    else
+    if (Directive = 'error') then
+      LapeExceptionFmt(lpeUserDefinedError, [Argument], Sender.DocPos)
+    else
       Result := False;
   end;
 end;

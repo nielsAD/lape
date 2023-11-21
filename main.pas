@@ -89,7 +89,7 @@ begin
     try
       t := HighResolutionTime();
       if Compiler.Compile() then
-        m.Lines.Add('Compiling Time (no sorting etc): ' + IntToStr(Round(HighResolutionTime() - t)) + 'ms.')
+        m.Lines.Add('Compiling Time: ' + IntToStr(Round(HighResolutionTime() - t)) + 'ms.')
       else
         m.Lines.Add('Error!');
     except
@@ -101,8 +101,8 @@ begin
     end;
 
     try
-      //if Disassemble then
-      //  DisassembleCode(Compiler.Emitter.Code, [Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue)]);
+      if Disassemble then
+        DisassembleCode(Compiler.Emitter.Code, [Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar, bTrue), Compiler.GlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue)]);
 
       if Run then
       begin
