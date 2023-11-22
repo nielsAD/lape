@@ -431,6 +431,24 @@ type
     property Sorted: Boolean read getSorted write setSorted;
   end;
 
+  // Simple managed overallocated array type. Needs initializing because record.
+  {$IFDEF FPC}generic{$ENDIF} TLapeArrayBuffer<_T> = record
+  private type
+    TItemArray = {$IFDEF Delphi}TArray<_T>{$ELSE}array of _T{$ENDIF};
+  private
+    FCount: Integer;
+    FItems: TItemArray;
+
+    function getItem(Index: Integer): _T;
+  public
+    procedure Add(Item: _T);
+    procedure Delete(Index: Integer);
+    procedure Clear;
+
+    property Count: Integer read FCount;
+    property Items[Index: Integer]: _T read getItem; default;
+  end;
+
   // "Perfect Hashing" - Each entry does not share a bucket.
   {$IFDEF FPC}generic{$ENDIF} TLapeUniqueStringDictionary<_T> = class(TLapeBaseClass)
   protected type
@@ -2124,6 +2142,38 @@ function TLapeStringMap{$IFNDEF FPC}<_T>{$ENDIF}.ExportToArrays: TTArrays;
 begin
   Result.Keys := FStringList.ExportToArray();
   Result.Items := FItems.ExportToArray;
+end;
+
+function TLapeArrayBuffer{$IFNDEF FPC}<_T>{$ENDIF}.getItem(Index: Integer): _T;
+begin
+  if (Index < 0) or (Index >= FCount) then
+    LapeExceptionFmt(lpeIndexOutOfRange, [Index, Low(FItems), High(FItems)]);
+
+  Result := FItems[Index];
+end;
+
+procedure TLapeArrayBuffer{$IFNDEF FPC}<_T>{$ENDIF}.Add(Item: _T);
+begin
+  if (FCount >= Length(FItems)) then
+    SetLength(FItems, 4 + (Length(FItems) * 2));
+
+  FItems[FCount] := Item;
+  Inc(FCount);
+end;
+
+procedure TLapeArrayBuffer{$IFNDEF FPC}<_T>{$ENDIF}.Delete(Index: Integer);
+begin
+  if (Index < 0) or (Index >= FCount) then
+    LapeExceptionFmt(lpeIndexOutOfRange, [Index, Low(FItems), High(FItems)]);
+
+  Dec(FCount);
+  if (Index < FCount) then
+    Move(FItems[Index + 1], FItems[Index], (FCount - Index) * SizeOf(_T));
+end;
+
+procedure TLapeArrayBuffer{$IFNDEF FPC}<_T>{$ENDIF}.Clear;
+begin
+  FCount := 0;
 end;
 
 function TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Hash(const S: PChar; const Len: Integer): UInt32;

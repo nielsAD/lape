@@ -18,6 +18,7 @@
 
 {$IFDEF FPC}
   {$MODE objfpc}{$H+}
+  {$MODESWITCH advancedrecords}
 {$ELSE}
   {$DEFINE Delphi}
   {$DEFINE Lape_Unicode} // Delphi: The default string type is UnicodeString.

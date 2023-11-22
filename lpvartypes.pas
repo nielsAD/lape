@@ -71,7 +71,7 @@ type
   end;
 
   PResVar = ^TResVar;
-  TResVar = {$IFDEF FPC}object{$ELSE}record{$ENDIF}
+  TResVar = record
   private
     function getReadable: Boolean;
     function getWriteable: Boolean;
@@ -81,7 +81,7 @@ type
     VarType: TLapeType;
     VarPos: TVarPos;
 
-    class function New(AVar: TLapeVar): TResVar; {$IFNDEF FPC}static;{$ENDIF}
+    class function New(AVar: TLapeVar): TResVar; static;
     function HasType: Boolean;
 
     procedure Spill(Unlock: Integer = 0);

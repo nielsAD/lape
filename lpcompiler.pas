@@ -35,7 +35,7 @@ type
   TLapeTokenizerArray = array of TLapeTokenizerBase;
 
   TLapeDefine = record Name, Value: lpString; end;
-  TLapeDefineArray = array of TLapeDefine;
+  TLapeDefines = {$IFDEF FPC}specialize{$ENDIF} TLapeArrayBuffer<TLapeDefine>;
 
   TLapeConditional = record
     Eval: Boolean;
@@ -50,7 +50,7 @@ type
     TokStates: array of Pointer;
     Options: ECompilerOptionsSet;
     Options_PackRecords: UInt8;
-    Defines: TLapeDefineArray;
+    Defines: TLapeDefines;
     Conditionals: TLapeConditionalStack.TTArray;
   end;
 
@@ -82,8 +82,8 @@ type
     FImporting: Pointer;
 
     FIncludes: TStringList;
-    FBaseDefines: TLapeDefineArray;
-    FDefines: TLapeDefineArray;
+    FBaseDefines: TLapeDefines;
+    FDefines: TLapeDefines;
     FConditionalStack: TLapeConditionalStack;
 
     FOnHandleDirective: TLapeHandleDirective;
@@ -98,7 +98,7 @@ type
 
     function getImporting: Boolean; virtual;
     procedure setImporting(Import: Boolean); virtual;
-    procedure setBaseDefines(Defines: TLapeDefineArray); virtual;
+    procedure setBaseDefines(Defines: TLapeDefines); virtual;
     function getTokenizer: TLapeTokenizerBase; virtual;
     procedure setTokenizer(ATokenizer: TLapeTokenizerBase); virtual;
     procedure pushTokenizer(ATokenizer: TLapeTokenizerBase); virtual;
@@ -212,9 +212,9 @@ type
     function getExpression(AName: lpString; AStackInfo: TLapeStackInfo; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
     function getExpression(AName: lpString; Pos: PDocPos = nil; LocalOnly: Boolean = False): TLapeTree_ExprBase; overload; virtual;
 
+    function hasInclude(FileName: lpString): Boolean; virtual;
     function hasBaseDefine(AName: lpString): Boolean; virtual;
     function hasDefine(AName: lpString): Boolean; virtual;
-
     procedure addBaseDefine(AName: lpString; AValue: lpString = ''); virtual;
     procedure addDefine(AName: lpString; AValue: lpString = ''); virtual;
 
@@ -264,7 +264,7 @@ type
     property DelayedTree: TLapeTree_DelayedStatementList read FDelayedTree;
     property Importing: Boolean read getImporting write setImporting;
     property Tokenizer: TLapeTokenizerBase read getTokenizer write setTokenizer;
-    property Defines: TLapeDefineArray read FDefines write setBaseDefines;
+    property Defines: TLapeDefines read FDefines write setBaseDefines;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
     property OnHandleExternal: TLapeHandleExternal read FOnHandleExternal write FOnHandleExternal;
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
@@ -389,7 +389,7 @@ begin
     EndImporting();
 end;
 
-procedure TLapeCompiler.setBaseDefines(Defines: TLapeDefineArray);
+procedure TLapeCompiler.setBaseDefines(Defines: TLapeDefines);
 begin
   FBaseDefines := Defines;
   Reset();
@@ -1259,7 +1259,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     else
     begin
       Argument := UpperCase(Trim(Argument));
-      for i := 0 to High(FDefines) do
+      for i := 0 to FDefines.Count - 1 do
         if (FDefines[i].Name = Argument) then
         begin
           pushTokenizer(TLapeTokenizerString.Create(FDefines[i].Value));
@@ -1297,9 +1297,9 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (Directive = 'undef') then
     begin
       Name := UpperCase(Argument);
-      for i := High(FDefines) downto 0 do
+      for i := FDefines.Count - 1 downto 0 do
         if (FDefines[i].Name = Name) then
-          Delete(FDefines, i, 1);
+          FDefines.Delete(i);
     end;
   end;
 
@@ -4274,11 +4274,11 @@ end;
 
 function TLapeCompiler.hasBaseDefine(AName: lpString): Boolean;
 var
-  i: Integer;
+  Len, i: Integer;
 begin
-  AName := UpperCase(Trim(AName));
-  for i := 0 to High(FBaseDefines) do
-    if (FBaseDefines[i].Name = AName) then
+  Len := Length(AName);
+  for i := 0 to FBaseDefines.Count - 1 do
+    if (Length(FBaseDefines[i].Name) = Len) and SameText(FBaseDefines[i].Name, AName) then
       Exit(True);
 
   Result := False;
@@ -4286,40 +4286,45 @@ end;
 
 function TLapeCompiler.hasDefine(AName: lpString): Boolean;
 var
-  i: Integer;
+  Len, i: Integer;
 begin
-  AName := UpperCase(Trim(AName));
-  for i := 0 to High(FDefines) do
-    if (FDefines[i].Name = AName) then
+  Len := Length(AName);
+  for i := 0 to FDefines.Count - 1 do
+    if (Length(FDefines[i].Name) = Len) and SameText(FDefines[i].Name, AName) then
       Exit(True);
 
   Result := False;
 end;
 
 procedure TLapeCompiler.addDefine(AName: lpString; AValue: lpString);
+var
+  Def: TLapeDefine;
 begin
-  if hasDefine(AName) then
-    Exit;
-
-  SetLength(FDefines, Length(FDefines) + 1);
-  with FDefines[High(FDefines)] do
+  if not hasDefine(AName) then
   begin
-    Name := UpperCase(Trim(AName));
-    Value := Trim(AValue);
+    Def.Name  := UpperCase(Trim(AName));
+    Def.Value := Trim(AValue);
+
+    FDefines.Add(Def);
   end;
 end;
 
 procedure TLapeCompiler.addBaseDefine(AName: lpString; AValue: lpString);
+var
+  Def: TLapeDefine;
 begin
-  if hasBaseDefine(AName) then
-    Exit;
-
-  SetLength(FBaseDefines, Length(FBaseDefines) + 1);
-  with FBaseDefines[High(FBaseDefines)] do
+  if not hasBaseDefine(AName) then
   begin
-    Name := UpperCase(Trim(AName));
-    Value := Trim(AValue);
+    Def.Name  := UpperCase(Trim(AName));
+    Def.Value := Trim(AValue);
+
+    FBaseDefines.Add(Def);
   end;
+end;
+
+function TLapeCompiler.hasInclude(FileName: lpString): Boolean;
+begin
+  Result := FIncludes.IndexOf(FileName) > -1;
 end;
 
 function TLapeCompiler.addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration;
@@ -4361,7 +4366,6 @@ begin
        (FStackInfo <> nil) and hasDeclaration(Name, FStackInfo, False, False) then
       Hint(lphDuplicateLocalName, [Name], DocPos);
   end;
-
 
   if (FStackInfo = nil) or (FStackInfo.Owner = nil) then
     Result := addGlobalVar(AVar.NewGlobalVarP(), Name)
