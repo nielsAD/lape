@@ -34,6 +34,9 @@ type
   TLapeCompilerNotification = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifier<TLapeCompiler>;
   TLapeTokenizerArray = array of TLapeTokenizerBase;
 
+  TLapePreprocessorFunc = function(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean of object;
+  TLapePreprocessorFuncs = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapePreprocessorFunc>;
+
   TLapeDefine = record Name, Value: lpString; end;
   TLapeDefines = {$IFDEF FPC}specialize{$ENDIF} TLapeArrayBuffer<TLapeDefine>;
 
@@ -92,6 +95,8 @@ type
     FOnFindMacro: TLapeFindMacro;
     FAfterParsing: TLapeCompilerNotification;
 
+    FPreprocessorFuncs: TLapePreprocessorFuncs;
+
     function getPDocPos: PDocPos; inline;
     function getDocPos: TDocPos; override;
     procedure Reset; override;
@@ -132,6 +137,9 @@ type
     function EnsureRange(VarType: TLapeType): TLapeType; overload; virtual;
     function EnsureConstantRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeRange; overload; virtual;
     function EnsureConstantRange(Node: TLapeTree_Base): TLapeRange; overload; virtual;
+
+    function HandlePreprocessorFunc(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean; virtual;
+    function EvalPreprocessorExpr(Expr: String; ADocPos: TDocPos): Boolean; virtual;
 
     function HandleDirective(Sender: TLapeTokenizerBase; Directive, Argument: lpString): Boolean; virtual;
     function InIgnore: Boolean; virtual;
@@ -217,6 +225,7 @@ type
     function hasDefine(AName: lpString): Boolean; virtual;
     procedure addBaseDefine(AName: lpString; AValue: lpString = ''); virtual;
     procedure addDefine(AName: lpString; AValue: lpString = ''); virtual;
+    procedure addPreprocessorFunc(Name: lpString; Func: TLapePreprocessorFunc); virtual;
 
     function addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration; override;
     function addLocalVar(AVar: TLapeType; Name: lpString = ''): TLapeVar; virtual;
@@ -372,6 +381,13 @@ begin
     FIncludes.Clear();
   if (FConditionalStack <> nil) then
     FConditionalStack.Reset();
+  if (FPreprocessorFuncs <> nil) then
+  begin
+    FPreprocessorFuncs.Clear();
+    FPreprocessorFuncs.Add('DEFINED', @HandlePreprocessorFunc);
+    FPreprocessorFuncs.Add('DECLARED', @HandlePreprocessorFunc);
+    FPreprocessorFuncs.Add('FILEEXISTS', @HandlePreprocessorFunc);
+  end;
 
   FDefines := FBaseDefines;
 end;
@@ -1128,6 +1144,82 @@ begin
   Result := EnsureConstantRange(Node, VarType);
 end;
 
+procedure TLapeCompiler.addPreprocessorFunc(Name: lpString; Func: TLapePreprocessorFunc);
+begin
+  FPreprocessorFuncs.Add(UpperCase(Name), Func);
+end;
+
+function TLapeCompiler.HandlePreprocessorFunc(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean;
+begin
+  Result := True;
+
+  if (Name = 'DEFINED') then
+    Value := BoolToStr(hasDefine(Argument), True)
+  else
+  if (Name = 'DECLARED') then
+    Value := BoolToStr(hasDeclaration(Argument), True)
+  else
+  if (Name = 'FILEEXISTS') then
+    Value := BoolToStr(FileExists(Argument) or FileExists(IncludeTrailingPathDelimiter(ExtractFileDir(Tokenizer.FileName)) + Argument), True)
+  else
+    Result := False;
+end;
+
+function TLapeCompiler.EvalPreprocessorExpr(Expr: String; ADocPos: TDocPos): Boolean;
+
+  function hasFunc(const Expr, Name: lpString; out StartPos, EndPos: Integer; out Param: lpString): Boolean;
+  var
+    Upper: lpString;
+  begin
+    Upper := UpperCase(Expr);
+
+    StartPos := Pos(Name + '(', Upper);
+    if (StartPos > 0) then
+      EndPos := Pos(')', Upper, StartPos);
+
+    Result := (StartPos > 0) and (EndPos > 0);
+    if Result then
+      Param := lpString(Copy(Expr, StartPos + Length(Name) + 1, (EndPos - StartPos) - (Length(Name) + 1)));
+  end;
+
+var
+  OldState: Pointer;
+  ExprBase: TLapeTree_ExprBase;
+  Res: TLapeGlobalVar;
+  StartPos, EndPos: Integer;
+  Param, Value: lpString;
+  i: Integer;
+begin
+  Result := False;
+
+  for i:=0 to FPreprocessorFuncs.Count - 1 do
+    while hasFunc(Expr, FPreprocessorFuncs.Key[i], StartPos, EndPos, Param) do
+    begin
+      if not FPreprocessorFuncs.ItemsI[i](Self, FPreprocessorFuncs.Key[i], Param, Value) then
+        LapeExceptionFmt(lpeCannotEvalPreprocessorFunc, [FPreprocessorFuncs.Key[i]], ADocPos);
+
+      // replace `Defined(hello)` with `Value`
+      Delete(Expr, startPos, (endPos - startPos) + 1);
+      Insert(Value, Expr, startPos);
+    end;
+
+  try
+    OldState := getTempTokenizerState(Expr);
+    Tokenizer.OverridePos := @ADocPos;
+
+    ExprBase := ParseExpression();
+    if (ExprBase = nil) then
+      LapeException(lpeCannotEvalConst, Tokenizer.DocPos);
+    Res := ExprBase.Evaluate();
+    if (Res = nil) or (not (Res.BaseType in LapeBoolTypes)) then
+      LapeException(lpeExpectedBoolExpression, Tokenizer.DocPos);
+
+    Result := Res.AsInteger <> 0;
+  finally
+    resetTokenizerState(OldState);
+  end;
+end;
+
 function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Argument: lpString): Boolean;
 
   function hasDefineOrOption(Name: lpString): Boolean;
@@ -1366,6 +1458,61 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     pushTokenizer(NewTokenizer);
   end;
 
+  function hasConditonal(Expr: lpString; Name: String; out startPos, endPos: Integer; out Param: lpString): Boolean;
+  var
+    lower: lpString;
+  begin
+    lower := LowerCase(expr);
+    startPos := Pos(Name + '(', lower);
+    if (startPos > 0) then
+      endPos := Pos(')', lower, startPos);
+    Result := (startPos > 0) and (endPos > 0);
+    if Result then
+      Param := lpString(Copy(Expr, startPos + Length(Name) + 1, (endPos - startPos) - (Length(Name) + 1)));
+  end;
+
+  procedure replaceConditonal(var Expr: lpString; startPos, endPos: Integer; replaceWith: lpString);
+  begin
+    Delete(Expr, startPos, (endPos-startPos) + 1);
+    Insert(replaceWith, Expr, startPos);
+  end;
+
+  function Eval(Expr: lpString): Boolean;
+  const
+    BoolStrings: array[Boolean] of lpString = ('False', 'True');
+  var
+    OldState: Pointer;
+    ExprBase: TLapeTree_ExprBase;
+    Res: TLapeGlobalVar;
+    p: TDocPos;
+    startPos, endPos: Integer;
+    Param: lpString;
+  begin
+    Result := False;
+
+    while hasConditonal(Expr, 'defined', startPos, endPos, Param) do
+      replaceConditonal(Expr, startPos, endPos, BoolStrings[hasDefine(Param)]);
+    while hasConditonal(Expr, 'declared', startPos, endPos, Param) do
+      replaceConditonal(Expr, startPos, endPos, BoolStrings[hasDeclaration(Param)]);
+
+    try
+      OldState := getTempTokenizerState(Expr);
+      p := Sender.DocPos;
+      Tokenizer.OverridePos := @p;
+
+      ExprBase := ParseExpression();
+      if (ExprBase = nil) then
+        LapeException(lpeCannotEvalConst, Sender.DocPos);
+      Res := ExprBase.Evaluate();
+      if (Res = nil) or (not (Res.BaseType in LapeBoolTypes)) then
+        LapeExceptionFmt(lpeExpected, ['Boolean expression'], Sender.DocPos);
+
+      Result := Res.AsInteger <> 0;
+    finally
+      resetTokenizerState(OldState);
+    end;
+  end;
+
 begin
   Assert(Sender = Tokenizer);
 
@@ -1386,17 +1533,8 @@ begin
     if (Directive = 'endif') then
       popConditional()
     else
-    if (Directive = 'ifdef') then
-      pushConditional(False, Sender.DocPos)
-    else
-    if (Directive = 'ifndef') then
-      pushConditional(False, Sender.DocPos)
-    else
-    if (Directive = 'ifdecl') then
-      pushConditional(False, Sender.DocPos)
-    else
-    if (Directive = 'ifndecl') then
-      pushConditional(False, Sender.DocPos)
+    if (Directive = 'ifdef') or (Directive = 'ifndef') or (Directive = 'ifdecl') or (Directive = 'ifndecl') or (Directive = 'if') then
+      pushConditional(False, Sender.DocPos);
   end else
   begin
     // Conditionals
@@ -1405,6 +1543,9 @@ begin
     else
     if (Directive = 'endif') then
       popConditional()
+    else
+    if (Directive = 'if') then
+      pushConditional(EvalPreprocessorExpr(Argument, Sender.DocPos), Sender.DocPos)
     else
     if (Directive = 'ifdef') then
       pushConditional(HasDefineOrOption(Argument), Sender.DocPos)
@@ -3762,6 +3903,7 @@ begin
   FOnFindFile := nil;
   FOnFindMacro := nil;
   FAfterParsing := TLapeCompilerNotification.Create();
+  FPreprocessorFuncs := TLapePreprocessorFuncs.Create(nil, dupError, False);
 
   FInternalMethodMap := TLapeInternalMethodMap.Create(nil);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
@@ -3848,6 +3990,7 @@ begin
   setTokenizer(nil);
   if FreeTree and (FDelayedTree <> nil) then
     FreeAndNil(FDelayedTree);
+  FreeAndNil(FPreprocessorFuncs);
   FreeAndNil(FIncludes);
   FreeAndNil(FConditionalStack);
   FreeAndNil(FAfterParsing);

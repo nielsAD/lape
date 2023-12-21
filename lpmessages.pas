@@ -30,6 +30,7 @@ type
   end;
 
 const
+  lpeCannotEvalPreprocessorFunc = 'Cannot evalulate preprocessor function "%s"';
   lpeArrayLengthsDontMatch = 'Length of arrays (%s) don''t match';
   lpeAssertionFailure = 'Assertion failure';
   lpeAssertionFailureMsg = 'Assertion failure: %s';
@@ -61,6 +62,7 @@ const
   lpeExpectedAssignOperator = 'Expected assign operator';
   lpeExpectedArray = 'Array expected';
   lpeExpectedArrayOfType = 'Array expected of type "%s"';
+  lpeExpectedBoolExpression = 'Boolean expression expected';
   lpeExpectedDynamicArray = 'Dynamic array expected';
   lpeExpectedNormalMethod = 'Normal method expected';
   lpeExpectedPointerType = 'Pointer type expected';
@@ -261,5 +263,3 @@ begin
 end;
 
 end.
-
-
