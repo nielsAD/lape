@@ -1,0 +1,48 @@
+{$assertions on}
+
+const
+  TWO = 2;
+
+begin
+  {$IF defined(Lape)}
+  Assert(True);
+  {$ELSE}
+  Assert(False);
+  {$ENDIF}
+
+  {$IF not defined(Lape)}
+  Assert(False);
+  {$ELSE}
+  Assert(True);
+  {$ENDIF}
+
+  {$IF declared(Pointer)}
+  Assert(True);
+  {$ELSE}
+  Assert(False);
+  {$ENDIF}
+
+  {$IF not declared(Pointer)}
+  Assert(False);
+  {$ELSE}
+  Assert(True);
+  {$ENDIF}
+
+  {$if (sizeof(int32)=4) and (High(UInt32)=$FFFFFFFF)}
+  Assert(True);
+  {$else}
+  Assert(False):
+  {$endif}
+
+  {$if (TWO = 2) and (TWO*2 = 4)}
+  Assert(True);
+  {$ELSE}
+  Assert(False);
+  {$ENDIF}
+
+  {$if (((1+1)=1) or (1+1=2)) and ("a"+"b"+"c" = "abc")}
+  Assert(True);
+  {$ELSE}
+  Assert(False);
+  {$ENDIF}
+end;
