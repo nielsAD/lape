@@ -465,6 +465,7 @@ type
 
     function Hash(const S: PChar; const Len: Integer): UInt32;
 
+    function TryBuildWithSeed(Seed: UInt32): Boolean;
     procedure Build;
 
     procedure setValue(Key: lpString; Value: _T);
@@ -518,8 +519,8 @@ type
     procedure Add(Decl: TLapeDeclaration); virtual;
     function Delete(Decl: TLapeDeclaration): Boolean; virtual;
 
-    function Get(Name: lpString; out Decl: TLapeDeclaration): Boolean; virtual;
-    function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean; virtual;
+    function Get(Name: lpString; out Decl: TLapeDeclaration): Boolean; overload; virtual;
+    function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean; overload; virtual;
     function GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray; virtual;
 
     function IndexOf(Decl: TLapeDeclaration): Integer; virtual;
@@ -802,11 +803,6 @@ function LapeTypeToString(Token: ELapeBaseType): lpString;
 function LapeOperatorToString(Token: EOperator): lpString;
 
 function PointerToString(const p: Pointer): lpString;
-{$IF NOT(DECLARED(UIntToStr))}
-function UIntToStr(i: UInt32): lpString; inline; overload;
-function UIntToStr(i: UInt64): lpString; inline; overload;
-{$DEFINE DoUIntToStr}
-{$IFEND}
 
 function VarTypeToVType(v: TVarType): SizeInt;
 function VariantToVarRec(const v: Variant): TVarRec; overload;
@@ -816,8 +812,7 @@ function VariantArrToConstArr(v: array of Variant): TVarRecList;
 procedure Swap(var A, B: Pointer); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 procedure Swap(var A, B: Boolean); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
-function _IndexPointer(const Buf; const Len: Integer; const p: Pointer): Integer;
-
+function _IndexPointer(const Buf; const Len: SizeInt; const p: Pointer): Integer; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function _BCompare(Arr: PUInt8; const Item: PUInt8; const Size: Integer; const Lo, Hi: Integer): Integer; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
 function _BSearch8(Arr: PUInt8; Item: UInt8; Lo, Hi: Integer): Integer;
@@ -921,18 +916,6 @@ begin
   else
     Result := lpString('0x'+IntToHex(PtrUInt(p^), 1));
 end;
-
-{$IFDEF DoUIntToStr}
-function UIntToStr(i: UInt32): lpString; inline; overload;
-begin
-  Result := lpString(IntToStr(i));
-end;
-
-function UIntToStr(i: UInt64): lpString; inline; overload;
-begin
-  Result := lpString(IntToStr(i));
-end;
-{$ENDIF}
 
 function VarTypeToVType(v: TVarType): SizeInt;
 begin
@@ -1048,16 +1031,35 @@ begin
   B := C;
 end;
 
-function _IndexPointer(const Buf; const Len: Integer; const p: Pointer): Integer;
+function _IndexPointer(const Buf; const Len: SizeInt; const p: Pointer): Integer;
+{$IF (SizeOf(Pointer) = 8) and Declared(IndexQWord)}
 begin
-  {$IF SizeOf(Pointer) = 8)}
   Result := IndexQWord(Buf, Len, PtrUInt(p));
-  {$ELSEIF SizeOf(Pointer) = 4}
-  Result := IndexDWord(Buf, Len, PtrUInt(p));
-  {$ELSE}
-    {$FATAL Pointer size?}
-  {$ENDIF}
 end;
+{$ELSEIF (SizeOf(Pointer) = 4) and Declared(IndexDWord)}
+begin
+  Result := IndexDWord(Buf, Len, PtrUInt(p));
+end;
+{$ELSE}
+var
+  Lower, Upper: PPtrUInt;
+begin
+  Lower := @buf;
+  if (Len < 0) or (Len > High(PtrInt) div 4) or (Lower + Len < Lower) then
+    Upper := PPtrUInt(High(PtrUInt) - PtrUInt(SizeOf(PtrUInt)))
+  else
+    Upper := Lower + Len;
+
+  while (Lower < Upper) do
+  begin
+    if (Lower^ = PtrUInt(p)) then
+      Exit(Lower - PPtrUInt(@buf));
+    Inc(Lower);
+  end;
+
+  Result := -1;
+end;
+{$ENDIF}
 
 function _BCompare(Arr: PUInt8; const Item: PUInt8; const Size: Integer; const Lo, Hi: Integer): Integer;
 var
@@ -2212,10 +2214,43 @@ begin
   Result := InvalidVal;
 end;
 
+function TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.TryBuildWithSeed(Seed: UInt32): Boolean;
+var
+  i, j, Len: Integer;
+  Key: lpString;
+  BucketIndices: TIntegerArray;
+begin
+  Result := False;
+
+  SetLength(BucketIndices, FCount);
+  for i := 0 to High(FItems) do
+  begin
+    Key := LowerCase(FItems[I].Key);
+    Len := Length(Key);
+
+    BucketIndices[i] := LapeHash(PChar(Key), Len * SizeOf(lpChar), Seed) and FSize;
+    for j := 0 to i-1 do
+      if BucketIndices[j] = BucketIndices[i] then // Already seen this bucket
+        Exit;
+
+    if (Len < FMinLength) then
+      FMinLength := Len;
+    if (Len > FMaxLength) then
+      FMaxLength := Len;
+
+    FBuckets[BucketIndices[i]].Key := Key;
+    FBuckets[BucketIndices[i]].Value := FItems[I].Value;
+  end;
+
+  FSeed := Seed;
+
+  Result := True;
+end;
+
 // Bruteforce a hashtable with no collisions
 procedure TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Build;
 const
-  // SHA256 Additive Constants which seem to be good seeds
+  // "SHA256 Additive Constants" seems to work well as seeds
   SEEDS: array[0..63] of UInt32 = (
    $428A2F98, $71374491, $B5C0FBCF, $E9B5DBA5, $3956C25B, $59F111F1, $923F82A4, $AB1C5ED5,
    $D807AA98, $12835B01, $243185BE, $550C7DC3, $72BE5D74, $80DEB1FE, $9BDC06A7, $C19BF174,
@@ -2227,36 +2262,6 @@ const
    $748F82EE, $78A5636F, $84C87814, $8CC70208, $90BEFFFA, $A4506CEB, $BEF9A3F7, $C67178F2
  );
 var
-  BucketIndices: TIntegerArray;
-
-  function BuildWithSeed(Seed: UInt32): Boolean;
-  var
-    i, Len: Integer;
-    Key: lpString;
-  begin
-    for i := 0 to High(FItems) do
-    begin
-      Key := LowerCase(FItems[I].Key);
-      Len := Length(Key);
-      BucketIndices[i] := LapeHash(PChar(Key), Len * SizeOf(lpChar), Seed) and FSize;
-      if (IndexDWord(BucketIndices[0], i, BucketIndices[i]) <> -1) then // Already seen this bucket
-        Exit(False);
-
-      if (Len < FMinLength) then
-        FMinLength := Len;
-      if (Len > FMaxLength) then
-        FMaxLength := Len;
-
-      FBuckets[BucketIndices[i]].Key := Key;
-      FBuckets[BucketIndices[i]].Value := FItems[I].Value;
-    end;
-
-    FSeed := Seed;
-
-    Result := True;
-  end;
-
-var
   i: Integer;
 begin
   FCount := Length(FItems);
@@ -2265,9 +2270,8 @@ begin
   FMinLength := $FFFFFF;
   FMaxLength := 0;
 
-  SetLength(BucketIndices, FCount);
   for i := 0 to High(SEEDS) do
-    if BuildWithSeed(SEEDS[i]) then
+    if TryBuildWithSeed(SEEDS[i]) then
       Exit;
 
   LapeExceptionFmt(lpeNeedMoreBuckets, [Length(FBuckets)]);

@@ -384,9 +384,9 @@ begin
   if (FPreprocessorFuncs <> nil) then
   begin
     FPreprocessorFuncs.Clear();
-    FPreprocessorFuncs.Add('DEFINED', @HandlePreprocessorFunc);
-    FPreprocessorFuncs.Add('DECLARED', @HandlePreprocessorFunc);
-    FPreprocessorFuncs.Add('FILEEXISTS', @HandlePreprocessorFunc);
+    FPreprocessorFuncs.Add('DEFINED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
+    FPreprocessorFuncs.Add('DECLARED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
+    FPreprocessorFuncs.Add('FILEEXISTS', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
   end;
 
   FDefines := FBaseDefines;
@@ -2804,7 +2804,7 @@ begin
 
     if (Result <> nil) then
       if (TypeForwards = nil) and (lcoHints in FOptions) and Result.HasHints() then
-        Result.WriteHints(@Hint, Tokenizer.DocPos)
+        Result.WriteHints({$IFDEF FPC}@{$ENDIF}Hint, Tokenizer.DocPos)
       else
       // TypeForwards<>nil means ParseTypeBlock
       // type TPoint = record X,Y: Integer deprecated;
@@ -4378,7 +4378,7 @@ begin
   try
     Decl := getDeclaration(AName, AStackInfo, LocalOnly);
     if (lcoHints in FOptions) and (Decl is TLapeVar) and TLapeVar(Decl).HasHints() then
-      TLapeVar(Decl).WriteHints(@Hint, Tokenizer.DocPos);
+      TLapeVar(Decl).WriteHints({$IFDEF FPC}@{$ENDIF}Hint, Tokenizer.DocPos);
   except
     on E: lpException do
       if (Pos = nil) then
