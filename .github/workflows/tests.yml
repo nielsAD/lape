@@ -16,28 +16,28 @@ jobs:
           - os: windows-latest
             name: Windows 64
             ffi: default default-static
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2064%20bits/Lazarus%202.2.4/lazarus-2.2.4-fpc-3.2.2-win64.exe
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2064%20bits/Lazarus%203.0/lazarus-3.0-fpc-3.2.2-win64.exe
             
           - os: windows-latest
             name: Windows 32
             ffi: stdcall cdecl pascal register stdcall-static cdecl-static pascal-static register-static
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2032%20bits/Lazarus%202.2.4/lazarus-2.2.4-fpc-3.2.2-win32.exe
-            
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2032%20bits/Lazarus%203.0/lazarus-3.0-fpc-3.2.2-win32.exe
+
           - os: ubuntu-latest
             name: Linux 64
             ffi: default
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%202.2.4/lazarus-project_2.2.4-0_amd64.deb
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.0/lazarus-project_3.0.0-0_amd64.deb
             fpc-url: |
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%202.2.4/fpc-laz_3.2.2-210709_amd64.deb
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%202.2.4/fpc-src_3.2.2-210709_amd64.deb
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.0/fpc-laz_3.2.2-210709_amd64.deb
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.0/fpc-src_3.2.2-210709_amd64.deb
           
           - os: macos-latest
             name: MacOS 64
             ffi: default
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%202.2.4/Lazarus-2.2.4-0-x86_64-macosx.pkg
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/Lazarus-3.0-macosx-x86_64.pkg
             fpc-url: |
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%202.2.4/fpc-3.2.2.intelarm64-macosx.dmg
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%202.2.4/fpc-src-3.2.2-20210709-macosx.dmg      
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/fpc-3.2.2.intelarm64-macosx.dmg
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/fpc-src-3.2.2-20210709-macosx.dmg
         
     steps:
       - uses: actions/checkout@v3.1.0
