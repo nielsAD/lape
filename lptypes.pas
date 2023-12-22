@@ -457,7 +457,7 @@ type
   protected
     FBuckets: TBuckets;
     FSize: UInt32;
-    FTag: UInt32;
+    FSeed: UInt32;
     FMinLength: Integer;
     FMaxLength: Integer;
     FCount: Integer;
@@ -472,7 +472,7 @@ type
   public
     InvalidVal: _T;
 
-    constructor Create(InvalidValue: _T; Size: Integer = 1024); reintroduce; virtual;
+    constructor Create(InvalidValue: _T; Size: Integer = 512); reintroduce; virtual;
 
     property Value[Key: lpString]: _T read getValue write setValue; default;
   end;
@@ -2178,7 +2178,7 @@ end;
 
 function TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Hash(const S: PChar; const Len: Integer): UInt32;
 begin
-  Result := LapeHash(S, Len * SizeOf(lpChar), FTag) and FSize;
+  Result := LapeHash(S, Len * SizeOf(lpChar), FSeed) and FSize;
 end;
 
 procedure TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.setValue(Key: lpString; Value: _T);
@@ -2214,62 +2214,63 @@ end;
 
 // Bruteforce a hashtable with no collisions
 procedure TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Build;
+const
+  // SHA256 Additive Constants which seem to be good seeds
+  SEEDS: array[0..63] of UInt32 = (
+   $428A2F98, $71374491, $B5C0FBCF, $E9B5DBA5, $3956C25B, $59F111F1, $923F82A4, $AB1C5ED5,
+   $D807AA98, $12835B01, $243185BE, $550C7DC3, $72BE5D74, $80DEB1FE, $9BDC06A7, $C19BF174,
+   $E49B69C1, $EFBE4786, $0FC19DC6, $240CA1CC, $2DE92C6F, $4A7484AA, $5CB0A9DC, $76F988DA,
+   $983E5152, $A831C66D, $B00327C8, $BF597FC7, $C6E00BF3, $D5A79147, $06CA6351, $14292967,
+   $27B70A85, $2E1B2138, $4D2C6DFC, $53380D13, $650A7354, $766A0ABB, $81C2C92E, $92722C85,
+   $A2BFE8A1, $A81A664B, $C24B8B70, $C76C51A3, $D192E819, $D6990624, $F40E3585, $106AA070,
+   $19A4C116, $1E376C08, $2748774C, $34B0BCB5, $391C0CB3, $4ED8AA4A, $5B9CCA4F, $682E6FF3,
+   $748F82EE, $78A5636F, $84C87814, $8CC70208, $90BEFFFA, $A4506CEB, $BEF9A3F7, $C67178F2
+ );
 var
-  HashList: TStringList;
-  i, Len, Bucket: Integer;
-  Key: lpString;
-  HashValue: String;
-begin
-  FCount := Length(FItems);
-  FTag := 8;
+  BucketIndices: TIntegerArray;
 
-  HashList := TStringList.Create();
-  HashList.Sorted := True;
-
-  while (HashList.Count < FCount) do
+  function BuildWithSeed(Seed: UInt32): Boolean;
+  var
+    i, Len: Integer;
+    Key: lpString;
   begin
-    HashList.Clear();
-
     for i := 0 to High(FItems) do
     begin
       Key := LowerCase(FItems[I].Key);
       Len := Length(Key);
+      BucketIndices[i] := LapeHash(PChar(Key), Len * SizeOf(lpChar), Seed) and FSize;
+      if (IndexDWord(BucketIndices[0], i, BucketIndices[i]) <> -1) then // Already seen this bucket
+        Exit(False);
 
-      HashValue := IntToStr(Self.Hash(PChar(Key), Len));
-      if (HashList.IndexOf(HashValue) > -1) then
-      begin
-        FTag := FTag * 2;
+      if (Len < FMinLength) then
+        FMinLength := Len;
+      if (Len > FMaxLength) then
+        FMaxLength := Len;
 
-        Break;
-      end;
-
-      HashList.Add(HashValue);
+      FBuckets[BucketIndices[i]].Key := Key;
+      FBuckets[BucketIndices[i]].Value := FItems[I].Value;
     end;
 
-    if (FTag >= High(Int32)) then
-      LapeException(lpeImpossible); // Increase bucket size!
+    FSeed := Seed;
+
+    Result := True;
   end;
 
-  HashList.Free();
-
+var
+  i: Integer;
+begin
+  FCount := Length(FItems);
+  if (FCount = 0) then
+    Exit;
   FMinLength := $FFFFFF;
   FMaxLength := 0;
 
-  for i := 0 to High(FItems) do
-  begin
-    Key := LowerCase(FItems[I].Key);
-    Len := Length(Key);
+  SetLength(BucketIndices, FCount);
+  for i := 0 to High(SEEDS) do
+    if BuildWithSeed(SEEDS[i]) then
+      Exit;
 
-    if (Len < FMinLength) then
-      FMinLength := Len;
-    if (Len > FMaxLength) then
-      FMaxLength := Len;
-
-    Bucket := Self.Hash(PChar(Key), Len);
-
-    FBuckets[Bucket].Key := Key;
-    FBuckets[Bucket].Value := FItems[I].Value;
-  end;
+  LapeExceptionFmt(lpeNeedMoreBuckets, [Length(FBuckets)]);
 end;
 
 constructor TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Create(InvalidValue: _T; Size: Integer);

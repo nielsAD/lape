@@ -31,7 +31,6 @@ type
     tk_kw_Array,
     tk_kw_Begin,
     tk_kw_Case,
-    tk_kw_Class,
     tk_kw_Const,
     tk_kw_ConstRef,
     tk_kw_Deprecated,
@@ -129,7 +128,9 @@ type
     tk_typ_Integer_Bin,
     tk_typ_String,
     tk_typ_HereString,
-    tk_typ_Char);
+    tk_typ_Char
+  );
+
   EParserTokenSet = set of EParserToken;
 
   PTokenizerState = ^TTokenizerState;
@@ -257,7 +258,7 @@ const
   ParserToken_Hints = [tk_kw_Deprecated, tk_kw_Experimental, tk_kw_UnImplemented];
   ParserToken_Strings = [tk_typ_String, tk_typ_HereString];
 
-  Lape_Keywords: array[0..55 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
+  Lape_Keywords: array[0..54 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
       (Keyword: 'AND';           Token: tk_op_AND),
       (Keyword: 'DIV';           Token: tk_op_DIV),
       (Keyword: 'IN';            Token: tk_op_IN),
@@ -273,7 +274,6 @@ const
       (Keyword: 'ARRAY';         Token: tk_kw_Array),
       (Keyword: 'BEGIN';         Token: tk_kw_Begin),
       (Keyword: 'CASE';          Token: tk_kw_Case),
-      (Keyword: 'CLASS';         Token: tk_kw_Class),
       (Keyword: 'CONST';         Token: tk_kw_Const),
       (Keyword: 'CONSTREF';      Token: tk_kw_ConstRef),
       (Keyword: 'DEPRECATED';    Token: tk_kw_Deprecated),
@@ -409,15 +409,13 @@ const
 
 function LapeTokenToString(Token: EParserToken): lpString;
 function ParserTokenToOperator(Token: EParserToken): EOperator;
-function StrToFloatDot(Str: string): Extended;
-function StrToFloatDotDef(Str: string; Default: Extended): Extended;
-function StrToUInt64(Str: string): UInt64;
-function StrToUInt64Def(Str: string; const Default: UInt64): UInt64;
+function StrToFloatDot(const Str: string): Extended;
+function StrToFloatDotDef(const Str: string; Default: Extended): Extended;
 function DetermineIntType(IntType: ELapeBaseType; MinSize: UInt8): ELapeBaseType; overload;
 function DetermineIntType(Left, Right: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
-function DetermineIntType(Str: lpString; MinSize: UInt8): ELapeBaseType; overload;
-function DetermineIntType(Str: lpString; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
-function DetermineIntType(Str: lpString): ELapeBaseType; overload;
+function DetermineIntType(const Str: lpString; MinSize: UInt8): ELapeBaseType; overload;
+function DetermineIntType(const Str: lpString; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
+function DetermineIntType(const Str: lpString): ELapeBaseType; overload;
 function DetermineIntType(i: Int64; MinSize: UInt8): ELapeBaseType; overload;
 function DetermineIntType(i: Int64; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType; overload;
 function DetermineIntType(i: Int64): ELapeBaseType; overload;
@@ -438,7 +436,12 @@ uses
   typinfo,
   lpmessages;
 
-{$WARN WIDECHAR_REDUCED OFF}
+{$IFDEF Delphi}
+  {$WARN WIDECHAR_REDUCED OFF}
+{$ENDIF}
+
+var
+  LapeFormatSettings: TFormatSettings;
 
 function LapeTokenToString(Token: EParserToken): lpString;
 begin
@@ -459,79 +462,15 @@ begin
     Result := EOperator(Integer(Token) - Integer(ParserToken_FirstOperator) + 1);
 end;
 
-function StrToFloatDot(Str: string): Extended;
+function StrToFloatDot(const Str: string): Extended;
 begin
-  Result := StrToFloat(StringReplace(Str, '.', FormatSettings.DecimalSeparator, []));
+  Result := StrToFloat(Str, LapeFormatSettings);
 end;
 
-function StrToFloatDotDef(Str: string; Default: Extended): Extended;
+function StrToFloatDotDef(const Str: string; Default: Extended): Extended;
 begin
-  Result := StrToFloatDef(StringReplace(Str, '.', FormatSettings.DecimalSeparator, []), Default);
+  Result := StrToFloatDef(Str, Default, LapeFormatSettings);
 end;
-
-{$IFNDEF FPC}
-//Warren P - http://stackoverflow.com/questions/6077258/
-function TryStrToUInt64(StrValue: string; var uValue:UInt64): Boolean;
-var
-  n, Base, Len, Digit: UInt32;
-  NextValue: UInt64;
-begin
-  Result := False;
-  uValue := 0;
-
-  StrValue := Trim(UpperCase(StrValue));
-  Len := Length(StrValue);
-  Base := 10;
-  n := 1;
-
-  if (Len < 1) or (Len > 20) or (StrValue[1] = '-') then
-    Exit;
-  if (StrValue[1] = '$') then
-  begin
-    Base := 16;
-    Inc(n);
-    if (Len > 17) then
-      Exit;
-  end;
-
-  for n := n to Length(StrValue) do
-  begin
-    if (StrValue[n] in ['0'..'9']) then
-      Digit := Ord(StrValue[n]) - Ord('0')
-    else if (Base = 16) and (StrValue[n] in ['A'..'F']) then
-      Digit := (Ord(StrValue[n]) - Ord('A')) + 10
-    else
-      Exit;
-
-    NextValue := (uValue * Base) + Digit;
-    if (Nextvalue < uValue) then
-      Exit;
-    uValue := Nextvalue;
-  end;
-
-  Result := True;
-end;
-{$ENDIF}
-
-function StrToUInt64(Str: string): UInt64;
-{$IFDEF FPC}
-begin Result := StrToQWord(Str); end;
-{$ELSE}
-begin
-  if (not TryStrToUInt64(Str, Result)) then
-    raise EConvertError.CreateFmt('"%s" is not a valid UInt64', [Str]);
-end;
-{$ENDIF}
-
-function StrToUInt64Def(Str: string; const Default: UInt64): UInt64;
-{$IFDEF FPC}
-begin Result := StrToQWordDef(Str, Default); end;
-{$ELSE}
-begin
-  if (not TryStrToUInt64(Str, Result)) then
-    Result := Default;
-end;
-{$ENDIF}
 
 function DetermineIntType(IntType: ELapeBaseType; MinSize: UInt8): ELapeBaseType; overload;
 begin
@@ -546,77 +485,43 @@ begin
   end;
 end;
 
-function DetermineIntType(Str: lpString; MinSize: UInt8): ELapeBaseType;
+function DetermineIntType(const Str: lpString; MinSize: UInt8): ELapeBaseType;
 begin
   Result := DetermineIntType(DetermineIntType(Str), MinSize);
 end;
 
-function DetermineIntType(Str: lpString; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType;
+function DetermineIntType(const Str: lpString; MinType: ELapeBaseType; DoGrow: Boolean = True): ELapeBaseType;
 begin
   Result := DetermineIntType(DetermineIntType(Str), MinType, DoGrow);
 end;
 
-function DetermineIntType(Str: lpString): ELapeBaseType;
-
-  function PadZ(Str: lpString; Len: Integer): lpString;
-  begin
-    if (Length(Str) >= Len) then
-      Result := Str
-    else
-      Result := StringOfChar(lpChar('0'), Len - Length(Str));
-  end;
-
-  function PadComp(Str1, Str2: lpString): Integer;
-  var
-    Len1, Len2: Integer;
-  begin
-    Len1 := Length(Str1);
-    if (Len1 > 0) and (Str1[1] = '-') then
-    begin
-      Delete(Str1, 1, 1);
-      Dec(Len1);
-    end;
-
-    Len2 := Length(Str2);
-    if (Len2 > 0) and (Str2[1] = '-') then
-    begin
-      Delete(Str2, 1, 1);
-      Dec(Len2);
-    end;
-    if (Len2 > Len1) then
-      Len1 := Len2;
-
-    Result := CompareStr(PadZ(Str1, Len1), PadZ(Str2, Len1));
-  end;
-
+function DetermineIntType(const Str: lpString): ELapeBaseType;
 var
-  Negative: Boolean;
+  i: Int64;
 begin
-  Str := StringReplace(Str, lpString(' '), lpString(''), [rfReplaceAll]);
-  if (Length(Str) < 1) then
-    Exit(ltUnknown);
-  Negative := (Str[1] = '-');
-  if Negative then
-    Delete(Str, 1, 1);
-  if (Length(Str) < 1) then
+  if (Length(Str) = 0) then
     Exit(ltUnknown);
 
-  if (Str[1] = '0') or (((not Negative) and (PadComp(Str, lpString(IntToStr(High(Int8)))) <= 0)) or (Negative and (PadComp(Str, lpString(IntToStr(Low(Int8)))) <= 0))) then
-    Result := ltInt8
-  else if (not Negative) and (PadComp(Str, lpString(IntToStr(High(UInt8)))) <= 0) then
-    Result := ltUInt8
-  else if ((not Negative) and (PadComp(Str, lpString(IntToStr(High(Int16)))) <= 0)) or (Negative and (PadComp(Str, lpString(IntToStr(Low(Int16)))) <= 0)) then
-    Result := ltInt16
-  else if (not Negative) and (PadComp(Str, lpString(IntToStr(High(UInt16)))) <= 0) then
-    Result := ltUInt16
-  else if ((not Negative) and (PadComp(Str, lpString(IntToStr(High(Int32)))) <= 0)) or (Negative and (PadComp(Str, lpString(IntToStr(Low(Int32)))) <= 0)) then
-      Result := ltInt32
-  else if (not Negative) and (PadComp(Str, lpString(IntToStr(High(UInt32)))) <= 0) then
-    Result := ltUInt32
-  else if ((not Negative) and (PadComp(Str, lpString(IntToStr(High(Int64)))) <= 0)) or (Negative {and (PadComp(Str, lpString(IntToStr(Low(Int64)))) <= 0)}) then
-    Result := ltInt64
-  else {if (not Negative) and (PadComp(Str, lpString(IntToStr(High(UInt64)))) <= 0) then}
-    Result := ltUInt64
+  if TryStrToInt64(Str, i) then
+  begin
+    if (i < 0) then
+    begin
+           if (i >= Low(Int8))  then Result := ltInt8
+      else if (i >= Low(Int16)) then Result := ltInt16
+      else if (i >= Low(Int32)) then Result := ltInt32
+      else                           Result := ltInt64;
+    end else
+    begin
+           if (i <= High(Int8))   then Result := ltInt8
+      else if (i <= High(UInt8))  then Result := ltUInt8
+      else if (i <= High(Int16))  then Result := ltInt16
+      else if (i <= High(UInt16)) then Result := ltUInt16
+      else if (i <= High(Int32))  then Result := ltInt32
+      else if (i <= High(UInt32)) then Result := ltUInt32
+      else                             Result := ltInt64
+    end;
+  end else
+    Result := ltUInt64;
 end;
 
 function DetermineIntType(i: Int64; MinSize: UInt8): ELapeBaseType;
@@ -1087,6 +992,7 @@ begin
 end;
 
 function TLapeTokenizerBase.getTokUInt64: UInt64;
+
   function Bin2Dec(s: lpString): UInt64; inline;
   var
     i: Integer;
@@ -1097,19 +1003,29 @@ function TLapeTokenizerBase.getTokUInt64: UInt64;
     for i := 2 to Length(s) do
       Result := (Result shl 1) + UInt64(Ord(s[i])) - UInt64(Ord('0'));
   end;
+
 var
-  TokStr: lpString;
+  Str: lpString;
 begin
-  TokStr := StringReplace(getTokString(), lpString('_'), lpString(''), [rfReplaceAll]);
-  case FTok of
-    tk_typ_Integer_Bin: Result := Bin2Dec(TokStr);
-    else Result := StrToUInt64Def(string(TokStr), UInt64(-1));
-  end;
+  Str := getTokString();
+  if (System.Pos('_', Str) > 0) then
+    Str := StringReplace(string(Str), '_', '', [rfReplaceAll]);
+
+  if (not (FTok = tk_typ_Integer_Bin)) then
+    Result := StrToUInt64Def(string(Str), UInt64(-1))
+  else
+    Result := Bin2Dec(Str);
 end;
 
 function TLapeTokenizerBase.getTokFloat: Extended;
+var
+  Str: lpString;
 begin
-  Result := StrToFloatDotDef(StringReplace(string(getTokString()), '_', '', [rfReplaceAll]), -1);
+  Str := getTokString();
+  if (System.Pos('_', Str) > 0) then
+    Result := StrToFloatDotDef(StringReplace(string(Str), '_', '', [rfReplaceAll]), -1)
+  else
+    Result := StrToFloatDotDef(Str, -1);
 end;
 
 function TLapeTokenizerBase.getTokChar: WideChar;
@@ -1422,6 +1338,9 @@ initialization
   {$IFDEF LoadDefaultFormatSettings}
   GetLocaleFormatSettings(0, FormatSettings);
   {$ENDIF}
+
+  LapeFormatSettings := FormatSettings;
+  LapeFormatSettings.DecimalSeparator := '.';
 
   LapeInitKeywordDictionary();
 

@@ -99,6 +99,7 @@ const
   lpeNoDefaultForParam = 'No default value for parameter %d found';
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';
   lpeNoOverloadedMethod = 'Don''t know which overloaded method to call with params (%s)';
+  lpeNeedMoreBuckets = 'Need more hash buckets (currently %d)';
   lpeOperatorExpected = 'Operator expected';
   lpeOperatorRequiredForType = 'Operator "%s" is required for type "%s"';
   lpeOutOfStackRange = 'Out of stack range';
