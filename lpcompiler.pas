@@ -29,8 +29,7 @@ type
   TLapeCompiler = class;
   TLapeHandleDirective = function(Sender: TLapeCompiler; Directive, Argument: lpString; InPeek, InIgnore: Boolean): Boolean of object;
   TLapeHandleExternal = function(Sender: TLapeCompiler; Header: TLapeGlobalVar): Boolean of object;
-  TLapeFindFile = function(Sender: TLapeCompiler; var FileName: lpString): TLapeTokenizerBase of object;
-  TLapeFindMacro = function(Sender: TLapeCompiler; Name: lpString; var Value: lpString): Boolean of object;
+  TLapeFindFile = function(Sender: TLapeCompiler; FileName: lpString): lpString of object;
   TLapeCompilerNotification = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifier<TLapeCompiler>;
   TLapeTokenizerArray = array of TLapeTokenizerBase;
 
@@ -92,10 +91,10 @@ type
     FOnHandleDirective: TLapeHandleDirective;
     FOnHandleExternal: TLapeHandleExternal;
     FOnFindFile: TLapeFindFile;
-    FOnFindMacro: TLapeFindMacro;
     FAfterParsing: TLapeCompilerNotification;
 
     FPreprocessorFuncs: TLapePreprocessorFuncs;
+    FPreprocessorMacros: TLapePreprocessorFuncs;
 
     function getPDocPos: PDocPos; inline;
     function getDocPos: TDocPos; override;
@@ -138,8 +137,11 @@ type
     function EnsureConstantRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeRange; overload; virtual;
     function EnsureConstantRange(Node: TLapeTree_Base): TLapeRange; overload; virtual;
 
+    function FindFile(AFileName: lpString): lpString;
     function HandlePreprocessorFunc(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean; virtual;
+    function HandlePreprocessorMacro(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean; virtual;
     function EvalPreprocessorExpr(Expr: String; ADocPos: TDocPos): Boolean; virtual;
+    function EvalPreprocessorMacro(Argument: String; ADocPos: TDocPos): Boolean; virtual;
 
     function HandleDirective(Sender: TLapeTokenizerBase; Directive, Argument: lpString): Boolean; virtual;
     function InIgnore: Boolean; virtual;
@@ -226,6 +228,7 @@ type
     procedure addBaseDefine(AName: lpString; AValue: lpString = ''); virtual;
     procedure addDefine(AName: lpString; AValue: lpString = ''); virtual;
     procedure addPreprocessorFunc(Name: lpString; Func: TLapePreprocessorFunc); virtual;
+    procedure addPreprocessorMacro(Name: lpString; Func: TLapePreprocessorFunc); virtual;
 
     function addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration; override;
     function addLocalVar(AVar: TLapeType; Name: lpString = ''): TLapeVar; virtual;
@@ -277,7 +280,6 @@ type
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
     property OnHandleExternal: TLapeHandleExternal read FOnHandleExternal write FOnHandleExternal;
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
-    property OnFindMacro: TLapeFindMacro read FOnFindMacro write FOnFindMacro;
     property AfterParsing: TLapeCompilerNotification read FAfterParsing;
   end;
 
@@ -387,6 +389,19 @@ begin
     FPreprocessorFuncs.Add('DEFINED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
     FPreprocessorFuncs.Add('DECLARED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
     FPreprocessorFuncs.Add('FILEEXISTS', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
+    FPreprocessorFuncs.Add('INCLUDED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
+  end;
+  if (FPreprocessorMacros <> nil) then
+  begin
+    FPreprocessorMacros.Clear();
+    FPreprocessorMacros.Add('FILE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+    FPreprocessorMacros.Add('DIR', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+    FPreprocessorMacros.Add('ENV', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+    FPreprocessorMacros.Add('INCLUDEDFILE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+    FPreprocessorMacros.Add('INCLUDEDFILES', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+    FPreprocessorMacros.Add('TICKCOUNT', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+    FPreprocessorMacros.Add('LINE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+    FPreprocessorMacros.Add('NOW', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
   end;
 
   FDefines := FBaseDefines;
@@ -1144,9 +1159,43 @@ begin
   Result := EnsureConstantRange(Node, VarType);
 end;
 
+function TLapeCompiler.FindFile(AFileName: lpString): lpString;
+var
+  i: Integer;
+  Dir: lpString;
+begin
+  if (AFileName = '') then
+    Exit('');
+
+  if ({$IFNDEF FPC}@{$ENDIF}FOnFindFile <> nil) then
+    FOnFindFile(Self, AFileName);
+
+  AFileName := StringReplace(AFileName, '\', '/', [rfReplaceAll]);
+  if (ExpandFileName(AFileName) = AFileName) then
+    Exit(AFileName);
+
+  for i := FTokenizer downto 0 do
+    if (FTokenizers[i] <> nil) then
+    begin
+      Dir := ExtractFilePath(FTokenizers[i].FileName);
+      if FileExists(string(Dir + AFileName)) then
+        Exit(Dir + AFileName);
+    end;
+
+  if FileExists(string(AFileName)) then
+    Result := AFileName
+  else
+    Result := '';
+end;
+
 procedure TLapeCompiler.addPreprocessorFunc(Name: lpString; Func: TLapePreprocessorFunc);
 begin
   FPreprocessorFuncs.Add(UpperCase(Name), Func);
+end;
+
+procedure TLapeCompiler.addPreprocessorMacro(Name: lpString; Func: TLapePreprocessorFunc);
+begin
+  FPreprocessorMacros.Add(UpperCase(Name), Func);
 end;
 
 function TLapeCompiler.HandlePreprocessorFunc(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean;
@@ -1161,6 +1210,58 @@ begin
   else
   if (Name = 'FILEEXISTS') then
     Value := BoolToStr(FileExists(Argument) or FileExists(IncludeTrailingPathDelimiter(ExtractFileDir(Tokenizer.FileName)) + Argument), True)
+  else
+  if (Name = 'INCLUDED') then
+    Value := BoolToStr(FIncludes.IndexOf(FindFile(Argument)) > -1, True)
+  else
+    Result := False;
+end;
+
+function TLapeCompiler.HandlePreprocessorMacro(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean;
+var
+  i: Integer;
+begin
+  Result := True;
+
+  if (Name = 'FILE') then
+    Value := #39 + Tokenizer.FileName + #39
+  else
+  if (Name = 'DIR') then
+    Value := #39 + IncludeTrailingPathDelimiter(ExtractFileDir(Tokenizer.FileName)) + #39
+  else
+  if (Name = 'LINE') then
+    Value := 'UInt32(' + IntToStr(Tokenizer.DocPos.Line) + ')'
+  else
+  if (Name = 'NOW') then
+    Value := 'TDateTime(' + FloatToStrDot(Now()) + ')'
+  else
+  if (Name = 'ENV') then
+    Value := #39 + GetEnvironmentVariable(Argument) + #39
+  else
+  if (Name = 'TICKCOUNT') then
+    Value := 'UInt64(' + UIntToStr(TThread.GetTickCount64()) + ')'
+  else
+  if (Name = 'INCLUDEDFILE') then
+  begin
+    for i := 0 to FIncludes.Count - 1 do
+      if (Argument = ExtractFileName(FIncludes[i])) then
+      begin
+        Value := #39 + FIncludes[i] + #39;
+        Exit;
+      end;
+  end
+  else
+  if (Name = 'INCLUDEDFILES') then
+  begin
+    Value := 'TStringArray([';
+    for i := 0 to FIncludes.Count - 1 do
+    begin
+      if (i > 0) then
+        Value := Value + ', ';
+      Value := Value + #39 + FIncludes[i] + #39;
+    end;
+    Value := Value + '])';
+  end
   else
     Result := False;
 end;
@@ -1192,7 +1293,7 @@ var
 begin
   Result := False;
 
-  for i:=0 to FPreprocessorFuncs.Count - 1 do
+  for i := 0 to FPreprocessorFuncs.Count - 1 do
     while hasFunc(Expr, FPreprocessorFuncs.Key[i], StartPos, EndPos, Param) do
     begin
       if not FPreprocessorFuncs.ItemsI[i](Self, FPreprocessorFuncs.Key[i], Param, Value) then
@@ -1218,6 +1319,49 @@ begin
   finally
     resetTokenizerState(OldState);
   end;
+end;
+
+function TLapeCompiler.EvalPreprocessorMacro(Argument: String; ADocPos: TDocPos): Boolean;
+var
+  Param, Value: lpString;
+  StartPos, EndPos: Integer;
+  i: Integer;
+begin
+  Result := False;
+
+  StartPos := Pos('(', Argument);
+  if (StartPos > 0) then
+    EndPos := Pos(')', Argument, StartPos);
+  if (StartPos > 0) and (EndPos > 0) then
+  begin
+    Param := Copy(Argument, StartPos + 1, (EndPos - StartPos) - 1);
+    Argument := UpperCase(Trim(Copy(Argument, 1, StartPos - 1)));
+  end else
+  begin
+    Param := '';
+    Argument := Trim(UpperCase(Argument));
+  end;
+
+  for i := 0 to FPreprocessorMacros.Count - 1 do
+    if (Argument = FPreprocessorMacros.Key[i]) then
+    begin
+      if FPreprocessorMacros.ItemsI[i](Self, FPreprocessorMacros.Key[i], Param, Value) and (Value <> '') then
+        pushTokenizer(TLapeTokenizerString.Create(Value));
+
+      Result := True;
+      Exit;
+    end;
+
+    for i := 0 to FDefines.Count - 1 do
+      if (FDefines[i].Name = Argument) then
+      begin
+        pushTokenizer(TLapeTokenizerString.Create(FDefines[i].Value));
+
+        Result := True;
+        Exit;
+      end;
+
+  LapeExceptionFmt(lpeUnknownDeclaration, [string(Argument)], ADocPos);
 end;
 
 function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Argument: lpString): Boolean;
@@ -1329,40 +1473,6 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     end;
   end;
 
-  procedure pushMacro(Argument: lpString);
-  var
-    i: Integer;
-    Value: lpString;
-  begin
-    Value := '';
-    if ({$IFNDEF FPC}@{$ENDIF}FOnFindMacro <> nil) then
-      if FOnFindMacro(Self, Argument, Value) then
-      begin
-        pushTokenizer(TLapeTokenizerString.Create(Value));
-
-        Exit;
-      end;
-
-    if (Sender.FileName <> '') and (LowerCase(Argument) = 'current_file') then
-      pushTokenizer(TLapeTokenizerString.Create(#39 + Sender.FileName + #39))
-    else
-    if (Sender.FileName <> '') and (LowerCase(Argument) = 'current_directory') then
-      pushTokenizer(TLapeTokenizerString.Create(#39 + IncludeTrailingPathDelimiter(ExtractFileDir(Sender.FileName)) + #39))
-    else
-    begin
-      Argument := UpperCase(Trim(Argument));
-      for i := 0 to FDefines.Count - 1 do
-        if (FDefines[i].Name = Argument) then
-        begin
-          pushTokenizer(TLapeTokenizerString.Create(FDefines[i].Value));
-
-          Exit;
-        end;
-
-      LapeExceptionFmt(lpeUnknownDeclaration, [string(Argument)], Sender.DocPos);
-    end;
-  end;
-
   procedure handleDefine(Directive, Argument: lpString);
   var
     p, i: Integer;
@@ -1373,8 +1483,8 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
       p := Pos(':=', lpString(Argument));
       if (p > 0) then
       begin
-        Name := Copy(Argument, 1, p - 1);
-        Value := Copy(Argument, p + 2);
+        Name := TrimRight(Copy(Argument, 1, p - 1));
+        Value := TrimLeft(Copy(Argument, p + 2));
       end else
       begin
         Name := Argument;
@@ -1395,49 +1505,14 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     end;
   end;
 
-  function FindFile(AFileName: lpString): lpString;
-  var
-    i: Integer;
-    Dir: lpString;
-  begin
-    if (AFileName = '') then
-      Exit('');
-
-    Argument := StringReplace(Argument, lpString('\'), lpString('/'), [rfReplaceAll]);
-    if (ExpandFileName(AFileName) = AFileName) then
-      Exit(AFileName);
-
-    for i := FTokenizer downto 0 do
-      if (FTokenizers[i] <> nil) then
-      begin
-        Dir := ExtractFilePath(FTokenizers[i].FileName);
-        if FileExists(string(Dir + AFileName)) then
-          Exit(Dir + AFileName);
-      end;
-
-    if FileExists(string(AFileName)) then
-      Result := AFileName
-    else
-      Result := '';
-  end;
-
   procedure pushInclude(Directive, Argument: lpString);
   var
     IncludeFile: lpString;
     NewTokenizer: TLapeTokenizerBase;
   begin
-    IncludeFile := Argument;
-    if ({$IFNDEF FPC}@{$ENDIF}FOnFindFile <> nil) then
-      NewTokenizer := FOnFindFile(Self, IncludeFile)
-    else
-      NewTokenizer := nil;
-
-    if (IncludeFile = '') or (not FileExists(string(IncludeFile))) then
-    begin
-      IncludeFile := FindFile(IncludeFile);
-      if (IncludeFile = '') then
-        LapeExceptionFmt(lpeFileNotFound, [Argument], Sender.DocPos);
-    end;
+    IncludeFile := FindFile(Argument);
+    if (IncludeFile = '') or (not FileExists(IncludeFile)) then
+      LapeExceptionFmt(lpeFileNotFound, [Argument], Sender.DocPos);
     IncludeFile := ExpandFileName(IncludeFile);
 
     if (Directive = 'include_once') and (FIncludes.IndexOf(string(IncludeFile)) > -1) then
@@ -1446,71 +1521,14 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (not Sender.InPeek) then
       FIncludes.Add(string(IncludeFile));
 
-    if (NewTokenizer = nil) then
-      if (FTokenizer + 1 < Length(FTokenizers)) and (FTokenizers[FTokenizer + 1] <> nil) and (FTokenizers[FTokenizer + 1].FileName = IncludeFile) then
-      begin
-        NewTokenizer := FTokenizers[FTokenizer + 1];
-        NewTokenizer.Reset();
-      end
-      else
-        NewTokenizer := TLapeTokenizerFile.Create(IncludeFile);
+    if (FTokenizer + 1 < Length(FTokenizers)) and (FTokenizers[FTokenizer + 1] <> nil) and (FTokenizers[FTokenizer + 1].FileName = IncludeFile) then
+    begin
+      NewTokenizer := FTokenizers[FTokenizer + 1];
+      NewTokenizer.Reset();
+    end else
+      NewTokenizer := TLapeTokenizerFile.Create(IncludeFile);
 
     pushTokenizer(NewTokenizer);
-  end;
-
-  function hasConditonal(Expr: lpString; Name: String; out startPos, endPos: Integer; out Param: lpString): Boolean;
-  var
-    lower: lpString;
-  begin
-    lower := LowerCase(expr);
-    startPos := Pos(Name + '(', lower);
-    if (startPos > 0) then
-      endPos := Pos(')', lower, startPos);
-    Result := (startPos > 0) and (endPos > 0);
-    if Result then
-      Param := lpString(Copy(Expr, startPos + Length(Name) + 1, (endPos - startPos) - (Length(Name) + 1)));
-  end;
-
-  procedure replaceConditonal(var Expr: lpString; startPos, endPos: Integer; replaceWith: lpString);
-  begin
-    Delete(Expr, startPos, (endPos-startPos) + 1);
-    Insert(replaceWith, Expr, startPos);
-  end;
-
-  function Eval(Expr: lpString): Boolean;
-  const
-    BoolStrings: array[Boolean] of lpString = ('False', 'True');
-  var
-    OldState: Pointer;
-    ExprBase: TLapeTree_ExprBase;
-    Res: TLapeGlobalVar;
-    p: TDocPos;
-    startPos, endPos: Integer;
-    Param: lpString;
-  begin
-    Result := False;
-
-    while hasConditonal(Expr, 'defined', startPos, endPos, Param) do
-      replaceConditonal(Expr, startPos, endPos, BoolStrings[hasDefine(Param)]);
-    while hasConditonal(Expr, 'declared', startPos, endPos, Param) do
-      replaceConditonal(Expr, startPos, endPos, BoolStrings[hasDeclaration(Param)]);
-
-    try
-      OldState := getTempTokenizerState(Expr);
-      p := Sender.DocPos;
-      Tokenizer.OverridePos := @p;
-
-      ExprBase := ParseExpression();
-      if (ExprBase = nil) then
-        LapeException(lpeCannotEvalConst, Sender.DocPos);
-      Res := ExprBase.Evaluate();
-      if (Res = nil) or (not (Res.BaseType in LapeBoolTypes)) then
-        LapeExceptionFmt(lpeExpected, ['Boolean expression'], Sender.DocPos);
-
-      Result := Res.AsInteger <> 0;
-    finally
-      resetTokenizerState(OldState);
-    end;
   end;
 
 begin
@@ -1564,7 +1582,7 @@ begin
     else
     // Includes
     if (Directive = 'macro') then
-      pushMacro(Argument)
+      EvalPreprocessorMacro(Argument, Sender.DocPos)
     else
     if (Directive = 'i') or (Directive = 'include') or (Directive = 'include_once') then
       pushInclude(Directive, Argument)
@@ -3901,9 +3919,9 @@ begin
   FOnHandleDirective := nil;
   FOnHandleExternal := nil;
   FOnFindFile := nil;
-  FOnFindMacro := nil;
   FAfterParsing := TLapeCompilerNotification.Create();
   FPreprocessorFuncs := TLapePreprocessorFuncs.Create(nil, dupError, False);
+  FPreprocessorMacros := TLapePreprocessorFuncs.Create(nil, dupError, False);
 
   FInternalMethodMap := TLapeInternalMethodMap.Create(nil);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
@@ -3991,6 +4009,7 @@ begin
   if FreeTree and (FDelayedTree <> nil) then
     FreeAndNil(FDelayedTree);
   FreeAndNil(FPreprocessorFuncs);
+  FreeAndNil(FPreprocessorMacros);
   FreeAndNil(FIncludes);
   FreeAndNil(FConditionalStack);
   FreeAndNil(FAfterParsing);
@@ -4417,11 +4436,12 @@ end;
 
 function TLapeCompiler.hasBaseDefine(AName: lpString): Boolean;
 var
-  Len, i: Integer;
+  S: lpString;
+  i: Integer;
 begin
-  Len := Length(AName);
+  S := UpperCase(AName);
   for i := 0 to FBaseDefines.Count - 1 do
-    if (Length(FBaseDefines[i].Name) = Len) and SameText(FBaseDefines[i].Name, AName) then
+    if (FBaseDefines[i].Name = S) then
       Exit(True);
 
   Result := False;
@@ -4429,11 +4449,12 @@ end;
 
 function TLapeCompiler.hasDefine(AName: lpString): Boolean;
 var
-  Len, i: Integer;
+  S: lpString;
+  i: Integer;
 begin
-  Len := Length(AName);
+  S := UpperCase(AName);
   for i := 0 to FDefines.Count - 1 do
-    if (Length(FDefines[i].Name) = Len) and SameText(FDefines[i].Name, AName) then
+    if (FDefines[I].Name = S) then
       Exit(True);
 
   Result := False;
@@ -4441,15 +4462,32 @@ end;
 
 procedure TLapeCompiler.addDefine(AName: lpString; AValue: lpString);
 var
+  S: lpString;
+  i: Integer;
   Def: TLapeDefine;
 begin
-  if not hasDefine(AName) then
-  begin
-    Def.Name  := UpperCase(Trim(AName));
-    Def.Value := Trim(AValue);
+  S := UpperCase(AName);
+  if (AValue = '') and hasDefine(S) then
+    Exit;
 
-    FDefines.Add(Def);
+  // modifiy value if already exists
+  if (AValue <> '') then
+  begin
+    for i := 0 to FDefines.Count - 1 do
+      if (FDefines[i].Name = S) then
+      begin
+        Def.Name  := S;
+        Def.Value := AValue;
+        FDefines[I] := Def;
+
+        Exit;
+      end;
   end;
+
+  Def.Name  := S;
+  Def.Value := AValue;
+
+  FDefines.Add(Def);
 end;
 
 procedure TLapeCompiler.addBaseDefine(AName: lpString; AValue: lpString);
@@ -4458,8 +4496,8 @@ var
 begin
   if not hasBaseDefine(AName) then
   begin
-    Def.Name  := UpperCase(Trim(AName));
-    Def.Value := Trim(AValue);
+    Def.Name  := UpperCase(AName);
+    Def.Value := AValue;
 
     FBaseDefines.Add(Def);
   end;

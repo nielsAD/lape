@@ -1,7 +1,7 @@
 {$assertions on}
 
 const
-  CURRENT_FILE = {$MACRO CURRENT_FILE};
+  CURRENT_FILE = {$MACRO FILE};
 
 procedure Foo(AtCaller: Boolean);
 begin

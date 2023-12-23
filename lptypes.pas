@@ -440,13 +440,14 @@ type
     FItems: TItemArray;
 
     function getItem(Index: Integer): _T;
+    procedure setItem(Index: Integer; Value: _T);
   public
     procedure Add(Item: _T);
     procedure Delete(Index: Integer);
     procedure Clear;
 
     property Count: Integer read FCount;
-    property Items[Index: Integer]: _T read getItem; default;
+    property Items[Index: Integer]: _T read getItem write setItem; default;
   end;
 
   // "Perfect Hashing" - Each entry does not share a bucket.
@@ -465,7 +466,7 @@ type
 
     function Hash(const S: PChar; const Len: Integer): UInt32;
 
-    function TryBuildWithSeed(Seed: UInt32): Boolean;
+    function TryBuildWithSeed(var Buffer: TIntegerArray; Seed: UInt32): Boolean;
     procedure Build;
 
     procedure setValue(Key: lpString; Value: _T);
@@ -473,7 +474,7 @@ type
   public
     InvalidVal: _T;
 
-    constructor Create(InvalidValue: _T; Size: Integer = 512); reintroduce; virtual;
+    constructor Create(InvalidValue: _T; Size: Integer = 1024); reintroduce; virtual;
 
     property Value[Key: lpString]: _T read getValue write setValue; default;
   end;
@@ -813,6 +814,7 @@ procedure Swap(var A, B: Pointer); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 procedure Swap(var A, B: Boolean); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
 function _IndexPointer(const Buf; const Len: SizeInt; const p: Pointer): Integer; {$IFDEF Lape_Inline}inline;{$ENDIF}
+
 function _BCompare(Arr: PUInt8; const Item: PUInt8; const Size: Integer; const Lo, Hi: Integer): Integer; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
 function _BSearch8(Arr: PUInt8; Item: UInt8; Lo, Hi: Integer): Integer;
@@ -1044,7 +1046,7 @@ end;
 var
   Lower, Upper: PPtrUInt;
 begin
-  Lower := @buf;
+  Lower := @Buf;
   if (Len < 0) or (Len > High(PtrInt) div 4) or (Lower + Len < Lower) then
     Upper := PPtrUInt(High(PtrUInt) - PtrUInt(SizeOf(PtrUInt)))
   else
@@ -1053,7 +1055,7 @@ begin
   while (Lower < Upper) do
   begin
     if (Lower^ = PtrUInt(p)) then
-      Exit(Lower - PPtrUInt(@buf));
+      Exit(Lower - PPtrUInt(@Buf));
     Inc(Lower);
   end;
 
@@ -2154,6 +2156,14 @@ begin
   Result := FItems[Index];
 end;
 
+procedure TLapeArrayBuffer{$IFNDEF FPC}<_T>{$ENDIF}.setItem(Index: Integer; Value: _T);
+begin
+  if (Index < 0) or (Index >= FCount) then
+    LapeExceptionFmt(lpeIndexOutOfRange, [Index, Low(FItems), High(FItems)]);
+
+  FItems[Index] := Value;
+end;
+
 procedure TLapeArrayBuffer{$IFNDEF FPC}<_T>{$ENDIF}.Add(Item: _T);
 begin
   if (FCount >= Length(FItems)) then
@@ -2214,23 +2224,22 @@ begin
   Result := InvalidVal;
 end;
 
-function TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.TryBuildWithSeed(Seed: UInt32): Boolean;
+function TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.TryBuildWithSeed(var Buffer: TIntegerArray; Seed: UInt32): Boolean;
 var
   i, j, Len: Integer;
   Key: lpString;
-  BucketIndices: TIntegerArray;
 begin
   Result := False;
 
-  SetLength(BucketIndices, FCount);
+  SetLength(Buffer, FCount);
   for i := 0 to High(FItems) do
   begin
     Key := LowerCase(FItems[I].Key);
     Len := Length(Key);
 
-    BucketIndices[i] := LapeHash(PChar(Key), Len * SizeOf(lpChar), Seed) and FSize;
+    Buffer[i] := LapeHash(PChar(Key), Len * SizeOf(lpChar), Seed) and FSize;
     for j := 0 to i-1 do
-      if BucketIndices[j] = BucketIndices[i] then // Already seen this bucket
+      if Buffer[j] = Buffer[i] then // Already seen this bucket
         Exit;
 
     if (Len < FMinLength) then
@@ -2238,8 +2247,8 @@ begin
     if (Len > FMaxLength) then
       FMaxLength := Len;
 
-    FBuckets[BucketIndices[i]].Key := Key;
-    FBuckets[BucketIndices[i]].Value := FItems[I].Value;
+    FBuckets[Buffer[i]].Key := Key;
+    FBuckets[Buffer[i]].Value := FItems[I].Value;
   end;
 
   FSeed := Seed;
@@ -2250,18 +2259,13 @@ end;
 // Bruteforce a hashtable with no collisions
 procedure TLapeUniqueStringDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Build;
 const
-  // "SHA256 Additive Constants" seems to work well as seeds
-  SEEDS: array[0..63] of UInt32 = (
-   $428A2F98, $71374491, $B5C0FBCF, $E9B5DBA5, $3956C25B, $59F111F1, $923F82A4, $AB1C5ED5,
-   $D807AA98, $12835B01, $243185BE, $550C7DC3, $72BE5D74, $80DEB1FE, $9BDC06A7, $C19BF174,
-   $E49B69C1, $EFBE4786, $0FC19DC6, $240CA1CC, $2DE92C6F, $4A7484AA, $5CB0A9DC, $76F988DA,
-   $983E5152, $A831C66D, $B00327C8, $BF597FC7, $C6E00BF3, $D5A79147, $06CA6351, $14292967,
-   $27B70A85, $2E1B2138, $4D2C6DFC, $53380D13, $650A7354, $766A0ABB, $81C2C92E, $92722C85,
-   $A2BFE8A1, $A81A664B, $C24B8B70, $C76C51A3, $D192E819, $D6990624, $F40E3585, $106AA070,
-   $19A4C116, $1E376C08, $2748774C, $34B0BCB5, $391C0CB3, $4ED8AA4A, $5B9CCA4F, $682E6FF3,
-   $748F82EE, $78A5636F, $84C87814, $8CC70208, $90BEFFFA, $A4506CEB, $BEF9A3F7, $C67178F2
- );
+  Seeds: array[0..25] of UInt32 = (
+    53, 97, 193, 389, 769, 1543, 3079, 6151, 12289, 24593, 49157, 98317,
+    196613, 393241, 786433, 1572869, 3145739, 6291469, 12582917, 25165843,
+    50331653, 100663319, 201326611, 402653189, 805306457, 1610612741
+  );
 var
+  Buffer: TIntegerArray;
   i: Integer;
 begin
   FCount := Length(FItems);
@@ -2270,9 +2274,13 @@ begin
   FMinLength := $FFFFFF;
   FMaxLength := 0;
 
-  for i := 0 to High(SEEDS) do
-    if TryBuildWithSeed(SEEDS[i]) then
+  SetLength(Buffer, FCount);
+  for i := 0 to High(Seeds) do
+    if TryBuildWithSeed(Buffer, Seeds[i]) then
+    begin
+      //WriteLn('Built on seed #', i);
       Exit;
+    end;
 
   LapeExceptionFmt(lpeNeedMoreBuckets, [Length(FBuckets)]);
 end;

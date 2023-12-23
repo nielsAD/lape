@@ -409,6 +409,7 @@ const
 
 function LapeTokenToString(Token: EParserToken): lpString;
 function ParserTokenToOperator(Token: EParserToken): EOperator;
+function FloatToStrDot(Value: Extended): string;
 function StrToFloatDot(const Str: string): Extended;
 function StrToFloatDotDef(const Str: string; Default: Extended): Extended;
 function DetermineIntType(IntType: ELapeBaseType; MinSize: UInt8): ELapeBaseType; overload;
@@ -460,6 +461,11 @@ begin
     Result := op_Unknown
   else
     Result := EOperator(Integer(Token) - Integer(ParserToken_FirstOperator) + 1);
+end;
+
+function FloatToStrDot(Value: Extended): string;
+begin
+  Result := FloatToStr(Value, LapeFormatSettings);
 end;
 
 function StrToFloatDot(const Str: string): Extended;

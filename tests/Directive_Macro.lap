@@ -1,0 +1,24 @@
+{$assertions on}
+
+begin
+  Assert(Length({$macro includedfiles}) = 0);
+end;
+
+{$i ../include.inc}
+
+begin
+  Assert(Length({$macro includedfiles}) = 2);
+end;
+
+begin
+  {$define hi:="hello"}
+  Assert({$macro hi} = 'hello');
+  {$define hi:="hola"}
+  Assert({$macro hi} = 'hola');
+
+  Assert({$macro line} = 19);
+  Assert({$macro line} = 20);
+
+  WriteLn('tickcount=', {$macro tickcount});
+  WriteLn('now=', {$macro now});
+end.
