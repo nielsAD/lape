@@ -29,7 +29,7 @@ type
   TLapeCompiler = class;
   TLapeHandleDirective = function(Sender: TLapeCompiler; Directive, Argument: lpString; InPeek, InIgnore: Boolean): Boolean of object;
   TLapeHandleExternal = function(Sender: TLapeCompiler; Header: TLapeGlobalVar): Boolean of object;
-  TLapeFindFile = function(Sender: TLapeCompiler; FileName: lpString): lpString of object;
+  TLapeFindFile = procedure(Sender: TLapeCompiler; var FileName: lpString) of object;
   TLapeCompilerNotification = {$IFDEF FPC}specialize{$ENDIF} TLapeNotifier<TLapeCompiler>;
   TLapeTokenizerArray = array of TLapeTokenizerBase;
 
@@ -1151,7 +1151,7 @@ begin
     FOnFindFile(Self, AFileName);
 
   AFileName := StringReplace(AFileName, '\', '/', [rfReplaceAll]);
-  if (ExpandFileName(AFileName) = AFileName) then
+  if FileExists(AFileName) then
     Exit(AFileName);
 
   for i := FTokenizer downto 0 do
