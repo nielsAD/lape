@@ -383,26 +383,6 @@ begin
     FIncludes.Clear();
   if (FConditionalStack <> nil) then
     FConditionalStack.Reset();
-  if (FPreprocessorFuncs <> nil) then
-  begin
-    FPreprocessorFuncs.Clear();
-    FPreprocessorFuncs.Add('DEFINED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
-    FPreprocessorFuncs.Add('DECLARED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
-    FPreprocessorFuncs.Add('FILEEXISTS', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
-    FPreprocessorFuncs.Add('INCLUDED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
-  end;
-  if (FPreprocessorMacros <> nil) then
-  begin
-    FPreprocessorMacros.Clear();
-    FPreprocessorMacros.Add('FILE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
-    FPreprocessorMacros.Add('DIR', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
-    FPreprocessorMacros.Add('ENV', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
-    FPreprocessorMacros.Add('INCLUDEDFILE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
-    FPreprocessorMacros.Add('INCLUDEDFILES', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
-    FPreprocessorMacros.Add('TICKCOUNT', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
-    FPreprocessorMacros.Add('LINE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
-    FPreprocessorMacros.Add('NOW', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
-  end;
 
   FDefines := FBaseDefines;
 end;
@@ -3920,8 +3900,22 @@ begin
   FOnHandleExternal := nil;
   FOnFindFile := nil;
   FAfterParsing := TLapeCompilerNotification.Create();
+
   FPreprocessorFuncs := TLapePreprocessorFuncs.Create(nil, dupError, False);
+  FPreprocessorFuncs.Add('DEFINED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
+  FPreprocessorFuncs.Add('DECLARED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
+  FPreprocessorFuncs.Add('FILEEXISTS', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
+  FPreprocessorFuncs.Add('INCLUDED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
+
   FPreprocessorMacros := TLapePreprocessorFuncs.Create(nil, dupError, False);
+  FPreprocessorMacros.Add('FILE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+  FPreprocessorMacros.Add('DIR', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+  FPreprocessorMacros.Add('ENV', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+  FPreprocessorMacros.Add('INCLUDEDFILE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+  FPreprocessorMacros.Add('INCLUDEDFILES', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+  FPreprocessorMacros.Add('TICKCOUNT', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+  FPreprocessorMacros.Add('LINE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+  FPreprocessorMacros.Add('NOW', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
 
   FInternalMethodMap := TLapeInternalMethodMap.Create(nil);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;
@@ -4948,4 +4942,3 @@ begin
 end;
 
 end.
-
