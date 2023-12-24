@@ -94,12 +94,12 @@ end;
 
 procedure _LapeWideUpperCase(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := WideUpperCase(PWideString(Params^[0])^);
+  PWideString(Result)^ := WideUpperCase(PWideString(Params^[0])^);
 end;
 
 procedure _LapeWideLowerCase(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := WideLowerCase(PWideString(Params^[0])^);
+  PWideString(Result)^ := WideLowerCase(PWideString(Params^[0])^);
 end;
 
 procedure _LapeWideCompareStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -120,6 +120,14 @@ end;
 procedure _LapeWideSameStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PEvalBool(Result)^ := WideSameStr(PWideString(Params^[0])^, PWideString(Params^[1])^);
+end;
+
+procedure _LapeWideFormat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+var
+  ConstArr: TVarRecList;
+begin
+  ConstArr := VariantArrToConstArr(PVariantArray(Params^[1])^);
+  PWideString(Result)^ := WideFormat(PWideString(Params^[0])^, ConstArr.VarRecs);
 end;
 
 procedure _LapeTrim(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

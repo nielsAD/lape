@@ -20,31 +20,13 @@ object Form1: TForm1
     Height = 506
     Align = alClient
     Lines.Strings = (
-      '// Issue 87'
-      ''
-      'type'
-      '  SetOfChar = set of Char;'
-      '  SetOfByte = set of Byte;'
-      '  SubSetOfChar = set of '#39'a'#39'..'#39'z'#39';'
-      '  SubSetOfByte = set of 100..200;'
-      ''
-      'var'
-      '  c: Char = '#39'c'#39';'
-      '  b: Byte = 102;'
-      '  soc: SetOfChar     := ['#39'b'#39'..'#39'y'#39'];'
-      '  sob: SetOfByte     := [101..199];'
-      '  ssoc: SubSetOfChar := ['#39'b'#39'..'#39'y'#39'];'
-      '  ssob: SubSetOfByte := [101..199];'
       'begin'
-      '  soc  := [c..'#39'y'#39'];'
-      '  sob  := [b..199];'
-      '  ssoc := [c..'#39'y'#39'];'
-      '  ssob := [b..199];'
-      'end;')
+      '  WriteLn('#39'Hola'#39');'
+      'end.')
     ScrollBars = ssBoth
     TabOrder = 0
-    ExplicitWidth = 563
-    ExplicitHeight = 321
+    ExplicitWidth = 777
+    ExplicitHeight = 497
   end
   object ButtonRun: TButton
     AlignWithMargins = True
@@ -56,9 +38,8 @@ object Form1: TForm1
     Caption = 'Run'
     TabOrder = 1
     OnClick = ButtonRunClick
-    ExplicitLeft = 8
-    ExplicitTop = 231
-    ExplicitWidth = 75
+    ExplicitTop = 506
+    ExplicitWidth = 777
   end
   object OutputMemo: TMemo
     AlignWithMargins = True
@@ -70,8 +51,7 @@ object Form1: TForm1
     Lines.Strings = (
       'OutputMemo')
     TabOrder = 2
-    ExplicitLeft = 8
-    ExplicitTop = 262
-    ExplicitWidth = 441
+    ExplicitTop = 537
+    ExplicitWidth = 777
   end
 end

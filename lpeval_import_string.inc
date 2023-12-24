@@ -33,20 +33,21 @@ addGlobalFunc('function AnsiSameText(s1,s2: string): EvalBool;', @_LapeAnsiSameT
 addGlobalFunc('function AnsiSameStr(s1,s2: string): EvalBool;', @_LapeAnsiSameStr);
 
 // Uses current user locale
-addGlobalFunc('function WideUpperCase(s: WideString): string;', @_LapeWideUpperCase);
-addGlobalFunc('function WideLowerCase(s: WideString): string;', @_LapeWideLowerCase);
+addGlobalFunc('function WideUpperCase(s: WideString): WideString;', @_LapeWideUpperCase);
+addGlobalFunc('function WideLowerCase(s: WideString): WideString;', @_LapeWideLowerCase);
 addGlobalFunc('function WideCompareStr(s1, s2: WideString): Int32;', @_LapeWideCompareStr);
 addGlobalFunc('function WideCompareText(s1, s2: WideString): Int32;', @_LapeWideCompareText);
 addGlobalFunc('function WideSameText(s1,s2: WideString): EvalBool;', @_LapeWideSameText);
 addGlobalFunc('function WideSameStr(s1,s2: WideString): EvalBool;', @_LapeWideSameStr);
+addGlobalFunc('function WideFormat(Fmt: WideString; Args: array of Variant): WideString;', @_LapeWideFormat);
 
 addGlobalFunc('function Pos(Substr, Source: AnsiString): SizeInt; overload;', @_LapePosA);
 addGlobalFunc('function Pos(Substr, Source: WideString): SizeInt; overload;', @_LapePosW);
 addGlobalFunc('function Pos(Substr, Source: UnicodeString): SizeInt; overload;', @_LapePosU);
 
 addGlobalFunc('function StringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags = [rfReplaceAll]): string;', @_LapeStringReplace);
-addGlobalFunc('function UnicodeStringReplace(S, OldPattern, NewPattern: UnicodeString; Flags: TReplaceFlags = [rfReplaceAll]): string;', @_LapeUnicodeStringReplace);
-addGlobalFunc('function WideStringReplace(S, OldPattern, NewPattern: WideString; Flags: TReplaceFlags = [rfReplaceAll]): string;', @_LapeWideStringReplace);
+addGlobalFunc('function UnicodeStringReplace(S, OldPattern, NewPattern: UnicodeString; Flags: TReplaceFlags = [rfReplaceAll]): UnicodeString;', @_LapeUnicodeStringReplace);
+addGlobalFunc('function WideStringReplace(S, OldPattern, NewPattern: WideString; Flags: TReplaceFlags = [rfReplaceAll]): WideString;', @_LapeWideStringReplace);
 
 addGlobalFunc('function Trim(s: string): string;', @_LapeTrim);
 addGlobalFunc('function TrimLeft(s: string): string;', @_LapeTrimLeft);

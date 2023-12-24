@@ -926,6 +926,7 @@ begin
     varDouble:   Result := vtExtended;
     varCurrency: Result := vtCurrency;
     varOleStr:   Result := vtWideString;
+    varUString:  Result := vtUnicodeString;
     varDispatch: Result := vtInterface;
     varBoolean:  Result := vtBoolean;
     varVariant:  Result := vtVariant;
@@ -950,18 +951,19 @@ function VariantToVarRec(const v: Variant): TVarRec;
 begin
   Result.VType := VarTypeToVType(VarType(v));
   case Result.VType of
-    vtInteger:    Result.VInteger := v;
-    vtBoolean:    Result.VBoolean := v;
-    vtAnsiString: Result.VAnsiString := TVarData(v).VString;
-    vtCurrency:   Result.VCurrency := @TVarData(v).VCurrency;
-    vtVariant:    Result.VVariant := @v;
-    vtInterface:  Result.VInterface := TVarData(v).VDispatch;
-    vtWideString: Result.VWideString := TVarData(v).VOleStr;
-    vtInt64:      Result.VInt64 := @TVarData(v).VInt64;
+    vtInteger:       Result.VInteger := v;
+    vtBoolean:       Result.VBoolean := v;
+    vtAnsiString:    Result.VAnsiString := TVarData(v).VString;
+    vtCurrency:      Result.VCurrency := @TVarData(v).VCurrency;
+    vtVariant:       Result.VVariant := @v;
+    vtInterface:     Result.VInterface := TVarData(v).VDispatch;
+    vtWideString:    Result.VWideString := TVarData(v).VOleStr;
+    vtUnicodeString: Result.VUnicodeString := TVarData(v).VUString;
+    vtInt64:         Result.VInt64 := @TVarData(v).VInt64;
     {$IFDEF FPC}
     vtChar:       Result.VChar := v;
     vtWideChar:   Result.VWideChar := v;
-    vtQWord:      Result.VQWord := @TVarData(v).VQWord;
+    vtQWord:         Result.VQWord := @TVarData(v).VQWord;
     {$ENDIF}
     else VarCastError();
   end;
