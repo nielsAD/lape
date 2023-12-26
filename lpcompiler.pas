@@ -882,7 +882,7 @@ begin
 
   addCompilerFuncs();
   addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System').isConstant := True;
-  addGlobalVar(addManagedType(TLapeType_NilPointer.Create(Self, nil, False)).NewGlobalVarP(), 'nil');
+  addGlobalVar(addManagedType(TLapeType_NilPointer.Create(Self, nil, False)).NewGlobalVarP(), 'nil').isConstant := True;
 
   addGlobalType(TLapeType_Label.Create(Self), '!label');
   addGlobalType(TLapeType_Pointer.Create(Self, nil, True), 'ConstPointer');

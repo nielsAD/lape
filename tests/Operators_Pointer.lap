@@ -1,10 +1,22 @@
 {$assertions on}
 
+const constTest1: Pointer = nil;
+const constTest2: Pointer = Pointer(0);
+const constTest3 = Pointer(nil);
+const constTest4 = Pointer(0);
+
 var
   a: Int32;
   b: ^Int32;
   c: Int64;
 begin
+  Assert(constTest1 = nil);
+  Assert(constTest2 = nil);
+  Assert(constTest3 = nil);
+  Assert(constTest4 = nil);
+
+  WriteLn('Consts   :: Passed');
+
   a := 100;
   b := @a;
   Assert(b^ = a, 'b^ <> a');
