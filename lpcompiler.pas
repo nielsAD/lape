@@ -45,6 +45,8 @@ type
   end;
   TLapeConditionalStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeConditional>;
 
+  TLapeVarStates = array of TLapeGlobalVar;
+
   PCompilerState = ^TCompilerState;
   TCompilerState = record
     Tokenizer: Integer;
@@ -200,6 +202,10 @@ type
     function getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''; ResetState: Boolean = True): Pointer; overload; virtual;
     procedure resetTokenizerState(const State: Pointer; DoFreeState: Boolean = True); virtual;
     procedure freeTempTokenizerState(const State: Pointer); virtual;
+
+    function getVarStates: TLapeVarStates; virtual;
+    procedure setVarStates(States: TLapeVarStates); virtual;
+    procedure freeVarStates(States: TLapeVarStates); virtual;
 
     procedure StartImporting; virtual;
     procedure EndImporting; virtual;
@@ -4160,6 +4166,51 @@ begin
     freeState(OldState);
   end;
   Dispose(PTempTokenizerState(State));
+end;
+
+function TLapeCompiler.getVarStates: TLapeVarStates;
+var
+  Decls: TLapeDeclArray;
+  i: Integer;
+begin
+  Decls := FGlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue);
+  SetLength(Result, Length(Decls));
+  for i := 0 to High(Decls) do
+    if TLapeGlobalVar(Decls[i]).VarType.CompatibleWith(TLapeGlobalVar(Decls[i]).VarType) then
+      Result[i] := TLapeGlobalVar(Decls[i]).CreateCopy();
+end;
+
+procedure TLapeCompiler.setVarStates(States: TLapeVarStates);
+var
+  Decls: TLapeDeclArray;
+  i: Integer;
+  wasWritable: Boolean;
+begin
+  Decls := FGlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue);
+  if (Length(Decls) <> Length(States)) then
+    LapeException(lpeImpossible);
+
+  for i := 0 to High(States) do
+  begin
+    if (States[i] = nil) then
+      Continue;
+
+    wasWritable := TLapeGlobalVar(Decls[i]).Writeable;
+    if (not wasWritable) then
+      TLapeGlobalVar(Decls[i]).Writeable := True;
+    TLapeGlobalVar(Decls[i]).VarType.EvalConst(op_Assign, TLapeGlobalVar(Decls[i]), States[i], []);
+    if (not wasWritable) then
+      TLapeGlobalVar(Decls[i]).Writeable := False;
+  end;
+end;
+
+procedure TLapeCompiler.freeVarStates(States: TLapeVarStates);
+var
+  i: Integer;
+begin
+  for i := 0 to High(States) do
+    if (States[i] <> nil) then
+      FreeAndNil(States[i]);
 end;
 
 procedure TLapeCompiler.StartImporting;
