@@ -204,8 +204,8 @@ type
     procedure freeTempTokenizerState(const State: Pointer); virtual;
 
     function getVarStates: TLapeVarStates; virtual;
-    procedure setVarStates(States: TLapeVarStates); virtual;
-    procedure freeVarStates(States: TLapeVarStates); virtual;
+    procedure setVarStates(VarStates: TLapeVarStates); virtual;
+    procedure freeVarStates(VarStates: TLapeVarStates); virtual;
 
     procedure StartImporting; virtual;
     procedure EndImporting; virtual;
@@ -4177,40 +4177,58 @@ begin
   SetLength(Result, Length(Decls));
   for i := 0 to High(Decls) do
     if TLapeGlobalVar(Decls[i]).VarType.CompatibleWith(TLapeGlobalVar(Decls[i]).VarType) then
-      Result[i] := TLapeGlobalVar(Decls[i]).CreateCopy();
+    begin
+      with TLapeTree_InternalMethod_DeepCopy.Create(Self) do
+      try
+        addParam(TLapeTree_GlobalVar.Create(TLapeGlobalVar(Decls[i]), Self));
+        Result[I] := Evaluate();
+      finally
+        Free();
+      end;
+    end;
 end;
 
-procedure TLapeCompiler.setVarStates(States: TLapeVarStates);
+procedure TLapeCompiler.setVarStates(VarStates: TLapeVarStates);
 var
   Decls: TLapeDeclArray;
   i: Integer;
-  wasWritable: Boolean;
+  VarCopy: TLapeGlobalVar;
+  wasConstant: Boolean;
 begin
   Decls := FGlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue);
-  if (Length(Decls) <> Length(States)) then
+  if (Length(Decls) <> Length(VarStates)) then
     LapeException(lpeImpossible);
 
-  for i := 0 to High(States) do
-  begin
-    if (States[i] = nil) then
-      Continue;
+  for i := 0 to High(VarStates) do
+    if (VarStates[i] <> nil) then
+    begin
+      wasConstant := not TLapeGlobalVar(Decls[i]).Writeable;
+      if wasConstant then
+        TLapeGlobalVar(Decls[i]).Writeable := True;
 
-    wasWritable := TLapeGlobalVar(Decls[i]).Writeable;
-    if (not wasWritable) then
-      TLapeGlobalVar(Decls[i]).Writeable := True;
-    TLapeGlobalVar(Decls[i]).VarType.EvalConst(op_Assign, TLapeGlobalVar(Decls[i]), States[i], []);
-    if (not wasWritable) then
-      TLapeGlobalVar(Decls[i]).Writeable := False;
-  end;
+      with TLapeTree_InternalMethod_DeepCopy.Create(Self) do
+      try
+        addParam(TLapeTree_GlobalVar.Create(TLapeGlobalVar(VarStates[i]), Self));
+
+        VarCopy := Evaluate();
+        VarStates[i].VarType.EvalConst(op_Assign, TLapeGlobalVar(Decls[i]), VarCopy, []);
+      finally
+        VarCopy.Free();
+        Free();
+
+        if wasConstant then
+          TLapeGlobalVar(Decls[i]).Writeable := False;
+      end;
+    end;
 end;
 
-procedure TLapeCompiler.freeVarStates(States: TLapeVarStates);
+procedure TLapeCompiler.freeVarStates(VarStates: TLapeVarStates);
 var
   i: Integer;
 begin
-  for i := 0 to High(States) do
-    if (States[i] <> nil) then
-      FreeAndNil(States[i]);
+  for i := 0 to High(VarStates) do
+    if (VarStates[i] <> nil) then
+      FreeAndNil(VarStates[i]);
 end;
 
 procedure TLapeCompiler.StartImporting;

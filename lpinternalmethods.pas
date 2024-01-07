@@ -306,10 +306,20 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_DeepCopy = class(TLapeTree_InternalMethod)
+  public
+    procedure ClearCache; override;
+    function isConstant: Boolean; override;
+    function resType: TLapeType; override;
+    function Evaluate: TLapeGlobalVar; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
 implementation
 
 uses
-  lpparser, lpvartypes_array, lpmessages, lpeval, lpvartypes_ord, lpinterpreter_types;
+  lpparser, lpvartypes_array, lpmessages, lpeval, lpvartypes_ord, lpinterpreter_types,
+  lpvartypes_record;
 
 type
   __TLapeTree_Operator = class(TLapeTree_Operator);
@@ -2832,6 +2842,153 @@ begin
   FCompiler.Emitter._DumpCallStack(Offset, @_DocPos);
 
   Result.isConstant := True;
+end;
+
+procedure TLapeTree_InternalMethod_DeepCopy.ClearCache;
+begin
+  FConstant := bUnknown;
+  inherited;
+end;
+
+function TLapeTree_InternalMethod_DeepCopy.isConstant: Boolean;
+begin
+  if (FConstant = bUnknown) then
+    if (FParams.Count = 1) and (not isEmpty(FParams[0])) and FParams[0].isConstant() then
+      FConstant := bTrue
+    else
+      FConstant := bFalse;
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_DeepCopy.resType: TLapeType;
+begin
+  if (FResType = nil) then
+    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    begin
+      FResType := FParams[0].resType();
+      if (FResType is TLapeType_Type) then
+        FResType := TLapeType_Type(FResType).TType;
+    end;
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_DeepCopy.Evaluate: TLapeGlobalVar;
+
+  procedure DoCopy(ASrc, ADst: TLapeGlobalVar);
+
+    procedure DoRecord(ASrc, ADst: TLapeGlobalVar);
+    var
+      i: Integer;
+      Rec: TLapeType_Record;
+      SrcField, DstField: TLapeGlobalVar;
+    begin
+      Rec := TLapeType_Record(ASrc.VarType);
+      if not Rec.NeedInitialization then // nothing special to copy, much faster
+      begin
+        Rec.EvalConst(op_Assign, ADst, ASrc, []);
+        Exit;
+      end;
+
+      for i := 0 to Rec.FieldMap.Count - 1 do
+      begin
+        SrcField := ASrc.VarType.EvalConst(op_Dot, ASrc, FCompiler.getConstant(Rec.FieldMap.Key[i]), []);
+        DstField := ADst.VarType.EvalConst(op_Dot, ADst, FCompiler.getConstant(Rec.FieldMap.Key[i]), []);
+        try
+          DoCopy(SrcField, DstField);
+        finally
+          SrcField.Free();
+          DstField.Free();
+        end;
+      end;
+    end;
+
+    procedure DoArray(ASrc, ADst: TLapeGlobalVar);
+    var
+      i: Integer;
+      Arr: TLapeType_DynArray;
+      SrcIndex, DstIndex: TLapeGlobalVar;
+      Len: Integer;
+    begin
+      if ASrc.isNull() then
+      begin
+        TLapeType_DynArray(ASrc.VarType).VarSetLength(ADst, 0);
+        Exit;
+      end;
+      if (PPointer(ASrc.Ptr)^ = PPointer(ADst.Ptr)^) then
+        Exit;
+
+      Len := PSizeInt(PPointer(ASrc.Ptr)^)[-1] {$IFDEF FPC}+1{$ENDIF};
+      Arr := TLapeType_DynArray(ASrc.VarType);
+      Arr.VarSetLength(ADst, Len);
+
+      if not Arr.PType.NeedInitialization then // nothing special to copy, much faster
+      begin
+        if (Len > 0) then
+          Move(PByte(PPointer(ASrc.Ptr)^)^, PByte(PPointer(ADst.Ptr)^)^, Len * Arr.PType.Size);
+        Exit;
+      end;
+
+      for i := 0 to Len - 1 do
+      begin
+        SrcIndex := Arr.PType.NewGlobalVarP(Pointer(PtrInt(PPointer(ASrc.Ptr)^) + (i * Arr.PType.Size)));
+        DstIndex := Arr.PType.NewGlobalVarP(Pointer(PtrInt(PPointer(ADst.Ptr)^) + (i * Arr.PType.Size)));
+        try
+          DoCopy(SrcIndex, DstIndex);
+        finally
+          SrcIndex.Free();
+          DstIndex.Free();
+        end;
+      end;
+    end;
+
+    procedure DoString(ASrc, ADst: TLapeGlobalVar);
+    begin
+      if ASrc.isNull() then
+      begin
+        TLapeType_DynArray(ASrc.VarType).VarSetLength(ADst, 0);
+        Exit;
+      end;
+
+      case ASrc.BaseType of
+        ltShortString:   PShortString(ADst.Ptr)^   := Copy(PShortString(ASrc.Ptr)^, 1);
+        ltAnsiString:    PAnsiString(ADst.Ptr)^    := Copy(PAnsiString(ASrc.Ptr)^, 1);
+        ltWideString:    PWideString(ADst.Ptr)^    := Copy(PWideString(ASrc.Ptr)^, 1);
+        ltUnicodeString: PUnicodeString(ADst.Ptr)^ := Copy(PUnicodeString(ASrc.Ptr)^, 1);
+      end;
+    end;
+
+  begin
+    if (ASrc.BaseType = ltRecord) then
+      DoRecord(ASrc, ADst)
+    else if (ASrc.BaseType = ltDynArray) then
+      DoArray(ASrc, ADst)
+    else if (ASrc.BaseType in LapeStringTypes) then
+      DoString(ASrc, ADst)
+    else
+      ASrc.VarType.EvalConst(op_Assign, ADst, ASrc, []);
+  end;
+
+var
+  Param: TLapeGlobalVar;
+begin
+  if (FRes = nil) then
+  begin
+    if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+      LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+    Param := FParams[0].Evaluate();
+    FRes := TLapeGlobalVar(FCompiler.addManagedDecl(resType().NewGlobalVarP()));
+
+    DoCopy(Param, FRes);
+  end;
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_DeepCopy.Compile(var Offset: Integer): TResVar;
+begin
+  LapeException(lpeCannotEvalRunTime, DocPos); // todo and expose to scripts
 end;
 
 end.
