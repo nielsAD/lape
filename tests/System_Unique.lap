@@ -18,8 +18,19 @@ begin
   Dyn += 3;
   Dyn += 2;
   Dyn += 1;
-
+  Dyn += 0;
   Dyn := Unique(Dyn);
+  Assert(ToString(Dyn) = '[1, 2, 3, 0]');
 
-  Assert(ToString(Dyn) = '[1, 2, 3]');
+  Dyn := [];
+  Dyn := Unique(Dyn);
+  Assert(ToString(Dyn) = '[]');
+
+  Dyn := [1];
+  Dyn := Unique(Dyn);
+  Assert(ToString(Dyn) = '[1]');
+
+  Dyn := [1,1];
+  Dyn := Unique(Dyn);
+  Assert(ToString(Dyn) = '[1]');
 end;
