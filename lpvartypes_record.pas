@@ -86,7 +86,10 @@ end;
 
 function TLapeType_Record.getSize: SizeInt;
 begin
-  Result := (inherited + (FAlignment - 1)) and not (FAlignment - 1);
+  if (FSize > 0) then
+    Result := (inherited + (FAlignment - 1)) and not (FAlignment - 1)
+  else
+    Result := 0;
 end;
 
 function TLapeType_Record.getPadding: SizeInt;

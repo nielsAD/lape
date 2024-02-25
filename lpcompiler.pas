@@ -2500,6 +2500,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     else
       Rec := TLapeType_Union.Create(Self, nil, '', getPDocPos());
 
+    if (Tokenizer.Tok <> tk_kw_End) then
     repeat
       if (Tokenizer.Tok = tk_kw_Const) then
       begin
