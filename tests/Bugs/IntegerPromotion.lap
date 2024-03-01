@@ -1,0 +1,5 @@
+{$assertions on}
+
+begin
+  Assert((1000 * 60 * 60 * 24 * 365) = 31536000000);
+end.
