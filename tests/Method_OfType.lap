@@ -7,7 +7,7 @@ end;
 
 function NativeInt.Create(s: string; Def: NativeInt): NativeInt; static; overload;
 begin
-  Result := StrToIntDef(s, Def);
+  Result := StrToInt(s, Def);
 end;
 
 function NativeInt.Next(i: NativeInt): NativeInt;

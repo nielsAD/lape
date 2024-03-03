@@ -60,27 +60,27 @@ addGlobalFunc('function IntToHex(Value: Int64; Digits: Int32 = 1): string; overl
 addGlobalFunc('function IntToHex(Value: UInt64; Digits: Int32 = 1): string; overload;', @_LapeUIntToHex);
 addGlobalFunc('function IntToStr(i: Int64): string; overload;', @_LapeToString_Int64);
 addGlobalFunc('function IntToStr(i: UInt64): string; overload;', @_LapeToString_UInt64);
-addGlobalFunc('function StrToInt(s: string): Int32;', @_LapeStrToInt);
-addGlobalFunc('function StrToIntDef(s: string; Def: Int32): Int32;', @_LapeStrToIntDef);
-addGlobalFunc('function StrToInt64(s: string): Int64;', @_LapeStrToInt64);
-addGlobalFunc('function StrToInt64Def(s: string; Def: Int64): Int64;', @_LapeStrToInt64Def);
-addGlobalFunc('function StrToUInt64(s: string): UInt64;', @_LapeStrToUInt64);
-addGlobalFunc('function StrToUInt64Def(s: string; Def: UInt64): UInt64;', @_LapeStrToUInt64Def);
+addGlobalFunc('function StrToInt(s: string): Int32; overload;', @_LapeStrToInt);
+addGlobalFunc('function StrToInt(s: string; Def: Int32): Int32; overload;', @_LapeStrToIntDef);
+addGlobalFunc('function StrToInt64(s: string): Int64; overload;', @_LapeStrToInt64);
+addGlobalFunc('function StrToInt64(s: string; Def: Int64): Int64; overload;', @_LapeStrToInt64Def);
+addGlobalFunc('function StrToUInt64(s: string): UInt64; overload;', @_LapeStrToUInt64);
+addGlobalFunc('function StrToUInt64(s: string; Def: UInt64): UInt64; overload;', @_LapeStrToUInt64Def);
 {$IFDEF Lape_NoExtended}
 addGlobalFunc('function FloatToStr(f: Double): string;', @_LapeToString_Double);
-addGlobalFunc('function StrToFloat(s: string): Double;', @_LapeStrToFloat);
-addGlobalFunc('function StrToFloatDef(s: string; Def: Double): Double;', @_LapeStrToFloatDef);
+addGlobalFunc('function StrToFloat(s: string): Double; overload;', @_LapeStrToFloat);
+addGlobalFunc('function StrToFloat(s: string; Def: Double): Double; overload;', @_LapeStrToFloatDef);
 {$ELSE}
 addGlobalFunc('function FloatToStr(f: Extended): string;', @_LapeToString_Extended);
-addGlobalFunc('function StrToFloat(s: string): Extended;', @_LapeStrToFloat);
-addGlobalFunc('function StrToFloatDef(s: string; Def: Extended): Extended;', @_LapeStrToFloatDef);
+addGlobalFunc('function StrToFloat(s: string): Extended; overload;', @_LapeStrToFloat);
+addGlobalFunc('function StrToFloat(s: string; Def: Extended): Extended; overload;', @_LapeStrToFloatDef);
 {$ENDIF}
 addGlobalFunc('function CurrToStr(Value: Currency): string;', @_LapeToString_Currency);
-addGlobalFunc('function StrToCurr(s: string): Currency;', @_LapeStrToCurr);
-addGlobalFunc('function StrToCurrDef(s: string; Def: Currency): Currency;', @_LapeStrToCurrDef);
-addGlobalFunc('function StrToBool(s: string): EvalBool;', @_LapeStrToBool);
+addGlobalFunc('function StrToCurr(s: string): Currency; overload;', @_LapeStrToCurr);
+addGlobalFunc('function StrToCurr(s: string; Def: Currency): Currency; overload;', @_LapeStrToCurrDef);
+addGlobalFunc('function StrToBool(s: string): EvalBool; overload;', @_LapeStrToBool);
+addGlobalFunc('function StrToBool(s: string; Default: EvalBool): EvalBool; overload;', @_LapeStrToBoolDef);
 addGlobalFunc('function BoolToStr(B: EvalBool; TrueS: string = ''True''; FalseS: string = ''False''): string;', @_LapeBoolToStr);
-addGlobalFunc('function StrToBoolDef(s: string; Default: EvalBool): EvalBool;', @_LapeStrToBoolDef);
 
 addGlobalFunc('function Format(Fmt: string; Args: array of Variant): string;', @_LapeFormat);
 addGlobalFunc('function FormatCurr(Format: string; Value: Currency): string;', @_LapeFormatCurr);

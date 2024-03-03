@@ -52,12 +52,12 @@ addGlobalFunc('procedure ReplaceTime(var DateTime: TDateTime; NewTime: TDateTime
 addGlobalFunc('procedure ReplaceDate(var DateTime: TDateTime; NewDate: TDateTime);', @_LapeReplaceDate);
 
 addGlobalFunc('function FormatDateTime(Format: string; DateTime: TDateTime): string;', @_LapeFormatDateTime);
-addGlobalFunc('function StrToDate(s: string): TDateTime;', @_LapeStrToDate);
-addGlobalFunc('function StrToDateDef(s: string; Default: TDateTime): TDateTime;', @_LapeStrToDateDef);
-addGlobalFunc('function StrToTime(s: string): TDateTime;', @_LapeStrToTime);
-addGlobalFunc('function StrToTimeDef(s: string; Default: TDateTime): TDateTime;', @_LapeStrToTimeDef);
-addGlobalFunc('function StrToDateTime(s: string): TDateTime;', @_LapeStrToDateTime);
-addGlobalFunc('function StrToDateTimeDef(s: string; Default: TDateTime): TDateTime;', @_LapeStrToDateTimeDef);
+addGlobalFunc('function StrToDate(s: string): TDateTime; overload;', @_LapeStrToDate);
+addGlobalFunc('function StrToDate(s: string; Default: TDateTime): TDateTime; overload;', @_LapeStrToDateDef);
+addGlobalFunc('function StrToTime(s: string): TDateTime; overload;', @_LapeStrToTime);
+addGlobalFunc('function StrToTime(s: string; Default: TDateTime): TDateTime; overload;', @_LapeStrToTimeDef);
+addGlobalFunc('function StrToDateTime(s: string): TDateTime; overload;', @_LapeStrToDateTime);
+addGlobalFunc('function StrToDateTime(s: string; Default: TDateTime): TDateTime; overload;', @_LapeStrToDateTimeDef);
 
 addGlobalFunc('function DateTimeToUnix(const Value: TDateTime; InputIsUTC: Boolean = True): Int64;', @_LapeDateTimeToUnix);
 addGlobalFunc('function UnixToDateTime(const Value: Int64; ReturnUTC: Boolean = True): TDateTime;', @_LapeUnixToDateTime);

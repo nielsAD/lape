@@ -60,12 +60,12 @@ addGlobalFunc('function VarIsNumeric(const V: Variant): EvalBool;', @_LapeVarIsN
 addGlobalFunc('function VarIsStr(const V: Variant): EvalBool;', @_LapeVarIsStr);
 addGlobalFunc('function VarIsArray(const A: Variant; AResolveByRef: EvalBool = True): EvalBool;', @_LapeVarIsArray);
 
-addGlobalFunc('function VarToStr(const V: Variant): string;', @_LapeVarToStr);
-addGlobalFunc('function VarToStrDef(const V: Variant; ADefault: string): string;', @_LapeVarToStrDef);
-addGlobalFunc('function VarToWideStr(const V: Variant): WideString;', @_LapeVarToWideStr);
-addGlobalFunc('function VarToWideStrDef(const V: Variant; ADefault: WideString): WideString;', @_LapeVarToWideStrDef);
-addGlobalFunc('function VarToUnicodeStr(const V: Variant): UnicodeString;', @_LapeVarToUnicodeStr);
-addGlobalFunc('function VarToUnicodeStrDef(const V: Variant; ADefault: UnicodeString): UnicodeString;', @_LapeVarToUnicodeStrDef);
+addGlobalFunc('function VarToStr(const V: Variant): string; overload;', @_LapeVarToStr);
+addGlobalFunc('function VarToStr(const V: Variant; ADefault: string): string; overload;', @_LapeVarToStrDef);
+addGlobalFunc('function VarToWideStr(const V: Variant): WideString; overload;', @_LapeVarToWideStr);
+addGlobalFunc('function VarToWideStr(const V: Variant; ADefault: WideString): WideString; overload;', @_LapeVarToWideStrDef);
+addGlobalFunc('function VarToUnicodeStr(const V: Variant): UnicodeString; overload;', @_LapeVarToUnicodeStr);
+addGlobalFunc('function VarToUnicodeStr(const V: Variant; ADefault: UnicodeString): UnicodeString; overload;', @_LapeVarToUnicodeStrDef);
 addGlobalFunc('function VarToDateTime(const V: Variant): TDateTime;', @_LapeVarToDateTime);
 addGlobalFunc('function VarFromDateTime(DateTime: TDateTime): Variant;', @_LapeVarFromDateTime);
 
