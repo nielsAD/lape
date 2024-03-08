@@ -187,6 +187,7 @@ type
     FRange: TLapeType_SubRange;
     FSmall: Boolean;
     function getAsString: lpString; override;
+    procedure setName(const AName: lpString); override;
   public
     constructor Create(ARange: TLapeType_SubRange; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
@@ -1034,6 +1035,14 @@ begin
   if (FAsString = '') then
     FAsString := 'set of ' + FRange.AsString;
   Result := inherited;
+end;
+
+procedure TLapeType_Set.setName(const AName: lpString);
+begin
+  inherited setName(AName);
+
+  if (FRange is TLapeType_Enum) and TLapeType_Enum(FRange).Scoped and (FRange.Name = '') then
+    TLapeType_Enum(FRange).Name := AName;
 end;
 
 constructor TLapeType_Set.Create(ARange: TLapeType_SubRange; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);

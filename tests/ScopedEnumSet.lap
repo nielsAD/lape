@@ -1,0 +1,16 @@
+{$assertions on}
+
+type
+  TSet = set of enum(Item1,Item2,Item3);
+
+var
+  TestSet: TSet;
+
+begin
+  TestSet := [TSet.Item1, TSet.Item3];
+  Assert(TestSet = [TSet.Item1, TSet.Item3]);
+  Assert(ToString(TestSet) = '[TSet.Item1, TSet.Item3]');
+  Assert(ToString(TSet.Item1) = 'TSet.Item1');
+  Assert(ToString(TSet.Item2) = 'TSet.Item2');
+  Assert(ToString(TSet.Item3) = 'TSet.Item3');
+end;

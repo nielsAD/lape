@@ -4582,6 +4582,9 @@ begin
 
   if (Result = nil) then
   begin
+    if (AType is TLapeType_Set) then
+      AType := TLapeType_Set(AType).Range;
+
     if (AType is TLapeType_Enum) then
       Result := addManagedDecl(addManagedType(TLapeType_TypeEnum.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar
     else
