@@ -1227,6 +1227,9 @@ begin
   if (Name = 'TICKCOUNT') then
     Value := 'UInt64(' + UIntToStr(TThread.GetTickCount64()) + ')'
   else
+  if (Name = 'FUNC') then
+    Value := #39 + FStackInfo.FuncName + #39
+  else
   if (Name = 'INCLUDEDFILE') then
   begin
     for i := 0 to FIncludes.Count - 1 do
@@ -2164,6 +2167,8 @@ begin
   end
   else
     ResetStack := False;
+
+  StackInfo.FuncName := GetMethodName(FuncHeader);
 
   try
     isNext([tk_kw_External, tk_kw_Forward, tk_kw_Overload, tk_kw_Override, tk_kw_Static] + ParserToken_Hints);
@@ -3923,6 +3928,7 @@ begin
   FPreprocessorMacros.Add('TICKCOUNT', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
   FPreprocessorMacros.Add('LINE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
   FPreprocessorMacros.Add('NOW', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
+  FPreprocessorMacros.Add('FUNC', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
 
   FInternalMethodMap := TLapeInternalMethodMap.Create(nil);
   FInternalMethodMap['Write'] := TLapeTree_InternalMethod_Write;

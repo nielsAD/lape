@@ -552,6 +552,8 @@ type
     ForceInitialization: Boolean;
     FullDisposal: Boolean;
 
+    FuncName: String;
+
     constructor Create(AlwaysInitialize: Boolean = True; ForceDisposal: Boolean = False; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True); reintroduce; virtual;
     destructor Destroy; override;
     procedure Clear; override;
