@@ -7,12 +7,12 @@
 }
 {%MainUnit lpinterpreter.pas}
 
-procedure DoJmp; {$IFDEF FPC}{$IFDEF Lape_Inline}inline;{$ENDIF}{$ENDIF}
+procedure DoJmp; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   JumpTo(PCodePos(PtrUInt(Code) + ocSize)^);
 end;
 
-procedure DoJmpR; {$IFDEF FPC}{$IFDEF Lape_Inline}inline;{$ENDIF}{$ENDIF}
+procedure DoJmpR; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   JumpToRelative(PCodeOffset(PtrUInt(Code) + ocSize)^);
 end;

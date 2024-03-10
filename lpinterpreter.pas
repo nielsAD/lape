@@ -213,7 +213,11 @@ var
       Inc(VarStackLen, Size);
       SetLength(VarStack, VarStackLen);
       VarStackStack[VarStackIndex].Stack := VarStack;
-    end else
+    end
+    else
+    if (VarStackLen = VarStackPos) then
+      ExpandVarStack(Size)
+    else
     begin
       OldLen := VarStackLen - VarStackPos;
       ExpandVarStack(Size + OldLen);
@@ -273,13 +277,13 @@ var
 
   procedure PushToVar(const Size: TStackOffset); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
+    //Assert(Size > 0); // Can be 0, NeedMoreVarStack will change VarStackPos
     if NeedMoreVarStack(Size) then
       ExpandVarStack(Size);
 
     if (Size > 0) then
     begin
       Dec(StackPos, Size);
-
       Move(Stack[StackPos], VarStack[VarStackPos], Size);
     end;
   end;
@@ -457,6 +461,7 @@ var
     InitStackSize: TStackOffset;
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    Assert(InitStackSize > 0);
     if (StackPos + InitStackSize > UInt32(Length(Stack))) then
       SetLength(Stack, StackPos + InitStackSize + (StackSize div 2));
     FillChar(Stack[StackPos], InitStackSize, 0);
@@ -468,6 +473,7 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    Assert(GrowSize > 0);
     if (StackPos + GrowSize > UInt32(Length(Stack))) then
       SetLength(Stack, StackPos + GrowSize + (StackSize div 2));
     Inc(StackPos, GrowSize);
@@ -479,8 +485,9 @@ var
     ExpandSize: TStackOffset;
   begin
     ExpandSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    Assert(ExpandSize > 0);
     if NeedMoreVarStack(ExpandSize) then
-      ExpandVarStack(PStackOffset(PtrUInt(Code) + ocSize)^);
+      ExpandVarStack(ExpandSize);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -489,6 +496,7 @@ var
     ExpandSize: TStackOffset;
   begin
     ExpandSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    Assert(ExpandSize > 0);
     if NeedMoreVarStack(ExpandSize) then
       ExpandVarStack(ExpandSize);
     FillChar(VarStack[VarStackPos], ExpandSize, 0);
@@ -500,6 +508,7 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    Assert(GrowSize > 0);
     if NeedMoreGrowVarStack(GrowSize) then
       GrowVarStack(GrowSize);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
@@ -510,6 +519,7 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    Assert(GrowSize > 0);
     if NeedMoreGrowVarStack(GrowSize) then
       GrowVarStack(GrowSize);
     FillChar(VarStack[VarStackLen - GrowSize], GrowSize, 0);
@@ -536,6 +546,7 @@ var
   begin
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
+      Assert(Size > 0);
       Dec(StackPos, Size);
       Move(Stack[StackPos], VarStack[VarStackPos + VOffset], Size);
     end;
@@ -546,6 +557,7 @@ var
   begin
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
+      Assert(Size > 0);
       Move(VarStack[VarStackPos + VOffset], Stack[StackPos], Size);
       FillChar(VarStack[VarStackPos + VOffset], Size, 0);
       Inc(StackPos, Size);
@@ -684,13 +696,40 @@ var
   {$I lpinterpreter_dojump.inc}
   {$I lpinterpreter_doeval.inc}
 
-  procedure DaLoop; {$IFDEF Lape_Inline}inline;{$ENDIF}
-  var
-    GoBack: Boolean;
-    i: Integer;
-  label
-    Start;
-  begin
+var
+  StackTrace: lpString;
+  GoBack: Boolean;
+  i: Integer;
+label
+  Start;
+begin
+  Code := PByte(PtrUInt(Emitter.Code) + InitialJump);
+  CodeBase := Emitter.Code;
+  CodeUpper := Emitter.Code + Emitter.CodeLen;
+  SetLength(Stack, StackSize);
+  SetLength(TryStack, TryStackSize);
+  SetLength(CallStack, CallStackSize);
+
+  VarStackIndex := 0;
+  SetLength(VarStackStack, VarStackStackSize);
+
+  VarStackStack[0].Stack := InitialVarStack;
+  if (Length(VarStackStack[0].Stack) < VarStackSize) then
+    SetLength(VarStackStack[0].Stack, VarStackSize);
+  VarStack := VarStackStack[0].Stack;
+  VarStackLen := Length(VarStack);
+
+  PreviousException.Exists := False;
+  PreviousException.Msg := '';
+  PreviousException.Loc := NullDocPos;
+
+  StackPos := 0;
+  VarStackPos := 0;
+  TryStackPos := 0;
+  CallStackPos := 0;
+  InJump := InEmptyJump;
+
+  try
     Start:
     GoBack := False;
 
@@ -734,39 +773,6 @@ var
 
     if GoBack then
       goto Start;
-  end;
-
-var
-  StackTrace: lpString;
-begin
-  Code := PByte(PtrUInt(Emitter.Code) + InitialJump);
-  CodeBase := Emitter.Code;
-  CodeUpper := Emitter.Code + Emitter.CodeLen;
-  SetLength(Stack, StackSize);
-  SetLength(TryStack, TryStackSize);
-  SetLength(CallStack, CallStackSize);
-
-  VarStackIndex := 0;
-  SetLength(VarStackStack, VarStackStackSize);
-
-  VarStackStack[0].Stack := InitialVarStack;
-  if (Length(VarStackStack[0].Stack) < VarStackSize) then
-    SetLength(VarStackStack[0].Stack, VarStackSize);
-  VarStack := VarStackStack[0].Stack;
-  VarStackLen := Length(VarStack);
-
-  PreviousException.Exists := False;
-  PreviousException.Msg := '';
-  PreviousException.Loc := NullDocPos;
-
-  StackPos := 0;
-  VarStackPos := 0;
-  TryStackPos := 0;
-  CallStackPos := 0;
-  InJump := InEmptyJump;
-
-  try
-    DaLoop();
   except
     on E: Exception do
     begin
