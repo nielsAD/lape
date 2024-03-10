@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, SynEdit, SynHighlighterPas,
+  StdCtrls, ExtCtrls, SynEdit, SynGutter, SynHighlighterPas,
   lptypes, lpvartypes;
 
 type
@@ -18,8 +18,11 @@ type
     pnlTop: TPanel;
     Splitter1: TSplitter;
     PasSyn: TSynFreePascalSyn;
+
     procedure btnDisassembleClick(Sender: TObject);
     procedure btnRunClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     procedure WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
   end;
@@ -30,7 +33,9 @@ var
 implementation
 
 uses
-  {$IFDEF WINDOWS}Windows,{$ENDIF}
+  {$IFDEF WINDOWS}
+  Windows,
+  {$ENDIF}
   lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, lpmessages, lpffi, ffi;
 
 {$R *.lfm}
@@ -133,6 +138,31 @@ begin
   Compile(True, False);
 end;
 
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  if Screen.Fonts.IndexOf('Cascadia Mono SemiLight') > -1 then
+  begin
+    e.Font.Name := 'Cascadia Mono SemiLight';
+    e.Font.Size := 11;
+  end;
+
+  e.Gutter.LineNumberPart().MarkupInfo.Background := clNone;
+  e.Gutter.SeparatorPart().MarkupInfo.Background := clNone;
+  e.Gutter.ChangesPart().Free();
+  e.Gutter.CodeFoldPart().Free();
+  e.Gutter.RightOffset := Scale96ToScreen(5);
+end;
+
+procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  if (Key = VK_R) and (Shift = [ssAlt]) then
+  begin
+    Key := 0;
+
+    btnRun.Click();
+  end;
+end;
+
 procedure TForm1.WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
 begin
   m.Lines.Add(Msg);
@@ -153,6 +183,6 @@ initialization
     'extensions\ffi\bin\win64'
     {$ENDIF}
     );
-{$IFEND}
+{$ENDIF}
 end.
 
