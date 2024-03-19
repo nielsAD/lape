@@ -82,7 +82,7 @@ var
   a: TIntegerArray = [1,1,1,2,2,2];
 begin
   Assert(ToString(a.Variance) = '0,25');
-  Assert(ToString(a.Stddev) = '0,5');
+  Assert(ToString(a.Stdev) = '0,5');
   Assert(ToString(a.Min) = '1');
   Assert(ToString(a.Max) = '2');
   Assert(ToString(a.Mean) = '1,5');

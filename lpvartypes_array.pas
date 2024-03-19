@@ -889,7 +889,7 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Sum, 'Sum');
   addArrayHelper(TLapeType_ArrayHelper_Mean, 'Mean');
   addArrayHelper(TLapeType_ArrayHelper_Variance, 'Variance');
-  addArrayHelper(TLapeType_ArrayHelper_Stddev, 'Stddev');
+  addArrayHelper(TLapeType_ArrayHelper_Stdev, 'Stdev');
 end;
 
 function TLapeType_StaticArray.getPadding: SizeInt;
@@ -1276,7 +1276,7 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Sum, 'Sum');
   addArrayHelper(TLapeType_ArrayHelper_Mean, 'Mean');
   addArrayHelper(TLapeType_ArrayHelper_Variance, 'Variance');
-  addArrayHelper(TLapeType_ArrayHelper_Stddev, 'Stddev');
+  addArrayHelper(TLapeType_ArrayHelper_Stdev, 'Stdev');
 end;
 
 function TLapeType_String.VarToString(AVar: Pointer): lpString;

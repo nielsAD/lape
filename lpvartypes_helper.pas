@@ -187,7 +187,7 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Stddev = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Stdev = class(TLapeType_Helper)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -851,7 +851,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Stddev.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Stdev.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
