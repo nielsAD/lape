@@ -689,6 +689,7 @@ end;
 function InvokeMagicMethod(Self: TLapeTree_Invoke; Name: lpString; var Res: TResVar; var Offset: Integer): Boolean;
 var
   Method: TLapeGlobalVar;
+  i: Integer;
 begin
   with Self do
   begin
@@ -704,8 +705,8 @@ begin
     begin
       with TLapeTree_Invoke.Create(Method, Self) do
       try
-        while (Self.Params.Count > 0) do
-          addParam(Self.Params[0]);
+        for i := 0 to Self.Params.Count - 1 do
+          addParam(TLapeTree_ResVar.Create(Self.Params[i].Compile(Offset).IncLock(), Self)); // ensure locked
 
         Res := Compile(Offset);
       finally

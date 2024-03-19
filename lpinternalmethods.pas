@@ -679,6 +679,8 @@ begin
   finally
     Free();
   end;
+
+  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
 end;
 
 constructor TLapeTree_InternalMethod_Write.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
@@ -913,6 +915,7 @@ begin
   FCompiler.Emitter._GetExceptionMessage(Offset, @_DocPos);
 
   Result.isConstant := True;
+  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
 end;
 
 function TLapeTree_InternalMethod_Break.Compile(var Offset: Integer): TResVar;
@@ -1539,7 +1542,6 @@ begin
       else FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!high']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
     end;
   end;
-  Param.Spill(1);
 end;
 
 procedure TLapeTree_InternalMethod_Length.ClearCache;
@@ -1656,8 +1658,6 @@ begin
       else FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!length']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
     end;
   end;
-
-  Param.Spill(1);
 end;
 
 function TLapeTree_InternalMethod_SetLength.Compile(var Offset: Integer): TResVar;
@@ -1899,6 +1899,8 @@ begin
     ParRes.Spill(1);
     StartRes.Spill(1);
   end;
+
+  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
 end;
 
 function TLapeTree_InternalMethod_Delete.Compile(var Offset: Integer): TResVar;
@@ -2842,6 +2844,7 @@ begin
   FCompiler.Emitter._DumpCallStack(Offset, @_DocPos);
 
   Result.isConstant := True;
+  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
 end;
 
 procedure TLapeTree_InternalMethod_DeepCopy.ClearCache;

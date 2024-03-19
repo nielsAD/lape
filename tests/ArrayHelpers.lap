@@ -77,6 +77,18 @@ begin
   Result := 123;
 end;
 
+procedure TestAlgo;
+var
+  a: TIntegerArray = [1,1,1,2,2,2];
+begin
+  Assert(ToString(a.Variance) = '0,25');
+  Assert(ToString(a.Stddev) = '0,5');
+  Assert(ToString(a.Min) = '1');
+  Assert(ToString(a.Max) = '2');
+  Assert(ToString(a.Mean) = '1,5');
+  Assert(ToString(a.Median) = '1,5');
+end; 
+
 var
   Arr: TIntegerArray = [3,2,1];
 begin
@@ -97,4 +109,5 @@ begin
   TestCopy();
   TestPop();
   TestDelayed();
+  TestAlgo();
 end;
