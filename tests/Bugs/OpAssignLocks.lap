@@ -1,0 +1,35 @@
+type
+  TArrayRecord = record
+    a: TIntegerArray;
+    b,c: String;
+  end;
+
+var
+  i: Integer = 0;
+
+procedure Test1(a: TArrayRecord);
+begin
+end;
+
+procedure Test2(const a: TArrayRecord);
+begin
+end;
+
+procedure Test3(constref a: TArrayRecord);
+begin
+end;
+
+function GetArray: TIntegerArray;
+begin
+  Result := [i+=1, i+=1, i+=1];
+end;
+
+var
+  Arr: TIntegerArray;
+begin
+  Arr := GetArray();
+  GetArray();
+  Test1([]);
+  Test2([]);
+  Test3([]);
+end.

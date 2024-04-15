@@ -2937,6 +2937,8 @@ begin
   else
     RightVar := NullResVar;
 
+  LeftVar.IncLock();
+  RightVar.IncLock();
   try
     if DoneAssignment then
     begin
