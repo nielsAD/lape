@@ -746,15 +746,18 @@ function MethodOfObject(VarType: TLapeType): Boolean;
 function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload;
 function ValidFieldName(Field: TResVar): Boolean; overload;
 
+function IsProperty(typ: TLapeType): Boolean;
+procedure PropertyInvokeError(typ: TLapeType; Tokenizer: TLapeTokenizerBase);
+
 const
   BigLock = 256;
 
   TypeID_Unknown = Ord(Low(ELapeBaseType)) - 1;
   TypeID_User = Ord(High(ELapeBaseType)) + 1;
 
-  NullResVar: TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpNone;  GlobalVar: nil));
-  VarResVar:  TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpVar;   StackVar : nil));
-  StackResVar:TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpStack; ForceVariable: False));
+  NullResVar:  TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpNone;  GlobalVar: nil));
+  VarResVar:   TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpVar;   StackVar : nil));
+  StackResVar: TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpStack; ForceVariable: False));
 
   NullParameter: TLapeParameter = (ParType: lptNormal; VarType: nil; Default: nil);
   NullWithDecl: TLapeWithDeclRec = (WithVar: nil; WithType: nil);
@@ -918,6 +921,32 @@ end;
 function ValidFieldName(Field: TResVar): Boolean; overload;
 begin
   Result := (Field.VarPos.MemPos = mpMem) and Field.isConstant and Field.HasType() and (Field.VarType.BaseType = ltString) and (Field.VarPos.GlobalVar.Ptr <> nil);
+end;
+
+function IsProperty(typ: TLapeType): Boolean;
+begin
+  Result := (Typ <> nil) and (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
+end;
+
+procedure PropertyInvokeError(typ: TLapeType; Tokenizer: TLapeTokenizerBase);
+begin
+  if not IsProperty(typ) then
+    LapeException(lpeImpossible, Tokenizer.DocPos);
+
+  with TLapeType_OverloadedMethod(typ).ManagedDeclarations do
+  begin
+    if (Count = 0) or (not (Items[0] is TLapeGlobalVar)) or (not (TLapeGlobalVar(Items[0]).VarType is TLapeType_Method)) then
+      LapeException(lpeImpossible, Tokenizer.DocPos);
+
+    with TLapeType_Method(TLapeGlobalVar(Items[0]).VarType) do
+      if (Params.Count = 0) and (Tokenizer.Tok <> tk_sym_SemiColon) then
+        LapeExceptionFmt(lpeExpectedOther, [Tokenizer.TokString, ';'], Tokenizer.DocPos)
+      else
+      if (Params.Count > 0) and (Tokenizer.Tok <> tk_sym_BracketOpen) then
+        LapeExceptionFmt(lpeExpectedOther, [Tokenizer.TokString, '['], Tokenizer.DocPos)
+      else
+        LapeException(lpeCannotInvoke, Tokenizer.DocPos);
+  end;
 end;
 
 function TResVar.getReadable: Boolean;

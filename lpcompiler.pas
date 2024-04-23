@@ -3240,11 +3240,6 @@ var
     end;
   end;
 
-  function IsProperty(typ: TLapeType): Boolean;
-  begin
-    Result := (Typ <> nil) and (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
-  end;
-
   function ResolveMethods(Node: TLapeTree_Base; SkipTop: Boolean): TLapeTree_Base;
 
     function Resolve(Node: TLapeTree_Base; Top, Recurse: Boolean; out HasChanged: Boolean): TLapeTree_Base;
@@ -3432,7 +3427,7 @@ begin
               if (Method = nil) then
               begin
                 if IsProperty(VarStack.Top.resType()) then
-                  LapeException(lpeCannotInvoke, Tokenizer.DocPos);
+                  PropertyInvokeError(VarStack.Top.resType(), Tokenizer);
 
                 Expr := ResolveMethods(VarStack.Top.FoldConstants(), True) as TLapeTree_ExprBase;
                 if (Expr <> VarStack.Pop()) and (Expr is TLapeTree_InternalMethod) then
