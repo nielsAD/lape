@@ -183,6 +183,17 @@ type
     property Params: TLapeExpressionList read FParams;
   end;
 
+  TLapeTree_InvokeProperty = class(TLapeTree_Invoke)
+  protected
+    FPropertyType: EPropertyType;
+    FAssignOp: EOperator;
+  public
+    function Compile(var Offset: Integer): TResVar; override;
+
+    property PropertyType: EPropertyType read FPropertyType write FPropertyType;
+    property AssignOp: EOperator read FAssignOp write FAssignOp;
+  end;
+
   TLapeTree_InternalMethodClass = class of TLapeTree_InternalMethod;
   TLapeTree_InternalMethod = class(TLapeTree_Invoke)
   protected
@@ -2443,6 +2454,50 @@ begin
     if (TempSelfVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
       TempSelfVar.Spill(1);
   end;
+end;
+
+function TLapeTree_InvokeProperty.Compile(var Offset: Integer): TResVar;
+var
+  OldValue: TLapeTree_ExprBase;
+  ReadProp: TLapeTree_InvokeProperty;
+  NewValue: TLapeTree_Operator;
+  ResVars: array of TResVar;
+  i: Int32;
+begin
+  Assert(RealIdent <> nil);
+  Assert(RealIdent.resType() <> nil);
+
+  if ((FPropertyType = ptWrite) and (TLapeType_MethodOfObject(RealIdent.resType()).Res <> nil)) or
+     ((FPropertyType = ptRead)  and (TLapeType_MethodOfObject(RealIdent.resType()).Res = nil)) then
+    LapeException(lpeNoMatchingProperty, DocPos);
+
+  if (self.FPropertyType = ptWrite) and (FAssignOp in CompoundOperators) then
+  begin
+    OldValue := FParams[FParams.Count-1];
+    FParams.Delete(FParams.Count-1);
+
+    SetLength(ResVars, FParams.Count+1);
+    ResVars[FParams.Count] := FExpr.Compile(Offset);
+
+    ReadProp := TLapeTree_InvokeProperty.Create(TLapeTree_ResVar.Create(ResVars[FParams.Count], FExpr), Self);
+    SetLength(ResVars, FParams.Count);
+    for i:=0 to FParams.Count-1 do
+    begin
+      ResVars[i] := FParams[i].Compile(Offset);
+      ReadProp.addParam(TLapeTree_ResVar.Create(ResVars[i], FParams[i]));
+    end;
+
+    NewValue := TLapeTree_Operator.Create(ResolveCompoundOp(FAssignOp, OldValue.resType()), Self);
+    NewValue.Left  := ReadProp;
+    NewValue.Right := OldValue;
+
+    FParams.Add(NewValue);
+    NewValue.Parent := Self;
+  end;
+  Result := inherited;
+
+  for i:=0 to High(ResVars) do
+    ResVars[i].Spill();
 end;
 
 constructor TLapeTree_InternalMethod.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

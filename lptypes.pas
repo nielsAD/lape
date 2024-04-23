@@ -151,6 +151,8 @@ type
 
   ELoopType = (loopUp, loopDown, loopOver);
   ELoopOverWhat = (loopOverArray, loopOverEnum, loopOverSet);
+  EPropertyType = (ptRead, ptWrite);
+  EMethodDef = (mdUnspecified, mdOperator, mdProperty);
 
   ELapeBaseType = (
     ltUnknown,
@@ -802,6 +804,7 @@ function LapeHash(Data: Pointer; Len: UInt32; const Seed: UInt32 = 0): UInt32; o
 function LapeHash(const Str: lpString): UInt32; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeTypeToString(Token: ELapeBaseType): lpString;
 function LapeOperatorToString(Token: EOperator): lpString;
+function LapeMethodDefToString(Value: EMethodDef): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
 function PointerToString(const p: Pointer): lpString;
 
@@ -909,6 +912,17 @@ function LapeOperatorToString(Token: EOperator): lpString;
 begin
   Result := lpString(getEnumName(TypeInfo(EOperator), Ord(Token)));
   Delete(Result, 1, 3);
+end;
+
+function LapeMethodDefToString(Value: EMethodDef): lpString;
+begin
+  if Value = mdUnspecified then
+    Result := 'Method'
+  else
+  begin
+    Result := lpString(getEnumName(TypeInfo(EMethodDef), Ord(Value)));
+    Delete(Result, 1, 2);
+  end;
 end;
 
 function PointerToString(const p: Pointer): lpString;

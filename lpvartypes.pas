@@ -25,7 +25,6 @@ type
     lcoLooseSemicolon,                 // {$L} {$LOOSESEMICOLON}
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
-    lcoAutoProperties,                 // {$P} {$AUTOPROPERTIES}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
     lcoConstAddress,                   // {$J} {$CONSTADDRESS}
     lcoHints,                          // {$H} {$HINTS}
@@ -381,7 +380,7 @@ type
     FreeParams: Boolean;
     ImplicitParams: Integer;
     Res: TLapeType;
-    IsOperator: Boolean;
+    MethodDef: EMethodDef;
 
     constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
@@ -461,6 +460,7 @@ type
   public
     OnFunctionNotFound: TLapeGetOverloadedMethod;
     NeedFullMatch: Boolean;
+    MethodDef: EMethodDef;
 
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
     function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
@@ -2613,7 +2613,7 @@ begin
   Params.ImportFromArray(AMethod.Params.ExportToArray());
 
   ImplicitParams := AMethod.ImplicitParams;
-  IsOperator := AMethod.IsOperator;
+  MethodDef := AMethod.MethodDef;
 
   inheritManagedDecls(AMethod);
   TypeID := AMethod.TypeID;
@@ -2635,7 +2635,7 @@ begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, FParams, Res, Name, @_DocPos);
 
   TLapeType_Method(Result).ImplicitParams := ImplicitParams;
-  TLapeType_Method(Result).IsOperator := IsOperator;
+  TLapeType_Method(Result).MethodDef := MethodDef;
 
   Result.inheritManagedDecls(Self, not DeepCopy);
   Result.TypeID := TypeID;
@@ -3010,6 +3010,7 @@ begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, FObjectType, FParams, Res, Name, @_DocPos);
 
   TLapeType_MethodOfType(Result).SelfParam := SelfParam;
+  TLapeType_MethodOfType(Result).MethodDef := MethodDef;
   TLapeType_MethodOfType(Result).ImplicitParams := ImplicitParams;
 
   Result.inheritManagedDecls(Self, not DeepCopy);

@@ -45,12 +45,15 @@ const
   lpeCannotInvoke = 'Cannot invoke identifier';
   lpeCannotMixStaticOverload = 'Cannot mix static with non-static method overload';
   lpeCannotOverload = 'Cannot overload function';
+  lpeCannotOverload2 = 'Cannot overload "%s" with a "%s"';
   lpeCannotOverloadOperator = 'Cannot overload operator "%s"';
   lpeCannotOverrideOperator = 'Cannot override operator "%s" with types "%s" and "%s"';
   lpeClosingParenthesisExpected = 'Closing parenthesis expected';
+  lpeClosingBracketExpected = 'Closing bracket expected';
   lpeConditionalNotClosed = 'Conditional statement not properly closed';
   lpeConstantExpected = 'Constant expression expected';
   lpeDeclarationOutOfScope = 'Declaration "%s" out of scope';
+  lpeDefaultParamInProperties = 'Properties do not support default parameters';
   lpeDefaultToMoreThanOne = 'Runtime default value can only be assigned to one variable';
   lpeDuplicateDeclaration = 'Duplicate declaration "%s"';
   lpeDuplicateHashBucket = 'Duplicate hash bucket with "%s" and "%s"';
@@ -66,6 +69,7 @@ const
   lpeExpectedDynamicArray = 'Dynamic array expected';
   lpeExpectedNormalMethod = 'Normal method expected';
   lpeExpectedPointerType = 'Pointer type expected';
+  lpeExpectedIndexValue = 'Expected at least one index value';
   lpeExpectedOther = 'Found unexpected token "%s", expected "%s"';
   lpeExpressionExpected = 'Expression expected';
   lpeExpectedEnum = 'Enum expected';
@@ -98,6 +102,7 @@ const
   lpeMethodOfObjectExpected = 'Expected method of object';
   lpeNoDefaultForParam = 'No default value for parameter %d found';
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';
+  lpeNoMatchingProperty = 'No matching property found';
   lpeNoOverloadedMethod = 'Don''t know which overloaded method to call with params (%s)';
   lpeNeedMoreBuckets = 'Need more hash buckets (currently %d)';
   lpeOperatorExpected = 'Operator expected';
@@ -112,6 +117,7 @@ const
   lpeIndexOutOfRangeLow  = 'Index out of range (index:%d, low:%d)';
   lpeIndexOutOfRangeHigh = 'Index out of range (index:%d, high:%d)';
   lpeParentOutOfScope = 'Parent declaration is out of scope';
+  lpeExpectedProperty = 'Property has to be of a type';
   lpeRuntime = 'Runtime error: "%s"';
   lpeStatementNotAllowed = 'Statement not allowed here';
   lpeStaticMethodExpected = 'Variable expected. "%s" is not a static method';

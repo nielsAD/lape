@@ -234,7 +234,7 @@ begin
 
   OldState := c.getTempTokenizerState(Header + ';', 'ffi');
   try
-    c.Expect([tk_kw_Function, tk_kw_Procedure]);
+    c.Expect([tk_kw_Function, tk_kw_Procedure, tk_kw_Property, tk_kw_Operator]);
     Result := c.ParseMethodHeader(s, False);
 
     if (Result = nil) then

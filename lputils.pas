@@ -230,6 +230,8 @@ var
 begin
   if (AName = '') or (AName[1] = '!') or (not v.HasType()) then
     Exit
+  else if (v.VarType is TLapeType_Method) and (TLapeType_Method(v.VarType).MethodDef = mdProperty) then
+     Exit
   else if (v.VarType is TLapeType_Method) then
     Temp := ''
   else if (v.VarType.EvalRes(op_Addr) <> nil) then
@@ -246,6 +248,8 @@ var
   Temp: lpString;
 begin
   if (AName = '') or (AName[1] = '!') or (not v.HasType()) then
+    Exit
+  else if (v.VarType is TLapeType_Method) and (TLapeType_Method(v.VarType).MethodDef = mdProperty) then
     Exit
   else if (v.VarType is TLapeType_Method) then
     Temp := 'ConstPointer(' + AName + ')'
