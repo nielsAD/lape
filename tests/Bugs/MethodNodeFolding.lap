@@ -1,0 +1,27 @@
+{$assertions on}
+
+type
+  TTestEnum = enum(abc,def);
+
+var
+  Val: TTestEnum;
+
+property Pointer.Test(e: TTestEnum);
+begin
+  Val := e;
+end;
+
+property Pointer.Test: TTestEnum;
+begin
+  Result := Val;
+end;
+
+var
+  p: Pointer;
+begin
+  p.Test := TTestEnum.abc;
+  Assert(P.Test = TTestEnum.abc);
+
+  P.Test := TTestEnum.def;
+  Assert(P.Test = TTestEnum.def);
+end.

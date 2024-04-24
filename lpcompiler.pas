@@ -3252,8 +3252,10 @@ var
       function ResolveMethod(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
       var
         Op: EOperator;
-        idc:Boolean;
+        idc: Boolean;
       begin
+        Node := Node.FoldConstants() as TLapeTree_ExprBase;
+
         if (Node is TLapeTree_Operator) then
           Op := TLapeTree_Operator(Node).OperatorType
         else

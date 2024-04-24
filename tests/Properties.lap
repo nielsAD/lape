@@ -62,4 +62,4 @@ begin
 
   ReadFunc := @Foo.Width;
   Assert(ReadFunc() = 50);
-end.
+end.        
