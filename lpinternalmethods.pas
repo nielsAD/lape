@@ -1370,22 +1370,48 @@ begin
 end;
 
 function TLapeTree_InternalMethod_Ord.Evaluate: TLapeGlobalVar;
+var
+  Cast: TLapeTree_Cast;
 begin
   if (FRes = nil) then
+  begin
     if (FParams.Count <> 1) or isEmpty(FParams[0]) then
-      LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos)
-    else
-      setExpr(TLapeTree_VarType.Create(resType(), Self));
+      LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+    Cast := TLapeTree_Cast.Create(FCompiler);
+    try
+      Cast.CastTo := TLapeTree_VarType.Create(resType(), FCompiler);
+      Cast.Param := FParams[0];
+
+      FRes := Cast.Evaluate();
+    finally
+      Cast.Free();
+    end;
+  end;
+
   Result := inherited;
 end;
 
 function TLapeTree_InternalMethod_Ord.Compile(var Offset: Integer): TResVar;
+var
+  Cast: TLapeTree_Cast;
+  Param: TResVar;
 begin
   if (FParams.Count <> 1) or isEmpty(FParams[0]) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  Param := FParams[0].Compile(Offset);
 
-  setExpr(TLapeTree_VarType.Create(resType(), Self));
-  Result := inherited;
+  Cast := TLapeTree_Cast.Create(FCompiler);
+  try
+    Cast.Dest := FDest;
+    Cast.CastTo := TLapeTree_VarType.Create(resType(), Self);
+    Cast.Param := TLapeTree_ResVar.Create(Param, Self);
+
+    Result := Cast.Compile(Offset);
+    Self.FDest := Cast.Dest;
+  finally
+    Cast.Free();
+  end;
 end;
 
 constructor TLapeTree_InternalMethod_Low.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
@@ -2103,102 +2129,85 @@ end;
 function TLapeTree_InternalMethod_Succ.Evaluate: TLapeGlobalVar;
 var
   VarParam, CountParam: TLapeGlobalVar;
-  OldVarParam, OldCountParam: TLapeTree_ExprBase;
   ResultType: TLapeType;
 begin
   if (FRes = nil) then
   begin
     CountParam := nil;
-    OldCountParam := nil;
+
+    if (not (FParams.Count in [1, 2])) then
+      LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+    if isEmpty(FParams[0]) then
+      LapeExceptionFmt(lpeNoDefaultForParam, [1], DocPos);
 
     if (FParams.Count = 2) then
-      if isEmpty(FParams[0]) then
-        LapeExceptionFmt(lpeNoDefaultForParam, [1], DocPos)
-      else if isEmpty(FParams[1]) then
-        LapeExceptionFmt(lpeNoDefaultForParam, [2], DocPos)
-      else
-        OldCountParam := FParams.Delete(1)
-    else if (FParams.Count <> 1) or isEmpty(FParams[0]) then
-      LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+    begin
+      if isEmpty(FParams[1]) then
+        LapeExceptionFmt(lpeNoDefaultForParam, [2], DocPos);
 
-    try
-      if (OldCountParam <> nil) then
-        CountParam := OldCountParam.Evaluate()
-      else
-        CountParam := FCompiler.getConstant(1);
+      CountParam := Params[1].Evaluate();
+    end else
+      CountParam := FCompiler.getConstant(1);
 
-      VarParam := FParams[0].Evaluate();
-      if (VarParam = nil) or (not VarParam.HasType()) or (not VarParam.VarType.IsOrdinal(True)) then
-        LapeException(lpeInvalidEvaluation, DocPos);
+    VarParam := FParams[0].Evaluate();
+    if (VarParam = nil) or (not VarParam.HasType()) or (not VarParam.VarType.IsOrdinal(True)) then
+      LapeException(lpeInvalidEvaluation, DocPos);
 
-      if (VarParam.VarType.BaseType = ltPointer) then
-        with TLapeTree_Operator.Create(op_Index, Self) do
-        try
-          Left := TLapeTree_GlobalVar.Create(VarParam, FParams[0]);
+    if (VarParam.VarType.BaseType = ltPointer) then
+      with TLapeTree_Operator.Create(op_Index, Self) do
+      try
+        Left := TLapeTree_GlobalVar.Create(VarParam, FParams[0]);
+        Right := TLapeTree_GlobalVar.Create(CountParam, Self);
+        FRes := Evaluate();
+      finally
+        Free();
+      end
+    else
+    begin
+      ResultType := VarParam.VarType;
+      VarParam := FCompiler.getBaseType(VarParam.VarType.BaseIntType).NewGlobalVarP(VarParam.Ptr);
+
+      with TLapeTree_Cast.Create(FCompiler) do
+      try
+        CastTo := TLapeTree_VarType.Create(ResultType, Self);
+        Param := TLapeTree_Operator.Create(op_Plus, Self);
+        with TLapeTree_Operator(Param) do
+        begin
+          Left := TLapeTree_GlobalVar.Create(VarParam, Self);
           Right := TLapeTree_GlobalVar.Create(CountParam, Self);
-          FRes := Evaluate();
-        finally
-          Free();
-        end
-      else
-      begin
-        ResultType := VarParam.VarType;
-        VarParam := FCompiler.getBaseType(VarParam.VarType.BaseIntType).NewGlobalVarP(VarParam.Ptr);
-        with TLapeTree_Operator.Create(op_Plus, Self) do
-        try
-          Left := TLapeTree_GlobalVar.Create(VarParam, FParams[0]);
-          Right := TLapeTree_GlobalVar.Create(CountParam, Self);
-          Result := Evaluate();
-
-          OldVarParam := FParams.Delete(0);
-          addParam(TLapeTree_GlobalVar.Create(Result, Self));
-          try
-            setExpr(TLapeTree_VarType.Create(ResultType, FParams[0]));
-            FRes := inherited;
-          finally
-            FParams.Delete(0).Free();
-            addParam(OldVarParam);
-          end;
-        finally
-          VarParam.Free();
-          Free();
         end;
-      end;
-    finally
-      if (OldCountParam <> nil) then
-      begin
-        CountParam.Free();
-        addParam(OldCountParam);
+        Self.FRes := Evaluate();
+      finally
+        Free();
       end;
     end;
   end;
+
   Result := inherited;
 end;
 
 function TLapeTree_InternalMethod_Succ.Compile(var Offset: Integer): TResVar;
 var
-  VarParam, CountParam, tmpDest: TResVar;
-  OldVarParam, OldCountParam: TLapeTree_ExprBase;
+  VarParam, CountParam: TResVar;
   ResultType: TLapeType;
 begin
   CountParam := NullResVar;
-  OldCountParam := nil;
-  if (FParams.Count = 2) then
-    if isEmpty(FParams[0]) then
-      LapeExceptionFmt(lpeNoDefaultForParam, [1], DocPos)
-    else if isEmpty(FParams[1]) then
-      LapeExceptionFmt(lpeNoDefaultForParam, [2], DocPos)
-    else
-      OldCountParam := FParams.Delete(1)
-  else if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+
+  if (not (FParams.Count in [1, 2])) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  if isEmpty(FParams[0]) then
+    LapeExceptionFmt(lpeNoDefaultForParam, [1], DocPos);
+
+  if (FParams.Count = 2) then
+  begin
+    if isEmpty(FParams[1]) then
+      LapeExceptionFmt(lpeNoDefaultForParam, [2], DocPos);
+
+    CountParam := FParams[1].Compile(Offset);
+  end else
+    CountParam := _ResVar.New(FCompiler.getConstant(1));
 
   try
-    if (OldCountParam <> nil) then
-      CountParam := OldCountParam.Compile(Offset)
-    else
-      CountParam := _ResVar.New(FCompiler.getConstant(1));
-
     VarParam := FParams[0].Compile(Offset);
     if (not VarParam.HasType()) or (not VarParam.VarType.IsOrdinal(True)) then
       LapeException(lpeInvalidEvaluation, DocPos);
@@ -2207,7 +2216,7 @@ begin
       with TLapeTree_Operator.Create(op_Index, Self) do
       try
         Dest := Self.FDest;
-        Left := TLapeTree_ResVar.Create(VarParam, FParams[0]);
+        Left := TLapeTree_ResVar.Create(VarParam.IncLock(), FParams[0]);
         Right := TLapeTree_ResVar.Create(CountParam.IncLock(), Self);
         Result := Compile(Offset);
         Self.FDest := Dest;
@@ -2218,38 +2227,26 @@ begin
     begin
       ResultType := VarParam.VarType;
       VarParam.VarType := FCompiler.getBaseType(VarParam.VarType.BaseIntType);
-      with TLapeTree_Operator.Create(op_Plus, Self) do
-      try
-        Dest := Self.Dest;
-        Left := TLapeTree_ResVar.Create(VarParam, FParams[0]);
-        Right := TLapeTree_ResVar.Create(CountParam.IncLock(), Self);
-        Result := Compile(Offset);
 
-        if (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
-          tmpDest := Dest
-        else
-          tmpDest := NullResVar;
-        OldVarParam := FParams.Delete(0);
-        addParam(TLapeTree_ResVar.Create(Result, Self));
-        try
-          setExpr(TLapeTree_VarType.Create(VarParam.VarType, FParams[0]));
-          Result := inherited;
-          Result.VarType := ResultType;
-          if (Self.Dest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
-            Self.Dest := tmpDest;
-        finally
-          FParams.Delete(0).Free();
-          addParam(OldVarParam);
+      with TLapeTree_Cast.Create(FCompiler) do
+      try
+        Dest := Self.FDest;
+        CastTo := TLapeTree_VarType.Create(ResultType, Self);
+        Param := TLapeTree_Operator.Create(op_Plus, Self);
+        with TLapeTree_Operator(Param) do
+        begin
+          Left := TLapeTree_ResVar.Create(VarParam.IncLock(), self);
+          Right := TLapeTree_ResVar.Create(CountParam.IncLock(), Self);
         end;
+        Result := Compile(Offset);
+        Self.FDest := Dest;
       finally
         Free();
       end;
     end;
   finally
-    if (OldCountParam <> nil) then
-      addParam(OldCountParam)
-    else
-      CountParam.Spill(1);
+    VarParam.Spill(1);
+    CountParam.Spill(1);
   end;
 end;
 

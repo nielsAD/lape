@@ -257,7 +257,6 @@ const
   ParserToken_Symbols = [tk_sym_BracketClose..tk_sym_SemiColon];
   ParserToken_Types = [tk_typ_Float..tk_typ_Char];
   ParserToken_Hints = [tk_kw_Deprecated, tk_kw_Experimental, tk_kw_UnImplemented];
-  ParserToken_Strings = [tk_typ_String, tk_typ_HereString];
 
   Lape_Keywords: array[0..55 {$IFDEF Lape_PascalLabels}+1{$ENDIF}] of TLapeKeyword = (
       (Keyword: 'AND';           Token: tk_op_AND),

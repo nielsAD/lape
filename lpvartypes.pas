@@ -108,6 +108,7 @@ type
     property isConstant: Boolean read getConstant write setConstant;
     property Lock: Integer read getLock;
   end;
+  TResVarArray = array of TResVar;
 
   ELapeParameterType = (lptNormal, lptConst, lptConstRef, lptVar, lptOut);
   TLapeParameter = record
@@ -746,6 +747,8 @@ function MethodOfObject(VarType: TLapeType): Boolean;
 function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload;
 function ValidFieldName(Field: TResVar): Boolean; overload;
 
+function IsMethod(typ: TLapeType): Boolean;
+function IsCast(typ: TLapeType): Boolean;
 function IsProperty(typ: TLapeType): Boolean;
 procedure PropertyInvokeError(typ: TLapeType; Tokenizer: TLapeTokenizerBase);
 
@@ -923,9 +926,19 @@ begin
   Result := (Field.VarPos.MemPos = mpMem) and Field.isConstant and Field.HasType() and (Field.VarType.BaseType = ltString) and (Field.VarPos.GlobalVar.Ptr <> nil);
 end;
 
+function IsMethod(typ: TLapeType): Boolean;
+begin
+  Result := (Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod);
+end;
+
+function IsCast(typ: TLapeType): Boolean;
+begin
+  Result := (Typ is TLapeType_Type);
+end;
+
 function IsProperty(typ: TLapeType): Boolean;
 begin
-  Result := (Typ <> nil) and (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
+  Result := (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
 end;
 
 procedure PropertyInvokeError(typ: TLapeType; Tokenizer: TLapeTokenizerBase);

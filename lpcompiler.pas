@@ -1735,7 +1735,7 @@ begin
   case Tokenizer.Tok of
     tk_kw_Deprecated:
       begin
-        if (Peek() in ParserToken_Strings) then
+        if (Peek() in [tk_typ_String, tk_typ_HereString]) then
         begin
           Next();
           Decl.AddHint(ldhDeprecated, Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2));
@@ -3244,11 +3244,6 @@ var
 
     function Resolve(Node: TLapeTree_Base; Top, Recurse: Boolean; out HasChanged: Boolean): TLapeTree_Base;
 
-      function MethodType(Typ: TLapeType): Boolean;
-      begin
-        Result := (Typ <> nil) and ((Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod));
-      end;
-
       function ResolveMethod(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
       var
         Op: EOperator;
@@ -3266,7 +3261,7 @@ var
           Result := TLapeTree_InvokeProperty.Create(Node, Node);
           TLapeTree_InvokeProperty(Result).PropertyType := ptRead;
         end
-        else if (lcoAutoInvoke in Node.CompilerOptions) and (not (Op in AssignOperators)) and MethodType(Node.resType()) then
+        else if (lcoAutoInvoke in Node.CompilerOptions) and (not (Op in AssignOperators)) and IsMethod(Node.resType()) then
           Result := TLapeTree_Invoke.Create(Node, Node)
         else if (Op in AssignOperators) and IsProperty(TLapeTree_Operator(Node).Left.resType()) then
         begin
@@ -3276,7 +3271,7 @@ var
           TLapeTree_InvokeProperty(Result).AssignOp := Op;
           Node.Free();
         end
-        else if (Op = op_Addr) and MethodType(TLapeTree_Operator(Node).Left.resType()) then
+        else if (Op = op_Addr) and IsMethod(TLapeTree_Operator(Node).Left.resType()) then
         begin
           Result := TLapeTree_Operator(Node).Left;
           Result.Parent := nil;
@@ -3305,7 +3300,7 @@ var
       else if (Node is TLapeTree_Operator) then
         with TLapeTree_Operator(Node) do
         begin
-          if (not (OperatorType in AssignOperators)) or (not MethodType(Left.resType())) then
+          if (not (OperatorType in AssignOperators)) or (not IsMethod(Left.resType())) then
             Left := TLapeTree_ExprBase(Resolve(Left, True, not (OperatorType in [op_Addr, op_Assign]), LeftChanged))
           else
             LeftChanged := False;
@@ -3325,6 +3320,7 @@ var
 
 var
   Signed: Boolean;
+  Cast: TLapeTree_Cast;
 begin
   Result := nil;
   Method := nil;
@@ -3343,9 +3339,7 @@ begin
       DoNext := True;
 
       case Tokenizer.Tok of
-        tk_typ_Integer,
-        tk_typ_Integer_Hex, tk_typ_Integer_Bin,
-        tk_typ_Float:
+        tk_typ_Float, tk_typ_Integer, tk_typ_Integer_Hex, tk_typ_Integer_Bin:
           begin
             // FCachedDeclarations are used - Need to know if signed or not. Remove op_UnaryMinus node too.
             Signed := (OpStack.Cur >= 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) and (opStack.Top.OperatorType = op_UnaryMinus);
@@ -3375,9 +3369,9 @@ begin
             end;
           end;
 
-        tk_typ_Char,
-        tk_typ_String,
-        tk_typ_HereString: ParseAndPushString();
+        tk_typ_String, tk_typ_HereString, tk_typ_Char:
+          ParseAndPushString();
+
         tk_kw_Type:
           begin
             if not IsInternalMethod then
@@ -3426,6 +3420,7 @@ begin
             if (_LastNode = _Var) then
             begin
               PopOpStack(op_Invoke);
+
               if (Method = nil) then
               begin
                 if IsProperty(VarStack.Top.resType()) then
@@ -3435,8 +3430,22 @@ begin
                 if (Expr <> VarStack.Pop()) and (Expr is TLapeTree_InternalMethod) then
                   Method := TLapeTree_Invoke(Expr)
                 else
-                  Method := TLapeTree_Invoke.Create(Expr, Self, getPDocPos());
+                begin
+                  if IsCast(Expr.resType()) then
+                  begin
+                    Cast := TLapeTree_Cast.Create(Self, getPDocPos());
+                    if (Next() = tk_sym_ParenthesisClose) then
+                      LapeException(lpeImpossible, DocPos);
+
+                    Cast.CastTo := Expr;
+                    Cast.Param := EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True));
+                    VarStack.Push(Cast);
+                    Continue;
+                  end else
+                    Method := TLapeTree_Invoke.Create(Expr, Self, getPDocPos());
+                end;
               end;
+
               if (Next() <> tk_sym_ParenthesisClose) then
               begin
                 Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True, Method is TLapeTree_InternalMethod)));
@@ -3457,6 +3466,7 @@ begin
               Inc(InExpr);
             end;
           end;
+
         tk_sym_ParenthesisClose:
           begin
             while (OpStack.Cur >= 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) do
@@ -3467,42 +3477,42 @@ begin
           end;
 
         tk_sym_BracketOpen:
-         if (_LastNode = _Var) then
-         begin
-           PopOpStack(op_Index);
-           if IsProperty(VarStack.Top.resType()) then
-           begin
-             Expr := ResolveMethods(VarStack.Pop().FoldConstants(), True) as TLapeTree_ExprBase;
-             Prop := TLapeTree_InvokeProperty.Create(Expr, Self, getPDocPos());
-             if (Next() <> tk_sym_BracketClose) then
-             begin
-               Prop.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma], False)));
-               while True do
-                 case Tokenizer.Tok of
-                   tk_sym_BracketClose: Break;
-                   tk_sym_Comma:        Prop.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma])));
-                   else                 LapeException(lpeClosingBracketExpected, Tokenizer.DocPos);
-                 end;
+          if (_LastNode = _Var) then
+          begin
+            PopOpStack(op_Index);
+            if IsProperty(VarStack.Top.resType()) then
+            begin
+              Expr := ResolveMethods(VarStack.Pop().FoldConstants(), True) as TLapeTree_ExprBase;
+              Prop := TLapeTree_InvokeProperty.Create(Expr, Self, getPDocPos());
+              if (Next() <> tk_sym_BracketClose) then
+              begin
+                Prop.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma], False)));
+                while True do
+                  case Tokenizer.Tok of
+                    tk_sym_BracketClose: Break;
+                    tk_sym_Comma:        Prop.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma])));
+                  else
+                    LapeException(lpeClosingBracketExpected, Tokenizer.DocPos);
+                  end;
 
-               if ParserTokenToOperator(Peek()) in AssignOperators then
-               begin
-                 Next();
-                 Prop.PropertyType := ptWrite;
-                 Prop.AssignOp := ParserTokenToOperator(Tokenizer.Tok);
-                 Prop.addParam(EnsureExpression(ParseExpression(ParserToken_ExpressionEnd, True)));
-                 DoNext := False;
-               end else
-                 Prop.PropertyType := ptRead;
-             end else
-               LapeException(lpeExpectedIndexValue, Tokenizer.DocPos);
+                if (ParserTokenToOperator(Peek()) in AssignOperators) then
+                begin
+                  Next();
+                  Prop.PropertyType := ptWrite;
+                  Prop.AssignOp := ParserTokenToOperator(Tokenizer.Tok);
+                  Prop.addParam(EnsureExpression(ParseExpression(ParserToken_ExpressionEnd, True)));
+                  DoNext := False;
+                end else
+                  Prop.PropertyType := ptRead;
+              end else
+                LapeException(lpeExpectedIndexValue, Tokenizer.DocPos);
 
-             VarStack.Push(Prop);
-             Prop := nil;
-           end else
-             ParseOperator();
-         end
-         else
-           ParseOperator();
+              VarStack.Push(Prop);
+              Prop := nil;
+            end else
+              ParseOperator();
+          end else
+            ParseOperator();
 
         {$IFDEF Lape_PascalLabels}
         tk_sym_Colon:

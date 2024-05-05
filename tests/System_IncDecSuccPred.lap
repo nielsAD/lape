@@ -1,0 +1,46 @@
+{$assertions on}
+
+procedure Test_Var;
+var
+  i: Int32 = 100;
+begin
+  Assert(Inc(i) = 101);
+  Assert(i = 101);
+  Assert(Dec(i) = 100);
+  Assert(i = 100);
+
+  Assert(Succ(i) = 101);
+  Assert(i = 100);
+  Assert(Pred(i) = 99);
+  Assert(i = 100);
+
+  Assert(Inc(i,100) = 200);
+  Assert(i=200);
+  Assert(Dec(i,100) = 100);
+  Assert(i=100);
+
+  Assert(Succ(i,100)=200);
+  Assert(i=100);
+  Assert(Pred(i,100)=0);
+  Assert(i=100);
+end;
+
+procedure Test_Const;
+const
+  i = Int32(100);
+begin
+  Assert(Succ(i) = 101);
+  Assert(i = 100);
+  Assert(Pred(i) = 99);
+  Assert(i = 100);
+
+  Assert(Succ(i,100)=200);
+  Assert(i=100);
+  Assert(Pred(i,100)=0);
+  Assert(i=100);
+end;
+
+begin
+  Test_Var();
+  Test_Const();
+end.
