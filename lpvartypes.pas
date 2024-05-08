@@ -735,14 +735,17 @@ type
     property Hints: lpString read FHints; // if OnHint=nil, this will have them
   end;
 
+function HasOperatorOverload(Compiler: TLapeCompilerBase; op: EOperator; LeftType, RightType: TLapeType; out Res: TLapeType): Boolean;
 procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; Typ: TLapeType; DocPos: TDocPos); overload;
 procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; LeftType, RightType: TLapeType; DocPos: TDocPos); overload;
+
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 procedure ClearBaseTypes(var Arr: TLapeBaseTypes; DoFree: Boolean);
 procedure LoadBaseTypes(var Arr: TLapeBaseTypes; Compiler: TLapeCompilerBase);
 
 function GetMethodName(VarType: TLapeType): lpString;
+function MethodToString(VarType: TLapeType): lpString;
 function MethodOfObject(VarType: TLapeType): Boolean;
 function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload;
 function ValidFieldName(Field: TResVar): Boolean; overload;
@@ -782,39 +785,45 @@ uses
   lpvartypes_ord, lpvartypes_array, lptree, lpinternalmethods,
   lpmessages, lpeval, lpinterpreter_types;
 
-procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; LeftType, RightType: TLapeType; DocPos: TDocPos);
+function HasOperatorOverload(Compiler: TLapeCompilerBase; op: EOperator; LeftType, RightType: TLapeType; out Res: TLapeType): Boolean;
+var
+  Left, Right: TResVar;
+begin
+  Res := nil;
 
-  function HasOperatorOverload(op: EOperator): Boolean;
-  var
-    Left, Right: TResVar;
-  begin
-    Result := False;
-
+  if (op in OverloadableOperators) and
+     (LeftType <> nil) and (LeftType.BaseType <> ltUnknown) and
+     (RightType <> nil) and (RightType.BaseType <> ltUnknown) and
+     (Compiler['!op_' + op_name[op]] <> nil) then
+  try
+    with TLapeTree_InternalMethod_Operator.Create(op, Compiler) do
     try
-      with TLapeTree_InternalMethod_Operator.Create(op, Compiler) do
-      try
-        Left := NullResVar;
-        Left.VarType := LeftType;
-        addParam(TLapeTree_ResVar.Create(Left, Compiler));
+      Left := NullResVar;
+      Left.VarType := LeftType;
+      addParam(TLapeTree_ResVar.Create(Left, Compiler));
 
-        Right := NullResVar;
-        Right.VarType := RightType;
-        addParam(TLapeTree_ResVar.Create(Right, Compiler));
+      Right := NullResVar;
+      Right.VarType := RightType;
+      addParam(TLapeTree_ResVar.Create(Right, Compiler));
 
-        Result := resType() <> nil;
-      finally
-        Free();
-      end;
-    except
+      Res := resType();
+    finally
+      Free();
     end;
+  except
   end;
 
+  Result := Res <> nil;
+end;
+
+procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; LeftType, RightType: TLapeType; DocPos: TDocPos);
 var
   i: Integer;
+  unused: TLapeType;
 begin
   for i := 0 to High(ops) do
   begin
-    if (LeftType.EvalRes(ops[i], RightType) = nil) and (not HasOperatorOverload(ops[i])) then
+    if (LeftType.EvalRes(ops[i], RightType) = nil) and (not HasOperatorOverload(Compiler, ops[i], LeftType, RightType, unused)) then
       if (LeftType.Name <> '') then
         LapeExceptionFmt(lpeOperatorRequiredForType, [op_str[ops[i]], LeftType.Name], DocPos)
       else
@@ -907,6 +916,52 @@ begin
     else
       Result := VarType.Name;
   end;
+end;
+
+function MethodToString(VarType: TLapeType): lpString;
+var
+  i: Integer;
+  ParamType: TLapeType;
+begin
+  if (VarType is TLapeType_Method) then
+    with TLapeType_Method(VarType) do
+    begin
+      if (Res <> nil) then
+        Result := 'function('
+      else
+        Result := 'procedure(';
+
+      for i := 0 to Params.Count - 1 do
+      begin
+        if (i > 0) then
+          Result := Result + ', ';
+
+        //case Params[i].ParType of
+        //  lptConst:    Result := Result + 'const ';
+        //  lptConstRef: Result := Result + 'constref ';
+        //  lptVar:      Result := Result + 'var ';
+        //  lptOut:      Result := Result + 'out ';
+        //end;
+
+        ParamType := Params[i].VarType;
+        if (ParamType <> nil) then
+          if (ParamType.Name <> '') then
+            Result := Result + ParamType.Name
+          else
+            Result := Result + ParamType.AsString
+        else
+          Result := Result + '*unknown*';
+      end;
+
+      Result := Result + ')';
+      if (Res <> nil) then
+        if (Res.Name <> '') then
+          Result := Result + ': ' + Res.Name
+        else
+          Result := Result + ': ' + Res.AsString;
+    end
+  else
+    Result := '';
 end;
 
 function MethodOfObject(VarType: TLapeType): Boolean;
@@ -2581,7 +2636,10 @@ begin
       if (FParams[i].VarType = nil) then
         FAsString := FAsString + '*unknown*'
       else
-        FAsString := FAsString + FParams[i].VarType.AsString;
+        if (FParams[i].VarType.Name <> '') then
+          FAsString := FAsString + FParams[i].VarType.Name
+        else
+          FAsString := FAsString + FParams[i].VarType.AsString;
       if (FParams[i].Default <> nil) then
         FAsString := FAsString + ']';
       if (FParams[i].ParType in Lape_RefParams) and (not (FParams[i].ParType in Lape_ValParams)) then

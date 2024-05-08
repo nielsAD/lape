@@ -21,12 +21,14 @@ type
     FDocPos: TDocPos;
     FError: lpString;
     FStackTrace: lpString;
+    FHint: lpString;
   public
     property DocPos: TDocPos read FDocPos;
     property Error: lpString read FError;
+    property Hint: lpString read FHint;
     property StackTrace: lpString read FStackTrace;
 
-    constructor Create(AMessage: lpString; ADocPos: TDocPos; AStackTrace: lpString = '');
+    constructor Create(AMessage: lpString; ADocPos: TDocPos; AStackTrace: lpString = ''; AHint: lpString = '');
   end;
 
 const
@@ -147,27 +149,28 @@ const
   lphExperimentalMethod = 'Method "%s" is experimental';
   lphDuplicateLocalName = 'Local declaration "%s" exists globally';
   lphUserDefined = 'User defined hint: "%s"';
+  lphExpectedParameters = 'Expected parameters for "%s":' + LineEnding + '> %s';
+  lphAvailableMethods = 'Available "%s" methods:' + LineEnding;
 
-procedure LapeException(Msg: lpString); overload;
-procedure LapeException(Msg: lpString; DocPos: TDocPos); overload;
-procedure LapeException(Msg: lpString; DocPos: array of TLapeBaseDeclClass); overload;
-procedure LapeExceptionFmt(Msg: lpString; Args: array of const); overload;
-procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: TDocPos); overload;
-procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of TLapeBaseDeclClass); overload;
+procedure LapeException(Msg: lpString; Hint: String = ''); overload;
+procedure LapeException(Msg: lpString; DocPos: TDocPos; Hint: String = ''); overload;
+procedure LapeException(Msg: lpString; DocPos: array of TLapeBaseDeclClass; Hint: String = ''); overload;
+procedure LapeExceptionFmt(Msg: lpString; Args: array of const; Hint: String = ''); overload;
+procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: TDocPos; Hint: String = ''); overload;
+procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of TLapeBaseDeclClass; Hint: String = ''); overload;
 
 procedure LapeExceptionRuntime(e: lpException; StackTrace: lpString); overload;
 procedure LapeExceptionRuntime(e: Exception; StackTrace: lpString; DocPos: TDocPos); overload;
+
+// reraise exception with a different docpos
+procedure LapeExceptionReraise(e: lpException; DocPos: TDocPos); overload;
+procedure LapeExceptionReraise(e: lpException; DocPos: array of TLapeBaseDeclClass); overload;
 
 function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString;
 
 implementation
 
-{$IFDEF Lape_NeedAnsiStringsUnit}
-uses
-  AnsiStrings;
-{$ENDIF}
-
-constructor lpException.Create(AMessage: lpString; ADocPos: TDocPos; AStackTrace: lpString);
+constructor lpException.Create(AMessage: lpString; ADocPos: TDocPos; AStackTrace: lpString; AHint: lpString);
 begin
   if (ADocPos.Col <> NullDocPos.Col) and (ADocPos.Line <> NullDocPos.Line) then
     inherited Create(string(FormatLocation(AMessage, ADocPos)))
@@ -177,6 +180,7 @@ begin
   FDocPos := ADocPos;
   FError := AMessage;
   FStackTrace := AStackTrace;
+  FHint := AHint;
 end;
 
 procedure LapeExceptionRuntime(e: lpException; StackTrace: lpString);
@@ -187,6 +191,29 @@ end;
 procedure LapeExceptionRuntime(e: Exception; StackTrace: lpString; DocPos: TDocPos);
 begin
   raise lpException.Create(Format(lpeRuntime, [e.Message]), DocPos, StackTrace);
+end;
+
+procedure LapeExceptionReraise(e: lpException; DocPos: TDocPos);
+begin
+  raise lpException.Create(e.Message, DocPos, e.StackTrace, e.Hint);
+end;
+
+procedure LapeExceptionReraise(e: lpException; DocPos: array of TLapeBaseDeclClass);
+var
+  i: Integer;
+  NewDocPos: TDocPos;
+begin
+  NewDocPos := NullDocPos;
+  for i := 0 to High(DocPos) do
+    if (DocPos[i] <> nil) and
+       (DocPos[i].DocPos.Col <> NullDocPos.Col) and
+       (DocPos[i].DocPos.Line <> NullDocPos.Line) then
+    begin
+      NewDocPos := DocPos[i].DocPos;
+      Break;
+    end;
+
+  raise lpException.Create(e.Message, NewDocPos, e.StackTrace, e.Hint);
 end;
 
 function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString;
@@ -205,28 +232,22 @@ asm
 end;
 {$IFEND}
 
-procedure _LapeException(Msg: lpString; DocPos: TDocPos); inline;
-{$IFDEF FPC}
+procedure _LapeException(Msg: lpString; DocPos: TDocPos; Hint: String = ''); inline;
 begin
-  raise lpException.Create(Msg, DocPos) at get_caller_addr(get_frame);
-end;
-{$ELSE}
-begin
-  raise lpException.Create(Msg, DocPos) at ReturnAddress;
-end;
-{$ENDIF}
-
-procedure LapeException(Msg: lpString);
-begin
-  _LapeException(Msg, NullDocPos);
+  raise lpException.Create(Msg, DocPos, '', Hint) at {$IFDEF FPC}get_caller_addr(get_frame){$ELSE}ReturnAddress{$ENDIF};
 end;
 
-procedure LapeException(Msg: lpString; DocPos: TDocPos);
+procedure LapeException(Msg: lpString; Hint: String);
 begin
-  _LapeException(Msg, DocPos);
+  _LapeException(Msg, NullDocPos, Hint);
 end;
 
-procedure LapeException(Msg: lpString; DocPos: array of TLapeBaseDeclClass);
+procedure LapeException(Msg: lpString; DocPos: TDocPos; Hint: String);
+begin
+  _LapeException(Msg, DocPos, Hint);
+end;
+
+procedure LapeException(Msg: lpString; DocPos: array of TLapeBaseDeclClass; Hint: String);
 var
   i: Integer;
 begin
@@ -236,23 +257,23 @@ begin
        (DocPos[i].DocPos.Line <> NullDocPos.Line)
     then
     begin
-      _LapeException(Msg, DocPos[i].DocPos);
+      _LapeException(Msg, DocPos[i].DocPos, Hint);
       Exit;
     end;
-  _LapeException(Msg, NullDocPos);
+  _LapeException(Msg, NullDocPos, Hint);
 end;
 
-procedure LapeExceptionFmt(Msg: lpString; Args: array of const);
+procedure LapeExceptionFmt(Msg: lpString; Args: array of const; Hint: String);
 begin
   _LapeException(Format(Msg, Args), NullDocPos);
 end;
 
-procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: TDocPos);
+procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: TDocPos; Hint: String);
 begin
-  _LapeException(Format(Msg, Args), DocPos);
+  _LapeException(Format(Msg, Args), DocPos, Hint);
 end;
 
-procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of TLapeBaseDeclClass);
+procedure LapeExceptionFmt(Msg: lpString; Args: array of const; DocPos: array of TLapeBaseDeclClass; Hint: String);
 var
   i: Integer;
 begin
@@ -263,10 +284,10 @@ begin
        (DocPos[i].DocPos.Line <> NullDocPos.Line)
     then
     begin
-      _LapeException(Msg, DocPos[i].DocPos);
+      _LapeException(Msg, DocPos[i].DocPos, Hint);
       Exit;
     end;
-  _LapeException(Msg, NullDocPos);
+  _LapeException(Msg, NullDocPos, Hint);
 end;
 
 end.

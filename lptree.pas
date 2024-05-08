@@ -171,6 +171,9 @@ type
     FRealIdent: TLapeTree_ExprBase;
     FParams: TLapeExpressionList;
 
+    procedure CheckHints(VarType: TLapeType; Pos: PDocPos);
+    procedure CheckIdent(VarType: TLapeType; Pos: PDocPos);
+
     function ResolveOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType = nil): Boolean;
 
     procedure setExpr(Node: TLapeTree_ExprBase); virtual;
@@ -1046,7 +1049,7 @@ end;
 
 function TLapeTree_OpenArray.canCastTo(AType: TLapeType; Strict: Boolean): Boolean;
 var
-  i: Int32;
+  i: Integer;
   CastTo: TLapeType;
 begin
   Result := False;
@@ -1729,8 +1732,9 @@ begin
     end
     else
       LapeException(lpeInvalidCast);
-  except on E: lpException do
-    LapeException(lpString(E.Message), Self.DocPos);
+  except
+    on E: lpException do
+      LapeException(lpString(E.Message), Self.DocPos);
   end;
 end;
 
@@ -1758,6 +1762,56 @@ begin
     FResType := TLapeTree_VarType(FCastTo).VarType;
 
   Result := inherited;
+end;
+
+procedure TLapeTree_Invoke.CheckHints(VarType: TLapeType; Pos: PDocPos);
+begin
+  if not (lcoHints in FCompilerOptions) then
+    Exit;
+
+  if (VarType is TLapeType_Method) and TLapeType_Method(VarType).HasHints() then
+    with TLapeType_Method(VarType).Hints do
+    begin
+      if (ldhDeprecated in Types) then
+        if (Message <> '') then
+          FCompiler.Hint(lphDeprecatedMethodHint, [GetMethodName(VarType), Message], Pos^)
+        else
+          FCompiler.Hint(lphDeprecatedMethod, [GetMethodName(VarType)], Pos^);
+
+      if (ldhExperimental  in Types) then FCompiler.Hint(lphExperimentalMethod, [GetMethodName(VarType)], Pos^);
+      if (ldhUnImplemented in Types) then FCompiler.Hint(lphUnImplementedMethod, [GetMethodName(VarType)], Pos^);
+    end;
+end;
+
+procedure TLapeTree_Invoke.CheckIdent(VarType: TLapeType; Pos: PDocPos);
+var
+  i: Integer;
+  Overloaded: TLapeType_OverloadedMethod;
+  Available: String;
+begin
+  if (VarType is TLapeType_OverloadedMethod) then
+  begin
+    Overloaded := TLapeType_OverloadedMethod(VarType);
+
+    if (Overloaded.ManagedDeclarations.Count > 0) then
+    begin
+      Available := Format(lphAvailableMethods, [GetMethodName(VarType)]);
+      for i := 0 to Overloaded.ManagedDeclarations.Count - 1 do
+      begin
+        if (i > 0) then
+          Available := Available + LineEnding;
+        Available := Available + '> ' + MethodToString(TLapeGlobalVar(Overloaded.ManagedDeclarations[i]).VarType);
+      end;
+    end else
+      Available := '';
+
+    if (Available <> '') then
+      LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], Pos^, Available)
+    else
+      LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], Pos^);
+  end
+  else if (not (VarType is TLapeType_Method)) then
+    LapeException(lpeCannotInvoke, Pos^);
 end;
 
 function TLapeTree_Invoke.ResolveOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType): Boolean;
@@ -1799,9 +1853,6 @@ function TLapeTree_Invoke.ResolveOverload(Overloaded: TLapeType_OverloadedMethod
         Exit;
       end;
     end;
-
-    if Strict then
-      Result := CastOpenArrays(False);
   end;
 
 var
@@ -1814,11 +1865,20 @@ begin
     ObjectType := TLapeTree_Operator(FExpr).Left.resType();
 
   MethodIndex := Overloaded.getMethodIndex(getParamTypes(), ExpectType, ObjectType);
+
+  // if only one overload exists, treat it as a non-overloaded method
+  // important to still call getMethodIndex in case one gets generated OnFunctionNotFound
+  if (Overloaded.ManagedDeclarations.Count = 1) then
+    MethodIndex := 0;
+
   if (MethodIndex < 0) then
-    MethodIndex := CastOpenArrays();
+  begin
+    MethodIndex := CastOpenArrays(True); // "exact" being `TPoint` needing both fields ~ [1,2]
+    if (MethodIndex < 0) then
+      MethodIndex := CastOpenArrays(False); // "not exact" being accepting [] for a TPoint
+  end;
 
   Result := MethodIndex > -1;
-
   if Result then
   begin
     IndexOp := TLapeTree_Operator.Create(op_Index, FExpr);
@@ -1933,7 +1993,10 @@ begin
     else
       ParamType := FParams[i].resType();
     if (ParamType <> nil) then
-      Result := Result + ParamType.AsString
+      if (ParamType.Name <> '') then
+        Result := Result + ParamType.Name
+      else
+        Result := Result + ParamType.AsString
     else
       Result := Result + '*unknown*';
   end;
@@ -2085,11 +2148,16 @@ var
       tmpRes := ParamVar;
       ParamVar := Param.VarType.Eval(op_Assign, tmpVar, Par, ParamVar, [], Offset, @DocPos);
       tmpRes.Spill(1);
-    except on E: lpException do
-      LapeException(lpString(E.Message), DocPos);
-    end
-    else
-      LapeExceptionFmt(lpeVariableOfTypeExpected, [Param.VarType.AsString, ParamVar.VarType.AsString], DocPos);
+    except
+      on E: lpException do
+        LapeExceptionReraise(E, DocPos);
+    end else
+    begin
+      LapeExceptionFmt(
+        lpeVariableOfTypeExpected, [Param.VarType.AsString, ParamVar.VarType.AsString], DocPos,
+        Format(lphExpectedParameters, [GetMethodName(IdentVar.VarType), MethodToString(IdentVar.VarType)])
+      );
+    end;
   end;
 
   function DoScriptMethod(IdentVar: TResVar; var ParamVars: TResVarArray): TResVar;
@@ -2159,8 +2227,9 @@ var
           if (ParamVars[i].VarPos.MemPos <> mpStack) or (not ParamVars[i].HasType()) then
             LapeException(lpeCannotInvoke);
         end;
-      except on E: lpException do
-        LapeException(lpString(E.Message), [FParams[i], Self]);
+      except
+        on E: lpException do
+          LapeExceptionReraise(E, [FParams[i], Self]);
       end;
 
       Dest := NullResVar;
@@ -2277,24 +2346,6 @@ var
     Assert(Result.VarPos.MemPos = tmpRes.VarPos.MemPos);
   end;
 
-  procedure DoDirectiveHints(Method: TLapeType_Method);
-  var
-    Typ: ELapeDeclarationHint;
-  begin
-    for Typ in Method.Hints.Types do
-      case Typ of
-        ldhDeprecated:
-          if (Method.Hints.Message <> '') then
-            FCompiler.Hint(lphDeprecatedMethodHint, [GetMethodName(Method), Method.Hints.Message], IdentExpr.DocPos)
-          else
-            FCompiler.Hint(lphDeprecatedMethod, [GetMethodName(Method)], IdentExpr.DocPos);
-        ldhExperimental:
-          FCompiler.Hint(lphExperimentalMethod, [GetMethodName(Method)], IdentExpr.DocPos);
-        ldhUnImplemented:
-          FCompiler.Hint(lphUnImplementedMethod, [GetMethodName(Method)], IdentExpr.DocPos);
-      end;
-  end;
-
 var
   Pos: TDocPos;
   TempNullVar, TempSelfVar: TResVar;
@@ -2309,9 +2360,8 @@ begin
   TempSelfVar := NullResVar;
 
   IdentVar := IdentExpr.Compile(Offset);
-
-  if (lcoHints in FCompilerOptions) and (IdentVar.VarType is TLapeType_Method) and (TLapeType_Method(IdentVar.VarType).Hints.Types <> []) then
-    DoDirectiveHints(IdentVar.VarType as TLapeType_Method);
+  CheckIdent(IdentVar.VarType, @IdentExpr._DocPos);
+  CheckHints(IdentVar.VarType, @IdentExpr._DocPos);
 
   if (lcoInitExternalResult in FCompilerOptions) then
     Dest := NullResVar;
@@ -2402,7 +2452,7 @@ var
   ReadProp: TLapeTree_InvokeProperty;
   NewValue: TLapeTree_Operator;
   ResVars: TResVarArray;
-  i: Int32;
+  i: Integer;
 begin
   Assert(RealIdent <> nil);
   Assert(RealIdent.resType() <> nil);
@@ -2670,6 +2720,7 @@ var
   LeftType, RightType, tmpRes: TLapeType;
   tmpLeft: TLapeTree_ExprBase;
   tmpVar, ResVar: TResVar;
+  t: UInt64;
 begin
   if (FResType = nil) then
     try
@@ -2714,28 +2765,13 @@ begin
 
   Result := inherited resType();
 
-  if (FResType = nil) and (LeftType <> nil) and (RightType <> nil) and (LeftType.BaseType <> ltUnknown) and
-     (FOperatorType in OverloadableOperators) and (FCompiler['!op_'+op_name[FOperatorType]] <> nil) then
+  // check for op overload
+  if (FResType = nil) and (FOperatorType in OverloadableOperators) and HasOperatorOverload(FCompiler, FOperatorType, LeftType, RightType, Result) then
   begin
-    with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, nil) do
-    try
-      tmpVar := NullResVar;
-      tmpVar.VarType := LeftType;
-      addParam(TLapeTree_ResVar.Create(tmpVar, FCompiler, nil));
-      tmpVar.VarType := RightType;
-      addParam(TLapeTree_ResVar.Create(tmpVar, FCompiler, nil));
-      tmpRes := resType();
-      if tmpRes <> nil then
-      begin
-        Result := tmpRes;
-        FOverloadOp := True;
-      end;
-    finally
-      Free();
-      FResType := Result;
-    end;
+    FResType := Result;
+    FOverloadOp := True;
   end;
-  
+
   if Restructure and (FRestructure = bTrue) then
   begin
     FRestructure := bFalse;
