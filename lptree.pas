@@ -1816,7 +1816,7 @@ end;
 
 function TLapeTree_Invoke.ResolveOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType): Boolean;
 
-  function CastOpenArrays(Strict: Boolean = True): Integer;
+  function CastOpenArrays(Strict: Boolean): Integer;
   var
     ParamTypes: TLapeTypeArray;
     Method: TLapeType_Method;
@@ -1865,12 +1865,6 @@ begin
     ObjectType := TLapeTree_Operator(FExpr).Left.resType();
 
   MethodIndex := Overloaded.getMethodIndex(getParamTypes(), ExpectType, ObjectType);
-
-  // if only one overload exists, treat it as a non-overloaded method
-  // important to still call getMethodIndex in case one gets generated OnFunctionNotFound
-  if (Overloaded.ManagedDeclarations.Count = 1) then
-    MethodIndex := 0;
-
   if (MethodIndex < 0) then
   begin
     MethodIndex := CastOpenArrays(True); // "exact" being `TPoint` needing both fields ~ [1,2]
@@ -1993,7 +1987,7 @@ begin
     else
       ParamType := FParams[i].resType();
     if (ParamType <> nil) then
-      if (ParamType.Name <> '') then
+      if (not (ParamType.BaseType in [ltImportedMethod, ltScriptMethod, ltUnknown])) and (ParamType.Name <> '') then
         Result := Result + ParamType.Name
       else
         Result := Result + ParamType.AsString
