@@ -2451,7 +2451,8 @@ begin
   Assert(RealIdent <> nil);
   Assert(RealIdent.resType() <> nil);
 
-  if ((FPropertyType = ptWrite) and (TLapeType_MethodOfObject(RealIdent.resType()).Res <> nil)) or
+  if (not (RealIdent.resType() is TLapeType_MethodOfObject)) or
+     ((FPropertyType = ptWrite) and (TLapeType_MethodOfObject(RealIdent.resType()).Res <> nil)) or
      ((FPropertyType = ptRead)  and (TLapeType_MethodOfObject(RealIdent.resType()).Res = nil)) then
     LapeException(lpeNoMatchingProperty, DocPos);
 

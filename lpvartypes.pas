@@ -752,7 +752,8 @@ function ValidFieldName(Field: TResVar): Boolean; overload;
 
 function IsMethod(typ: TLapeType): Boolean;
 function IsCast(typ: TLapeType): Boolean;
-function IsProperty(typ: TLapeType): Boolean;
+function IsProperty(typ: TLapeType): Boolean; overload;
+function IsProperty(typ: TLapeType; out isIndexable: Boolean): Boolean; overload;
 procedure PropertyInvokeError(typ: TLapeType; Tokenizer: TLapeTokenizerBase);
 
 const
@@ -994,6 +995,23 @@ end;
 function IsProperty(typ: TLapeType): Boolean;
 begin
   Result := (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
+end;
+
+function IsProperty(typ: TLapeType; out isIndexable: Boolean): Boolean;
+var
+  i: Integer;
+begin
+  isIndexable := False;
+
+  Result := (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
+  if Result then
+    with TLapeType_OverloadedMethod(Typ) do
+      for i := 0 to ManagedDeclarations.Count - 1 do
+        if (TLapeType_Method(TLapeGlobalVar(ManagedDeclarations[i]).VarType).Params.Count > 0) then
+        begin
+          isIndexable := True;
+          Break;
+        end;
 end;
 
 procedure PropertyInvokeError(typ: TLapeType; Tokenizer: TLapeTokenizerBase);

@@ -1,0 +1,20 @@
+{$assertions on}
+
+type
+  TPoint = record
+    x, y: Integer;
+  end;
+  TPointArray = array of TPoint;
+
+property TPoint.Test: TPointArray;
+begin
+  Result := [[1,1],[2,2],[3,3]];
+end;
+
+var
+  p: TPoint;
+
+begin
+  Assert(p.Test[2] = [3,3]);
+  Assert(Length(p.Test) = 3);
+end;

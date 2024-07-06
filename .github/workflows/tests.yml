@@ -40,10 +40,10 @@ jobs:
               https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/fpc-src-3.2.2-20210709-macosx.dmg
         
     steps:
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
       
       - name: Install Lazarus
-        uses: ollydev/setup-lazarus@v3.2
+        uses: ollydev/setup-lazarus@v3.3
         with:
           laz-url: ${{ matrix.config.laz-url }}
           fpc-url: ${{ matrix.config.fpc-url }}
