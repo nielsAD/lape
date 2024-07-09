@@ -1,0 +1,106 @@
+// just some methods give an accurate benchmark of the interpeter
+
+function fib(n: Int64): Int64;
+var
+  SomeStackVar: array[1..1024] of UInt8;
+begin
+  if (n < 1) then
+    Result := 0
+  else if (n <= 2) then
+    Result := 1
+  else
+    Result := fib(n - 2) + fib(n - 1);
+end;
+
+function CalcPi(NumDigits: Integer): String;
+var
+  Arr: array of Int32;
+  I, J, K, P, X, Y, Nines, Predigit: Int32;
+begin
+  for I := 0 to Pred(10*NumDigits div 3) do
+    Arr += 2;
+  Nines := 0;
+  Predigit := 0;
+
+  for J := 0 to NumDigits-1 do
+  begin
+    Y := 0;
+    P := 2 * High(Arr) + 1;
+    for I := High(Arr) downto 0 do
+    begin
+      X := 10*Arr[I] + Y*(I+1);
+      Arr[I] := X mod P;
+      Y := X div P;
+      P := P - 2;
+    end;
+    Arr[0] := Y mod 10;
+    Y := Y div 10;
+    if Y = 9 then
+      Inc(Nines)
+    else if Y = 10 then
+    begin
+      Result := Result + Chr(Predigit + 1 + Ord('0'));
+      for K := 1 to Nines do
+        Result := Result + '0';
+      Predigit := 0;
+      Nines := 0;
+    end else
+    begin
+      Result := Result + Chr(Predigit + Ord('0'));
+      Predigit := Y;
+      for K := 1 to Nines do
+        Result := Result + '9';
+      Nines := 0;
+    end;
+  end;
+  Result := Result + Chr(Predigit + Ord('0'));
+end;
+
+procedure Sum(amount: Integer);
+var
+  I: Integer;
+  TotalI: Int64;
+  TotalF: Double;
+begin
+  for I := -Amount to Amount do
+    TotalI += I*I-1;
+  for I := -Amount to Amount do
+    TotalF += Sqrt(Amount);
+end;
+
+procedure Jumping(amount: Integer);
+var
+  Jumps: Integer;
+label
+  A,B,C,D;
+begin
+  while jumps<=amount do
+  begin
+    case jumps mod 3 of
+      0: goto A;
+      1: goto B;
+      2: goto C;
+    end;
+
+    A:;
+    goto D;
+    B:;
+    goto D;
+    C:;
+    goto D;
+    D:;
+
+    Inc(Jumps);
+  end;
+end;
+
+const LOOPS = 10;
+begin
+  for 1 to LOOPS do
+  begin
+    Jumping(1000000);
+    Sum(1000000);
+    fib(30);
+    CalcPi(1000);
+  end;
+end;

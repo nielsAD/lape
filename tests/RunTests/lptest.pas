@@ -90,7 +90,13 @@ begin
       else
       begin
         Output := Output + Hints;
-        RunCode(Emitter);
+
+        with TLapeCodeRunner.Create(Emitter) do
+        try
+          Run();
+        finally
+          Free();
+        end;
       end;
     except
       on E: Exception do

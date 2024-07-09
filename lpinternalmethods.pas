@@ -848,7 +848,7 @@ begin
   Param.VarType.Eval(op_Assign, tmpVar, DestVar, Param, [], Offset, @_DocPos);
   Param.Spill(1);
 
-  FCompiler.Emitter._IsInternal(Offset, @_DocPos);
+  FCompiler.Emitter._IsScriptMethod(Offset, @_DocPos);
   Result.VarPos.MemPos := mpStack;
   Result.VarType := resType();
 

@@ -23,7 +23,7 @@ type
   opCodeP = ^opCode;
   opCode = (
     ocNone,
-    ocIsInternal,                                              //IsInternal
+    ocIsScriptMethod,                                          //IsScriptMethod
     ocGetExceptionMessage,                                     //GetExceptionMessage
     ocGetExceptionLocation,
     ocGetCallerLocation,

@@ -16,25 +16,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpvartypes,
-  lpinterpreter_types;
-
-const
-  StackSize = 2048 * SizeOf(Pointer);
-  VarStackSize = 512 * SizeOf(Pointer);
-  VarStackStackSize = 32;
-  TryStackSize = 512;
-  CallStackSize = 512;
-
-procedure RunCode(const Emitter: TLapeCodeEmitter; var DoContinue: TInitBool; const InitialVarStack: TByteArray = nil; const InitialJump: TCodePos = 0); overload;
-procedure RunCode(const Emitter: TLapeCodeEmitter; const InitialVarStack: TByteArray = nil; const InitialJump: TCodePos = 0); overload;
-
-implementation
-
-uses
-  lpmessages;
-
-{$OverFlowChecks Off}
+  lptypes, lpvartypes, lpinterpreter_types;
 
 type
   TStackTraceInfo = array of record
@@ -48,10 +30,86 @@ type
     StackTraceInfo: TStackTraceInfo;
   end;
 
+  TVarStackStack = array of record
+    FStack: TByteArray;
+    Pos: UInt32;
+  end;
+
+  TTryStack = array of record
+    Jmp: PByte;
+    JmpFinally: PByte;
+  end;
+
   TInJump = record
     JumpException: TJumpException;
     JumpSafe: PByte;
   end;
+
+  TCallStack = array of record
+    Address: TCodePos;
+    CalledFrom: PByte;
+    JumpBack: PByte;
+    StackP, VarStackP: UInt32;
+    Jump: TInJump;
+  end;
+
+  TLapeCodeRunner = class(TLapeBaseClass)
+  protected
+    FEmitter: TLapeCodeEmitter;
+    FRunning: TInitBool;
+    FStack: TByteArray;
+    FStackPos: UInt32;
+
+    FVarStack: TByteArray;
+    FVarStackIndex, FVarStackPos, FVarStackLen: UInt32;
+    FVarStackStack: TVarStackStack;
+
+    FTryStack: TTryStack;
+    FTryStackPos: UInt32;
+    FInJump: TInJump;
+
+    FCallStack: TCallStack;
+    FCallStackPos: UInt32;
+
+    FDefStackSize: SizeUInt;
+    FDefVarStackSize: SizeUInt;
+    FDefVarStackStackSize: SizeUInt;
+    FDefTryStackSize: SizeUInt;
+    FDefCallStackSize: SizeUInt;
+
+    FStacksAllocated: Boolean;
+
+    function getRunning: Boolean;
+    function getPaused: Boolean;
+    function getStopped: Boolean;
+  public
+    constructor Create(Emitter: TLapeCodeEmitter); reintroduce;
+
+    procedure Run(const InitialVarStack: TByteArray = nil; const InitialJump: TCodePos = 0);
+
+    procedure Resume;
+    procedure Pause;
+    procedure Stop;
+
+    property isRunning: Boolean read getRunning;
+    property isStopped: Boolean read getStopped;
+    property isPaused: Boolean read getPaused;
+
+    property DefStackSize: SizeUInt read FDefStackSize write FDefStackSize;
+    property DefVarStackSize: SizeUInt read FDefVarStackSize write FDefVarStackSize;
+    property DefVarStackStackSize: SizeUInt read FDefVarStackStackSize write FDefVarStackStackSize;
+    property DefTryStackSize: SizeUInt read FDefTryStackSize write FDefTryStackSize;
+    property DefCallStackSize: SizeUInt read FDefCallStackSize write FDefCallStackSize;
+  end;
+
+procedure RunCode(const Emitter: TLapeCodeEmitter; const InitialVarStack: TByteArray = nil; const InitialJump: TCodePos = 0); deprecated 'Use TLapeCodeRunner class';
+
+implementation
+
+uses
+  lpmessages;
+
+{$OverflowChecks Off}
 
 const
   InEmptyJump: TInJump = (JumpException: nil; JumpSafe: nil);
@@ -78,7 +136,7 @@ var
   i, Number: Integer;
   DocPos: PDocPos;
 begin
-  Result := 'Stack Trace:';
+  Result := 'FStack Trace:';
 
   if (Length(StackTraceInfo) = 0) then
     Result := Result + FormatLine(0, 'main', Pos)
@@ -118,43 +176,46 @@ begin
     AJump.JumpSafe := Merge.JumpSafe;
 end;
 
-function IsLapeException(const E: Exception): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function IsLapeException(const E: Exception): Boolean;
 begin
   Result := (E <> nil) and (E.ClassType = lpException) and (lpException(e).DocPos.Col <> NullDocPos.Col) and (lpException(e).DocPos.Line <> NullDocPos.Line);
 end;
 
-procedure RunCode(const Emitter: TLapeCodeEmitter; var DoContinue: TInitBool; const InitialVarStack: TByteArray; const InitialJump: TCodePos);
+function TLapeCodeRunner.getRunning: Boolean;
+begin
+  Result := FRunning = bTrue;
+end;
+
+function TLapeCodeRunner.getPaused: Boolean;
+begin
+  Result := FRunning = bUnknown;
+end;
+
+function TLapeCodeRunner.getStopped: Boolean;
+begin
+  Result := FRunning = bFalse;
+end;
+
+constructor TLapeCodeRunner.Create(Emitter: TLapeCodeEmitter);
+begin
+  inherited Create();
+
+  FEmitter := Emitter;
+
+  FDefStackSize         := 2048 * SizeOf(Pointer);
+  FDefVarStackSize      := 512 * SizeOf(Pointer);
+  FDefVarStackStackSize := 32;
+  FDefTryStackSize      := 512;
+  FDefCallStackSize     := 512;
+end;
+
+procedure TLapeCodeRunner.Run(const InitialVarStack: TByteArray; const InitialJump: TCodePos);
 const
   opNone: opCode = ocNone;
 var
   Code: PByte;
   CodeBase: PByte;
   CodeUpper: PByte;
-  Stack: TByteArray;
-  StackPos: UInt32;
-
-  VarStack: TByteArray;
-  VarStackIndex, VarStackPos, VarStackLen: UInt32;
-  VarStackStack: array of record
-    Stack: TByteArray;
-    Pos: UInt32;
-  end;
-
-  TryStack: array of record
-    Jmp: PByte;
-    JmpFinally: PByte;
-  end;
-  TryStackPos: UInt32;
-  InJump: TInJump;
-
-  CallStack: array of record
-    Address: TCodePos;
-    CalledFrom: PByte;
-    JumpBack: PByte;
-    StackP, VarStackP: UInt32;
-    Jump: TInJump;
-  end;
-  CallStackPos: UInt32;
 
   PreviousException: record
     Exists: Boolean;
@@ -164,67 +225,67 @@ var
 
   function NeedMoreVarStack(const Size: UInt32): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    Result := VarStackLen + Size > Length(VarStack);
+    Result := FVarStackLen + Size > Length(FVarStack);
     if not Result then
     begin
-      VarStackPos := VarStackLen;
-      VarStackLen := VarStackLen + Size;
+      FVarStackPos := FVarStackLen;
+      FVarStackLen := FVarStackLen + Size;
     end;
   end;
 
   function NeedMoreGrowVarStack(const Size: UInt32): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    Result := VarStackLen + Size > Length(VarStack);
+    Result := FVarStackLen + Size > Length(FVarStack);
     if not Result then
-      VarStackLen := VarStackLen + Size;
+      FVarStackLen := FVarStackLen + Size;
   end;
 
   procedure ExpandVarStack(const Size: UInt32);
   begin
-    Assert(VarStackLen + Size > Length(VarStack));
+    Assert(FVarStackLen + Size > Length(FVarStack));
 
-    VarStackStack[VarStackIndex].Pos := VarStackLen;
+    FVarStackStack[FVarStackIndex].Pos := FVarStackLen;
 
-    Inc(VarStackIndex);
-    if (VarStackIndex >= UInt32(Length(VarStackStack))) then
-      SetLength(VarStackStack, VarStackIndex + (VarStackStackSize div 2));
+    Inc(FVarStackIndex);
+    if (FVarStackIndex >= UInt32(Length(FVarStackStack))) then
+      SetLength(FVarStackStack, FVarStackIndex + FDefVarStackStackSize);
 
-    VarStackPos := 0;
-    VarStackLen := Size;
-    VarStack := VarStackStack[VarStackIndex].Stack;
+    FVarStackPos := 0;
+    FVarStackLen := Size;
+    FVarStack := FVarStackStack[FVarStackIndex].FStack;
 
-    if (Size > VarStackSize) then
-      SetLength(VarStack, Size)
+    if (Size > FDefVarStackSize) then
+      SetLength(FVarStack, Size)
     else
-    if (VarStack = nil) then
-      SetLength(VarStack, VarStackSize);
+    if (FVarStack = nil) then
+      SetLength(FVarStack, FDefVarStackSize);
 
-    VarStackStack[VarStackIndex].Stack := VarStack;
+    FVarStackStack[FVarStackIndex].FStack := FVarStack;
   end;
 
   procedure GrowVarStack(const Size: UInt32);
   var
     OldLen: UInt32;
   begin
-    Assert(VarStackLen + Size > Length(VarStack));
+    Assert(FVarStackLen + Size > Length(FVarStack));
 
-    if (VarStackPos = 0) then
+    if (FVarStackPos = 0) then
     begin
-      Inc(VarStackLen, Size);
-      SetLength(VarStack, VarStackLen);
-      VarStackStack[VarStackIndex].Stack := VarStack;
+      Inc(FVarStackLen, Size);
+      SetLength(FVarStack, FVarStackLen);
+      FVarStackStack[FVarStackIndex].FStack := FVarStack;
     end
     else
-    if (VarStackLen = VarStackPos) then
+    if (FVarStackLen = FVarStackPos) then
       ExpandVarStack(Size)
     else
     begin
-      OldLen := VarStackLen - VarStackPos;
+      OldLen := FVarStackLen - FVarStackPos;
       ExpandVarStack(Size + OldLen);
-      with VarStackStack[VarStackIndex - 1] do
+      with FVarStackStack[FVarStackIndex - 1] do
       begin
         Dec(Pos, OldLen);
-        Move(Stack[Pos], VarStack[0], OldLen);
+        Move(FStack[Pos], FVarStack[0], OldLen);
       end;
     end;
   end;
@@ -243,106 +304,112 @@ var
 
   procedure HandleException;
   begin
-    if (TryStackPos > 0) then
+    if (FTryStackPos > 0) then
     begin
-      Dec(TryStackPos);
-      Code := TryStack[TryStackPos].Jmp;
+      Dec(FTryStackPos);
+      Code := FTryStack[FTryStackPos].Jmp;
     end else
-      raise InJump.JumpException.Obj;
+      raise FInJump.JumpException.Obj;
   end;
 
   procedure HandleSafeJump; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
     IsEndJump: Boolean;
   begin
-    IsEndJump := (CodeBase = PByte(PtrUInt(InJump.JumpSafe) - EndJump));
+    IsEndJump := (CodeBase = PByte(PtrUInt(FInJump.JumpSafe) - EndJump));
 
-    while (TryStackPos > 0) and (IsEndJump or (TryStack[TryStackPos - 1].Jmp < InJump.JumpSafe)) and (TryStack[TryStackPos - 1].JmpFinally = nil) do
-      Dec(TryStackPos);
+    while (FTryStackPos > 0) and (IsEndJump or (FTryStack[FTryStackPos - 1].Jmp < FInJump.JumpSafe)) and (FTryStack[FTryStackPos - 1].JmpFinally = nil) do
+      Dec(FTryStackPos);
 
-    if (TryStackPos > 0) and (IsEndJump or (TryStack[TryStackPos - 1].Jmp < InJump.JumpSafe)) and  (TryStack[TryStackPos - 1].JmpFinally <> nil) then
+    if (FTryStackPos > 0) and (IsEndJump or (FTryStack[FTryStackPos - 1].Jmp < FInJump.JumpSafe)) and  (FTryStack[FTryStackPos - 1].JmpFinally <> nil) then
     begin
-      Assert(IsEndJump or (TryStack[TryStackPos - 1].JmpFinally >= Code));
-      Dec(TryStackPos);
-      Code := TryStack[TryStackPos].JmpFinally;
+      Assert(IsEndJump or (FTryStack[FTryStackPos - 1].JmpFinally >= Code));
+      Dec(FTryStackPos);
+      Code := FTryStack[FTryStackPos].JmpFinally;
     end
-    else if (CodeBase = PByte(PtrUInt(InJump.JumpSafe) - EndJump)) then
+    else if (CodeBase = PByte(PtrUInt(FInJump.JumpSafe) - EndJump)) then
       Code := @opNone
     else
     begin
-      Code := InJump.JumpSafe;
-      InJump.JumpSafe := nil;
+      Code := FInJump.JumpSafe;
+      FInJump.JumpSafe := nil;
     end;
   end;
 
   procedure PushToVar(const Size: TStackOffset); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    //Assert(Size > 0); // Can be 0, NeedMoreVarStack will change VarStackPos
-    if NeedMoreVarStack(Size) then
+    // force inlining of:
+    // if NeedMoreVarStack(Size) then
+    //   ExpandVarStack(Size);
+    if FVarStackLen + Size <= Length(FVarStack) then
+    begin
+      FVarStackPos := FVarStackLen;
+      FVarStackLen := FVarStackLen + Size;
+    end else
       ExpandVarStack(Size);
 
     if (Size > 0) then
     begin
-      Dec(StackPos, Size);
-      Move(Stack[StackPos], VarStack[VarStackPos], Size);
+      Dec(FStackPos, Size);
+      Move(FStack[FStackPos], FVarStack[FVarStackPos], Size);
     end;
   end;
 
-  procedure DoCheckInternal; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure DoIsScriptMethod; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
     Check: PtrUInt;
   begin
-    Check := PtrUInt(CodeBase) + PtrUInt(PCodePos(@Stack[StackPos - SizeOf(Pointer)])^);
-    PEvalBool(@Stack[StackPos - SizeOf(Pointer)])^ := (Check >= PtrUInt(CodeBase)) and (Check < PtrUInt(CodeUpper)) and (opCodeP(Check)^ = ocIncTry);
-    Dec(StackPos, SizeOf(Pointer) - SizeOf(EvalBool));
+    Check := PtrUInt(CodeBase) + PtrUInt(PCodePos(@FStack[FStackPos - SizeOf(Pointer)])^);
+    PEvalBool(@FStack[FStackPos - SizeOf(Pointer)])^ := (Check >= PtrUInt(CodeBase)) and (Check < PtrUInt(CodeUpper)) and (opCodeP(Check)^ = ocIncTry);
+    Dec(FStackPos, SizeOf(Pointer) - SizeOf(EvalBool));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetExceptionMessage;
   begin
     if PreviousException.Exists then
-      PlpString(PPointer(@Stack[StackPos - SizeOf(Pointer)])^)^ := PreviousException.Msg
+      PlpString(PPointer(@FStack[FStackPos - SizeOf(Pointer)])^)^ := PreviousException.Msg
     else
-      PlpString(PPointer(@Stack[StackPos - SizeOf(Pointer)])^)^ := '';
+      PlpString(PPointer(@FStack[FStackPos - SizeOf(Pointer)])^)^ := '';
 
-    Dec(StackPos, SizeOf(Pointer));
+    Dec(FStackPos, SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetExceptionLocation;
   begin
     if PreviousException.Exists then
-      PPointer(@Stack[StackPos])^ := @PreviousException.Loc
+      PPointer(@FStack[FStackPos])^ := @PreviousException.Loc
     else
-      PPointer(@Stack[StackPos])^ := nil;
+      PPointer(@FStack[FStackPos])^ := nil;
 
-    Inc(StackPos, SizeOf(Pointer));
+    Inc(FStackPos, SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetCallerLocation;
   begin
     {$IFDEF Lape_EmitPos}
-    if (CallStackPos > 0) then
-      PPointer(@Stack[StackPos])^ := PPointer(CallStack[CallStackPos - 1].CalledFrom + SizeOf(opCode))^
+    if (FCallStackPos > 0) then
+      PPointer(@FStack[FStackPos])^ := PPointer(FCallStack[FCallStackPos - 1].CalledFrom + SizeOf(opCode))^
     else
-      PPointer(@Stack[StackPos])^ := nil;
+      PPointer(@FStack[FStackPos])^ := nil;
     {$ELSE}
-    PPointer(@Stack[StackPos])^ := nil;
+    PPointer(@FStack[FStackPos])^ := nil;
     {$ENDIF}
 
-    Inc(StackPos, SizeOf(Pointer));
+    Inc(FStackPos, SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetCallerAddress;
   begin
-    if (CallStackPos < 2) then
-      PPointer(@Stack[StackPos])^ := nil
+    if (FCallStackPos < 2) then
+      PPointer(@FStack[FStackPos])^ := nil
     else
-      PPointer(@Stack[StackPos])^ := Pointer(CallStack[CallStackPos - 2].Address);
+      PPointer(@FStack[FStackPos])^ := Pointer(FCallStack[FCallStackPos - 2].Address);
 
-    Inc(StackPos, SizeOf(Pointer));
+    Inc(FStackPos, SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
@@ -352,42 +419,42 @@ var
     Offset, i: Integer;
     Pos: PDocPos;
   begin
-    Offset := PInt32(@Stack[StackPos - (SizeOf(Pointer) + SizeOf(Int32))])^;
+    Offset := PInt32(@FStack[FStackPos - (SizeOf(Pointer) + SizeOf(Int32))])^;
 
-    if (Offset >= 0) and (Offset <= CallStackPos) then
+    if (Offset >= 0) and (Offset <= FCallStackPos) then
     begin
-      SetLength(StackTraceInfo, CallStackPos - Offset);
+      SetLength(StackTraceInfo, FCallStackPos - Offset);
       for i := 0 to High(StackTraceInfo) do
       begin
-        StackTraceInfo[i].Address := CallStack[i].Address;
-        StackTraceInfo[i].CalledFrom := CallStack[i].CalledFrom;
+        StackTraceInfo[i].Address := FCallStack[i].Address;
+        StackTraceInfo[i].CalledFrom := FCallStack[i].CalledFrom;
       end;
 
       {$IFDEF Lape_EmitPos}
       if (Offset > 0) then
-        Pos := PPointer(CallStack[CallStackPos - Offset].CalledFrom + SizeOf(opCode))^
+        Pos := PPointer(FCallStack[FCallStackPos - Offset].CalledFrom + SizeOf(opCode))^
       else
         Pos := PPointer(Code + SizeOf(opCode))^;
       {$ELSE}
       Pos := nil;
       {$ENDIF}
 
-      PlpString(PPointer(@Stack[StackPos - SizeOf(Pointer)])^)^ := GetStackTrace(Emitter, StackTraceInfo, Pos);
+      PlpString(PPointer(@FStack[FStackPos - SizeOf(Pointer)])^)^ := GetStackTrace(FEmitter, StackTraceInfo, Pos);
     end;
 
-    Dec(StackPos, SizeOf(Int32) + SizeOf(Pointer));
+    Dec(FStackPos, SizeOf(Int32) + SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetScriptMethodName;
   begin
     {$IFDEF Delphi}
-    PShortString(@Stack[StackPos - SizeOf(Pointer)])^ := UTF8EncodeToShortString(Emitter.CodePointerName[PCodePos(@Stack[StackPos - SizeOf(Pointer)])^]);
+    PShortString(@FStack[FStackPos - SizeOf(Pointer)])^ := UTF8EncodeToShortString(FEmitter.CodePointerName[PCodePos(@FStack[FStackPos - SizeOf(Pointer)])^]);
     {$ELSE}
-    PShortString(@Stack[StackPos - SizeOf(Pointer)])^ := Emitter.CodePointerName[PCodePos(@Stack[StackPos - SizeOf(Pointer)])^];
+    PShortString(@FStack[FStackPos - SizeOf(Pointer)])^ := FEmitter.CodePointerName[PCodePos(@FStack[FStackPos - SizeOf(Pointer)])^];
     {$ENDIF}
 
-    Inc(StackPos, SizeOf(ShortString) - SizeOf(Pointer));
+    Inc(FStackPos, SizeOf(ShortString) - SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
@@ -403,24 +470,24 @@ var
 
   procedure DoCatchException;
   begin
-    if (InJump.JumpException <> nil) then
+    if (FInJump.JumpException <> nil) then
     begin
       PreviousException.Exists := True;
 
-      if IsLapeException(InJump.JumpException.Obj) then
+      if IsLapeException(FInJump.JumpException.Obj) then
       begin
-        PreviousException.Msg := lpException(InJump.JumpException.Obj).Error;
-        PreviousException.Loc := lpException(InJump.JumpException.Obj).DocPos;
+        PreviousException.Msg := lpException(FInJump.JumpException.Obj).Error;
+        PreviousException.Loc := lpException(FInJump.JumpException.Obj).DocPos;
       end else
       begin
-        PreviousException.Msg := InJump.JumpException.Obj.Message;
-        if (InJump.JumpException.Pos <> nil) then
-          PreviousException.Loc := InJump.JumpException.Pos^;
+        PreviousException.Msg := FInJump.JumpException.Obj.Message;
+        if (FInJump.JumpException.Pos <> nil) then
+          PreviousException.Loc := FInJump.JumpException.Pos^;
       end;
 
-      InJump.JumpException.Obj.Free();
+      FInJump.JumpException.Obj.Free();
 
-      FreeAndNil(InJump.JumpException);
+      FreeAndNil(FInJump.JumpException);
     end;
 
     Inc(Code, ocSize);
@@ -431,13 +498,13 @@ var
     Arr: Pointer;
     Len, Index: SizeInt;
   begin
-    Dec(StackPos, SizeOf(Pointer) + SizeOf(SizeInt));
+    Dec(FStackPos, SizeOf(Pointer) + SizeOf(SizeInt));
     Inc(Code, ocSize);
 
-    Arr := PPointer(@Stack[StackPos])^;
-    Index := PSizeInt(@Stack[StackPos + SizeOf(SizeInt)])^;
+    Arr := PPointer(@FStack[FStackPos])^;
+    Index := PSizeInt(@FStack[FStackPos + SizeOf(SizeInt)])^;
 
-    if Assigned(Arr) then
+    if (Arr <> nil) then
       Len := PSizeInt(Arr)[-1] {$IFDEF FPC}+1{$ENDIF}
     else
       Len := 0;
@@ -451,8 +518,8 @@ var
     InitStackSize: TStackOffset;
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    if (StackPos + InitStackSize > UInt32(Length(Stack))) then
-      SetLength(Stack, StackPos + InitStackSize + (StackSize div 2));
+    if (FStackPos + InitStackSize > UInt32(Length(FStack))) then
+      SetLength(FStack, FStackPos + InitStackSize + FDefStackSize);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -462,9 +529,9 @@ var
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     Assert(InitStackSize > 0);
-    if (StackPos + InitStackSize > UInt32(Length(Stack))) then
-      SetLength(Stack, StackPos + InitStackSize + (StackSize div 2));
-    FillChar(Stack[StackPos], InitStackSize, 0);
+    if (FStackPos + InitStackSize > UInt32(Length(FStack))) then
+      SetLength(FStack, FStackPos + InitStackSize + FDefStackSize);
+    FillChar(FStack[FStackPos], InitStackSize, 0);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -474,9 +541,9 @@ var
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
     Assert(GrowSize > 0);
-    if (StackPos + GrowSize > UInt32(Length(Stack))) then
-      SetLength(Stack, StackPos + GrowSize + (StackSize div 2));
-    Inc(StackPos, GrowSize);
+    if (FStackPos + GrowSize > UInt32(Length(FStack))) then
+      SetLength(FStack, FStackPos + GrowSize + FDefStackSize);
+    Inc(FStackPos, GrowSize);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -499,7 +566,7 @@ var
     Assert(ExpandSize > 0);
     if NeedMoreVarStack(ExpandSize) then
       ExpandVarStack(ExpandSize);
-    FillChar(VarStack[VarStackPos], ExpandSize, 0);
+    FillChar(FVarStack[FVarStackPos], ExpandSize, 0);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -522,23 +589,23 @@ var
     Assert(GrowSize > 0);
     if NeedMoreGrowVarStack(GrowSize) then
       GrowVarStack(GrowSize);
-    FillChar(VarStack[VarStackLen - GrowSize], GrowSize, 0);
+    FillChar(FVarStack[FVarStackLen - GrowSize], GrowSize, 0);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
   procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (VarStackPos = 0) and (VarStackIndex > 0) then
+    if (FVarStackPos = 0) and (FVarStackIndex > 0) then
     begin
-      Dec(VarStackIndex);
-      with VarStackStack[VarStackIndex] do
+      Dec(FVarStackIndex);
+      with FVarStackStack[FVarStackIndex] do
       begin
-        VarStack := Stack;
-        VarStackPos := Pos;
+        FVarStack := FStack;
+        FVarStackPos := Pos;
       end;
     end;
 
-    VarStackLen := VarStackPos;
+    FVarStackLen := FVarStackPos;
     Inc(Code, ocSize);
   end;
 
@@ -547,8 +614,8 @@ var
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
       Assert(Size > 0);
-      Dec(StackPos, Size);
-      Move(Stack[StackPos], VarStack[VarStackPos + VOffset], Size);
+      Dec(FStackPos, Size);
+      Move(FStack[FStackPos], FVarStack[FVarStackPos + VOffset], Size);
     end;
     Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
   end;
@@ -558,68 +625,68 @@ var
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
       Assert(Size > 0);
-      Move(VarStack[VarStackPos + VOffset], Stack[StackPos], Size);
-      FillChar(VarStack[VarStackPos + VOffset], Size, 0);
-      Inc(StackPos, Size);
+      Move(FVarStack[FVarStackPos + VOffset], FStack[FStackPos], Size);
+      FillChar(FVarStack[FVarStackPos + VOffset], Size, 0);
+      Inc(FStackPos, Size);
     end;
     Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
   end;
 
   procedure DoJmpVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    Dec(StackPos, SizeOf(TCodePos));
-    //JumpTo(PCodePos(@Stack[StackPos])^);
-    InJump.JumpSafe := @Stack[StackPos];
-    if (PCodePos(InJump.JumpSafe)^ = 0) then
+    Dec(FStackPos, SizeOf(TCodePos));
+    //JumpTo(PCodePos(@FStack[FStackPos])^);
+    FInJump.JumpSafe := @FStack[FStackPos];
+    if (PCodePos(FInJump.JumpSafe)^ = 0) then
       LapeException(lpeInvalidJump);
 
-    InJump.JumpSafe := PByte(PtrUInt(CodeBase) + PCodePos(InJump.JumpSafe)^);
+    FInJump.JumpSafe := PByte(PtrUInt(CodeBase) + PCodePos(FInJump.JumpSafe)^);
     HandleSafeJump();
   end;
 
   procedure DoJmpSafe; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    InJump.JumpSafe := PByte(PtrUInt(CodeBase) + PCodePos(PtrUInt(Code) + ocSize)^);
+    FInJump.JumpSafe := PByte(PtrUInt(CodeBase) + PCodePos(PtrUInt(Code) + ocSize)^);
     HandleSafeJump();
   end;
 
   procedure DoJmpSafeR; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    InJump.JumpSafe := PByte(PtrInt(Code) + PCodeOffset(PtrUInt(Code) + ocSize)^);
+    FInJump.JumpSafe := PByte(PtrInt(Code) + PCodeOffset(PtrUInt(Code) + ocSize)^);
     HandleSafeJump();
   end;
 
   procedure DoIncTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (TryStackPos >= UInt32(Length(TryStack))) then
-      SetLength(TryStack, TryStackPos + (TryStackSize div 2));
+    if (FTryStackPos >= UInt32(Length(FTryStack))) then
+      SetLength(FTryStack, FTryStackPos + FDefTryStackSize);
 
     with POC_IncTry(PtrUInt(Code) + ocSize)^ do
     begin
-      TryStack[TryStackPos].Jmp := PByte(PtrInt(Code) + Jmp);
+      FTryStack[FTryStackPos].Jmp := PByte(PtrInt(Code) + Jmp);
       if (JmpFinally = Try_NoFinally) then
-        TryStack[TryStackPos].JmpFinally := nil
+        FTryStack[FTryStackPos].JmpFinally := nil
       else if (JmpFinally = Try_NoExcept) then
-        TryStack[TryStackPos].JmpFinally := TryStack[TryStackPos].Jmp
+        FTryStack[FTryStackPos].JmpFinally := FTryStack[FTryStackPos].Jmp
       else
-        TryStack[TryStackPos].JmpFinally := PByte(PtrInt(Code) + Int32(JmpFinally) + Jmp);
+        FTryStack[FTryStackPos].JmpFinally := PByte(PtrInt(Code) + Int32(JmpFinally) + Jmp);
     end;
 
-    Inc(TryStackPos);
+    Inc(FTryStackPos);
     Inc(Code, ocSize + SizeOf(TOC_IncTry));
   end;
 
   procedure DoDecTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    Dec(TryStackPos);
+    Dec(FTryStackPos);
     Inc(Code, ocSize);
   end;
 
   procedure DoEndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (InJump.JumpException <> nil) then
+    if (FInJump.JumpException <> nil) then
       HandleException()
-    else if (InJump.JumpSafe <> nil) then
+    else if (FInJump.JumpSafe <> nil) then
       HandleSafeJump()
     else
       Inc(Code, ocSize);
@@ -629,39 +696,39 @@ var
 
   procedure DoIncCall(const RecSize: Integer; const Jmp: TCodePos; const ParamSize: TParamSize; const StackPosOffset: TStackInc = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (CallStackPos >= UInt32(Length(CallStack))) then
-      SetLength(CallStack, CallStackPos + (CallStackSize div 2));
+    if (FCallStackPos >= UInt32(Length(FCallStack))) then
+      SetLength(FCallStack, FCallStackPos + FDefCallStackSize);
 
-    with CallStack[CallStackPos] do
+    with FCallStack[FCallStackPos] do
     begin
       Address := Jmp;
       CalledFrom := Code;
       JumpBack := PByte(PtrInt(Code) + ocSize + RecSize);
-      VarStackP := VarStackPos;
+      VarStackP := FVarStackPos;
       PushToVar(ParamSize);
-      StackP := StackPos + UInt32(StackPosOffset);
+      StackP := FStackPos + UInt32(StackPosOffset);
 
-      Jump := InJump;
-      InJump := InEmptyJump;
+      Jump := FInJump;
+      FInJump := InEmptyJump;
       JumpTo(Jmp);
     end;
-    Inc(CallStackPos);
+    Inc(FCallStackPos);
   end;
 
   procedure DoDecCall; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    if (CallStackPos <= 0) then
+    if (FCallStackPos <= 0) then
       Code := @opNone
     else
     begin
       DoPopVar();
-      Dec(CallStackPos);
-      with CallStack[CallStackPos] do
+      Dec(FCallStackPos);
+      with FCallStack[FCallStackPos] do
       begin
         Code := JumpBack;
-        VarStackPos := VarStackP;
-        StackPos := StackP;
-        MergeJumps(InJump, Jump);
+        FVarStackPos := VarStackP;
+        FStackPos := StackP;
+        MergeJumps(FInJump, Jump);
       end;
     end;
   end;
@@ -670,25 +737,25 @@ var
   var
     tmp: TInJump;
   begin
-    tmp := InJump;
+    tmp := FInJump;
     DoDecCall();
-    if (tmp.JumpException = InJump.JumpException) and (InJump.JumpException <> nil) then
+    if (tmp.JumpException = FInJump.JumpException) and (FInJump.JumpException <> nil) then
       HandleException()
-    else if (tmp.JumpSafe = InJump.JumpSafe) and (InJump.JumpSafe <> nil) then
+    else if (tmp.JumpSafe = FInJump.JumpSafe) and (FInJump.JumpSafe <> nil) then
       HandleSafeJump();
   end;
 
   procedure DoInvokeImportedProc(const RecSize: Integer; const Ptr: Pointer; const ParamSize: TParamSize; const StackPosOffset: TStackInc = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    TLapeImportedProc(Ptr)(@Stack[StackPos - ParamSize]);
-    Dec(StackPos, ParamSize - StackPosOffset);
+    TLapeImportedProc(Ptr)(@FStack[FStackPos - ParamSize]);
+    Dec(FStackPos, ParamSize - StackPosOffset);
     Inc(Code, RecSize + ocSize);
   end;
 
   procedure DoInvokeImportedFunc(const RecSize: Integer; const Ptr, Res: Pointer; const ParamSize: TParamSize; const StackPosOffset: TStackInc = 0); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    TLapeImportedFunc(Ptr)(@Stack[StackPos - ParamSize], Res);
-    Dec(StackPos, ParamSize - StackPosOffset);
+    TLapeImportedFunc(Ptr)(@FStack[FStackPos - ParamSize], Res);
+    Dec(FStackPos, ParamSize - StackPosOffset);
     Inc(Code, RecSize + ocSize);
   end;
 
@@ -703,70 +770,81 @@ var
 label
   Start;
 begin
-  Code := PByte(PtrUInt(Emitter.Code) + InitialJump);
-  CodeBase := Emitter.Code;
-  CodeUpper := Emitter.Code + Emitter.CodeLen;
-  SetLength(Stack, StackSize);
-  SetLength(TryStack, TryStackSize);
-  SetLength(CallStack, CallStackSize);
+  FRunning := bTrue;
 
-  VarStackIndex := 0;
-  SetLength(VarStackStack, VarStackStackSize);
+  Code := PByte(PtrUInt(FEmitter.Code) + InitialJump);
+  CodeBase := FEmitter.Code;
+  CodeUpper := FEmitter.Code + FEmitter.CodeLen;
 
-  VarStackStack[0].Stack := InitialVarStack;
-  if (Length(VarStackStack[0].Stack) < VarStackSize) then
-    SetLength(VarStackStack[0].Stack, VarStackSize);
-  VarStack := VarStackStack[0].Stack;
-  VarStackLen := Length(VarStack);
+  if not FStacksAllocated then
+  begin
+    SetLength(FStack, FDefStackSize);
+    SetLength(FTryStack, FDefTryStackSize);
+    SetLength(FCallStack, FDefCallStackSize);
+    SetLength(FVarStackStack, FDefVarStackStackSize);
+    SetLength(FVarStackStack[0].FStack, FDefVarStackSize);
+
+    FStacksAllocated := True;
+  end;
+
+  FVarStack := FVarStackStack[0].FStack;
+  FVarStackIndex := 0;
+  if (InitialVarStack <> nil) then
+  begin
+    if Length(FVarStack) < Length(InitialVarStack) then
+      SetLength(FVarStack, Length(InitialVarStack));
+    Move(InitialVarStack[0], FVarStack[0], Length(InitialVarStack) * SizeOf(Byte));
+  end;
+  FVarStackLen := Length(FVarStack);
 
   PreviousException.Exists := False;
   PreviousException.Msg := '';
   PreviousException.Loc := NullDocPos;
 
-  StackPos := 0;
-  VarStackPos := 0;
-  TryStackPos := 0;
-  CallStackPos := 0;
-  InJump := InEmptyJump;
+  FStackPos := 0;
+  FVarStackPos := 0;
+  FTryStackPos := 0;
+  FCallStackPos := 0;
+  FInJump := InEmptyJump;
 
   try
     Start:
     GoBack := False;
 
     try
-      while (DoContinue = bTrue) do {$I lpinterpreter_opcodecase.inc}
+      while (FRunning = bTrue) do {$I lpinterpreter_opcodecase.inc}
     except
-      if (InJump.JumpException = nil) or (ExceptObject <> InJump.JumpException.Obj) then
+      if (FInJump.JumpException = nil) or (ExceptObject <> FInJump.JumpException.Obj) then
       begin
-        if (InJump.JumpException = nil) then
-          InJump.JumpException := TJumpException.Create();
+        if (FInJump.JumpException = nil) then
+          FInJump.JumpException := TJumpException.Create();
 
-        SetLength(InJump.JumpException.StackTraceInfo, CallStackPos);
-        for i := 0 to CallStackPos - 1 do
+        SetLength(FInJump.JumpException.StackTraceInfo, FCallStackPos);
+        for i := 0 to FCallStackPos - 1 do
         begin
-          InJump.JumpException.StackTraceInfo[i].Address    := CallStack[i].Address;
-          InJump.JumpException.StackTraceInfo[i].CalledFrom := CallStack[i].CalledFrom;
+          FInJump.JumpException.StackTraceInfo[i].Address    := FCallStack[i].Address;
+          FInJump.JumpException.StackTraceInfo[i].CalledFrom := FCallStack[i].CalledFrom;
         end;
 
         {$IFDEF Lape_EmitPos}
-        InJump.JumpException.Pos := PPointer(PtrUInt(Code) + SizeOf(opCode))^;
+        FInJump.JumpException.Pos := PPointer(PtrUInt(Code) + SizeOf(opCode))^;
         {$ENDIF}
       end;
-      InJump.JumpException.Obj := Exception(AcquireExceptionObject());
+      FInJump.JumpException.Obj := Exception(AcquireExceptionObject());
 
       HandleException();
       GoBack := True;
     end;
 
-    if (DoContinue = bUnknown) then
+    if (FRunning = bUnknown) then
     begin
       Sleep(1);
       goto Start;
     end
-    else if (DoContinue = bFalse) then
+    else if (FRunning = bFalse) then
     begin
-      DoContinue := bTrue;
-      InJump.JumpSafe := PByte(PtrUInt(CodeBase) + EndJump);
+      FRunning := bTrue;
+      FInJump.JumpSafe := PByte(PtrUInt(CodeBase) + EndJump);
       HandleSafeJump();
       goto Start;
     end;
@@ -776,25 +854,45 @@ begin
   except
     on E: Exception do
     begin
-      StackTrace := GetStackTrace(Emitter, InJump.JumpException.StackTraceInfo, InJump.JumpException.Pos);
+      FRunning := bFalse;
 
+      StackTrace := GetStackTrace(FEmitter, FInJump.JumpException.StackTraceInfo, FInJump.JumpException.Pos);
       if IsLapeException(E) then
         LapeExceptionRuntime(E as lpException, StackTrace)
       else
-      if (InJump.JumpException <> nil) and (E = InJump.JumpException.Obj) and (InJump.JumpException.Pos <> nil) then
-        LapeExceptionRuntime(E, StackTrace, InJump.JumpException.Pos^)
+      if (FInJump.JumpException <> nil) and (E = FInJump.JumpException.Obj) and (FInJump.JumpException.Pos <> nil) then
+        LapeExceptionRuntime(E, StackTrace, FInJump.JumpException.Pos^)
       else
         LapeExceptionRuntime(E, StackTrace, NullDocPos);
     end;
   end;
+
+  FRunning := bFalse;
+end;
+
+procedure TLapeCodeRunner.Resume;
+begin
+  FRunning := bTrue;
+end;
+
+procedure TLapeCodeRunner.Pause;
+begin
+  FRunning := bUnknown;
+end;
+
+procedure TLapeCodeRunner.Stop;
+begin
+  FRunning := bFalse
 end;
 
 procedure RunCode(const Emitter: TLapeCodeEmitter; const InitialVarStack: TByteArray; const InitialJump: TCodePos);
-var
-  DoContinue: TInitBool;
 begin
-  DoContinue := bTrue;
-  RunCode(Emitter, DoContinue, InitialVarStack, InitialJump);
+  with TLapeCodeRunner.Create(Emitter) do
+  try
+    Run(InitialVarStack, InitialJump);
+  finally
+    Free();
+  end;
 end;
 
 end.

@@ -55,19 +55,19 @@ var
     end;
   end;
 
-  procedure _WriteLn(s: string); overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure _WriteLn(const s: string); overload;
   begin
     WriteLn('$', IntToHex(Code - CodeBase, 8), ' :: ', s);
   end;
 
-  procedure _WriteLn(s: string; args: array of const); overload;
+  procedure _WriteLn(const s: string; const Args: array of const); overload;
   begin
     _WriteLn(Format(s, args));
   end;
 
-  procedure DoCheckInternal; {$IFDEF Lape_Inline}inline;{$ENDIF}
+  procedure DoIsScriptMethod; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    _WriteLn('IsInternal');
+    _WriteLn('IsScriptMethod');
     _WriteLn('IncStack %d', [SizeOf(EvalBool) - SizeOf(Pointer)]);
     Inc(Code, ocSize);
   end;

@@ -12,11 +12,11 @@ object Form1: TForm1
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   Position = poScreenCenter
-  LCLVersion = '3.0.0.3'
+  LCLVersion = '3.4.0.0'
   inline e: TSynEdit
     Left = 0
-    Height = 667
-    Top = 47
+    Height = 672
+    Top = 42
     Width = 800
     Align = alClient
     Color = cl3DLight
@@ -544,35 +544,13 @@ object Form1: TForm1
         Command = emcStartDragMove
       end>
     Lines.Strings = (
-      'type'
-      '  TPoint = record'
-      '    x, y: Integer;'
-      '  end;'
-      '  TPointArray = array of TPoint;'
-      ''
-      'procedure test(a: ^Integer);'
+      'function LessThan(a,b: Integer): Boolean;'
       'begin'
-      '  WriteLn(a);'
+      '  Result := a<b;'
       'end;'
       ''
-      'procedure test(a: ^Integer); override;'
       'begin'
-      '  Write(''Dumping: '');'
-      '  inherited;'
-      'end;'
-      ''
-      'var'
-      '  tpa: TPointArray = [[1, 2], [3, 4]];'
-      '  i = 1;'
-      'begin'
-      '  WriteLn(''tpa: '', tpa + tpa[0]);'
-      ''
-      '  for i to Random(0, 2) do'
-      '    WriteLn(''hoi '', i)'
-      '  else'
-      '    WriteLn(''no hoi'');'
-      ''
-      '  test(@tpa[1].y);'
+      '  test(Pointer(natify(@LessThan)));'
       'end;'
     )
     Options = [eoAutoIndent, eoBracketHighlight, eoGroupUndo, eoHideRightMargin, eoScrollPastEol, eoTabIndent, eoTabsToSpaces, eoTrimTrailingSpaces]
@@ -703,12 +681,12 @@ object Form1: TForm1
   end
   object pnlTop: TPanel
     Left = 0
-    Height = 47
+    Height = 42
     Top = 0
     Width = 800
     Align = alTop
     AutoSize = True
-    ClientHeight = 47
+    ClientHeight = 42
     ClientWidth = 800
     Color = clForm
     ParentBackground = False
@@ -717,9 +695,9 @@ object Form1: TForm1
     TabOrder = 0
     object btnRun: TButton
       Left = 6
-      Height = 35
+      Height = 30
       Top = 6
-      Width = 57
+      Width = 51
       Align = alLeft
       AutoSize = True
       BorderSpacing.Around = 5
@@ -732,16 +710,28 @@ object Form1: TForm1
     object btnDisassemble: TButton
       AnchorSideLeft.Control = btnRun
       AnchorSideLeft.Side = asrBottom
-      Left = 68
-      Height = 35
+      Left = 62
+      Height = 30
       Top = 6
-      Width = 125
+      Width = 109
       AutoSize = True
       BorderSpacing.Around = 5
       Caption = 'Disassemble'
       ParentFont = False
       TabOrder = 1
       OnClick = btnDisassembleClick
+    end
+    object ButtonBench: TButton
+      Left = 695
+      Height = 30
+      Top = 6
+      Width = 99
+      Align = alRight
+      AutoSize = True
+      BorderSpacing.Around = 5
+      Caption = 'Benchmark'
+      TabOrder = 2
+      OnClick = ButtonBenchClick
     end
   end
   object PasSyn: TSynFreePascalSyn

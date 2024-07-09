@@ -13,6 +13,7 @@ type
   TForm1 = class(TForm)
     btnRun: TButton;
     btnDisassemble: TButton;
+    ButtonBench: TButton;
     e: TSynEdit;
     m: TMemo;
     pnlTop: TPanel;
@@ -21,6 +22,7 @@ type
 
     procedure btnDisassembleClick(Sender: TObject);
     procedure btnRunClick(Sender: TObject);
+    procedure ButtonBenchClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
@@ -71,6 +73,19 @@ begin
   WriteLn();
 end;
 
+// 1899ms
+procedure _LapeTest(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+type
+  TFunc = function(a,b: Int32): Boolean;
+var
+  p: TFunc;
+  i: Integer;
+begin
+  p := TFunc(Params^[0]^);
+  for i:=0 to 1000000 do
+    p(1,2);
+end;
+
 procedure Compile(Run, Disassemble: Boolean);
 var
   t: Double;
@@ -87,6 +102,8 @@ begin
 
     InitializeFFI(Compiler);
     InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
+
+    Compiler.addGlobalFunc('procedure Test(p: Pointer);', @_LapeTest);
 
     Compiler.addGlobalMethod('procedure _Write(s: string); override;', @MyWrite, Form1);
     Compiler.addGlobalMethod('procedure _WriteLn; override;', @MyWriteLn, Form1);
@@ -112,7 +129,15 @@ begin
       if Run then
       begin
         t := HighResolutionTime();
-        RunCode(Compiler.Emitter);
+
+        with TLapeCodeRunner.Create(Compiler.Emitter) do
+        try
+          Run();
+        finally
+          Free();
+        end;
+
+        //RunCode(Compiler.Emitter);
         m.Lines.Add('Running Time: ' + IntToStr(Round(HighResolutionTime - t)) + 'ms.');
       end;
     except
@@ -135,6 +160,14 @@ end;
 
 procedure TForm1.btnRunClick(Sender: TObject);
 begin
+  Compile(True, False);
+end;
+
+procedure TForm1.ButtonBenchClick(Sender: TObject);
+begin
+  e.Text := ReadFileToString('tests/bench.inc');
+  e.Update();
+
   Compile(True, False);
 end;
 

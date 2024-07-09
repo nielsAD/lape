@@ -9,7 +9,7 @@
 
 case opCodeP(Code)^ of
   ocNone: Break;
-  ocIsInternal: DoCheckInternal();
+  ocIsScriptMethod: DoIsScriptMethod();
   ocGetExceptionMessage: DoGetExceptionMessage();
   ocGetExceptionLocation: DoGetExceptionLocation();
   ocGetCallerLocation: DoGetCallerLocation();

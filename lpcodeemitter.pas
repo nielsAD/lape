@@ -110,8 +110,8 @@ type
     function _op(op: opCode; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _op(op: opCode; Pos: PDocPos = nil): Integer; overload;
 
-    function _IsInternal(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
-    function _IsInternal(Pos: PDocPos = nil): Integer; overload;
+    function _IsScriptMethod(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _IsScriptMethod(Pos: PDocPos = nil): Integer; overload;
     function _GetExceptionMessage(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _GetExceptionMessage(Pos: PDocPos = nil): Integer; overload;
     function _GetExceptionLocation(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
@@ -513,9 +513,9 @@ begin
   _DocPos(Pos, Offset);
 end;
 
-function TLapeCodeEmitterBase._IsInternal(var Offset: Integer; Pos: PDocPos = nil): Integer;
+function TLapeCodeEmitterBase._IsScriptMethod(var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
-  Result := _op(ocIsInternal, Offset, Pos);
+  Result := _op(ocIsScriptMethod, Offset, Pos);
   DecStack(SizeOf(Pointer) - SizeOf(EvalBool));
 end;
 
@@ -703,8 +703,8 @@ function TLapeCodeEmitterBase._DocPos(Pos: PDocPos): Integer;
   var o: Integer; begin o := -1; Result := _DocPos(Pos, o); end;
 function TLapeCodeEmitterBase._op(op: opCode; Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _op(op, o, Pos); end;
-function TLapeCodeEmitterBase._IsInternal(Pos: PDocPos = nil): Integer;
-  var o: Integer; begin o := -1; Result := _IsInternal(o, Pos); end;
+function TLapeCodeEmitterBase._IsScriptMethod(Pos: PDocPos = nil): Integer;
+  var o: Integer; begin o := -1; Result := _IsScriptMethod(o, Pos); end;
 function TLapeCodeEmitterBase._GetExceptionMessage(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _GetExceptionMessage(o, Pos); end;
 function TLapeCodeEmitterBase._GetExceptionLocation(Pos: PDocPos = nil): Integer;
