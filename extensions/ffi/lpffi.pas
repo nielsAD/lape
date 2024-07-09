@@ -134,7 +134,7 @@ procedure _Natify(const Params: PParamArray; const Result: Pointer); {$IFDEF Lap
     Assert(i >= 0);
     Assert(i <= Length(c));
     b := c[i];
-    Assert(b.UserData.Emitter <> nil);
+    Assert(b.UserData.CodeRunner <> nil);
     Assert(b.UserData.CodePos = nil);
 
     r := TExportClosure.Create(b.Cif, b.Callback);
@@ -161,7 +161,7 @@ procedure _NatifyMethod(const Params: PParamArray; const Result: Pointer); {$IFD
     Assert(i >= 0);
     Assert(i <= Length(c));
     b := c[i];
-    Assert(b.UserData.Emitter <> nil);
+    Assert(b.UserData.CodeRunner <> nil);
     Assert(b.UserData.CodePos = nil);
 
     r := TExportClosure.Create(b.Cif, b.Callback);

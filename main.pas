@@ -73,19 +73,6 @@ begin
   WriteLn();
 end;
 
-// 1899ms
-procedure _LapeTest(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-type
-  TFunc = function(a,b: Int32): Boolean;
-var
-  p: TFunc;
-  i: Integer;
-begin
-  p := TFunc(Params^[0]^);
-  for i:=0 to 1000000 do
-    p(1,2);
-end;
-
 procedure Compile(Run, Disassemble: Boolean);
 var
   t: Double;
@@ -102,8 +89,6 @@ begin
 
     InitializeFFI(Compiler);
     InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
-
-    Compiler.addGlobalFunc('procedure Test(p: Pointer);', @_LapeTest);
 
     Compiler.addGlobalMethod('procedure _Write(s: string); override;', @MyWrite, Form1);
     Compiler.addGlobalMethod('procedure _WriteLn; override;', @MyWriteLn, Form1);
@@ -137,7 +122,6 @@ begin
           Free();
         end;
 
-        //RunCode(Compiler.Emitter);
         m.Lines.Add('Running Time: ' + IntToStr(Round(HighResolutionTime - t)) + 'ms.');
       end;
     except

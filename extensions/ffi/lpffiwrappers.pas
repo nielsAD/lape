@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils, ffi,
-  lptypes, lpvartypes, lpcompiler;
+  lptypes, lpvartypes, lpcompiler, lpinterpreter;
 
 type
   TFFITypeManager = class;
@@ -147,7 +147,7 @@ type
 
   PExportClosureData = ^TExportClosureData;
   TExportClosureData = packed record
-    Emitter: TLapeCodeEmitter;
+    CodeRunner: TLapeCodeRunner;
     _CodePos: TCodePos;
     CodePos: PCodePos;
     NativeCif: TFFICifManager;
@@ -188,7 +188,7 @@ function _ParseMethodHeader(Compiler: TLapeCompiler; Header: lpString): TLapeTyp
 implementation
 
 uses
-  lpmessages, lpparser, lpeval, lpinterpreter_types, lpinterpreter, lpvartypes_array, lpvartypes_record, lpffi;
+  lpmessages, lpparser, lpeval, lpinterpreter_types, lpvartypes_array, lpvartypes_record, lpffi;
 
 const
   PowerTwoRegs = [SizeOf(UInt8), SizeOf(UInt16), SizeOf(UInt32), SizeOf(UInt64)];
@@ -942,6 +942,12 @@ begin
   Result := LapeHeaderToFFICif(_ParseMethodHeader(Compiler, Header), ABI);
 end;
 
+procedure FreeExportClosureData(const AData: TExportClosureData);
+begin
+  if (AData.CodeRunner <> nil) then
+    AData.CodeRunner.Free();
+end;
+
 procedure FreeImportClosureData(const AData: TImportClosureData);
 begin
   if (AData.NativeCif <> nil) and AData.FreeCif then
@@ -1032,7 +1038,7 @@ begin
         PPointer(@VarStack[b])^ := Res;
       end;
 
-    RunCode(Emitter, VarStack, CodePos^);
+    CodeRunner.Run(VarStack, CodePos^);
 
     if (NativeCif.Res <> nil) and ({$IFNDEF FPC}@{$ENDIF}ParamInfo[High(ParamInfo)].Eval <> nil) then
       ParamInfo[High(ParamInfo)].Eval(Res, @r, nil);
@@ -1046,8 +1052,18 @@ begin
   Assert(NativeCif <> nil);
 
   Result := TExportClosure.Create(NativeCif, @LapeExportBinder);
+  Result.FreeData := @FreeExportClosureData;
   try
-    Result.UserData.Emitter := Emitter;
+    Result.UserData.CodeRunner := TLapeCodeRunner.Create(Emitter);
+    with Result.UserData.CodeRunner do
+    begin
+      DefStackSize := 256 * SizeOf(Pointer);
+      DefVarStackSize := 128 * SizeOf(Pointer);
+      DefVarStackStackSize := 4;
+      DefTryStackSize := 8;
+      DefCallStackSize := 8;
+    end;
+
     Result.UserData.CodePos := Func;
     Result.UserData.NativeCif := NativeCif;
     Result.UserData.TotalParamSize := 0;
