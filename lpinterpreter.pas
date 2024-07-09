@@ -111,6 +111,11 @@ uses
 
 {$OverflowChecks Off}
 
+{$IFDEF Lape_InterpreterDebug}
+  {$DEFINE DEBUG}
+{$ELSE}
+  {$UNDEF DEBUG}
+{$ENDIF}
 const
   InEmptyJump: TInJump = (JumpException: nil; JumpSafe: nil);
 
@@ -243,6 +248,9 @@ var
   procedure ExpandVarStack(const Size: UInt32);
   begin
     Assert(FVarStackLen + Size > Length(FVarStack));
+    {$IFDEF DEBUG}
+    WriteLn('[ExpandVarStack] Size=', Size);
+    {$ENDIF}
 
     FVarStackStack[FVarStackIndex].Pos := FVarStackLen;
 
@@ -268,6 +276,9 @@ var
     OldLen: UInt32;
   begin
     Assert(FVarStackLen + Size > Length(FVarStack));
+    {$IFDEF DEBUG}
+    WriteLn('[GrowVarStack] Size=', Size);
+    {$ENDIF}
 
     if (FVarStackPos = 0) then
     begin
@@ -316,6 +327,9 @@ var
   var
     IsEndJump: Boolean;
   begin
+    {$IFDEF DEBUG}
+    WriteLn('[HandleSafeJump] FTryStackPos=', FTryStackPos);
+    {$ENDIF}
     IsEndJump := (CodeBase = PByte(PtrUInt(FInJump.JumpSafe) - EndJump));
 
     while (FTryStackPos > 0) and (IsEndJump or (FTryStack[FTryStackPos - 1].Jmp < FInJump.JumpSafe)) and (FTryStack[FTryStackPos - 1].JmpFinally = nil) do
@@ -338,6 +352,10 @@ var
 
   procedure PushToVar(const Size: TStackOffset); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
+    {$IFDEF DEBUG}
+    WriteLn('[PushToVar] Size=', Size);
+    {$ENDIF}
+
     // force inlining of:
     // if NeedMoreVarStack(Size) then
     //   ExpandVarStack(Size);
@@ -518,6 +536,10 @@ var
     InitStackSize: TStackOffset;
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    {$IFDEF DEBUG}
+    WriteLn('[DoInitStackLen] DoInitStackLen=', InitStackSize);
+    {$ENDIF}
+
     if (FStackPos + InitStackSize > UInt32(Length(FStack))) then
       SetLength(FStack, FStackPos + InitStackSize + FDefStackSize);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
@@ -528,6 +550,10 @@ var
     InitStackSize: TStackOffset;
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    {$IFDEF DEBUG}
+    WriteLn('[DoInitStack] InitStackSize=', InitStackSize);
+    {$ENDIF}
+
     Assert(InitStackSize > 0);
     if (FStackPos + InitStackSize > UInt32(Length(FStack))) then
       SetLength(FStack, FStackPos + InitStackSize + FDefStackSize);
@@ -540,6 +566,10 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    {$IFDEF DEBUG}
+    WriteLn('[DoGrowStack] GrowSize=', GrowSize);
+    {$ENDIF}
+
     Assert(GrowSize > 0);
     if (FStackPos + GrowSize > UInt32(Length(FStack))) then
       SetLength(FStack, FStackPos + GrowSize + FDefStackSize);
@@ -552,6 +582,10 @@ var
     ExpandSize: TStackOffset;
   begin
     ExpandSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    {$IFDEF DEBUG}
+    WriteLn('[DoExpandVar] ExpandSize=', ExpandSize);
+    {$ENDIF}
+
     Assert(ExpandSize > 0);
     if NeedMoreVarStack(ExpandSize) then
       ExpandVarStack(ExpandSize);
@@ -563,6 +597,10 @@ var
     ExpandSize: TStackOffset;
   begin
     ExpandSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    {$IFDEF DEBUG}
+    WriteLn('[DoExpandVarAndInit] ExpandSize=', ExpandSize);
+    {$ENDIF}
+
     Assert(ExpandSize > 0);
     if NeedMoreVarStack(ExpandSize) then
       ExpandVarStack(ExpandSize);
@@ -575,6 +613,10 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    {$IFDEF DEBUG}
+    WriteLn('[DoGrowVar] GrowSize=', GrowSize);
+    {$ENDIF}
+
     Assert(GrowSize > 0);
     if NeedMoreGrowVarStack(GrowSize) then
       GrowVarStack(GrowSize);
@@ -586,6 +628,10 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
+    {$IFDEF DEBUG}
+    WriteLn('[DoGrowVarAndInit] GrowSize=', GrowSize);
+    {$ENDIF}
+
     Assert(GrowSize > 0);
     if NeedMoreGrowVarStack(GrowSize) then
       GrowVarStack(GrowSize);
@@ -595,6 +641,10 @@ var
 
   procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
+    {$IFDEF DEBUG}
+    WriteLn('[DoPopVar] VarStackPos=', FVarStackPos, ' FVarStackIndex=', FVarStackIndex);
+    {$ENDIF}
+
     if (FVarStackPos = 0) and (FVarStackIndex > 0) then
     begin
       Dec(FVarStackIndex);
@@ -613,6 +663,10 @@ var
   begin
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
+      {$IFDEF DEBUG}
+      WriteLn('[DoPopStackToVar] FStackPos=', FStackPos, ' Size=', Size, ' FVarStackPos=', FVarStackPos, ' VOffset=', VOffset);
+      {$ENDIF}
+
       Assert(Size > 0);
       Dec(FStackPos, Size);
       Move(FStack[FStackPos], FVarStack[FVarStackPos + VOffset], Size);
@@ -624,6 +678,10 @@ var
   begin
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
+      {$IFDEF DEBUG}
+      WriteLn('[DoPopVarToStack] FVarStackPos=', FVarStackPos, ' VOffset=', VOffset, ' FStackPos=', FStackPos);
+      {$ENDIF}
+
       Assert(Size > 0);
       Move(FVarStack[FVarStackPos + VOffset], FStack[FStackPos], Size);
       FillChar(FVarStack[FVarStackPos + VOffset], Size, 0);
@@ -658,6 +716,10 @@ var
 
   procedure DoIncTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
+    {$IFDEF DEBUG}
+    WriteLn('[DoIncTry] FTryStackPos=', FTryStackPos);
+    {$ENDIF}
+
     if (FTryStackPos >= UInt32(Length(FTryStack))) then
       SetLength(FTryStack, FTryStackPos + FDefTryStackSize);
 
@@ -678,12 +740,20 @@ var
 
   procedure DoDecTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
+    {$IFDEF DEBUG}
+    WriteLn('[DoDecTry] FTryStackPos=', FTryStackPos);
+    {$ENDIF}
+
     Dec(FTryStackPos);
     Inc(Code, ocSize);
   end;
 
   procedure DoEndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
+    {$IFDEF DEBUG}
+    WriteLn('[DoEndTry]');
+    {$ENDIF}
+
     if (FInJump.JumpException <> nil) then
       HandleException()
     else if (FInJump.JumpSafe <> nil) then
@@ -701,6 +771,10 @@ var
 
     with FCallStack[FCallStackPos] do
     begin
+      {$IFDEF DEBUG}
+      WriteLn('[DoIncCall] FCallStackPos=', FCallStackPos, ' Address=', FEmitter.CodePointerName[Jmp], ' ParamSize=', ParamSize, ' StackPosOffset=', StackPosOffset);
+      {$ENDIF}
+
       Address := Jmp;
       CalledFrom := Code;
       JumpBack := PByte(PtrInt(Code) + ocSize + RecSize);
@@ -721,6 +795,10 @@ var
       Code := @opNone
     else
     begin
+      {$IFDEF DEBUG}
+      WriteLn('[DoDecCall] FCallStackPos=', FCallStackPos);
+      {$ENDIF}
+
       DoPopVar();
       Dec(FCallStackPos);
       with FCallStack[FCallStackPos] do
