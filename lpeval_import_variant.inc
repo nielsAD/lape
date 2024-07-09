@@ -45,20 +45,20 @@ addGlobalVar(VarByRef, 'VarByRef').isConstant := True;
 
 addGlobalFunc('function VarType(const V: Variant): TVarType;', @_LapeVarType);
 addGlobalFunc('function VarAsType(const V: Variant; aVarType: TVarType): Variant;', @_LapeVarAsType);
-addGlobalFunc('function VarIsByRef(const V: Variant): EvalBool;', @_LapeVarIsByRef);
-addGlobalFunc('function VarIsEmpty(const V: Variant): EvalBool;', @_LapeVarIsEmpty);
-addGlobalFunc('function VarIsNull(const V: Variant): EvalBool;', @_LapeVarIsNull);
-addGlobalFunc('function VarIsClear(const V: Variant): EvalBool;', @_LapeVarIsClear);
+addGlobalFunc('function VarIsByRef(const V: Variant): Boolean;', @_LapeVarIsByRef);
+addGlobalFunc('function VarIsEmpty(const V: Variant): Boolean;', @_LapeVarIsEmpty);
+addGlobalFunc('function VarIsNull(const V: Variant): Boolean;', @_LapeVarIsNull);
+addGlobalFunc('function VarIsClear(const V: Variant): Boolean;', @_LapeVarIsClear);
 
-addGlobalFunc('function VarIsError(const V: Variant; out AResult: HRESULT): EvalBool;', @_LapeVarIsError);
+addGlobalFunc('function VarIsError(const V: Variant; out AResult: HRESULT): Boolean;', @_LapeVarIsError);
 addGlobalFunc('function VarAsError(AResult: HRESULT): Variant;', @_LapeVarAsError);
 
-addGlobalFunc('function VarIsCustom(const V: Variant): EvalBool;', @_LapeVarIsCustom);
-addGlobalFunc('function VarIsOrdinal(const V: Variant): EvalBool;', @_LapeVarIsOrdinal);
-addGlobalFunc('function VarIsFloat(const V: Variant): EvalBool;', @_LapeVarIsFloat);
-addGlobalFunc('function VarIsNumeric(const V: Variant): EvalBool;', @_LapeVarIsNumeric);
-addGlobalFunc('function VarIsStr(const V: Variant): EvalBool;', @_LapeVarIsStr);
-addGlobalFunc('function VarIsArray(const A: Variant; AResolveByRef: EvalBool = True): EvalBool;', @_LapeVarIsArray);
+addGlobalFunc('function VarIsCustom(const V: Variant): Boolean;', @_LapeVarIsCustom);
+addGlobalFunc('function VarIsOrdinal(const V: Variant): Boolean;', @_LapeVarIsOrdinal);
+addGlobalFunc('function VarIsFloat(const V: Variant): Boolean;', @_LapeVarIsFloat);
+addGlobalFunc('function VarIsNumeric(const V: Variant): Boolean;', @_LapeVarIsNumeric);
+addGlobalFunc('function VarIsStr(const V: Variant): Boolean;', @_LapeVarIsStr);
+addGlobalFunc('function VarIsArray(const A: Variant; AResolveByRef: Boolean = True): Boolean;', @_LapeVarIsArray);
 
 addGlobalFunc('function VarToStr(const V: Variant): string; overload;', @_LapeVarToStr);
 addGlobalFunc('function VarToStr(const V: Variant; ADefault: string): string; overload;', @_LapeVarToStrDef);
@@ -69,13 +69,13 @@ addGlobalFunc('function VarToUnicodeStr(const V: Variant; ADefault: UnicodeStrin
 addGlobalFunc('function VarToDateTime(const V: Variant): TDateTime;', @_LapeVarToDateTime);
 addGlobalFunc('function VarFromDateTime(DateTime: TDateTime): Variant;', @_LapeVarFromDateTime);
 
-addGlobalFunc('function VarInRange(const AValue, AMin, AMax: Variant): EvalBool;', @_LapeVarInRange);
+addGlobalFunc('function VarInRange(const AValue, AMin, AMax: Variant): Boolean;', @_LapeVarInRange);
 addGlobalFunc('function VarEnsureRange(const AValue, AMin, AMax: Variant): Variant;', @_LapeVarEnsureRange);
-addGlobalFunc('function VarSameValue(const A, B: Variant): EvalBool;', @_LapeVarSameValue);
+addGlobalFunc('function VarSameValue(const A, B: Variant): Boolean;', @_LapeVarSameValue);
 addGlobalFunc('function VarCompareValue(const A, B: Variant): TVariantRelationship;', @_LapeVarCompareValue);
 
-addGlobalFunc('function VarTypeIsValidArrayType(aVarType: TVarType): EvalBool;', @_LapeVarTypeIsValidArrayType);
-addGlobalFunc('function VarTypeIsValidElementType(aVarType: TVarType): EvalBool;', @_LapeVarTypeIsValidElementType);
+addGlobalFunc('function VarTypeIsValidArrayType(aVarType: TVarType): Boolean;', @_LapeVarTypeIsValidArrayType);
+addGlobalFunc('function VarTypeIsValidElementType(aVarType: TVarType): Boolean;', @_LapeVarTypeIsValidElementType);
 
 addGlobalFunc('function VarArrayCreate(Bounds: array of SizeInt; aVarType: TVarType): Variant;', @_LapeVarArrayCreate);
 addGlobalFunc('function VarArrayOf(Values: array of Variant): Variant;', @_LapeVarArrayOf);

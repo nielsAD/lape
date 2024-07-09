@@ -258,10 +258,10 @@ end;
 
 procedure _LapeInRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := InRange(PInt64(Params^[0])^, PInt64(Params^[1])^, PInt64(Params^[2])^);
+  PBoolean(Result)^ := InRange(PInt64(Params^[0])^, PInt64(Params^[1])^, PInt64(Params^[2])^);
 end;
 
 procedure _LapeInRangeF(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := InRange(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^, PlpFloat(Params^[2])^);
+  PBoolean(Result)^ := InRange(PlpFloat(Params^[0])^, PlpFloat(Params^[1])^, PlpFloat(Params^[2])^);
 end;

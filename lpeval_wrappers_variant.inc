@@ -21,29 +21,29 @@ end;
 
 procedure _LapeVarIsByRef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsByRef(PVariant(Params^[0])^);
+  PBoolean(Result)^ := VarIsByRef(PVariant(Params^[0])^);
 end;
 
 procedure _LapeVarIsEmpty(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsEmpty(PVariant(Params^[0])^);
+  PBoolean(Result)^ := VarIsEmpty(PVariant(Params^[0])^);
 end;
 
 procedure _LapeVarIsNull(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsNull(PVariant(Params^[0])^);
+  PBoolean(Result)^ := VarIsNull(PVariant(Params^[0])^);
 end;
 
 procedure _LapeVarIsClear(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsClear(PVariant(Params^[0])^);
+  PBoolean(Result)^ := VarIsClear(PVariant(Params^[0])^);
 end;
 
 type
   PRESULT = ^HRESULT;
 procedure _LapeVarIsError(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsError(PVariant(Params^[0])^, PRESULT(Params^[1])^);
+  PBoolean(Result)^ := VarIsError(PVariant(Params^[0])^, PRESULT(Params^[1])^);
 end;
 
 procedure _LapeVarAsError(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -53,32 +53,32 @@ end;
 
 procedure _LapeVarIsCustom(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsCustom(PVariant(Params^[0])^);
+  PBoolean(Result)^ := VarIsCustom(PVariant(Params^[0])^);
 end;
 
 procedure _LapeVarIsOrdinal(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsOrdinal(PVariant(Params^[0])^);
+  PBoolean(Result)^ := VarIsOrdinal(PVariant(Params^[0])^);
 end;
 
 procedure _LapeVarIsFloat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsFloat(PVariant(Params^[0])^);
+  PBoolean(Result)^ := VarIsFloat(PVariant(Params^[0])^);
 end;
 
 procedure _LapeVarIsNumeric(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsNumeric(PVariant(Params^[0])^);
+  PBoolean(Result)^ := VarIsNumeric(PVariant(Params^[0])^);
 end;
 
 procedure _LapeVarIsStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsStr(PVariant(Params^[0])^);
+  PBoolean(Result)^ := VarIsStr(PVariant(Params^[0])^);
 end;
 
 procedure _LapeVarIsArray(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarIsArray(PVariant(Params^[0])^, PEvalBool(Params^[1])^);
+  PBoolean(Result)^ := VarIsArray(PVariant(Params^[0])^, PBoolean(Params^[1])^);
 end;
 
 procedure _LapeVarToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -123,7 +123,7 @@ end;
 
 procedure _LapeVarInRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarInRange(PVariant(Params^[0])^, PVariant(Params^[1])^, PVariant(Params^[2])^);
+  PBoolean(Result)^ := VarInRange(PVariant(Params^[0])^, PVariant(Params^[1])^, PVariant(Params^[2])^);
 end;
 
 procedure _LapeVarEnsureRange(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -133,7 +133,7 @@ end;
 
 procedure _LapeVarSameValue(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarSameValue(PVariant(Params^[0])^, PVariant(Params^[1])^);
+  PBoolean(Result)^ := VarSameValue(PVariant(Params^[0])^, PVariant(Params^[1])^);
 end;
 
 procedure _LapeVarCompareValue(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -147,12 +147,12 @@ type
 
 procedure _LapeVarTypeIsValidArrayType(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarTypeIsValidArrayType(PVarType(Params^[0])^);
+  PBoolean(Result)^ := VarTypeIsValidArrayType(PVarType(Params^[0])^);
 end;
 
 procedure _LapeVarTypeIsValidElementType(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := VarTypeIsValidElementType(PVarType(Params^[0])^);
+  PBoolean(Result)^ := VarTypeIsValidElementType(PVarType(Params^[0])^);
 end;
 
 procedure _LapeVarArrayCreate(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

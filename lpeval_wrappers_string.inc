@@ -59,7 +59,7 @@ end;
 
 procedure _LapeSameText(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := SameText(PlpString(Params^[0])^, PlpString(Params^[1])^);
+  PBoolean(Result)^ := SameText(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
 procedure _LapeAnsiUpperCase(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -84,12 +84,12 @@ end;
 
 procedure _LapeAnsiSameText(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := AnsiSameText(PlpString(Params^[0])^, PlpString(Params^[1])^);
+  PBoolean(Result)^ := AnsiSameText(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
 procedure _LapeAnsiSameStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := AnsiSameStr(PlpString(Params^[0])^, PlpString(Params^[1])^);
+  PBoolean(Result)^ := AnsiSameStr(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
 procedure _LapeWideUpperCase(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -114,12 +114,12 @@ end;
 
 procedure _LapeWideSameText(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := WideSameText(PWideString(Params^[0])^, PWideString(Params^[1])^);
+  PBoolean(Result)^ := WideSameText(PWideString(Params^[0])^, PWideString(Params^[1])^);
 end;
 
 procedure _LapeWideSameStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := WideSameStr(PWideString(Params^[0])^, PWideString(Params^[1])^);
+  PBoolean(Result)^ := WideSameStr(PWideString(Params^[0])^, PWideString(Params^[1])^);
 end;
 
 procedure _LapeWideFormat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -222,12 +222,12 @@ end;
 
 procedure _LapeStrToBool(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := StrToBool(string(PlpString(Params^[0])^));
+  PBoolean(Result)^ := StrToBool(string(PlpString(Params^[0])^));
 end;
 
 procedure _LapeBoolToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if PEvalBool(Params^[0])^ then
+  if PBoolean(Params^[0])^ then
     PlpString(Result)^ := PlpString(Params^[1])^
   else
     PlpString(Result)^ := PlpString(Params^[2])^;
@@ -235,7 +235,7 @@ end;
 
 procedure _LapeStrToBoolDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := StrToBoolDef(string(PlpString(Params^[0])^), PEvalBool(Params^[1])^);
+  PBoolean(Result)^ := StrToBoolDef(string(PlpString(Params^[0])^), PBoolean(Params^[1])^);
 end;
 
 procedure _LapeFormat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -282,7 +282,7 @@ end;
 
 procedure _LapeIsDelimiter(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := IsDelimiter(PlpString(Params^[0])^, PlpString(Params^[1])^, PSizeInt(Params^[2])^);
+  PBoolean(Result)^ := IsDelimiter(PlpString(Params^[0])^, PlpString(Params^[1])^, PSizeInt(Params^[2])^);
 end;
 
 procedure _LapePosA(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

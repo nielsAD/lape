@@ -1,0 +1,35 @@
+// `function InRange: Boolean` was doing PEvalBool(Result)^
+// 1 byte boolean vs 4 byte boolean, this random code trigged it.
+
+type
+  TPointArray = array of record x,y: Int32; end;
+
+procedure TryAndCrash;
+var i: Int32;
+var j: Byte;
+var Running: Boolean;
+var p: TPointArray;
+begin
+  Running := True;
+  while Running do
+  begin
+    for i:=0 to 100000 do
+    begin
+      j := i mod 255;
+      Running := not Running;
+      if InRange(i,0,50000) and InRange(i,0,50000) then
+      begin
+        p += [i,i];
+        if InRange(i, 0,10) then
+          WriteLn(Length(p));
+      end else
+        SetLength(p, Length(p) - 1);
+      Running := not Running;
+    end;
+    Running := False;
+  end;
+end;
+
+begin
+  TryAndCrash();
+end;

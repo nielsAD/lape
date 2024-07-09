@@ -247,7 +247,7 @@ end;
 
 procedure _LapeFreeLibrary(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := FreeLibrary(TLibHandle(Params^[0]^));
+  PBoolean(Result)^ := FreeLibrary(TLibHandle(Params^[0]^));
 end;
 
 type
@@ -418,7 +418,7 @@ begin
 
     Compiler.addGlobalFunc('function LoadLibrary(const Name: string): TLibHandle', @_LapeLoadLibrary);
     Compiler.addGlobalFunc('function GetProcAddress(Lib: TlibHandle; const ProcName: string): ConstPointer', @_LapeGetProcAddress);
-    Compiler.addGlobalFunc('function FreeLibrary(Lib: TLibHandle): EvalBool', @_LapeFreeLibrary);
+    Compiler.addGlobalFunc('function FreeLibrary(Lib: TLibHandle): Boolean', @_LapeFreeLibrary);
   end;
 
   if (fsiExternal in Initialize) then
