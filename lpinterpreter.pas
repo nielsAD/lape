@@ -116,6 +116,10 @@ uses
 
 {$OverflowChecks Off}
 
+{$IFDEF Lape_UseFPCTrunk_FillChar}
+  {$i extensions/fpctrunkfillchar.inc}
+{$ENDIF}
+
 const
   InEmptyJump: TInJump = (JumpException: nil; JumpSafe: nil);
 
