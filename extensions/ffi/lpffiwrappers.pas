@@ -1038,7 +1038,7 @@ begin
         PPointer(@VarStack[b])^ := Res;
       end;
 
-    CodeRunner.Run(VarStack, CodePos^);
+    CodeRunner.Run(CodePos^, VarStack);
 
     if (NativeCif.Res <> nil) and ({$IFNDEF FPC}@{$ENDIF}ParamInfo[High(ParamInfo)].Eval <> nil) then
       ParamInfo[High(ParamInfo)].Eval(Res, @r, nil);

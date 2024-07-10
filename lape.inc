@@ -15,7 +15,10 @@
 {.$DEFINE Lape_TrackObjects}             //Track all created classes with a list to check for leaks
 {.$DEFINE Lape_Unicode}                  //Use unicodestrings
 {.$DEFINE Lape_NoExtended}               //No extended type
-{.$DEFINE Lape_InterpreterDebug}         //WriteLn some info while running code
+
+{.$DEFINE Lape_InterpreterDebug_StackResize}
+{.$DEFINE Lape_InterpreterDebug_ScriptMethodInvokes}
+{.$DEFINE Lape_InterpreterDebug_StackUsage}
 
 {$IFDEF FPC}
   {$MODE objfpc}{$H+}

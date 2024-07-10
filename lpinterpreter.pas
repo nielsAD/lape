@@ -84,8 +84,9 @@ type
     function getStopped: Boolean;
   public
     constructor Create(Emitter: TLapeCodeEmitter); reintroduce;
+    destructor Destroy; override;
 
-    procedure Run(const InitialVarStack: TByteArray = nil; const InitialJump: TCodePos = 0);
+    procedure Run(const InitialJump: TCodePos = 0; const InitialVarStack: TByteArray = nil);
 
     procedure Resume;
     procedure Pause;
@@ -102,20 +103,19 @@ type
     property DefCallStackSize: SizeUInt read FDefCallStackSize write FDefCallStackSize;
   end;
 
-procedure RunCode(const Emitter: TLapeCodeEmitter; const InitialVarStack: TByteArray = nil; const InitialJump: TCodePos = 0); deprecated 'Use TLapeCodeRunner class';
+procedure RunCode(const Emitter: TLapeCodeEmitter; const InitialVarStack: TByteArray = nil; const InitialJump: TCodePos = 0);
 
 implementation
 
 uses
   lpmessages;
 
+{$IFDEF Lape_InterpreterDebug_ScriptMethodInvokes} {$DEFINE DEBUG_INVOKE}      {$ENDIF}
+{$IFDEF Lape_InterpreterDebug_StackResize}         {$DEFINE DEBUG_STACKRESIZE} {$ENDIF}
+{$IFDEF Lape_InterpreterDebug_StackUsage}          {$DEFINE DEBUG_STACKUSAGE}  {$ENDIF}
+
 {$OverflowChecks Off}
 
-{$IFDEF Lape_InterpreterDebug}
-  {$DEFINE DEBUG}
-{$ELSE}
-  {$UNDEF DEBUG}
-{$ENDIF}
 const
   InEmptyJump: TInJump = (JumpException: nil; JumpSafe: nil);
 
@@ -207,14 +207,42 @@ begin
 
   FEmitter := Emitter;
 
-  FDefStackSize         := 2048 * SizeOf(Pointer);
-  FDefVarStackSize      := 512 * SizeOf(Pointer);
-  FDefVarStackStackSize := 32;
-  FDefTryStackSize      := 512;
-  FDefCallStackSize     := 512;
+  FDefStackSize         := 1024*8;
+  FDefVarStackSize      := 1024*16;
+  FDefVarStackStackSize := 64;
+  FDefTryStackSize      := 128;
+  FDefCallStackSize     := 128;
 end;
 
-procedure TLapeCodeRunner.Run(const InitialVarStack: TByteArray; const InitialJump: TCodePos);
+destructor TLapeCodeRunner.Destroy;
+var
+  I: Integer;
+begin
+  inherited Destroy();
+
+  {$IFDEF DEBUG_STACKUSAGE}
+  for I := 0 to High(FCallStack) do
+    if FCallStack[I].Address = 0 then
+    begin
+      WriteLn('FCallStack MaxDepth=', I);
+      Break;
+    end;
+  for I := 0 to High(FTryStack) do
+    if FTryStack[I].Jmp = nil then
+    begin
+      WriteLn('FTryStack MaxDepth=', I);
+      Break;
+    end;
+
+  WriteLn('FStack Length=', Length(FStack));
+
+  for I := 0 to High(FVarStackStack) do
+    if (Length(FVarStackStack[I].FStack) > 0) then
+      WriteLn('FVarStackStack[',I,'] Length=', Length(FVarStackStack[I].FStack));
+  {$ENDIF}
+end;
+
+procedure TLapeCodeRunner.Run(const InitialJump: TCodePos; const InitialVarStack: TByteArray = nil);
 const
   opNone: opCode = ocNone;
 var
@@ -248,10 +276,6 @@ var
   procedure ExpandVarStack(const Size: UInt32);
   begin
     Assert(FVarStackLen + Size > Length(FVarStack));
-    {$IFDEF DEBUG}
-    WriteLn('[ExpandVarStack] Size=', Size);
-    {$ENDIF}
-
     FVarStackStack[FVarStackIndex].Pos := FVarStackLen;
 
     Inc(FVarStackIndex);
@@ -262,11 +286,17 @@ var
     FVarStackLen := Size;
     FVarStack := FVarStackStack[FVarStackIndex].FStack;
 
-    if (Size > FDefVarStackSize) then
-      SetLength(FVarStack, Size)
-    else
-    if (FVarStack = nil) then
-      SetLength(FVarStack, FDefVarStackSize);
+    {$IFDEF DEBUG_STACKRESIZE}
+    if (Size > Length(FVarStack)) then
+      WriteLn('[Resize]: ExpandVarStack Index=', FVarStackIndex, ' Need=', Size, ' Current=', Length(FVarStack));
+    {$ENDIF}
+
+    if (Size > Length(FVarStack)) then
+      if (Size > FDefVarStackSize) then
+        SetLength(FVarStack, Size)
+      else
+      if (FVarStack = nil) then
+        SetLength(FVarStack, FDefVarStackSize);
 
     FVarStackStack[FVarStackIndex].FStack := FVarStack;
   end;
@@ -276,9 +306,6 @@ var
     OldLen: UInt32;
   begin
     Assert(FVarStackLen + Size > Length(FVarStack));
-    {$IFDEF DEBUG}
-    WriteLn('[GrowVarStack] Size=', Size);
-    {$ENDIF}
 
     if (FVarStackPos = 0) then
     begin
@@ -327,9 +354,6 @@ var
   var
     IsEndJump: Boolean;
   begin
-    {$IFDEF DEBUG}
-    WriteLn('[HandleSafeJump] FTryStackPos=', FTryStackPos);
-    {$ENDIF}
     IsEndJump := (CodeBase = PByte(PtrUInt(FInJump.JumpSafe) - EndJump));
 
     while (FTryStackPos > 0) and (IsEndJump or (FTryStack[FTryStackPos - 1].Jmp < FInJump.JumpSafe)) and (FTryStack[FTryStackPos - 1].JmpFinally = nil) do
@@ -352,10 +376,6 @@ var
 
   procedure PushToVar(const Size: TStackOffset); {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    {$IFDEF DEBUG}
-    WriteLn('[PushToVar] Size=', Size);
-    {$ENDIF}
-
     // force inlining of:
     // if NeedMoreVarStack(Size) then
     //   ExpandVarStack(Size);
@@ -536,8 +556,9 @@ var
     InitStackSize: TStackOffset;
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    {$IFDEF DEBUG}
-    WriteLn('[DoInitStackLen] DoInitStackLen=', InitStackSize);
+    {$IFDEF DEBUG_STACKRESIZE}
+    if (FStackPos + InitStackSize > Length(FStack)) then
+      WriteLn('[Resize]: DoInitStackLen Need=', FStackPos + InitStackSize, 'Current=', Length(FStack));
     {$ENDIF}
 
     if (FStackPos + InitStackSize > UInt32(Length(FStack))) then
@@ -550,8 +571,9 @@ var
     InitStackSize: TStackOffset;
   begin
     InitStackSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    {$IFDEF DEBUG}
-    WriteLn('[DoInitStack] InitStackSize=', InitStackSize);
+    {$IFDEF DEBUG_STACKRESIZE}
+    if (FStackPos + InitStackSize > Length(FStack)) then
+      WriteLn('[Resize]: DoInitStack Need=', FStackPos + InitStackSize, 'Current=', Length(FStack));
     {$ENDIF}
 
     Assert(InitStackSize > 0);
@@ -566,8 +588,9 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    {$IFDEF DEBUG}
-    WriteLn('[DoGrowStack] GrowSize=', GrowSize);
+    {$IFDEF DEBUG_STACKRESIZE}
+    if (FStackPos + GrowSize > Length(FStack)) then
+      WriteLn('[Resize]: DoGrowStack Need=', FStackPos + GrowSize, 'Current=', Length(FStack));
     {$ENDIF}
 
     Assert(GrowSize > 0);
@@ -582,10 +605,6 @@ var
     ExpandSize: TStackOffset;
   begin
     ExpandSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    {$IFDEF DEBUG}
-    WriteLn('[DoExpandVar] ExpandSize=', ExpandSize);
-    {$ENDIF}
-
     Assert(ExpandSize > 0);
     if NeedMoreVarStack(ExpandSize) then
       ExpandVarStack(ExpandSize);
@@ -597,10 +616,6 @@ var
     ExpandSize: TStackOffset;
   begin
     ExpandSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    {$IFDEF DEBUG}
-    WriteLn('[DoExpandVarAndInit] ExpandSize=', ExpandSize);
-    {$ENDIF}
-
     Assert(ExpandSize > 0);
     if NeedMoreVarStack(ExpandSize) then
       ExpandVarStack(ExpandSize);
@@ -613,10 +628,6 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    {$IFDEF DEBUG}
-    WriteLn('[DoGrowVar] GrowSize=', GrowSize);
-    {$ENDIF}
-
     Assert(GrowSize > 0);
     if NeedMoreGrowVarStack(GrowSize) then
       GrowVarStack(GrowSize);
@@ -628,10 +639,6 @@ var
     GrowSize: TStackOffset;
   begin
     GrowSize := PStackOffset(PtrUInt(Code) + ocSize)^;
-    {$IFDEF DEBUG}
-    WriteLn('[DoGrowVarAndInit] GrowSize=', GrowSize);
-    {$ENDIF}
-
     Assert(GrowSize > 0);
     if NeedMoreGrowVarStack(GrowSize) then
       GrowVarStack(GrowSize);
@@ -641,10 +648,6 @@ var
 
   procedure DoPopVar; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    {$IFDEF DEBUG}
-    WriteLn('[DoPopVar] VarStackPos=', FVarStackPos, ' FVarStackIndex=', FVarStackIndex);
-    {$ENDIF}
-
     if (FVarStackPos = 0) and (FVarStackIndex > 0) then
     begin
       Dec(FVarStackIndex);
@@ -663,10 +666,6 @@ var
   begin
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
-      {$IFDEF DEBUG}
-      WriteLn('[DoPopStackToVar] FStackPos=', FStackPos, ' Size=', Size, ' FVarStackPos=', FVarStackPos, ' VOffset=', VOffset);
-      {$ENDIF}
-
       Assert(Size > 0);
       Dec(FStackPos, Size);
       Move(FStack[FStackPos], FVarStack[FVarStackPos + VOffset], Size);
@@ -678,10 +677,6 @@ var
   begin
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
-      {$IFDEF DEBUG}
-      WriteLn('[DoPopVarToStack] FVarStackPos=', FVarStackPos, ' VOffset=', VOffset, ' FStackPos=', FStackPos);
-      {$ENDIF}
-
       Assert(Size > 0);
       Move(FVarStack[FVarStackPos + VOffset], FStack[FStackPos], Size);
       FillChar(FVarStack[FVarStackPos + VOffset], Size, 0);
@@ -716,10 +711,6 @@ var
 
   procedure DoIncTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    {$IFDEF DEBUG}
-    WriteLn('[DoIncTry] FTryStackPos=', FTryStackPos);
-    {$ENDIF}
-
     if (FTryStackPos >= UInt32(Length(FTryStack))) then
       SetLength(FTryStack, FTryStackPos + FDefTryStackSize);
 
@@ -740,20 +731,12 @@ var
 
   procedure DoDecTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    {$IFDEF DEBUG}
-    WriteLn('[DoDecTry] FTryStackPos=', FTryStackPos);
-    {$ENDIF}
-
     Dec(FTryStackPos);
     Inc(Code, ocSize);
   end;
 
   procedure DoEndTry; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
-    {$IFDEF DEBUG}
-    WriteLn('[DoEndTry]');
-    {$ENDIF}
-
     if (FInJump.JumpException <> nil) then
       HandleException()
     else if (FInJump.JumpSafe <> nil) then
@@ -771,8 +754,8 @@ var
 
     with FCallStack[FCallStackPos] do
     begin
-      {$IFDEF DEBUG}
-      WriteLn('[DoIncCall] FCallStackPos=', FCallStackPos, ' Address=', FEmitter.CodePointerName[Jmp], ' ParamSize=', ParamSize, ' StackPosOffset=', StackPosOffset);
+      {$IFDEF DEBUG_INVOKE}
+      WriteLn('[INVOKE] Name=', FEmitter.CodePointerName[Jmp], ' Depth=', FCallStackPos);
       {$ENDIF}
 
       Address := Jmp;
@@ -795,10 +778,6 @@ var
       Code := @opNone
     else
     begin
-      {$IFDEF DEBUG}
-      WriteLn('[DoDecCall] FCallStackPos=', FCallStackPos);
-      {$ENDIF}
-
       DoPopVar();
       Dec(FCallStackPos);
       with FCallStack[FCallStackPos] do
@@ -867,13 +846,13 @@ begin
 
   FVarStack := FVarStackStack[0].FStack;
   FVarStackIndex := 0;
-  if (InitialVarStack <> nil) then
+  FVarStackLen := Length(InitialVarStack);
+  if (FVarStackLen > 0) then
   begin
-    if Length(FVarStack) < Length(InitialVarStack) then
-      SetLength(FVarStack, Length(InitialVarStack));
-    Move(InitialVarStack[0], FVarStack[0], Length(InitialVarStack) * SizeOf(Byte));
+    if (Length(FVarStack) < FVarStackLen) then
+      SetLength(FVarStack, FVarStackLen);
+    Move(InitialVarStack[0], FVarStack[0], FVarStackLen);
   end;
-  FVarStackLen := Length(FVarStack);
 
   PreviousException.Exists := False;
   PreviousException.Msg := '';
@@ -967,7 +946,7 @@ procedure RunCode(const Emitter: TLapeCodeEmitter; const InitialVarStack: TByteA
 begin
   with TLapeCodeRunner.Create(Emitter) do
   try
-    Run(InitialVarStack, InitialJump);
+    Run(InitialJump, InitialVarStack);
   finally
     Free();
   end;
