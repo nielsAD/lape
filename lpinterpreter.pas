@@ -31,7 +31,7 @@ type
   end;
 
   TVarStackStack = array of record
-    FStack: TByteArray;
+    Stack: TByteArray;
     Pos: UInt32;
   end;
 
@@ -116,8 +116,10 @@ uses
 
 {$OverflowChecks Off}
 
-{$IFDEF Lape_UseFPCTrunk_FillChar}
-  {$i extensions/fpctrunkfillchar.inc}
+{$IFDEF FPC}
+  {$IFDEF Lape_UseFPCTrunk_FillChar}
+    {$i extensions/fpctrunkfillchar.inc}
+  {$ENDIF}
 {$ENDIF}
 
 const
@@ -145,7 +147,7 @@ var
   i, Number: Integer;
   DocPos: PDocPos;
 begin
-  Result := 'FStack Trace:';
+  Result := 'Stack Trace:';
 
   if (Length(StackTraceInfo) = 0) then
     Result := Result + FormatLine(0, 'main', Pos)
@@ -219,8 +221,9 @@ begin
 end;
 
 destructor TLapeCodeRunner.Destroy;
-var
-  I: Integer;
+{$IFDEF DEBUG_STACKUSAGE}
+var I: Integer;
+{$ENDIF}
 begin
   inherited Destroy();
 
@@ -288,7 +291,7 @@ var
 
     FVarStackPos := 0;
     FVarStackLen := Size;
-    FVarStack := FVarStackStack[FVarStackIndex].FStack;
+    FVarStack := FVarStackStack[FVarStackIndex].Stack;
 
     {$IFDEF DEBUG_STACKRESIZE}
     if (Size > Length(FVarStack)) then
@@ -302,7 +305,7 @@ var
       if (FVarStack = nil) then
         SetLength(FVarStack, FDefVarStackSize);
 
-    FVarStackStack[FVarStackIndex].FStack := FVarStack;
+    FVarStackStack[FVarStackIndex].Stack := FVarStack;
   end;
 
   procedure GrowVarStack(const Size: UInt32);
@@ -315,7 +318,7 @@ var
     begin
       Inc(FVarStackLen, Size);
       SetLength(FVarStack, FVarStackLen);
-      FVarStackStack[FVarStackIndex].FStack := FVarStack;
+      FVarStackStack[FVarStackIndex].Stack := FVarStack;
     end
     else
     if (FVarStackLen = FVarStackPos) then
@@ -823,12 +826,12 @@ begin
     SetLength(FTryStack, FDefTryStackSize);
     SetLength(FCallStack, FDefCallStackSize);
     SetLength(FVarStackStack, FDefVarStackStackSize);
-    SetLength(FVarStackStack[0].FStack, FDefVarStackSize);
+    SetLength(FVarStackStack[0].Stack, FDefVarStackSize);
 
     FStacksAllocated := True;
   end;
 
-  FVarStack := FVarStackStack[0].FStack;
+  FVarStack := FVarStackStack[0].Stack;
   FVarStackIndex := 0;
   FVarStackLen := Length(InitialVarStack);
   if (FVarStackLen > 0) then
