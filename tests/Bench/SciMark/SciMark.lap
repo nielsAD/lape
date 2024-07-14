@@ -1,0 +1,82 @@
+{$rangechecks off}
+
+{$I tests/bench/SciMark/Constants.pas}
+{$I tests/bench/SciMark/Stopwatch.pas}
+{$I tests/bench/SciMark/Random.pas}
+{$I tests/bench/SciMark/FFT.pas}
+{$I tests/bench/SciMark/LU.pas}
+{$I tests/bench/SciMark/MonteCarlo.pas}
+{$I tests/bench/SciMark/SOR.pas}
+{$I tests/bench/SciMark/SparseCompRow.pas}
+{$I tests/bench/SciMark/Kernel.pas}
+
+const
+  MODE = 'large';
+
+var
+  FFT_N, SOR_N, Sparse_M, Sparse_Nz, LU_N: integer;
+  flops: array [0..5] of Double;
+  R: TRandom;
+begin
+  case Mode of
+    'small':
+      begin
+        FFT_N := FFT_SIZE;
+        SOR_N := SOR_SIZE;
+        Sparse_M := SPARSE_SIZE_M;
+        Sparse_Nz := SPARSE_SIZE_nz;
+        LU_N := LU_SIZE;
+      end;
+
+    'tiny':
+      begin
+        FFT_N := TINY_FFT_SIZE;
+        SOR_N := TINY_SOR_SIZE;
+        Sparse_M := TINY_SPARSE_SIZE_M;
+        Sparse_Nz := TINY_SPARSE_SIZE_nz;
+        LU_N := TINY_LU_SIZE;
+      end;
+
+    'large':
+      begin
+        FFT_N := LG_FFT_SIZE;
+        SOR_N := LG_SOR_SIZE;
+        Sparse_M := LG_SPARSE_SIZE_M;
+        Sparse_Nz := LG_SPARSE_SIZE_nz;
+        LU_N := LG_LU_SIZE;
+      end;
+
+    'huge':
+      begin
+        FFT_N := HG_FFT_SIZE;
+        SOR_N := HG_SOR_SIZE;
+        Sparse_M := HG_SPARSE_SIZE_M;
+        Sparse_Nz := HG_SPARSE_SIZE_nz;
+        LU_N := HG_LU_SIZE;
+      end;
+
+    else
+      raise 'Invalid mode';
+  end;
+
+  WriteLn('** -------------------------------------------------------------------- **');
+  WriteLn('** SciMark2 Numeric Benchmark for Lape |  http://math.nist.gov/scimark  **');
+  WriteLn('** -------------------------------------------------------------------- **');
+  R := new_Random_seed(RANDOM_SEED);
+
+  flops[1] := kernel_measureFFT(FFT_N, RESOLUTION_DEFAULT, R);
+  flops[2] := kernel_measureSOR(SOR_N, RESOLUTION_DEFAULT, R);
+  flops[3] := kernel_measureMonteCarlo(RESOLUTION_DEFAULT, R);
+  flops[4] := kernel_measureSparseMatMult(Sparse_M, Sparse_Nz, RESOLUTION_DEFAULT, R);
+  flops[5] := kernel_measureLU(LU_N, RESOLUTION_DEFAULT, R);
+
+  flops[0] := (flops[1] + flops[2] + flops[3] + flops[4] + flops[5]) / 5;
+  WriteLn('/---------------------------------------------------------------------- \');
+  WriteLn(Format('| Composite Score         MFlops: %8.3f',                [flops[0]]));
+  WriteLn(Format('| Fast Fourier Transform  MFlops: %8.3f  [N=%d]',        [flops[1], FFT_N]));
+  WriteLn(Format('| Succ. Over-Relaxation   MFlops: %8.3f  [%dx%d]',       [flops[2], SOR_N, SOR_N]));
+  WriteLn(Format('| Monte Carlo             MFlops: %8.3f',                [flops[3]]));
+  WriteLn(Format('| Sparse Matrix Mul.      MFlops: %8.3f  [N=%d, nz=%d]', [flops[4], SPARSE_SIZE_M, SPARSE_SIZE_nz]));
+  WriteLn(Format('| LU Factorization        MFlops: %8.3f  [M=%d, N=%d]',  [flops[5], LU_SIZE, LU_SIZE]));
+  WriteLn('\---------------------------------------------------------------------- /');
+end.

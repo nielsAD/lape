@@ -13,7 +13,8 @@ type
   TForm1 = class(TForm)
     btnRun: TButton;
     btnDisassemble: TButton;
-    ButtonBench: TButton;
+    btnBenchScimark: TButton;
+    btnBench: TButton;
     e: TSynEdit;
     m: TMemo;
     pnlTop: TPanel;
@@ -22,7 +23,7 @@ type
 
     procedure btnDisassembleClick(Sender: TObject);
     procedure btnRunClick(Sender: TObject);
-    procedure ButtonBenchClick(Sender: TObject);
+    procedure btnBenchClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
@@ -147,12 +148,12 @@ begin
   Compile(True, False);
 end;
 
-procedure TForm1.ButtonBenchClick(Sender: TObject);
+procedure TForm1.btnBenchClick(Sender: TObject);
 begin
-  e.Text := ReadFileToString('tests/bench.inc');
-  e.Update();
-
-  Compile(True, False);
+  if (Sender = btnBench) then
+    e.Text := ReadFileToString('tests/bench/Simple.lap')
+  else if (Sender = btnBenchScimark) then
+    e.Text := ReadFileToString('tests/bench/SciMark/SciMark.lap');
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);

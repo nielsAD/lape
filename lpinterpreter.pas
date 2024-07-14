@@ -330,7 +330,7 @@ var
       with FVarStackStack[FVarStackIndex - 1] do
       begin
         Dec(Pos, OldLen);
-        Move(FStack[Pos], FVarStack[0], OldLen);
+        Move(Stack[Pos], FVarStack[0], OldLen);
       end;
     end;
   end;
@@ -640,7 +640,7 @@ var
       Dec(FVarStackIndex);
       with FVarStackStack[FVarStackIndex] do
       begin
-        FVarStack := FStack;
+        FVarStack := Stack;
         FVarStackPos := Pos;
       end;
     end;
