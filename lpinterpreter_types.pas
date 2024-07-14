@@ -30,7 +30,6 @@ type
     ocGetCallerAddress,
     ocGetScriptMethodName,
     ocDumpCallStack,
-    ocDynArrayRangeCheck,
     ocInitStackLen,                                            //InitStackLen TStackOffset
     ocInitStack,                                               //InitStack TStackOffset
     ocGrowStack,                                               //GrowStack TStackOffset

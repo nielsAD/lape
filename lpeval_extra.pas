@@ -2,8 +2,10 @@
   Author: Niels A.D
   Project: Lape (https://github.com/nielsAD/lape)
   License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
+
+  Extra evalulation methods that do more than basic ops.
 }
-unit lpeval_pointerindex;
+unit lpeval_extra;
 
 {$I lape.inc}
 
@@ -16,17 +18,104 @@ uses
 const
   LapePointerIndexEvalSizes = [4, 8, 16, 24, 32];
 
+var
+  LapePointerIndexEvals: array[4..32] of array [LapeIntegerTypeRange] of TLapeEvalProc;
+  LapeDynArrayRangeCheckEvals: array[LapeIntegerTypeRange] of TLapeEvalProc;
+
+function getDynArrayRangeCheckEvalProc(IndexType: ELapeBaseType): TLapeEvalProc;
 function getPointerIndexEvalProc(Size: Integer; IndexType: ELapeBaseType): TLapeEvalProc;
 
 implementation
 
-var
-  LapePointerIndexEvals: array[4..32] of array [LapeIntegerTypeRange] of TLapeEvalProc;
+// note: in dynarray headers FPC stores high and Delphi stores length
+
+procedure lpeDynArrayRangeCheck_WithInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) or ((PInt8(Right)^ < 0) or (PInt8(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
+    if (PPointer(Left)^ <> nil) then
+      LapeExceptionFmt(lpeIndexOutOfRange, [PInt8(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
+    else
+      LapeExceptionFmt(lpeIndexOutOfRange, [PInt8(Right)^, 0, -1]);
+end;
+
+procedure lpeDynArrayRangeCheck_WithUInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) or (PUInt8(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
+    if (PPointer(Left)^ <> nil) then
+      LapeExceptionFmt(lpeIndexOutOfRange, [PUInt8(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
+    else
+      LapeExceptionFmt(lpeIndexOutOfRange, [PUInt8(Right)^, 0, -1]);
+end;
+
+procedure lpeDynArrayRangeCheck_WithInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) or ((PInt16(Right)^ < 0) or (PInt16(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
+    if (PPointer(Left)^ <> nil) then
+      LapeExceptionFmt(lpeIndexOutOfRange, [PInt16(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
+    else
+      LapeExceptionFmt(lpeIndexOutOfRange, [PInt16(Right)^, 0, -1]);
+end;
+
+procedure lpeDynArrayRangeCheck_WithUInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) or (PUInt16(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
+    if (PPointer(Left)^ <> nil) then
+      LapeExceptionFmt(lpeIndexOutOfRange, [PUInt16(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
+    else
+      LapeExceptionFmt(lpeIndexOutOfRange, [PUInt16(Right)^, 0, -1]);
+end;
+
+procedure lpeDynArrayRangeCheck_WithInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) or ((PInt32(Right)^ < 0) or (PInt32(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
+    if (PPointer(Left)^ <> nil) then
+      LapeExceptionFmt(lpeIndexOutOfRange, [PInt32(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
+    else
+      LapeExceptionFmt(lpeIndexOutOfRange, [PInt32(Right)^, 0, -1]);
+end;
+
+procedure lpeDynArrayRangeCheck_WithUInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) or (PUInt32(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
+    if (PPointer(Left)^ <> nil) then
+      LapeExceptionFmt(lpeIndexOutOfRange, [PUInt32(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
+    else
+      LapeExceptionFmt(lpeIndexOutOfRange, [PUInt32(Right)^, 0, -1]);
+end;
+
+procedure lpeDynArrayRangeCheck_WithInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) or ((PInt64(Right)^ < 0) or (PInt64(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
+    if (PPointer(Left)^ <> nil) then
+      LapeExceptionFmt(lpeIndexOutOfRange, [PInt64(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
+    else
+      LapeExceptionFmt(lpeIndexOutOfRange, [PInt64(Right)^, 0, -1]);
+end;
+
+procedure lpeDynArrayRangeCheck_WithUInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) or (PUInt64(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
+    if (PPointer(Left)^ <> nil) then
+      LapeExceptionFmt(lpeIndexOutOfRange, [PUInt64(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
+    else
+      LapeExceptionFmt(lpeIndexOutOfRange, [PUInt64(Right)^, 0, -1]);
+end;
+
+function getDynArrayRangeCheckEvalProc(IndexType: ELapeBaseType): TLapeEvalProc;
+begin
+  if (not (IndexType in LapeIntegerTypes)) then
+    LapeException(lpeImpossible);
+
+  Result := LapeDynArrayRangeCheckEvals[IndexType];
+  if (Result = nil) then
+    LapeException(lpeImpossible);
+end;
 
 function getPointerIndexEvalProc(Size: Integer; IndexType: ELapeBaseType): TLapeEvalProc;
 begin
   if (not (IndexType in LapeIntegerTypes)) then
     LapeException(lpeImpossible);
+
   Result := LapePointerIndexEvals[Size, IndexType];
   if (Result = nil) then
     LapeException(lpeImpossible);
@@ -237,8 +326,17 @@ begin
   PPointer(Dest)^ := PByte(PPointer(Left)^) + (PUInt64(Right)^ * 32);
 end;
 
-procedure LapeInitPointerIndexEvals;
+procedure LapeInitExtraEvals;
 begin
+  LapeDynArrayRangeCheckEvals[ltInt8]   := @lpeDynArrayRangeCheck_WithInt8;
+  LapeDynArrayRangeCheckEvals[ltUInt8]  := @lpeDynArrayRangeCheck_WithUInt8;
+  LapeDynArrayRangeCheckEvals[ltInt16]  := @lpeDynArrayRangeCheck_WithInt16;
+  LapeDynArrayRangeCheckEvals[ltUInt16] := @lpeDynArrayRangeCheck_WithUInt16;
+  LapeDynArrayRangeCheckEvals[ltInt32]  := @lpeDynArrayRangeCheck_WithInt32;
+  LapeDynArrayRangeCheckEvals[ltUInt32] := @lpeDynArrayRangeCheck_WithUInt32;
+  LapeDynArrayRangeCheckEvals[ltInt64]  := @lpeDynArrayRangeCheck_WithInt64;
+  LapeDynArrayRangeCheckEvals[ltUInt64] := @lpeDynArrayRangeCheck_WithUInt64;
+
   LapePointerIndexEvals[4, ltInt8]   := @lpePointerIndexBy4_WithInt8;
   LapePointerIndexEvals[4, ltUInt8]  := @lpePointerIndexBy4_WithUInt8;
   LapePointerIndexEvals[4, ltInt16]  := @lpePointerIndexBy4_WithInt16;
@@ -286,7 +384,7 @@ begin
 end;
 
 initialization
-  LapeInitPointerIndexEvals();
+  LapeInitExtraEvals();
 
 end.
 

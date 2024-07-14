@@ -784,7 +784,7 @@ implementation
 
 uses
   lpvartypes_ord, lpvartypes_array, lptree, lpinternalmethods,
-  lpmessages, lpeval, lpinterpreter_types, lpeval_pointerindex;
+  lpmessages, lpeval, lpinterpreter_types, lpeval_extra;
 
 function HasOperatorOverload(Compiler: TLapeCompilerBase; op: EOperator; LeftType, RightType: TLapeType; out Res: TLapeType): Boolean;
 var
