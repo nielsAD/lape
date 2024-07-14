@@ -784,7 +784,7 @@ implementation
 
 uses
   lpvartypes_ord, lpvartypes_array, lptree, lpinternalmethods,
-  lpmessages, lpeval, lpinterpreter_types;
+  lpmessages, lpeval, lpinterpreter_types, lpeval_extra;
 
 function HasOperatorOverload(Compiler: TLapeCompilerBase; op: EOperator; LeftType, RightType: TLapeType; out Res: TLapeType): Boolean;
 var
@@ -2356,7 +2356,7 @@ begin
       else
         FAsString := '^'+FPType.AsString
     else if FPConst then
-      FAsString := 'Const' + inherited;
+      FAsString := 'const' + inherited;
   Result := inherited;
 end;
 
@@ -2536,33 +2536,43 @@ begin
       Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
 
     IndexVar := Right;
-    if HasType() and (FPType.Size <> 1) then
-      if (Right.VarPos.MemPos = mpMem) and Right.Readable then
-        IndexVar := _ResVar.New(FCompiler.getConstant(Right.VarPos.GlobalVar.AsInteger * FPType.Size))
-      else
-        IndexVar :=
-          Right.VarType.Eval(
-            op_Multiply,
-            tmpVar,
-            Right,
-            _ResVar.New(FCompiler.getConstant(FPType.Size)),
-            [],
-            Offset,
-            Pos
-          );
 
-    Result := //Result := (Pointer + Index * PSize)
-      Eval(
-        op_Plus,
-        Dest,
-        Left,
-        IndexVar,
-        [],
-        Offset,
-        Pos
-      );
+    if HasType() and (PType.Size in LapePointerIndexEvalSizes) and (IndexVar.VarType.BaseIntType in LapeIntegerTypes) then
+    begin
+      Result := NullResVar;
+      Result.VarType := FCompiler.getPointerType(PType, PConst);
+      FCompiler.getDestVar(Dest, Result, op_Index);
+      FCompiler.Emitter._Eval(getPointerIndexEvalProc(PType.Size, IndexVar.VarType.BaseIntType), Result, Left, IndexVar, Offset, Pos);
+    end else
+    begin
+      if HasType() and (FPType.Size <> 1) then
+        if (Right.VarPos.MemPos = mpMem) and Right.Readable then
+          IndexVar := _ResVar.New(FCompiler.getConstant(Right.VarPos.GlobalVar.AsInteger * FPType.Size))
+        else
+          IndexVar :=
+            Right.VarType.Eval(
+              op_Multiply,
+              tmpVar,
+              Right,
+              _ResVar.New(FCompiler.getConstant(FPType.Size)),
+              [],
+              Offset,
+              Pos
+            );
 
-    IndexVar.Spill(1);
+      Result := //Result := (Pointer + Index * PSize)
+        Eval(
+          op_Plus,
+          Dest,
+          Left,
+          IndexVar,
+          [],
+          Offset,
+          Pos
+        );
+
+      IndexVar.Spill(1);
+    end;
     Result.setConstant(wasConstant, False);
   end
   else

@@ -115,7 +115,7 @@ type
 implementation
 
 uses
-  lpparser, lpeval, lpmessages, lpinternalmethods;
+  lpparser, lpeval, lpmessages, lpinternalmethods, lpeval_extra;
 
 function TLapeType_DynArray.getAsString: lpString;
 begin
@@ -451,23 +451,7 @@ begin
       FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset, @_DocPos);
     end;
 
-    TempVar := NullResVar;
-
-    DestVar := NullResVar;
-    DestVar.VarPos.MemPos := mpStack;
-    DestVar.VarType := FCompiler.getBaseType(ltPointer);
-
-    ArrayPtrVar := AVar;
-    ArrayPtrVar.VarType := FCompiler.getBaseType(ltPointer);
-
-    DestVar.VarType.Eval(op_Assign, TempVar, DestVar, ArrayPtrVar, [], Offset, @_DocPos);
-
-    DestVar := NullResVar;
-    DestVar.VarPos.MemPos := mpStack;
-    DestVar.VarType := FCompiler.getBaseType(ltSizeInt);
-    DestVar.VarType.Eval(op_Assign, TempVar, DestVar, AIndex, [], Offset, @_DocPos);
-
-    FCompiler.Emitter._DynArrayRangeCheck(Offset, @_DocPos);
+    FCompiler.Emitter._Eval(getDynArrayRangeCheckEvalProc(AIndex.VarType.BaseIntType), AVar, AVar, AIndex, Offset, Pos);
   end else
   begin
     AIndex.VarType := FCompiler.getBaseType(AIndex.VarType.BaseIntType);

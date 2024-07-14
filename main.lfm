@@ -1,7 +1,7 @@
 object Form1: TForm1
-  Left = -887
+  Left = -979
   Height = 900
-  Top = 404
+  Top = 222
   Width = 800
   Caption = 'Lape'
   ClientHeight = 900
@@ -743,17 +743,29 @@ object Form1: TForm1
       TabOrder = 1
       OnClick = btnDisassembleClick
     end
-    object ButtonBench: TButton
-      Left = 695
+    object btnBenchScimark: TButton
+      Left = 591
       Height = 30
       Top = 6
-      Width = 99
+      Width = 132
       Align = alRight
       AutoSize = True
       BorderSpacing.Around = 5
-      Caption = 'Benchmark'
+      Caption = 'Bench - Scimark'
       TabOrder = 2
-      OnClick = ButtonBenchClick
+      OnClick = btnBenchClick
+    end
+    object btnBench: TButton
+      Left = 728
+      Height = 30
+      Top = 6
+      Width = 66
+      Align = alRight
+      AutoSize = True
+      BorderSpacing.Around = 5
+      Caption = 'Bench'
+      TabOrder = 3
+      OnClick = btnBenchClick
     end
   end
   object PasSyn: TSynFreePascalSyn

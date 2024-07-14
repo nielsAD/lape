@@ -126,8 +126,6 @@ type
     function _DumpCallStack(Pos: PDocPos = nil): Integer; overload;
     function _ReRaiseException(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _ReRaiseException(Pos: PDocPos = nil): Integer; overload;
-    function _DynArrayRangeCheck(var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
-    function _DynArrayRangeCheck(Pos: PDocPos = nil): Integer; overload;
     function _InitStackLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
     function _InitStackLen(Len: TStackOffset; Pos: PDocPos = nil): Integer; overload;
     function _InitStack(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
@@ -560,12 +558,6 @@ begin
   Result := _op(ocReRaiseException, Offset, Pos);
 end;
 
-function TLapeCodeEmitterBase._DynArrayRangeCheck(var Offset: Integer; Pos: PDocPos = nil): Integer;
-begin
-  Result := _op(ocDynArrayRangeCheck, Offset, Pos);
-  IncStack(SizeOf(Pointer) + SizeOf(SizeInt));
-end;
-
 function TLapeCodeEmitterBase._InitStackLen(Len: TStackOffset; var Offset: Integer; Pos: PDocPos = nil): Integer;
 begin
   Result := _op(ocInitStackLen, Offset, Pos);
@@ -719,8 +711,6 @@ function TLapeCodeEmitterBase._DumpCallStack(Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _DumpCallStack(o, Pos); end;
 function TLapeCodeEmitterBase._ReRaiseException(Pos: PDocPos): Integer;
   var o: Integer; begin o := -1; Result := _ReRaiseException(o, Pos); end;
-function TLapeCodeEmitterBase._DynArrayRangeCheck(Pos: PDocPos = nil): Integer;
-  var o: Integer; begin o := -1; Result := _DynArrayRangeCheck(o, Pos); end;
 function TLapeCodeEmitterBase._InitStackLen(Len: TStackOffset; Pos: PDocPos = nil): Integer;
   var o: Integer; begin o := -1; Result := _InitStackLen(Len, o, Pos); end;
 function TLapeCodeEmitterBase._InitStack(Len: TStackOffset; Pos: PDocPos = nil): Integer;

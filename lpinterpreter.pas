@@ -31,7 +31,7 @@ type
   end;
 
   TVarStackStack = array of record
-    FStack: TByteArray;
+    Stack: TByteArray;
     Pos: UInt32;
   end;
 
@@ -116,8 +116,10 @@ uses
 
 {$OverflowChecks Off}
 
-{$IFDEF Lape_UseFPCTrunk_FillChar}
-  {$i extensions/fpctrunkfillchar.inc}
+{$IFDEF FPC}
+  {$IFDEF Lape_UseFPCTrunk_FillChar}
+    {$i extensions/fpctrunkfillchar.inc}
+  {$ENDIF}
 {$ENDIF}
 
 const
@@ -145,7 +147,7 @@ var
   i, Number: Integer;
   DocPos: PDocPos;
 begin
-  Result := 'FStack Trace:';
+  Result := 'Stack Trace:';
 
   if (Length(StackTraceInfo) = 0) then
     Result := Result + FormatLine(0, 'main', Pos)
@@ -219,8 +221,9 @@ begin
 end;
 
 destructor TLapeCodeRunner.Destroy;
-var
-  I: Integer;
+{$IFDEF DEBUG_STACKUSAGE}
+var I: Integer;
+{$ENDIF}
 begin
   inherited Destroy();
 
@@ -288,7 +291,7 @@ var
 
     FVarStackPos := 0;
     FVarStackLen := Size;
-    FVarStack := FVarStackStack[FVarStackIndex].FStack;
+    FVarStack := FVarStackStack[FVarStackIndex].Stack;
 
     {$IFDEF DEBUG_STACKRESIZE}
     if (Size > Length(FVarStack)) then
@@ -302,7 +305,7 @@ var
       if (FVarStack = nil) then
         SetLength(FVarStack, FDefVarStackSize);
 
-    FVarStackStack[FVarStackIndex].FStack := FVarStack;
+    FVarStackStack[FVarStackIndex].Stack := FVarStack;
   end;
 
   procedure GrowVarStack(const Size: UInt32);
@@ -315,7 +318,7 @@ var
     begin
       Inc(FVarStackLen, Size);
       SetLength(FVarStack, FVarStackLen);
-      FVarStackStack[FVarStackIndex].FStack := FVarStack;
+      FVarStackStack[FVarStackIndex].Stack := FVarStack;
     end
     else
     if (FVarStackLen = FVarStackPos) then
@@ -327,7 +330,7 @@ var
       with FVarStackStack[FVarStackIndex - 1] do
       begin
         Dec(Pos, OldLen);
-        Move(FStack[Pos], FVarStack[0], OldLen);
+        Move(Stack[Pos], FVarStack[0], OldLen);
       end;
     end;
   end;
@@ -535,26 +538,6 @@ var
     Inc(Code, ocSize);
   end;
 
-  procedure DoDynArrayRangeCheck; {$IFDEF Lape_Inline}inline;{$ENDIF}
-  var
-    Arr: Pointer;
-    Len, Index: SizeInt;
-  begin
-    Dec(FStackPos, SizeOf(Pointer) + SizeOf(SizeInt));
-    Inc(Code, ocSize);
-
-    Arr := PPointer(@FStack[FStackPos])^;
-    Index := PSizeInt(@FStack[FStackPos + SizeOf(SizeInt)])^;
-
-    if (Arr <> nil) then
-      Len := PSizeInt(Arr)[-1] {$IFDEF FPC}+1{$ENDIF}
-    else
-      Len := 0;
-
-    if (Index < 0) or (Index >= Len) then
-      LapeExceptionFmt(lpeIndexOutOfRange, [Index, 0, Len - 1]);
-  end;
-
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
   var
     InitStackSize: TStackOffset;
@@ -657,7 +640,7 @@ var
       Dec(FVarStackIndex);
       with FVarStackStack[FVarStackIndex] do
       begin
-        FVarStack := FStack;
+        FVarStack := Stack;
         FVarStackPos := Pos;
       end;
     end;
@@ -843,12 +826,12 @@ begin
     SetLength(FTryStack, FDefTryStackSize);
     SetLength(FCallStack, FDefCallStackSize);
     SetLength(FVarStackStack, FDefVarStackStackSize);
-    SetLength(FVarStackStack[0].FStack, FDefVarStackSize);
+    SetLength(FVarStackStack[0].Stack, FDefVarStackSize);
 
     FStacksAllocated := True;
   end;
 
-  FVarStack := FVarStackStack[0].FStack;
+  FVarStack := FVarStackStack[0].Stack;
   FVarStackIndex := 0;
   FVarStackLen := Length(InitialVarStack);
   if (FVarStackLen > 0) then
