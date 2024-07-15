@@ -642,23 +642,11 @@ begin
      begin
        WeightType := TLapeType_DynArray(AParams[0]).PType;
 
-       if (WeightType.BaseType in LapeIntegerTypes) then
-       begin
-         Result := CreateFunction(
-           'System.Sort(Self, Param0, Param1);',
-           VarType,
-           [FCompiler.getGlobalType('TIntegerArray'), FCompiler.getBaseType(ltEvalBool)]
-         );
-       end;
-
-       if (WeightType.BaseType in LapeRealTypes) then
-       begin
-         Result := CreateFunction(
-           'System.Sort(Self, Param0, Param1);',
-           VarType,
-           [FCompiler.addManagedType(TLapeType_DynArray.Create(WeightType, FCompiler)), FCompiler.getBaseType(ltEvalBool)]
-         );
-       end;
+       Result := CreateFunction(
+         'System.Sort(Self, Param0, Param1);',
+         VarType,
+         [FCompiler.addManagedType(TLapeType_DynArray.Create(WeightType, FCompiler)), FCompiler.getBaseType(ltEvalBool)]
+       );
      end;
   end;
 end;
@@ -700,25 +688,12 @@ begin
       begin
         WeightType := TLapeType_DynArray(AParams[0]).PType;
 
-        if (WeightType.BaseType in LapeIntegerTypes) then
-        begin
-          Result := CreateFunction(
-            'Result := System.Sorted(Self, Param0, Param1);',
-            VarType,
-            [FCompiler.getGlobalType('TIntegerArray'), FCompiler.getBaseType(ltEvalBool)],
-            ResType
-          );
-        end;
-
-        if (WeightType.BaseType in LapeRealTypes) then
-        begin
-          Result := CreateFunction(
+        Result := CreateFunction(
             'Result := System.Sorted(Self, Param0, Param1);',
             VarType,
             [FCompiler.addManagedType(TLapeType_DynArray.Create(WeightType, FCompiler)), FCompiler.getBaseType(ltEvalBool)],
             ResType
           );
-        end;
       end;
   end;
 end;

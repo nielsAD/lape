@@ -25,8 +25,15 @@ begin
   Arr.Sort(TDoubleArray([0.1, 0.2, 0.3, 0.4, 0.5]), False);
   Assert(ToString(Arr) = '[1, 2, 3, 4, 5]');
 
-  Arr.Sort();
+  Arr.Sort(TSingleArray([0.1, 0.2, 0.3, 0.4, 0.5]), False);
+  Assert(ToString(Arr) = '[5, 4, 3, 2, 1]');
+
+  Arr.Sort([High(Int64),High(Int64)-1,High(Int64)-2,High(Int64)-3,High(Int64)-4], True);
   Assert(ToString(Arr) = '[1, 2, 3, 4, 5]');
+
+  Arr += [-10000,10000];
+  Arr.Sort();
+  Assert(ToString(Arr) = '[-10000, 1, 2, 3, 4, 5, 10000]');
 end;
 
 procedure TestSorted;
@@ -37,7 +44,10 @@ begin
     ToString(Arr.Sorted(TIntegerArray([5,4,3,2,1]), True)) =
     ToString(Arr.Sorted(TDoubleArray([0.1,0.2,0.3,0.4,0.5]), False))
   );
+  // ensure untouched
+  Assert(ToString(Arr) = '[1, 2, 3, 4, 5]');
 
+  Assert(ToString(Arr.Sorted([High(Int64),High(Int64)-1,High(Int64)-2,High(Int64)-3,High(Int64)-4], True)) = '[5, 4, 3, 2, 1]');
   Assert(ToString(Arr.Sorted()) = '[1, 2, 3, 4, 5]');
 end;
 
