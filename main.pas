@@ -104,6 +104,8 @@ begin
       on E: Exception do
       begin
         m.Lines.Add('Compilation error: "' + E.Message + '"');
+        if (E is lpException) and (lpException(E).Hint <> '') then
+          m.Lines.Add(lpException(E).Hint);
         Exit;
       end;
     end;
