@@ -1787,7 +1787,7 @@ procedure TLapeTree_Invoke.CheckIdent(VarType: TLapeType; Pos: PDocPos);
 var
   i: Integer;
   Overloaded: TLapeType_OverloadedMethod;
-  Available: String;
+  Msg, Available: String;
 begin
   if (VarType is TLapeType_OverloadedMethod) then
   begin
@@ -1805,10 +1805,15 @@ begin
     end else
       Available := '';
 
-    if (Available <> '') then
-      LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], Pos^, Available)
+    if (Overloaded.MethodDef = mdProperty) then
+      Msg := lpeNoProperty
     else
-      LapeExceptionFmt(lpeNoOverloadedMethod, [getParamTypesStr()], Pos^);
+      Msg := lpeNoOverloadedMethod;
+
+    if (Available <> '') then
+      LapeExceptionFmt(Msg, [getParamTypesStr()], Pos^, Available)
+    else
+      LapeExceptionFmt(Msg, [getParamTypesStr()], Pos^);
   end
   else if (not (VarType is TLapeType_Method)) then
     LapeException(lpeCannotInvoke, Pos^);
@@ -2451,12 +2456,7 @@ begin
   Assert(RealIdent <> nil);
   Assert(RealIdent.resType() <> nil);
 
-  if (not (RealIdent.resType() is TLapeType_MethodOfObject)) or
-     ((FPropertyType = ptWrite) and (TLapeType_MethodOfObject(RealIdent.resType()).Res <> nil)) or
-     ((FPropertyType = ptRead)  and (TLapeType_MethodOfObject(RealIdent.resType()).Res = nil)) then
-    LapeException(lpeNoMatchingProperty, DocPos);
-
-  if (self.FPropertyType = ptWrite) and (FAssignOp in CompoundOperators) then
+  if (FPropertyType = ptWrite) and (FAssignOp in CompoundOperators) then
   begin
     OldValue := FParams[FParams.Count-1];
     FParams.Delete(FParams.Count-1);

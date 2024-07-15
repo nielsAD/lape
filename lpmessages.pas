@@ -105,6 +105,7 @@ const
   lpeNoDefaultForParam = 'No default value for parameter %d found';
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';
   lpeNoMatchingProperty = 'No matching property found';
+  lpeNoProperty = 'Don''t know which property to call with params (%s)';
   lpeNoOverloadedMethod = 'Don''t know which overloaded method to call with params (%s)';
   lpeNeedMoreBuckets = 'Need more hash buckets (currently %d)';
   lpeOperatorExpected = 'Operator expected';
