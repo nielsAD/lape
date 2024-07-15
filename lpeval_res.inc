@@ -2898,6 +2898,7 @@ Arr[op_Assign][ltVariant][ltShortString] := ltVariant;
 Arr[op_Assign][ltVariant][ltAnsiString] := ltVariant;
 Arr[op_Assign][ltVariant][ltWideString] := ltVariant;
 Arr[op_Assign][ltVariant][ltUnicodeString] := ltVariant;
+Arr[op_Assign][ltVariant][ltPointer] := ltVariant;
 
 //Boolean
 Arr[op_NOT][ltByteBool][ltUnknown] := ltByteBool;
@@ -3451,6 +3452,7 @@ Arr[op_cmp_LessThan][ltPointer][ltPointer] := ltEvalBool;
 Arr[op_cmp_LessThanOrEqual][ltPointer][ltPointer] := ltEvalBool;
 Arr[op_cmp_NotEqual][ltPointer][ltPointer] := ltEvalBool;
 Arr[op_Assign][ltPointer][ltPointer] := ltPointer;
+Arr[op_Assign][ltPointer][ltVariant] := ltPointer;
 
 Arr[op_Plus][ltPointer][ltUInt8] := ltPointer;
 Arr[op_Plus][ltPointer][ltInt8] := ltPointer;

@@ -2922,6 +2922,7 @@ Arr[op_Assign][ltVariant][ltShortString] := @lpeVariant_ASGN_SString;
 Arr[op_Assign][ltVariant][ltAnsiString] := @lpeVariant_ASGN_AString;
 Arr[op_Assign][ltVariant][ltWideString] := @lpeVariant_ASGN_WString;
 Arr[op_Assign][ltVariant][ltUnicodeString] := @lpeVariant_ASGN_UString;
+Arr[op_Assign][ltVariant][ltPointer] := @lpeVariant_ASGN_Pointer;
 
 //Boolean
 Arr[op_NOT][ltByteBool][ltUnknown] := @lpeBBool_NOT;
@@ -3478,6 +3479,7 @@ Arr[op_cmp_LessThan][ltPointer][ltPointer] := @lpePointer_LT_Pointer;
 Arr[op_cmp_LessThanOrEqual][ltPointer][ltPointer] := @lpePointer_LTEQ_Pointer;
 Arr[op_cmp_NotEqual][ltPointer][ltPointer] := @lpePointer_NEQ_Pointer;
 Arr[op_Assign][ltPointer][ltPointer] := @lpePointer_ASGN_Pointer;
+Arr[op_Assign][ltPointer][ltVariant] := @lpePointer_ASGN_Variant;
 
 Arr[op_Plus][ltPointer][ltUInt8] := @lpePointer_ADD_UInt8;
 Arr[op_Plus][ltPointer][ltInt8] := @lpePointer_ADD_Int8;

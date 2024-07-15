@@ -2921,6 +2921,8 @@ procedure lpeVariant_ASGN_SString(const Dest, Left, Right: Pointer); {$IFDEF Lap
 procedure lpeVariant_ASGN_AString(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PAnsiString(Left)^; end;
 procedure lpeVariant_ASGN_WString(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PWideString(Left)^; end;
 procedure lpeVariant_ASGN_UString(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PUnicodeString(Left)^; end;
+procedure lpeVariant_ASGN_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PVariant(Dest)^ := PPtrUInt(Left)^; end;
+
 
 //Boolean
 procedure lpeBBool_NOT(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PByteBool(Dest)^ := PByteBool(Left)^ = ByteBool(False); end;
@@ -3368,6 +3370,7 @@ procedure lpePointer_LT_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_
 procedure lpePointer_LTEQ_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PtrUInt(PPointer(Left)^) <= PtrUInt(PPointer(Right)^); end;
 procedure lpePointer_NEQ_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PPointer(Left)^ <> PPointer(Right)^; end;
 procedure lpePointer_ASGN_Pointer(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := PPointer(Left)^; end;
+procedure lpePointer_ASGN_Variant(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PVariant(Left)^)); end;
 
 procedure lpePointer_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrUInt(PPointer(Left)^) + PUInt8(Right)^); end;
 procedure lpePointer_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PPointer(Dest)^ := Pointer(PtrInt(PPointer(Left)^) + PInt8(Right)^); end;
