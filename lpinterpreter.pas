@@ -16,7 +16,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpvartypes, lpinterpreter_types;
+  lptypes, lpvartypes, lpinterpreter_types, lpinterpreter_debugevals;
 
 type
   TStackTraceInfo = array of record
@@ -79,6 +79,10 @@ type
 
     FStacksAllocated: Boolean;
 
+    {$IFDEF Lape_InterpreterDebug_EvalUsage}
+    FDebugEvals: TLapeDebugEvals;
+    {$ENDIF}
+
     function getRunning: Boolean;
     function getPaused: Boolean;
     function getStopped: Boolean;
@@ -113,6 +117,7 @@ uses
 {$IFDEF Lape_InterpreterDebug_ScriptMethodInvokes} {$DEFINE DEBUG_INVOKE}      {$ENDIF}
 {$IFDEF Lape_InterpreterDebug_StackResize}         {$DEFINE DEBUG_STACKRESIZE} {$ENDIF}
 {$IFDEF Lape_InterpreterDebug_StackUsage}          {$DEFINE DEBUG_STACKUSAGE}  {$ENDIF}
+{$IFDEF Lape_InterpreterDebug_EvalUsage}           {$DEFINE DEBUG_EVALUSAGE}   {$ENDIF}
 
 {$OverflowChecks Off}
 
@@ -218,6 +223,10 @@ begin
   FDefVarStackStackSize := 64;
   FDefTryStackSize      := 128;
   FDefCallStackSize     := 128;
+
+  {$IFDEF DEBUG_EVALUSAGE}
+  FDebugEvals := TLapeDebugEvals.Create();
+  {$ENDIF}
 end;
 
 destructor TLapeCodeRunner.Destroy;
@@ -246,6 +255,10 @@ begin
   for I := 0 to High(FVarStackStack) do
     if (Length(FVarStackStack[I].FStack) > 0) then
       WriteLn('FVarStackStack[',I,'] Length=', Length(FVarStackStack[I].FStack));
+  {$ENDIF}
+
+  {$IFDEF DEBUG_EVALUSAGE}
+  FDebugEvals.Free();
   {$ENDIF}
 end;
 
@@ -856,7 +869,15 @@ begin
     GoBack := False;
 
     try
-      while (FRunning = bTrue) do {$I lpinterpreter_opcodecase.inc}
+      while (FRunning = bTrue) do
+      begin
+        {$IFDEF DEBUG_EVALUSAGE}
+        if (opCodeP(Code)^ in [ocEval_PtrD_PtrL_PtrR..ocEval_PVarD_PStkL_PStkR]) then
+          FDebugEvals.Add(TLapeEvalProc(PPointer(PtrUInt(Code) + ocSize)^), opCodeP(Code)^);
+        {$ENDIF}
+
+        {$I lpinterpreter_opcodecase.inc}
+      end;
     except
       if (FInJump.JumpException = nil) or (ExceptObject <> FInJump.JumpException.Obj) then
       begin
