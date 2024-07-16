@@ -61,20 +61,20 @@ begin
         proc := getEvalProc(op, t1, t2);
         if ValidEvalFunction(proc) then
         begin
-          if (PtrUInt(Proc) < FLo) then FLo := PtrUInt(Proc);
-          if (PtrUInt(Proc) > FHi) then FHi := PtrUInt(Proc);
+          if (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) < FLo) then FLo := PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc);
+          if (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) > FHi) then FHi := PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc);
         end;
       end;
   end;
 
-  for i := 0 to High(LapePointerIndexEvals) do
+  for i := Low(LapePointerIndexEvals) to High(LapePointerIndexEvals) do
     for t1 in LapeIntegerTypeRange do
     begin
       proc := LapePointerIndexEvals[i][t1];
       if ValidEvalFunction(proc) then
       begin
-        if (PtrUInt(Proc) < FLo) then FLo := PtrUInt(Proc);
-        if (PtrUInt(Proc) > FHi) then FHi := PtrUInt(Proc);
+        if (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) < FLo) then FLo := PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc);
+        if (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) > FHi) then FHi := PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc);
       end;
     end;
 
@@ -83,8 +83,8 @@ begin
       proc := LapeDynArrayRangeCheckEvals[t1];
       if ValidEvalFunction(proc) then
       begin
-        if (PtrUInt(Proc) < FLo) then FLo := PtrUInt(Proc);
-        if (PtrUInt(Proc) > FHi) then FHi := PtrUInt(Proc);
+        if (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) < FLo) then FLo := PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc);
+        if (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) > FHi) then FHi := PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc);
       end;
     end;
 
@@ -109,24 +109,24 @@ begin
           else
             TheName := 'lpe'+string(LapeTypeToString(t1))+'_'+string(op_name[op]+'_'+LapeTypeToString(t2));
 
-          FNames[PtrUInt(Proc) - FLo] := TheName;
+          FNames[PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) - FLo] := TheName;
         end;
       end;
   end;
 
-  for i:=0 to High(LapePointerIndexEvals) do
+  for i := Low(LapePointerIndexEvals) to High(LapePointerIndexEvals) do
     for t1 in LapeIntegerTypeRange do
     begin
       proc := LapePointerIndexEvals[i][t1];
       if ValidEvalFunction(proc) then
-        FNames[PtrUInt(Proc) - FLo] := 'lpePointerIndexBy' + IntToStr(i) + '_With' + LapeTypeToString(t1);
+        FNames[PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) - FLo] := 'lpePointerIndexBy' + IntToStr(i) + '_With' + LapeTypeToString(t1);
     end;
 
     for t1 in LapeIntegerTypeRange do
     begin
       proc := LapeDynArrayRangeCheckEvals[t1];
       if ValidEvalFunction(proc) then
-        FNames[PtrUInt(Proc) - FLo] := 'lpeDynArrayRangeCheck_With' + LapeTypeToString(t1);
+        FNames[PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) - FLo] := 'lpeDynArrayRangeCheck_With' + LapeTypeToString(t1);
     end;
 end;
 
@@ -158,9 +158,12 @@ begin
       end;
     end;
 
-  {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int64>.QuickSort(@Lines[0], SizeOf(String), Length(Lines), Weights, False);
-  for i := 0 to High(Lines) do
-    WriteLn(Lines[i]);
+  if Length(Lines) > 0 then
+  begin
+    {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int64>.QuickSort(@Lines[0], SizeOf(String), Length(Lines), Weights, False);
+    for i := 0 to High(Lines) do
+      WriteLn(Lines[i]);
+  end;
 
   inherited Destroy();
 end;

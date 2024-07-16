@@ -84,7 +84,7 @@ begin
   Compiler := nil;
   with Form1 do
   try
-    Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND});
+    Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND}, 'main');
     Compiler := TLapeCompiler.Create(Parser);
     Compiler.OnHint := @WriteHint;
 

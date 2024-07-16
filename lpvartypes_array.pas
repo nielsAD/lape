@@ -384,7 +384,7 @@ begin
     Inc(Idx);
 
   Lo := VarLo(AVar.Ptr);
-  Hi := VarHi(Avar.Ptr);
+  Hi := VarHi(AVar.Ptr);
   if ((Lo <> nil) and (Idx < Lo.AsInteger)) or ((Hi <> nil) and (Idx > Hi.AsInteger)) then
     if (Lo <> nil) and (Hi <> nil) then
       LapeExceptionFmt(lpeIndexOutOfRange, [idx, Lo.AsInteger, Hi.AsInteger])
