@@ -196,7 +196,7 @@ end;
 
 procedure LapeExceptionReraise(e: lpException; DocPos: TDocPos);
 begin
-  raise lpException.Create(e.Message, DocPos, e.StackTrace, e.Hint);
+  raise lpException.Create(e.Error, DocPos, e.StackTrace, e.Hint);
 end;
 
 procedure LapeExceptionReraise(e: lpException; DocPos: array of TLapeBaseDeclClass);
@@ -214,7 +214,7 @@ begin
       Break;
     end;
 
-  raise lpException.Create(e.Message, NewDocPos, e.StackTrace, e.Hint);
+  raise lpException.Create(e.Error, NewDocPos, e.StackTrace, e.Hint);
 end;
 
 function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString;

@@ -1,28 +1,71 @@
 {$assertions on}
 
-type
-  TPoint = record X,Y:Integer; end;
-
+procedure Test_Int32;
 var
-  Stat: array[5..8] of TPoint;
-  Dyn: array of Integer;
+  arr: array of Int32 := [0,1,2,3,4,High(Int32)];
 begin
-  Stat := [[0,0],[1,1],[2,2],[3,3]];
-
-  Reverse(Stat);
-
-  Assert(ToString(Stat) = '[{X = 3, Y = 3}, {X = 2, Y = 2}, {X = 1, Y = 1}, {X = 0, Y = 0}]');
-  Assert(ToString(Reversed(Stat)) = '[{X = 0, Y = 0}, {X = 1, Y = 1}, {X = 2, Y = 2}, {X = 3, Y = 3}]');
-
-  Dyn += 0;
-  Dyn += 1;
-  Dyn += 2;
-  Dyn += 3;
-  Dyn += 4;
-  Dyn += 5;
-
-  Reverse(Dyn);
-
-  Assert(ToString(Dyn) = '[5, 4, 3, 2, 1, 0]');
-  Assert(ToString(Reversed(Dyn)) = '[0, 1, 2, 3, 4, 5]');
+  Assert(ToString(Reversed(arr)) = '[2147483647, 4, 3, 2, 1, 0]');
+  Reverse(arr);
+  Assert(ToString(arr) = '[2147483647, 4, 3, 2, 1, 0]');
 end;
+
+procedure Test_UInt32;
+var
+  arr: array of UInt32 := [0,1,2,3,4,High(UInt32)];
+begin
+  Assert(ToString(Reversed(arr)) = '[4294967295, 4, 3, 2, 1, 0]');
+  Reverse(arr);
+  Assert(ToString(arr) = '[4294967295, 4, 3, 2, 1, 0]');
+end;
+
+procedure Test_Int64;
+var
+  arr: array of Int64 := [0,1,2,3,4,High(Int64)];
+begin
+  Assert(ToString(Reversed(arr)) = '[9223372036854775807, 4, 3, 2, 1, 0]');
+  Reverse(arr);
+  Assert(ToString(arr) = '[9223372036854775807, 4, 3, 2, 1, 0]');
+end;
+
+procedure Test_UInt64;
+var
+  arr: array of UInt64 := [0,1,2,3,4,High(UInt64)];
+begin
+  Assert(ToString(Reversed(arr)) = '[18446744073709551615, 4, 3, 2, 1, 0]');
+  Reverse(arr);
+  Assert(ToString(arr) = '[18446744073709551615, 4, 3, 2, 1, 0]');
+end;
+
+procedure Test_Point;
+type
+  TPoint = record x,y: Int32; end;
+var
+  arr: array of TPoint;
+  statArr: array[100..103] of TPoint = [[1,1],[2,2],[3,3],[4,4]];
+begin
+  arr := [[1,1],[2,2],[3,3],[4,4]];
+  Assert(ToString(Reversed(arr)) = '[{X = 4, Y = 4}, {X = 3, Y = 3}, {X = 2, Y = 2}, {X = 1, Y = 1}]');
+  Assert(ToString(Reversed(statArr)) = '[{X = 4, Y = 4}, {X = 3, Y = 3}, {X = 2, Y = 2}, {X = 1, Y = 1}]');
+end;
+
+procedure Test_Vec;
+type
+  TVec = record x,y,z: Double; end;
+var
+  arr: array of TVec;
+  statArr: array[6..8] of TVec = [[1,2,3],[4,5,6],[7,8,9]];
+begin
+  arr := [[1,2,3],[4,5,6],[7,8,9]];
+  Assert(ToString(Reversed(arr)) = '[{X = 7, Y = 8, Z = 9}, {X = 4, Y = 5, Z = 6}, {X = 1, Y = 2, Z = 3}]');
+  Assert(ToString(Reversed(statArr)) = '[{X = 7, Y = 8, Z = 9}, {X = 4, Y = 5, Z = 6}, {X = 1, Y = 2, Z = 3}]');
+end;
+
+begin
+  Test_Int32();
+  Test_UInt32();
+  Test_Int64();
+  Test_UInt64();
+
+  Test_Point();
+  Test_Vec();
+end.

@@ -1,0 +1,82 @@
+{$assertions on}
+
+procedure Test_Int32;
+var
+  a: array of String := ['0','4','3','2','1'];
+  w: array of Int32  := [0,High(Int32),High(Int32)-1,2,1];
+begin
+  Assert(ToString(Sorted(a,w,True)) = '[0, 1, 2, 3, 4]');
+  Sort(a, w, True);
+  Assert(ToString(a) = '[0, 1, 2, 3, 4]');
+end;
+
+procedure Test_UInt32;
+var
+  a: array of String := ['0','4','3','2','1'];
+  w: array of UInt32  := [0,High(UInt32),High(UInt32)-1,2,1];
+begin
+  Assert(ToString(Sorted(a,w,True)) = '[0, 1, 2, 3, 4]');
+  Sort(a, w, True);
+  Assert(ToString(a) = '[0, 1, 2, 3, 4]');
+end;
+
+procedure Test_Int64;
+var
+  a: array of String := ['0','4','3','2','1'];
+  w: array of Int64  := [0,High(Int64),High(Int64)-1,2,1];
+begin
+  Assert(ToString(Sorted(a,w,True)) = '[0, 1, 2, 3, 4]');
+  Sort(a, w, True);
+  Assert(ToString(a) = '[0, 1, 2, 3, 4]');
+end;
+
+procedure Test_UInt64;
+var
+  a: array of String := ['0','4','3','2','1'];
+  w: array of UInt64  := [0,High(UInt64),High(UInt64)-1,2,1];
+begin
+  Assert(ToString(Sorted(a,w,True)) = '[0, 1, 2, 3, 4]');
+  Sort(a, w, True);
+  Assert(ToString(a) = '[0, 1, 2, 3, 4]');
+end;
+
+procedure Test_Single;
+var
+  a: array of String := ['0','4','3','2','1'];
+  w: array of Single := [0,999.9,888.8,2,1];
+begin
+  Assert(ToString(Sorted(a,w,True)) = '[0, 1, 2, 3, 4]');
+  Sort(a, w, True);
+  Assert(ToString(a) = '[0, 1, 2, 3, 4]');
+end;
+
+procedure Test_Double;
+var
+  a: array of String := ['0','4','3','2','1'];
+  w: array of Double := [0,999.9,888.8,2,1];
+begin
+  Assert(ToString(Sorted(a,w,True)) = '[0, 1, 2, 3, 4]');
+  Sort(a, w, True);
+  Assert(ToString(a) = '[0, 1, 2, 3, 4]');
+end;
+
+procedure Test_Extended;
+var
+  a: array of String := ['0','4','3','2','1'];
+  w: array of Extended := [0,999.9,888.8,2,1];
+begin
+  Assert(ToString(Sorted(a,w,True)) = '[0, 1, 2, 3, 4]');
+  Sort(a, w, True);
+  Assert(ToString(a) = '[0, 1, 2, 3, 4]');
+end;
+
+begin
+  Test_Int32();
+  Test_UInt32();
+  Test_Int64();
+  Test_UInt64();
+
+  Test_Single();
+  Test_Double();
+  Test_Extended();
+end.

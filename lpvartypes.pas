@@ -3903,7 +3903,7 @@ end;
 
 type
   EMyMemoryPos = (mmpNone, mmpPtr, mmpVar, mmpStk, mmpPVar, mmpPStk);
-function getMemoryPos(AVar: TVarPos): EMyMemoryPos; inline;
+function getMemoryPos(AVar: TVarPos): EMyMemoryPos; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   Result := mmpNone;
   case AVar.MemPos of

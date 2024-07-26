@@ -498,10 +498,12 @@ type
   end;
 
   {$IFDEF FPC}generic{$ENDIF} TLapeSorter<_T> = class
+  public type
+    TWeightArr = array of _T;
   protected
-    class procedure DoQuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: array of _T; iLo, iHi: SizeInt; const SortUp: Boolean);
+    class procedure DoQuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: TWeightArr; iLo, iHi: SizeInt; const SortUp: Boolean);
   public
-    class procedure QuickSort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: array of _T; const SortUp: Boolean);
+    class procedure QuickSort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TWeightArr; const SortUp: Boolean);
   end;
 
   TLapeDeclaration = class;
@@ -804,7 +806,7 @@ function LapeHash(Data: Pointer; Len: UInt32; const Seed: UInt32 = 0): UInt32; o
 function LapeHash(const Str: lpString): UInt32; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeTypeToString(Token: ELapeBaseType): lpString;
 function LapeOperatorToString(Token: EOperator): lpString;
-function LapeMethodDefToString(Value: EMethodDef): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function LapeMethodDefToString(Value: EMethodDef): lpString;
 
 function PointerToString(const p: Pointer): lpString;
 
@@ -830,13 +832,9 @@ procedure _Insert16(Arr: PUInt16; var Index: Integer);
 procedure _Insert32(Arr: PUInt32; var Index: Integer);
 procedure _Insert64(Arr: PUInt64; var Index: Integer);
 
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TIntegerArray; const SortUp: Boolean); overload;
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TInt64Array; const SortUp: Boolean); overload;
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TSingleArray; const SortUp: Boolean); overload;
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TDoubleArray; const SortUp: Boolean); overload;
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean); overload;
-
-procedure _Reverse(const Arr: PByte; const ElSize: SizeInt; Len: SizeInt);
+procedure _Reverse32(const Arr: PByte; const Len: SizeInt);
+procedure _Reverse64(const Arr: PByte; const Len: SizeInt);
+procedure _Reverse(const Arr: PByte; const ElSize, Len: SizeInt);
 
 {$IFDEF Lape_TrackObjects}
 var
@@ -975,8 +973,8 @@ begin
     vtUnicodeString: Result.VUnicodeString := TVarData(v).VUString;
     vtInt64:         Result.VInt64 := @TVarData(v).VInt64;
     {$IFDEF FPC}
-    vtChar:       Result.VChar := v;
-    vtWideChar:   Result.VWideChar := v;
+    vtChar:          Result.VChar := v;
+    vtWideChar:      Result.VWideChar := v;
     vtQWord:         Result.VQWord := @TVarData(v).VQWord;
     {$ENDIF}
     else VarCastError();
@@ -1262,7 +1260,7 @@ begin
   end;
 end;
 
-class procedure TLapeSorter{$IFNDEF FPC}<_T>{$ENDIF}.DoQuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: array of _T; iLo, iHi: SizeInt; const SortUp: Boolean);
+class procedure TLapeSorter{$IFNDEF FPC}<_T>{$ENDIF}.DoQuickSort(const Arr: PByte; const ElSize: SizeInt; var Weights: TWeightArr; iLo, iHi: SizeInt; const SortUp: Boolean);
 var
   Lo, Hi: SizeInt;
   Mid, T: _T;
@@ -1340,7 +1338,7 @@ begin
   FreeMem(Item);
 end;
 
-class procedure TLapeSorter{$IFNDEF FPC}<_T>{$ENDIF}.QuickSort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: array of _T; const SortUp: Boolean);
+class procedure TLapeSorter{$IFNDEF FPC}<_T>{$ENDIF}.QuickSort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TWeightArr; const SortUp: Boolean);
 begin
   if (Len <> Length(Weights)) then
     LapeExceptionFmt(lpeArrayLengthsDontMatch, [Format('%d,%d', [Len, Length(Weights)])]);
@@ -1349,54 +1347,76 @@ begin
     DoQuickSort(Arr, ElSize, Weights, Low(Weights), High(Weights), SortUp);
 end;
 
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TIntegerArray; const SortUp: Boolean);
-begin
-  {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Integer>.QuickSort(Arr, ElSize, Len, Weights, SortUp);
-end;
-
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TInt64Array; const SortUp: Boolean);
-begin
-  {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int64>.QuickSort(Arr, ElSize, Len, Weights, SortUp);
-end;
-
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TSingleArray; const SortUp: Boolean);
-begin
-  {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Single>.QuickSort(Arr, ElSize, Len, Weights, SortUp);
-end;
-
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TDoubleArray; const SortUp: Boolean);
-begin
-  {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Double>.QuickSort(Arr, ElSize, Len, Weights, SortUp);
-end;
-
-procedure _Sort(const Arr: PByte; const ElSize, Len: SizeInt; var Weights: TExtendedArray; const SortUp: Boolean);
-begin
-  {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Extended>.QuickSort(Arr, ElSize, Len, Weights, SortUp);
-end;
-
-procedure _Reverse(const Arr: PByte; const ElSize: SizeInt; Len: SizeInt);
+procedure _Reverse32(const Arr: PByte; const Len: SizeInt);
 var
-  T: PByte;
-  Lo, Hi: PByte;
+  Temp: Int32;
+  Lo, Hi: PInt32;
 begin
   if (Arr = nil) then
     Exit;
 
-  T := GetMemory(ElSize);
-
-  Lo := Arr;
-  Hi := Arr + (Len * ElSize);
+  Lo := PInt32(Arr);
+  Hi := PInt32(Arr + (Len * SizeOf(Int32)));
   while (PtrUInt(Lo) < PtrUInt(Hi)) do
   begin
-    Move(Hi^, T^, ElSize);
-    Move(Lo^, Hi^, ElSize);
-    Move(T^, Lo^, ElSize);
+    Temp := Hi^;
+    Hi^ := Lo^;
+    Lo^ := Temp;
 
-    Dec(Hi, ElSize);
-    Inc(Lo, ElSize);
+    Dec(Hi);
+    Inc(Lo);
   end;
+end;
 
-  FreeMem(T);
+procedure _Reverse64(const Arr: PByte; const Len: SizeInt);
+var
+  Temp: Int64;
+  Lo, Hi: PInt64;
+begin
+  if (Arr = nil) then
+    Exit;
+
+  Lo := PInt64(Arr);
+  Hi := PInt64(Arr + (Len * SizeOf(Int64)));
+  while (PtrUInt(Lo) < PtrUInt(Hi)) do
+  begin
+    Temp := Hi^;
+    Hi^ := Lo^;
+    Lo^ := Temp;
+
+    Dec(Hi);
+    Inc(Lo);
+  end;
+end;
+
+procedure _Reverse(const Arr: PByte; const ElSize, Len: SizeInt);
+var
+  T: PByte;
+  Lo, Hi: PByte;
+begin
+  if (Arr <> nil) then
+    case ElSize of
+      SizeOf(Int32): _Reverse32(Arr, Len);
+      SizeOf(Int64): _Reverse64(Arr, Len);
+      else
+      begin
+        T := GetMemory(ElSize);
+
+        Lo := Arr;
+        Hi := Arr + (Len * ElSize);
+        while (PtrUInt(Lo) < PtrUInt(Hi)) do
+        begin
+          Move(Hi^, T^, ElSize);
+          Move(Lo^, Hi^, ElSize);
+          Move(T^, Lo^, ElSize);
+
+          Dec(Hi, ElSize);
+          Inc(Lo, ElSize);
+        end;
+
+        FreeMem(T);
+      end;
+    end;
 end;
 
 function TLapeBaseClass._AddRef: Integer; {$IFDEF Interface_CDecl}cdecl{$ELSE}stdcall{$ENDIF};

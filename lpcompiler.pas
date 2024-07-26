@@ -949,7 +949,9 @@ begin
   addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: UnicodeString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeUStr_Insert);
 
   addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: EvalBool); overload;', @_LapeSortWeighted_Int32);
+  addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt32; SortUp: EvalBool); overload;', @_LapeSortWeighted_UInt32);
   addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int64; SortUp: EvalBool); overload;', @_LapeSortWeighted_Int64);
+  addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt64; SortUp: EvalBool); overload;', @_LapeSortWeighted_UInt64);
   addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Single; SortUp: EvalBool); overload;', @_LapeSortWeighted_Single);
   addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Double; SortUp: EvalBool); overload;', @_LapeSortWeighted_Double);
   {$IFNDEF Lape_NoExtended}
