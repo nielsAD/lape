@@ -649,45 +649,52 @@ begin
 end;
 
 procedure _LapeSortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+type
+  Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int32>;
 begin
-  with {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int32> do
-    QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeSortWeighted_UInt32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+type
+  Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<UInt32>;
 begin
-  with {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<UInt32> do
-    QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeSortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+type
+  Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int64>;
 begin
-  with {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int64> do
-    QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeSortWeighted_UInt64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+type
+  Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<UInt64>;
 begin
-  with {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<UInt64> do
-    QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeSortWeighted_Single(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+type
+  Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Single>;
 begin
-  with {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Single> do
-    QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeSortWeighted_Double(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+type
+  Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Double>;
 begin
-  with {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Double> do
-    QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeSortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+type
+  Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Extended>;
 begin
-  with {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Extended> do
-    QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
 procedure _LapeReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

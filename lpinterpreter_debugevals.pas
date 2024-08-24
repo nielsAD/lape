@@ -68,7 +68,7 @@ begin
   end;
 
   for i := Low(LapePointerIndexEvals) to High(LapePointerIndexEvals) do
-    for t1 in LapeIntegerTypeRange do
+    for t1 := Low(LapeIntegerTypeRange) to High(LapeIntegerTypeRange) do
     begin
       proc := LapePointerIndexEvals[i][t1];
       if ValidEvalFunction(proc) then
@@ -78,7 +78,7 @@ begin
       end;
     end;
 
-    for t1 in LapeIntegerTypeRange do
+    for t1 := Low(LapeIntegerTypeRange) to High(LapeIntegerTypeRange) do
     begin
       proc := LapeDynArrayRangeCheckEvals[t1];
       if ValidEvalFunction(proc) then
@@ -115,14 +115,14 @@ begin
   end;
 
   for i := Low(LapePointerIndexEvals) to High(LapePointerIndexEvals) do
-    for t1 in LapeIntegerTypeRange do
+    for t1 := Low(LapeIntegerTypeRange) to High(LapeIntegerTypeRange) do
     begin
       proc := LapePointerIndexEvals[i][t1];
       if ValidEvalFunction(proc) then
         FNames[PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) - FLo] := 'lpePointerIndexBy' + IntToStr(i) + '_With' + LapeTypeToString(t1);
     end;
 
-    for t1 in LapeIntegerTypeRange do
+    for t1 := Low(LapeIntegerTypeRange) to High(LapeIntegerTypeRange) do
     begin
       proc := LapeDynArrayRangeCheckEvals[t1];
       if ValidEvalFunction(proc) then
@@ -141,7 +141,7 @@ begin
   Lines := nil;
 
   for i := 0 to High(FHits) do
-    for op in opCode do
+    for op := Low(opCode) to High(opCode) do
     begin
       if FHits[i][op] > 0 then
       begin
@@ -150,8 +150,8 @@ begin
 
         Weights[High(Weights)] := FHits[I][op];
         Lines[High(Lines)] := Format('%s %s %d - %f%%', [
-          PadRight(FNames[i], 35),
-          PadRight(GetEnumName(TypeInfo(opCode), Ord(op)), 25),
+          {$IFDEF FPC}PadRight(FNames[i], 35){$ELSE}FNames[i]{$ENDIF},
+          {$IFDEF FPC}PadRight(GetEnumName(TypeInfo(opCode), Ord(op)), 25){$ELSE}GetEnumName(TypeInfo(opCode), Ord(op)){$ENDIF},
           FHits[i][op],
           FHits[i][op] / FTotalHits * 100
         ]);
@@ -160,7 +160,7 @@ begin
 
   if Length(Lines) > 0 then
   begin
-    {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int64>.QuickSort(@Lines[0], SizeOf(String), Length(Lines), Weights, False);
+    {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int64>.QuickSort(@Lines[0], SizeOf(String), Length(Lines), {$IFDEF FPC}specialize{$ENDIF}TLapeSorter<Int64>.TWeightArr(Weights), False);
     for i := 0 to High(Lines) do
       WriteLn(Lines[i]);
   end;
@@ -170,17 +170,17 @@ end;
 
 function TLapeDebugEvals.getName(Proc: TLapeEvalProc): lpString;
 begin
-  if (PtrUInt(Proc) >= FLo) and (PtrUInt(Proc) <= FHi) then
-    Result := FNames[PtrUInt(Proc) - FLo]
+  if (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) >= FLo) and (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) <= FHi) then
+    Result := FNames[PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) - FLo]
   else
-    Result := 'EvalProc(' + IntToHex(PtrUInt(Proc)) + ')';
+    Result := 'EvalProc(' + IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc)) + ')';
 end;
 
 procedure TLapeDebugEvals.Add(Proc: TLapeEvalProc; op: opCode);
 begin
-  if (PtrUInt(Proc) >= FLo) and (PtrUInt(Proc) <= FHi) then
+  if (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) >= FLo) and (PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) <= FHi) then
   begin
-    Inc(FHits[PtrUInt(Proc) - FLo][op]);
+    Inc(FHits[PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc) - FLo][op]);
     Inc(FTotalHits);
   end;
 end;

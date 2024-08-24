@@ -262,7 +262,7 @@ begin
   {$ENDIF}
 end;
 
-procedure TLapeCodeRunner.Run(const InitialJump: TCodePos; const InitialVarStack: TByteArray = nil);
+procedure TLapeCodeRunner.Run(const InitialJump: TCodePos = 0; const InitialVarStack: TByteArray = nil);
 const
   opNone: opCode = ocNone;
 var

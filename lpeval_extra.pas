@@ -31,7 +31,7 @@ implementation
 
 procedure lpeDynArrayRangeCheck_WithInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PPointer(Left)^ = nil) or ((PInt8(Right)^ < 0) or (PInt8(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
+  if (PPointer(Left)^ = nil) or ((PInt8(Right)^ < 0) or (PInt8(Right)^ {$IFDEF DELPHI}>={$ELSE}>{$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
     if (PPointer(Left)^ <> nil) then
       LapeExceptionFmt(lpeIndexOutOfRange, [PInt8(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
     else
@@ -40,7 +40,7 @@ end;
 
 procedure lpeDynArrayRangeCheck_WithUInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PPointer(Left)^ = nil) or (PUInt8(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
+  if (PPointer(Left)^ = nil) or (PUInt8(Right)^ {$IFDEF DELPHI}>={$ELSE}>{$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
     if (PPointer(Left)^ <> nil) then
       LapeExceptionFmt(lpeIndexOutOfRange, [PUInt8(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
     else
@@ -49,7 +49,7 @@ end;
 
 procedure lpeDynArrayRangeCheck_WithInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PPointer(Left)^ = nil) or ((PInt16(Right)^ < 0) or (PInt16(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
+  if (PPointer(Left)^ = nil) or ((PInt16(Right)^ < 0) or (PInt16(Right)^ {$IFDEF DELPHI}>={$ELSE}>{$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
     if (PPointer(Left)^ <> nil) then
       LapeExceptionFmt(lpeIndexOutOfRange, [PInt16(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
     else
@@ -58,7 +58,7 @@ end;
 
 procedure lpeDynArrayRangeCheck_WithUInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PPointer(Left)^ = nil) or (PUInt16(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
+  if (PPointer(Left)^ = nil) or (PUInt16(Right)^ {$IFDEF DELPHI}>={$ELSE}>{$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
     if (PPointer(Left)^ <> nil) then
       LapeExceptionFmt(lpeIndexOutOfRange, [PUInt16(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
     else
@@ -67,7 +67,7 @@ end;
 
 procedure lpeDynArrayRangeCheck_WithInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PPointer(Left)^ = nil) or ((PInt32(Right)^ < 0) or (PInt32(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
+  if (PPointer(Left)^ = nil) or ((PInt32(Right)^ < 0) or (PInt32(Right)^ {$IFDEF DELPHI}>={$ELSE}>{$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
     if (PPointer(Left)^ <> nil) then
       LapeExceptionFmt(lpeIndexOutOfRange, [PInt32(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
     else
@@ -76,7 +76,7 @@ end;
 
 procedure lpeDynArrayRangeCheck_WithUInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PPointer(Left)^ = nil) or (PUInt32(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
+  if (PPointer(Left)^ = nil) or (PUInt32(Right)^ {$IFDEF DELPHI}>={$ELSE}>{$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
     if (PPointer(Left)^ <> nil) then
       LapeExceptionFmt(lpeIndexOutOfRange, [PUInt32(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
     else
@@ -85,7 +85,7 @@ end;
 
 procedure lpeDynArrayRangeCheck_WithInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PPointer(Left)^ = nil) or ((PInt64(Right)^ < 0) or (PInt64(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
+  if (PPointer(Left)^ = nil) or ((PInt64(Right)^ < 0) or (PInt64(Right)^ {$IFDEF DELPHI}>={$ELSE}>{$ENDIF} PSizeInt(PPointer(Left)^)[-1])) then
     if (PPointer(Left)^ <> nil) then
       LapeExceptionFmt(lpeIndexOutOfRange, [PInt64(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
     else
@@ -94,7 +94,7 @@ end;
 
 procedure lpeDynArrayRangeCheck_WithUInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (PPointer(Left)^ = nil) or (PUInt64(Right)^ >{$IFDEF DELPHI}={$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
+  if (PPointer(Left)^ = nil) or (PUInt64(Right)^ {$IFDEF DELPHI}>={$ELSE}>{$ENDIF} PSizeInt(PPointer(Left)^)[-1]) then
     if (PPointer(Left)^ <> nil) then
       LapeExceptionFmt(lpeIndexOutOfRange, [PUInt64(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
     else
@@ -107,7 +107,7 @@ begin
     LapeException(lpeImpossible);
 
   Result := LapeDynArrayRangeCheckEvals[IndexType];
-  if (Result = nil) then
+  if ({$IFNDEF FPC}@{$ENDIF}Result = nil) then
     LapeException(lpeImpossible);
 end;
 
@@ -117,7 +117,7 @@ begin
     LapeException(lpeImpossible);
 
   Result := LapePointerIndexEvals[Size, IndexType];
-  if (Result = nil) then
+  if ({$IFNDEF FPC}@{$ENDIF}Result = nil) then
     LapeException(lpeImpossible);
 end;
 
