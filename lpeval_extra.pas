@@ -18,16 +18,41 @@ uses
 const
   LapePointerIndexEvalSizes = [4, 8, 16, 24, 32];
 
-var
-  LapePointerIndexEvals: array[4..32] of array [LapeIntegerTypeRange] of TLapeEvalProc;
-  LapeDynArrayRangeCheckEvals: array[LapeIntegerTypeRange] of TLapeEvalProc;
+function getEvalProc_StringLength: TLapeEvalProc;
+function getEvalProc_StringHigh: TLapeEvalProc;
+function getEvalProc_DynArrayLength: TLapeEvalProc;
+function getEvalProc_DynArrayHigh: TLapeEvalProc;
 
-function getDynArrayRangeCheckEvalProc(IndexType: ELapeBaseType): TLapeEvalProc;
-function getPointerIndexEvalProc(Size: Integer; IndexType: ELapeBaseType): TLapeEvalProc;
+function getEvalProc_DynArrayRangeCheck(IndexType: ELapeBaseType): TLapeEvalProc;
+function getEvalProc_PointerIndex(Size: Integer; IndexType: ELapeBaseType): TLapeEvalProc;
 
 implementation
 
-// note: in dynarray headers FPC stores high and Delphi stores length
+// Note: in dynarray headers FPC stores high and Delphi stores length
+
+procedure lpeStringLength(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) then
+    PSizeInt(Dest)^ := 0
+  else
+    PSizeInt(Dest)^ := PSizeInt(PPointer(Left)^)[-1];
+end;
+
+procedure lpeDynArrayLength(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) then
+    PSizeInt(Dest)^ := 0
+  else
+    PSizeInt(Dest)^ := PSizeInt(PPointer(Left)^)[-1] {$IFDEF FPC}+1{$ENDIF};
+end;
+
+procedure lpeDynArrayHigh(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (PPointer(Left)^ = nil) then
+    PSizeInt(Dest)^ := -1
+  else
+    PSizeInt(Dest)^ := PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF};
+end;
 
 procedure lpeDynArrayRangeCheck_WithInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
@@ -99,26 +124,6 @@ begin
       LapeExceptionFmt(lpeIndexOutOfRange, [PUInt64(Right)^, 0, PSizeInt(PPointer(Left)^)[-1] {$IFDEF DELPHI}-1{$ENDIF}])
     else
       LapeExceptionFmt(lpeIndexOutOfRange, [PUInt64(Right)^, 0, -1]);
-end;
-
-function getDynArrayRangeCheckEvalProc(IndexType: ELapeBaseType): TLapeEvalProc;
-begin
-  if (not (IndexType in LapeIntegerTypes)) then
-    LapeException(lpeImpossible);
-
-  Result := LapeDynArrayRangeCheckEvals[IndexType];
-  if ({$IFNDEF FPC}@{$ENDIF}Result = nil) then
-    LapeException(lpeImpossible);
-end;
-
-function getPointerIndexEvalProc(Size: Integer; IndexType: ELapeBaseType): TLapeEvalProc;
-begin
-  if (not (IndexType in LapeIntegerTypes)) then
-    LapeException(lpeImpossible);
-
-  Result := LapePointerIndexEvals[Size, IndexType];
-  if ({$IFNDEF FPC}@{$ENDIF}Result = nil) then
-    LapeException(lpeImpossible);
 end;
 
 // index by 4
@@ -326,65 +331,111 @@ begin
   PPointer(Dest)^ := PByte(PPointer(Left)^) + (PUInt64(Right)^ * 32);
 end;
 
-procedure LapeInitExtraEvals;
+function getEvalProc_StringLength: TLapeEvalProc;
 begin
-  LapeDynArrayRangeCheckEvals[ltInt8]   := @lpeDynArrayRangeCheck_WithInt8;
-  LapeDynArrayRangeCheckEvals[ltUInt8]  := @lpeDynArrayRangeCheck_WithUInt8;
-  LapeDynArrayRangeCheckEvals[ltInt16]  := @lpeDynArrayRangeCheck_WithInt16;
-  LapeDynArrayRangeCheckEvals[ltUInt16] := @lpeDynArrayRangeCheck_WithUInt16;
-  LapeDynArrayRangeCheckEvals[ltInt32]  := @lpeDynArrayRangeCheck_WithInt32;
-  LapeDynArrayRangeCheckEvals[ltUInt32] := @lpeDynArrayRangeCheck_WithUInt32;
-  LapeDynArrayRangeCheckEvals[ltInt64]  := @lpeDynArrayRangeCheck_WithInt64;
-  LapeDynArrayRangeCheckEvals[ltUInt64] := @lpeDynArrayRangeCheck_WithUInt64;
-
-  LapePointerIndexEvals[4, ltInt8]   := @lpePointerIndexBy4_WithInt8;
-  LapePointerIndexEvals[4, ltUInt8]  := @lpePointerIndexBy4_WithUInt8;
-  LapePointerIndexEvals[4, ltInt16]  := @lpePointerIndexBy4_WithInt16;
-  LapePointerIndexEvals[4, ltUInt16] := @lpePointerIndexBy4_WithUInt16;
-  LapePointerIndexEvals[4, ltInt32]  := @lpePointerIndexBy4_WithInt32;
-  LapePointerIndexEvals[4, ltUInt32] := @lpePointerIndexBy4_WithUInt32;
-  LapePointerIndexEvals[4, ltInt64]  := @lpePointerIndexBy4_WithInt64;
-  LapePointerIndexEvals[4, ltUInt64] := @lpePointerIndexBy4_WithUInt64;
-
-  LapePointerIndexEvals[8, ltInt8]   := @lpePointerIndexBy8_WithInt8;
-  LapePointerIndexEvals[8, ltUInt8]  := @lpePointerIndexBy8_WithUInt8;
-  LapePointerIndexEvals[8, ltInt16]  := @lpePointerIndexBy8_WithInt16;
-  LapePointerIndexEvals[8, ltUInt16] := @lpePointerIndexBy8_WithUInt16;
-  LapePointerIndexEvals[8, ltInt32]  := @lpePointerIndexBy8_WithInt32;
-  LapePointerIndexEvals[8, ltUInt32] := @lpePointerIndexBy8_WithUInt32;
-  LapePointerIndexEvals[8, ltInt64]  := @lpePointerIndexBy8_WithInt64;
-  LapePointerIndexEvals[8, ltUInt64] := @lpePointerIndexBy8_WithUInt64;
-
-  LapePointerIndexEvals[16, ltInt8]   := @lpePointerIndexBy16_WithInt8;
-  LapePointerIndexEvals[16, ltUInt8]  := @lpePointerIndexBy16_WithUInt8;
-  LapePointerIndexEvals[16, ltInt16]  := @lpePointerIndexBy16_WithInt16;
-  LapePointerIndexEvals[16, ltUInt16] := @lpePointerIndexBy16_WithUInt16;
-  LapePointerIndexEvals[16, ltInt32]  := @lpePointerIndexBy16_WithInt32;
-  LapePointerIndexEvals[16, ltUInt32] := @lpePointerIndexBy16_WithUInt32;
-  LapePointerIndexEvals[16, ltInt64]  := @lpePointerIndexBy16_WithInt64;
-  LapePointerIndexEvals[16, ltUInt64] := @lpePointerIndexBy16_WithUInt64;
-
-  LapePointerIndexEvals[24, ltInt8]   := @lpePointerIndexBy24_WithInt8;
-  LapePointerIndexEvals[24, ltUInt8]  := @lpePointerIndexBy24_WithUInt8;
-  LapePointerIndexEvals[24, ltInt16]  := @lpePointerIndexBy24_WithInt16;
-  LapePointerIndexEvals[24, ltUInt16] := @lpePointerIndexBy24_WithUInt16;
-  LapePointerIndexEvals[24, ltInt32]  := @lpePointerIndexBy24_WithInt32;
-  LapePointerIndexEvals[24, ltUInt32] := @lpePointerIndexBy24_WithUInt32;
-  LapePointerIndexEvals[24, ltInt64]  := @lpePointerIndexBy24_WithInt64;
-  LapePointerIndexEvals[24, ltUInt64] := @lpePointerIndexBy24_WithUInt64;
-
-  LapePointerIndexEvals[32, ltInt8]   := @lpePointerIndexBy32_WithInt8;
-  LapePointerIndexEvals[32, ltUInt8]  := @lpePointerIndexBy32_WithUInt8;
-  LapePointerIndexEvals[32, ltInt16]  := @lpePointerIndexBy32_WithInt16;
-  LapePointerIndexEvals[32, ltUInt16] := @lpePointerIndexBy32_WithUInt16;
-  LapePointerIndexEvals[32, ltInt32]  := @lpePointerIndexBy32_WithInt32;
-  LapePointerIndexEvals[32, ltUInt32] := @lpePointerIndexBy32_WithUInt32;
-  LapePointerIndexEvals[32, ltInt64]  := @lpePointerIndexBy32_WithInt64;
-  LapePointerIndexEvals[32, ltUInt64] := @lpePointerIndexBy32_WithUInt64;
+  Result := @lpeStringLength;
 end;
 
-initialization
-  LapeInitExtraEvals();
+function getEvalProc_StringHigh: TLapeEvalProc; // Same as Length for a string
+begin
+  Result := @lpeStringLength;
+end;
+
+function getEvalProc_DynArrayLength: TLapeEvalProc;
+begin
+  Result := @lpeDynArrayLength;
+end;
+
+function getEvalProc_DynArrayHigh: TLapeEvalProc;
+begin
+  Result := @lpeDynArrayHigh;
+end;
+
+function getEvalProc_DynArrayRangeCheck(IndexType: ELapeBaseType): TLapeEvalProc;
+begin
+  case IndexType of
+    ltInt8:   Result := @lpeDynArrayRangeCheck_WithInt8;
+    ltUInt8:  Result := @lpeDynArrayRangeCheck_WithUInt8;
+    ltInt16:  Result := @lpeDynArrayRangeCheck_WithInt16;
+    ltUInt16: Result := @lpeDynArrayRangeCheck_WithUInt16;
+    ltInt32:  Result := @lpeDynArrayRangeCheck_WithInt32;
+    ltUInt32: Result := @lpeDynArrayRangeCheck_WithUInt32;
+    ltInt64:  Result := @lpeDynArrayRangeCheck_WithInt64;
+    ltUInt64: Result := @lpeDynArrayRangeCheck_WithUInt64;
+    else
+      LapeException(lpeImpossible);
+  end;
+end;
+
+function getEvalProc_PointerIndex(Size: Integer; IndexType: ELapeBaseType): TLapeEvalProc;
+begin
+  Result := nil;
+
+  case Size of
+    4:
+      case IndexType of
+        ltInt8:   Result   := @lpePointerIndexBy4_WithInt8;
+        ltUInt8:  Result  := @lpePointerIndexBy4_WithUInt8;
+        ltInt16:  Result  := @lpePointerIndexBy4_WithInt16;
+        ltUInt16: Result := @lpePointerIndexBy4_WithUInt16;
+        ltInt32:  Result  := @lpePointerIndexBy4_WithInt32;
+        ltUInt32: Result := @lpePointerIndexBy4_WithUInt32;
+        ltInt64:  Result  := @lpePointerIndexBy4_WithInt64;
+        ltUInt64: Result := @lpePointerIndexBy4_WithUInt64;
+      end;
+
+    8:
+      case IndexType of
+        ltInt8:   Result   := @lpePointerIndexBy8_WithInt8;
+        ltUInt8:  Result  := @lpePointerIndexBy8_WithUInt8;
+        ltInt16:  Result  := @lpePointerIndexBy8_WithInt16;
+        ltUInt16: Result := @lpePointerIndexBy8_WithUInt16;
+        ltInt32:  Result  := @lpePointerIndexBy8_WithInt32;
+        ltUInt32: Result := @lpePointerIndexBy8_WithUInt32;
+        ltInt64:  Result  := @lpePointerIndexBy8_WithInt64;
+        ltUInt64: Result := @lpePointerIndexBy8_WithUInt64;
+      end;
+
+    16:
+      case IndexType of
+        ltInt8:   Result   := @lpePointerIndexBy16_WithInt8;
+        ltUInt8:  Result  := @lpePointerIndexBy16_WithUInt8;
+        ltInt16:  Result  := @lpePointerIndexBy16_WithInt16;
+        ltUInt16: Result := @lpePointerIndexBy16_WithUInt16;
+        ltInt32:  Result  := @lpePointerIndexBy16_WithInt32;
+        ltUInt32: Result := @lpePointerIndexBy16_WithUInt32;
+        ltInt64:  Result  := @lpePointerIndexBy16_WithInt64;
+        ltUInt64: Result := @lpePointerIndexBy16_WithUInt64;
+      end;
+
+    24:
+      case IndexType of
+        ltInt8:   Result   := @lpePointerIndexBy24_WithInt8;
+        ltUInt8:  Result  := @lpePointerIndexBy24_WithUInt8;
+        ltInt16:  Result  := @lpePointerIndexBy24_WithInt16;
+        ltUInt16: Result := @lpePointerIndexBy24_WithUInt16;
+        ltInt32:  Result  := @lpePointerIndexBy24_WithInt32;
+        ltUInt32: Result := @lpePointerIndexBy24_WithUInt32;
+        ltInt64:  Result  := @lpePointerIndexBy24_WithInt64;
+        ltUInt64: Result := @lpePointerIndexBy24_WithUInt64;
+      end;
+
+    32:
+      case IndexType of
+        ltInt8:   Result   := @lpePointerIndexBy32_WithInt8;
+        ltUInt8:  Result  := @lpePointerIndexBy32_WithUInt8;
+        ltInt16:  Result  := @lpePointerIndexBy32_WithInt16;
+        ltUInt16: Result := @lpePointerIndexBy32_WithUInt16;
+        ltInt32:  Result  := @lpePointerIndexBy32_WithInt32;
+        ltUInt32: Result := @lpePointerIndexBy32_WithUInt32;
+        ltInt64:  Result  := @lpePointerIndexBy32_WithInt64;
+        ltUInt64: Result := @lpePointerIndexBy32_WithUInt64;
+      end;
+  end;
+
+  if ({$IFNDEF FPC}@{$ENDIF}Result = nil) then
+    LapeException(lpeImpossible);
+end;
 
 end.
 

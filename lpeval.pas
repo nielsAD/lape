@@ -53,12 +53,6 @@ procedure _LapeSortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CD
 
 procedure _LapeReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeHigh(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeLength(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-
-procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeSStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeWStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -700,31 +694,6 @@ end;
 procedure _LapeReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   _Reverse(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
-end;
-
-procedure _LapeHigh(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PSizeInt(Result)^ := High(PCodeArray(Params^[0])^);
-end;
-
-procedure _LapeLength(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PSizeInt(Result)^ := Length(PCodeArray(Params^[0])^);
-end;
-
-procedure _LapeAStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PSizeInt(Result)^ := Length(PAnsiString(Params^[0])^);
-end;
-
-procedure _LapeWStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PSizeInt(Result)^ := Length(PWideString(Params^[0])^);
-end;
-
-procedure _LapeUStr_GetLen(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PSizeInt(Result)^ := Length(PUnicodeString(Params^[0])^);
 end;
 
 procedure _LapeSStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

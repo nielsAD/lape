@@ -2542,7 +2542,7 @@ begin
       Result := NullResVar;
       Result.VarType := FCompiler.getPointerType(PType, PConst);
       FCompiler.getDestVar(Dest, Result, op_Index);
-      FCompiler.Emitter._Eval(getPointerIndexEvalProc(PType.Size, IndexVar.VarType.BaseIntType), Result, Left, IndexVar, Offset, Pos);
+      FCompiler.Emitter._Eval(getEvalProc_PointerIndex(PType.Size, IndexVar.VarType.BaseIntType), Result, Left, IndexVar, Offset, Pos);
     end else
     begin
       if HasType() and (FPType.Size <> 1) then

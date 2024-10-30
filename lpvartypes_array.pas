@@ -451,7 +451,7 @@ begin
       FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset, @_DocPos);
     end;
 
-    FCompiler.Emitter._Eval(getDynArrayRangeCheckEvalProc(AIndex.VarType.BaseIntType), AVar, AVar, AIndex, Offset, Pos);
+    FCompiler.Emitter._Eval(getEvalProc_DynArrayRangeCheck(AIndex.VarType.BaseIntType), AVar, AVar, AIndex, Offset, Pos);
   end else
   begin
     AIndex.VarType := FCompiler.getBaseType(AIndex.VarType.BaseIntType);

@@ -807,12 +807,9 @@ procedure TLapeCompiler.InitBaseDefinitions;
     pn = lptNormal;
     pv = lptVar;
   var
-    a, w, u, i, b, n: TLapeType;
+    i, b, n: TLapeType;
     gn: TLapeGlobalVar;
   begin
-    a := getBaseType(ltAnsiString);
-    w := getBaseType(ltWideString);
-    u := getBaseType(ltUnicodeString);
     i := getBaseType(ltSizeInt);
     b := getBaseType(ltEvalBool);
 
@@ -821,12 +818,6 @@ procedure TLapeCompiler.InitBaseDefinitions;
 
     addGlobalFunc([n, n, i], [pv, pv, pn], [gn, gn, gn], b, @_LapeCompareMem, '!cmp');
     addGlobalFunc([n, n, i], [pv, pv, pn], [gn, gn, gn], @_LapeMove, '!move');
-    addGlobalFunc([n], [pn], [gn], i, @_LapeHigh, '!high');
-    addGlobalFunc([n], [pn], [gn], i, @_LapeLength, '!length');
-
-    addGlobalFunc([a], [pn], [gn], i, @_LapeAStr_GetLen, '!astr_getlen');
-    addGlobalFunc([w], [pn], [gn], i, @_LapeWStr_GetLen, '!wstr_getlen');
-    addGlobalFunc([u], [pn], [gn], i, @_LapeUStr_GetLen, '!ustr_getlen');
   end;
 
   function NewMagicMethod(GetMethod: TLapeGetOverloadedMethod; NeedFullMatch: Boolean = True): TLapeType_OverloadedMethod;

@@ -11,7 +11,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lptree, lpvartypes;
+  lptypes, lptree, lpvartypes, lpeval_extra;
 
 type
   TLapeTree_InternalMethod_Write = class(TLapeTree_InternalMethod)
@@ -1551,22 +1551,15 @@ begin
   end else
   begin
     Result := NullResVar;
-    Result.VarPos.MemPos := mpStack;
-    Result.VarType := Compiler.getBaseType(ltPointer);
-
-    FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Result, Param, NullResVar, Offset, @Self._DocPos);
-
-    Result := NullResVar;
     Result.VarType := FCompiler.getBaseType(ltSizeInt);
     if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
       FDest := VarResVar;
     FCompiler.getDestVar(FDest, Result, op_Unknown);
-    case Param.VarType.BaseType of
-      ltAnsiString:    FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!astr_getlen']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      ltWideString:    FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!wstr_getlen']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      ltUnicodeString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!ustr_getlen']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      else FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!high']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-    end;
+
+    if (Param.VarType.BaseType in LapeStringTypes) then
+      FCompiler.Emitter._Eval(getEvalProc_StringHigh(), Result, Param, Param, Offset, @Self._DocPos)
+    else
+      FCompiler.Emitter._Eval(getEvalProc_DynArrayHigh(), Result, Param, Param, Offset, @Self._DocPos);
   end;
 end;
 
@@ -1667,22 +1660,15 @@ begin
   else
   begin
     Result := NullResVar;
-    Result.VarPos.MemPos := mpStack;
-    Result.VarType := Compiler.getBaseType(ltPointer);
-    FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Result, Param, NullResVar, Offset, @Self._DocPos);
-
-    Result := NullResVar;
     Result.VarType := FCompiler.getBaseType(ltSizeInt);
     if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
       FDest := VarResVar;
     FCompiler.getDestVar(FDest, Result, op_Unknown);
 
-    case Param.VarType.BaseType of
-      ltAnsiString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!astr_getlen']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      ltWideString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!wstr_getlen']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      ltUnicodeString: FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!ustr_getlen']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-      else FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!length']), Result, SizeOf(Pointer), Offset, @Self._DocPos);
-    end;
+    if (Param.VarType.BaseType in LapeStringTypes) then
+      FCompiler.Emitter._Eval(getEvalProc_StringLength(), Result, Param, Param, Offset, @Self._DocPos)
+    else
+      FCompiler.Emitter._Eval(getEvalProc_DynArrayLength(), Result, Param, Param, Offset, @Self._DocPos);
   end;
 end;
 
