@@ -25,11 +25,11 @@ const
     $748F82EE, $78A5636F, $84C87814, $8CC70208, $90BEFFFA, $A4506CEB, $BEF9A3F7, $C67178F2
   ];
 
-function Hash_SHA256(ABuffer: ^Byte; ALength: Integer): String;
+function Hash_SHA256(ABuffer: ^Byte; ALength: Integer): AnsiString;
 var
   Hash: array[0..7] of UInt32 = [$6a09e667, $bb67ae85, $3c6ef372, $a54ff53a,$510e527f, $9b05688c, $1f83d9ab, $5be0cd19];
 
-  function Final: String;
+  function Final: AnsiString;
   begin
     Result := LowerCase(IntToHex(Hash[0], 8) + IntToHex(Hash[1], 8) + IntToHex(Hash[2], 8) +
                         IntToHex(Hash[3], 8) + IntToHex(Hash[4], 8) + IntToHex(Hash[5], 8) +
@@ -129,7 +129,7 @@ begin
   Result := Final();
 end;
 
-var Data: String;
+var Data: AnsiString;
 begin
   Data := 'Hello World';
   Assert(Hash_SHA256(Pointer(@Data[1]), Length(Data)) = 'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e');

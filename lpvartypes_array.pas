@@ -442,7 +442,7 @@ begin
   if (not (lefRangeCheck in Flags)) then
     Exit;
 
-  if (BaseType = ltDynArray) then // Use `ocDynArrayRangeCheck` opcode, much faster
+  if (BaseType = ltDynArray) then
   begin
     AIndex.VarType := FCompiler.getBaseType(AIndex.VarType.BaseIntType);
     if (AIndex.VarPos.MemPos = mpStack) then
