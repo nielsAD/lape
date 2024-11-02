@@ -45,6 +45,7 @@ const
   lpeCannotEvalRunTime = 'Cannot be evaluated at runtime';
   lpeCannotFallthrough = 'Cannot use fallthrough in this context';
   lpeCannotInvoke = 'Cannot invoke identifier';
+  lpeCannotInvokeProperty = 'Cannot invoke property like this';
   lpeCannotMixStaticOverload = 'Cannot mix static with non-static method overload';
   lpeCannotOverload = 'Cannot overload function';
   lpeCannotOverload2 = 'Cannot overload "%s" with a "%s"';

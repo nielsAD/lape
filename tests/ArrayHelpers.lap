@@ -8,11 +8,11 @@ procedure TestString;
 var
   Str: String = 'Hello';
 begin
-  Assert(Str.First() = 'H');
-  Assert(Str.Last() = 'o');
+  Assert(Str.First = 'H');
+  Assert(Str.Last = 'o');
   Assert(Str = 'Hello');
-  while (Str.Length() > 0) do
-    Assert(Str.Last() = Str.Pop());
+  while (Str.Length > 0) do
+    Assert(Str.Last = Str.Pop);
 end;
 
 procedure TestSort;
@@ -62,9 +62,9 @@ procedure TestPop;
 var
   Arr: TIntegerArray = [1,2,3,4,5,6];
 begin
-  Assert(Arr.Pop(0) = 1);
-  Assert(Arr.Pop() = 6);
-  Assert(Arr.Length() = 4);
+  Assert(Arr.Pop = 6);
+  Assert(Arr.Pop = 5);
+  Assert(Arr.Length = 4);
 end;
 
 procedure TestDelayed;
@@ -97,20 +97,19 @@ begin
   Assert(ToString(a.Max) = '2');
   Assert(ToString(a.Mean) = '1,5');
   Assert(ToString(a.Median) = '1,5');
-end; 
+end;
 
 var
   Arr: TIntegerArray = [3,2,1];
 begin
   Arr.SetLength(10);
 
-  Assert(Arr.Length() = 10);
+  Assert(Arr.Length = 10);
   Assert(Arr.IndexOf(2) = 1);
-  Assert(Arr.First() = 3);
-  Assert(Arr.Reversed().Last() = 3);
-  Assert(Arr.Pop(1) = 2);
+  Assert(Arr.First = 3);
+  Assert(Arr.Reversed().Last = 3);
   Assert(Arr.IndexOf(3) = 0);
-  Assert(Arr.IndexOf(1) = 1);
+  Assert(Arr.IndexOf(1) = 2);
   Assert(Arr.RandomValue() = 123);
 
   TestString();

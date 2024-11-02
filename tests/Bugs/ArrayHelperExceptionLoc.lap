@@ -3,12 +3,12 @@ type
 
 procedure TIntArray.Foo;
 begin
-  Self.First();
+  Self.First;
 end;
 
 procedure TIntArray.Bar;
 begin
-  Self.First();
+  Self.First;
 end;
 
 var

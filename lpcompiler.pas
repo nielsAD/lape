@@ -904,9 +904,9 @@ begin
   {$ENDIF}
 
   addDelayedCode(
-    'const                  ' + LineEnding +
-    '  True  = EvalBool(1); ' + LineEnding +
-    '  False = EvalBool(0); ' + LineEnding +
+    'const                 ' + LineEnding +
+    '  True  = EvalBool(1);' + LineEnding +
+    '  False = EvalBool(0);' + LineEnding +
     '',
     '!InitBaseDefinitions'
   );
@@ -996,8 +996,6 @@ begin
     _LapeSetLength +
     _LapeCopy +
     _LapeDelete +
-    _LapeDeleteIndex +
-    _LapeDeleteIndices +
     _LapeInsert +
     _LapeSort +
     _LapeIndexOf +
@@ -3467,7 +3465,7 @@ begin
               if (Method = nil) then
               begin
                 if IsProperty(VarStack.Top.resType()) then
-                  PropertyInvokeError(VarStack.Top.resType(), Tokenizer);
+                  LapeException(lpeCannotInvokeProperty, Tokenizer.DocPos);
 
                 Expr := ResolveMethods(VarStack.Top.FoldConstants(), True) as TLapeTree_ExprBase;
                 if (Expr <> VarStack.Pop()) and (Expr is TLapeTree_InternalMethod) then
@@ -4056,7 +4054,6 @@ begin
   FInternalMethodMap['IndicesOf'] := TLapeTree_InternalMethod_IndicesOf;
   FInternalMethodMap['Contains'] := TLapeTree_InternalMethod_Contains;
   FInternalMethodMap['Remove'] := TLapeTree_InternalMethod_Remove;
-  FInternalMethodMap['RemoveAll'] := TLapeTree_InternalMethod_RemoveAll;
 
   FInternalMethodMap['Ord'] := TLapeTree_InternalMethod_Ord;
   FInternalMethodMap['Succ'] := TLapeTree_InternalMethod_Succ;

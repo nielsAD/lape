@@ -754,7 +754,6 @@ function IsMethod(typ: TLapeType): Boolean;
 function IsCast(typ: TLapeType): Boolean;
 function IsProperty(typ: TLapeType): Boolean; overload;
 function IsProperty(typ: TLapeType; out isIndexable: Boolean): Boolean; overload;
-procedure PropertyInvokeError(typ: TLapeType; Tokenizer: TLapeTokenizerBase);
 
 const
   BigLock = 256;
@@ -1012,27 +1011,6 @@ begin
           isIndexable := True;
           Break;
         end;
-end;
-
-procedure PropertyInvokeError(typ: TLapeType; Tokenizer: TLapeTokenizerBase);
-begin
-  if not IsProperty(typ) then
-    LapeException(lpeImpossible, Tokenizer.DocPos);
-
-  with TLapeType_OverloadedMethod(typ).ManagedDeclarations do
-  begin
-    if (Count = 0) or (not (Items[0] is TLapeGlobalVar)) or (not (TLapeGlobalVar(Items[0]).VarType is TLapeType_Method)) then
-      LapeException(lpeImpossible, Tokenizer.DocPos);
-
-    with TLapeType_Method(TLapeGlobalVar(Items[0]).VarType) do
-      if (Params.Count = 0) and (Tokenizer.Tok <> tk_sym_SemiColon) then
-        LapeExceptionFmt(lpeExpectedOther, [Tokenizer.TokString, ';'], Tokenizer.DocPos)
-      else
-      if (Params.Count > 0) and (Tokenizer.Tok <> tk_sym_BracketOpen) then
-        LapeExceptionFmt(lpeExpectedOther, [Tokenizer.TokString, '['], Tokenizer.DocPos)
-      else
-        LapeException(lpeCannotInvoke, Tokenizer.DocPos);
-  end;
 end;
 
 function TResVar.getReadable: Boolean;
@@ -3198,6 +3176,8 @@ begin
   Result.TypeID := TypeID;
 
   TLapeType_OverloadedMethod(Result).FOfObject := FOfObject;
+  TLapeType_OverloadedMethod(Result).FHiddenSelf := FHiddenSelf;
+  TLapeType_OverloadedMethod(Result).MethodDef := MethodDef;
 end;
 
 procedure TLapeType_OverloadedMethod.addSubDeclaration(ADecl: TLapeDeclaration);
@@ -3423,7 +3403,7 @@ end;
 
 function TLapeType_OverloadedMethod.getMethod(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType): TLapeGlobalVar;
 begin
-  Result := FManagedDecls[getMethodIndex(AParams, AResult)] as TLapeGlobalVar;
+  Result := FManagedDecls[getMethodIndex(AParams, AResult, AObjectType)] as TLapeGlobalVar;
 end;
 
 function TLapeType_OverloadedMethod.NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;

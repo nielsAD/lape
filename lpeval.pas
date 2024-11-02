@@ -507,30 +507,6 @@ var
     '  end;'                                                                          + LineEnding +
     'end;';
 
-  _LapeDeleteIndex: lpString =
-    'function _ArrayDeleteIndex(Index: Int32;'                              + LineEnding +
-    '  var p: Pointer; ElSize: SizeInt;'                                    + LineEnding +
-    '  Dispose: private procedure(p: Pointer);'                             + LineEnding +
-    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer)): Boolean;' + LineEnding +
-    'begin'                                                                 + LineEnding +
-    '  Result := Index > -1;'                                               + LineEnding +
-    '  if Result then'                                                      + LineEnding +
-    '    _ArrayDelete(p, Index, 1, ElSize, Dispose, Copy);'                 + LineEnding +
-    'end;';
-
-  _LapeDeleteIndices: lpString =
-    'function _ArrayDeleteIndices(Indices: array of Int32;'                 + LineEnding +
-    '  var p: Pointer; ElSize: SizeInt;'                                    + LineEnding +
-    '  Dispose: private procedure(p: Pointer);'                             + LineEnding +
-    '  Copy: private procedure(Src: ConstPointer; Dst: Pointer)): SizeInt;' + LineEnding +
-    'var'                                                                   + LineEnding +
-    '  i: SizeInt;'                                                         + LineEnding +
-    'begin'                                                                 + LineEnding +
-    '  Result := Length(Indices);'                                          + LineEnding +
-    '  for i := High(Indices) downto 0 do'                                  + LineEnding +
-    '    _ArrayDelete(p, Indices[i], 1, ElSize, Dispose, Copy);'            + LineEnding +
-    'end;';
-
 implementation
 
 uses

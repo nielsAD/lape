@@ -27,12 +27,17 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; override;
   end;
 
+  TLapeType_HelperProperty = class(TLapeType_Helper)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; AName: lpString=''; ADocPos: PDocPos=nil); override;
+  end;
+
   TLapeType_ArrayHelper_SetLength = class(TLapeType_Helper)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Length = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Length = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -47,17 +52,12 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_RemoveAll = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Low = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Low = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
-  TLapeType_ArrayHelper_High = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_High = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -77,17 +77,17 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_First = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_First = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Last = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Last = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Pop = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Pop = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -152,42 +152,42 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Median = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Median = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Mode = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Mode = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Min = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Min = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Max = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Max = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Sum = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Sum = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Mean = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Mean = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Variance = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Variance = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Stdev = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Stdev = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -318,6 +318,13 @@ begin
   OnFunctionNotFound := {$IFDEF FPC}@{$ENDIF}FunctionNotFound;
 end;
 
+constructor TLapeType_HelperProperty.Create(ACompiler: TLapeCompilerBase; AName: lpString; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, AName, ADocPos);
+
+  MethodDef := mdProperty;
+end;
+
 function TLapeType_ArrayHelper_SetLength.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
@@ -353,17 +360,7 @@ begin
     'Result := System.Remove(Param0, Self);',
     VarType,
     [TLapeType_DynArray(VarType).PType],
-    FCompiler.getBaseType(ltEvalBool)
-  );
-end;
-
-function TLapeType_ArrayHelper_RemoveAll.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := CreateFunction(
-    'Result := System.RemoveAll(Param0, Self);',
-    VarType,
-    [TLapeType_DynArray(VarType).PType],
-    FCompiler.getBaseType(ltSizeInt)
+    TLapeType_DynArray(VarType).PType
   );
 end;
 
@@ -513,17 +510,6 @@ begin
           'System.SetLength(Self, Index);',
           VarType,
           [],
-          TLapeType_DynArray(VarType).PType
-        );
-      end;
-
-    1:
-      begin
-        Result := CreateFunction(
-          '  Result := Self[Param0];' + LineEnding +
-          '  System.Delete(Self, Param0, 1);',
-          VarType,
-          [FCompiler.getBaseType(ltSizeInt)],
           TLapeType_DynArray(VarType).PType
         );
       end;

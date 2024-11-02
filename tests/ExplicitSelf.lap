@@ -29,8 +29,8 @@ var
 
 begin
   Arr1.Test1();
-  Assert(Arr1.Length() = 1);
+  Assert(Arr1.Length = 1);
 
   Arr2.Test2();
-  Assert(Arr2.Length() = 2);
+  Assert(Arr2.Length = 2);
 end.

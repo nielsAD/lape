@@ -8,8 +8,12 @@ var
 begin
   Arr := [[0,0],[1,1],[2,2],[1,1]];
 
-  Assert(Remove(TPoint([2,2]), Arr) = True);
-  Assert(ToString(Arr) = '[{X = 0, Y = 0}, {X = 1, Y = 1}, {X = 1, Y = 1}]');
-  Assert(RemoveAll(TPoint([1,1]), Arr) = 2);
-  Assert(ToString(Arr) = '[{X = 0, Y = 0}]');
+  Assert(Remove(TPoint([2,2]), Arr) = [2,2]);
+  Assert(Remove(TPoint([2,2]), Arr) = [0,0]);
+  Assert(Length(Arr) = 3);
+
+  Assert(Remove(TPoint([1,1]), Arr) = [1,1]);
+  Assert(Length(Arr) = 2);
+  Assert(Remove(TPoint([1,1]), Arr) = [1,1]);
+  Assert(Length(Arr) = 1);
 end;

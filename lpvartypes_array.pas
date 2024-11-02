@@ -839,11 +839,17 @@ begin
   if (not (lcoArrayHelpers in FCompiler.Options)) then
     Exit;
 
+  // properties
   addArrayHelper(TLapeType_ArrayHelper_Low, 'Low');
   addArrayHelper(TLapeType_ArrayHelper_High, 'High');
+  addArrayHelper(TLapeType_ArrayHelper_Length, 'Length');
+  addArrayHelper(TLapeType_ArrayHelper_First, 'First');
+  addArrayHelper(TLapeType_ArrayHelper_Last, 'Last');
+  addArrayHelper(TLapeType_ArrayHelper_Pop, 'Pop');
+
+  // functions
   addArrayHelper(TLapeType_ArrayHelper_Contains, 'Contains');
   addArrayHelper(TLapeType_ArrayHelper_Remove, 'Remove');
-  addArrayHelper(TLapeType_ArrayHelper_RemoveAll, 'RemoveAll');
   addArrayHelper(TLapeType_ArrayHelper_Delete, 'Delete');
   addArrayHelper(TLapeType_ArrayHelper_Insert, 'Insert');
   addArrayHelper(TLapeType_ArrayHelper_Swap, 'Swap');
@@ -853,11 +859,7 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Sort, 'Sort');
   addArrayHelper(TLapeType_ArrayHelper_Sorted, 'Sorted');
   addArrayHelper(TLapeType_ArrayHelper_SetLength, 'SetLength');
-  addArrayHelper(TLapeType_ArrayHelper_Length, 'Length');
   addArrayHelper(TLapeType_ArrayHelper_Copy, 'Copy');
-  addArrayHelper(TLapeType_ArrayHelper_First, 'First');
-  addArrayHelper(TLapeType_ArrayHelper_Last, 'Last');
-  addArrayHelper(TLapeType_ArrayHelper_Pop, 'Pop');
   addArrayHelper(TLapeType_ArrayHelper_RandomValue, 'RandomValue');
   addArrayHelper(TLapeType_ArrayHelper_Reverse, 'Reverse');
   addArrayHelper(TLapeType_ArrayHelper_Reversed, 'Reversed');
@@ -866,6 +868,7 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Extend, 'Extend');
   addArrayHelper(TLapeType_ArrayHelper_Slice, 'Slice');
 
+  // properties
   addArrayHelper(TLapeType_ArrayHelper_Median, 'Median');
   addArrayHelper(TLapeType_ArrayHelper_Mode, 'Mode');
   addArrayHelper(TLapeType_ArrayHelper_Min, 'Min');
