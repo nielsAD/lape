@@ -3639,6 +3639,15 @@ begin
   else if (not (Tokenizer.Tok in ParserToken_BlockEnd)) then
   begin
     Result := ParseExpression(ExprEnd, False);
+    {$IFDEF Lape_PascalLabels}
+    if (Result is TLapeTree_InternalMethod_Label) then
+    begin
+      if (Tokenizer.LastTok <> tk_sym_Colon) then
+        LapeExceptionFmt(lpeExpectedOther, [LapeTokenToString(Tokenizer.LastTok), LapeTokenToString(tk_sym_Colon)], Tokenizer.DocPos);
+      Exit;
+    end;
+    {$ENDIF}
+
     try
       ParseExpressionEnd(ExprEnd);
     except

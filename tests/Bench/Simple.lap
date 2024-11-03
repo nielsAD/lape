@@ -82,13 +82,13 @@ begin
       2: goto C;
     end;
 
-    A:;
+    A:
     goto D;
-    B:;
+    B:
     goto D;
-    C:;
+    C:
     goto D;
-    D:;
+    D:
 
     Inc(Jumps);
   end;

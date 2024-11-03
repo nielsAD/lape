@@ -10,7 +10,7 @@ begin
   goto c;
   WriteLn(2);
 
-  {$IFDEF Lape_PascalLabels}a:{$ELSE}label(a){$ENDIF};
+  {$IFDEF Lape_PascalLabels}a:{$ELSE}label(a);{$ENDIF}
     while True do
     begin
       WriteLn(3);
@@ -18,7 +18,7 @@ begin
       WriteLn(4);
     end;
     WriteLn(5);
-  {$IFDEF Lape_PascalLabels}b:{$ELSE}label(b){$ENDIF};
+  {$IFDEF Lape_PascalLabels}b:{$ELSE}label(b);{$ENDIF}
     try
       WriteLn(6);
       goto d;
@@ -27,10 +27,10 @@ begin
       WriteLn(8);
     end;
     WriteLn(9);
-  {$IFDEF Lape_PascalLabels}c:{$ELSE}label(c){$ENDIF};
+  {$IFDEF Lape_PascalLabels}c:{$ELSE}label(c);{$ENDIF}
     WriteLn(10);
     goto a;
     WriteLn(11);
-  {$IFDEF Lape_PascalLabels}d:{$ELSE}label(d){$ENDIF};
+  {$IFDEF Lape_PascalLabels}d:{$ELSE}label(d);{$ENDIF}
     WriteLn(12);
 end;
