@@ -583,6 +583,8 @@ begin
     Free();
   end;
 
+  Result.isConstant := True;
+
   IndexVar.Spill(1);
   ArrayVar.Spill(1);
   ItemVar.Spill(1);
@@ -2946,6 +2948,7 @@ end;
 
 function TLapeTree_InternalMethod_DeepCopy.Compile(var Offset: Integer): TResVar;
 begin
+  Result := NullResVar;
   LapeException(lpeCannotEvalRunTime, DocPos); // todo and expose to scripts
 end;
 

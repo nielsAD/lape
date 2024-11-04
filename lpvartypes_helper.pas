@@ -32,26 +32,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString=''; ADocPos: PDocPos=nil); override;
   end;
 
-  TLapeType_ArrayHelper_SetLength = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
-  TLapeType_ArrayHelper_Length = class(TLapeType_HelperProperty)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
-  TLapeType_ArrayHelper_Contains = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
-  TLapeType_ArrayHelper_Remove = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
+  // Low,High,Length,Pop,First,Last are done "inline" in DynArray.Eval and wont be used like the others
   TLapeType_ArrayHelper_Low = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
@@ -62,17 +43,7 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Copy = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
-  TLapeType_ArrayHelper_Delete = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
-  TLapeType_ArrayHelper_Insert = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Length = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -92,12 +63,42 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
+  TLapeType_ArrayHelper_SetLength = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_Contains = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_Remove = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_Copy = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_Delete = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_Insert = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
   TLapeType_ArrayHelper_Swap = class(TLapeType_Helper)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_RandomValue = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Random = class(TLapeType_Helper)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -201,7 +202,7 @@ implementation
 
 uses
   lpcompiler, lpparser, lptree,
-  lpvartypes_array;
+  lpvartypes_array, lpmessages;
 
 function TLapeType_Helper.FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
@@ -334,14 +335,97 @@ begin
   );
 end;
 
+function TLapeType_ArrayHelper_Low.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+
+  //Result := CreateFunction(
+  //  'Result := System.Low(Self);',
+  //  VarType,
+  //  [],
+  //  FCompiler.getBaseType(ltSizeInt)
+  //);
+end;
+
+function TLapeType_ArrayHelper_High.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+
+  //Result := CreateFunction(
+  //  'Result := System.High(Self);',
+  //  VarType,
+  //  [],
+  //  FCompiler.getBaseType(ltSizeInt)
+  //);
+end;
+
 function TLapeType_ArrayHelper_Length.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
-  Result := CreateFunction(
-    'Result := System.Length(Self);',
-    VarType,
-    [],
-    FCompiler.getBaseType(ltSizeInt)
-  );
+  Result := nil;
+  LapeException(lpeCannotOverload);
+
+  //Result := CreateFunction(
+  //  'Result := System.Length(Self);',
+  //  VarType,
+  //  [],
+  //  FCompiler.getBaseType(ltSizeInt)
+  //);
+end;
+
+function TLapeType_ArrayHelper_First.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+
+  //Result := CreateFunction(
+  //  'Result := Self[System.Low(Self)];',
+  //  VarType,
+  //  [],
+  //  TLapeType_DynArray(VarType).PType
+  //);
+end;
+
+function TLapeType_ArrayHelper_Last.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+
+  //Result := CreateFunction(
+  //  'Result := Self[System.High(Self)];',
+  //  VarType,
+  //  [],
+  //  TLapeType_DynArray(VarType).PType
+  //);
+end;
+
+function TLapeType_ArrayHelper_Pop.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+
+  //if VarType.BaseType in LapeStringTypes then
+  //begin
+  //  Result := CreateFunction(
+  //    'var Index: Integer := System.Length(Self);' + LineEnding +
+  //    'Result := Self[Index];'                   + LineEnding +
+  //    'System.SetLength(Self, Index - 1);',
+  //    VarType,
+  //    [],
+  //    TLapeType_DynArray(VarType).PType
+  //  );
+  //end else
+  //begin
+  //  Result := CreateFunction(
+  //    'var Index: Integer := System.High(Self);' + LineEnding +
+  //    'Result := Self[Index];'                 + LineEnding +
+  //    'System.SetLength(Self, Index);',
+  //    VarType,
+  //    [],
+  //    TLapeType_DynArray(VarType).PType
+  //  );
+  //end;
 end;
 
 function TLapeType_ArrayHelper_Contains.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
@@ -361,26 +445,6 @@ begin
     VarType,
     [TLapeType_DynArray(VarType).PType],
     TLapeType_DynArray(VarType).PType
-  );
-end;
-
-function TLapeType_ArrayHelper_Low.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := CreateFunction(
-    'Result := System.Low(Self);',
-    VarType,
-    [],
-    FCompiler.getBaseType(ltSizeInt)
-  );
-end;
-
-function TLapeType_ArrayHelper_High.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := CreateFunction(
-    'Result := System.High(Self);',
-    VarType,
-    [],
-    FCompiler.getBaseType(ltSizeInt)
   );
 end;
 
@@ -466,56 +530,6 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_First.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := CreateFunction(
-    'Result := Self[System.Low(Self)];',
-    VarType,
-    [],
-    TLapeType_DynArray(VarType).PType
-  );
-end;
-
-function TLapeType_ArrayHelper_Last.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := CreateFunction(
-    'Result := Self[System.High(Self)];',
-    VarType,
-    [],
-    TLapeType_DynArray(VarType).PType
-  );
-end;
-
-function TLapeType_ArrayHelper_Pop.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := nil;
-
-  case Length(AParams) of
-    0:
-      if VarType.BaseType in LapeStringTypes then
-      begin
-        Result := CreateFunction(
-          'var Index: Integer := System.Length(Self);' + LineEnding +
-          'Result := Self[Index];'                   + LineEnding +
-          'System.SetLength(Self, Index - 1);',
-          VarType,
-          [],
-          TLapeType_DynArray(VarType).PType
-        );
-      end else
-      begin
-        Result := CreateFunction(
-          'var Index: Integer := System.High(Self);' + LineEnding +
-          'Result := Self[Index];'                 + LineEnding +
-          'System.SetLength(Self, Index);',
-          VarType,
-          [],
-          TLapeType_DynArray(VarType).PType
-        );
-      end;
-  end;
-end;
-
 function TLapeType_ArrayHelper_Swap.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
@@ -525,7 +539,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_RandomValue.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Random.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := Self[System.Random(System.Low(Self), System.High(Self))];',

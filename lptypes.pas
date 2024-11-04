@@ -2805,7 +2805,7 @@ function TLapeDeclarationList.HasSubDeclaration(Name: lpString; CheckParent: TIn
 var
   Decl: TLapeDeclaration;
 begin
-  Result := Get(Name, Decl, CheckParent);;
+  Result := Get(Name, Decl, CheckParent);
 end;
 
 function TLapeDeclarationList.HasSubDeclaration(Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;

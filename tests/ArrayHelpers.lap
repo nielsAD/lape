@@ -82,7 +82,7 @@ begin
   Result := [From];
 end;
 
-function TIntegerArray.RandomValue: Int32; override;
+function TIntegerArray.Random: Int32; override;
 begin
   Result := 123;
 end;
@@ -110,7 +110,7 @@ begin
   Assert(Arr.Reversed().Last = 3);
   Assert(Arr.IndexOf(3) = 0);
   Assert(Arr.IndexOf(1) = 2);
-  Assert(Arr.RandomValue() = 123);
+  Assert(Arr.Random() = 123);
 
   TestString();
   TestSort();
