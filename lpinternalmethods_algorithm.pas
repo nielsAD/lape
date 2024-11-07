@@ -173,32 +173,6 @@ const
     '    Result := Index;'                                             + LineEnding +
     'end;';
 
-  _LapeArrayMinMax: lpString =
-    'function _ArrayMinMax(p: Pointer; ElSize, Start, Len: SizeInt;' + LineEnding +
-    '                      Func: _LapeEqualsFunc): SizeInt;'         + LineEnding +
-    'var'                                                            + LineEnding +
-    '  i: SizeInt;'                                                  + LineEnding +
-    '  Cur: Pointer;'                                                + LineEnding +
-    'begin'                                                          + LineEnding +
-    '  Result := 0;'                                                 + LineEnding +
-    ''                                                               + LineEnding +
-    '  Cur := p;'                                                    + LineEnding +
-    '  Inc(p, ElSize);'                                              + LineEnding +
-    ''                                                               + LineEnding +
-    '  for i := 1 to Len - 1 do'                                     + LineEnding +
-    '  begin'                                                        + LineEnding +
-    '    if Func(p^, Cur^) then'                                     + LineEnding +
-    '    begin'                                                      + LineEnding +
-    '      Cur := p;'                                                + LineEnding +
-    '      Result := i;'                                             + LineEnding +
-    '    end;'                                                       + LineEnding +
-    ''                                                               + LineEnding +
-    '    Inc(p, ElSize);'                                            + LineEnding +
-    '  end;'                                                         + LineEnding +
-    ''                                                               + LineEnding +
-    '  Inc(Result, Start);'                                          + LineEnding +
-    'end;';
-
 implementation
 
 uses
@@ -838,83 +812,25 @@ end;
 
 function TLapeTree_InternalMethod_ArrayMin.Compile(var Offset: Integer): TResVar;
 var
-  ArrayVar, ArrayPointerVar, LengthVar, TempVar: TResVar;
-  ArrayType: TLapeType;
+  ArrayElementType: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
-  TempVar := NullResVar;
-
-  if (FParams.Count <> 1) then
-    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
-
-  ArrayType := resType();
-  if (ArrayType = nil) or (not FParams[0].CompileToTempVar(Offset, ArrayVar, 1)) then
-    LapeException(lpeExpectedArray, DocPos);
 
   // Check if user defined `_ArrayMin` exists. Useful for providing a native method
   if InvokeMagicMethod(Self, '_ArrayMin', Result, Offset) then
     Exit;
 
-  RequireOperators(FCompiler, [op_cmp_LessThan], ArrayType, DocPos);
+  if (FParams.Count <> 1) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  ArrayElementType := resType();
+  if (ArrayElementType = nil) then
+    LapeException(lpeExpectedArray, DocPos);
 
-  if (ArrayVar.VarType.BaseType = ltDynArray) then
-  begin
-    ArrayPointerVar := ArrayVar;
-    ArrayPointerVar.VarType := FCompiler.getBaseType(ltPointer);
-  end else
-    ArrayPointerVar := ArrayVar.VarType.Eval(op_Addr, TempVar, ArrayVar, NullResVar, [], Offset, @_DocPos); // ltStaticArray
+  RequireOperators(FCompiler, [op_cmp_LessThan], ArrayElementType, DocPos);
 
-  Result := _ResVar.New(FCompiler.getTempVar(ArrayType));
-
-  FCompiler.VarToDefault(Result, Offset);
-
-  with TLapeTree_InternalMethod_Length.Create(Self) do
-  try
-    addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
-
-    LengthVar := FoldConstants(False).Compile(Offset);
-  finally
-    Free();
-  end;
-
-  // if Length(ArrayVar) > 0 then
-  //   Result := ArrayVar[_ArrayMinMax(...)]
-  with TLapeTree_If.Create(Self) do
-  try
-    Condition := TLapeTree_ResVar.Create(LengthVar.IncLock(), Self);
-    Body := TLapeTree_Operator.Create(op_Assign, Self);
-    with TLapeTree_Operator(Body) do
-    begin
-      Left := TLapeTree_ResVar.Create(Result.IncLock(), Self);
-      Right := TLapeTree_Operator.Create(op_Index, Self);
-      with TLapeTree_Operator(Right) do
-      begin
-        Left := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
-        Right := TLapeTree_Invoke.Create('_ArrayMinMax', Self);
-
-        with TLapeTree_Invoke(Right) do
-        begin
-          addParam(TLapeTree_ResVar.Create(ArrayPointerVar.IncLock(), Self));
-          addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
-          addParam(TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self));
-          addParam(TLapeTree_ResVar.Create(LengthVar.IncLock(), Self));
-          addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_LessThan', [ArrayType, ArrayType], FCompiler.getBaseType(ltEvalBool)), Self));
-        end;
-      end;
-    end;
-
-    Compile(Offset);
-  finally
-    if (ArrayVar.VarType.BaseType = ltStaticArray)then
-      ArrayPointerVar.Spill(1);
-    LengthVar.Spill(1);
-
-    Free();
-  end;
-
-  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
-  Result.isConstant := True;
+  setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMin'], Self));
+  Result := inherited;
 end;
 
 function TLapeTree_InternalMethod_ArrayMax.resType: TLapeType;
@@ -934,83 +850,25 @@ end;
 
 function TLapeTree_InternalMethod_ArrayMax.Compile(var Offset: Integer): TResVar;
 var
-  ArrayVar, ArrayPointerVar, LengthVar, TempVar: TResVar;
-  ArrayType: TLapeType;
+  ArrayElementType: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
-  TempVar := NullResVar;
-
-  if (FParams.Count <> 1) then
-    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
-
-  ArrayType := resType();
-  if (ArrayType = nil) or (not FParams[0].CompileToTempVar(Offset, ArrayVar, 1)) then
-    LapeException(lpeExpectedArray, DocPos);
 
   // Check if user defined `_ArrayMax` exists. Useful for providing a native method
   if InvokeMagicMethod(Self, '_ArrayMax', Result, Offset) then
     Exit;
 
-  RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayType, DocPos);
+  if (FParams.Count <> 1) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  ArrayElementType := resType();
+  if (ArrayElementType = nil) then
+    LapeException(lpeExpectedArray, DocPos);
 
-  if (ArrayVar.VarType.BaseType = ltDynArray) then
-  begin
-    ArrayPointerVar := ArrayVar;
-    ArrayPointerVar.VarType := FCompiler.getBaseType(ltPointer);
-  end else
-    ArrayPointerVar := ArrayVar.VarType.Eval(op_Addr, TempVar, ArrayVar, NullResVar, [], Offset, @_DocPos); // ltStaticArray
+  RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayElementType, DocPos);
 
-  Result := _ResVar.New(FCompiler.getTempVar(ArrayType));
-
-  FCompiler.VarToDefault(Result, Offset);
-
-  with TLapeTree_InternalMethod_Length.Create(Self) do
-  try
-    addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
-
-    LengthVar := FoldConstants(False).Compile(Offset);
-  finally
-    Free();
-  end;
-
-  // if Length(ArrayVar) > 0 then
-  //   Result := ArrayVar[_ArrayMinMax(...)]
-  with TLapeTree_If.Create(Self) do
-  try
-    Condition := TLapeTree_ResVar.Create(LengthVar.IncLock(), Self);
-    Body := TLapeTree_Operator.Create(op_Assign, Self);
-    with TLapeTree_Operator(Body) do
-    begin
-      Left := TLapeTree_ResVar.Create(Result.IncLock(), Self);
-      Right := TLapeTree_Operator.Create(op_Index, Self);
-      with TLapeTree_Operator(Right) do
-      begin
-        Left := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
-        Right := TLapeTree_Invoke.Create('_ArrayMinMax', Self);
-
-        with TLapeTree_Invoke(Right) do
-        begin
-          addParam(TLapeTree_ResVar.Create(ArrayPointerVar.IncLock(), Self));
-          addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
-          addParam(TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self));
-          addParam(TLapeTree_ResVar.Create(LengthVar.IncLock(), Self));
-          addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_GreaterThan', [ArrayType, ArrayType], FCompiler.getBaseType(ltEvalBool)), Self));
-        end;
-      end;
-    end;
-
-    Compile(Offset);
-  finally
-    if (ArrayVar.VarType.BaseType = ltStaticArray)then
-      ArrayPointerVar.Spill(1);
-    LengthVar.Spill(1);
-
-    Free();
-  end;
-
-  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
-  Result.isConstant := True;
+  setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMax'], Self));
+  Result := inherited;
 end;
 
 function TLapeTree_InternalMethod_ArraySum.resType: TLapeType;

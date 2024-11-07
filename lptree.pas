@@ -722,19 +722,23 @@ function InvokeMagicMethod(Self: TLapeTree_Invoke; Name: lpString; var Res: TRes
 var
   Method: TLapeGlobalVar;
   i: Integer;
+  Temp: TLapeGetOverloadedMethod;
 begin
   with Self do
   begin
     Method := Compiler[Name];
     if (Method <> nil) and (Method.VarType is TLapeType_OverloadedMethod) then
-      Method := TLapeType_OverloadedMethod(Method.VarType).getMethod(getParamTypes(), resType())
-    else
-      Method := nil;
+      with TLapeType_OverloadedMethod(Method.VarType) do
+      begin
+        Temp := OnFunctionNotFound; // we are looking for only already available methods
+
+        OnFunctionNotFound := nil;
+        Method := getMethod(getParamTypes(), resType());
+        OnFunctionNotFound := Temp;
+      end;
 
     Result := Method <> nil;
-
     if Result then
-    begin
       with TLapeTree_Invoke.Create(Method, Self) do
       try
         for i := 0 to Self.Params.Count - 1 do
@@ -744,7 +748,6 @@ begin
       finally
         Free();
       end;
-    end;
   end;
 end;
 
