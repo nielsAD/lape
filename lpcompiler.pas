@@ -113,10 +113,11 @@ type
     function popConditional: TDocPos; virtual;
 
     procedure SetUniqueTypeID(Typ: TLapeType); virtual;
-    function GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetCompareMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+
+    function GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetSortMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     function GetGreaterThanMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetLessThanMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
@@ -633,30 +634,61 @@ begin
   end;
 end;
 
-function TLapeCompiler.GetCompareMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+function TLapeCompiler.GetSortMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
-  Method: TLapeTree_Method;
   Header: TLapeType_Method;
+  Method: TLapeTree_Method;
 begin
   Result := nil;
-  if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult = nil) then
+  GetMethod_FixupParams(AType, AParams, AResult);
+  if (Sender = nil) or (not (Length(AParams) in [3,4])) then
     Exit;
 
-  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptConstRef], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
-  Method := addGlobalFunc(Header,
-    'CompareMethod',
-    'begin'                     + LineEnding +
-    '  if Param0 > Param1 then' + LineEnding +
-    '    Result := 1'           + LineEnding +
-    '  else'                    + LineEnding +
-    '  if Param0 < Param1 then' + LineEnding +
-    '    Result := -1'          + LineEnding +
-    '  else'                    + LineEnding +
-    '    Result := 0;'          + LineEnding +
-    'end;');
+  if (Length(AParams) = 3) then
+    Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1], AParams[2]], [lptVar, lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)])) as TLapeType_Method
+  else
+    Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1], AParams[2], AParams[3]], [lptVar, lptNormal, lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)])) as TLapeType_Method;
+
+  Method := addGlobalFunc(Header, 'GetSortMethod',
+    'const                                                    ' + LineEnding +
+    '  Gaps: TIntegerArray = [                                ' + LineEnding +
+    '    835387, 392925, 184011, 85764, 39744, 18298, 8359,   ' + LineEnding +
+    '    3785, 1695, 701, 301, 132, 57, 23, 10, 4, 1          ' + LineEnding +
+    '  ];                                                     ' + LineEnding +
+    'var                                                      ' + LineEnding +
+    '  i, j, Gap, GapLo, Len: Int32;                          ' + LineEnding +
+    '  Temp: PType(Param0);                                   ' + LineEnding +
+    'begin                                                    ' + LineEnding +
+    '  Len := (Param2 - Param1 + 1);                          ' + LineEnding +
+    '  for Gap in Gaps do                                     ' + LineEnding +
+    '  begin                                                  ' + LineEnding +
+    '    // skip gaps larger than the subsection size         ' + LineEnding +
+    '    if (Gap > Len) then                                  ' + LineEnding +
+    '      Continue;                                          ' + LineEnding +
+    '                                                         ' + LineEnding +
+    '    GapLo := Param1 + Gap;                               ' + LineEnding +
+    '    for i := GapLo to Param2 do                          ' + LineEnding +
+    '    begin                                                ' + LineEnding +
+    '      Temp := Param0[i];                                 ' + LineEnding +
+    '      j := i;                                            ' + LineEnding +
+    '      while (j >= GapLo) and                             ' + LineEnding +
+    '        {$IFPARAM Param3}                                ' + LineEnding +
+    '        (Param3(Param0[j - Gap], Temp) > 0)              ' + LineEnding +
+    '        {$ELSE}                                          ' + LineEnding +
+    '        (Param0[j - Gap] > Temp)                         ' + LineEnding +
+    '        {$ENDIF} do                                      ' + LineEnding +
+    '      begin                                              ' + LineEnding +
+    '        Param0[j] := Param0[j - Gap];                    ' + LineEnding +
+    '        j := j - Gap;                                    ' + LineEnding +
+    '      end;                                               ' + LineEnding +
+    '      Param0[j] := Temp;                                 ' + LineEnding +
+    '    end;                                                 ' + LineEnding +
+    '  end;                                                   ' + LineEnding +
+    'end;'
+  );
 
   Result := Method.Method;
-  Result.VarType.Name := '_Compare';
+  Result.VarType.Name := '_Sort';
 
   Sender.addMethod(Result);
 end;
@@ -973,10 +1005,10 @@ begin
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetObjectifyMethod).NewGlobalVar('_Objectify'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
-  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCompareMethod).NewGlobalVar('_Compare'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetLessThanMethod).NewGlobalVar('_LessThan'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetGreaterThanMethod).NewGlobalVar('_GreaterThan'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetEqualsMethod).NewGlobalVar('_Equals'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetSortMethod).NewGlobalVar('_Sort'));
 
   InitBaseMath();
   InitBaseString();
@@ -997,7 +1029,6 @@ begin
     _LapeCopy +
     _LapeDelete +
     _LapeInsert +
-    _LapeSort +
     _LapeIndexOf +
     _LapeArrayUnique +
     _LapeArrayMode +
@@ -1525,7 +1556,7 @@ begin
     if (Directive = 'endif') then
       popConditional()
     else
-    if (Directive = 'ifdef') or (Directive = 'ifndef') or (Directive = 'ifdecl') or (Directive = 'ifndecl') or (Directive = 'if') then
+    if (Directive = 'ifdef') or (Directive = 'ifndef') or (Directive = 'ifdecl') or (Directive = 'ifndecl') or (Directive = 'ifparam') or (Directive = 'if') then
       pushConditional(False, Sender.DocPos);
   end else
   begin
@@ -1550,6 +1581,9 @@ begin
     else
     if (Directive = 'ifndecl') then
       pushConditional(not hasDeclaration(Argument), Sender.DocPos)
+    else
+    if (Directive = 'ifparam') then
+      pushConditional(getDeclaration(Argument, True) is TLapeParameterVar, Sender.DocPos)
     else
     if (Directive = 'define') or (Directive = 'undef') then
       handleDefine(Directive, Argument)
@@ -4087,6 +4121,8 @@ begin
   FInternalMethodMap['ArrayStdev'] := TLapeTree_InternalMethod_ArrayStdev;
 
   FInternalMethodMap['Slice'] := TLapeTree_InternalMethod_Slice;
+
+  FInternalMethodMap['PType'] := TLapeTree_InternalMethod_PType;
 
   setTokenizer(ATokenizer);
   Reset();

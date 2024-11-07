@@ -309,6 +309,14 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_PType = class(TLapeTree_InternalMethod)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos=nil); override;
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+    function Evaluate: TLapeGlobalVar; override;
+  end;
+
 implementation
 
 uses
@@ -2950,6 +2958,41 @@ function TLapeTree_InternalMethod_DeepCopy.Compile(var Offset: Integer): TResVar
 begin
   Result := NullResVar;
   LapeException(lpeCannotEvalRunTime, DocPos); // todo and expose to scripts
+end;
+
+constructor TLapeTree_InternalMethod_PType.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, ADocPos);
+  FConstant := bTrue;
+end;
+
+function TLapeTree_InternalMethod_PType.resType: TLapeType;
+var
+  Typ: TLapeType;
+begin
+  if (FResType = nil) and (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+  begin
+    Typ := FParams[0].resType();
+    if (Typ is TLapeType_Type) then
+      Typ := TLapeType_Type(Typ).TType;
+    if (not (Typ is TLapeType_Pointer)) then
+      LapeException(lpeImpossible, DocPos);
+
+    FResType := TLapeType_Pointer(Typ).PType;
+  end;
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_PType.Compile(var Offset: Integer): TResVar;
+begin
+  Result := NullResVar;
+  LapeException(lpeImpossible);
+end;
+
+function TLapeTree_InternalMethod_PType.Evaluate: TLapeGlobalVar;
+begin
+  Result := FCompiler.getTypeVar(resType());
 end;
 
 end.

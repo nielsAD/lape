@@ -130,7 +130,6 @@ var
   LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
   LapeDelayedTypes: lpString =
     'type'                                                            + LineEnding +
-    '  _LapeCompareFunc = private function(constref A, B): Int32;'    + LineEnding +
     '  _LapeEqualsFunc  = private function(constref A, B): EvalBool;' + LineEnding;
 
   LapeDelayedForwards: lpString =
