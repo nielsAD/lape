@@ -219,17 +219,14 @@ type
 
   TLapeTree_InternalMethod_IndexOf = class(TLapeTree_InternalMethod)
   public
-    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
-
     function resType: TLapeType; override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
-  TLapeTree_InternalMethod_IndicesOf = class(TLapeTree_InternalMethod_IndexOf)
+  TLapeTree_InternalMethod_IndicesOf = class(TLapeTree_InternalMethod)
   public
-    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
-
     function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
   end;
 
   TLapeTree_InternalMethod_FallThrough = class(TLapeTree_InternalMethod)
@@ -385,103 +382,25 @@ end;
 
 function TLapeTree_InternalMethod_IndexOf.Compile(var Offset: Integer): TResVar;
 var
-  ArrayPointerVar, ItemVar, ArrayVar, EqualsVar, TempVar: TResVar;
-  ArrayType: TLapeType;
-  ArrayLen: TLapeTree_InternalMethod_Length;
-  ItemPointer: TLapeTree_Operator;
-  ItemWasConstant, ArrayWasConstant: Boolean;
-  i: Integer;
+  ArrayElementType: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
-  TempVar := NullResVar;
 
-  if (Params.Count <> 2) then
-    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
-  if (not FParams[0].CompileToTempVar(Offset, ItemVar)) then
-    LapeException(lpeInvalidEvaluation, DocPos);
-  if (not FParams[1].CompileToTempVar(Offset, ArrayVar)) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+  // Check if user defined `_ArrayIndexOf` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_ArrayIndexOf', Result, Offset) then
+    Exit;
 
-  if (not (ArrayVar.VarType is TLapeType_DynArray)) then
+  if (FParams.Count <> 2) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  if (not (FParams[1].resType is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
+  ArrayElementType := TLapeType_DynArray(FParams[1].resType()).PType;
 
-  ItemWasConstant := ItemVar.isConstant;
-  if ItemWasConstant then
-    ItemVar.isConstant := False;
+  RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
-  ArrayWasConstant := ArrayVar.isConstant;
-  if ArrayWasConstant then
-    ArrayVar.isConstant := False;
-
-  try
-    // Check if user defined `_IndexOf` exists. Useful for providing a native method
-    if InvokeMagicMethod(Self, '_IndexOf', Result, Offset) then
-      Exit;
-
-    ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
-    if (not ItemVar.VarType.CompatibleWith(ArrayType)) then
-      LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op_cmp_Equal), ItemVar.VarType.AsString, ArrayType.AsString], DocPos);
-
-    EqualsVar := GetMagicMethodOrNil(FCompiler, '_Equals', [ItemVar.VarType, ArrayType], FCompiler.getBaseType(ltEvalBool));
-
-    if (ArrayVar.VarType.BaseType = ltDynArray) then
-    begin
-      ArrayPointerVar := ArrayVar;
-      ArrayPointerVar.VarType := FCompiler.getBaseType(ltPointer);
-    end else
-      ArrayPointerVar := ArrayVar.VarType.Eval(op_Addr, TempVar, ArrayVar, NullResVar, [], Offset, @_DocPos); // ltStaticArray
-
-    ArrayLen := TLapeTree_InternalMethod_Length.Create(Self);
-    ArrayLen.addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
-
-    ItemPointer := TLapeTree_Operator.Create(op_Addr, Self);
-    ItemPointer.Left := TLapeTree_ResVar.Create(ItemVar.IncLock(), Self);
-
-    for i := FParams.Count - 1 downto 0 do
-      if (FParams[i] <> nil) and (FParams[i].Parent = Self) then
-        FParams[i].Free();
-
-    addParam(TLapeTree_ResVar.Create(ArrayPointerVar.IncLock(), Self));
-    addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
-    addParam(TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self));
-    addParam(ArrayLen.FoldConstants() as TLapeTree_ExprBase);
-    addParam(ItemPointer.FoldConstants() as TLapeTree_ExprBase);
-    addParam(TLapeTree_ResVar.Create(EqualsVar.IncLock(), Self));
-
-    Result := inherited;
-  finally
-    ItemVar.isConstant := ItemWasConstant;
-    ArrayVar.isConstant := ArrayWasConstant;
-  end;
-end;
-
-constructor TLapeTree_InternalMethod_IndexOf.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
-var
-  _IndexOf: TLapeGlobalVar;
-begin
-  inherited;
-
-  _IndexOf := ACompiler['_IndexOf'];
-  if (_IndexOf <> nil) and (_IndexOf.VarType is TLapeType_OverloadedMethod) then
-    _IndexOf := _IndexOf.VarType.ManagedDeclarations[0] as TLapeGlobalVar;
-  Assert(_IndexOf <> nil);
-
-  setExpr(TLapeTree_GlobalVar.Create(_IndexOf, Self));
-end;
-
-constructor TLapeTree_InternalMethod_IndicesOf.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
-var
-  _IndicesOf: TLapeGlobalVar;
-begin
-  inherited;
-
-  _IndicesOf := ACompiler['_IndicesOf'];
-  if (_IndicesOf <> nil) and (_IndicesOf.VarType is TLapeType_OverloadedMethod) then
-    _IndicesOf := _IndicesOf.VarType.ManagedDeclarations[0] as TLapeGlobalVar;
-  Assert(_IndicesOf <> nil);
-
-  setExpr(TLapeTree_GlobalVar.Create(_IndicesOf, Self));
+  setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayIndexOf'], Self));
+  Result := inherited;
 end;
 
 function TLapeTree_InternalMethod_IndicesOf.resType: TLapeType;
@@ -489,6 +408,29 @@ begin
   if (FResType = nil) then
     FResType := FCompiler.getGlobalType('TIntegerArray');
 
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_IndicesOf.Compile(var Offset: Integer): TResVar;
+var
+  ArrayElementType: TLapeType;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  // Check if user defined `_ArrayIndicesOf` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_ArrayIndicesOf', Result, Offset) then
+    Exit;
+
+  if (FParams.Count <> 2) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  if (not (FParams[1].resType is TLapeType_DynArray)) then
+    LapeException(lpeExpectedArray, DocPos);
+  ArrayElementType := TLapeType_DynArray(FParams[1].resType()).PType;
+
+  RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
+
+  setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayIndicesOf'], Self));
   Result := inherited;
 end;
 

@@ -91,51 +91,6 @@ type
   end;
 
 const
-  _LapeArrayUnique: lpString =
-    'procedure _Unique(var p: Pointer; ElSize: SizeInt; Equals: _LapeEqualsFunc;'            + LineEnding +
-    '                  Dispose: private procedure(p: Pointer);'                              + LineEnding +
-    '                  Copy: private procedure(Src: ConstPointer; Dst: Pointer)); overload;' + LineEnding +
-    'type'                                                                                   + LineEnding +
-    '  PSizeInt = ^SizeInt;'                                                                 + LineEnding +
-    'var'                                                                                    + LineEnding +
-    '  I, Len, NewLen: SizeInt;'                                                             + LineEnding +
-    '  Cur: Pointer;'                                                                        + LineEnding +
-    '  Upper: PtrUInt;'                                                                      + LineEnding +
-    'begin'                                                                                  + LineEnding +
-    '  if (p = nil) then'                                                                    + LineEnding +
-    '    Exit;'                                                                              + LineEnding +
-    ''                                                                                       + LineEnding +
-    '  NewLen := 0;'                                                                         + LineEnding +
-    '  Len := PSizeInt(p)[-1]^' {$IFDEF FPC}+'+1'{$ENDIF}+';'                                + LineEnding +
-    '  Upper := PtrUInt(p + (Len * ElSize));'                                                + LineEnding +
-    '  Cur := p;'                                                                            + LineEnding +
-    ''                                                                                       + LineEnding +
-    '  while (PtrUInt(Cur) < Upper) do'                                                      + LineEnding +
-    '  begin'                                                                                + LineEnding +
-    '    I := 0;'                                                                            + LineEnding +
-    '    while (I < NewLen) do'                                                              + LineEnding +
-    '    begin'                                                                              + LineEnding +
-    '      if Equals(Cur^, p[I * ElSize]^) then'                                             + LineEnding +
-    '        Break;'                                                                         + LineEnding +
-    '      Inc(I);'                                                                          + LineEnding +
-    '    end;'                                                                               + LineEnding +
-    ''                                                                                       + LineEnding +
-    '    if (I = NewLen) then'                                                               + LineEnding +
-    '    begin'                                                                              + LineEnding +
-    '      if (Pointer(Copy) = nil) then'                                                    + LineEnding +
-    '        Move(Cur^, p[NewLen * ElSize]^, ElSize)'                                        + LineEnding +
-    '      else'                                                                             + LineEnding +
-    '        Copy(Cur^, p[NewLen * ElSize]^);'                                               + LineEnding +
-    ''                                                                                       + LineEnding +
-    '      Inc(NewLen);'                                                                     + LineEnding +
-    '    end;'                                                                               + LineEnding +
-    ''                                                                                       + LineEnding +
-    '    Inc(Cur, ElSize);'                                                                  + LineEnding +
-    '  end;'                                                                                 + LineEnding +
-    ''                                                                                       + LineEnding +
-    '  _ArraySetLength(p, NewLen, ElSize, Dispose, nil);'                                    + LineEnding +
-    'end;';
-
   _LapeArrayMode: lpString =
     'function _ArrayMode(p: Pointer; ElSize, Len: SizeInt;'            + LineEnding +
     '                    Equals: _LapeEqualsFunc): SizeInt; overload;' + LineEnding +
@@ -517,50 +472,23 @@ end;
 
 function TLapeTree_InternalMethod_Unique.Compile(var Offset: Integer): TResVar;
 var
-  ArrayVar: TResVar;
-  ArrayType: TLapeType;
+  ArrayElementType: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
-
-  if (resType() = nil) then
-    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
-  if (not FParams[0].CompileToTempVar(Offset, ArrayVar)) then
-    LapeException(lpeInvalidEvaluation, DocPos);
 
   // Check if user defined `_Unique` exists. Useful for providing a native method
   if InvokeMagicMethod(Self, '_Unique', Result, Offset) then
     Exit;
 
-  ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
-  with TLapeTree_InternalMethod_Copy.Create(Self) do
-  try
-    addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
+   if (FParams.Count <> 1) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  ArrayElementType := TLapeType_DynArray(resType()).PType;
 
-    Result := Compile(Offset);
-    Result.isConstant := False;
-  finally
-    Free();
-  end;
+  RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
-  ArrayVar := Result;
-  ArrayVar.VarType := FCompiler.getBaseType(ltPointer);
-
-  with TLapeTree_Invoke.Create('_Unique', Self) do
-  try
-    addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
-    addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
-    addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Equals', [ArrayType, ArrayType], FCompiler.getBaseType(ltEvalBool)), Self));
-    addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
-    addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Assign', [ArrayType]), Self));
-
-    Compile(Offset).Spill(1);
-  finally
-    Free();
-  end;
-
-  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
-  Result.isConstant := True;
+  setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayUnique'], Self));
+  Result := inherited;
 end;
 
 function TLapeTree_InternalMethod_ArrayMedian.resType: TLapeType;
