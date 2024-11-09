@@ -90,44 +90,6 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
-const
-  _LapeArrayMode: lpString =
-    'function _ArrayMode(p: Pointer; ElSize, Len: SizeInt;'            + LineEnding +
-    '                    Equals: _LapeEqualsFunc): SizeInt; overload;' + LineEnding +
-    'var'                                                              + LineEnding +
-    '  i, Hits, Best, Index: SizeInt;'                                 + LineEnding +
-    '  Cur: Pointer;'                                                  + LineEnding +
-    'begin'                                                            + LineEnding +
-    '  Result := 0;'                                                   + LineEnding +
-    '  Index := 0;'                                                    + LineEnding +
-    '  Hits := 1;'                                                     + LineEnding +
-    ''                                                                 + LineEnding +
-    '  Cur := p;'                                                      + LineEnding +
-    '  Inc(p, ElSize);'                                                + LineEnding +
-    ''                                                                 + LineEnding +
-    '  for i := 1 to Len - 1 do'                                       + LineEnding +
-    '  begin'                                                          + LineEnding +
-    '    if not Equals(p^, Cur^) then'                                 + LineEnding +
-    '    begin'                                                        + LineEnding +
-    '      if (Hits > Best) then'                                      + LineEnding +
-    '      begin'                                                      + LineEnding +
-    '        Best := Hits;'                                            + LineEnding +
-    '        Result := Index;'                                         + LineEnding +
-    '      end;'                                                       + LineEnding +
-    ''                                                                 + LineEnding +
-    '      Index := i;'                                                + LineEnding +
-    '      Hits := 0;'                                                 + LineEnding +
-    '      Cur := p;'                                                  + LineEnding +
-    '    end;'                                                         + LineEnding +
-    ''                                                                 + LineEnding +
-    '    Inc(Hits);'                                                   + LineEnding +
-    '    Inc(p, ElSize);'                                              + LineEnding +
-    '  end;'                                                           + LineEnding +
-    ''                                                                 + LineEnding +
-    '  if (Hits > Best) then'                                          + LineEnding +
-    '    Result := Index;'                                             + LineEnding +
-    'end;';
-
 implementation
 
 uses
@@ -477,14 +439,13 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
 
-  // Check if user defined `_Unique` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_Unique', Result, Offset) then
-    Exit;
-
    if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   ArrayElementType := TLapeType_DynArray(resType()).PType;
 
+  // Check if user defined `_Unique` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_Unique', Result, Offset) then
+    Exit;
   RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayUnique'], Self));
@@ -642,85 +603,32 @@ end;
 function TLapeTree_InternalMethod_ArrayMode.Compile(var Offset: Integer): TResVar;
 var
   ArrayVar, SortedArrayVar, LengthVar: TResVar;
-  ArrayType: TLapeType;
+  ArrayElementType: TLapeType;
+  NewParam: TLapeTree_InternalMethod_Sorted;
 begin
   Result := NullResVar;
   Dest := NullResVar;
 
   if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
-
-  ArrayType := resType();
-  if (ArrayType = nil) or (not FParams[0].CompileToTempVar(Offset, ArrayVar, 1)) then
+  if (not (FParams[0].resType() is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  RequireOperators(FCompiler, [op_cmp_Equal, op_cmp_LessThan, op_cmp_GreaterThan], ArrayType, DocPos);
+  // Check if user defined `_ArrayMode` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_ArrayMode', Result, Offset) then
+    Exit;
 
-  Result := _ResVar.New(FCompiler.getTempVar(ArrayType));
-  SortedArrayVar := _ResVar.New(FCompiler.getTempVar(ArrayVar.VarType));
+  ArrayElementType := resType();
+  if (ArrayElementType = nil) then
+    LapeException(lpeExpectedArray, DocPos);
 
-  FCompiler.VarToDefault(Result, Offset);
+  RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
-  with TLapeTree_InternalMethod_Length.Create(Self) do
-  try
-    addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
-
-    LengthVar := FoldConstants(False).Compile(Offset);
-  finally
-    Free();
-  end;
-
-  // // if Length(ArrayVar) > 0 then
-  with TLapeTree_If.Create(Self) do
-  try
-    Condition := TLapeTree_ResVar.Create(LengthVar.IncLock(), Self);
-    Body := TLapeTree_StatementList.Create(Self);
-    with TLapeTree_StatementList(Body) do
-    begin
-      // SortedArrayVar := Sorted(ArrayVar)
-      addStatement(TLapeTree_Operator.Create(op_Assign, Self));
-      with TLapeTree_Operator(Statements[0]) do
-      begin
-        Left := TLapeTree_ResVar.Create(SortedArrayVar.IncLock(), Self);
-        Right := TLapeTree_InternalMethod_Sorted.Create(Self);
-        with TLapeTree_InternalMethod_Sorted(Right) do
-          addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
-      end;
-
-      // Result := SortedArrayVar[_ArrayMode(...)]
-      addStatement(TLapeTree_Operator.Create(op_Assign, Self));
-      with TLapeTree_Operator(Statements[1]) do
-      begin
-        Left := TLapeTree_ResVar.Create(Result.IncLock(), Self);
-        Right := TLapeTree_Operator.Create(op_Index, Self);
-        with TLapeTree_Operator(Right) do
-        begin
-          Left := TLapeTree_ResVar.Create(SortedArrayVar.IncLock(), Self);
-          Right := TLapeTree_Invoke.Create('_ArrayMode', Self);
-
-          with TLapeTree_Invoke(Right) do
-          begin
-            SortedArrayVar.VarType := FCompiler.getBaseType(ltPointer);
-
-            addParam(TLapeTree_ResVar.Create(SortedArrayVar.IncLock(), Self));
-            addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
-            addParam(TLapeTree_ResVar.Create(LengthVar.IncLock(), Self));
-            addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Equals', [ArrayType, ArrayType], FCompiler.getBaseType(ltEvalBool)), Self));
-          end;
-        end;
-      end;
-    end;
-
-    Compile(Offset);
-  finally
-    LengthVar.Spill(1);
-    SortedArrayVar.Spill(1);
-
-    Free();
-  end;
-
-  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
-  Result.isConstant := True;
+  NewParam := TLapeTree_InternalMethod_Sorted.Create(Self);
+  NewParam.addParam(FParams[0]);
+  setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMode'], Self));
+  addParam(NewParam);
+  Result := inherited;
 end;
 
 function TLapeTree_InternalMethod_ArrayMin.resType: TLapeType;
@@ -745,15 +653,15 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
 
-  // Check if user defined `_ArrayMin` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayMin', Result, Offset) then
-    Exit;
-
   if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   ArrayElementType := resType();
   if (ArrayElementType = nil) then
     LapeException(lpeExpectedArray, DocPos);
+
+  // Check if user defined `_ArrayMin` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_ArrayMin', Result, Offset) then
+    Exit;
 
   RequireOperators(FCompiler, [op_cmp_LessThan], ArrayElementType, DocPos);
 
@@ -783,15 +691,15 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
 
-  // Check if user defined `_ArrayMax` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayMax', Result, Offset) then
-    Exit;
-
   if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   ArrayElementType := resType();
   if (ArrayElementType = nil) then
     LapeException(lpeExpectedArray, DocPos);
+
+  // Check if user defined `_ArrayMax` exists. Useful for providing a native method
+  if InvokeMagicMethod(Self, '_ArrayMax', Result, Offset) then
+    Exit;
 
   RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayElementType, DocPos);
 
