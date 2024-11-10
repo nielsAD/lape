@@ -43,15 +43,15 @@ procedure _LapeFillMem(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$EN
 procedure _LapeMove(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeCompareMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeSortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeSortWeighted_UInt32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeSortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeSortWeighted_UInt64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeSortWeighted_Single(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeSortWeighted_Double(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeSortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_UInt32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_UInt64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Single(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Double(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArrayReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
 procedure _LapeSStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAStr_SetLen(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -128,15 +128,6 @@ var
   LapeEvalArr: TLapeEvalArr;
 
   LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
-  LapeDelayedTypes: lpString =
-    'type'                                                            + LineEnding +
-    '  _LapeEqualsFunc  = private function(constref A, B): EvalBool;' + LineEnding;
-
-  LapeDelayedForwards: lpString =
-    'procedure _ArrayMin; overload; begin end;'   + LineEnding +
-    'procedure _ArrayMax; overload; begin end;'   + LineEnding +
-    'procedure _ArraySum; overload; begin end;'   + LineEnding +
-    'procedure _ArrayStdev; overload; begin end;';
 
   _LapeToString_Enum: lpString =
     'function _EnumToString(s: ^const string; Index, Lo, Hi: SizeInt): string;'          + LineEnding +
@@ -574,56 +565,56 @@ begin
   PEvalBool(Result)^ := CompareMem(Params^[0], Params^[1], PSizeInt(Params^[2])^);
 end;
 
-procedure _LapeSortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int32>;
 begin
   Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
-procedure _LapeSortWeighted_UInt32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_UInt32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<UInt32>;
 begin
   Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
-procedure _LapeSortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int64>;
 begin
   Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
-procedure _LapeSortWeighted_UInt64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_UInt64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<UInt64>;
 begin
   Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
-procedure _LapeSortWeighted_Single(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Single(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Single>;
 begin
   Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
-procedure _LapeSortWeighted_Double(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Double(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Double>;
 begin
   Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
-procedure _LapeSortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArraySortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Extended>;
 begin
   Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
 end;
 
-procedure _LapeReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeArrayReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   _Reverse(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^);
 end;

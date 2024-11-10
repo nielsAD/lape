@@ -117,8 +117,8 @@ type
     function GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetSortMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
+    function GetMethod_ArraySort(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetMethod_ArrayRange(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetMethod_ArrayMin(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetMethod_ArrayMax(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
@@ -126,6 +126,11 @@ type
     function GetMethod_ArrayIndexOf(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetMethod_ArrayIndicesOf(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetMethod_ArrayMode(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArraySum(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayMean(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayMedian(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayVariance(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayStdev(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
@@ -638,24 +643,24 @@ begin
   end;
 end;
 
-function TLapeCompiler.GetSortMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArraySort(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
   GetMethod_FixupParams(AType, AParams, AResult);
-  if (Sender = nil) or (not (Length(AParams) in [3,4])) then
+  if (Sender = nil) or (not (Length(AParams) in [1, 2])) then
     Exit;
 
-  if (Length(AParams) = 3) then
-    Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1], AParams[2]], [lptVar, lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)])) as TLapeType_Method
+  if (Length(AParams) = 1) then
+    Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptVar], [TLapeGlobalVar(nil)])) as TLapeType_Method
   else
-    Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1], AParams[2], AParams[3]], [lptVar, lptNormal, lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)])) as TLapeType_Method;
+    Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptVar, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)])) as TLapeType_Method;
 
-  Method := addGlobalFunc(Header, 'GetSortMethod',
+  Method := addGlobalFunc(Header, '!ArraySort',
     '{$RANGECHECKS OFF}                                       ' + LineEnding +
-     'type                                                    ' + LineEnding +
+    'type                                                     ' + LineEnding +
     '  TType = PType(Param0);                                 ' + LineEnding +
     'const                                                    ' + LineEnding +
     '  Gaps: TIntegerArray = [                                ' + LineEnding +
@@ -663,24 +668,27 @@ begin
     '    3785, 1695, 701, 301, 132, 57, 23, 10, 4, 1          ' + LineEnding +
     '  ];                                                     ' + LineEnding +
     'var                                                      ' + LineEnding +
-    '  i, j, Gap, GapLo, Len: Int32;                          ' + LineEnding +
+    '  i, j, Gap, GapLo, Len, Lo, Hi: Int32;                  ' + LineEnding +
     '  Temp: TType;                                           ' + LineEnding +
     'begin                                                    ' + LineEnding +
-    '  Len := (Param2 - Param1 + 1);                          ' + LineEnding +
+    '  Len := Length(Param0);                                 ' + LineEnding +
+    '  Lo := Low(Param0);                                     ' + LineEnding +
+    '  Hi := High(Param0);                                    ' + LineEnding +
+    '                                                         ' + LineEnding +
     '  for Gap in Gaps do                                     ' + LineEnding +
     '  begin                                                  ' + LineEnding +
     '    // skip gaps larger than the subsection size         ' + LineEnding +
     '    if (Gap > Len) then                                  ' + LineEnding +
     '      Continue;                                          ' + LineEnding +
     '                                                         ' + LineEnding +
-    '    GapLo := Param1 + Gap;                               ' + LineEnding +
-    '    for i := GapLo to Param2 do                          ' + LineEnding +
+    '    GapLo := Lo + Gap;                                   ' + LineEnding +
+    '    for i := GapLo to Hi do                              ' + LineEnding +
     '    begin                                                ' + LineEnding +
     '      Temp := Param0[i];                                 ' + LineEnding +
     '      j := i;                                            ' + LineEnding +
     '      while (j >= GapLo) and                             ' + LineEnding +
-    '        {$IFPARAM Param3}                                ' + LineEnding +
-    '        (Param3(Param0[j - Gap], Temp) > 0)              ' + LineEnding +
+    '        {$IFPARAM Param1}                                ' + LineEnding +
+    '        (Param1(Param0[j - Gap], Temp) > 0)              ' + LineEnding +
     '        {$ELSE}                                          ' + LineEnding +
     '        (Param0[j - Gap] > Temp)                         ' + LineEnding +
     '        {$ENDIF} do                                      ' + LineEnding +
@@ -695,7 +703,7 @@ begin
   );
 
   Result := Method.Method;
-  Result.VarType.Name := '_Sort';
+  Result.VarType.Name := '_ArraySort';
 
   Sender.addMethod(Result);
 end;
@@ -710,7 +718,7 @@ begin
   if (Sender = nil) or (Length(AParams) <> 3) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
-  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1], AParams[2]], [lptVar, lptOut, lptOut], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getBaseType(ltInt32))) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1], AParams[2]], [lptNormal, lptOut, lptOut], [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getBaseType(ltInt32))) as TLapeType_Method;
   Method := addGlobalFunc(Header, '!ArrayRange',
     'begin                                    ' + LineEnding +
     '  Result := Length(Param0);              ' + LineEnding +
@@ -738,7 +746,7 @@ begin
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
-  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptVar], [TLapeGlobalVar(nil)], TLapeType_DynArray(AParams[0]).PType)) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptNormal], [TLapeGlobalVar(nil)], TLapeType_DynArray(AParams[0]).PType)) as TLapeType_Method;
   Method := addGlobalFunc(Header, '!ArrayMin',
     '{$RANGECHECKS OFF}                              ' + LineEnding +
     'type                                            ' + LineEnding +
@@ -779,7 +787,7 @@ begin
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
-  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptVar], [TLapeGlobalVar(nil)], TLapeType_DynArray(AParams[0]).PType)) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptNormal], [TLapeGlobalVar(nil)], TLapeType_DynArray(AParams[0]).PType)) as TLapeType_Method;
   Method := addGlobalFunc(Header, '!ArrayMax',
     '{$RANGECHECKS OFF}                              ' + LineEnding +
     'type                                            ' + LineEnding +
@@ -826,14 +834,14 @@ begin
   else
     AResult := AParams[0];
 
-  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptVar], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptNormal], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
   Method := addGlobalFunc(Header, '!ArrayUnique',
     '{$RANGECHECKS OFF}                                 ' + LineEnding +
     'type                                               ' + LineEnding +
     '  TType = PType(Param0);                           ' + LineEnding +
     'var                                                ' + LineEnding +
     '  Ptr, Upper: ^TType;                              ' + LineEnding +
-    '  I, NewLen: Integer;                              ' + LineEnding +
+    '  I, NewLen: Int32;                                ' + LineEnding +
     'begin                                              ' + LineEnding +
     '  Result := Copy(Param0);                          ' + LineEnding +
     '  if (_ArrayRange(Result, Ptr, Upper) <= 1) then   ' + LineEnding +
@@ -874,7 +882,7 @@ begin
   if (Sender = nil) or (Length(AParams) <> 2) or (not (AParams[1] is TLapeType_DynArray)) then
     Exit;
 
-  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptVar], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getBaseType(ltInt32))) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getBaseType(ltInt32))) as TLapeType_Method;
   Method := addGlobalFunc(Header, '!ArrayIndexOf',
     '{$RANGECHECKS OFF}                        ' + LineEnding +
     'var                                       ' + LineEnding +
@@ -903,7 +911,7 @@ begin
   if (Sender = nil) or (Length(AParams) <> 2) or (not (AParams[1] is TLapeType_DynArray)) then
     Exit;
 
-  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptVar], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getGlobalType('TIntegerArray'))) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getGlobalType('TIntegerArray'))) as TLapeType_Method;
   Method := addGlobalFunc(Header, '!ArrayIndicesOf',
     '{$RANGECHECKS OFF}                        ' + LineEnding +
     'var                                       ' + LineEnding +
@@ -943,29 +951,30 @@ begin
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
-  // input must be sorted!
-  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConstRef], [TLapeGlobalVar(nil)], TLapeType_DynArray(AParams[0]).PType)) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptNormal], [TLapeGlobalVar(nil)], TLapeType_DynArray(AParams[0]).PType)) as TLapeType_Method;
   Method := addGlobalFunc(Header, '!ArrayMode',
     '{$RANGECHECKS OFF}                                      ' + LineEnding +
     'type                                                    ' + LineEnding +
     '  TType = PType(Param0);                                ' + LineEnding +
     'var                                                     ' + LineEnding +
+    '  Arr: array of TType;                                  ' + LineEnding +
     '  Best, Current: record Value: TType; Hits: Int32; end; ' + LineEnding +
     '  i: Int32;                                             ' + LineEnding +
     'begin                                                   ' + LineEnding +
     '  if (Length(Param0) = 0) then                          ' + LineEnding +
-    '    Exit(Default(TType));                               ' + LineEnding +
+    '    Exit(Default(Result));                              ' + LineEnding +
     '                                                        ' + LineEnding +
+    '  Arr := Sorted(Param0);                                ' + LineEnding +
     '  Best := [];                                           ' + LineEnding +
-    '  Current := [Param0[Low(Param0)], 1];                  ' + LineEnding +
+    '  Current := [Arr[0], 1];                               ' + LineEnding +
     '                                                        ' + LineEnding +
-    '  for i := Low(Param0) + 1 to High(Param0) do           ' + LineEnding +
+    '  for i := 1 to High(Arr) do                            ' + LineEnding +
     '  begin                                                 ' + LineEnding +
-    '    if (Param0[i] <> Current.Value) then                ' + LineEnding +
+    '    if (Arr[i] <> Current.Value) then                   ' + LineEnding +
     '    begin                                               ' + LineEnding +
     '      if (Current.Hits > Best.Hits) then                ' + LineEnding +
     '        Best := Current;                                ' + LineEnding +
-    '      Current := [Param0[i], 1];                        ' + LineEnding +
+    '      Current := [Arr[i], 1];                           ' + LineEnding +
     '    end else                                            ' + LineEnding +
     '      Current.Hits := Current.Hits + 1;                 ' + LineEnding +
     '  end;                                                  ' + LineEnding +
@@ -978,6 +987,176 @@ begin
 
   Result := Method.Method;
   Result.VarType.Name := '_ArrayMode';
+
+  Sender.addMethod(Result);
+end;
+
+function TLapeCompiler.GetMethod_ArraySum(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Header: TLapeType_Method;
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  GetMethod_FixupParams(AType, AParams, AResult);
+  if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
+    Exit;
+
+  if (TLapeType_DynArray(AParams[0]).PType.BaseType in LapeRealTypes) then
+    AResult := getBaseType(ltDouble)
+  else
+  if (TLapeType_DynArray(AParams[0]).PType.BaseType in LapeIntegerTypes) then
+    AResult := getBaseType(ltInt64)
+  else
+    AResult := TLapeType_DynArray(AParams[0]).PType;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptNormal], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+  Method := addGlobalFunc(Header, '!ArraySum',
+    '{$RANGECHECKS OFF}                                 ' + LineEnding +
+    'type                                               ' + LineEnding +
+    '  TType = PType(Param0);                           ' + LineEnding +
+    'var                                                ' + LineEnding +
+    '  Ptr, Upper: ^TType;                              ' + LineEnding +
+    'begin                                              ' + LineEnding +
+    '  Result := Default(Result);                       ' + LineEnding +
+    '  if (_ArrayRange(Param0, Ptr, Upper) > 0) then    ' + LineEnding +
+    '    while (PtrUInt(Ptr) <= PtrUInt(Upper)) do      ' + LineEnding +
+    '    begin                                          ' + LineEnding +
+    '      Result := Result + Ptr^;                     ' + LineEnding +
+    '      Inc(Ptr);                                    ' + LineEnding +
+    '    end;                                           ' + LineEnding +
+    'end;'
+  );
+
+  Result := Method.Method;
+  Result.VarType.Name := '_ArraySum';
+
+  Sender.addMethod(Result);
+end;
+
+function TLapeCompiler.GetMethod_ArrayMean(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Header: TLapeType_Method;
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  GetMethod_FixupParams(AType, AParams, AResult);
+  if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
+    Exit;
+
+  if (TLapeType_DynArray(AParams[0]).PType.BaseType in LapeRealTypes+LapeIntegerTypes) then
+    AResult := getBaseType(ltDouble)
+  else
+    AResult := TLapeType_DynArray(AParams[0]).PType;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptNormal], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+  Method := addGlobalFunc(Header, '!ArrayMean',
+    '{$RANGECHECKS OFF}                                ' + LineEnding +
+    'begin                                             ' + LineEnding +
+    '  if (Length(Param0) > 0) then                    ' + LineEnding +
+    '    Result := ArraySum(Param0) / Length(Param0)   ' + LineEnding +
+    '  else                                            ' + LineEnding +
+    '    Result := Default(Result);                    ' + LineEnding +
+    'end;'
+  );
+
+  Result := Method.Method;
+  Result.VarType.Name := '_ArrayMean';
+
+  Sender.addMethod(Result);
+end;
+
+function TLapeCompiler.GetMethod_ArrayMedian(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Header: TLapeType_Method;
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  GetMethod_FixupParams(AType, AParams, AResult);
+  if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
+    Exit;
+
+  if (TLapeType_DynArray(AParams[0]).PType.BaseType in LapeRealTypes+LapeIntegerTypes) then
+    AResult := getBaseType(ltDouble)
+  else
+    AResult := TLapeType_DynArray(AParams[0]).PType;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptNormal], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+  Method := addGlobalFunc(Header, '!ArrayMedian',
+    '{$RANGECHECKS OFF}                                     ' + LineEnding +
+    'type                                                   ' + LineEnding +
+    '  TType = PType(Param0);                               ' + LineEnding +
+    'var                                                    ' + LineEnding +
+    '  Arr: array of TType;                                 ' + LineEnding +
+    '  Mid: Double;                                         ' + LineEnding +
+    'begin                                                  ' + LineEnding +
+    '  if (Length(Param0) < 2) then                         ' + LineEnding +
+    '    raise "ArrayMedian requires at least two values";  ' + LineEnding +
+    '  Arr := Sorted(Param0);                               ' + LineEnding +
+    '  Mid := (Length(Arr) - 1) / 2;                        ' + LineEnding +
+    '  Result := (Arr[Trunc(Mid)] + Arr[Ceil(Mid)]) / 2;    ' + LineEnding +
+    'end;'
+  );
+
+  Result := Method.Method;
+  Result.VarType.Name := '_ArrayMedian';
+
+  Sender.addMethod(Result);
+end;
+
+function TLapeCompiler.GetMethod_ArrayVariance(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Header: TLapeType_Method;
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  GetMethod_FixupParams(AType, AParams, AResult);
+  if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
+    Exit;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltDouble))) as TLapeType_Method;
+  Method := addGlobalFunc(Header, '!ArrayVariance',
+    '{$RANGECHECKS OFF}                             ' + LineEnding +
+    'type                                           ' + LineEnding +
+    '  TType = PType(Param0);                       ' + LineEnding +
+    'var                                            ' + LineEnding +
+    '  Mean, Square: Double;                        ' + LineEnding +
+    '  i: Int32;                                    ' + LineEnding +
+    'begin                                          ' + LineEnding +
+    '  if Length(Param0) = 0 then                   ' + LineEnding +
+    '    Exit(Default(Result));                     ' + LineEnding +
+    '                                               ' + LineEnding +
+    '  Mean := ArrayMean(Param0);                   ' + LineEnding +
+    '  for i := Low(Param0) to High(Param0) do      ' + LineEnding +
+    '    Square := Square + Sqr(Param0[i] - Mean);  ' + LineEnding +
+    '  Result := Square / Length(Param0);           ' + LineEnding +
+    'end;                                           '
+  );
+
+  Result := Method.Method;
+  Result.VarType.Name := '_ArrayVariance';
+
+  Sender.addMethod(Result);
+end;
+
+function TLapeCompiler.GetMethod_ArrayStdev(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Header: TLapeType_Method;
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  GetMethod_FixupParams(AType, AParams, AResult);
+  if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
+    Exit;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptNormal], [TLapeGlobalVar(nil)], getBaseType(ltDouble))) as TLapeType_Method;
+  Method := addGlobalFunc(Header, '!ArrayStdev',
+    'begin                                     ' + LineEnding +
+    '  Result := Sqrt(ArrayVariance(Param0));  ' + LineEnding +
+    'end;'
+  );
+
+  Result := Method.Method;
+  Result.VarType.Name := '_ArrayStdev';
 
   Sender.addMethod(Result);
 end;
@@ -1167,17 +1346,17 @@ begin
   addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: WideString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeWStr_Insert);
   addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: UnicodeString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeUStr_Insert);
 
-  addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: EvalBool); overload;', @_LapeSortWeighted_Int32);
-  addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt32; SortUp: EvalBool); overload;', @_LapeSortWeighted_UInt32);
-  addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int64; SortUp: EvalBool); overload;', @_LapeSortWeighted_Int64);
-  addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt64; SortUp: EvalBool); overload;', @_LapeSortWeighted_UInt64);
-  addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Single; SortUp: EvalBool); overload;', @_LapeSortWeighted_Single);
-  addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Double; SortUp: EvalBool); overload;', @_LapeSortWeighted_Double);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Int32);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt32; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_UInt32);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int64; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Int64);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt64; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_UInt64);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Single; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Single);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Double; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Double);
   {$IFNDEF Lape_NoExtended}
-  addGlobalFunc('procedure _SortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Extended; SortUp: EvalBool); overload;', @_LapeSortWeighted_Extended);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Extended; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Extended);
   {$ENDIF}
 
-  addGlobalFunc('procedure _Reverse(A: Pointer; ElSize, Len: SizeInt); overload;', @_LapeReverse);
+  addGlobalFunc('procedure _ArrayReverse(A: Pointer; ElSize, Len: SizeInt); overload;', @_LapeArrayReverse);
 
   addGlobalFunc('function GetMem(i: SizeInt): Pointer;', @_LapeGetMem);
   addGlobalFunc('function AllocMem(i: SizeInt): Pointer;', @_LapeAllocMem);
@@ -1198,10 +1377,10 @@ begin
   addGlobalFunc('procedure UniqueString(var Str: UnicodeString); overload;', @_LapeUStr_Unique);
 
   addToString();
-  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetObjectifyMethod).NewGlobalVar('_Objectify'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
-  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetSortMethod).NewGlobalVar('_Sort'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetObjectifyMethod).NewGlobalVar('_Objectify'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArraySort).NewGlobalVar('_ArraySort'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayRange).NewGlobalVar('_ArrayRange'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayMin).NewGlobalVar('_ArrayMin'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayMax).NewGlobalVar('_ArrayMax'));
@@ -1209,6 +1388,11 @@ begin
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayIndexOf).NewGlobalVar('_ArrayIndexOf'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayIndicesOf).NewGlobalVar('_ArrayIndicesOf'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayMode).NewGlobalVar('_ArrayMode'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArraySum).NewGlobalVar('_ArraySum'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayMean).NewGlobalVar('_ArrayMean'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayMedian).NewGlobalVar('_ArrayMedian'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayVariance).NewGlobalVar('_ArrayVariance'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayStdev).NewGlobalVar('_ArrayStdev'));
 
   InitBaseMath();
   InitBaseString();
@@ -1218,8 +1402,6 @@ begin
 
   addDelayedCode(
     LapeDelayedFlags +
-    LapeDelayedTypes +
-    LapeDelayedForwards +
     _LapeToString_Enum +
     Format(_LapeToString_Set, ['Small', Ord(High(ELapeSmallEnum))]) +
     Format(_LapeToString_Set, ['Large', Ord(High(ELapeLargeEnum))]) +

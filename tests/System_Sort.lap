@@ -63,8 +63,13 @@ type
   TVec = record X,Y,Z:Integer; end;
   TVecArray = array of TVec;
 
-// _Sort overloads will be checked before generating a method
-procedure _Sort(var Arr: TVecArray); overload;
+operator >(l,r: TVec): Boolean;
+begin
+  // needed for below
+end;
+
+// _ArraySort overloads will be checked before generating a method
+procedure _ArraySort(var Arr: TVecArray); override;
 begin
   Arr += [1,2,3];
 end;
