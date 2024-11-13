@@ -1572,27 +1572,47 @@ begin
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
   Param := FParams[0].Compile(Offset);
-  if (not Param.HasType()) or (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray])) then
+  if (not Param.HasType()) then
     LapeException(lpeInvalidEvaluation, DocPos);
 
-  if (Param.VarType.BaseType = ltShortString) then
-  begin
-    Dest := NullResVar;
-    Result := Param;
-    Result.VarType := FCompiler.getBaseType(ltUInt8);
-  end
-  else
-  begin
-    Result := NullResVar;
-    Result.VarType := FCompiler.getBaseType(ltSizeInt);
-    if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
-      FDest := VarResVar;
-    FCompiler.getDestVar(FDest, Result, op_Unknown);
+  case Param.VarType.BaseType of
+    ltSmallSet, ltLargeSet:
+      begin
+        Dest := NullResVar;
+        with TLapeTree_Invoke.Create('BitCount', Self) do
+        try
+          addParam(TLapeTree_ResVar.Create(Param, Self));
+          addParam(TLapeTree_Integer.Create(Param.VarType.Size, Self));
 
-    if (Param.VarType.BaseType in LapeStringTypes) then
-      FCompiler.Emitter._Eval(getEvalProc_StringLength(), Result, Param, Param, Offset, @Self._DocPos)
-    else
-      FCompiler.Emitter._Eval(getEvalProc_DynArrayLength(), Result, Param, Param, Offset, @Self._DocPos);
+          Result := Compile(Offset);
+        finally
+          Free();
+        end;
+      end;
+
+    ltShortString:
+      begin
+        Dest := NullResVar;
+        Result := Param;
+        Result.VarType := FCompiler.getBaseType(ltUInt8);
+      end;
+
+     ltDynArray, ltAnsiString, ltWideString, ltUnicodeString:
+      begin
+        Result := NullResVar;
+        Result.VarType := FCompiler.getBaseType(ltSizeInt);
+        if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
+          FDest := VarResVar;
+        FCompiler.getDestVar(FDest, Result, op_Unknown);
+
+        if (Param.VarType.BaseType in LapeStringTypes) then
+          FCompiler.Emitter._Eval(getEvalProc_StringLength(), Result, Param, Param, Offset, @Self._DocPos)
+        else
+          FCompiler.Emitter._Eval(getEvalProc_DynArrayLength(), Result, Param, Param, Offset, @Self._DocPos);
+      end;
+
+     else
+       LapeException(lpeInvalidEvaluation, DocPos);
   end;
 end;
 

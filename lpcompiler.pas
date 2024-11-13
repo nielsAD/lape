@@ -1369,6 +1369,8 @@ begin
 
   addGlobalFunc('function Assigned(constref p): EvalBool;', @_LapeAssigned);
 
+  addGlobalFunc('function BitCount(constref Value; Size: UInt8): UInt32;', @_LapeBitCount);
+
   addGlobalFunc('procedure RaiseException(Message: string); overload;', @_LapeRaiseString);
   addGlobalFunc('procedure RaiseException(Message: String; DocPos: Pointer); overload;', @_LapeRaiseStringWithDocPos);
 

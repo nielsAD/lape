@@ -3,10 +3,12 @@
 type
   TMyRange = 1..4;
   TMySet = set of TMyRange;
+  TMyLargeSet = set of 1..255;
 
 var
   a: TMyRange;
   b: TMySet;
+  c: TMyLargeSet;
 begin
   a := 3;
   Assert(a =  3, 'a <> 3');
@@ -16,21 +18,32 @@ begin
   Assert(b = [1, 4],   'b <> [1, 4]');
   Assert(b <> [1, 3],  'b = [1, 3]');
   Assert(not (a in b), 'a in b');
+  Assert(Length(b) = 2);
 
   b := b + a;
   Assert(b = [1, 3..4], 'b <> [1, 3..4]');
+  Assert(Length(b) = 3);
 
   Assert(a in b,              'a not in b');
   Assert(TMySet([3..4]) <= b, 'not ([3..4] <= b)');
 
   b := b - [1];
   Assert(b = [3..4], 'b <> [3..4]');
+  Assert(Length(b) = 2);
 
   b := b * [2..3];
   Assert(b = [3], 'b <> [3]');
+  Assert(Length(b) = 1);
 
   Inc(a);
   Assert(a = 4, 'a <> 4');
+
+  c := [1..10];
+  Assert(Length(c) = 10);
+  c := c + [202..204];
+  Assert(Length(c) = 13);
+  c := c + [1..11];
+  Assert(Length(c) = 14);
 
   WriteLn('Passed');
 end;
