@@ -2848,6 +2848,8 @@ end;
 function TLapeDeclarationList.Get(Name: lpString; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
 begin
   Result := False;
+  if (Name = '') then
+    Exit;
 
   Name := LapeCase(Name);
   if (FList <> nil) then
@@ -2863,6 +2865,8 @@ end;
 function TLapeDeclarationList.Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
 begin
   Result := False;
+  if (Name = '') then
+    Exit;
 
   Name := LapeCase(Name);
   if (FList <> nil) then
