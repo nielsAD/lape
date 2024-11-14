@@ -198,6 +198,21 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
+  TLapeType_ArrayHelper_Difference = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_SymDifference = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_Intersection = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
 implementation
 
 uses
@@ -846,6 +861,36 @@ begin
     VarType,
     [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)],
     ResType
+  );
+end;
+
+function TLapeType_ArrayHelper_Difference.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Result := System.ArrayDifference(Self, Param0);',
+    VarType,
+    [VarType],
+    VarType
+  );
+end;
+
+function TLapeType_ArrayHelper_SymDifference.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Result := System.ArraySymDifference(Self, Param0);',
+    VarType,
+    [VarType],
+    VarType
+  );
+end;
+
+function TLapeType_ArrayHelper_Intersection.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Result := System.ArrayIntersection(Self, Param0);',
+    VarType,
+    [VarType],
+    VarType
   );
 end;
 

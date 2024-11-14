@@ -132,6 +132,9 @@ type
     function GetMethod_ArrayMedian(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetMethod_ArrayVariance(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetMethod_ArrayStdev(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayDifference(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArraySymDifference(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayIntersection(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     procedure InitBaseDefinitions; virtual;
     procedure InitBaseMath; virtual;
@@ -1168,6 +1171,111 @@ begin
   Sender.addMethod(Result);
 end;
 
+function TLapeCompiler.GetMethod_ArrayDifference(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Header: TLapeType_Method;
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  if (Sender = nil) or (Length(AParams) <> 2) then
+    Exit;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AParams[0])) as TLapeType_Method;
+  Method := addGlobalFunc(Header, '!ArrayDifference',
+    '{$RANGECHECKS OFF}                    ' + LineEnding +
+    'var                                   ' + LineEnding +
+    '  Val: PType(Param0);                 ' + LineEnding +
+    '  Count: Int32 = 0;                   ' + LineEnding +
+    'begin                                 ' + LineEnding +
+    '  SetLength(Result, Length(Param0));  ' + LineEnding +
+    '  for Val in Param0 do                ' + LineEnding +
+    '    if IndexOf(Val, Param1) = -1 then ' + LineEnding +
+    '    begin                             ' + LineEnding +
+    '      Result[Count] := Val;           ' + LineEnding +
+    '      Count := Count + 1;             ' + LineEnding +
+    '    end;                              ' + LineEnding +
+    '  SetLength(Result, Count);           ' + LineEnding +
+    'end;'
+  );
+
+  Result := Method.Method;
+  Result.VarType.Name := '_ArrayDifference';
+
+  Sender.addMethod(Result);
+end;
+
+function TLapeCompiler.GetMethod_ArraySymDifference(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Header: TLapeType_Method;
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  if (Sender = nil) or (Length(AParams) <> 2) then
+    Exit;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AParams[0])) as TLapeType_Method;
+  Method := addGlobalFunc(Header, '!ArraySymDifference',
+    '{$RANGECHECKS OFF}                                    ' + LineEnding +
+    'var                                                   ' + LineEnding +
+    '  Val: PType(Param0);                                 ' + LineEnding +
+    '  Count: Int32 = 0;                                   ' + LineEnding +
+    'begin                                                 ' + LineEnding +
+    '  SetLength(Result, Length(Param0) + Length(Param1)); ' + LineEnding +
+    '  for Val in Param0 do                                ' + LineEnding +
+    '    if IndexOf(val, Param1) = -1 then                 ' + LineEnding +
+    '    begin                                             ' + LineEnding +
+    '      Result[Count] := Val;                           ' + LineEnding +
+    '      Count := Count + 1;                             ' + LineEnding +
+    '    end;                                              ' + LineEnding +
+    '  for Val in Param1 do                                ' + LineEnding +
+    '    if IndexOf(val, Param0) = -1 then                 ' + LineEnding +
+    '    begin                                             ' + LineEnding +
+    '      Result[Count] := Val;                           ' + LineEnding +
+    '      Count := Count + 1;                             ' + LineEnding +
+    '    end;                                              ' + LineEnding +
+    '  SetLength(Result, Count);                           ' + LineEnding +
+    'end;'
+  );
+
+  Result := Method.Method;
+  Result.VarType.Name := '_ArraySymDifference';
+
+  Sender.addMethod(Result);
+end;
+
+function TLapeCompiler.GetMethod_ArrayIntersection(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Header: TLapeType_Method;
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  if (Sender = nil) or (Length(AParams) <> 2) then
+    Exit;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AParams[0])) as TLapeType_Method;
+  Method := addGlobalFunc(Header, '!ArrayIntersection',
+    '{$RANGECHECKS OFF}                                        ' + LineEnding +
+    'var                                                       ' + LineEnding +
+    '  Val: PType(Param0);                                     ' + LineEnding +
+    '  Count: Int32 = 0;                                       ' + LineEnding +
+    'begin                                                     ' + LineEnding +
+    '  SetLength(Result, Min(Length(Param0), Length(Param1))); ' + LineEnding +
+    '  for Val in Param0 do                                    ' + LineEnding +
+    '    if IndexOf(Val, Param1) > -1 then                     ' + LineEnding +
+    '    begin                                                 ' + LineEnding +
+    '      Result[Count] := Val;                               ' + LineEnding +
+    '      Count := Count + 1;                                 ' + LineEnding +
+    '    end;                                                  ' + LineEnding +
+    '  SetLength(Result, Count);                               ' + LineEnding +
+    'end;'
+  );
+
+  Result := Method.Method;
+  Result.VarType.Name := '_ArrayIntersection';
+
+  Sender.addMethod(Result);
+end;
+
 procedure TLapeCompiler.InitBaseDefinitions;
 
   procedure addCompilerFuncs;
@@ -1356,6 +1464,9 @@ begin
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayMedian).NewGlobalVar('_ArrayMedian'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayVariance).NewGlobalVar('_ArrayVariance'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayStdev).NewGlobalVar('_ArrayStdev'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayDifference).NewGlobalVar('_ArrayDifference'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArraySymDifference).NewGlobalVar('_ArraySymDifference'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayIntersection).NewGlobalVar('_ArrayIntersection'));
 
   InitBaseMath();
   InitBaseString();
@@ -4460,6 +4571,9 @@ begin
   FInternalMethodMap['ArrayMean'] := TLapeTree_InternalMethod_ArrayMean;
   FInternalMethodMap['ArrayVariance'] := TLapeTree_InternalMethod_ArrayVariance;
   FInternalMethodMap['ArrayStdev'] := TLapeTree_InternalMethod_ArrayStdev;
+  FInternalMethodMap['ArrayDifference'] := TLapeTree_InternalMethod_ArrayDifference;
+  FInternalMethodMap['ArraySymDifference'] := TLapeTree_InternalMethod_ArraySymDifference;
+  FInternalMethodMap['ArrayIntersection'] := TLapeTree_InternalMethod_ArrayIntersection;
 
   FInternalMethodMap['Slice'] := TLapeTree_InternalMethod_Slice;
 
@@ -5415,7 +5529,8 @@ begin
   //Nothing
 end;
 
-function TLapeType_SystemUnit.CanHaveChild: Boolean;begin
+function TLapeType_SystemUnit.CanHaveChild: Boolean;
+begin
   Result := (FCompiler <> nil);
 end;
 

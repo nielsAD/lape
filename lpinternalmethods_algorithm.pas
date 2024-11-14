@@ -90,6 +90,26 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_ArrayDifference = class(TLapeTree_InternalMethod)
+  protected
+    FMethod: lpString;
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_ArraySymDifference = class(TLapeTree_InternalMethod_ArrayDifference)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+  end;
+
+  TLapeTree_InternalMethod_ArrayIntersection = class(TLapeTree_InternalMethod_ArrayDifference)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+  end;
+
 implementation
 
 uses
@@ -605,6 +625,7 @@ end;
 function TLapeTree_InternalMethod_ArraySum.Compile(var Offset: Integer): TResVar;
 var
   ArrayVar, CounterVar: TResVar;
+  ArrayElementType: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
@@ -613,6 +634,11 @@ begin
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   if (resType() = nil) then
     LapeException(lpeExpectedArray, DocPos);
+
+  // ensure we can generate such a method, best to error here
+  ArrayElementType := TLapeType_DynArray(FParams[0].resType()).PType;
+  if (not HasMagicMethod(Compiler, '_ArraySum', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_Plus], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArraySum'], Self));
   Result := inherited;
@@ -642,6 +668,7 @@ end;
 function TLapeTree_InternalMethod_ArrayMean.Compile(var Offset: Integer): TResVar;
 var
   ArrayVar, CounterVar: TResVar;
+  ArrayElementType: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
@@ -650,6 +677,11 @@ begin
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   if (resType() = nil) then
     LapeException(lpeExpectedArray, DocPos);
+
+  // ensure we can generate such a method, best to error here
+  ArrayElementType := TLapeType_DynArray(FParams[0].resType()).PType;
+  if (not HasMagicMethod(Compiler, '_ArrayMean', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_Plus], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMean'], Self));
   Result := inherited;
@@ -709,6 +741,59 @@ begin
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayStdev'], Self));
   Result := inherited;
+end;
+
+constructor TLapeTree_InternalMethod_ArrayDifference.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, ADocPos);
+
+  FMethod := '_ArrayDifference';
+end;
+
+function TLapeTree_InternalMethod_ArrayDifference.resType: TLapeType;
+begin
+  if (FResType = nil) then
+    if (FParams.Count = 2) and
+       (FParams[0].resType() is TLapeType_DynArray) and (FParams[1].resType() is TLapeType_DynArray) and
+       (FParams[0].resType().Equals(FParams[1].resType())) then
+      FResType := FParams[0].resType();
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_ArrayDifference.Compile(var Offset: Integer): TResVar;
+var
+  ArrayElementType: TLapeType;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  if (FParams.Count <> 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
+  if (resType() = nil) then
+    LapeException(lpeInvalidEvaluation, DocPos);
+
+  // ensure we can generate such a method, best to error here
+  ArrayElementType := TLapeType_DynArray(FParams[0].resType()).PType;
+  if (not HasMagicMethod(Compiler, FMethod, getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
+
+  setExpr(TLapeTree_GlobalVar.Create(FCompiler[FMethod], Self));
+  Result := inherited;
+end;
+
+constructor TLapeTree_InternalMethod_ArraySymDifference.Create( ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, ADocPos);
+
+  FMethod := '_ArraySymDifference';
+end;
+
+constructor TLapeTree_InternalMethod_ArrayIntersection.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, ADocPos);
+
+  FMethod := '_ArrayIntersection';
 end;
 
 end.

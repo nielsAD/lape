@@ -1,0 +1,108 @@
+{$assertions on}
+
+type
+  TPoint = record
+    x, y: Integer;
+  end;
+  TPointArray = array of TPoint;
+
+operator /(l: TPoint; r: Double): TPoint;
+begin
+  Result.x := Round(l.x / r);
+  Result.y := Round(l.y / r);
+end;
+
+operator +(l,r: TPoint): TPoint;
+begin
+  Result.x := l.x+r.x;
+  Result.y := l.y+r.y;
+end;
+
+operator < (l,r:TPoint): Boolean;
+begin
+  Result := Int64(l) < Int64(r);
+end;
+
+operator > (l,r:TPoint): Boolean;
+begin
+  Result := Int64(l) > Int64(r);
+end;
+
+procedure TestMean;
+var
+  Arr: array of Int32 = [10,10,5,1,10];
+  Points: TPointArray = [[10,10], [20,10]];
+begin
+  Assert(Round(ArrayMean(Arr))=7);
+  Assert(ArrayMean(Points)=[15,10]);
+end;
+
+procedure TestMedian;
+var
+  Arr: array of Int32 = [1,3,4,1,1,1,5,5,6,10];
+  Points: TPointArray = [[1,1],[4,4],[6,6],[10,10]];
+begin
+  Assert(ArrayMedian(Arr) = 3.5);
+  Assert(ArrayMedian(Points) = [5, 5]);
+
+  Delete(Arr, 0, 1);
+
+  Assert(ArrayMedian(Arr) = 4);
+end;
+
+procedure TestMode;
+var
+  TPA: TPointArray;
+  Arr: TIntegerArray;
+begin
+  TPA := [];
+  Assert(ArrayMode(TPA)=[0,0]);
+  TPA := [[5,5],[5,5],[1,1],[5,5],[1,1],[4,4],[1,1],[1,1],[5,5],[5,5],[-1,-1]];
+  Assert(ArrayMode(TPA)=[5,5]);
+
+  Arr := [];
+  Assert(ArrayMode(Arr)=0);
+  Arr := [1];
+  Assert(ArrayMode(Arr)=1);
+  Arr := [0,1,0];
+  Assert(ArrayMode(Arr)=0);
+  Arr := [1,1,1,0,0];
+  Assert(ArrayMode(Arr)=1);
+  Arr := [1,1,1,0,0,0,0];
+  Assert(ArrayMode(Arr)=0);
+  Arr := [1,1,2,2,2,2,4,4,1,1,2,4,4];
+  Assert(ArrayMode(Arr)=2);
+end;
+
+procedure TestStdev;
+begin
+  Assert(Abs(ArrayStdev([1, 2, 3, 4, 5]) - 1.414) <= 0.001);
+  Assert(Abs(ArrayStdev([1.1, 2.2, 3.3, 4.4, 5.5]) - 1.555) <= 0.001);
+end;
+
+procedure TestVariance;
+begin
+  Assert(Abs(ArrayVariance([1, 2, 3, 4, 5]) - 2) <= 0.001);
+  Assert(Abs(ArrayVariance([1.1, 2.2, 3.3, 4.4, 5.5]) - 2.42) <= 0.001);
+end;
+
+procedure TestSum;
+var
+  Arr: array of Int32 = [10,10,-10,5];
+  Points: TPointArray = [[5,5],[15,15],[5,0]];
+begin
+  Assert(ArraySum(Arr) = 15);
+  Assert(ArraySum(Points) = [25,20]);
+  Assert(ArraySum(Arr) + ArraySum([1]) = 16);
+end;
+
+begin
+  TestMean();
+  TestMedian();
+  TestMode();
+  TestStdev();
+  TestVariance();
+  TestSum();
+end.
+
+
