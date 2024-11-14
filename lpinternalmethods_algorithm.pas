@@ -90,6 +90,26 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
+  TLapeTree_InternalMethod_ArrayDifference = class(TLapeTree_InternalMethod)
+  protected
+    FMethod: lpString;
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
+  TLapeTree_InternalMethod_ArraySymDifference = class(TLapeTree_InternalMethod_ArrayDifference)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+  end;
+
+  TLapeTree_InternalMethod_ArrayIntersection = class(TLapeTree_InternalMethod_ArrayDifference)
+  public
+    constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+  end;
+
 implementation
 
 uses
@@ -105,11 +125,9 @@ var
 
   procedure DoNormal;
   begin
-    // Check if user defined `_ArraySort` exists. Useful for providing a native method
-    if InvokeMagicMethod(Self, '_ArraySort', Result, Offset) then
-      Exit;
-
-    RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayElementType, DocPos);
+    // ensure we can generate such a method
+    if (not HasMagicMethod(Compiler, '_ArraySort', getParamTypes(), resType())) then
+      RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayElementType, DocPos);
 
     with TLapeTree_Invoke.Create('_ArraySort', Self) do
     try
@@ -278,10 +296,6 @@ begin
     ArrayVar.isConstant := False;
 
   try
-    // Check if user defined `_ArrayReverse` exists. Useful for providing a native method
-    if InvokeMagicMethod(Self, '_ArrayReverse', Result, Offset) then
-      Exit;
-
     case ArrayVar.VarType.BaseType of
       ltStaticArray:
         begin
@@ -426,10 +440,9 @@ begin
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   ArrayElementType := TLapeType_DynArray(resType()).PType;
 
-  // Check if user defined `_ArrayUnique` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayUnique', Result, Offset) then
-    Exit;
-  RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
+  // ensure we can generate such a method
+  if (not HasMagicMethod(Compiler, '_ArrayUnique', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayUnique'], Self));
   Result := inherited;
@@ -501,15 +514,13 @@ begin
   if (not (FParams[0].resType() is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  // Check if user defined `_ArrayMode` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayMode', Result, Offset) then
-    Exit;
-
   ArrayElementType := resType();
   if (ArrayElementType = nil) then
     LapeException(lpeExpectedArray, DocPos);
 
-  RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
+  // ensure we can generate such a method
+  if (not HasMagicMethod(Compiler, '_ArrayMode', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMode'], Self));
   Result := inherited;
@@ -543,11 +554,9 @@ begin
   if (ArrayElementType = nil) then
     LapeException(lpeExpectedArray, DocPos);
 
-  // Check if user defined `_ArrayMin` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayMin', Result, Offset) then
-    Exit;
-
-  RequireOperators(FCompiler, [op_cmp_LessThan], ArrayElementType, DocPos);
+  // ensure we can generate such a method
+  if (not HasMagicMethod(Compiler, '_ArrayMin', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_cmp_LessThan], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMin'], Self));
   Result := inherited;
@@ -581,11 +590,9 @@ begin
   if (ArrayElementType = nil) then
     LapeException(lpeExpectedArray, DocPos);
 
-  // Check if user defined `_ArrayMax` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayMax', Result, Offset) then
-    Exit;
-
-  RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayElementType, DocPos);
+  // ensure we can generate such a method
+  if (not HasMagicMethod(Compiler, '_ArrayMax', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMax'], Self));
   Result := inherited;
@@ -618,19 +625,20 @@ end;
 function TLapeTree_InternalMethod_ArraySum.Compile(var Offset: Integer): TResVar;
 var
   ArrayVar, CounterVar: TResVar;
+  ArrayElementType: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
 
   if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
-
   if (resType() = nil) then
     LapeException(lpeExpectedArray, DocPos);
 
-  // Check if user defined `_ArraySum` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArraySum', Result, Offset) then
-    Exit;
+  // ensure we can generate such a method, best to error here
+  ArrayElementType := TLapeType_DynArray(FParams[0].resType()).PType;
+  if (not HasMagicMethod(Compiler, '_ArraySum', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_Plus], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArraySum'], Self));
   Result := inherited;
@@ -660,6 +668,7 @@ end;
 function TLapeTree_InternalMethod_ArrayMean.Compile(var Offset: Integer): TResVar;
 var
   ArrayVar, CounterVar: TResVar;
+  ArrayElementType: TLapeType;
 begin
   Result := NullResVar;
   Dest := NullResVar;
@@ -669,9 +678,10 @@ begin
   if (resType() = nil) then
     LapeException(lpeExpectedArray, DocPos);
 
-  // Check if user defined `_ArrayMean` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayMean', Result, Offset) then
-    Exit;
+  // ensure we can generate such a method, best to error here
+  ArrayElementType := TLapeType_DynArray(FParams[0].resType()).PType;
+  if (not HasMagicMethod(Compiler, '_ArrayMean', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_Plus], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMean'], Self));
   Result := inherited;
@@ -708,9 +718,6 @@ begin
   if (not (FParams[0].resType() is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  // Check if user defined `_ArrayMean` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayVariance', Result, Offset) then
-    Exit;
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayVariance'], Self));
   Result := inherited;
 end;
@@ -732,11 +739,61 @@ begin
   if (not (FParams[0].resType() is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  // Check if user defined `_ArrayMean` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayStdev', Result, Offset) then
-    Exit;
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayStdev'], Self));
   Result := inherited;
+end;
+
+constructor TLapeTree_InternalMethod_ArrayDifference.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, ADocPos);
+
+  FMethod := '_ArrayDifference';
+end;
+
+function TLapeTree_InternalMethod_ArrayDifference.resType: TLapeType;
+begin
+  if (FResType = nil) then
+    if (FParams.Count = 2) and
+       (FParams[0].resType() is TLapeType_DynArray) and (FParams[1].resType() is TLapeType_DynArray) and
+       (FParams[0].resType().Equals(FParams[1].resType())) then
+      FResType := FParams[0].resType();
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_ArrayDifference.Compile(var Offset: Integer): TResVar;
+var
+  ArrayElementType: TLapeType;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  if (FParams.Count <> 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
+  if (resType() = nil) then
+    LapeException(lpeInvalidEvaluation, DocPos);
+
+  // ensure we can generate such a method, best to error here
+  ArrayElementType := TLapeType_DynArray(FParams[0].resType()).PType;
+  if (not HasMagicMethod(Compiler, FMethod, getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
+
+  setExpr(TLapeTree_GlobalVar.Create(FCompiler[FMethod], Self));
+  Result := inherited;
+end;
+
+constructor TLapeTree_InternalMethod_ArraySymDifference.Create( ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, ADocPos);
+
+  FMethod := '_ArraySymDifference';
+end;
+
+constructor TLapeTree_InternalMethod_ArrayIntersection.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos);
+begin
+  inherited Create(ACompiler, ADocPos);
+
+  FMethod := '_ArrayIntersection';
 end;
 
 end.

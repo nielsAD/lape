@@ -19,7 +19,7 @@ type
   protected
     FHelperName: lpString;
 
-    function FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function FunctionNotFound(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     function CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType = nil): TLapeGlobalVar;
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; virtual; abstract;
@@ -198,13 +198,28 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
+  TLapeType_ArrayHelper_Difference = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_SymDifference = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_Intersection = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
 implementation
 
 uses
   lpcompiler, lpparser, lptree,
   lpvartypes_array, lpmessages;
 
-function TLapeType_Helper.FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeType_Helper.FunctionNotFound(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   i: Integer;
   Temp: TLapeGetOverloadedMethod;
@@ -217,17 +232,6 @@ begin
 
   if (AObjectType <> nil) then
   begin
-    if (AType <> nil) then
-    begin
-      if (AType.Params.Count > 0) then
-      begin
-        SetLength(AParams,  AType.Params.Count);
-        for i := 0 to AType.Params.Count - 1 do
-          AParams[i] := AType.Params[i].VarType;
-      end;
-      AResult := AType.Res;
-    end;
-
     GetFunction(AObjectType, AParams, AResult);
 
     // Return nil if a function was generated but doesn't match params
@@ -857,6 +861,36 @@ begin
     VarType,
     [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)],
     ResType
+  );
+end;
+
+function TLapeType_ArrayHelper_Difference.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Result := System.ArrayDifference(Self, Param0);',
+    VarType,
+    [VarType],
+    VarType
+  );
+end;
+
+function TLapeType_ArrayHelper_SymDifference.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Result := System.ArraySymDifference(Self, Param0);',
+    VarType,
+    [VarType],
+    VarType
+  );
+end;
+
+function TLapeType_ArrayHelper_Intersection.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Result := System.ArrayIntersection(Self, Param0);',
+    VarType,
+    [VarType],
+    VarType
   );
 end;
 

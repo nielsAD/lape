@@ -659,7 +659,7 @@ type
 function getFlowStatement(Offset: Integer; Pos: PDocPos = nil; JumpSafe: Boolean = False): TLapeFlowStatement; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function EnsureCompound(Compiler: TLapeCompilerBase; Statement: TLapeTree_Base; AllowNil: Boolean = True): TLapeTree_StatementList;
 function GetMagicMethodOrNil(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; AResult: TLapeType = nil): TResVar;
-function InvokeMagicMethod(Self: TLapeTree_Invoke; Name: lpString; var Res: TResVar; var Offset: Integer): Boolean;
+function HasMagicMethod(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; ARes: TLapeType): Boolean;
 
 const
   NullFlowStatement: TLapeFlowStatement = (CodeOffset: 0; DocPos: (Line: 0; Col: 0; FileName: ''); JumpSafe: False);
@@ -718,37 +718,40 @@ begin
   Result.VarType := Compiler.getBaseType(ltPointer);
 end;
 
-function InvokeMagicMethod(Self: TLapeTree_Invoke; Name: lpString; var Res: TResVar; var Offset: Integer): Boolean;
+function hasMagicMethod(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; ARes: TLapeType): Boolean;
+
+  function EqualTypes(const Left, Right: TLapeType): Boolean;
+  begin
+    Result := (Left = Right) or ((Left <> nil) and Left.Equals(Right, False));
+  end;
+
+  function EqualParams(const Method: TLapeType_Method): Boolean;
+  var
+    i: Integer;
+  begin
+    if (Method.Params.Count <> Length(AParams)) or (not EqualTypes(ARes, Method.Res)) then
+      Exit(False);
+    for i := 0 to High(AParams) do
+      if not EqualTypes(AParams[i], Method.Params[i].VarType) then
+        Exit(False);
+
+    Result := True;
+  end;
+
 var
   Method: TLapeGlobalVar;
   i: Integer;
-  Temp: TLapeGetOverloadedMethod;
 begin
-  with Self do
-  begin
-    Method := Compiler[Name];
-    if (Method <> nil) and (Method.VarType is TLapeType_OverloadedMethod) then
-      with TLapeType_OverloadedMethod(Method.VarType) do
-      begin
-        Temp := OnFunctionNotFound; // we are looking for only already available methods
+  Result := False;
 
-        OnFunctionNotFound := nil;
-        Method := getMethod(getParamTypes(), resType());
-        OnFunctionNotFound := Temp;
-      end;
-
-    Result := Method <> nil;
-    if Result then
-      with TLapeTree_Invoke.Create(Method, Self) do
-      try
-        for i := 0 to Self.Params.Count - 1 do
-          addParam(TLapeTree_ResVar.Create(Self.Params[i].Compile(Offset).IncLock(), Self)); // ensure locked
-
-        Res := Compile(Offset);
-      finally
-        Free();
-      end;
-  end;
+  Method := Compiler[AName];
+  if (Method <> nil) and (Method.VarType is TLapeType_OverloadedMethod) then
+    with TLapeType_OverloadedMethod(Method.VarType) do
+    begin
+      for i := 0 to ManagedDeclarations.Count - 1 do
+        if EqualParams(TLapeType_Method(TLapeGlobalVar(ManagedDeclarations[i]).VarType)) then
+          Exit(True);
+    end;
 end;
 
 constructor TLapeTreeType.Create(ADecl: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase);

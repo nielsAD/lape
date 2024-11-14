@@ -1,0 +1,96 @@
+{$assertions on}
+
+type TPointArray = array of record X, Y: Int32; end;
+type TBoxArray = array of record X1,Y1,X2,Y2: Int32; end;
+
+function good(a,b: TIntegerArray): Boolean; overload;
+var i: Int32;
+begin
+  if (Length(a) <> Length(b)) then
+    Exit(False);
+  for i:=0 to High(a) do
+    if not Contains(a[i], b) then
+      Exit(False);
+  Result := True;
+end;
+
+function good(a,b: TPointArray): Boolean; overload;
+var i: Int32;
+begin
+  if (Length(a) <> Length(b)) then
+    Exit(False);
+  for i:=0 to High(a) do
+    if not Contains(a[i], b) then
+      Exit(False);
+  Result := True;
+end;
+
+function good(a,b: TBoxArray): Boolean; overload;
+var i: Int32;
+begin
+  if (Length(a) <> Length(b)) then
+    Exit(False);
+  for i:=0 to High(a) do
+    if not Contains(a[i], b) then
+      Exit(False);
+  Result := True;
+end;
+
+procedure TestIntegerArray;
+var
+  a,b: TIntegerArray;
+begin
+  a := [1,2,3];
+  b := [3,2,1];
+  Assert(good(a.Difference(b), []));
+  Assert(good(a.SymDifference(b), []));
+  Assert(good(a.Intersection(b), [3,2,1]));
+
+  a := [1,2,3,4];
+  b := [5,4,3];
+  Assert(good(a.Difference(b), [1, 2]));
+  Assert(good(a.SymDifference(b), [1, 2, 5]));
+  Assert(good(a.Intersection(b), [3, 4]));
+end;
+
+procedure TestPointArray;
+var
+  a,b: TPointArray;
+begin
+  a := [[1,1],[2,2],[3,3]];
+  b := [[3,3],[2,2],[1,1]];
+  Assert(good(a.Difference(b), []));
+  Assert(good(a.SymDifference(b), []));
+  Assert(good(a.Intersection(b), [[3,3],[2,2],[1,1]]));
+
+  a := [[1,2],[2,3],[3,4]];
+  b := [[1,2],[2,3]];
+  Assert(good(a.Difference(b), [[3,4]]));
+  Assert(good(a.SymDifference(b), [[3,4]]));
+  Assert(good(a.Intersection(b), [[1,2],[2,3]]));
+end;
+
+procedure TestBoxArray;
+var
+  a,b: TBoxArray;
+begin
+  a := [[1,1,1,1],[2,2,2,2],[3,3,3,3]];
+  b := [[3,3,3,3],[2,2,2,2],[1,1,1,1]];
+
+  Assert(good(a.Difference(b), []));
+  Assert(good(a.SymDifference(b), []));
+  Assert(good(a.Intersection(b), [[3,3,3,3],[2,2,2,2],[1,1,1,1]]));
+
+  a := [[1,1,1,1],[2,2,2,2],[3,3,3,3]];
+  b := [[1,1,1,1],[2,2,2,2]];
+
+  Assert(good(a.Difference(b), [[3,3,3,3]]));
+  Assert(good(a.SymDifference(b), [[3,3,3,3]]));
+  Assert(good(a.Intersection(b), [[1,1,1,1],[2,2,2,2]]));
+end;
+
+begin
+  TestIntegerArray();
+  TestPointArray();
+  TestBoxArray();
+end;
