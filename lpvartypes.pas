@@ -449,7 +449,7 @@ type
     property ObjectType: TLapeType read FObjectType;
   end;
 
-  TLapeGetOverloadedMethod = function(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method;
+  TLapeGetOverloadedMethod = function(Sender: TLapeType_OverloadedMethod;
     AObjectType: TLapeType = nil; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar of object;
 
   TLapeType_OverloadedMethod = class(TLapeType)
@@ -3266,6 +3266,7 @@ function TLapeType_OverloadedMethod.getMethodIndex(AType: TLapeType_Method): Int
 var
   i: Integer;
   ObjectType: TLapeType;
+  Params: TLapeTypeArray;
 begin
   if (AType = nil) then
     Exit(-1);
@@ -3274,12 +3275,16 @@ begin
     if TLapeType_Method(TLapeGlobalVar(FManagedDecls[i]).VarType).EqualParams(AType) then
       Exit(i);
 
+  SetLength(Params, AType.Params.Count);
+  for i := 0 to High(params) do
+    Params[i] := AType.Params[i].VarType;
+
   ObjectType := nil;
   if (AType is TLapeType_MethodOfType) then
     ObjectType := TLapeType_MethodOfType(AType).ObjectType;
 
   if ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
-    Result := FManagedDecls.IndexOf(OnFunctionNotFound(Self, AType, ObjectType, nil, nil))
+    Result := FManagedDecls.IndexOf(OnFunctionNotFound(Self, ObjectType, Params, AType.Res))
   else
     Result := -1;
 end;
@@ -3393,7 +3398,7 @@ begin
     end;
 
   if (Result < 0) and ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
-    Result := FManagedDecls.IndexOf(OnFunctionNotFound(Self, nil, AObjectType, AParams, AResult));
+    Result := FManagedDecls.IndexOf(OnFunctionNotFound(Self, AObjectType, AParams, AResult));
 end;
 
 function TLapeType_OverloadedMethod.getMethod(AType: TLapeType_Method): TLapeGlobalVar;

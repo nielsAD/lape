@@ -114,25 +114,24 @@ type
 
     procedure SetUniqueTypeID(Typ: TLapeType); virtual;
 
-    function GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
-    function GetMethod_ArraySort(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayRange(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayMin(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayMax(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayUnique(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayIndexOf(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayIndicesOf(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayMode(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArraySum(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayMean(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayMedian(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayVariance(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetMethod_ArrayStdev(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-
-    function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArraySort(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayRange(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayMin(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayMax(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayUnique(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayIndexOf(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayIndicesOf(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayMode(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArraySum(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayMean(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayMedian(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayVariance(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayStdev(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     procedure InitBaseDefinitions; virtual;
     procedure InitBaseMath; virtual;
@@ -505,47 +504,70 @@ begin
     LapeException(lpeLostConditional, Tokenizer.DocPos);
 end;
 
-procedure GetMethod_FixupParams(var AType: TLapeType_Method; var AParams: TLapeTypeArray; var AResult: TLapeType; AddResultToParams: Boolean = False);
-var
-  i: Integer;
-begin
-  if (AType <> nil) then
-  begin
-    if (AType.Params.Count > 0) then
-    begin
-      SetLength(AParams, AType.Params.Count);
-      for i := 0 to AType.Params.Count - 1 do
-        AParams[i] := AType.Params[i].VarType;
-    end;
-    AResult := AType.Res;
-  end;
-
-  if AddResultToParams and (AResult <> nil) then
-  begin
-    SetLength(AParams, Length(AParams) + 1);
-    AParams[High(AParams)] := AResult;
-    AResult := nil;
-  end;
-end;
-
 procedure TLapeCompiler.SetUniqueTypeID(Typ: TLapeType);
 begin
   Typ.TypeID := FTypeID;
   Inc(FTypeID);
 end;
 
-function TLapeCompiler.GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+function TLapeCompiler.GetToStringMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  Body: lpString;
+  Index: Integer;
+  Header: TLapeType_Method;
+begin
+  Result := nil;
+  if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or ((AResult <> nil) and (AResult.BaseType <> ltString)) then
+    Exit;
+
+  AResult := getBaseType(ltString);
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConstRef], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+
+  Result := Header.NewGlobalVar(@_LapeToString_Unknown);
+  Result.VarType.Name := '_ToString';
+  Sender.addMethod(Result);
+
+  Body := AParams[0].VarToStringBody(Sender);
+  if (Body = '') and Sender.NeedFullMatch then
+  try
+    Sender.NeedFullMatch := False;
+
+    Assert(Result.DeclarationList = Sender.ManagedDeclarations);
+    Result.DeclarationList := nil;
+
+    Index := Sender.getMethodIndex(AParams, AResult);
+    if (Index < 0) then
+      Index := Sender.getMethodIndex(getTypeArray([getBaseType(AParams[0].BaseType)]), AResult);
+
+    if (Index >= 0) then
+    begin
+      Body := 'begin Result := System.ToString[' + lpString(IntToStr(Index)) + '](Param0); end;';
+      Result.DeclarationList := Sender.ManagedDeclarations;
+    end;
+  finally
+    Sender.NeedFullMatch := True;
+  end;
+
+  if (Body <> '') then
+    Result := addGlobalFunc(Header, 'ToString', 'override;' + LapeDelayedFlags + Body + LineEnding).Method
+  else
+    FreeAndNil(Result);
+end;
+
+function TLapeCompiler.GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Method: TLapeTree_Method;
   Invoke: TLapeTree_Invoke;
   Assignment: TLapeTree_Operator;
   Callback: TResVar;
   i: Int32;
+  AType: TLapeType_MethodOfObject;
 begin
   Result := nil;
-  if (AType = nil) or (AType.ClassType <> TLapeType_MethodOfObject) then
+  if (AObjectType = nil) or (AObjectType.ClassType <> TLapeType_MethodOfObject) then
     Exit;
 
+  AType := TLapeType_MethodOfObject(AObjectType);
   IncStackInfo();
 
   try
@@ -578,24 +600,23 @@ begin
   end;
 end;
 
-function TLapeCompiler.GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+function TLapeCompiler.GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Method: TLapeTree_Method;
+  Header: TLapeType_Method;
 begin
   Result := nil;
   Method := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or (AResult <> nil) then
     Exit;
   if (not (lcoFullDisposal in FOptions)) and (not AParams[0].NeedFinalization) then
     Exit;
 
-  if (AType = nil) then
-    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptVar], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptVar], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
   IncStackInfo();
   try
-    Result := AType.NewGlobalVar(EndJump);
+    Result := Header.NewGlobalVar(EndJump);
     Result.VarType.Name := '_Dispose';
     Sender.addMethod(Result);
 
@@ -608,25 +629,24 @@ begin
   end;
 end;
 
-function TLapeCompiler.GetCopyMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
+function TLapeCompiler.GetCopyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Method: TLapeTree_Method;
   Assignment: TLapeTree_Operator;
+  Header: TLapeType_Method;
 begin
   Result := nil;
   Method := nil;
-  GetMethod_FixupParams(AType, AParams, AResult, True);
   if (Sender = nil) or (Length(AParams) <> 2) or (AParams[0] = nil) or (AParams[1] = nil) or (AResult <> nil) or (not AParams[0].CompatibleWith(AParams[1])) then
     Exit;
   if (not AParams[0].NeedFinalization) and (not AParams[1].NeedInitialization) then
     Exit;
 
-  if (AType = nil) then
-    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptOut], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptOut], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
   IncStackInfo();
   try
-    Result := AType.NewGlobalVar(EndJump);
+    Result := Header.NewGlobalVar(EndJump);
     Result.VarType.Name := '_Assign';
     Sender.addMethod(Result);
 
@@ -643,13 +663,12 @@ begin
   end;
 end;
 
-function TLapeCompiler.GetMethod_ArraySort(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArraySort(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (not (Length(AParams) in [1, 2])) then
     Exit;
 
@@ -708,13 +727,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayRange(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayRange(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 3) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -736,13 +754,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayMin(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayMin(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -777,13 +794,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayMax(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayMax(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -818,13 +834,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayUnique(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayUnique(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -872,13 +887,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayIndexOf(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayIndexOf(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 2) or (not (AParams[1] is TLapeType_DynArray)) then
     Exit;
 
@@ -901,13 +915,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayIndicesOf(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayIndicesOf(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 2) or (not (AParams[1] is TLapeType_DynArray)) then
     Exit;
 
@@ -941,13 +954,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayMode(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayMode(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -991,13 +1003,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArraySum(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArraySum(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -1033,13 +1044,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayMean(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayMean(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -1065,13 +1075,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayMedian(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayMedian(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -1103,13 +1112,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayVariance(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayVariance(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -1138,13 +1146,12 @@ begin
   Sender.addMethod(Result);
 end;
 
-function TLapeCompiler.GetMethod_ArrayStdev(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeCompiler.GetMethod_ArrayStdev(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Method: TLapeTree_Method;
 begin
   Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
   if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
@@ -1159,52 +1166,6 @@ begin
   Result.VarType.Name := '_ArrayStdev';
 
   Sender.addMethod(Result);
-end;
-
-function TLapeCompiler.GetToStringMethod(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
-var
-  Body: lpString;
-  Index: Integer;
-begin
-  Result := nil;
-  GetMethod_FixupParams(AType, AParams, AResult);
-  if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or ((AResult <> nil) and (AResult.BaseType <> ltString)) then
-    Exit;
-
-  if (AResult = nil) and (AType = nil) then
-    AResult := getBaseType(ltString);
-  if (AType = nil) then
-    AType := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConstRef], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
-
-  Result := AType.NewGlobalVar(@_LapeToString_Unknown);
-  Result.VarType.Name := '_ToString';
-  Sender.addMethod(Result);
-
-  Body := AParams[0].VarToStringBody(Sender);
-  if (Body = '') and Sender.NeedFullMatch then
-  try
-    Sender.NeedFullMatch := False;
-
-    Assert(Result.DeclarationList = Sender.ManagedDeclarations);
-    Result.DeclarationList := nil;
-
-    Index := Sender.getMethodIndex(AParams, AResult);
-    if (Index < 0) then
-      Index := Sender.getMethodIndex(getTypeArray([getBaseType(AParams[0].BaseType)]), AResult);
-
-    if (Index >= 0) then
-    begin
-      Body := 'begin Result := System.ToString[' + lpString(IntToStr(Index)) + '](Param0); end;';
-      Result.DeclarationList := Sender.ManagedDeclarations;
-    end;
-  finally
-    Sender.NeedFullMatch := True;
-  end;
-
-  if (Body <> '') then
-    Result := addGlobalFunc(AType, 'ToString', 'override;' + LapeDelayedFlags + Body + LineEnding).Method
-  else
-    FreeAndNil(Result);
 end;
 
 procedure TLapeCompiler.InitBaseDefinitions;

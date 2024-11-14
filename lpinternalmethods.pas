@@ -387,17 +387,15 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
 
-  // Check if user defined `_ArrayIndexOf` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayIndexOf', Result, Offset) then
-    Exit;
-
   if (FParams.Count <> 2) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   if (not (FParams[1].resType is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
   ArrayElementType := TLapeType_DynArray(FParams[1].resType()).PType;
 
-  RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
+  // ensure we can generate such a method
+  if (not HasMagicMethod(Compiler, '_ArrayIndexOf', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayIndexOf'], Self));
   Result := inherited;
@@ -418,17 +416,15 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
 
-  // Check if user defined `_ArrayIndicesOf` exists. Useful for providing a native method
-  if InvokeMagicMethod(Self, '_ArrayIndicesOf', Result, Offset) then
-    Exit;
-
   if (FParams.Count <> 2) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   if (not (FParams[1].resType is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
   ArrayElementType := TLapeType_DynArray(FParams[1].resType()).PType;
 
-  RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
+  // ensure we can generate such a method
+  if (not HasMagicMethod(Compiler, '_ArrayIndicesOf', getParamTypes(), resType())) then
+    RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayIndicesOf'], Self));
   Result := inherited;

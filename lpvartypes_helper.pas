@@ -19,7 +19,7 @@ type
   protected
     FHelperName: lpString;
 
-    function FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function FunctionNotFound(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     function CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType = nil): TLapeGlobalVar;
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; virtual; abstract;
@@ -204,7 +204,7 @@ uses
   lpcompiler, lpparser, lptree,
   lpvartypes_array, lpmessages;
 
-function TLapeType_Helper.FunctionNotFound(Sender: TLapeType_OverloadedMethod; AType: TLapeType_Method; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeType_Helper.FunctionNotFound(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   i: Integer;
   Temp: TLapeGetOverloadedMethod;
@@ -217,17 +217,6 @@ begin
 
   if (AObjectType <> nil) then
   begin
-    if (AType <> nil) then
-    begin
-      if (AType.Params.Count > 0) then
-      begin
-        SetLength(AParams,  AType.Params.Count);
-        for i := 0 to AType.Params.Count - 1 do
-          AParams[i] := AType.Params[i].VarType;
-      end;
-      AResult := AType.Res;
-    end;
-
     GetFunction(AObjectType, AParams, AResult);
 
     // Return nil if a function was generated but doesn't match params
