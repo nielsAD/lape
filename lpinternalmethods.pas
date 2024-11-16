@@ -314,6 +314,12 @@ type
     function Evaluate: TLapeGlobalVar; override;
   end;
 
+  TLapeTree_InternalMethod_ArrayEquals = class(TLapeTree_InternalMethod)
+  public
+    function resType: TLapeType; override;
+    function Compile(var Offset: Integer): TResVar; override;
+  end;
+
 implementation
 
 uses
@@ -2951,6 +2957,36 @@ end;
 function TLapeTree_InternalMethod_PType.Evaluate: TLapeGlobalVar;
 begin
   Result := FCompiler.getTypeVar(resType());
+end;
+
+function TLapeTree_InternalMethod_ArrayEquals.resType: TLapeType;
+begin
+  if (FResType = nil) then
+    FResType := FCompiler.getBaseType(ltBoolean);
+
+  Result := inherited;
+end;
+
+function TLapeTree_InternalMethod_ArrayEquals.Compile(var Offset: Integer): TResVar;
+var
+  Left, Right: TLapeType;
+begin
+  Result := NullResVar;
+  Dest := NullResVar;
+
+  if (FParams.Count <> 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
+  if (not (FParams[0].resType() is TLapeType_DynArray)) or (not (FParams[1].resType() is TLapeType_DynArray)) then
+    LapeException(lpeExpectedArray, DocPos);
+
+  Left := TLapeType_DynArray(FParams[0].resType()).PType;
+  Right := TLapeType_DynArray(FParams[1].resType()).PType;
+  if (not Left.CompatibleWith(Right)) then
+    LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op_cmp_Equal), Left.AsString, Right.AsString], DocPos);
+
+  // ensure we can generate such a method, best to error here
+  setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayEquals'], Self));
+  Result := inherited;
 end;
 
 end.

@@ -1,0 +1,19 @@
+{$assertions on}
+
+var a,b: TIntegerArray;
+begin
+  a := [];
+  b := [];
+  Assert(a.Equals(b));
+
+  a := [1,2,3];
+  b := [1,2,3];
+  Assert(a.Equals(b));
+
+  a := [1,2,3];
+  b := [3,2,1];
+  Assert(not a.Equals(b));
+
+  Assert(TStringArray(['hello', 'world']).Equals(['hello', 'world']));
+  Assert(not TStringArray(['world', 'hello']).Equals(['hello', 'world']));
+end.

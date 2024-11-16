@@ -570,23 +570,18 @@ end;
 procedure _LapeBitCount(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
   {$IF NOT DECLARED(PopCnt)}
-  function PopCnt(AValue: UInt32): UInt32; overload;
+  function PopCnt(AValue : UInt64): UInt64;
   const
-    Data: array[0..15] of byte = (0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4);
+    PopCntData: array[0..15] of Byte = (0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4);
   var
-    i: Int32;
+    i : Byte;
   begin
-    Result := 0;
-    for i := 0 to 7 do
+    Result:=0;
+    for i := 0 to 13 do
       begin
-        Inc(Result, Data[AValue and $F]);
+        Inc(Result, PopCntData[AValue and $f]);
         AValue := AValue shr 4;
       end;
-  end;
-
-  function PopCnt(AValue: UInt64): UInt32; overload;
-  begin
-    Result := PopCnt(lo(AValue)) + PopCnt(hi(AValue));
   end;
   {$ENDIF}
 
@@ -594,8 +589,11 @@ var
   p: Pointer;
 begin
   p := Params^[0];
+
   case PUInt8(Params^[1])^ of
-    4:  PUInt32(Result)^ := PopCnt(UInt32(p^));
+    1:  PUInt32(Result)^ := PopCnt(UInt64(UInt8(p^)));  // upcast
+    2:  PUInt32(Result)^ := PopCnt(UInt64(UInt16(p^))); // ..
+    4:  PUInt32(Result)^ := PopCnt(UInt64(UInt32(p^))); // ..
     8:  PUInt32(Result)^ := PopCnt(UInt64(p^));
     16: PUInt32(Result)^ := PopCnt(PUInt64(p)[0]) + PopCnt(PUInt64(p)[1]);
     24: PUInt32(Result)^ := PopCnt(PUInt64(p)[0]) + PopCnt(PUInt64(p)[1]) + PopCnt(PUInt64(p)[2]);

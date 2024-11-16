@@ -213,6 +213,11 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
+  TLapeType_ArrayHelper_Equals = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
 implementation
 
 uses
@@ -891,6 +896,16 @@ begin
     VarType,
     [VarType],
     VarType
+  );
+end;
+
+function TLapeType_ArrayHelper_Equals.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Result := System.ArrayEquals(Self, Param0);',
+    VarType,
+    [VarType],
+    FCompiler.getBaseType(ltBoolean)
   );
 end;
 

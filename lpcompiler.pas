@@ -135,6 +135,7 @@ type
     function GetMethod_ArrayDifference(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetMethod_ArraySymDifference(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetMethod_ArrayIntersection(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetMethod_ArrayEquals(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     procedure InitBaseDefinitions; virtual;
     procedure InitBaseMath; virtual;
@@ -1276,6 +1277,52 @@ begin
   Sender.addMethod(Result);
 end;
 
+function TLapeCompiler.GetMethod_ArrayEquals(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Header: TLapeType_Method;
+  Method: TLapeTree_Method;
+begin
+  Result := nil;
+  if (Sender = nil) or (Length(AParams) <> 2) then
+    Exit;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getBaseType(ltBoolean))) as TLapeType_Method;
+  Method := addGlobalFunc(Header, '!ArrayEquals',
+    '{$RANGECHECKS OFF}                                 ' + LineEnding +
+    'type                                               ' + LineEnding +
+    '  TType = PType(Param0);                           ' + LineEnding +
+    '  TOtherType = PType(Param1);                      ' + LineEnding +
+    'var                                                ' + LineEnding +
+    '  Ptr, Upper: ^TType;                              ' + LineEnding +
+    '  OtherPtr: ^TOtherType;                           ' + LineEnding +
+    'begin                                              ' + LineEnding +
+    '  Result := False;                                 ' + LineEnding +
+    '                                                   ' + LineEnding +
+    '  if (Length(Param0) = Length(Param1)) then        ' + LineEnding +
+    '  begin                                            ' + LineEnding +
+    '    if (_ArrayRange(Param0, Ptr, Upper) > 0) then  ' + LineEnding +
+    '    begin                                          ' + LineEnding +
+    '      OtherPtr := @Param1[Low(Param1)];            ' + LineEnding +
+    '      while (PtrUInt(Ptr) <= PtrUInt(Upper)) do    ' + LineEnding +
+    '      begin                                        ' + LineEnding +
+    '        if (Ptr^ <> OtherPtr^) then                ' + LineEnding +
+    '          Exit;                                    ' + LineEnding +
+    '        Inc(Ptr);                                  ' + LineEnding +
+    '        Inc(OtherPtr);                             ' + LineEnding +
+    '      end;                                         ' + LineEnding +
+    '    end;                                           ' + LineEnding +
+    '                                                   ' + LineEnding +
+    '    Result := True;                                ' + LineEnding +
+    '  end;                                             ' + LineEnding +
+    'end;'
+  );
+
+  Result := Method.Method;
+  Result.VarType.Name := '_ArrayIntersection';
+
+  Sender.addMethod(Result);
+end;
+
 procedure TLapeCompiler.InitBaseDefinitions;
 
   procedure addCompilerFuncs;
@@ -1467,6 +1514,7 @@ begin
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayDifference).NewGlobalVar('_ArrayDifference'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArraySymDifference).NewGlobalVar('_ArraySymDifference'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayIntersection).NewGlobalVar('_ArrayIntersection'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArrayEquals).NewGlobalVar('_ArrayEquals'));
 
   InitBaseMath();
   InitBaseString();
@@ -4574,6 +4622,7 @@ begin
   FInternalMethodMap['ArrayDifference'] := TLapeTree_InternalMethod_ArrayDifference;
   FInternalMethodMap['ArraySymDifference'] := TLapeTree_InternalMethod_ArraySymDifference;
   FInternalMethodMap['ArrayIntersection'] := TLapeTree_InternalMethod_ArrayIntersection;
+  FInternalMethodMap['ArrayEquals'] := TLapeTree_InternalMethod_ArrayEquals;
 
   FInternalMethodMap['Slice'] := TLapeTree_InternalMethod_Slice;
 

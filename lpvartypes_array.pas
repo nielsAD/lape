@@ -975,6 +975,7 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Difference, 'Difference');
   addArrayHelper(TLapeType_ArrayHelper_SymDifference, 'SymDifference');
   addArrayHelper(TLapeType_ArrayHelper_Intersection, 'Intersection');
+  addArrayHelper(TLapeType_ArrayHelper_Equals, 'Equals');
 
   // properties
   addArrayHelper(TLapeType_ArrayHelper_Median, 'Median');
