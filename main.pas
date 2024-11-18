@@ -6,11 +6,14 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs,
-  StdCtrls, ExtCtrls, SynEdit, SynGutter, SynHighlighterPas,
+  StdCtrls, ExtCtrls, AsyncProcess, SynEdit, SynHighlighterPas,
   lptypes, lpvartypes;
 
 type
   TForm1 = class(TForm)
+    LazBuildProcess: TAsyncProcess;
+    LapeTestProcess: TAsyncProcess;
+    btnDisassemble1: TButton;
     btnRun: TButton;
     btnDisassemble: TButton;
     btnBenchScimark: TButton;
@@ -21,9 +24,12 @@ type
     Splitter1: TSplitter;
     PasSyn: TSynFreePascalSyn;
 
+    procedure LazBuildProcessReadData(Sender: TObject);
+    procedure LazBuildProcessTerminate(Sender: TObject);
     procedure btnDisassembleClick(Sender: TObject);
     procedure btnRunClick(Sender: TObject);
     procedure btnBenchClick(Sender: TObject);
+    procedure btnRunTestsClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
@@ -158,6 +164,15 @@ begin
     e.Text := ReadFileToString('tests/bench/SciMark/SciMark.lap');
 end;
 
+procedure TForm1.btnRunTestsClick(Sender: TObject);
+begin
+  m.Clear();
+
+  LazBuildProcess.Executable := 'C:/lazarus/lazbuild.exe';
+  LazBuildProcess.Parameters.Add('tests/RunTests/LapeTest.lpi');
+  LazBuildProcess.Execute();
+end;
+
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   if Screen.Fonts.IndexOf('Cascadia Mono SemiLight') > -1 then
@@ -191,6 +206,32 @@ end;
 procedure TForm1.btnDisassembleClick(Sender: TObject);
 begin
   Compile(True, True);
+end;
+
+procedure TForm1.LazBuildProcessReadData(Sender: TObject);
+var
+  Data: String;
+begin
+  SetLength(Data, TAsyncProcess(Sender).PipeBufferSize);
+  SetLength(Data, TAsyncProcess(Sender).Output.Read(Data[1], Length(Data)));
+  if (Data <> '') and (Sender <> LazBuildProcess) then
+  begin
+    m.Lines.Text := m.Lines.Text + Data;
+    m.SelStart := Length(m.Lines.Text) - 1;
+    m.SelLength := 0;
+  end;
+end;
+
+procedure TForm1.LazBuildProcessTerminate(Sender: TObject);
+begin
+  if (LazBuildProcess.ExitCode <> 0) then
+    m.Lines.Add('Building LapeTest failed')
+  else
+  begin
+    LapeTestProcess.CurrentDirectory := 'tests/RunTests';
+    LapeTestProcess.Executable := 'tests/RunTests/LapeTest.exe';
+    LapeTestProcess.Execute();
+  end;
 end;
 
 {$IF DEFINED(MSWINDOWS) AND DECLARED(LoadFFI)}

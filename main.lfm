@@ -1,26 +1,25 @@
 object Form1: TForm1
-  Left = -979
-  Height = 900
-  Top = 222
-  Width = 800
+  Left = -1733
+  Height = 720
+  Top = 482
+  Width = 640
   Caption = 'Lape'
-  ClientHeight = 900
-  ClientWidth = 800
+  ClientHeight = 0
+  ClientWidth = 0
   Color = clWindow
-  DesignTimePPI = 120
   KeyPreview = True
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   Position = poScreenCenter
-  LCLVersion = '3.4.0.0'
+  LCLVersion = '3.6.0.0'
   inline e: TSynEdit
     Left = 0
-    Height = 672
-    Top = 42
-    Width = 800
+    Height = 528
+    Top = 43
+    Width = 640
     Align = alClient
     Color = cl3DLight
-    Font.Height = -18
+    Font.Height = -14
     Font.Name = 'Courier New'
     Font.Pitch = fpFixed
     Font.Quality = fqCleartypeNatural
@@ -29,7 +28,7 @@ object Form1: TForm1
     TabOrder = 1
     BorderStyle = bsNone
     Gutter.Color = cl3DLight
-    Gutter.Width = 74
+    Gutter.Width = 57
     Gutter.MouseActions = <    
       item
         ClickCount = ccAny
@@ -598,11 +597,11 @@ object Form1: TForm1
     TabWidth = 2
     inline SynLeftGutterPartList1: TSynGutterPartList
       object SynGutterMarks1: TSynGutterMarks
-        Width = 30
+        Width = 24
         MouseActions = <>
       end
       object SynGutterLineNumber1: TSynGutterLineNumber
-        Width = 23
+        Width = 17
         MouseActions = <>
         MarkupInfo.Background = clBtnFace
         MarkupInfo.Foreground = clNone
@@ -612,19 +611,18 @@ object Form1: TForm1
         LeadingZeros = False
       end
       object SynGutterChanges1: TSynGutterChanges
-        Width = 5
+        Width = 4
         MouseActions = <>
         ModifiedColor = 59900
         SavedColor = clGreen
       end
       object SynGutterSeparator1: TSynGutterSeparator
-        Width = 3
+        Width = 2
         MouseActions = <>
         MarkupInfo.Background = clWhite
         MarkupInfo.Foreground = clGray
       end
       object SynGutterCodeFolding1: TSynGutterCodeFolding
-        Width = 13
         MouseActions = <        
           item
             Button = mbRight
@@ -678,24 +676,25 @@ object Form1: TForm1
     end
   end
   object m: TMemo
-    Left = 5
-    Height = 170
-    Top = 725
-    Width = 790
+    Left = 4
+    Height = 136
+    Top = 580
+    Width = 632
     Align = alBottom
-    BorderSpacing.Around = 5
+    BorderSpacing.Around = 4
     BorderStyle = bsNone
-    Font.Height = -20
+    Font.Height = -16
     ParentFont = False
     ScrollBars = ssAutoBoth
     TabOrder = 2
+    WordWrap = False
   end
   object Splitter1: TSplitter
     Cursor = crVSplit
     Left = 0
-    Height = 6
-    Top = 714
-    Width = 800
+    Height = 5
+    Top = 571
+    Width = 640
     Align = alBottom
     Color = clForm
     ParentColor = False
@@ -703,26 +702,26 @@ object Form1: TForm1
   end
   object pnlTop: TPanel
     Left = 0
-    Height = 42
+    Height = 43
     Top = 0
-    Width = 800
+    Width = 640
     Align = alTop
     AutoSize = True
-    ClientHeight = 42
-    ClientWidth = 800
+    ClientHeight = 43
+    ClientWidth = 640
     Color = clForm
     ParentBackground = False
     ParentColor = False
     ParentFont = False
     TabOrder = 0
     object btnRun: TButton
-      Left = 6
-      Height = 30
-      Top = 6
-      Width = 51
+      Left = 4
+      Height = 35
+      Top = 4
+      Width = 57
       Align = alLeft
       AutoSize = True
-      BorderSpacing.Around = 5
+      BorderSpacing.Around = 3
       Caption = 'Run'
       Default = True
       ParentFont = False
@@ -730,42 +729,54 @@ object Form1: TForm1
       OnClick = btnRunClick
     end
     object btnDisassemble: TButton
-      AnchorSideLeft.Control = btnRun
-      AnchorSideLeft.Side = asrBottom
-      Left = 62
-      Height = 30
-      Top = 6
-      Width = 109
+      Left = 64
+      Height = 35
+      Top = 4
+      Width = 125
+      Align = alLeft
       AutoSize = True
-      BorderSpacing.Around = 5
+      BorderSpacing.Around = 3
       Caption = 'Disassemble'
       ParentFont = False
       TabOrder = 1
       OnClick = btnDisassembleClick
     end
     object btnBenchScimark: TButton
-      Left = 591
-      Height = 30
-      Top = 6
-      Width = 132
+      Left = 408
+      Height = 35
+      Top = 4
+      Width = 152
       Align = alRight
       AutoSize = True
-      BorderSpacing.Around = 5
+      BorderSpacing.Around = 3
       Caption = 'Bench - Scimark'
       TabOrder = 2
       OnClick = btnBenchClick
     end
     object btnBench: TButton
-      Left = 728
-      Height = 30
-      Top = 6
-      Width = 66
+      Left = 563
+      Height = 35
+      Top = 4
+      Width = 73
       Align = alRight
       AutoSize = True
-      BorderSpacing.Around = 5
+      BorderSpacing.Around = 3
       Caption = 'Bench'
       TabOrder = 3
       OnClick = btnBenchClick
+    end
+    object btnDisassemble1: TButton
+      Left = 192
+      Height = 35
+      Top = 4
+      Width = 102
+      Align = alLeft
+      AutoSize = True
+      BorderSpacing.Around = 3
+      Caption = 'Run Tests'
+      ParentFont = False
+      TabOrder = 4
+      OnClick = btnRunTestsClick
     end
   end
   object PasSyn: TSynFreePascalSyn
@@ -781,7 +792,45 @@ object Form1: TForm1
     NestedComments = True
     TypeHelpers = False
     StringMultilineMode = []
-    Left = 910
-    Top = 80
+    Left = 728
+    Top = 64
+  end
+  object LazBuildProcess: TAsyncProcess
+    PipeBufferSize = 8096
+    Active = False
+    Options = [poUsePipes]
+    Priority = ppNormal
+    StartupOptions = []
+    ShowWindow = swoNone
+    WindowColumns = 0
+    WindowHeight = 0
+    WindowLeft = 0
+    WindowRows = 0
+    WindowTop = 0
+    WindowWidth = 0
+    FillAttribute = 0
+    OnReadData = LazBuildProcessReadData
+    OnTerminate = LazBuildProcessTerminate
+    Left = 516
+    Top = 73
+  end
+  object LapeTestProcess: TAsyncProcess
+    PipeBufferSize = 8096
+    Active = False
+    Options = [poUsePipes]
+    Priority = ppNormal
+    StartupOptions = []
+    ShowWindow = swoNone
+    WindowColumns = 0
+    WindowHeight = 0
+    WindowLeft = 0
+    WindowRows = 0
+    WindowTop = 0
+    WindowWidth = 0
+    FillAttribute = 0
+    OnReadData = LazBuildProcessReadData
+    OnTerminate = LazBuildProcessReadData
+    Left = 512
+    Top = 144
   end
 end

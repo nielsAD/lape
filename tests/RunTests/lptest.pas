@@ -136,6 +136,8 @@ var
 
     if (FindFirst(Folder + '*.lap', faAnyFile - faDirectory, Res) = 0) then
     try
+      WriteLn('Entering ', ExtractFileName(ExcludeTrailingPathDelimiter(Folder)), '..');
+
       repeat
         Write(Format('Testing %35s :: ', [ExtractFileName(Res.Name)]));
         Inc(Result);
@@ -143,7 +145,6 @@ var
         Output := '';
         StartTime := GetTickCount();
         try
-
           if FileExists(Folder + ChangeFileExt(Res.Name, '.txt')) then
             TestFile(Folder + Res.Name, Output, Folder + ChangeFileExt(Res.Name, '.txt'))
           else
@@ -178,10 +179,7 @@ var
     try
       repeat
         if ((Res.Attr and faDirectory) <> 0) and (Res.Name <> '.') and (Res.Name <> '..') and (Res.Name <> 'Bench') then
-        begin
-          WriteLn('Entering ', Res.Name, '..');
           Result := TestFolder(Folder + Res.Name + PathDelim);
-        end;
       until (FindNext(Res) <> 0);
     finally
       SysUtils.FindClose(Res);

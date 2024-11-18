@@ -5,7 +5,6 @@ program LapeTest;
 uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}cthreads,{$ENDIF}{$ENDIF}
   Classes, SysUtils, CustApp,
-
   lptest;
 
 type
