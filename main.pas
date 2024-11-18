@@ -10,7 +10,7 @@ uses
   lptypes, lpvartypes;
 
 type
-  TForm1 = class(TForm)
+  TMainForm = class(TForm)
     LazBuildProcess: TAsyncProcess;
     LapeTestProcess: TAsyncProcess;
     btnDisassemble1: TButton;
@@ -37,7 +37,7 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
@@ -68,14 +68,14 @@ end;
 
 procedure MyWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  with TForm1(Params^[0]) do
+  with TMainForm(Params^[0]) do
     m.Text := m.Text + {$IF DEFINED(Lape_Unicode)}UTF8Encode(PlpString(Params^[1])^){$ELSE}PlpString(Params^[1])^{$IFEND};
   Write(PlpString(Params^[1])^);
 end;
 
 procedure MyWriteLn(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  with TForm1(Params^[0]) do
+  with TMainForm(Params^[0]) do
     m.Text := m.Text + LineEnding;
   WriteLn();
 end;
@@ -88,7 +88,7 @@ var
 begin
   Parser := nil;
   Compiler := nil;
-  with Form1 do
+  with MainForm do
   try
     Parser := TLapeTokenizerString.Create({$IF DEFINED(Lape_Unicode)}UTF8Decode(e.Lines.Text){$ELSE}e.Lines.Text{$IFEND}, 'main');
     Compiler := TLapeCompiler.Create(Parser);
@@ -97,8 +97,8 @@ begin
     InitializeFFI(Compiler);
     InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
 
-    Compiler.addGlobalMethod('procedure _Write(s: string); override;', @MyWrite, Form1);
-    Compiler.addGlobalMethod('procedure _WriteLn; override;', @MyWriteLn, Form1);
+    Compiler.addGlobalMethod('procedure _Write(s: string); override;', @MyWrite, MainForm);
+    Compiler.addGlobalMethod('procedure _WriteLn; override;', @MyWriteLn, MainForm);
 
     try
       t := HighResolutionTime();
@@ -151,12 +151,12 @@ begin
   end;
 end;
 
-procedure TForm1.btnRunClick(Sender: TObject);
+procedure TMainForm.btnRunClick(Sender: TObject);
 begin
   Compile(True, False);
 end;
 
-procedure TForm1.btnBenchClick(Sender: TObject);
+procedure TMainForm.btnBenchClick(Sender: TObject);
 begin
   if (Sender = btnBench) then
     e.Text := ReadFileToString('tests/bench/Simple.lap')
@@ -164,7 +164,7 @@ begin
     e.Text := ReadFileToString('tests/bench/SciMark/SciMark.lap');
 end;
 
-procedure TForm1.btnRunTestsClick(Sender: TObject);
+procedure TMainForm.btnRunTestsClick(Sender: TObject);
 begin
   m.Clear();
 
@@ -173,7 +173,7 @@ begin
   LazBuildProcess.Execute();
 end;
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 begin
   if Screen.Fonts.IndexOf('Cascadia Mono SemiLight') > -1 then
   begin
@@ -188,7 +188,7 @@ begin
   e.Gutter.RightOffset := Scale96ToScreen(5);
 end;
 
-procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if (Key = VK_R) and (Shift = [ssAlt]) then
   begin
@@ -198,17 +198,17 @@ begin
   end;
 end;
 
-procedure TForm1.WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
+procedure TMainForm.WriteHint(Sender: TLapeCompilerBase; Msg: lpString);
 begin
   m.Lines.Add(Msg);
 end;
 
-procedure TForm1.btnDisassembleClick(Sender: TObject);
+procedure TMainForm.btnDisassembleClick(Sender: TObject);
 begin
   Compile(True, True);
 end;
 
-procedure TForm1.LazBuildProcessReadData(Sender: TObject);
+procedure TMainForm.LazBuildProcessReadData(Sender: TObject);
 var
   Data: String;
 begin
@@ -222,7 +222,7 @@ begin
   end;
 end;
 
-procedure TForm1.LazBuildProcessTerminate(Sender: TObject);
+procedure TMainForm.LazBuildProcessTerminate(Sender: TObject);
 begin
   if (LazBuildProcess.ExitCode <> 0) then
     m.Lines.Add('Building LapeTest failed')

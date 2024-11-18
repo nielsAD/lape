@@ -1,11 +1,11 @@
-object Form1: TForm1
+object MainForm: TMainForm
   Left = -1733
   Height = 720
   Top = 482
   Width = 640
   Caption = 'Lape'
-  ClientHeight = 0
-  ClientWidth = 0
+  ClientHeight = 720
+  ClientWidth = 640
   Color = clWindow
   KeyPreview = True
   OnCreate = FormCreate
