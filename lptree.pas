@@ -460,7 +460,7 @@ type
   TLapeTree_With = class(TLapeTree_Base)
   protected
     FWithList: TLapeExpressionList;
-    FVarList: TResVarArray;
+    FVarList: array[0..7] of TResVar;
     FBody: TLapeTree_Base;
     procedure setBody(Node: TLapeTree_Base); virtual;
   public
@@ -3627,7 +3627,7 @@ constructor TLapeTree_With.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos
 begin
   inherited;
   FBody := nil;
-  FWithList := TLapeExpressionList.Create(nil, dupAccept, True);
+  FWithList := TLapeExpressionList.Create(nil, dupAccept, False);
 end;
 
 destructor TLapeTree_With.Destroy;
@@ -3648,13 +3648,13 @@ var
   i: Integer;
 begin
   Result := NullWithDecl;
-  i := FWithList.Add(AWith);
+  if (FWithList.Count = Length(FVarList)) then
+    LapeException(lpeInvalidWithReference, [AWith, Self]);
 
+  i := FWithList.Add(AWith);
   if (AWith <> nil) and (i > -1) then
   begin
     AWith.Parent := Self;
-    SetLength(FVarList, FWithList.Count);
-
     if (AWith is TLapeTree_GlobalVar) and TLapeTree_GlobalVar(AWith).isConstant then
       FVarList[i] := _ResVar.New(TLapeTree_GlobalVar(AWith).GlobalVar)
     else
