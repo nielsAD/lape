@@ -3672,33 +3672,29 @@ function TLapeTree_With.Compile(var Offset: Integer): TResVar;
 var
   i: Integer;
   NewStack: Boolean;
-  ResVarList: TResVarArray;
 begin
   Result := NullResVar;
-
-  SetLength(ResVarList, Length(FVarList));
-  for i := 0 to High(FVarList) do
-    ResVarList[i] := FVarList[i].IncLock(BigLock);
 
   NewStack := (FCompiler.StackInfo = nil);
   if NewStack then
     FCompiler.IncStackInfo(True);
 
   for i := 0 to FWithList.Count - 1 do
+  begin
     if (FVarList[i].VarPos.MemPos = NullResVar.VarPos.MemPos) then
     begin
-      if (not FWithList[i].CompileToTempVar(Offset, ResVarList[i], BigLock)) or
-         (ResVarList[i].VarPos.MemPos in [mpNone, mpStack])
-      then
+      FVarList[i] := FWithList[i].Compile(Offset);
+      if (not FVarList[i].HasType()) or (FVarList[i].VarPos.MemPos in [mpNone, mpStack]) then
         LapeException(lpeInvalidCondition, FWithList[i].DocPos);
-      FVarList[i] := ResVarList[i];
     end;
+    FVarList[i] := FVarList[i].IncLock();
+  end;
 
   if (FBody <> nil) then
     FBody.CompileToTempVar(Offset, Result);
 
-  for i := 0 to High(ResVarList) do
-    ResVarList[i].Spill(BigLock);
+  for i := 0 to FWithList.Count - 1 do
+    FVarList[i] := FVarList[i].DecLock();
 
   if NewStack then
     FCompiler.DecStackInfo(False, True, True);

@@ -501,35 +501,6 @@ type
     property WithDeclRec: TLapeWithDeclRec read FWithDeclRec;
   end;
 
-  TLapeVarRef = record
-    Lock: Integer;
-    ResVar: TResVar;
-    RefVar: TLapeVar;
-  end;
-  TLapeVarRefMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeVarRef>;
-
-  TLapeType_VarRefMap = class(TLapeType)
-  protected
-    FVarMap: TLapeVarRefMap;
-  public
-    constructor Create(ACompiler: TLapeCompilerBase); reintroduce; virtual;
-    destructor Destroy; override;
-
-    function CanHaveChild: Boolean; override;
-    function HasChild(AName: lpString): Boolean; override;
-
-    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
-
-    function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
-
-    procedure addVar(RefVar: TLapeVar; AName: lpString); overload; virtual;
-    procedure addVar(RefVar: TResVar; AName: lpString); overload; virtual;
-    property VarMap: TLapeVarRefMap read FVarMap;
-  end;
-
   TLapeStackInfo = class(TLapeDeclarationList)
   protected
     FVarStack: TLapeVarStack;
@@ -684,9 +655,6 @@ type
     function DecStackInfo(var Offset: Integer; InFunction: Boolean = False; Emit: Boolean = True; DoFree: Boolean = False; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
     function DecStackInfo(InFunction: Boolean = False; Emit: Boolean = False; DoFree: Boolean = False): TLapeStackInfo; overload; virtual;
 
-    procedure EmitCode(ACode: lpString; var Offset: Integer; Pos: PDocPos = nil); overload; virtual; abstract;
-    procedure EmitCode(ACode: lpString; AVarNames: array of lpString; AVars: array of TLapeVar; AResVars: array of TResVar; var Offset: Integer; Pos: PDocPos = nil); overload; virtual;
-
     function getBaseType(Name: lpString): TLapeType; overload; virtual;
     function getBaseType(BaseType: ELapeBaseType): TLapeType; overload; virtual;
     function addLocalDecl(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration; overload; virtual;
@@ -756,8 +724,6 @@ function IsProperty(typ: TLapeType): Boolean; overload;
 function IsProperty(typ: TLapeType; out isIndexable: Boolean): Boolean; overload;
 
 const
-  BigLock = 256;
-
   TypeID_Unknown = Ord(Low(ELapeBaseType)) - 1;
   TypeID_User = Ord(High(ELapeBaseType)) + 1;
 
@@ -767,7 +733,6 @@ const
 
   NullParameter: TLapeParameter = (ParType: lptNormal; VarType: nil; Default: nil);
   NullWithDecl: TLapeWithDeclRec = (WithVar: nil; WithType: nil);
-  NullVarRef: TLapeVarRef = (Lock: -1; ResVar: (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpNone; GlobalVar: nil)); RefVar: nil);
 
   Lape_RefParams   = [lptConstRef, lptOut, lptVar];
   Lape_ConstParams = [lptConst, lptConstRef];
@@ -2105,7 +2070,7 @@ begin
   begin
     Dest := Left;
     Exit(Eval(op_Assign, Dest, Left, Eval(ResolveCompoundOp(op, Left.VarType), Dest, Left, Right, Flags, Offset, Pos), Flags, Offset, Pos));
-  end; 
+  end;
 
   Result.VarType := EvalRes(Op, Right.VarType, Flags);
   if (op = op_Addr) and (not Left.Writeable) then
@@ -3508,121 +3473,6 @@ begin
   FWithDeclRec := AWithDeclRec;
 end;
 
-constructor TLapeType_VarRefMap.Create(ACompiler: TLapeCompilerBase);
-begin
-  inherited Create(ltUnknown, ACompiler);
-  FVarMap := TLapeVarRefMap.Create(NullVarRef, dupError, True);
-end;
-
-destructor TLapeType_VarRefMap.Destroy;
-var
-  i: Integer;
-begin
-  for i := 0 to FVarMap.Count - 1 do
-    with FVarMap.ItemsI[i] do
-      if (Lock <> NullVarRef.Lock) then
-        if (RefVar <> nil) then
-          TLapeStackTempVar(RefVar).FLock := Lock
-        else
-          TLapeStackTempVar(ResVar.VarPos.StackVar).FLock := Lock;
-
-  FreeAndNil(FVarMap);
-  inherited;
-end;
-
-function TLapeType_VarRefMap.CanHaveChild: Boolean;
-begin
-  Result := True;
-end;
-
-function TLapeType_VarRefMap.HasChild(AName: lpString): Boolean;
-begin
-  Result := FVarMap.ExistsKey(AName) or HasSubDeclaration(AName, bTrue);
-end;
-
-function TLapeType_VarRefMap.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
-begin
-  Result := nil;
-end;
-
-function TLapeType_VarRefMap.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
-begin
-  if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.Ptr)^) then
-    with FVarMap[PlpString(Right.Ptr)^] do
-      if (RefVar <> nil) then
-        Result := RefVar.VarType
-      else
-        Result := ResVar.VarType
-  else
-    Result := inherited;
-end;
-
-function TLapeType_VarRefMap.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
-begin
-  Result := inherited;
-  if Result and (op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.Ptr)^) then
-    Result := (FVarMap[PlpString(Right.Ptr)^].RefVar is TLapeGlobalVar);
-end;
-
-function TLapeType_VarRefMap.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
-begin
-  Assert((Left = nil) or (Left.VarType = Self));
-  if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.Ptr)^) then
-    Result := FVarMap[PlpString(Right.Ptr)^].RefVar as TLapeGlobalVar
-  else
-    Result := inherited;
-end;
-
-function TLapeType_VarRefMap.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
-begin
-  Assert(Left.VarType = Self);
-  if (Op = op_Dot) and ValidFieldName(Right) and FVarMap.ExistsKey(PlpString(Right.VarPos.GlobalVar.Ptr)^) then
-    with FVarMap[PlpString(Right.VarPos.GlobalVar.Ptr)^] do
-    begin
-      Dest := NullResVar;
-      if (RefVar <> nil) then
-        Result := _ResVar.New(RefVar)
-      else
-        Result := ResVar;
-    end
-  else
-    Result := inherited;
-end;
-
-procedure TLapeType_VarRefMap.addVar(RefVar: TLapeVar; AName: lpString);
-var
-  Rec: TLapeVarRef;
-begin
-  Rec := NullVarRef;
-  Rec.RefVar := RefVar;
-  if (RefVar is TLapeStackTempVar) then
-    with TLapeStackTempVar(RefVar) do
-      if (FLock <> BigLock * BigLock) then
-      begin
-        Rec.Lock := FLock;
-        FLock := BigLock * BigLock;
-      end;
-
-  FVarMap.Add(AName, Rec);
-end;
-
-procedure TLapeType_VarRefMap.addVar(RefVar: TResVar; AName: lpString);
-var
-  Rec: TLapeVarRef;
-begin
-  Rec := NullVarRef;
-  Rec.ResVar := RefVar;
-  if (RefVar.VarPos.MemPos = mpVar) and (RefVar.VarPos.StackVar is TLapeStackTempVar) then
-    with TLapeStackTempVar(RefVar.VarPos.StackVar) do
-      if (FLock <> BigLock * BigLock) then
-      begin
-        Rec.Lock := FLock;
-        FLock := BigLock * BigLock;
-      end;
-
-  FVarMap.Add(AName, Rec);
-end;
-
 function TLapeStackInfo.getVar(Index: Integer): TLapeStackVar;
 begin
   Result := FVarStack[Index];
@@ -4489,53 +4339,6 @@ begin
   Result := DecStackInfo(Offset, InFunction, Emit, DoFree);
 end;
 
-procedure TLapeCompilerBase.EmitCode(ACode: lpString; AVarNames: array of lpString; AVars: array of TLapeVar; AResVars: array of TResVar; var Offset: Integer; Pos: PDocPos = nil);
-var
-  FreeStack: Boolean;
-  VarRefs: TLapeType_VarRefMap;
-  VarRefsVar: TResVar;
-  WithVar: TLapeWithDeclRec;
-  i: Integer;
-begin
-  Assert(Length(AVarNames) = Length(AVars) + Length(AResVars));
-  VarRefs := nil;
-  VarRefsVar := NullResVar;
-  WithVar := NullWithDecl;
-
-  FreeStack := (FStackInfo = nil);
-  if FreeStack then
-    IncStackInfo(Offset, True, Pos);
-
-  try
-    VarRefs := TLapeType_VarRefMap.Create(Self);
-    for i := 0 to High(AVarNames) do
-      if (i < Length(AVars)) then
-        VarRefs.addVar(AVars[i], AVarNames[i])
-      else
-        VarRefs.addVar(AResVars[i - Length(AVars)], AVarNames[i]);
-
-    VarRefs.addVar(getGlobalVar('System'), 'System');
-    VarRefsVar := _ResVar.New(VarRefs.NewGlobalVarP());
-
-    WithVar.WithType := VarRefs;
-    WithVar.WithVar := @VarRefsVar;
-    FStackInfo.addWith(WithVar);
-
-    try
-      EmitCode(ACode, Offset, Pos);
-    finally
-      FStackInfo.delWith(1);
-    end;
-  finally
-    if (VarRefsVar.VarPos.GlobalVar <> nil) then
-      VarRefsVar.VarPos.GlobalVar.Free();
-    if (VarRefs <> nil) then
-      VarRefs.Free();
-    if FreeStack then
-      DecStackInfo(Offset, False, True, True, Pos);
-  end;
-end;
-
 function TLapeCompilerBase.getBaseType(Name: lpString): TLapeType;
 begin
   Result := FBaseTypesDictionary[Name];
@@ -4824,5 +4627,3 @@ initialization
 finalization
   EmptyStackInfo.Free();
 end.
-
-

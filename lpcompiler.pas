@@ -152,7 +152,7 @@ type
     function EnsureConstantRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeRange; overload; virtual;
     function EnsureConstantRange(Node: TLapeTree_Base): TLapeRange; overload; virtual;
 
-    function FindFile(AFileName: lpString): lpString;
+    function FindFile(AFileName: lpString): lpString; virtual;
     function HandlePreprocessorFunc(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean; virtual;
     function HandlePreprocessorMacro(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean; virtual;
     function EvalPreprocessorExpr(Expr: String; ADocPos: TDocPos): Boolean; virtual;
@@ -225,7 +225,6 @@ type
 
     function addDelayedExpression(Node: TLapeTree_Base; AfterCompilation: Boolean = True; IsGlobal: Boolean = False): TLapeTree_Base; virtual;
     function ParseFile: TLapeTree_Base; virtual;
-    procedure EmitCode(ACode: lpString; var Offset: Integer; Pos: PDocPos = nil); override;
 
     function Compile: Boolean; virtual;
     procedure CheckAfterCompile; virtual;
@@ -253,24 +252,19 @@ type
     function addLocalVar(AVar: TLapeType; Name: lpString = ''): TLapeVar; virtual;
 
     function addGlobalVar(AVar: TLapeGlobalVar; AName: lpString = ''): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Typ: lpString; Value: lpString; AName: lpString): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Typ: TLapeType; AName: lpString; Value: lpString = ''): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Typ: ELapeBaseType; AName: lpString; Value: lpString = ''): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Typ: lpString; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Typ: TLapeType; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Typ: ELapeBaseType; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
+    function addGlobalVar(Typ: lpString; Value: lpString; AName: lpString): TLapeGlobalVar; overload; virtual;
+    function addGlobalVar(Typ: lpString; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
 
     function addGlobalVar(Value: Int32; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: UInt32; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: Int64; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: UInt64; AName: lpString): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Value: lpFloat; AName: lpString): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Value: EvalBool; AName: lpString): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Value: ShortString; AName: lpString): TLapeGlobalVar; overload; virtual;
+    function addGlobalVar(Value: Single; AName: lpString): TLapeGlobalVar; overload; virtual;
+    function addGlobalVar(Value: Double; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: AnsiString; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: UnicodeString; AName: lpString): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Value: AnsiChar; AName: lpString): TLapeGlobalVar; overload; virtual;
-    function addGlobalVar(Value: WideChar; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: Variant; AName: lpString): TLapeGlobalVar; overload; virtual;
     function addGlobalVar(Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
 
@@ -285,8 +279,6 @@ type
     function addGlobalMethod(AFunc: TLapeGlobalVar; Value: TMethod; FreeFunc: Boolean = True): TLapeGlobalVar; overload; virtual;
     function addGlobalMethod(AHeader: lpString; Value: TMethod): TLapeGlobalVar; overload; virtual;
     function addGlobalMethod(AHeader: lpString; AMethod, ASelf: Pointer): TLapeGlobalVar; overload; virtual;
-    function addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: TMethod; AName: lpString): TLapeGlobalVar; overload; virtual;
-    function addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: TMethod; AName: lpString): TLapeGlobalVar; overload; virtual;
 
     function addDelayedCode(ACode: lpString; AFileName: lpString = ''; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base; virtual;
 
@@ -4911,35 +4903,6 @@ begin
   end;
 end;
 
-procedure TLapeCompiler.EmitCode(ACode: lpString; var Offset: Integer; Pos: PDocPos = nil);
-var
-  FileName: lpString;
-  OldState: Pointer;
-begin
-  if (Pos <> nil) then
-    FileName := Pos^.FileName
-  else
-  begin
-    FileName := '!EmitCode';
-    if hasTokenizer() then
-      FileName := FileName + '::' + Tokenizer.FileName
-  end;
-
-  OldState := getTempTokenizerState(ACode, FileName, False);
-  Tokenizer.OverridePos := Pos;
-
-  try
-    with ParseStatementList() do
-    try
-      Compile(Offset).Spill(1);
-    finally
-      Free();
-    end;
-  finally
-    resetTokenizerState(OldState);
-  end;
-end;
-
 function TLapeCompiler.Compile: Boolean;
 
   procedure GlobalHints;
@@ -5165,7 +5128,7 @@ begin
   if (AValue = '') and hasDefine(S) then
     Exit;
 
-  // modifiy value if already exists
+  // modify value if already exists
   if (AValue <> '') then
   begin
     for i := 0 to FDefines.Count - 1 do
@@ -5283,40 +5246,29 @@ begin
   end;
 end;
 
-function TLapeCompiler.addGlobalVar(Typ: TLapeType; AName: lpString; Value: lpString = ''): TLapeGlobalVar;
-begin
-  if (Typ.Name <> '') then
-    Result := addGlobalVar(Typ.Name, Value, AName)
-  else
-    Result := addGlobalVar(Typ.AsString, Value, AName);
-end;
-
-function TLapeCompiler.addGlobalVar(Typ: ELapeBaseType; AName: lpString; Value: lpString = ''): TLapeGlobalVar;
-begin
-  Result := addGlobalVar(getBaseType(Typ), Value, AName);
-end;
-
 function TLapeCompiler.addGlobalVar(Typ: lpString; Value: Pointer; AName: lpString): TLapeGlobalVar;
+var
+  OldState: Pointer;
+  VarType: TLapeType;
 begin
-  with addGlobalVar(Typ, '', AName) do
-  begin
-    Name := '';
-    Result := addGlobalVar(VarType.NewGlobalVarP(Value), AName);
-    Free();
+  OldState := getTempTokenizerState(Typ + ';', '!addGlobalVar::' + AName);
+  try
+    VarType := ParseType(nil);
+    Result := VarType.NewGlobalVarP(Value);
+    addGlobalVar(Result, AName);
+  finally
+    resetTokenizerState(OldState);
   end;
 end;
 
 function TLapeCompiler.addGlobalVar(Typ: TLapeType; Value: Pointer; AName: lpString): TLapeGlobalVar;
 begin
-  if (Typ.Name <> '') then
-    Result := addGlobalVar(Typ.Name, Value, AName)
-  else
-    Result := addGlobalVar(Typ.AsString, Value, AName);
+  Result := addGlobalVar(Typ.NewGlobalVarP(Value), AName);
 end;
 
 function TLapeCompiler.addGlobalVar(Typ: ELapeBaseType; Value: Pointer; AName: lpString): TLapeGlobalVar;
 begin
-  Result := addGlobalVar(getBaseType(Typ), Value, AName);
+  Result := addGlobalVar(FBaseTypes[Typ].NewGlobalVarP(Value), AName);
 end;
 
 function TLapeCompiler.addGlobalVar(Value: Int32; AName: lpString): TLapeGlobalVar;
@@ -5339,23 +5291,14 @@ begin
   Result := addGlobalVar(TLapeType_UInt64(FBaseTypes[ltUInt64]).NewGlobalVar(Value), AName);
 end;
 
-function TLapeCompiler.addGlobalVar(Value: lpFloat; AName: lpString): TLapeGlobalVar;
+function TLapeCompiler.addGlobalVar(Value: Single; AName: lpString): TLapeGlobalVar;
 begin
-  {$IFDEF Lape_NoExtended}
+  Result := addGlobalVar(TLapeType_Single(FBaseTypes[ltSingle]).NewGlobalVar(Value), AName);
+end;
+
+function TLapeCompiler.addGlobalVar(Value: Double; AName: lpString): TLapeGlobalVar;
+begin
   Result := addGlobalVar(TLapeType_Double(FBaseTypes[ltDouble]).NewGlobalVar(Value), AName);
-  {$ELSE}
-  Result := addGlobalVar(TLapeType_Extended(FBaseTypes[ltExtended]).NewGlobalVar(Value), AName);
-  {$ENDIF}
-end;
-
-function TLapeCompiler.addGlobalVar(Value: EvalBool; AName: lpString): TLapeGlobalVar;
-begin
-  Result := addGlobalVar(TLapeType_EvalBool(FBaseTypes[ltEvalBool]).NewGlobalVar(Ord(EvalBool(Value))), AName);
-end;
-
-function TLapeCompiler.addGlobalVar(Value: ShortString; AName: lpString): TLapeGlobalVar;
-begin
-  Result := addGlobalVar(TLapeType_ShortString(FBaseTypes[ltShortString]).NewGlobalVar(Value), AName);
 end;
 
 function TLapeCompiler.addGlobalVar(Value: AnsiString; AName: lpString): TLapeGlobalVar;
@@ -5366,16 +5309,6 @@ end;
 function TLapeCompiler.addGlobalVar(Value: UnicodeString; AName: lpString): TLapeGlobalVar;
 begin
   Result := addGlobalVar(TLapeType_UnicodeString(FBaseTypes[ltUnicodeString]).NewGlobalVar(Value), AName);
-end;
-
-function TLapeCompiler.addGlobalVar(Value: AnsiChar; AName: lpString): TLapeGlobalVar;
-begin
-  Result := addGlobalVar(TLapeType_AnsiChar(FBaseTypes[ltAnsiChar]).NewGlobalVar(Value), AName);
-end;
-
-function TLapeCompiler.addGlobalVar(Value: WideChar; AName: lpString): TLapeGlobalVar;
-begin
-  Result := addGlobalVar(TLapeType_WideChar(FBaseTypes[ltWideChar]).NewGlobalVar(Value), AName);
 end;
 
 function TLapeCompiler.addGlobalVar(Value: Variant; AName: lpString): TLapeGlobalVar;
@@ -5527,16 +5460,6 @@ begin
   Val.Code := AMethod;
   Val.Data := ASelf;
   Result := addGlobalMethod(AHeader, Val);
-end;
-
-function TLapeCompiler.addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: TMethod; AName: lpString): TLapeGlobalVar;
-begin
-  Result := addGlobalMethod(addGlobalFunc(AParams, AParTypes, AParDefaults, ARes, @Value.Code, AName), Value);
-end;
-
-function TLapeCompiler.addGlobalMethod(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: TMethod; AName: lpString): TLapeGlobalVar;
-begin
-  Result := addGlobalMethod(AParams, AParTypes, AParDefaults, nil, Value, AName);
 end;
 
 function TLapeCompiler.addDelayedCode(ACode: lpString; AFileName: lpString = ''; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base;
