@@ -1,0 +1,46 @@
+{$assertions on}
+
+type
+  TMyUInt32 = record
+    lo, hi: UInt16;
+  end;
+  TRGBA = record
+    R,G,B,A: UInt8;
+  end;
+
+var
+  c: AnsiChar = 'A';
+  i: Int32 = -1;
+  u32: TMyUInt32;
+  rgba: TRGBA;
+begin
+  WriteLn(UInt8(c) = 65);
+
+  Assert(UInt64(i) = High(UInt64));
+  Assert(UInt32(i) = High(UInt32));
+  Assert(UInt16(i) = High(UInt16));
+  Assert(UInt8(i) = High(UInt8));
+
+  u32.lo := 10000;
+  u32.hi := 0;
+  Assert(UInt32(u32) = UInt32(10000));
+
+  u32.lo := 10000;
+  u32.hi := 100;
+  Assert(UInt32(u32) = UInt32(6563600));
+
+  rgba := [0,0,0,0];
+  Assert(UInt32(rgba) = UInt32(0));
+
+  rgba := [255,0,0,0];
+  Assert(UInt32(rgba) = UInt32(255));
+
+  rgba := [255,255,0,0];
+  Assert(UInt32(rgba) = UInt32(65535));
+
+  rgba := [255,255,255,0];
+  Assert(UInt32(rgba) = UInt32(16777215));
+
+  rgba := [255,255,255,255];
+  Assert(UInt32(rgba) = UInt32(4294967295));
+end;

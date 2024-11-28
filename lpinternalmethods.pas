@@ -2477,18 +2477,11 @@ function TLapeTree_InternalMethod_Objectify.resType: TLapeType;
 var
   VarType: TLapeType;
 begin
-  if (FResType = nil) then
+  if (FResType = nil) and (FParams.Count = 1) and (not isEmpty(FParams[0])) then
   begin
-    if (FParams.Count <> 1) or isEmpty(FParams[0]) then
-      LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
-
     VarType := FParams[0].resType();
-    if (VarType = nil) then
-      LapeException(lpeTypeExpected, DocPos);
-    if (VarType.ClassType <> TLapeType_Method) then
-      LapeException(lpeExpectedNormalMethod, DocPos);
-
-    FResType := FCompiler.addManagedType(TLapeType_MethodOfObject.Create(VarType as TLapeType_Method)) as TLapeType_MethodOfObject;
+    if (VarType <> nil) and (VarType.ClassType = TLapeType_Method) then
+      FResType := FCompiler.addManagedType(TLapeType_MethodOfObject.Create(VarType as TLapeType_Method));
   end;
 
   Result := inherited;
@@ -2502,6 +2495,11 @@ var
 begin
   Result := NullResVar;
   Dest := NullResVar;
+
+  if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  if (resType() = nil) then
+    LapeException(lpeExpectedNormalMethod, DocPos);
 
   with FCompiler['_Objectify'].VarType as TLapeType_OverloadedMethod do
     Method := OnFunctionNotFound(TLapeType_OverloadedMethod(GetSelf()), TLapeType_Method(resType()));
@@ -2939,10 +2937,8 @@ begin
     Typ := FParams[0].resType();
     if (Typ is TLapeType_Type) then
       Typ := TLapeType_Type(Typ).TType;
-    if (not (Typ is TLapeType_Pointer)) then
-      LapeException(lpeImpossible, DocPos);
-
-    FResType := TLapeType_Pointer(Typ).PType;
+    if (Typ is TLapeType_Pointer) then
+      FResType := TLapeType_Pointer(Typ).PType;
   end;
 
   Result := inherited;
@@ -2956,6 +2952,11 @@ end;
 
 function TLapeTree_InternalMethod_PType.Evaluate: TLapeGlobalVar;
 begin
+  if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  if (resType() = nil) then
+    LapeException(lpeExpectedPointerType, DocPos);
+
   Result := FCompiler.getTypeVar(resType());
 end;
 
@@ -2984,7 +2985,6 @@ begin
   if (not Left.CompatibleWith(Right)) then
     LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op_cmp_Equal), Left.AsString, Right.AsString], DocPos);
 
-  // ensure we can generate such a method, best to error here
   setExpr(TLapeTree_GlobalVar.Create(FCompiler['_ArrayEquals'], Self));
   Result := inherited;
 end;

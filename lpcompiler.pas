@@ -3959,7 +3959,20 @@ begin
             if (Expr is TLapeTree_GlobalVar) then
               TLapeTree_GlobalVar(Expr).GlobalVar.Used := duTrue;
 
-            if (Expr is TLapeTree_Invoke) then
+            // cast
+            if (Expr is TLapeTree_VarType) and (Peek() = tk_sym_ParenthesisOpen) then
+            begin
+              _LastNode := _Var;
+              Expect(tk_sym_ParenthesisOpen, True, True);
+              Cast := TLapeTree_Cast.Create(Self, getPDocPos());
+              Cast.CastTo := Expr;
+              Cast.Param := EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True));
+              VarStack.Push(Cast);
+              Expect(tk_sym_ParenthesisClose, False, True);
+              DoNext := False;
+            end
+            // method
+            else if (Expr is TLapeTree_Invoke) then
             begin
               Method := Expr as TLapeTree_Invoke;
               DoNext := False;
@@ -3997,20 +4010,7 @@ begin
                 if (Expr <> VarStack.Pop()) and (Expr is TLapeTree_InternalMethod) then
                   Method := TLapeTree_Invoke(Expr)
                 else
-                begin
-                  if IsCast(Expr.resType()) then
-                  begin
-                    Cast := TLapeTree_Cast.Create(Self, getPDocPos());
-                    if (Next() = tk_sym_ParenthesisClose) then
-                      LapeException(lpeImpossible, DocPos);
-
-                    Cast.CastTo := Expr;
-                    Cast.Param := EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True));
-                    VarStack.Push(Cast);
-                    Continue;
-                  end else
-                    Method := TLapeTree_Invoke.Create(Expr, Self, getPDocPos());
-                end;
+                  Method := TLapeTree_Invoke.Create(Expr, Self, getPDocPos());
               end;
 
               if (Next() <> tk_sym_ParenthesisClose) then
