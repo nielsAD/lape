@@ -614,7 +614,7 @@ var
   _Write: TLapeGlobalVar;
 begin
   inherited;
-  FForceParam := True;
+  FSpecialParam := spForce;
 
   _Write := ACompiler['_Write'];
   if (_Write <> nil) and (_Write.VarType is TLapeType_OverloadedMethod) then
@@ -736,7 +736,7 @@ end;
 constructor TLapeTree_InternalMethod_Assert.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited Create('_Assert', ACompiler, ADocPos);
-  FForceParam := True;
+  FSpecialParam := spForce;
 end;
 
 function TLapeTree_InternalMethod_Assert.Compile(var Offset: Integer): TResVar;
@@ -1010,7 +1010,7 @@ end;
 constructor TLapeTree_InternalMethod_New.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FForceParam := True;
+  FSpecialParam := spForce;
 end;
 
 function TLapeTree_InternalMethod_New.Compile(var Offset: Integer): TResVar;
@@ -1063,7 +1063,7 @@ end;
 constructor TLapeTree_InternalMethod_Dispose.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FForceParam := True;
+  FSpecialParam := spForce;
   FunctionOnly := False;
 end;
 
@@ -2341,7 +2341,7 @@ end;
 constructor TLapeTree_InternalMethod_Label.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FForceParam := True;
+  FSpecialParam := spForce;
 end;
 
 function TLapeTree_InternalMethod_Label.Compile(var Offset: Integer): TResVar;
@@ -2384,7 +2384,7 @@ end;
 constructor TLapeTree_InternalMethod_Goto.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FForceParam := True;
+  FSpecialParam := spForce;
 end;
 
 function TLapeTree_InternalMethod_Goto.Compile(var Offset: Integer): TResVar;
@@ -2411,7 +2411,7 @@ end;
 constructor TLapeTree_InternalMethod_Raise.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FForceParam := True;
+  FSpecialParam := spForce;
 end;
 
 function TLapeTree_InternalMethod_Raise.Compile(var Offset: Integer): TResVar;
@@ -2438,6 +2438,7 @@ function TLapeTree_InternalMethod_Raise.Compile(var Offset: Integer): TResVar;
 var
   Invoke: TLapeTree_Invoke;
 begin
+  Dest := NullResVar;
   Result := NullResVar;
 
   if (FParams.Count = 0) then

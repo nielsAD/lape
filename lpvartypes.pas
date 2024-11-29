@@ -719,7 +719,6 @@ function ValidFieldName(Field: TLapeGlobalVar): Boolean; overload;
 function ValidFieldName(Field: TResVar): Boolean; overload;
 
 function IsMethod(typ: TLapeType): Boolean;
-function IsCast(typ: TLapeType): Boolean;
 function IsProperty(typ: TLapeType): Boolean; overload;
 function IsProperty(typ: TLapeType; out isIndexable: Boolean): Boolean; overload;
 
@@ -949,11 +948,6 @@ end;
 function IsMethod(typ: TLapeType): Boolean;
 begin
   Result := (Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod);
-end;
-
-function IsCast(typ: TLapeType): Boolean;
-begin
-  Result := (Typ is TLapeType_Type);
 end;
 
 function IsProperty(typ: TLapeType): Boolean;

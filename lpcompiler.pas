@@ -183,7 +183,7 @@ type
     procedure ParseLabelBlock; virtual;
     function ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList; virtual;
 
-    function ParseExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True; IsInternalMethod: Boolean = False): TLapeTree_ExprBase; virtual;
+    function ParseExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True): TLapeTree_ExprBase; virtual;
     function ParseTypeExpression(ReturnOn: EParserTokenSet = []; FirstNext: Boolean = True; DoFold: Boolean = True): TLapeTree_Base; virtual;
     function ParseStatement(FirstNext: Boolean = True; ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_Base; virtual;
     function ParseStatementList: TLapeTree_StatementList; virtual;
@@ -3530,7 +3530,7 @@ begin
   end;
 end;
 
-function TLapeCompiler.ParseExpression(ReturnOn: EParserTokenSet; FirstNext: Boolean; DoFold: Boolean; IsInternalMethod: Boolean): TLapeTree_ExprBase;
+function TLapeCompiler.ParseExpression(ReturnOn: EParserTokenSet; FirstNext: Boolean; DoFold: Boolean): TLapeTree_ExprBase;
 const
   ParenthesisOpen = Pointer(-1);
 var
@@ -3885,6 +3885,26 @@ var
     end;
   end;
 
+  procedure ParseSpecialParam(Method: TLapeTree_InternalMethod);
+  begin
+    case Method.SpecialParam of
+      spForce:
+        if not (Tokenizer.Tok in ReturnOn) then
+        begin
+          Method.addParam(EnsureExpression(ParseExpression(ReturnOn, Tokenizer.Tok = tk_kw_At)));
+          if (Method is TLapeTree_InternalMethod_Raise) and (Tokenizer.Tok = tk_kw_At) then
+            Method.addParam(EnsureExpression(ParseExpression(ReturnOn, True)));
+        end;
+
+      spType:
+        begin
+          Expect(tk_cmp_LessThan, False, True);
+          Method.addParam(getExpression(Tokenizer.TokString));
+          Expect(tk_cmp_GreaterThan, True, True);
+        end;
+    end;
+  end;
+
 var
   Signed: Boolean;
   Cast: TLapeTree_Cast;
@@ -3940,24 +3960,13 @@ begin
           ParseAndPushString();
 
         tk_kw_Type:
-          begin
-            if not IsInternalMethod then
-              Break;
-
-            PushVarStack(TLapeTree_VarType.Create(parseType(nil), Self));
-          end;
+          PushVarStack(TLapeTree_VarType.Create(parseType(nil), Self));
 
         tk_Identifier:
           begin
             Expr := getExpression(Tokenizer.TokString, getPDocPos());
             if (Expr = nil) then
               LapeExceptionFmt(lpeUnknownDeclaration, [Tokenizer.TokString], Tokenizer.DocPos);
-
-            if (Expr is TLapeTree_ResVar) then
-              TLapeTree_ResVar(Expr).ResVar.VarPos.StackVar.Used := duTrue
-            else
-            if (Expr is TLapeTree_GlobalVar) then
-              TLapeTree_GlobalVar(Expr).GlobalVar.Used := duTrue;
 
             // cast
             if (Expr is TLapeTree_VarType) and (Peek() = tk_sym_ParenthesisOpen) then
@@ -3980,13 +3989,8 @@ begin
                 _LastNode := _Var
               else
               begin
-                if (Method is TLapeTree_InternalMethod) and (TLapeTree_InternalMethod(Method).ForceParam and (not (Tokenizer.Tok in ReturnOn))) then
-                begin
-                  Method.addParam(EnsureExpression(ParseExpression(ReturnOn, Tokenizer.Tok = tk_kw_At)));
-                  if (Method is TLapeTree_InternalMethod_Raise) and (Tokenizer.Tok = tk_kw_At) then
-                    Method.addParam(EnsureExpression(ParseExpression(ReturnOn, True)));
-                end;
-
+                if (Method is TLapeTree_InternalMethod) and (TLapeTree_InternalMethod(Method).SpecialParam <> spNo) then
+                  ParseSpecialParam(Method as TLapeTree_InternalMethod);
                 VarStack.Push(Method);
                 Method := nil;
               end;
@@ -4015,11 +4019,11 @@ begin
 
               if (Next() <> tk_sym_ParenthesisClose) then
               begin
-                Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True, Method is TLapeTree_InternalMethod)));
+                Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True)));
                 while True do
                   case Tokenizer.Tok of
                     tk_sym_ParenthesisClose: Break;
-                    tk_sym_Comma: Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], True, True, Method is TLapeTree_InternalMethod)));
+                    tk_sym_Comma: Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], True, True)));
                     else
                       LapeException(lpeClosingParenthesisExpected, Tokenizer.DocPos);
                   end;
@@ -5054,8 +5058,6 @@ begin
 
   try
     Decl := getDeclaration(AName, AStackInfo, LocalOnly);
-    if (lcoHints in FOptions) and (Decl is TLapeVar) and TLapeVar(Decl).HasHints() then
-      TLapeVar(Decl).WriteHints({$IFDEF FPC}@{$ENDIF}Hint, Tokenizer.DocPos);
   except
     on E: lpException do
       if (Pos = nil) then
@@ -5065,6 +5067,11 @@ begin
   end;
 
   if (Decl <> nil) then
+  begin
+    Decl.Used := duTrue;
+    if (lcoHints in FOptions) and (Decl is TLapeVar) and TLapeVar(Decl).HasHints() then
+      TLapeVar(Decl).WriteHints({$IFDEF FPC}@{$ENDIF}Hint, Tokenizer.DocPos);
+
     if (Decl is TLapeWithDeclaration) then
       with TLapeWithDeclaration(Decl) do
       try
@@ -5083,7 +5090,7 @@ begin
       Result := TLapeTree_VarType.Create(TLapeType(Decl), Self, Pos)
     else
       {nothing}
-  else if FInternalMethodMap[AName] <> nil then
+  end else if FInternalMethodMap[AName] <> nil then
     Result := FInternalMethodMap[AName].Create(Self, Pos);
 end;
 

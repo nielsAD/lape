@@ -680,8 +680,9 @@ constructor TLapeTree_InternalMethod_Native.Create(ACompiler: TLapeCompilerBase;
 begin
   inherited;
 
-  FForceParam := True;
-  FABIType  := ACompiler.getGlobalType('TFFI_ABI'); Assert(FABIType <> nil);
+  FSpecialParam := spForce;
+  FABIType := ACompiler.getGlobalType('TFFI_ABI');
+  Assert(FABIType <> nil);
 end;
 
 procedure TLapeTree_InternalMethod_Native.ClearCache;
@@ -769,8 +770,9 @@ constructor TLapeTree_InternalMethod_Natify.Create(ACompiler: TLapeCompilerBase;
 begin
   inherited;
 
-  FForceParam := False;
-  FClosures := ACompiler.getGlobalVar('!ffi_natify_closures'); Assert(FClosures <> nil);
+  FSpecialParam := spForce;
+  FClosures := ACompiler.getGlobalVar('!ffi_natify_closures');
+  Assert(FClosures <> nil);
 end;
 
 function TLapeTree_InternalMethod_Natify.Evaluate: TLapeGlobalVar;

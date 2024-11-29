@@ -217,12 +217,18 @@ type
 
   TLapeTree_InternalMethodClass = class of TLapeTree_InternalMethod;
   TLapeTree_InternalMethod = class(TLapeTree_Invoke)
+  public type
+    ESpecialParam = (
+      spNo,    // normal parameters
+      spForce, // force the next expression to be the parameter even without parentheses
+      spType   // type parameter in <> like generics
+    );
   protected
-    FForceParam: Boolean;
+    FSpecialParam: ESpecialParam;
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     procedure ClearCache; override;
-    property ForceParam: Boolean read FForceParam;
+    property SpecialParam: ESpecialParam read FSpecialParam;
   end;
 
   TLapeTree_Operator = class(TLapeTree_DestExprBase)
@@ -2495,7 +2501,6 @@ constructor TLapeTree_InternalMethod.Create(ACompiler: TLapeCompilerBase; ADocPo
 begin
   inherited Create(TLapeTree_ExprBase(nil), ACompiler, ADocPos);
   FConstant := bFalse;
-  FForceParam := False;
 end;
 
 procedure TLapeTree_InternalMethod.ClearCache;
