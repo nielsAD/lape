@@ -29,7 +29,7 @@ type
 
   TLapeType_HelperProperty = class(TLapeType_Helper)
   public
-    constructor Create(ACompiler: TLapeCompilerBase; AName: lpString=''; ADocPos: PDocPos=nil); override;
+    constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); override;
   end;
 
   // Low,High,Length,Pop,First,Last are done "inline" in DynArray.Eval and wont be used like the others
@@ -73,17 +73,27 @@ type
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Remove = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
   TLapeType_ArrayHelper_Copy = class(TLapeType_Helper)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
+  TLapeType_ArrayHelper_CopyRange = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_Remove = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
   TLapeType_ArrayHelper_Delete = class(TLapeType_Helper)
+  protected
+    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
+  TLapeType_ArrayHelper_DeleteRange = class(TLapeType_Helper)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -144,11 +154,6 @@ type
   end;
 
   TLapeType_ArrayHelper_Append = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
-  TLapeType_ArrayHelper_Extend = class(TLapeType_Helper)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -447,16 +452,6 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Remove.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := CreateFunction(
-    'Result := System.Remove(Param0, Self);',
-    VarType,
-    [TLapeType_DynArray(VarType).PType],
-    TLapeType_DynArray(VarType).PType
-  );
-end;
-
 function TLapeType_ArrayHelper_Copy.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
@@ -468,62 +463,61 @@ begin
   else
     ResType := VarType;
 
-  case Length(AParams) of
-    0:
-      begin
-        Result := CreateFunction(
-          'Result := System.Copy(Self);',
-          VarType,
-          [],
-          ResType
-        );
-      end;
+  Result := CreateFunction(
+    'Result := System.Copy(Self);',
+    VarType,
+    [],
+    ResType
+  );
+end;
 
-    1:
-      begin
-        Result := CreateFunction(
-          'Result := System.Copy(Self, Param0);',
-          VarType,
-          [FCompiler.getBaseType(ltSizeInt)],
-          ResType
-        );
-      end;
+function TLapeType_ArrayHelper_CopyRange.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  ResType: TLapeType;
+begin
+  if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
+    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+  else
+    ResType := VarType;
 
-    2:
-      begin
-        Result := CreateFunction(
-          'Result := System.Copy(Self, Param0, Param1);',
-          VarType,
-          [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)],
-          ResType
-        );
-      end;
-  end;
+  Result := CreateFunction(
+    'Result := System.Copy(Self, Param0, (Param1 - Param0) + 1);',
+    VarType,
+    [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)],
+    ResType
+  );
+end;
+
+function TLapeType_ArrayHelper_Remove.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Result := System.Remove(Param0, Self);',
+    VarType,
+    [TLapeType_DynArray(VarType).PType],
+    TLapeType_DynArray(VarType).PType
+  );
 end;
 
 function TLapeType_ArrayHelper_Delete.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
-  Result := nil;
+  Result := CreateFunction(
+    'Result := Self[Param0];'          + LineEnding +
+    'System.Delete(Self, Param0, 1);',
+    VarType,
+    [FCompiler.getBaseType(ltSizeInt)],
+    TLapeType_DynArray(VarType).PType
+  );
+end;
 
-  case Length(AParams) of
-    1:
-      begin
-        Result := CreateFunction(
-          'System.Delete(Self, Param0);',
-          VarType,
-          [FCompiler.getBaseType(ltSizeInt)]
-        );
-      end;
-
-    2:
-      begin
-        Result := CreateFunction(
-          'System.Delete(Self, Param0, Param1);',
-          VarType,
-          [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)]
-        );
-     end;
-  end;
+function TLapeType_ArrayHelper_DeleteRange.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Result := Self[Param0];'                            + LineEnding +
+    'System.Delete(Self, Param0, (Param1 - Param0) + 1);',
+    VarType,
+    [FCompiler.getBaseType(ltSizeInt), FCompiler.getBaseType(ltSizeInt)],
+    TLapeType_DynArray(VarType).PType
+  );
 end;
 
 function TLapeType_ArrayHelper_Insert.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
@@ -718,19 +712,14 @@ end;
 
 function TLapeType_ArrayHelper_Append.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
-  Result := CreateFunction(
-    'Self := Self + Param0;',
-    VarType,
-    [TLapeType_DynArray(VarType).PType]
-  );
-end;
+  Result := nil;
+  if (Length(AParams) <> 1) then
+    Exit;
 
-function TLapeType_ArrayHelper_Extend.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
   Result := CreateFunction(
     'Self := Self + Param0;',
     VarType,
-    [VarType]
+    [AParams[0]]
   );
 end;
 

@@ -1,9 +1,5 @@
 {$assertions on}
 
-type
-  TPoint = record X, Y: Integer; end;
-  TPointArray = array of TPoint;
-
 procedure TestString;
 var
   Str: String = 'Hello';
@@ -53,9 +49,30 @@ end;
 
 procedure TestCopy;
 var
-  Arr: TIntegerArray = [1,2,3,4,5,6];
+  Arr: TIntegerArray = [1..8];
 begin
-  Assert(ToString(Arr.Copy(2,2) + Arr.Copy() + Arr.Copy(4)) = '[3, 4, 1, 2, 3, 4, 5, 6, 5, 6]');
+  Assert(ToString(Arr.Copy()) = '[1, 2, 3, 4, 5, 6, 7, 8]');
+  Assert(ToString(Arr.CopyRange(2,4)) = '[3, 4, 5]');
+end;
+
+procedure TestDelete;
+var
+  Arr: TIntegerArray = [1..8];
+begin
+  Assert(Arr.Delete(0) = 1);
+  Assert(Arr.Delete(6) = 8);
+  Arr.DeleteRange(1,4);
+  Assert(ToString(Arr) = '[2, 7]');
+end;
+
+procedure TestRemove;
+var
+  Arr: TIntegerArray = [1..4];
+begin
+  Assert(Arr.Remove(1) = 1);
+  Assert(Arr.Remove(4) = 4);
+  Assert(Arr.Remove(123) = 0);   
+  Assert(ToString(Arr) = '[2, 3]');
 end;
 
 procedure TestPop;
@@ -67,25 +84,23 @@ begin
   Assert(Arr.Length = 4);
 end;
 
-procedure TestDelayed;
+procedure TestOverrideOverload;
 var
-  Points: TPointArray;
-  P: TPoint;
+  a: TIntegerArray;
 begin
-  Points := [];
-  P := [5, 15];
-  Assert(Points.Sorted(P)[0] = P); // Sorted(From: TPoint) not declared yet
+  Assert(a.Random() = 123);
+  Assert(a.IndexOf(0,0,0) = 999);
 end;
 
-function TPointArray.Sorted(From: TPoint): TPointArray; overload;
+function TIntegerArray.IndexOf(a,b,c: Integer): Integer; overload;
 begin
-  Result := [From];
+  Result := 999;
 end;
 
 function TIntegerArray.Random: Int32; override;
 begin
   Result := 123;
-end;
+end; 
 
 procedure TestAlgo;
 var
@@ -105,18 +120,20 @@ begin
   Arr.SetLength(10);
 
   Assert(Arr.Length = 10);
-  Assert(Arr.IndexOf(2) = 1);
   Assert(Arr.First = 3);
+  Assert(Arr.Last = 0);
   Assert(Arr.Reversed().Last = 3);
   Assert(Arr.IndexOf(3) = 0);
+  Assert(Arr.IndexOf(2) = 1);
   Assert(Arr.IndexOf(1) = 2);
-  Assert(Arr.Random() = 123);
 
   TestString();
   TestSort();
   TestSorted();
   TestCopy();
+  TestDelete();
+  TestRemove();
   TestPop();
-  TestDelayed();
   TestAlgo();
+  TestOverrideOverload();
 end;
