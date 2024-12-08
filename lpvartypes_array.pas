@@ -937,7 +937,7 @@ end;
 
 procedure TLapeType_DynArray.addArrayHelpers;
 begin
-  if (not (lcoArrayHelpers in FCompiler.Options)) then
+  if (not (lcoArrayHelpers in FCompiler.Options)) or InheritsFrom(TLapeType_String) then
     Exit;
 
   addArrayHelper(TLapeType_ArrayHelper_Low, 'Low');
@@ -961,6 +961,15 @@ begin
   addArrayHelper(TLapeType_ArrayHelper_Intersection, 'Intersection');
   addArrayHelper(TLapeType_ArrayHelper_Equals, 'Equals');
 
+  addArrayHelper(TLapeType_ArrayHelper_Median, 'Median');
+  addArrayHelper(TLapeType_ArrayHelper_Mode, 'Mode');
+  addArrayHelper(TLapeType_ArrayHelper_Min, 'Min');
+  addArrayHelper(TLapeType_ArrayHelper_Max, 'Max');
+  addArrayHelper(TLapeType_ArrayHelper_Sum, 'Sum');
+  addArrayHelper(TLapeType_ArrayHelper_Mean, 'Mean');
+  addArrayHelper(TLapeType_ArrayHelper_Variance, 'Variance');
+  addArrayHelper(TLapeType_ArrayHelper_Stdev, 'Stdev');
+
   if (not InheritsFrom(TLapeType_StaticArray)) then
   begin
     addArrayHelper(TLapeType_ArrayHelper_SetLength, 'SetLength');
@@ -971,20 +980,6 @@ begin
     addArrayHelper(TLapeType_ArrayHelper_Insert, 'Insert');
     addArrayHelper(TLapeType_ArrayHelper_Sort, 'Sort');
     addArrayHelper(TLapeType_ArrayHelper_Reverse, 'Reverse');
-    addArrayHelper(TLapeType_ArrayHelper_Clear, 'Clear');
-    addArrayHelper(TLapeType_ArrayHelper_Append, 'Append');
-  end;
-
-  if (not InheritsFrom(TLapeType_String)) then
-  begin
-    addArrayHelper(TLapeType_ArrayHelper_Median, 'Median');
-    addArrayHelper(TLapeType_ArrayHelper_Mode, 'Mode');
-    addArrayHelper(TLapeType_ArrayHelper_Min, 'Min');
-    addArrayHelper(TLapeType_ArrayHelper_Max, 'Max');
-    addArrayHelper(TLapeType_ArrayHelper_Sum, 'Sum');
-    addArrayHelper(TLapeType_ArrayHelper_Mean, 'Mean');
-    addArrayHelper(TLapeType_ArrayHelper_Variance, 'Variance');
-    addArrayHelper(TLapeType_ArrayHelper_Stdev, 'Stdev');
   end;
 end;
 

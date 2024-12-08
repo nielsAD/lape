@@ -354,7 +354,7 @@ type
 
   TLapeType_StrictPointer = class(TLapeType_Pointer)
   protected
-    function getAsString: String; override;
+    function getAsString: lpString; override;
   public
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
   end;
@@ -2523,7 +2523,7 @@ begin
   end;
 end;
 
-function TLapeType_StrictPointer.getAsString: String;
+function TLapeType_StrictPointer.getAsString: lpString;
 begin
   Result := 'strict Pointer(' + Name + ')';
 end;

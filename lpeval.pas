@@ -459,7 +459,7 @@ var
 implementation
 
 uses
-  Variants, Math, DateUtils,
+  Variants, Math, DateUtils, StrUtils,
   {$IFDEF DELPHI}
   System.WideStrings, System.WideStrUtils,
   {$ENDIF}

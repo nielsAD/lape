@@ -1,16 +1,5 @@
 {$assertions on}
 
-procedure TestString;
-var
-  Str: String = 'Hello';
-begin
-  Assert(Str.First = 'H');
-  Assert(Str.Last = 'o');
-  Assert(Str = 'Hello');
-  while (Str.Length > 0) do
-    Assert(Str.Last = Str.Pop);
-end;
-
 procedure TestSort;
 var
   Arr: TIntegerArray = [1,2,3,4,5];
@@ -127,7 +116,6 @@ begin
   Assert(Arr.IndexOf(2) = 1);
   Assert(Arr.IndexOf(1) = 2);
 
-  TestString();
   TestSort();
   TestSorted();
   TestCopy();

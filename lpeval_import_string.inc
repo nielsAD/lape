@@ -41,9 +41,9 @@ addGlobalFunc('function WideSameText(s1,s2: WideString): Boolean;', @_LapeWideSa
 addGlobalFunc('function WideSameStr(s1,s2: WideString): Boolean;', @_LapeWideSameStr);
 addGlobalFunc('function WideFormat(Fmt: WideString; Args: array of Variant): WideString;', @_LapeWideFormat);
 
-addGlobalFunc('function Pos(Substr, Source: AnsiString): SizeInt; overload;', @_LapePosA);
-addGlobalFunc('function Pos(Substr, Source: WideString): SizeInt; overload;', @_LapePosW);
-addGlobalFunc('function Pos(Substr, Source: UnicodeString): SizeInt; overload;', @_LapePosU);
+addGlobalFunc('function Pos(Substr, Source: AnsiString; Offset: SizeInt = 1): SizeInt; overload;', @_LapePosA);
+addGlobalFunc('function Pos(Substr, Source: WideString; Offset: SizeInt = 1): SizeInt; overload;', @_LapePosW);
+addGlobalFunc('function Pos(Substr, Source: UnicodeString; Offset: SizeInt = 1): SizeInt; overload;', @_LapePosU);
 
 addGlobalFunc('function StringReplace(S, OldPattern, NewPattern: string; Flags: TReplaceFlags = [rfReplaceAll]): string;', @_LapeStringReplace);
 addGlobalFunc('function UnicodeStringReplace(S, OldPattern, NewPattern: UnicodeString; Flags: TReplaceFlags = [rfReplaceAll]): UnicodeString;', @_LapeUnicodeStringReplace);
@@ -100,3 +100,48 @@ addDelayedCode(LapeDelayedFlags +
   'function Chr(IntValue: UInt16): WideChar; overload; begin Result := WideChar(IntValue); end;'
 ,  '!addDelayedCode::Chr');
 
+addGlobalFunc('procedure String.SetLength(NewLen: Int32);', @_LapeString_SetLength);
+addGlobalFunc('property String.Length: Int32;', @_LapeString_Length);
+addGlobalFunc('property String.Low: Int32;', @_LapeString_Low);
+addGlobalFunc('property String.High: Int32;', @_LapeString_High);
+addGlobalFunc('property String.Pop: Char;', @_LapeString_Pop);
+addGlobalFunc('property String.First: Char;', @_LapeString_First);
+addGlobalFunc('property String.Last: Char;', @_LapeString_Last);
+
+addGlobalFunc('procedure String.Insert(Value: String; Index: Int32);', @_LapeString_Insert);
+addGlobalFunc('procedure String.Delete(Value: String);', @_LapeString_Delete);
+addGlobalFunc('procedure String.DeleteRange(StartIndex, EndIndex: Int32);', @_LapeString_DeleteRange);
+addGlobalFunc('function String.Copy(StartIndex, EndIndex: Int32): String', @_LapeString_Copy);
+addGlobalFunc('function String.CopyRange(StartIndex, EndIndex: Int32): String', @_LapeString_CopyRange);
+
+addGlobalFunc('function String.Replace(OldValue, NewValue: String; ReplaceFlags: TReplaceFlags = [rfReplaceAll]): String;', @_LapeString_Replace);
+addGlobalFunc('function String.ToUpper: String;', @_LapeString_ToUpper);
+addGlobalFunc('function String.ToLower: String;', @_LapeString_ToLower);
+addGlobalFunc('function String.IndexOf(Value: String; Offset: Int32 = 1): Int32;', @_LapeString_IndexOf);
+addGlobalFunc('function String.LastIndexOf(Value: String; Offset: Int32 = 1): Int32;', @_LapeString_LastIndexOf);
+addGlobalFunc('function String.Trim: String;', @_LapeString_Trim);
+addGlobalFunc('function String.TrimLeft: String;', @_LapeString_TrimLeft);
+addGlobalFunc('function String.TrimRight: String;', @_LapeString_TrimRight);
+addGlobalFunc('function String.Split(Seperator: String; ExcludeEmpty: Boolean = True): TStringArray;', @_LapeString_Split);
+addGlobalFunc('function String.Contains(Value: String; CaseSenstive: Boolean = True): Boolean;', @_LapeString_Contains);
+addGlobalFunc('function String.Equals(Other: String; CaseSenstive: Boolean = True): Boolean;', @_LapeString_Equals);
+addGlobalFunc('function String.Compare(Other: String): Int32;', @_LapeString_Compare);
+addGlobalFunc('function String.PadLeft(Count: Int32; PaddingChar: Char = #32): String', @_LapeString_PadLeft);
+addGlobalFunc('function String.PadRight(Count: Int32; PaddingChar: Char = #32): String', @_LapeString_PadRight);
+addGlobalFunc('function String.StartsWith(Value: string; CaseSenstive: Boolean = True): Boolean', @_LapeString_StartsWith);
+addGlobalFunc('function String.EndsWith(Value: string; CaseSenstive: Boolean = True): Boolean', @_LapeString_EndsWith);
+
+addGlobalFunc('function String.ToBoolean: Boolean; overload;', @_LapeString_ToBoolean);
+addGlobalFunc('function String.ToBoolean(DefValue: Boolean): Boolean; overload;', @_LapeString_ToBooleanDef);
+addGlobalFunc('function String.ToInt32: Int32; overload;', @_LapeString_ToInt32);
+addGlobalFunc('function String.ToInt32(DefValue: Int32): Int32; overload;', @_LapeString_ToInt32Def);
+addGlobalFunc('function String.ToInt64: Int64; overload;', @_LapeString_ToInt64);
+addGlobalFunc('function String.ToInt64(DefValue: Int64): Int64; overload;', @_LapeString_ToInt64Def);
+addGlobalFunc('function String.ToSingle: Single; overload;', @_LapeString_ToSingle);
+addGlobalFunc('function String.ToSingle(DefValue: Single): Single; overload;', @_LapeString_ToSingleDef);
+addGlobalFunc('function String.ToDouble: Double; overload;', @_LapeString_ToDouble);
+addGlobalFunc('function String.ToDouble(DefValue: Double): Double; overload;', @_LapeString_ToDoubleDef);
+{$IFNDEF Lape_NoExtended}
+addGlobalFunc('function String.ToExtended: Extended; overload;', @_LapeString_ToExtended);
+addGlobalFunc('function String.ToExtended(DefValue: Extended): Extended; overload;', @_LapeString_ToExtendedDef);
+{$ENDIF}

@@ -1,0 +1,52 @@
+{$assertions on}
+
+var s: String;
+begin
+  SetLength(s, 12);
+  Assert(s.Length = 12);
+  Assert(s.Low = 1);
+  Assert(s.High = 12);
+
+  s := '123';
+  Assert(s.First = '1');
+  Assert(s.Last = '3');
+
+  s := 'abc xyz 123';
+  Assert(s.IndexOf(' ') = 4);
+  Assert(s.IndexOf(' ', 5) = 8);
+  Assert(s.LastIndexOf(' ') = 8);
+  Assert(s.LastIndexOf(' ', 5) = 4);
+  Assert(s.IndexOf('xyz') = 5);
+  Assert(s.LastIndexOf('xyz') = 5);
+
+  Assert(s.Replace(' ', '').Replace('123', '') = 'abcxyz');
+
+  s := 'ZzzZzz';
+  Assert(s.ToLower() = 'zzzzzz');
+  Assert(s.ToUpper() = 'ZZZZZZ');
+
+  s := '  z  ';
+  Assert(s.Trim() = 'z');
+  Assert(s.TrimLeft() = 'z  ');
+  Assert(s.TrimRight() = '  z');
+
+  s := ' aa bb    1 cc  2 3  ';
+  Assert(ToStr(s.Split(' ')) = '[aa, bb, 1, cc, 2, 3]');
+  Assert(ToStr(s.Split(' ', False)) = '[, aa, bb, , , , 1, cc, , 2, 3, ]');
+
+  Assert('abc'.Equals('abc') = True);
+  Assert('abc'.Equals('ABC', False) = True);
+  Assert('abc'.Equals('xyz') = False);
+  Assert('abc'.Equals('xyz', False) = False);
+
+  Assert('FooBarBaz'.Contains('Bar') = True);
+  Assert('FooBarBaz'.Contains('bar', False) = True);
+  Assert('FooBarBaz'.Contains('bar') = False);
+  Assert('FooBarBaz'.Contains('xyz') = False);
+
+  s := 'abcxyz';
+  Assert(s.StartsWith('abc', True));
+  Assert(s.StartsWith('ABC', False));
+  Assert(s.EndsWith('xyz', True));
+  Assert(s.EndsWith('XYZ', False));
+end;

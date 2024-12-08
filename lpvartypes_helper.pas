@@ -32,7 +32,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); override;
   end;
 
-  // Low,High,Length,Pop,First,Last are done "inline" in DynArray.Eval and wont be used like the others
+  // Low,High,Length,Pop,First,Last are performed inline in DynArray.Eval to reduce overhead and wont be used like the others
   TLapeType_ArrayHelper_Low = class(TLapeType_HelperProperty)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
@@ -144,16 +144,6 @@ type
   end;
 
   TLapeType_ArrayHelper_Sorted = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
-  TLapeType_ArrayHelper_Clear = class(TLapeType_Helper)
-  protected
-    function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
-  end;
-
-  TLapeType_ArrayHelper_Append = class(TLapeType_Helper)
   protected
     function GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -699,28 +689,6 @@ begin
           );
       end;
   end;
-end;
-
-function TLapeType_ArrayHelper_Clear.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := CreateFunction(
-    'Self := [];',
-    VarType,
-    []
-  );
-end;
-
-function TLapeType_ArrayHelper_Append.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := nil;
-  if (Length(AParams) <> 1) then
-    Exit;
-
-  Result := CreateFunction(
-    'Self := Self + Param0;',
-    VarType,
-    [AParams[0]]
-  );
 end;
 
 function TLapeType_ArrayHelper_Median.GetFunction(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
