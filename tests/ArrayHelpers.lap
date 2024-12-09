@@ -20,7 +20,7 @@ begin
   Arr.Sort();
   Assert(ToString(Arr) = '[-10000, 1, 2, 3, 4, 5, 10000]');
 end;
-
+ 
 procedure TestSorted;
 var
   Arr: TIntegerArray = [1,2,3,4,5];
@@ -115,6 +115,12 @@ begin
   Assert(Arr.IndexOf(3) = 0);
   Assert(Arr.IndexOf(2) = 1);
   Assert(Arr.IndexOf(1) = 2);
+
+  Assert(not Arr.Empty);
+  Arr := [];
+  Assert(Arr.Empty);
+  SetLength(Arr, 0);
+  Assert(Arr.Empty);
 
   TestSort();
   TestSorted();

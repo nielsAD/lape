@@ -314,7 +314,7 @@ uses
   Variants,
   lpvartypes_ord, lpvartypes_record, lpvartypes_array,
   lpinternalmethods, lpinternalmethods_algorithm,
-  lpmessages, lpeval, lpinterpreter_types;
+  lpmessages, lpeval, lpinterpreter_types, lpvartypes_helper;
 
 function TLapeCompiler.getPDocPos: PDocPos;
 begin
@@ -4626,6 +4626,9 @@ begin
 
   setTokenizer(ATokenizer);
   Reset();
+
+  LapeCreateArrayHelpers(Self);
+  LapeCreateStaticArrayHelpers(Self);
 
   InitBaseDefinitions();
 end;
