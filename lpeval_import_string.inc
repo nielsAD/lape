@@ -124,6 +124,7 @@ addGlobalFunc('function String.TrimLeft: String;', @_LapeString_TrimLeft);
 addGlobalFunc('function String.TrimRight: String;', @_LapeString_TrimRight);
 addGlobalFunc('function String.Split(Seperator: String; ExcludeEmpty: Boolean = True): TStringArray;', @_LapeString_Split);
 addGlobalFunc('function String.Contains(Value: String; CaseSenstive: Boolean = True): Boolean;', @_LapeString_Contains);
+addGlobalFunc('function String.Count(Value: String; CaseSenstive: Boolean = True): Int32;', @_LapeString_Count);
 addGlobalFunc('function String.Equals(Other: String; CaseSenstive: Boolean = True): Boolean;', @_LapeString_Equals);
 addGlobalFunc('function String.Compare(Other: String): Int32;', @_LapeString_Compare);
 addGlobalFunc('function String.PadLeft(Count: Int32; PaddingChar: Char = #32): String', @_LapeString_PadLeft);
@@ -145,3 +146,19 @@ addGlobalFunc('function String.ToDouble(DefValue: Double): Double; overload;', @
 addGlobalFunc('function String.ToExtended: Extended; overload;', @_LapeString_ToExtended);
 addGlobalFunc('function String.ToExtended(DefValue: Extended): Extended; overload;', @_LapeString_ToExtendedDef);
 {$ENDIF}
+
+addGlobalFunc('property String.IsUpper: Boolean;', @_LapeString_IsUpper);
+addGlobalFunc('property String.IsLower: Boolean;', @_LapeString_IsLower);
+addGlobalFunc('property String.IsAlpha: Boolean;', @_LapeString_IsAlpha);
+addGlobalFunc('property String.IsAlphaNum: Boolean;', @_LapeString_IsAlphaNum);
+addGlobalFunc('property String.IsNumeric: Boolean;', @_LapeString_IsNumeric);
+addGlobalFunc('property String.IsFloat: Boolean;', @_LapeString_IsFloat);
+addGlobalFunc('property String.IsInteger: Boolean;', @_LapeString_IsInteger);
+
+addGlobalFunc('property Char.ToUpper: Char;', @_LapeChar_ToUpper);
+addGlobalFunc('property Char.ToLower: Char;', @_LapeChar_ToLower);
+addGlobalFunc('property Char.IsUpper: Boolean;', @_LapeChar_IsUpper);
+addGlobalFunc('property Char.IsLower: Boolean;', @_LapeChar_IsLower);
+addGlobalFunc('property Char.IsAlpha: Boolean;', @_LapeChar_IsAlpha);
+addGlobalFunc('property Char.IsAlphaNum: Boolean;', @_LapeChar_IsAlphaNum);
+addGlobalFunc('property Char.IsNumeric: Boolean;', @_LapeChar_IsNumeric);

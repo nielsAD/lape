@@ -507,6 +507,33 @@ begin
     PBoolean(Result)^ := Pos(LowerCase(PlpString(Params^[1])^), LowerCase(PlpString(Params^[0])^)) > 0;
 end;
 
+procedure _LapeString_Count(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function _Count(Str, SubStr: lpString; CaseSens: Boolean): Integer;
+  var
+    Offset, Index: SizeInt;
+  begin
+    Result := 0;
+
+    if not CaseSens then
+    begin
+      Str := LowerCase(Str);
+      SubStr := LowerCase(SubStr);
+    end;
+
+    Offset := 1;
+    repeat
+      Index := Pos(SubStr, Str, Offset);
+      Offset := Index + Length(SubStr);
+      if (Index > 0) then
+        Inc(Result);
+    until (Index < 1);
+  end;
+
+begin
+  PInteger(Result)^ := _Count(PlpString(Params^[0])^, PlpString(Params^[1])^, PBoolean(Params^[2])^);
+end;
+
 procedure _LapeString_Equals(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if PBoolean(Params^[2])^ then
@@ -616,4 +643,133 @@ end;
 procedure _LapeString_ToExtendedDef(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   PExtended(Result)^ := StrToFloatDotDef(PlpString(Params^[0])^, PExtended(Params^[1])^);
+end;
+
+procedure _LapeString_IsUpper(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function IsUpper(const S: lpString): Boolean;
+  var
+    I: Integer;
+  begin
+    for I := 1 to Length(S) do
+      if (not (S[I] in ['A'..'Z'])) then
+        Exit(False);
+    Result := S <> '';
+  end;
+
+begin
+  PBoolean(Result)^ := IsUpper(PlpString(Params^[0])^);
+end;
+
+procedure _LapeString_IsLower(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function IsLower(const S: lpString): Boolean;
+  var
+    I: Integer;
+  begin
+    for I := 1 to Length(S) do
+      if (not (S[I] in ['a'..'z'])) then
+        Exit(False);
+    Result := S <> '';
+  end;
+
+begin
+  PBoolean(Result)^ := IsLower(PlpString(Params^[0])^);
+end;
+
+procedure _LapeString_IsAlpha(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function IsAlpha(const S: lpString): Boolean;
+  var
+    I: Integer;
+  begin
+    for I := 1 to Length(S) do
+      if (not (S[I] in ['a'..'z', 'A'..'Z'])) then
+        Exit(False);
+    Result := S <> '';
+  end;
+
+begin
+  PBoolean(Result)^ := IsAlpha(PlpString(Params^[0])^);
+end;
+
+procedure _LapeString_IsAlphaNum(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function IsAlphaNum(const S: lpString): Boolean;
+  var
+    I: Integer;
+  begin
+    for I := 1 to Length(S) do
+      if (not (S[I] in ['0'..'9', 'a'..'z', 'A'..'Z'])) then
+        Exit(False);
+    Result := S <> '';
+  end;
+
+begin
+  PBoolean(Result)^ := IsAlphaNum(PlpString(Params^[0])^);
+end;
+
+procedure _LapeString_IsNumeric(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function IsNumeric(const S: lpString): Boolean;
+  var
+    I: Integer;
+  begin
+    for I := 1 to Length(S) do
+      if (not (S[I] in ['0'..'9'])) then
+        Exit(False);
+    Result := S <> '';
+  end;
+
+begin
+  PBoolean(Result)^ := IsNumeric(PlpString(Params^[0])^);
+end;
+
+procedure _LapeString_IsFloat(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+var
+  _: Single;
+begin
+  PBoolean(Result)^ := TryStrToFloat(PlpString(Params^[0])^, _);
+end;
+
+procedure _LapeString_IsInteger(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+var
+  _: Int64;
+begin
+  PBoolean(Result)^ := TryStrToInt64(PlpString(Params^[0])^, _) or TryStrToUInt64(PlpString(Params^[0])^, UInt64(_));
+end;
+
+procedure _LapeChar_ToUpper(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PlpChar(Result)^ := UpCase(PlpChar(Params^[0])^);
+end;
+
+procedure _LapeChar_ToLower(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PlpChar(Result)^ := LowerCase(PlpChar(Params^[0])^);
+end;
+
+procedure _LapeChar_IsUpper(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['A'..'Z'];
+end;
+
+procedure _LapeChar_IsLower(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['a'..'z'];
+end;
+
+procedure _LapeChar_IsAlpha(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['a'..'z', 'A'..'Z'];
+end;
+
+procedure _LapeChar_IsAlphaNum(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['0'..'9', 'a'..'z', 'A'..'Z'];
+end;
+
+procedure _LapeChar_IsNumeric(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['0'..'9'];
 end;

@@ -72,6 +72,11 @@ type
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
+  TLapeType_ArrayHelper_Clear = class(TLapeType_Helper)
+  protected
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
+  end;
+
   TLapeType_ArrayHelper_SetLength = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
@@ -446,6 +451,15 @@ function TLapeType_ArrayHelper_Empty.getFunc(VarType: TLapeType; AParams: TLapeT
 begin
   Result := nil;
   LapeException(lpeCannotOverload);
+end;
+
+function TLapeType_ArrayHelper_Clear.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := CreateFunction(
+    'Self := [];',
+    VarType,
+    []
+  );
 end;
 
 function TLapeType_ArrayHelper_Contains.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
@@ -889,7 +903,7 @@ var
   procedure Add(Helper: TLapeType_HelperClass; Name: lpString);
   begin
     Typ.ManagedDeclarations.addDeclaration(
-      TLapeType_Helper(Helper.Create(Compiler, Name)).NewGlobalVar(Name)
+      TLapeType_Helper(Compiler.addManagedType(Helper.Create(Compiler, Name))).NewGlobalVar(Name)
     );
   end;
 
@@ -918,6 +932,7 @@ begin
   Add(TLapeType_ArrayHelper_Intersection, 'Intersection');
   Add(TLapeType_ArrayHelper_Equals, 'Equals');
   Add(TLapeType_ArrayHelper_Empty, 'Empty');
+  Add(TLapeType_ArrayHelper_Clear, 'Clear');
 
   Add(TLapeType_ArrayHelper_Median, 'Median');
   Add(TLapeType_ArrayHelper_Mode, 'Mode');
@@ -947,7 +962,7 @@ var
   procedure Add(Helper: TLapeType_HelperClass; Name: lpString);
   begin
     Typ.ManagedDeclarations.addDeclaration(
-      TLapeType_Helper(Helper.Create(Compiler, Name)).NewGlobalVar(Name)
+      TLapeType_Helper(Compiler.addManagedType(Helper.Create(Compiler, Name))).NewGlobalVar(Name)
     );
   end;
 
