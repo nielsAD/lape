@@ -407,8 +407,27 @@ begin
 end;
 
 procedure _LapeString_LastIndexOf(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function _LastIndexOf(const Self, AValue: lpString; Offset: SizeInt): SizeInt;
+  var
+    i, StartIndex: SizeInt;
+  begin
+    if (Length(Self) > 0) and (Length(AValue) > 0) then
+    begin
+      StartIndex := (Length(Self) - Length(AValue) + 1) - (Offset-1);
+      if (StartIndex > Length(Self)) then
+        StartIndex := Length(Self);
+
+      for i := StartIndex downto 1 do
+        if CompareMem(@Self[i], @AValue[1], Length(AValue) * SizeOf(lpChar)) then
+          Exit(i);
+    end;
+
+    Result := -1;
+  end;
+
 begin
-  PInt32(Result)^ := RPosEx(PlpString(Params^[1])^, PlpString(Params^[0])^, Length(PlpString(Params^[0])^) - PInt32(Params^[2])^);
+  PInt32(Result)^ := _LastIndexOf(PlpString(Params^[0])^, PlpString(Params^[1])^, PInt32(Params^[2])^);
 end;
 
 procedure _LapeString_Trim(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -457,7 +476,7 @@ type
         while (I <= MaxLen) do
         begin
           Inc(I);
-          if (PlpChar(Seperator)^ = Ptr^) and (CompareByte(PlpChar(Seperator)^, Ptr^, SepLen * SizeOf(lpChar)) = 0) then
+          if (PlpChar(Seperator)^ = Ptr^) and CompareMem(Ptr, PlpChar(Seperator), SepLen * SizeOf(lpChar)) then
             Exit(I);
           Inc(Ptr);
         end;
@@ -537,14 +556,14 @@ end;
 procedure _LapeString_Equals(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   if PBoolean(Params^[2])^ then
-    PBoolean(Result)^ := {$IFDEF LAPE_UNICODE}UnicodeSameStr{$ELSE}SameStr{$ENDIF}(PlpString(Params^[1])^, PlpString(Params^[0])^)
+    PBoolean(Result)^ := {$IF DEFINED(LAPE_UNICODE) and DECLARED(UnicodeSameStr)}UnicodeSameStr{$ELSE}SameStr{$ENDIF}(PlpString(Params^[1])^, PlpString(Params^[0])^)
   else
-    PBoolean(Result)^ := {$IFDEF LAPE_UNICODE}UnicodeSameText{$ELSE}SameText{$ENDIF}(PlpString(Params^[1])^, PlpString(Params^[0])^);
+    PBoolean(Result)^ := {$IF DEFINED(LAPE_UNICODE) and DECLARED(UnicodeSameText)}UnicodeSameText{$ELSE}SameText{$ENDIF}(PlpString(Params^[1])^, PlpString(Params^[0])^);
 end;
 
 procedure _LapeString_Compare(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PInt32(Result)^ := {$IFDEF LAPE_UNICODE}UnicodeCompareText{$ELSE}CompareText{$ENDIF}(PlpString(Params^[0])^, PlpString(Params^[1])^);
+  PInt32(Result)^ := {$IF DEFINED(LAPE_UNICODE) and DECLARED(UnicodeCompareText)}UnicodeCompareText{$ELSE}CompareText{$ENDIF}(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
 procedure _LapeString_PadLeft(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -652,7 +671,7 @@ procedure _LapeString_IsUpper(const Params: PParamArray; const Result: Pointer);
     I: Integer;
   begin
     for I := 1 to Length(S) do
-      if (not (S[I] in ['A'..'Z'])) then
+      if not CharInSet(S[I], ['A'..'Z']) then
         Exit(False);
     Result := S <> '';
   end;
@@ -668,7 +687,7 @@ procedure _LapeString_IsLower(const Params: PParamArray; const Result: Pointer);
     I: Integer;
   begin
     for I := 1 to Length(S) do
-      if (not (S[I] in ['a'..'z'])) then
+      if (not CharInSet(S[I], ['a'..'z'])) then
         Exit(False);
     Result := S <> '';
   end;
@@ -684,7 +703,7 @@ procedure _LapeString_IsAlpha(const Params: PParamArray; const Result: Pointer);
     I: Integer;
   begin
     for I := 1 to Length(S) do
-      if (not (S[I] in ['a'..'z', 'A'..'Z'])) then
+      if (not CharInSet(S[I], ['a'..'z', 'A'..'Z'])) then
         Exit(False);
     Result := S <> '';
   end;
@@ -700,7 +719,7 @@ procedure _LapeString_IsAlphaNum(const Params: PParamArray; const Result: Pointe
     I: Integer;
   begin
     for I := 1 to Length(S) do
-      if (not (S[I] in ['0'..'9', 'a'..'z', 'A'..'Z'])) then
+      if (not CharInSet(S[I], ['0'..'9', 'a'..'z', 'A'..'Z'])) then
         Exit(False);
     Result := S <> '';
   end;
@@ -716,7 +735,7 @@ procedure _LapeString_IsNumeric(const Params: PParamArray; const Result: Pointer
     I: Integer;
   begin
     for I := 1 to Length(S) do
-      if (not (S[I] in ['0'..'9'])) then
+      if (not CharInSet(S[I], ['0'..'9'])) then
         Exit(False);
     Result := S <> '';
   end;
@@ -740,36 +759,54 @@ begin
 end;
 
 procedure _LapeChar_ToUpper(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function _ToUpper(const C: lpChar): lpChar;
+  begin
+    if (C in ['a'..'z']) then
+      Result := lpChar(Ord(C) - 32)
+    else
+      Result := C;
+  end;
+
 begin
-  PlpChar(Result)^ := UpCase(PlpChar(Params^[0])^);
+  PlpChar(Result)^ := _ToUpper(PlpChar(Params^[0])^);
 end;
 
 procedure _LapeChar_ToLower(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+
+  function _ToLower(const C: lpChar): lpChar;
+  begin
+    if CharInSet(C, ['A'..'Z']) then
+      Result := lpChar(Ord(C) + 32)
+    else
+      Result := C;
+  end;
+
 begin
-  PlpChar(Result)^ := LowerCase(PlpChar(Params^[0])^);
+  PlpChar(Result)^ := _ToLower(PlpChar(Params^[0])^);
 end;
 
 procedure _LapeChar_IsUpper(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['A'..'Z'];
+  PBoolean(Result)^ := CharInSet(PlpChar(Params^[0])^, ['A'..'Z']);
 end;
 
 procedure _LapeChar_IsLower(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['a'..'z'];
+  PBoolean(Result)^ := CharInSet(PlpChar(Params^[0])^, ['a'..'z']);
 end;
 
 procedure _LapeChar_IsAlpha(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['a'..'z', 'A'..'Z'];
+  PBoolean(Result)^ := CharInSet(PlpChar(Params^[0])^, ['a'..'z', 'A'..'Z']);
 end;
 
 procedure _LapeChar_IsAlphaNum(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['0'..'9', 'a'..'z', 'A'..'Z'];
+  PBoolean(Result)^ := CharInSet(PlpChar(Params^[0])^, ['0'..'9', 'a'..'z', 'A'..'Z']);
 end;
 
 procedure _LapeChar_IsNumeric(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PBoolean(Result)^ := PlpChar(Params^[0])^ in ['0'..'9'];
+  PBoolean(Result)^ := CharInSet(PlpChar(Params^[0])^, ['0'..'9']);
 end;
