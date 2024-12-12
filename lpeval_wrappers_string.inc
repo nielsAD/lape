@@ -366,7 +366,7 @@ begin
   Insert(PlpString(Params^[1])^, PlpString(Params^[0])^, PInteger(Params^[2])^);
 end;
 
-procedure _LapeString_Delete(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+procedure _LapeString_DeleteIndex(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   Delete(PlpString(Params^[0])^, PInteger(Params^[1])^, 1);
 end;
@@ -414,7 +414,7 @@ procedure _LapeString_LastIndexOf(const Params: PParamArray; const Result: Point
   begin
     if (Length(Self) > 0) and (Length(AValue) > 0) then
     begin
-      StartIndex := (Length(Self) - Length(AValue) + 1) - (Offset-1);
+      StartIndex := (Length(Self) - Length(AValue) + 1) - (Offset - 1);
       if (StartIndex > Length(Self)) then
         StartIndex := Length(Self);
 

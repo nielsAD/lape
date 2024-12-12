@@ -109,9 +109,9 @@ addGlobalFunc('property String.First: Char;', @_LapeString_First);
 addGlobalFunc('property String.Last: Char;', @_LapeString_Last);
 
 addGlobalFunc('procedure String.Insert(Value: String; Index: Int32);', @_LapeString_Insert);
-addGlobalFunc('procedure String.Delete(Value: String);', @_LapeString_Delete);
+addGlobalFunc('procedure String.DeleteIndex(Index: Int32);', @_LapeString_DeleteIndex);
 addGlobalFunc('procedure String.DeleteRange(StartIndex, EndIndex: Int32);', @_LapeString_DeleteRange);
-addGlobalFunc('function String.Copy(StartIndex, EndIndex: Int32): String', @_LapeString_Copy);
+addGlobalFunc('function String.Copy: String', @_LapeString_Copy);
 addGlobalFunc('function String.CopyRange(StartIndex, EndIndex: Int32): String', @_LapeString_CopyRange);
 
 addGlobalFunc('function String.Replace(OldValue, NewValue: String; ReplaceFlags: TReplaceFlags = [rfReplaceAll]): String;', @_LapeString_Replace);

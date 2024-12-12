@@ -49,4 +49,15 @@ begin
   Assert(s.StartsWith('ABC', False));
   Assert(s.EndsWith('xyz', True));
   Assert(s.EndsWith('XYZ', False));
+
+  s := '123456';
+  Assert(s.Copy() = s);
+  Assert(s.Copy() = '123456');
+  Assert(s.CopyRange(2,4) = '234');
+  s.DeleteIndex(3);
+  Assert(s = '12456');
+  s.DeleteRange(2,4);
+  Assert(s = '16');
+  s.Insert('2345', 2);
+  Assert(s = '123456');
 end;

@@ -3898,9 +3898,17 @@ var
 
       spType:
         begin
-          Expect(tk_cmp_LessThan, False, True);
-          Method.addParam(getExpression(Tokenizer.TokString));
-          Expect(tk_cmp_GreaterThan, True, True);
+          Expect(tk_cmp_LessThan, False, False);
+          Method.AddParam(EnsureExpression(ParseExpression([tk_cmp_GreaterThan, tk_sym_Comma], True, True)));
+          while True do
+            case Tokenizer.Tok of
+              tk_cmp_GreaterThan: Break;
+              tk_sym_Comma:
+                Method.AddParam(EnsureExpression(ParseExpression([tk_cmp_GreaterThan, tk_sym_Comma], True, True)));
+              else
+                LapeException(lpeClosingParenthesisExpected, Tokenizer.DocPos);
+            end;
+          Expect(tk_cmp_GreaterThan, False, True);
         end;
     end;
   end;
