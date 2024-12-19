@@ -1270,47 +1270,92 @@ begin
 end;
 
 function TLapeCompiler.GetMethod_ArrayEquals(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+
+  function IsMultiDimensional: Boolean;
+  begin
+    Result := TLapeType_DynArray(AParams[0]).PType is TLapeType_DynArray;
+  end;
+
+  function CanCompareMem: Boolean;
+  var
+    ElementType: TLapeType;
+  begin
+    Result := False;
+    if (AParams[0].ClassType = TLapeType_DynArray) then
+    begin
+      ElementType := TLapeType_DynArray(AParams[0]).PType;
+      if (ElementType <> nil) and (not ElementType.NeedInitialization) then
+        if (ElementType.BaseType in LapeStackTypes + [ltPointer]) then
+          Result := True
+        else if (ElementType is TLapeType_Record) and (TLapeType_Record(ElementType).Padding = 0) then
+          Result := True;
+    end;
+  end;
+
 var
   Header: TLapeType_Method;
-  Method: TLapeTree_Method;
+  Body: lpString;
 begin
   Result := nil;
-  if (Sender = nil) or (Length(AParams) <> 2) then
+  if (Sender = nil) or (Length(AParams) <> 2) or (not (AParams[0] is TLapeType_DynArray)) then
     Exit;
 
   Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptNormal, lptNormal], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], getBaseType(ltBoolean))) as TLapeType_Method;
-  Method := addGlobalFunc(Header, '!ArrayEquals',
-    '{$RANGECHECKS OFF}                                 ' + LineEnding +
-    'type                                               ' + LineEnding +
-    '  TType = PType(Param0);                           ' + LineEnding +
-    '  TOtherType = PType(Param1);                      ' + LineEnding +
-    'var                                                ' + LineEnding +
-    '  Ptr, Upper: ^TType;                              ' + LineEnding +
-    '  OtherPtr: ^TOtherType;                           ' + LineEnding +
-    'begin                                              ' + LineEnding +
-    '  Result := False;                                 ' + LineEnding +
-    '                                                   ' + LineEnding +
-    '  if (Length(Param0) = Length(Param1)) then        ' + LineEnding +
-    '  begin                                            ' + LineEnding +
-    '    if (_ArrayRange(Param0, Ptr, Upper) > 0) then  ' + LineEnding +
-    '    begin                                          ' + LineEnding +
-    '      OtherPtr := @Param1[Low(Param1)];            ' + LineEnding +
-    '      while (PtrUInt(Ptr) <= PtrUInt(Upper)) do    ' + LineEnding +
-    '      begin                                        ' + LineEnding +
-    '        if (Ptr^ <> OtherPtr^) then                ' + LineEnding +
-    '          Exit;                                    ' + LineEnding +
-    '        Inc(Ptr);                                  ' + LineEnding +
-    '        Inc(OtherPtr);                             ' + LineEnding +
-    '      end;                                         ' + LineEnding +
-    '    end;                                           ' + LineEnding +
-    '                                                   ' + LineEnding +
-    '    Result := True;                                ' + LineEnding +
-    '  end;                                             ' + LineEnding +
-    'end;'
-  );
 
-  Result := Method.Method;
-  Result.VarType.Name := '_ArrayIntersection';
+  if IsMultiDimensional() then
+    Body := '{$RANGECHECKS OFF}'                                   + LineEnding +
+            'var i: SizeInt;'                                      + LineEnding +
+            'begin'                                                + LineEnding +
+            '  Result := False;'                                   + LineEnding +
+            '  if (Length(Param0) = Length(Param1)) then'          + LineEnding +
+            '  begin'                                              + LineEnding +
+            '    for i := 0 to High(Param0) do'                    + LineEnding +
+            '      if not ArrayEquals(Param0[i], Param1[i]) then'  + LineEnding +
+            '        Exit;'                                        + LineEnding +
+            '    Result := True;'                                  + LineEnding +
+            '  end;'                                               + LineEnding +
+            'end;'
+  else if CanCompareMem() then
+    Body := '{$RANGECHECKS OFF}'                                                                          + LineEnding +
+            'var Len1 := Length(Param0);'                                                                 + LineEnding +
+            'var Len2 := Length(Param1);'                                                                 + LineEnding +
+            'begin'                                                                                       + LineEnding +
+            '  if (Len1 = Len2) then'                                                                     + LineEnding +
+            '    Result := (Len1 = 0) or CompareMem(Param0[0], Param1[0], Len1 * SizeOf(PType(Param0)))'  + LineEnding +
+            '  else'                                                                                      + LineEnding +
+            '    Result := False;'                                                                        + LineEnding +
+            'end;'
+  else
+    Body := '{$RANGECHECKS OFF}'                                 + LineEnding +
+            'type'                                               + LineEnding +
+            '  TType = PType(Param0);'                           + LineEnding +
+            '  TOtherType = PType(Param1);'                      + LineEnding +
+            'var'                                                + LineEnding +
+            '  Ptr, Upper: ^TType;'                              + LineEnding +
+            '  OtherPtr: ^TOtherType;'                           + LineEnding +
+            'begin'                                              + LineEnding +
+            '  Result := False;'                                 + LineEnding +
+            ''                                                   + LineEnding +
+            '  if (Length(Param0) = Length(Param1)) then'        + LineEnding +
+            '  begin'                                            + LineEnding +
+            '    if (_ArrayRange(Param0, Ptr, Upper) > 0) then'  + LineEnding +
+            '    begin'                                          + LineEnding +
+            '      OtherPtr := @Param1[Low(Param1)];'            + LineEnding +
+            '      while (PtrUInt(Ptr) <= PtrUInt(Upper)) do'    + LineEnding +
+            '      begin'                                        + LineEnding +
+            '        if (Ptr^ <> OtherPtr^) then'                + LineEnding +
+            '          Exit;'                                    + LineEnding +
+            '        Inc(Ptr);'                                  + LineEnding +
+            '        Inc(OtherPtr);'                             + LineEnding +
+            '      end;'                                         + LineEnding +
+            '    end;'                                           + LineEnding +
+            ''                                                   + LineEnding +
+            '    Result := True;'                                + LineEnding +
+            '  end;'                                             + LineEnding +
+            'end;';
+
+  Result := addGlobalFunc(Header, '!ArrayEquals', Body).Method;
+  Result.VarType.Name := '_ArrayEquals';
 
   Sender.addMethod(Result);
 end;

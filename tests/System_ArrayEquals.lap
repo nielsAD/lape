@@ -1,19 +1,109 @@
 {$assertions on}
 
-var a,b: TIntegerArray;
+type
+  TPoint = record
+    x, y: Integer;
+  end;
+  TPointArray = array of TPoint;
+  T2DPointArray = array of TPointArray;
+
+  TPadded = record
+    a: Int32;
+    b: Int64;
+    c: Int8;
+    d: Int64;
+  end;
+  TPaddedArray = array of TPadded;
+
+  TInit = record
+    a: String;
+    b: Int32;
+    c: Variant;
+  end;
+  TInitArray = array of TInit;
+
+var tia1,tia2: TIntegerArray;
+var tpa1,tpa2: TPointArray;
+var padded1,padded2: TPaddedArray;
+var init1,init2: TInitArray;
+var atpa1,atpa2: T2DPointArray;
+var str1,str2: TStringArray;
 begin
-  a := [];
-  b := [];
-  Assert(a.Equals(b));
+  // tia, will use CompareMem
+  Assert(ArrayEquals(tia1,tia2));
+  SetLength(tia1,1);
+  Assert(not ArrayEquals(tia1,tia2));
+  SetLength(tia2,1);
+  Assert(ArrayEquals(tia1,tia2));
 
-  a := [1,2,3];
-  b := [1,2,3];
-  Assert(a.Equals(b));
+  tia1 := [1,2,3,0];
+  tia2 := [1,2,3];
+  Assert(not ArrayEquals(tia1,tia2));
+  tia2 += 0;
+  Assert(ArrayEquals(tia1,tia2));
 
-  a := [1,2,3];
-  b := [3,2,1];
-  Assert(not a.Equals(b));
+  // tpa, will use CompareMem
+  Assert(ArrayEquals(tpa1,tpa2));
+  SetLength(tpa1,1);
+  Assert(not ArrayEquals(tpa1,tpa2));
+  SetLength(tpa2,1);
+  Assert(ArrayEquals(tpa1,tpa2));
 
-  Assert(TStringArray(['hello', 'world']).Equals(['hello', 'world']));
-  Assert(not TStringArray(['world', 'hello']).Equals(['hello', 'world']));
-end.
+  tpa1 := [[1,1],[2,2],[-1,-1]];
+  tpa2 := [[1,1],[2,2]];
+  Assert(not ArrayEquals(tpa1,tpa2));
+  tpa2 += [-1,-1];
+  Assert(ArrayEquals(tpa1,tpa2));
+
+  // padded, no compare mem
+  Assert(ArrayEquals(padded1,padded2));
+  SetLength(padded1,1);
+  Assert(not ArrayEquals(padded1,padded2));
+  SetLength(padded2,1);
+  Assert(ArrayEquals(padded1,padded2));
+
+  padded1 := [[1,2,3,4],[4,3,2,1],[0,1,2,3]];
+  padded2 := [[1,2,3,4],[4,3,2,1]];
+  Assert(not ArrayEquals(padded1,padded2));
+  padded2 += [0,1,2,3];
+  Assert(ArrayEquals(padded1,padded2));
+
+  // initialized, no compare mem
+  Assert(ArrayEquals(init1,init2));
+  SetLength(init1,1);
+  Assert(not ArrayEquals(init1,init2));
+  SetLength(init2,1);
+  Assert(ArrayEquals(init1,init2));
+
+  init1 := [['abc', 123, True], ['xyz', 123, False], ['',0,False]];
+  init2 := [['abc', 123, True], ['xyz', 123, False]];
+  Assert(not ArrayEquals(init1,init2));
+  init2 += ['',0,False];
+  Assert(ArrayEquals(init1,init2));
+
+  // multi dims
+  Assert(ArrayEquals(atpa1,atpa2));
+  SetLength(atpa1,1);
+  Assert(not ArrayEquals(atpa1,atpa2));
+  SetLength(atpa2,1);
+  Assert(ArrayEquals(atpa1,atpa2));
+
+  atpa1 += [[1,2],[3,4]];
+  atpa1 += [[1,2]];
+  atpa2 += [[1,2],[3,4]];
+  atpa2 += [[2,1]];
+  Assert(not ArrayEquals(atpa1,atpa2));
+  atpa2[2][0] := [1,2];
+  Assert(ArrayEquals(atpa1,atpa2));
+
+  // string
+  str1 := ['hello', 'world'];
+  str2 := ['world'];
+  Assert(not ArrayEquals(str1, str2));
+  str1 := ['hello', 'world'];
+  str2 := ['hello', 'world'];
+  Assert(ArrayEquals(str1, str2));
+  str1 := ['hello', 'world'];
+  str2 := ['world', 'hello'];
+  Assert(not ArrayEquals(str1, str2));
+end;
