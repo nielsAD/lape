@@ -36,7 +36,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString=''; ADocPos: PDocPos=nil); override;
   end;
 
-  // Low,High,Length,Pop,First,Last are performed inline in DynArray.Eval to reduce overhead and wont be used like the others
+  // Low,High,Length,Pop,First,Last are performed inline in DynArray.Eval to reduce function overhead and wont be used like the others
   TLapeType_ArrayHelper_Low = class(TLapeType_HelperProperty)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
@@ -72,12 +72,12 @@ type
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Clear = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_SetLength = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_SetLength = class(TLapeType_Helper)
+  TLapeType_ArrayHelper_Clear = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -162,42 +162,42 @@ type
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Median = class(TLapeType_HelperProperty)
+  TLapeType_ArrayHelper_Median = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Mode = class(TLapeType_HelperProperty)
+  TLapeType_ArrayHelper_Mode = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Min = class(TLapeType_HelperProperty)
+  TLapeType_ArrayHelper_Min = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Max = class(TLapeType_HelperProperty)
+  TLapeType_ArrayHelper_Max = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Sum = class(TLapeType_HelperProperty)
+  TLapeType_ArrayHelper_Sum = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Mean = class(TLapeType_HelperProperty)
+  TLapeType_ArrayHelper_Mean = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Variance = class(TLapeType_HelperProperty)
+  TLapeType_ArrayHelper_Variance = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Stdev = class(TLapeType_HelperProperty)
+  TLapeType_ArrayHelper_Stdev = class(TLapeType_Helper)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -228,13 +228,11 @@ type
   end;
 
   procedure LapeCreateArrayHelpers(Compiler: TLapeCompilerBase);
-  procedure LapeCreateStaticArrayHelpers(Compiler: TLapeCompilerBase);
 
 implementation
 
 uses
-  lpcompiler, lpparser, lptree,
-  lpvartypes_array, lpmessages;
+  lpcompiler, lptree, lpvartypes_array, lpmessages;
 
 procedure TLapeType_Helper.addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean);
 begin
@@ -345,6 +343,48 @@ begin
   MethodDef := mdProperty;
 end;
 
+function TLapeType_ArrayHelper_Low.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+end;
+
+function TLapeType_ArrayHelper_High.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+end;
+
+function TLapeType_ArrayHelper_Length.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+end;
+
+function TLapeType_ArrayHelper_First.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+end;
+
+function TLapeType_ArrayHelper_Last.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+end;
+
+function TLapeType_ArrayHelper_Pop.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+end;
+
+function TLapeType_ArrayHelper_Empty.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  LapeException(lpeCannotOverload);
+end;
+
 function TLapeType_ArrayHelper_SetLength.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
@@ -352,105 +392,6 @@ begin
     VarType,
     [FCompiler.getBaseType(ltSizeInt)]
   );
-end;
-
-function TLapeType_ArrayHelper_Low.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := nil;
-  LapeException(lpeCannotOverload);
-
-  //Result := CreateFunction(
-  //  'Result := System.Low(Self);',
-  //  VarType,
-  //  [],
-  //  FCompiler.getBaseType(ltSizeInt)
-  //);
-end;
-
-function TLapeType_ArrayHelper_High.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := nil;
-  LapeException(lpeCannotOverload);
-
-  //Result := CreateFunction(
-  //  'Result := System.High(Self);',
-  //  VarType,
-  //  [],
-  //  FCompiler.getBaseType(ltSizeInt)
-  //);
-end;
-
-function TLapeType_ArrayHelper_Length.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := nil;
-  LapeException(lpeCannotOverload);
-
-  //Result := CreateFunction(
-  //  'Result := System.Length(Self);',
-  //  VarType,
-  //  [],
-  //  FCompiler.getBaseType(ltSizeInt)
-  //);
-end;
-
-function TLapeType_ArrayHelper_First.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := nil;
-  LapeException(lpeCannotOverload);
-
-  //Result := CreateFunction(
-  //  'Result := Self[System.Low(Self)];',
-  //  VarType,
-  //  [],
-  //  TLapeType_DynArray(VarType).PType
-  //);
-end;
-
-function TLapeType_ArrayHelper_Last.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := nil;
-  LapeException(lpeCannotOverload);
-
-  //Result := CreateFunction(
-  //  'Result := Self[System.High(Self)];',
-  //  VarType,
-  //  [],
-  //  TLapeType_DynArray(VarType).PType
-  //);
-end;
-
-function TLapeType_ArrayHelper_Pop.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := nil;
-  LapeException(lpeCannotOverload);
-
-  //if VarType.BaseType in LapeStringTypes then
-  //begin
-  //  Result := CreateFunction(
-  //    'var Index: Integer := System.Length(Self);' + LineEnding +
-  //    'Result := Self[Index];'                   + LineEnding +
-  //    'System.SetLength(Self, Index - 1);',
-  //    VarType,
-  //    [],
-  //    TLapeType_DynArray(VarType).PType
-  //  );
-  //end else
-  //begin
-  //  Result := CreateFunction(
-  //    'var Index: Integer := System.High(Self);' + LineEnding +
-  //    'Result := Self[Index];'                 + LineEnding +
-  //    'System.SetLength(Self, Index);',
-  //    VarType,
-  //    [],
-  //    TLapeType_DynArray(VarType).PType
-  //  );
-  //end;
-end;
-
-function TLapeType_ArrayHelper_Empty.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
-begin
-  Result := nil;
-  LapeException(lpeCannotOverload);
 end;
 
 function TLapeType_ArrayHelper_Clear.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
@@ -897,110 +838,104 @@ begin
 end;
 
 procedure LapeCreateArrayHelpers(Compiler: TLapeCompilerBase);
-var
-  Typ: TLapeType;
 
-  procedure Add(Helper: TLapeType_HelperClass; Name: lpString);
+  procedure Add(Typ: TLapeType; Helper: TLapeType_HelperClass; Name: lpString);
   begin
     Typ.ManagedDeclarations.addDeclaration(
       TLapeType_Helper(Compiler.addManagedType(Helper.Create(Compiler, Name))).NewGlobalVar(Name)
     );
   end;
 
-begin
-  Typ := TLapeType.Create(ltUnknown, Compiler);
-  Typ.Name := '!arrayhelpers';
-
-  Add(TLapeType_ArrayHelper_Low, 'Low');
-  Add(TLapeType_ArrayHelper_High, 'High');
-  Add(TLapeType_ArrayHelper_Length, 'Length');
-  Add(TLapeType_ArrayHelper_First, 'First');
-  Add(TLapeType_ArrayHelper_Last, 'Last');
-  Add(TLapeType_ArrayHelper_Contains, 'Contains');
-  Add(TLapeType_ArrayHelper_Swap, 'Swap');
-  Add(TLapeType_ArrayHelper_Unique, 'Unique');
-  Add(TLapeType_ArrayHelper_IndexOf, 'IndexOf');
-  Add(TLapeType_ArrayHelper_IndicesOf, 'IndicesOf');
-  Add(TLapeType_ArrayHelper_Sorted, 'Sorted');
-  Add(TLapeType_ArrayHelper_Copy, 'Copy');
-  Add(TLapeType_ArrayHelper_CopyRange, 'CopyRange');
-  Add(TLapeType_ArrayHelper_Random, 'Random');
-  Add(TLapeType_ArrayHelper_Reversed, 'Reversed');
-  Add(TLapeType_ArrayHelper_Slice, 'Slice');
-  Add(TLapeType_ArrayHelper_Difference, 'Difference');
-  Add(TLapeType_ArrayHelper_SymDifference, 'SymDifference');
-  Add(TLapeType_ArrayHelper_Intersection, 'Intersection');
-  Add(TLapeType_ArrayHelper_Equals, 'Equals');
-  Add(TLapeType_ArrayHelper_Empty, 'Empty');
-  Add(TLapeType_ArrayHelper_Clear, 'Clear');
-
-  Add(TLapeType_ArrayHelper_Median, 'Median');
-  Add(TLapeType_ArrayHelper_Mode, 'Mode');
-  Add(TLapeType_ArrayHelper_Min, 'Min');
-  Add(TLapeType_ArrayHelper_Max, 'Max');
-  Add(TLapeType_ArrayHelper_Sum, 'Sum');
-  Add(TLapeType_ArrayHelper_Mean, 'Mean');
-  Add(TLapeType_ArrayHelper_Variance, 'Variance');
-  Add(TLapeType_ArrayHelper_Stdev, 'Stdev');
-
-  Add(TLapeType_ArrayHelper_SetLength, 'SetLength');
-  Add(TLapeType_ArrayHelper_Pop, 'Pop');
-  Add(TLapeType_ArrayHelper_Remove, 'Remove');
-  Add(TLapeType_ArrayHelper_Delete, 'Delete');
-  Add(TLapeType_ArrayHelper_DeleteRange, 'DeleteRange');
-  Add(TLapeType_ArrayHelper_Insert, 'Insert');
-  Add(TLapeType_ArrayHelper_Sort, 'Sort');
-  Add(TLapeType_ArrayHelper_Reverse, 'Reverse');
-
-  Compiler.addGlobalDecl(Typ);
-end;
-
-procedure LapeCreateStaticArrayHelpers(Compiler: TLapeCompilerBase);
 var
   Typ: TLapeType;
-
-  procedure Add(Helper: TLapeType_HelperClass; Name: lpString);
-  begin
-    Typ.ManagedDeclarations.addDeclaration(
-      TLapeType_Helper(Compiler.addManagedType(Helper.Create(Compiler, Name))).NewGlobalVar(Name)
-    );
-  end;
-
 begin
-  Typ := TLapeType.Create(ltUnknown, Compiler);
-  Typ.Name := '!arrayhelpersstatic';
+  // helpers for one dimensional arrays
+  Typ := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_flat')) as TLapeType;
 
-  Add(TLapeType_ArrayHelper_Low, 'Low');
-  Add(TLapeType_ArrayHelper_High, 'High');
-  Add(TLapeType_ArrayHelper_Length, 'Length');
-  Add(TLapeType_ArrayHelper_First, 'First');
-  Add(TLapeType_ArrayHelper_Last, 'Last');
-  Add(TLapeType_ArrayHelper_Contains, 'Contains');
-  Add(TLapeType_ArrayHelper_Swap, 'Swap');
-  Add(TLapeType_ArrayHelper_Unique, 'Unique');
-  Add(TLapeType_ArrayHelper_IndexOf, 'IndexOf');
-  Add(TLapeType_ArrayHelper_IndicesOf, 'IndicesOf');
-  Add(TLapeType_ArrayHelper_Sorted, 'Sorted');
-  Add(TLapeType_ArrayHelper_Copy, 'Copy');
-  Add(TLapeType_ArrayHelper_CopyRange, 'CopyRange');
-  Add(TLapeType_ArrayHelper_Random, 'Random');
-  Add(TLapeType_ArrayHelper_Reversed, 'Reversed');
-  Add(TLapeType_ArrayHelper_Slice, 'Slice');
-  Add(TLapeType_ArrayHelper_Difference, 'Difference');
-  Add(TLapeType_ArrayHelper_SymDifference, 'SymDifference');
-  Add(TLapeType_ArrayHelper_Intersection, 'Intersection');
-  Add(TLapeType_ArrayHelper_Equals, 'Equals');
+  Add(Typ, TLapeType_ArrayHelper_SetLength, 'SetLength');
+  Add(Typ, TLapeType_ArrayHelper_Low, 'Low');
+  Add(Typ, TLapeType_ArrayHelper_High, 'High');
+  Add(Typ, TLapeType_ArrayHelper_Length, 'Length');
+  Add(Typ, TLapeType_ArrayHelper_First, 'First');
+  Add(Typ, TLapeType_ArrayHelper_Last, 'Last');
+  Add(Typ, TLapeType_ArrayHelper_Swap, 'Swap');
+  Add(Typ, TLapeType_ArrayHelper_Copy, 'Copy');
+  Add(Typ, TLapeType_ArrayHelper_CopyRange, 'CopyRange');
+  Add(Typ, TLapeType_ArrayHelper_Random, 'Random');
+  Add(Typ, TLapeType_ArrayHelper_Slice, 'Slice');
+  Add(Typ, TLapeType_ArrayHelper_Empty, 'Empty');
+  Add(Typ, TLapeType_ArrayHelper_Clear, 'Clear');
+  Add(Typ, TLapeType_ArrayHelper_Pop, 'Pop');
+  Add(Typ, TLapeType_ArrayHelper_Delete, 'Delete');
+  Add(Typ, TLapeType_ArrayHelper_DeleteRange, 'DeleteRange');
+  Add(Typ, TLapeType_ArrayHelper_Remove, 'Remove');
+  Add(Typ, TLapeType_ArrayHelper_Insert, 'Insert');
+  Add(Typ, TLapeType_ArrayHelper_Reverse, 'Reverse');
+  Add(Typ, TLapeType_ArrayHelper_Reversed, 'Reversed');
+  Add(Typ, TLapeType_ArrayHelper_Equals, 'Equals');
+  Add(Typ, TLapeType_ArrayHelper_Unique, 'Unique');
+  Add(Typ, TLapeType_ArrayHelper_Contains, 'Contains');
+  Add(Typ, TLapeType_ArrayHelper_IndexOf, 'IndexOf');
+  Add(Typ, TLapeType_ArrayHelper_IndicesOf, 'IndicesOf');
+  Add(Typ, TLapeType_ArrayHelper_Sort, 'Sort');
+  Add(Typ, TLapeType_ArrayHelper_Sorted, 'Sorted');
+  Add(Typ, TLapeType_ArrayHelper_Reverse, 'Reverse');
+  Add(Typ, TLapeType_ArrayHelper_Reversed, 'Reversed');
+  Add(Typ, TLapeType_ArrayHelper_Difference, 'Difference');
+  Add(Typ, TLapeType_ArrayHelper_SymDifference, 'SymDifference');
+  Add(Typ, TLapeType_ArrayHelper_Intersection, 'Intersection');
+  Add(Typ, TLapeType_ArrayHelper_Median, 'Median');
+  Add(Typ, TLapeType_ArrayHelper_Mode, 'Mode');
+  Add(Typ, TLapeType_ArrayHelper_Min, 'Min');
+  Add(Typ, TLapeType_ArrayHelper_Max, 'Max');
+  Add(Typ, TLapeType_ArrayHelper_Sum, 'Sum');
+  Add(Typ, TLapeType_ArrayHelper_Mean, 'Mean');
+  Add(Typ, TLapeType_ArrayHelper_Variance, 'Variance');
+  Add(Typ, TLapeType_ArrayHelper_Stdev, 'Stdev');
 
-  Add(TLapeType_ArrayHelper_Median, 'Median');
-  Add(TLapeType_ArrayHelper_Mode, 'Mode');
-  Add(TLapeType_ArrayHelper_Min, 'Min');
-  Add(TLapeType_ArrayHelper_Max, 'Max');
-  Add(TLapeType_ArrayHelper_Sum, 'Sum');
-  Add(TLapeType_ArrayHelper_Mean, 'Mean');
-  Add(TLapeType_ArrayHelper_Variance, 'Variance');
-  Add(TLapeType_ArrayHelper_Stdev, 'Stdev');
+  // limited helpers for multi dimensional arrays
+  Typ := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_multidim')) as TLapeType;
 
-  Compiler.addGlobalDecl(Typ);
+  Add(Typ, TLapeType_ArrayHelper_SetLength, 'SetLength');
+  Add(Typ, TLapeType_ArrayHelper_Low, 'Low');
+  Add(Typ, TLapeType_ArrayHelper_High, 'High');
+  Add(Typ, TLapeType_ArrayHelper_Length, 'Length');
+  Add(Typ, TLapeType_ArrayHelper_First, 'First');
+  Add(Typ, TLapeType_ArrayHelper_Last, 'Last');
+  Add(Typ, TLapeType_ArrayHelper_Swap, 'Swap');
+  Add(Typ, TLapeType_ArrayHelper_Copy, 'Copy');
+  Add(Typ, TLapeType_ArrayHelper_CopyRange, 'CopyRange');
+  Add(Typ, TLapeType_ArrayHelper_Random, 'Random');
+  Add(Typ, TLapeType_ArrayHelper_Slice, 'Slice');
+  Add(Typ, TLapeType_ArrayHelper_Empty, 'Empty');
+  Add(Typ, TLapeType_ArrayHelper_Clear, 'Clear');
+  Add(Typ, TLapeType_ArrayHelper_Pop, 'Pop');
+  Add(Typ, TLapeType_ArrayHelper_Delete, 'Delete');
+  Add(Typ, TLapeType_ArrayHelper_DeleteRange, 'DeleteRange');
+  Add(Typ, TLapeType_ArrayHelper_Insert, 'Insert');
+  Add(Typ, TLapeType_ArrayHelper_Reverse, 'Reverse');
+  Add(Typ, TLapeType_ArrayHelper_Reversed, 'Reversed');
+  Add(Typ, TLapeType_ArrayHelper_Equals, 'Equals');
+
+  // limited helpers for static arrays
+  Typ := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_static')) as TLapeType;
+
+  Add(Typ, TLapeType_ArrayHelper_Low, 'Low');
+  Add(Typ, TLapeType_ArrayHelper_High, 'High');
+  Add(Typ, TLapeType_ArrayHelper_Length, 'Length');
+  Add(Typ, TLapeType_ArrayHelper_First, 'First');
+  Add(Typ, TLapeType_ArrayHelper_Last, 'Last');
+  Add(Typ, TLapeType_ArrayHelper_Swap, 'Swap');
+  Add(Typ, TLapeType_ArrayHelper_Copy, 'Copy');
+  Add(Typ, TLapeType_ArrayHelper_CopyRange, 'CopyRange');
+  Add(Typ, TLapeType_ArrayHelper_Random, 'Random');
+  Add(Typ, TLapeType_ArrayHelper_Slice, 'Slice');
+  Add(Typ, TLapeType_ArrayHelper_Reverse, 'Reverse');
+  Add(Typ, TLapeType_ArrayHelper_Reversed, 'Reversed');
+  Add(Typ, TLapeType_ArrayHelper_Equals, 'Equals');
+  Add(Typ, TLapeType_ArrayHelper_Contains, 'Contains');
+  Add(Typ, TLapeType_ArrayHelper_IndexOf, 'IndexOf');
+  Add(Typ, TLapeType_ArrayHelper_IndicesOf, 'IndicesOf');
 end;
 
 end.

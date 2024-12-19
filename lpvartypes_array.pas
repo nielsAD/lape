@@ -944,7 +944,11 @@ var
 begin
   if (lcoArrayHelpers in FCompiler.Options) then
   begin
-    Typ := FCompiler.getGlobalType('!arrayhelpers');
+    if (PType is TLapeType_DynArray) then
+      Typ := FCompiler.getGlobalType('!arrayhelpers_multidim')
+    else
+      Typ := FCompiler.getGlobalType('!arrayhelpers_flat');
+
     if (Typ <> nil) then
       FManagedDecls.Parent := TLapeType(Typ).ManagedDeclarations;
   end;
@@ -1312,7 +1316,7 @@ var
 begin
   if (lcoArrayHelpers in FCompiler.Options) then
   begin
-    Typ := FCompiler.getGlobalType('!arrayhelpersstatic');
+    Typ := FCompiler.getGlobalType('!arrayhelpers_static');
     if (Typ <> nil) then
       FManagedDecls.Parent := TLapeType(Typ).ManagedDeclarations;
   end;

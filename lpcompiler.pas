@@ -4681,7 +4681,6 @@ begin
   Reset();
 
   LapeCreateArrayHelpers(Self);
-  LapeCreateStaticArrayHelpers(Self);
 
   InitBaseDefinitions();
 end;
