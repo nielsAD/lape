@@ -1,133 +1,56 @@
 {$assertions on}
 
-procedure TestSort;
-var
-  Arr: TIntegerArray = [1,2,3,4,5];
+// This test is more about checking methods are generated correctly rather than actual core methods
+
+var a: TIntegerArray;
 begin
-  Arr.Sort(TIntegerArray([5,4,3,2,1]), True);
-  Assert(ToString(Arr) = '[5, 4, 3, 2, 1]');
+  a := [1,2,3,4,5];
+  Assert(a.Low = Low(a));
+  Assert(a.High = High(a));
+  Assert(a.Length = Length(a));
+  Assert(a.First = a[0]);
+  Assert(a.Last = a[High(a)]);
+  Assert(a.Equals(a.Copy()));
+  Assert(a.CopyRange(1,3).Equals([2,3,4]));
+  Assert(a.Contains(a.Random()));
+  Assert(a.Slice(0,5,2).Equals([1,3,5]));
+  Assert(a.Mode = 1);
+  Assert(a.Min = 1);
+  Assert(a.Max = 5);
+  Assert(a.Sum = 15);
+  Assert(Abs(a.Mean - 3) < 0.001);
+  Assert(Abs(a.Median - 3) < 0.001);
+  Assert(Abs(a.Stdev - 1.414) < 0.001);
+  Assert(Abs(a.Variance - 2) < 0.001);
 
-  Arr.Sort(TDoubleArray([0.1, 0.2, 0.3, 0.4, 0.5]), False);
-  Assert(ToString(Arr) = '[1, 2, 3, 4, 5]');
+  Assert(a.Pop = 5);
+  Assert(a.Delete(1) = 2);
+  Assert(a.Equals([1, 3, 4]));
+  a.DeleteRange(1,2);
+  Assert(a.Equals([1]));
+  a.Remove(1);
+  Assert(a.IsEmpty);
 
-  Arr.Sort(TSingleArray([0.1, 0.2, 0.3, 0.4, 0.5]), False);
-  Assert(ToString(Arr) = '[5, 4, 3, 2, 1]');
+  a.SetLength(10);
+  Assert(not a.IsEmpty);
+  a.Clear();
+  Assert(a.IsEmpty);
 
-  Arr.Sort([High(Int64),High(Int64)-1,High(Int64)-2,High(Int64)-3,High(Int64)-4], True);
-  Assert(ToString(Arr) = '[1, 2, 3, 4, 5]');
+  a := [1,2,-1,2,0,20];
+  Assert(a.IndexOf(2) = 1);
+  Assert(a.IndicesOf(2).Equals([1,3]));
 
-  Arr += [-10000,10000];
-  Arr.Sort();
-  Assert(ToString(Arr) = '[-10000, 1, 2, 3, 4, 5, 10000]');
-end;
- 
-procedure TestSorted;
-var
-  Arr: TIntegerArray = [1,2,3,4,5];
-begin
-  Assert(
-    ToString(Arr.Sorted(TIntegerArray([5,4,3,2,1]), True)) =
-    ToString(Arr.Sorted(TDoubleArray([0.1,0.2,0.3,0.4,0.5]), False))
-  );
-  // ensure untouched
-  Assert(ToString(Arr) = '[1, 2, 3, 4, 5]');
+  Assert(a.Sorted().Equals([-1,0,1,2,2,20]));
+  a.Sort();
+  Assert(a.Equals([-1,0,1,2,2,20]));
 
-  Assert(ToString(Arr.Sorted([High(Int64),High(Int64)-1,High(Int64)-2,High(Int64)-3,High(Int64)-4], True)) = '[5, 4, 3, 2, 1]');
-  Assert(ToString(Arr.Sorted()) = '[1, 2, 3, 4, 5]');
-end;
+  Assert(a.Reversed().Equals([20,2,2,1,0,-1]));
+  a.Reverse();
+  Assert(a.Equals([20,2,2,1,0,-1]));
+  Assert(a.Unique().Equals([20, 2, 1, 0, -1]));
 
-procedure TestCopy;
-var
-  Arr: TIntegerArray = [1..8];
-begin
-  Assert(ToString(Arr.Copy()) = '[1, 2, 3, 4, 5, 6, 7, 8]');
-  Assert(ToString(Arr.CopyRange(2,4)) = '[3, 4, 5]');
-end;
-
-procedure TestDelete;
-var
-  Arr: TIntegerArray = [1..8];
-begin
-  Assert(Arr.Delete(0) = 1);
-  Assert(Arr.Delete(6) = 8);
-  Arr.DeleteRange(1,4);
-  Assert(ToString(Arr) = '[2, 7]');
-end;
-
-procedure TestRemove;
-var
-  Arr: TIntegerArray = [1..4];
-begin
-  Assert(Arr.Remove(1) = 1);
-  Assert(Arr.Remove(4) = 4);
-  Assert(Arr.Remove(123) = 0);   
-  Assert(ToString(Arr) = '[2, 3]');
-end;
-
-procedure TestPop;
-var
-  Arr: TIntegerArray = [1,2,3,4,5,6];
-begin
-  Assert(Arr.Pop = 6);
-  Assert(Arr.Pop = 5);
-  Assert(Arr.Length = 4);
-end;
-
-procedure TestOverrideOverload;
-var
-  a: TIntegerArray;
-begin
-  Assert(a.Random() = 123);
-  Assert(a.IndexOf(0,0,0) = 999);
-end;
-
-function TIntegerArray.IndexOf(a,b,c: Integer): Integer; overload;
-begin
-  Result := 999;
-end;
-
-function TIntegerArray.Random: Int32; override;
-begin
-  Result := 123;
-end; 
-
-procedure TestAlgo;
-var
-  a: TIntegerArray = [1,1,1,2,2,2];
-begin
-  Assert(ToString(a.Variance) = '0,25');
-  Assert(ToString(a.Stdev) = '0,5');
-  Assert(ToString(a.Min) = '1');
-  Assert(ToString(a.Max) = '2');
-  Assert(ToString(a.Mean) = '1,5');
-  Assert(ToString(a.Median) = '1,5');
-end;
-
-var
-  Arr: TIntegerArray = [3,2,1];
-begin
-  Arr.SetLength(10);
-
-  Assert(Arr.Length = 10);
-  Assert(Arr.First = 3);
-  Assert(Arr.Last = 0);
-  Assert(Arr.Reversed().Last = 3);
-  Assert(Arr.IndexOf(3) = 0);
-  Assert(Arr.IndexOf(2) = 1);
-  Assert(Arr.IndexOf(1) = 2);
-
-  Assert(not Arr.Empty);
-  Arr := [];
-  Assert(Arr.Empty);
-  SetLength(Arr, 0);
-  Assert(Arr.Empty);
-
-  TestSort();
-  TestSorted();
-  TestCopy();
-  TestDelete();
-  TestRemove();
-  TestPop();
-  TestAlgo();
-  TestOverrideOverload();
+  a := [2,4,12];
+  a.Insert(3,1);
+  a.Insert(TIntegerArray([5,6,7,8,9,10,11]),3);
+  Assert(a.Equals([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]));
 end;

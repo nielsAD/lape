@@ -4,7 +4,7 @@
   License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
 
   A helper type is a type method that is generated when required.
-  Side effect is these can currently not be overriden (or overloaded with the same name).
+  These can currently not be overriden (or overloaded with the same name).
 }
 unit lpvartypes_helper;
 
@@ -67,7 +67,7 @@ type
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
-  TLapeType_ArrayHelper_Empty = class(TLapeType_HelperProperty)
+  TLapeType_ArrayHelper_IsEmpty = class(TLapeType_HelperProperty)
   protected
     function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
@@ -379,7 +379,7 @@ begin
   LapeException(lpeCannotOverload);
 end;
 
-function TLapeType_ArrayHelper_Empty.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+function TLapeType_ArrayHelper_IsEmpty.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := nil;
   LapeException(lpeCannotOverload);
@@ -863,7 +863,7 @@ begin
   Add(Typ, TLapeType_ArrayHelper_CopyRange, 'CopyRange');
   Add(Typ, TLapeType_ArrayHelper_Random, 'Random');
   Add(Typ, TLapeType_ArrayHelper_Slice, 'Slice');
-  Add(Typ, TLapeType_ArrayHelper_Empty, 'Empty');
+  Add(Typ, TLapeType_ArrayHelper_IsEmpty, 'IsEmpty');
   Add(Typ, TLapeType_ArrayHelper_Clear, 'Clear');
   Add(Typ, TLapeType_ArrayHelper_Pop, 'Pop');
   Add(Typ, TLapeType_ArrayHelper_Delete, 'Delete');
@@ -907,7 +907,7 @@ begin
   Add(Typ, TLapeType_ArrayHelper_CopyRange, 'CopyRange');
   Add(Typ, TLapeType_ArrayHelper_Random, 'Random');
   Add(Typ, TLapeType_ArrayHelper_Slice, 'Slice');
-  Add(Typ, TLapeType_ArrayHelper_Empty, 'Empty');
+  Add(Typ, TLapeType_ArrayHelper_IsEmpty, 'IsEmpty');
   Add(Typ, TLapeType_ArrayHelper_Clear, 'Clear');
   Add(Typ, TLapeType_ArrayHelper_Pop, 'Pop');
   Add(Typ, TLapeType_ArrayHelper_Delete, 'Delete');

@@ -143,7 +143,7 @@ begin
               (Typ is TLapeType_ArrayHelper_High) or
               (Typ is TLapeType_ArrayHelper_Low) or
               (Typ is TLapeType_ArrayHelper_Length) or
-              (Typ is TLapeType_ArrayHelper_Empty);
+              (Typ is TLapeType_ArrayHelper_IsEmpty);
   end else
     Result := False;
 end;
@@ -511,7 +511,7 @@ begin
       Result := FPType
     else if (Typ is TLapeType_ArrayHelper_Low) or (Typ is TLapeType_ArrayHelper_High) or (Typ is TLapeType_ArrayHelper_Length) then
       Result := FCompiler.getBaseType(ltSizeInt)
-    else if (Typ is TLapeType_ArrayHelper_Empty) then
+    else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
       Result := FCompiler.getBaseType(ltEvalBool)
     else
       Result := nil
@@ -924,7 +924,7 @@ begin
       finally
         Free();
       end
-    else if (Typ is TLapeType_ArrayHelper_Empty) then
+    else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
     begin
       Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool, 1));
       Result.isConstant := True;
@@ -942,9 +942,9 @@ procedure TLapeType_DynArray.addArrayHelpers;
 var
   Typ: TLapeType;
 begin
-  if (lcoArrayHelpers in FCompiler.Options) then
+  if (lcoArrayHelpers in FCompiler.Options) and HasType() then
   begin
-    if (PType is TLapeType_DynArray) then
+    if (PType.BaseType in [ltDynArray, ltStaticArray]) then
       Typ := FCompiler.getGlobalType('!arrayhelpers_multidim')
     else
       Typ := FCompiler.getGlobalType('!arrayhelpers_flat');
@@ -1314,7 +1314,7 @@ procedure TLapeType_StaticArray.addArrayHelpers;
 var
   Typ: TLapeType;
 begin
-  if (lcoArrayHelpers in FCompiler.Options) then
+  if (lcoArrayHelpers in FCompiler.Options) and HasType() then
   begin
     Typ := FCompiler.getGlobalType('!arrayhelpers_static');
     if (Typ <> nil) then
