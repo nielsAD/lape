@@ -470,8 +470,8 @@ type
     procedure addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False); virtual;
     function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; virtual;
 
-    function getMethodIndex(AType: TLapeType_Method): Integer; overload; virtual;
-    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType = nil; AObjectType: TLapeType = nil): Integer; overload; virtual;
+    function getMethodIndex(AType: TLapeType_Method; Pos: PDocPos = nil): Integer; overload; virtual;
+    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType = nil; AObjectType: TLapeType = nil; Pos: PDocPos = nil): Integer; overload; virtual;
     function getMethod(AType: TLapeType_Method): TLapeGlobalVar; overload; virtual;
     function getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil; AObjectType: TLapeType = nil): TLapeGlobalVar; overload; virtual;
 
@@ -3221,7 +3221,7 @@ begin
   FManagedDecls.addDeclaration(AMethod);
 end;
 
-function TLapeType_OverloadedMethod.getMethodIndex(AType: TLapeType_Method): Integer;
+function TLapeType_OverloadedMethod.getMethodIndex(AType: TLapeType_Method; Pos: PDocPos): Integer;
 var
   i: Integer;
   ObjectType: TLapeType;
@@ -3248,7 +3248,7 @@ begin
     Result := -1;
 end;
 
-function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType): Integer;
+function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Pos: PDocPos): Integer;
 
   function SizeWeight(a, b: TLapeType): SizeInt; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin

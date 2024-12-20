@@ -1881,7 +1881,7 @@ begin
   if (FExpr is TLapeTree_Operator) and (TLapeTree_Operator(FExpr).Left <> nil) then
     ObjectType := TLapeTree_Operator(FExpr).Left.resType();
 
-  MethodIndex := Overloaded.getMethodIndex(getParamTypes(), ExpectType, ObjectType);
+  MethodIndex := Overloaded.getMethodIndex(getParamTypes(), ExpectType, ObjectType, @_DocPos);
   if (MethodIndex < 0) then
   begin
     MethodIndex := CastOpenArrays(True); // "exact" being `TPoint` needing both fields ~ [1,2]
