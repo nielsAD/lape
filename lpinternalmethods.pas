@@ -59,11 +59,6 @@ type
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
-  TLapeTree_InternalMethod_Operator = class(TLapeTree_InternalMethod)
-  public
-    constructor Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce;
-  end;
-
   TLapeTree_InternalMethod_Exit = class(TLapeTree_InternalMethod)
   public
     function Compile(var Offset: Integer): TResVar; override;
@@ -942,11 +937,6 @@ begin
     LapeException(lpeCannotContinue, DocPos)
   else
       FoundNode.addContinueStatement(JumpSafe, Offset, @_DocPos);
-end;
-
-constructor TLapeTree_InternalMethod_Operator.Create(AOperator:EOperator; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
-begin
-  inherited Create('!op_'+op_name[AOperator], ACompiler, ADocPos);
 end;
 
 function TLapeTree_InternalMethod_Exit.Compile(var Offset: Integer): TResVar;

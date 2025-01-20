@@ -749,35 +749,46 @@ uses
   lpvartypes_ord, lpvartypes_array, lptree, lpinternalmethods,
   lpmessages, lpeval, lpinterpreter_types, lpeval_extra;
 
+// I think doing a simple check rather than overload.getMethodIndex should be fine for op overloads
 function HasOperatorOverload(Compiler: TLapeCompilerBase; op: EOperator; LeftType, RightType: TLapeType; out Res: TLapeType): Boolean;
-var
-  Left, Right: TResVar;
-begin
-  Res := nil;
 
-  if (op in OverloadableOperators) and
-     (LeftType <> nil) and (LeftType.BaseType <> ltUnknown) and
-     (RightType <> nil) and (RightType.BaseType <> ltUnknown) and
-     (Compiler['!op_' + op_name[op]] <> nil) then
-  try
-    with TLapeTree_InternalMethod_Operator.Create(op, Compiler) do
-    try
-      Left := NullResVar;
-      Left.VarType := LeftType;
-      addParam(TLapeTree_ResVar.Create(Left, Compiler));
-
-      Right := NullResVar;
-      Right.VarType := RightType;
-      addParam(TLapeTree_ResVar.Create(Right, Compiler));
-
-      Res := resType();
-    finally
-      Free();
-    end;
-  except
+  function CompatibleParam(L, R: TLapeType): Boolean;
+  begin
+    Result := R.CompatibleWith(L) or (
+      (L is TLapeType_StaticArray) and // static > dynamic arrays is supported too
+      (R is TLapeType_DynArray) and
+      (TLapeType_StaticArray(L).PType.CompatibleWith(TLapeType_DynArray(R).PType))
+    );
   end;
 
-  Result := Res <> nil;
+var
+  Ovl: TLapeGlobalVar;
+  Decls: TLapeDeclarationList;
+  Method: TLapeType_Method;
+  i: Integer;
+begin
+  Result := False;
+  if not (op in OverloadableOperators) then
+    Exit;
+
+  Ovl := Compiler['!op_' + op_name[op]];
+  if (Ovl is TLapeGlobalVar) and (Ovl.VarType is TLapeType_OverloadedMethod) then
+  begin
+    Decls := TLapeType_OverloadedMethod(Ovl.VarType).ManagedDeclarations;
+    for i := 0 to Decls.Count - 1 do
+    begin
+      Method := TLapeType_Method(TLapeGlobalVar(Decls[i]).VarType);
+      if (Method.Params.Count <> 2) or (Method.Res = nil) then
+        Continue;
+
+      if CompatibleParam(LeftType, Method.Params[0].VarType) and CompatibleParam(RightType, Method.Params[1].VarType) then
+      begin
+        Res := Method.Res;
+        Result := True;
+        Exit;
+      end;
+    end;
+  end;
 end;
 
 procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator; LeftType, RightType: TLapeType; DocPos: TDocPos);

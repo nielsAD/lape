@@ -2772,7 +2772,7 @@ begin
   Result := inherited resType();
 
   // check for op overload
-  if (FResType = nil) and (FOperatorType in OverloadableOperators) and HasOperatorOverload(FCompiler, FOperatorType, LeftType, RightType, Result) then
+  if (FResType = nil) and HasOperatorOverload(FCompiler, FOperatorType, LeftType, RightType, Result) then
   begin
     FResType := Result;
     FOverloadOp := True;
@@ -2920,7 +2920,7 @@ var
   function DoOperatorOverload(): TResVar;
   begin
     Dest := NullResVar;
-    with TLapeTree_InternalMethod_Operator.Create(FOperatorType, FCompiler, @_DocPos) do
+    with TLapeTree_Invoke.Create('!op_'+op_name[FOperatorType], FCompiler, @_DocPos) do
     try
       addParam(Left);
       addParam(Right);
