@@ -1,0 +1,32 @@
+{$assertions on}
+
+var success: Boolean;
+
+operator in(l: Int32; r: array of Int64): Boolean;
+begin
+  success := True;
+end;
+
+operator in(l: Int32; r: array of Int32): Boolean;
+begin
+  Success := True;
+end;
+
+operator in(l: Char; r: String): Boolean;
+begin
+  success := True;
+end;
+
+var
+  i: Int32;
+  b: Boolean;
+begin
+  success := False;
+  i := 100;
+  b := i in [0, 1..50]; // should call an op overload
+  assert(success);
+
+  success := False;
+  b := 'z' in 'abc';
+  Assert(success);
+end;

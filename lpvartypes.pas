@@ -4406,7 +4406,6 @@ begin
       BaseType := DetermineIntType(Value)
     else
       BaseType := DetermineIntType(Value, BaseType, False);
-
     Assert(BaseType in LapeIntegerTypes);
   end;
 

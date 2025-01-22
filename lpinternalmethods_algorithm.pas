@@ -503,7 +503,6 @@ end;
 
 function TLapeTree_InternalMethod_ArrayMode.Compile(var Offset: Integer): TResVar;
 var
-  ArrayVar, SortedArrayVar, LengthVar: TResVar;
   ArrayElementType: TLapeType;
 begin
   Result := NullResVar;
@@ -666,7 +665,6 @@ end;
 
 function TLapeTree_InternalMethod_ArrayMean.Compile(var Offset: Integer): TResVar;
 var
-  ArrayVar, CounterVar: TResVar;
   ArrayElementType: TLapeType;
 begin
   Result := NullResVar;

@@ -420,7 +420,6 @@ var
   Idx: SizeInt;
   Lo, Hi: TLapeGlobalVar;
   Check, Len: TLapeTree_Invoke;
-  TempVar, DestVar, ArrayPtrVar: TResVar;
 begin
   if (not AIndex.HasType()) then
     LapeException(lpeInvalidEvaluation)

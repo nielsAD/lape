@@ -86,6 +86,9 @@ const
   lpeInvalidCast = 'Invalid cast';
   lpeInvalidCaseStatement = 'Invalid case statement';
   lpeInvalidCondition = 'Invalid condition';
+  lpeInvalidConstSet = 'Invalid constant set';
+  lpeInvalidConstByteSet = 'Invalid constant (Byte) set';
+  lpeInvalidConstCharSet = 'Invalid constant (Char) set';
   lpeInvalidCompareMethod = 'Invalid compare method';
   lpeInvalidEvaluation = 'Invalid evaluation';
   lpeInvalidForward = 'Forwarded declaration "%s" not resolved';
@@ -100,6 +103,7 @@ const
   lpeInvalidUnionType = 'Invalid union type';
   lpeInvalidValueForType = 'Invalid value for type "%s"';
   lpeInvalidWithReference = 'Invalid with-reference';
+  lpeInvalidSet = 'Invalid set';
   lpeLostClosingParenthesis = 'Found closing parenthesis without matching opening parenthesis';
   lpeLostConditional = 'Found conditional without matching opening statement';
   lpeMethodOfObjectExpected = 'Expected method of object';
