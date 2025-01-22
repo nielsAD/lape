@@ -2246,7 +2246,7 @@ var
         if AVar.HasType() and AVar.VarType.NeedInitialization then
           FCompiler.Emitter._InitStack(AVar.VarType.Size, Offset, @DocPos);
         Result.VarType := AVar.VarType;
-        Result := AVar.VarType.Eval(op_Assign, tmpVar, Result, AVar, [], Offset, @DocPos);
+        Result := AVar.VarType.Eval(op_Assign, tmpVar, Result, AVar, [lefAssigningParam], Offset, @DocPos);
       end;
     end
     else
@@ -2271,7 +2271,7 @@ var
       Par.setConstant(False, False);
 
       tmpRes := ParamVar;
-      ParamVar := Param.VarType.Eval(op_Assign, tmpVar, Par, ParamVar, [], Offset, @DocPos);
+      ParamVar := Param.VarType.Eval(op_Assign, tmpVar, Par, ParamVar, [lefAssigningParam], Offset, @DocPos);
       tmpRes.Spill(1);
     except
       on E: lpException do

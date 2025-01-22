@@ -226,7 +226,7 @@ type
     property AsInteger: Int64 read getAsInt;
   end;
 
-  ELapeEvalFlag = (lefAssigning, lefInvoking, lefConstAddress, lefConstRangeCheck, lefRangeCheck);
+  ELapeEvalFlag = (lefAssigning, lefAssigningParam, lefInvoking, lefConstAddress, lefConstRangeCheck, lefRangeCheck);
   ELapeEvalFlags = set of ELapeEvalFlag;
 
   TLapeType = class(TLapeManagingDeclaration)
