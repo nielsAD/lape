@@ -1,0 +1,25 @@
+{$assertions on}
+
+type
+  EEnum = (e1,e2,e3,e4,e5,e6,e7,e9);
+
+var
+  e: EEnum;
+  i: Int32;
+  c: Char;
+begin
+  e := e1;
+  Assert(not (e in [e3,e2]));
+  Assert(e in [e3,e2,e1]);
+  e := e5;
+  Assert(not (e in [e1,e2,e6..e9]));
+  Assert(e in [e1,e2,e5..e9]);
+
+  i := 100;
+  Assert(not (i in [1..99]));
+  Assert(i in [1..200]);
+
+  c := 'z';
+  Assert(not (c in ['a', 'd'..'y', '0']));
+  Assert(c in ['a', 'd'..'y', 'z']);
+end;
