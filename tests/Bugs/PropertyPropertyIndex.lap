@@ -1,0 +1,22 @@
+{$assertions on}
+
+property Int32.NormalProp: Int32;
+begin
+  Result := 1;
+end;
+
+property Int32.IndexProp(i: Integer): Int32;
+begin
+  Result := i;
+end;
+
+var i: Int32;
+
+begin
+  Assert(i.IndexProp[123].NormalProp = 1);
+  Assert(i.NormalProp.IndexProp[123] = 123);
+
+  i := 999;
+  Assert(i.NormalProp.IndexProp[i].IndexProp[i] = 999);
+  Assert(i.NormalProp.NormalProp.IndexProp[i] = 999);
+end;

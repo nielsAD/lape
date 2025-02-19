@@ -3891,9 +3891,10 @@ var
     begin
       PopOpStack(op_Index);
 
-      if IsProperty(VarStack.Top.resType(), isIndexableProp) then
+      Expr := ResolveMethods(VarStack.Top, True) as TLapeTree_ExprBase;
+      if IsProperty(Expr.resType(), isIndexableProp) then
       begin
-        Expr := ResolveMethods(VarStack.Pop().FoldConstants(), True) as TLapeTree_ExprBase;
+        VarStack.Pop();
         Prop := TLapeTree_InvokeProperty.Create(Expr, Self, getPDocPos());
 
         if isIndexableProp then
