@@ -1627,7 +1627,7 @@ begin
 
   // create new uint8 consts
   OldCount := FValues.Count;
-  ToType := TLapeType_Set.Create(TLapeType_SubRange.Create(UInt8Range, FCompiler, FCompiler.getBaseType(ltUInt8)), FCompiler);
+  ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_SubRange.Create(UInt8Range, FCompiler, FCompiler.getBaseType(ltUInt8)), FCompiler));
 
   for i := 0 to FValues.Count - 1 do
     if (FValues[i] is TLapeTree_ExprBase) then
@@ -1670,7 +1670,7 @@ begin
     Exit(False);
   end;
 
-  ToType := TLapeType_Set.Create(TLapeType_SubRange.Create(CharRange, FCompiler, FCompiler.getBaseType(ltChar)), FCompiler);
+  ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_SubRange.Create(CharRange, FCompiler, FCompiler.getBaseType(ltChar)), FCompiler));
 
   Assert(canCast);
   Assert(isConstant);
@@ -1701,9 +1701,9 @@ begin
   end;
 
   if (FValues[0] is TLapeTree_ExprBase) then
-    ToType := TLapeType_Set.Create(TLapeTree_ExprBase(FValues[0]).resType as TLapeType_SubRange, FCompiler)
+    ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeTree_ExprBase(FValues[0]).resType() as TLapeType_SubRange, FCompiler))
   else
-    ToType := TLapeType_Set.Create(TLapeTree_Range(FValues[0]).Lo.resType as TLapeType_SubRange, FCompiler);
+    ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeTree_Range(FValues[0]).Lo.resType() as TLapeType_SubRange, FCompiler));
 
   Assert(canCast);
   Assert(isConstant);
