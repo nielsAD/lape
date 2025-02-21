@@ -3806,10 +3806,31 @@ var
 
     function Resolve(Node: TLapeTree_Base; Top, Recurse: Boolean; out HasChanged: Boolean): TLapeTree_Base;
 
+      function ResolveProperty(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
+      var
+        Changed: Boolean;
+      begin
+        if IsProperty(Node.resType()) then
+        begin
+          Result := TLapeTree_InvokeProperty.Create(Node, Node);
+          TLapeTree_InvokeProperty(Result).PropertyType := ptRead;
+        end else
+        begin
+          Result := TLapeTree_InvokeProperty.Create(TLapeTree_Operator(Node).Left, Node);
+          if (TLapeTree_Operator(Node).Right is TLapeTree_Operator) and (TLapeTree_Operator(TLapeTree_Operator(Node).Right).OperatorType = op_Addr) then
+            TLapeTree_InvokeProperty(Result).addParam(Resolve(TLapeTree_Operator(Node).Right, True,True, Changed) as TLapeTree_ExprBase)
+          else
+            TLapeTree_InvokeProperty(Result).addParam(TLapeTree_Operator(Node).Right);
+          TLapeTree_InvokeProperty(Result).PropertyType := ptWrite;
+          TLapeTree_InvokeProperty(Result).AssignOp := TLapeTree_Operator(Node).OperatorType;
+
+          Node.Free();
+        end;
+      end;
+
       function ResolveMethod(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
       var
         Op: EOperator;
-        idc: Boolean;
       begin
         Node := Node.FoldConstants() as TLapeTree_ExprBase;
 
@@ -3818,28 +3839,16 @@ var
         else
           Op := op_Unknown;
 
-        if (not (Op in AssignOperators)) and IsProperty(Node.resType()) then
-        begin
-          Result := TLapeTree_InvokeProperty.Create(Node, Node);
-          TLapeTree_InvokeProperty(Result).PropertyType := ptRead;
-        end
+        if IsProperty(Node.resType) or ((Op in AssignOperators) and IsProperty(TLapeTree_Operator(Node).Left.resType())) then
+          Result := ResolveProperty(Node)
         else if (lcoAutoInvoke in Node.CompilerOptions) and (not (Op in AssignOperators)) and IsMethod(Node.resType()) then
           Result := TLapeTree_Invoke.Create(Node, Node)
-        else if (Op in AssignOperators) and IsProperty(TLapeTree_Operator(Node).Left.resType()) then
-        begin
-          Result := TLapeTree_InvokeProperty.Create(TLapeTree_Operator(Node).Left, Node);
-          TLapeTree_InvokeProperty(Result).addParam(Resolve(TLapeTree_Operator(Node).Right, True, True, idc) as TLapeTree_ExprBase);
-          TLapeTree_InvokeProperty(Result).PropertyType := ptWrite;
-          TLapeTree_InvokeProperty(Result).AssignOp := Op;
-          Node.Free();
-        end
         else if (Op = op_Addr) and IsMethod(TLapeTree_Operator(Node).Left.resType()) then
         begin
           Result := TLapeTree_Operator(Node).Left;
           Result.Parent := nil;
           Node.Free();
-        end
-        else
+        end else
           Result := Node;
       end;
 
@@ -3891,7 +3900,7 @@ var
     begin
       PopOpStack(op_Index);
 
-      Expr := ResolveMethods(VarStack.Top, True) as TLapeTree_ExprBase;
+      Expr := ResolveMethods(VarStack.Top.FoldConstants(False), True) as TLapeTree_ExprBase;
       if IsProperty(Expr.resType(), isIndexableProp) then
       begin
         VarStack.Pop();

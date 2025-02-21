@@ -1,0 +1,52 @@
+{$assertions on}
+
+type
+  TEvent = procedure(Sender: Pointer);
+
+var
+  i: Int32;
+
+property Pointer.Prop: Pointer;
+begin
+  i += 1;
+end;
+
+property Pointer.Event(NewValue: TEvent);
+begin
+  i += 100;
+end;
+
+property Pointer.Event: TEvent;
+begin
+  i += 1000;
+end;
+
+property Pointer.EventIndex(index: Integer): TEvent;
+begin
+  i += 10000;
+end;
+
+procedure MyEvent(Sender: Pointer);
+begin
+end;
+
+var
+  p: Pointer;
+
+begin
+  i:=0;
+  p.Prop.Event := @MyEvent;
+  Assert(i=101);
+
+  i:=0;
+  p.Prop.Event := p.Prop.Event;
+  Assert(i=1102);
+
+  i:=0;
+  p.Prop.Prop.Event := p.Prop.Prop.Event;
+  Assert(i=1104);
+
+  i:=0;
+  p.Prop.Event := p.Prop.EventIndex[0];
+  Assert(i=10102);
+end;
