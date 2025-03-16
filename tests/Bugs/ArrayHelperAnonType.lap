@@ -1,0 +1,19 @@
+function Test(x: Int32): Boolean;
+var
+  arr: array of Int32;
+begin
+  arr.IndexOf(x);
+end;
+
+function Test2(x: Int32): Boolean;
+type
+  TInt = type Int32;
+  TIntArr = array of TInt;
+var
+  arr: TIntArr;
+begin
+  arr.IndexOf(x);
+end; 
+
+begin
+end;

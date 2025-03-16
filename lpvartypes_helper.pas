@@ -20,14 +20,14 @@ type
   TLapeType_HelperClass = class of TLapeType_Helper;
   TLapeType_Helper = class(TLapeType_OverloadedMethod)
   protected
+    function getFunc(ObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; virtual; abstract;
+  public
     procedure addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False); override;
     function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; override;
 
     function getMethodIndex(AType: TLapeType_Method; Pos: PDocPos = nil): Integer; override;
     function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType=nil; AObjectType: TLapeType=nil; Pos: PDocPos = nil): Integer; override;
 
-    function getFunc(ObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; virtual; abstract;
-  public
     function CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType = nil; Pos: PDocPos = nil): TLapeGlobalVar;
   end;
 
@@ -303,8 +303,8 @@ begin
 
   with FCompiler as TLapeCompiler do
   begin
-    if (not hasDeclaration(VarType, False, False)) then // for `var a: array of x` otherwise "parent declaration out of scope"
-      addLocalDecl(VarType);
+    if (not hasDeclaration(VarType)) and (VarType.Name = '') then // for `var a: array of x` otherwise "parent declaration out of scope"
+      addGlobalDecl(VarType);
 
     Header := addManagedType(TLapeType_MethodOfType.Create(FCompiler, VarType, nil, ResultType)) as TLapeType_Method;
     for i := 0 to High(ParamTypes) do
