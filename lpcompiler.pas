@@ -2532,7 +2532,7 @@ begin
           begin
              if (Result.MethodDef = mdProperty) then
               LapeException(lpeDefaultParamInProperties, Tokenizer.DocPos);
-            Default := ParseExpression([tk_sym_ParenthesisClose], True, False).setExpectedType(Param.VarType) as TLapeTree_ExprBase;
+            Default := EnsureExpression(ParseExpression([tk_sym_ParenthesisClose], True, False)).setExpectedType(Param.VarType) as TLapeTree_ExprBase;
             try
               Param.Default := Default.Evaluate();
               if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or (not Param.Default.Writeable)) then
@@ -3090,7 +3090,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
 
         if Expect([tk_sym_SemiColon, tk_sym_Equals], FieldType <> nil, False) = tk_sym_Equals then
         begin
-          Expression := ParseExpression([tk_sym_SemiColon], True, False).setExpectedType(FieldType) as TLapeTree_ExprBase;
+          Expression := EnsureExpression(ParseExpression([tk_sym_SemiColon], True, False)).setExpectedType(FieldType) as TLapeTree_ExprBase;
           if (Expression <> nil) and (not Expression.isConstant()) then
             LapeException(lpeConstantExpected, Expression.DocPos);
 
@@ -3498,7 +3498,7 @@ begin
 
       if (Tokenizer.Tok = tk_sym_Equals) then
       begin
-        DefExpr := ParseExpression(ValidEnd, True, False).setExpectedType(VarType) as TLapeTree_ExprBase;
+        DefExpr := EnsureExpression(ParseExpression(ValidEnd, True, False)).setExpectedType(VarType) as TLapeTree_ExprBase;
         if (DefExpr <> nil) and (not DefExpr.isConstant()) then
           LapeException(lpeConstantExpected, DefExpr.DocPos);
 
@@ -3900,7 +3900,7 @@ var
     begin
       PopOpStack(op_Index);
 
-      Expr := ResolveMethods(VarStack.Top.FoldConstants(False), True) as TLapeTree_ExprBase;
+      Expr := ResolveMethods(VarStack.Top, True) as TLapeTree_ExprBase;
       if IsProperty(Expr.resType(), isIndexableProp) then
       begin
         VarStack.Pop();
@@ -4366,11 +4366,10 @@ function TLapeCompiler.ParseFor(ExprEnd: EParserTokenSet = ParserToken_Expressio
       tk_kw_DownTo: Result.LoopType := lptypes.loopDown;
       tk_kw_To    : Result.LoopType := lptypes.loopUp;
     end;
-
-    Next;
+    Next();
 
     Result.Counter := counterExpr;
-    Result.Limit := TLapeTree_ExprBase(ParseExpression([], False).setExpectedType(Result.Counter.resType));
+    Result.Limit := EnsureExpression(ParseExpression([], False)).setExpectedType(Result.Counter.resType) as TLapeTree_ExprBase;
   end;
 
   // for i in arr
