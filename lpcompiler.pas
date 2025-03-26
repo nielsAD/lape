@@ -3582,11 +3582,7 @@ var
   VarStack: TLapeTree_NodeStack;
   OpStack: TLapeTree_OpStack;
   Precedence: Byte;
-  Expr: TLapeTree_ExprBase;
-  Method: TLapeTree_Invoke;
-  Prop: TLapeTree_InvokeProperty;
   _LastNode: (_None, _Var, _Op);
-  InExpr: Integer;
   DoNext: Boolean;
 
   procedure PopOpNode;
@@ -3892,7 +3888,9 @@ var
   // return false = need parseOperator
   function ParseIndex: Boolean;
   var
-    isIndexableProp: Boolean;
+    Expr: TLapeTree_ExprBase;
+    IndexableProp: Boolean;
+    PropInvoke: TLapeTree_InvokeProperty;
   begin
     Result := False;
 
@@ -3900,21 +3898,21 @@ var
     begin
       PopOpStack(op_Index);
 
+      VarStack.Top := TLapeTree_ExprBase(VarStack.Top.FoldConstants());
       Expr := ResolveMethods(VarStack.Top, True) as TLapeTree_ExprBase;
-      if IsProperty(Expr.resType(), isIndexableProp) then
+      if IsProperty(Expr.resType(), IndexableProp) then
       begin
-        VarStack.Pop();
-        Prop := TLapeTree_InvokeProperty.Create(Expr, Self, getPDocPos());
+        PropInvoke := TLapeTree_InvokeProperty.Create(Expr, Self, getPDocPos());
 
-        if isIndexableProp then
+        if IndexableProp then
         begin
           if (Next() <> tk_sym_BracketClose) then
           begin
-            Prop.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma], False)));
+            PropInvoke.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma], False)));
             while True do
               case Tokenizer.Tok of
                 tk_sym_BracketClose: Break;
-                tk_sym_Comma:        Prop.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma])));
+                tk_sym_Comma:        PropInvoke.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma])));
               else
                 LapeException(lpeClosingBracketExpected, Tokenizer.DocPos);
               end;
@@ -3922,20 +3920,20 @@ var
             if (ParserTokenToOperator(Peek()) in AssignOperators) then
             begin
               Next();
-              Prop.PropertyType := ptWrite;
-              Prop.AssignOp := ParserTokenToOperator(Tokenizer.Tok);
-              Prop.addParam(EnsureExpression(ParseExpression(ParserToken_ExpressionEnd, True)));
+              PropInvoke.PropertyType := ptWrite;
+              PropInvoke.AssignOp := ParserTokenToOperator(Tokenizer.Tok);
+              PropInvoke.addParam(EnsureExpression(ParseExpression(ParserToken_ExpressionEnd, True)));
               DoNext := False;
             end else
-              Prop.PropertyType := ptRead;
+              PropInvoke.PropertyType := ptRead;
           end else
             LapeException(lpeExpectedIndexValue, Tokenizer.DocPos);
 
           Result := True;
         end;
 
-        VarStack.Push(Prop);
-        Prop := nil;
+        VarStack.Pop();
+        VarStack.Push(PropInvoke);
       end;
     end;
   end;
@@ -3971,10 +3969,12 @@ var
 var
   Signed: Boolean;
   Cast: TLapeTree_Cast;
+  InExpr: Integer;
+  Expr: TLapeTree_ExprBase;
+  Method: TLapeTree_Invoke;
 begin
   Result := nil;
   Method := nil;
-  Prop := nil;
   VarStack := TLapeTree_NodeStack.Create(8);
   OpStack := TLapeTree_OpStack.Create(16);
   _LastNode := _None;

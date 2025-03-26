@@ -1,0 +1,24 @@
+{$assertions on}
+
+type
+  TThing = record
+    Rec: record
+      Arr: array of record
+        i: Integer;
+      end;
+    end;
+  end;
+
+property TThing.Item(index: Integer): Integer;
+begin
+  Result := Rec.Arr[index].i;
+end;
+
+var
+  Thing: TThing;
+
+begin
+  Thing.Rec.Arr := [[1],[2],[3]];
+  Assert(Thing.Rec.Arr[1].i = 2);
+  Assert(Thing.Item[1] = 2);
+end.
