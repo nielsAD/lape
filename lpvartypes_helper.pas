@@ -259,7 +259,7 @@ begin
     Result := -1;
 end;
 
-function TLapeType_Helper.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Pos: PDocPos = nil): Integer;
+function TLapeType_Helper.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Pos: PDocPos): Integer;
 
   function EqualMethod(Method: TLapeType_MethodOfType): Boolean;
 
