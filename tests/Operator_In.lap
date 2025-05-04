@@ -6,7 +6,7 @@ type
 var
   e: EEnum;
   i: Int32;
-  c: Char;
+  c: AnsiChar;
 begin
   e := e1;
   Assert(not (e in [e3,e2]));

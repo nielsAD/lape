@@ -1586,11 +1586,19 @@ begin
 end;
 
 function TLapeTree_OpenArray.toByteSet: Boolean;
+var
+  NeedRebuild: Boolean;
 
   function isIntegerConst(Expr: TLapeTree_ExprBase): Boolean;
   begin
-    Result := (Expr is TLapeTree_ExprBase) and Expr.isConstant and (Expr.resType.BaseType in LapeIntegerTypes) and
-              (Expr.Evaluate.AsInteger >= 0) and (Expr.Evaluate.AsInteger <= 255);
+    if (Expr is TLapeTree_ExprBase) and Expr.isConstant and (Expr.resType.BaseType in LapeIntegerTypes) and
+       (Expr.Evaluate.AsInteger >= 0) and (Expr.Evaluate.AsInteger <= 255) then
+    begin
+      Result := True;
+      if not NeedRebuild then
+        NeedRebuild := (Expr.resType.BaseType <> ltUInt8);
+    end else
+      Result := False;
   end;
 
   procedure Add(Expr: TLapeTree_ExprBase);
@@ -1615,6 +1623,7 @@ begin
   if (FValues.Count = 0) or (FValues.Count > 256) then
     Exit(False);
 
+  NeedRebuild := False;
   for i := 0 to FValues.Count - 1 do
   begin
     if ((FValues[i] is TLapeTree_ExprBase) and isIntegerConst(TLapeTree_ExprBase(FValues[i]))) or
@@ -1625,19 +1634,22 @@ begin
     Exit(False);
   end;
 
-  // create new uint8 consts
-  OldCount := FValues.Count;
   ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_SubRange.Create(UInt8Range, FCompiler, FCompiler.getBaseType(ltUInt8)), FCompiler));
 
-  for i := 0 to FValues.Count - 1 do
-    if (FValues[i] is TLapeTree_ExprBase) then
-      Add(TLapeTree_ExprBase(FValues[i]))
-    else if (FValues[i] is TLapeTree_Range) then
-      AddRange(TLapeTree_Range(FValues[i]));
+  if NeedRebuild then
+  begin
+    // create new uint8 consts
+    OldCount := FValues.Count;
+    for i := 0 to FValues.Count - 1 do
+      if (FValues[i] is TLapeTree_ExprBase) then
+        Add(TLapeTree_ExprBase(FValues[i]))
+      else if (FValues[i] is TLapeTree_Range) then
+        AddRange(TLapeTree_Range(FValues[i]));
 
-  // delete old values
-  for i := 0 to OldCount - 1 do
-    FValues[0].Free();
+    // delete old values
+    for i := 0 to OldCount - 1 do
+      FValues[0].Free();
+  end;
 
   Assert(canCast);
   Assert(isConstant);
@@ -1645,21 +1657,44 @@ begin
 end;
 
 function TLapeTree_OpenArray.toCharSet: Boolean;
+var
+  NeedRebuild: Boolean;
 
   function isCharConst(Expr: TLapeTree_ExprBase): Boolean;
   begin
-    Result := (Expr is TLapeTree_ExprBase) and Expr.isConstant and (Expr.resType.BaseType = ltChar);
+    if (Expr is TLapeTree_ExprBase) and Expr.isConstant and (Expr.resType.BaseType in LapeCharTypes) and
+       (Expr.Evaluate.AsInteger >= 0) and (Expr.Evaluate.AsInteger <= 255) then
+    begin
+      Result := True;
+      if not NeedRebuild then
+        NeedRebuild := (Expr.resType.BaseType <> ltAnsiChar);
+    end else
+      Result := False;
+  end;
+
+  procedure Add(Expr: TLapeTree_ExprBase);
+  begin
+    addValue(TLapeTree_GlobalVar.Create(FCompiler.getConstant(Expr.Evaluate.AsInteger, ltAnsiChar), Self));
+  end;
+
+  procedure AddRange(Expr: TLapeTree_Range);
+  var
+    i: Integer;
+  begin
+    for i := Expr.Lo.Evaluate.AsInteger to Expr.Hi.Evaluate.AsInteger do
+      addValue(TLapeTree_GlobalVar.Create(FCompiler.getConstant(i, ltAnsiChar), Self));
   end;
 
 const
-  CharRange: TLapeRange = (Lo: Ord(Low(Char)); Hi: Ord(High(Char)));
+  CharRange: TLapeRange = (Lo: Ord(Low(AnsiChar)); Hi: Ord(High(AnsiChar)));
 var
-  i: Integer;
+  i, OldCount: Integer;
 begin
   Result := True;
   if (FValues.Count = 0) or (FValues.Count > 256) then
     Exit(False);
 
+  NeedRebuild := False;
   for i := 0 to FValues.Count - 1 do
   begin
     if ((FValues[i] is TLapeTree_ExprBase) and isCharConst(TLapeTree_ExprBase(FValues[i]))) or
@@ -1670,10 +1705,26 @@ begin
     Exit(False);
   end;
 
-  ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_SubRange.Create(CharRange, FCompiler, FCompiler.getBaseType(ltChar)), FCompiler));
+  ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_SubRange.Create(CharRange, FCompiler, FCompiler.getBaseType(ltAnsiChar)), FCompiler));
+
+  if NeedRebuild then
+  begin
+    // create new ansichar consts
+    OldCount := FValues.Count;
+    for i := 0 to FValues.Count - 1 do
+      if (FValues[i] is TLapeTree_ExprBase) then
+        Add(TLapeTree_ExprBase(FValues[i]))
+      else if (FValues[i] is TLapeTree_Range) then
+        AddRange(TLapeTree_Range(FValues[i]));
+
+    // delete old values
+    for i := 0 to OldCount - 1 do
+      FValues[0].Free();
+  end;
 
   Assert(canCast);
   Assert(isConstant);
+  Assert((FValues.Count > 0) and (FValues.Count <= 256));
 end;
 
 function TLapeTree_OpenArray.toSet: Boolean;
@@ -3087,7 +3138,7 @@ begin
             ltUInt8..ltInt64:
               if not TLapeTree_OpenArray(Right).toByteSet() then
                 LapeException(lpeInvalidConstByteSet, DocPos);
-            ltChar:
+            ltAnsiChar:
               if not TLapeTree_OpenArray(Right).toCharSet() then
                 LapeException(lpeInvalidConstCharSet, DocPos);
             else
