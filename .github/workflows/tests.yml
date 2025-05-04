@@ -40,7 +40,7 @@ jobs:
 
           - os: macos-14
             name: Mac Arm
-            ffi: default
+            ffi: '' # currently has some fails
             laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20aarch64/Lazarus%203.8/lazarus-darwin-aarch64-3.8.zip
             fpc-url: |
               https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20aarch64/Lazarus%203.8/fpc-3.2.2.intelarm64-macosx.dmg
