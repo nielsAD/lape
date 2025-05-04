@@ -16,34 +16,33 @@ jobs:
           - os: windows-latest
             name: Windows 64
             ffi: default default-static
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2064%20bits/Lazarus%203.0/lazarus-3.0-fpc-3.2.2-win64.exe
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2064%20bits/Lazarus%203.8/lazarus-3.8-fpc-3.2.2-win64.exe
             
           - os: windows-latest
             name: Windows 32
             ffi: stdcall cdecl pascal register stdcall-static cdecl-static pascal-static register-static
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2032%20bits/Lazarus%203.0/lazarus-3.0-fpc-3.2.2-win32.exe
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2032%20bits/Lazarus%203.8/lazarus-3.8-fpc-3.2.2-win32.exe
 
           - os: ubuntu-latest
             name: Linux 64
             ffi: default
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.0/lazarus-project_3.0.0-0_amd64.deb
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.8/lazarus-project_3.8.0-0_amd64.deb
             fpc-url: |
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.0/fpc-laz_3.2.2-210709_amd64.deb
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.0/fpc-src_3.2.2-210709_amd64.deb
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.6/fpc-laz_3.2.2-210709_amd64.deb
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.6/fpc-src_3.2.2-210709_amd64.deb
           
           - os: macos-latest
             name: MacOS 64
             ffi: default
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/Lazarus-3.0-macosx-x86_64.pkg
+            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.8/lazarus-darwin-x86_64-3.8.zip
             fpc-url: |
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/fpc-3.2.2.intelarm64-macosx.dmg
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.0/fpc-src-3.2.2-20210709-macosx.dmg
+              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.8/fpc-3.2.2.intelarm64-macosx.dmg
         
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.2
       
       - name: Install Lazarus
-        uses: ollydev/setup-lazarus@v3.3
+        uses: ollydev/setup-lazarus@v3.5
         with:
           laz-url: ${{ matrix.config.laz-url }}
           fpc-url: ${{ matrix.config.fpc-url }}
