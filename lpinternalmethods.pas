@@ -72,6 +72,7 @@ type
   TLapeTree_InternalMethod_New = class(TLapeTree_InternalMethod)
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
+    function resType: TLapeType; override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
@@ -319,7 +320,7 @@ implementation
 
 uses
   lpparser, lpvartypes_array, lpmessages, lpeval, lpvartypes_ord, lpinterpreter_types,
-  lpvartypes_record;
+  lpvartypes_record, lpvartypes_object;
 
 type
   __TLapeTree_Operator = class(TLapeTree_Operator);
@@ -1000,7 +1001,15 @@ end;
 constructor TLapeTree_InternalMethod_New.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FSpecialParam := spForce;
+  FSpecialParam := spTypeThenParams;
+end;
+
+function TLapeTree_InternalMethod_New.resType: TLapeType;
+begin
+  if (FResType = nil) and (FParams.Count >= 1) and (Fparams[0].resType() is TLapeType_Type) then
+    FResType := TLapeType_Type(FParams[0].resType()).TType;
+
+  Result := inherited resType;
 end;
 
 function TLapeTree_InternalMethod_New.Compile(var Offset: Integer): TResVar;
@@ -1008,46 +1017,80 @@ var
   Param: TResVar;
   VarType: TLapeType;
   IsPointer: Boolean;
+  op: TLapeTree_Operator;
 begin
   Result := NullResVar;
   Dest := NullResVar;
-  if (FParams.Count <> 1) or isEmpty(FParams[0]) then
-    LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
 
-  Param := FParams[0].Compile(Offset);
-  VarType := Param.VarType;
-  IsPointer := (VarType <> nil) and (VarType.BaseType = ltPointer);
+  if (resType() is TLapeType_Object) then
+  begin
+    Result := _ResVar.New(FCompiler.getTempVar(resType()));
+    Result.Writeable := True;
 
-  if IsPointer then
-    if (VarType is TLapeType_Pointer) then
-      if TLapeType_Pointer(VarType).PConst then
-        LapeException(lpeVariableExpected, [FParams[0], Self])
-      else
-        VarType := TLapeType_Pointer(VarType).PType
-    else
-      LapeException(lpeImpossible, _DocPos);
+    with TLapeTree_InternalMethod_SetLength.Create(Self) do
+    try
+      addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
+      addParam(TLapeTree_Integer.Create(TLapeType_Object(Self.resType()).TotalFieldSize, Self));
+      Compile(Offset);
+    finally
+      Free();
+    end;
 
-  if (VarType = nil) or (not Param.Writeable) then
-    LapeException(lpeVariableExpected, [FParams[0], Self]);
-
-  with TLapeTree_Operator.Create(op_Assign, Self) do
-  try
-    Left := TLapeTree_ResVar.Create(Param.IncLock(), Self.FParams[0]);
-
-    if isPointer then
+    if resType().HasSubDeclaration('Construct', bTrue) then
     begin
-      Right := TLapeTree_Invoke.Create('AllocMem', Self);
-      TLapeTree_Invoke(Right).addParam(TLapeTree_Integer.Create(VarType.Size, Self.FParams[0]));
-    end
-    else
-      Right := TLapeTree_GlobalVar.Create(VarType.NewGlobalVarP(), Self.FParams[0]);
+      Op := TLapeTree_Operator.Create(op_Dot, Self);
+      Op.Left := TLapeTree_ResVar.Create(Result.IncLock(), Self);
+      Op.Right := TLapeTree_Field.Create('Construct', Self);
 
-    Compile(Offset);
-  finally
-    Free();
+      with TLapeTree_Invoke.Create(Op, FCompiler) do
+      try
+        while (Self.FParams.Count > 1) do
+          addParam(Self.FParams[1]);
+        Compile(Offset);
+      finally
+        Free();
+      end;
+    end;
+  end else
+  begin
+    if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+      LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+
+    Param := FParams[0].Compile(Offset);
+    VarType := Param.VarType;
+    IsPointer := (VarType <> nil) and (VarType.BaseType = ltPointer);
+
+    if IsPointer then
+      if (VarType is TLapeType_Pointer) then
+        if TLapeType_Pointer(VarType).PConst then
+          LapeException(lpeVariableExpected, [FParams[0], Self])
+        else
+          VarType := TLapeType_Pointer(VarType).PType
+      else
+        LapeException(lpeImpossible, _DocPos);
+
+    if (VarType = nil) or (not Param.Writeable) then
+      LapeException(lpeVariableExpected, [FParams[0], Self]);
+
+    with TLapeTree_Operator.Create(op_Assign, Self) do
+    try
+      Left := TLapeTree_ResVar.Create(Param.IncLock(), Self.FParams[0]);
+
+      if isPointer then
+      begin
+        Right := TLapeTree_Invoke.Create('AllocMem', Self);
+        TLapeTree_Invoke(Right).addParam(TLapeTree_Integer.Create(VarType.Size, Self.FParams[0]));
+      end
+      else
+        Right := TLapeTree_GlobalVar.Create(VarType.NewGlobalVarP(), Self.FParams[0]);
+
+      Compile(Offset);
+    finally
+      Free();
+    end;
+
+    Param.Spill(1);
   end;
-
-  Param.Spill(1);
 end;
 
 constructor TLapeTree_InternalMethod_Dispose.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
@@ -1638,6 +1681,22 @@ begin
      (not Len.HasType()) or (not (Len.VarType.BaseType in LapeIntegerTypes))
 	then
     LapeException(lpeInvalidEvaluation, DocPos);
+
+  if (Param.VarType is TLapeType_Object) then
+  begin
+    Param.VarType := FCompiler.getBaseType(ltPointer);
+    with TLapeTree_Invoke.Create('_ObjectSetLength', Self) do
+    try
+      addParam(TLapeTree_ResVar.Create(Param.IncLock(), Self.FParams[0]));
+      addParam(TLapeTree_ResVar.Create(Len.IncLock(), Self.FParams[1]));
+      addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_DisposeObject', [tmpType]), Self));
+
+      Result := Compile(Offset);
+    finally
+      Free();
+    end;
+    Exit;
+  end;
 
   case Param.VarType.BaseType of
     ltShortString:   _ArraySetLength := FCompiler['_SStr_SetLen'];

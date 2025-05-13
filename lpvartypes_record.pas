@@ -38,7 +38,7 @@ type
 
     procedure ClearCache; override;
     procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); virtual;
-    procedure addClassField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: lpString; IsConst: Boolean); virtual;
+    procedure addConstField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: lpString); virtual;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -196,7 +196,7 @@ begin
   ClearCache();
 end;
 
-procedure TLapeType_Record.addClassField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: lpString; IsConst: Boolean);
+procedure TLapeType_Record.addConstField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: lpString);
 var
   Field: TLapeGlobalVar;
 begin
@@ -205,9 +205,8 @@ begin
   Field := TLapeGlobalVar.Create(FieldType);
   Field.Name := AName;
   if (FieldValue <> nil) then
-    FieldType.EvalConst(op_Assign, Field, FieldValue, []);
-
-  Field.isConstant := IsConst;
+    FieldType.EvalConst(op_Assign, Field, FieldValue, [lefAssigning]);
+  Field.isConstant := True;
 
   addSubDeclaration(Field);
 end;
