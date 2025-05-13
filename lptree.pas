@@ -225,6 +225,7 @@ type
     ESpecialParam = (
       spNo,    // normal parameters
       spForce, // force the next expression to be the parameter even without parentheses
+      spTypeThenParams,
       spType   // type parameter in <> like generics
     );
   protected

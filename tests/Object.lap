@@ -1,0 +1,150 @@
+{$assertions on}
+
+var
+  creates, destroys: Int32;
+  tracking: array of Int32;
+
+type
+  TMyObject = object
+    i: Int32;
+    s: String;
+  end;
+
+  TMyComplexObject = object
+    i: Int32;
+    s: String;
+    a: TMyObject;
+    b: array of Int32;
+    c: array of TMyObject;
+  end;
+
+procedure TMyComplexObject.Construct;
+var
+  i: Int32;
+  tmp: array[0..Pred((SizeOf(Pointer)*3) + SizeOf(String) + SizeOf(Int32))] of UInt8;
+begin
+  Assert(Self <> nil);
+  Assert(Length(Self) = Length(tmp));
+  Assert(CompareMem(tmp[0], Self[0], Length(Self)));
+
+  self.i := Inc(creates);
+  self.s := 'Number: ' + IntToStr(self.i);
+
+  SetLength(self.b, creates);
+  SetLength(self.c, creates);
+  for i := 0 to creates-1 do
+  begin
+    self.b[i] := i;
+    self.c[i] := new TMyObject;
+  end;
+
+  tracking += self.i;
+end;
+
+procedure TMyComplexObject.Destroy;
+var
+  i: Integer;
+begin
+  Assert(self.s = 'Number: ' + IntToStr(self.i));
+  for i := 0 to High(tracking) do
+    if (tracking[i] = self.i) then
+      tracking[i] := -1;
+
+  Inc(destroys);
+end;
+
+procedure TMyObject.Construct;
+var
+  tmp: array[0..Pred(SizeOf(Int32) + SizeOf(Pointer))] of UInt8;
+begin
+  Assert(Self <> nil);
+  Assert(Length(Self) = Length(tmp));
+  Assert(CompareMem(tmp[0], Self[0], Length(Self)));
+
+  self.i := Inc(creates);
+  self.s := 'Number: ' + IntToStr(self.i);
+
+  tracking += self.i;
+end;
+
+procedure TMyObject.Destroy;
+var
+  i: Int32;
+begin
+  Assert(self.s = 'Number: ' + IntToStr(self.i));
+  for i := 0 to High(tracking) do
+    if (tracking[i] = self.i) then
+      tracking[i] := -1;
+
+  Inc(destroys);
+end;
+
+procedure test;
+var
+  obj: TMyObject;
+  obj2: TMyObject;
+begin
+  obj := new TMyObject;
+  obj2 := obj;
+  obj := new TMyObject;
+  for 1 to 3 do
+    obj := new TMyObject;
+  obj := new TMyObject;
+end;
+
+procedure testRef;
+var
+  obj: TMyObject;
+  a,b,c: TMyObject;
+  p: Pointer;
+begin
+  obj := new TMyObject;
+  a := obj;
+  b := obj;
+  c := obj;
+end;
+
+procedure testLoop;
+var
+  obj: TMyObject;
+  i: Integer;
+begin
+  for i:=1 to 5 do
+    obj := new TMyObject;
+end;
+
+procedure testArray;
+var
+  a: array of TMyObject;
+begin
+  SetLength(a,5);
+  a[0] := new TMyObject;
+  a[3] := new TMyObject;
+end;
+
+procedure testComplex;
+var
+  a: TMyComplexObject;
+  b: array of TMyComplexObject;
+begin
+  a := new TMyComplexObject;
+  SetLength(a.c,3);
+  a.c[2] := new TMyObject;
+
+  b += new TMyComplexObject;
+  b += new TMyComplexObject;
+end;
+
+var i: Int32;
+begin
+  test();
+  testRef();
+  testLoop();
+  testComplex();
+  testArray();
+
+  Assert(creates = destroys);
+  Assert(creates = Length(tracking));
+  for i := 0 to High(tracking) do
+    Assert(tracking[i] = -1);
+end.
