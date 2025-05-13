@@ -1,0 +1,98 @@
+{$assertions on}
+
+var
+  creates, destroys: Integer;
+  allocations: array of Pointer;
+
+function MyAllocMem(i: SizeInt): Pointer;
+begin
+  Result := AllocMem(i);
+  allocations += Result;
+  inc(creates);
+end;
+
+procedure MyFreeMem(p: Pointer);
+begin
+  FreeMem(p);
+  allocations.remove(p);
+  inc(destroys);
+end;
+
+type
+  TBitmap = object
+    width, height: Integer;
+    data: ^Byte;
+  end;
+
+procedure TBitmap.Construct(width, height: Integer);
+begin
+  Self.width := width;
+  Self.height := height;
+  Self.data := MyAllocMem(width*height*4);
+end;
+
+procedure TBitmap.Destroy;
+begin
+  MyFreeMem(self.data);
+end;
+
+procedure TBitmap.Fill(color: Integer);
+var
+  i: Integer;
+  ptr: ^Int32;
+begin
+  ptr := Pointer(self.data);
+  for i:=0 to self.width*self.height-1 do
+  begin
+    ptr^ := color;
+    inc(ptr);
+  end;
+end;
+
+// Test that object is cleaning up as expected
+procedure Test;
+
+  procedure TestParams(const a: TBitmap; constref b: TBitmap; var c: TBitmap; out d: TBitmap; e: TBitmap);
+  begin
+    a.fill(1);
+    b.fill(2);
+    c.fill(3);
+    c := new TBitmap(c.width+1, c.height+1);
+    d.fill(4);
+    d := new TBitmap(d.width+1, d.height+1);
+    e.fill(5);
+  end;
+
+var bmp: TBitmap;
+var bmps: array of TBitmap;
+var i: Integer;
+begin
+  bmp := new TBitmap(20, 20);
+  Assert(creates = 1);
+  Assert(destroys = 0);
+
+  for i:=1 to 20 do
+  begin
+    bmp := new TBitmap(bmp.width+1, bmp.height+1);
+    if (i mod 2 = 0) then
+      bmps += bmp;
+  end;
+  Assert(creates = 21);
+  Assert(destroys = 10);
+
+  Assert(creates = 21);
+  TestParams(bmps[7], bmps[6], bmps[5], bmps[4], bmps[3]);
+  Assert(creates = 23);
+
+  Assert(destroys = 12);
+  for i := 2 to 5 do
+    bmps[i] := [];
+  Assert(destroys = 16);
+end;
+
+begin
+  Test();
+  Assert(Length(allocations) = 0);
+  Assert(creates = 23);
+  Assert(destroys = 23);
+end.

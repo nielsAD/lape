@@ -282,6 +282,66 @@ var
     '  end;'                                                                             + LineEnding +
     'end;';
 
+  _LapeObjectSetLength: lpString =
+    'procedure _ObjectSetLength(var p: Pointer; NewLen: SizeInt;'                        + LineEnding +
+    '  ObjectDispose: private procedure(constref p: Pointer));'                          + LineEnding +
+    'const'                                                                              + LineEnding +
+    '  HeaderSize = SizeOf(PtrInt) + SizeOf(SizeInt);'                                   + LineEnding +
+    'var'                                                                                + LineEnding +
+    '  i, OldLen, NewSize: SizeInt;'                                                     + LineEnding +
+    '  NewP: Pointer;'                                                                   + LineEnding +
+    '  DoFree: EvalBool;'                                                                + LineEnding +
+    'begin'                                                                              + LineEnding +
+    '  NewSize := NewLen;'                                                               + LineEnding +
+    '  DoFree := NewSize <= 0;'                                                          + LineEnding +
+    '  Inc(NewSize, HeaderSize);'                                                        + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  if (p = nil) then'                                                                + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    if DoFree then'                                                                 + LineEnding +
+    '      Exit;'                                                                        + LineEnding +
+    '    p := AllocMem(NewSize);'                                                        + LineEnding +
+    ''                                                                                   + LineEnding +
+    '    PtrInt(p^) := 1;'                                                               + LineEnding +
+    '    Inc(p, SizeOf(PtrInt));'                                                        + LineEnding +
+    '    SizeInt(p^) := NewLen' {$IFDEF FPC}+'-1'{$ENDIF}+';'                            + LineEnding +
+    '    Inc(p, SizeOf(SizeInt));'                                                       + LineEnding +
+    '    Exit;'                                                                          + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  Dec(p, SizeOf(SizeInt));'                                                         + LineEnding +
+    '  OldLen := p^' {$IFDEF FPC}+'+1'{$ENDIF}+';'                                       + LineEnding +
+    '  Dec(p, SizeOf(PtrInt));'                                                          + LineEnding +
+    ''                                                                                   + LineEnding +
+    '  if (PtrInt(p^) <= 1) then'                                                        + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    if DoFree then'                                                                 + LineEnding +
+    '    begin'                                                                          + LineEnding +
+    '      Inc(p, HeaderSize);'                                                          + LineEnding +
+    '      ObjectDispose(p);'                                                            + LineEnding +
+    '      Dec(p, HeaderSize);'                                                          + LineEnding +
+    ''                                                                                   + LineEnding +
+    '      FreeMem(p);'                                                                  + LineEnding +
+    '      p := nil;'                                                                    + LineEnding +
+    '      Exit;'                                                                        + LineEnding +
+    '    end;'                                                                           + LineEnding +
+    '    ReallocMem(p, NewSize);'                                                        + LineEnding +
+    '    PtrInt(p^) := 1;'                                                               + LineEnding +
+    '    Inc(p, SizeOf(PtrInt));'                                                        + LineEnding +
+    '    SizeInt(p^) := NewLen' {$IFDEF FPC}+'-1'{$ENDIF}+';'                            + LineEnding +
+    '    Inc(p, SizeOf(SizeInt));'                                                       + LineEnding +
+    ''                                                                                   + LineEnding +
+    '    if (NewLen > OldLen) then'                                                      + LineEnding +
+    '      FillMem(p[OldLen]^, (NewLen - OldLen));'                                      + LineEnding +
+    '  end'                                                                              + LineEnding +
+    '  else'                                                                             + LineEnding +
+    '  begin'                                                                            + LineEnding +
+    '    Dec(PtrInt(p^));'                                                               + LineEnding +
+    '    p := nil;'                                                                      + LineEnding +
+    '    _ObjectSetLength(p, NewLen, ObjectDispose);'                                    + LineEnding +
+    '  end;'                                                                             + LineEnding +
+    'end;';
+
   _LapeCopy: lpString =
     'procedure _ArrayCopy(p: ConstPointer;'                                              + LineEnding +
     '  Start: SizeInt = 0; Count: SizeInt = High(SizeInt);'                              + LineEnding +

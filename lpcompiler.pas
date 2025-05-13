@@ -117,6 +117,8 @@ type
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    function GetDisposeObjectMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+
     function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     function GetMethod_ArraySort(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
@@ -312,7 +314,7 @@ implementation
 
 uses
   Variants,
-  lpvartypes_ord, lpvartypes_record, lpvartypes_array,
+  lpvartypes_ord, lpvartypes_record, lpvartypes_array, lpvartypes_object,
   lpinternalmethods, lpinternalmethods_algorithm,
   lpmessages, lpeval, lpinterpreter_types, lpvartypes_helper;
 
@@ -624,6 +626,69 @@ begin
     DecStackInfo(True, False, Method = nil);
   end;
 end;
+
+function TLapeCompiler.GetDisposeObjectMethod(
+  Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;
+  AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+var
+  Method: TLapeTree_Method;
+  Header: TLapeType_Method;
+  ParamVar: TResVar;
+  Op: TLapeTree_Operator;
+  Dispose: TLapeTree_InternalMethod_Dispose;
+  i: Integer;
+begin
+  Result := nil;
+  Method := nil;
+  if (Sender = nil) or (Length(AParams) <> 1) or (not (AParams[0] is TLapeType_Object)) or (AResult <> nil) then
+    Exit;
+
+  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConstRef], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
+
+  IncStackInfo();
+  try
+    Result := Header.NewGlobalVar(EndJump);
+    Result.VarType.Name := '_DisposeObject';
+    Sender.addMethod(Result);
+
+    ParamVar := _ResVar.New(FStackInfo.addVar(lptConstRef, AParams[0], '!AVar'));
+    ParamVar.Writeable := True;
+
+    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
+    Method.Statements := TLapeTree_StatementList.Create(Self);
+
+    if ParamVar.VarType.HasSubDeclaration('Destroy', bTrue) then
+    begin
+      Op := TLapeTree_Operator.Create(op_Dot, Self);
+      Op.Left := TLapeTree_ResVar.Create(ParamVar.IncLock(), Self);
+      Op.Right := TLapeTree_Field.Create('Destroy', Self);
+
+      Method.Statements.addStatement(TLapeTree_Invoke.Create(Op, Self));
+    end;
+
+    with TLapeType_Object(AParams[0]) do
+      for i := 0 to FieldMap.Count - 1 do
+      begin
+        if not FieldMap.ItemsI[i].FieldType.NeedFinalization then
+          Continue;
+
+        Op := TLapeTree_Operator.Create(op_Dot, Self);
+        Op.Left := TLapeTree_ResVar.Create(ParamVar.IncLock(), Self);
+        Op.Right := TLapeTree_Field.Create(FieldMap.Key[i], Self);
+
+        Dispose := TLapeTree_InternalMethod_Dispose.Create(Method.Statements);
+        Dispose.FunctionOnly := True;
+        Dispose.addParam(Op);
+
+        Method.Statements.addStatement(Dispose);
+      end;
+
+    addDelayedExpression(Method);
+  finally
+    DecStackInfo(True, False, Method = nil);
+  end;
+end;
+
 
 function TLapeCompiler.GetCopyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
@@ -1533,6 +1598,7 @@ begin
 
   addToString();
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
+  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeObjectMethod).NewGlobalVar('_DisposeObject'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetObjectifyMethod).NewGlobalVar('_Objectify'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetMethod_ArraySort).NewGlobalVar('_ArraySort'));
@@ -1567,6 +1633,7 @@ begin
     _LapeToString_Array +
     _LapeSwap +
     _LapeSetLength +
+    _LapeObjectSetLength +
     _LapeCopy +
     _LapeDelete +
     _LapeInsert +
@@ -3042,39 +3109,14 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       Result := addManagedType(TLapeType_DynArray.Create(ParseType(nil, addToStackOwner), Self, '', @DocPos));
   end;
 
-  procedure ParseRecord(IsPacked: Boolean = False);
+  procedure ParseFields(IsPacked: Boolean);
   var
     i: Integer;
-    IsRecord: Boolean;
-    Rec: TLapeType_Record absolute Result;
     FieldType: TLapeType;
     Identifiers: TStringArray;
     Expression: TLapeTree_ExprBase;
     FieldValue: TLapeGlobalVar;
   begin
-    IsRecord := Tokenizer.Tok = tk_kw_Record;
-
-    Next();
-
-    if (lcoInheritableRecords in FOptions) and (Tokenizer.Tok = tk_sym_ParenthesisOpen) then
-    begin
-      FieldType := ParseType(nil, addToStackOwner);
-      if (not (FieldType is TLapeType_Record)) or (IsRecord <> (FieldType.BaseType = ltRecord)) then
-        LapeException(lpeUnknownParent, Tokenizer.DocPos);
-      Tokenizer.Expect(tk_sym_ParenthesisClose, True, False);
-      Rec := FieldType.CreateCopy(True) as TLapeType_Record;
-      if (Peek() = tk_sym_SemiColon) then
-      begin
-        Result := addManagedType(Rec);
-        Exit;
-      end else
-        Next();
-    end
-    else if IsRecord then
-      Rec := TLapeType_Record.Create(Self, nil, '', getPDocPos())
-    else
-      Rec := TLapeType_Union.Create(Self, nil, '', getPDocPos());
-
     if (Tokenizer.Tok <> tk_kw_End) then
     repeat
       if (Tokenizer.Tok = tk_kw_Const) then
@@ -3084,6 +3126,8 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         FieldType := nil;
 
         Identifiers := ParseIdentifierList(True);
+        if Result.HasChild(Identifiers[0]) then
+          LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[0]], DocPos);
 
         if Expect([tk_sym_Colon, tk_sym_Equals], False, False) = tk_sym_Colon then
           FieldType := ParseType(nil);
@@ -3100,28 +3144,76 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
           Expression.Free();
         end;
 
-        Rec.addClassField(FieldType, FieldValue, Identifiers[0], True);
+        if (Result is TLapeType_Record) then
+          TLapeType_Record(Result).addConstField(FieldType, FieldValue, Identifiers[0])
+        else if (Result is TLapeType_Object) then
+          TLapeType_Object(Result).addConstField(FieldType, FieldValue, Identifiers[0]);
       end else
       begin
         Identifiers := ParseIdentifierList();
         Expect(tk_sym_Colon, False, False);
         FieldType := ParseType(nil, addToStackOwner);
         Expect(tk_sym_SemiColon, True, False);
+
         for i := 0 to High(Identifiers) do
         begin
-          if Rec.HasChild(Identifiers[i]) then
+          if Result.HasChild(Identifiers[i]) then
             LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], DocPos);
 
-          if IsPacked then
-            Rec.addField(FieldType, Identifiers[i], 1)
-          else
-            Rec.addField(FieldType, Identifiers[i], FOptions_PackRecords);
+          if (Result is TLapeType_Record) then
+          begin
+            if IsPacked then
+              TLapeType_Record(Result).addField(FieldType, Identifiers[i], 1)
+            else
+              TLapeType_Record(Result).addField(FieldType, Identifiers[i], FOptions_PackRecords);
+          end else if (Result is TLapeType_Object) then
+            TLapeType_Object(Result).addField(FieldType, Identifiers[i]);
         end;
       end;
       Expect(tk_sym_SemiColon, False, True);
     until (Tokenizer.Tok in [tk_NULL, tk_kw_End]);
+  end;
 
-    Result := addManagedType(Rec);
+  procedure ParseRecord(IsPacked: Boolean = False);
+  var
+    IsRecord: Boolean;
+    FieldType: TLapeType;
+  begin
+    IsRecord := Tokenizer.Tok = tk_kw_Record;
+
+    Next();
+
+    if (lcoInheritableRecords in FOptions) and (Tokenizer.Tok = tk_sym_ParenthesisOpen) then
+    begin
+      FieldType := ParseType(nil, addToStackOwner);
+      if (not (FieldType is TLapeType_Record)) or (IsRecord <> (FieldType.BaseType = ltRecord)) then
+        LapeException(lpeUnknownParent, Tokenizer.DocPos);
+      Tokenizer.Expect(tk_sym_ParenthesisClose, True, False);
+      Result := FieldType.CreateCopy(True) as TLapeType_Record;
+      if (Peek() = tk_sym_SemiColon) then
+      begin
+        Result := addManagedType(Result);
+        Exit;
+      end else
+        Next();
+    end
+    else if IsRecord then
+      Result := TLapeType_Record.Create(Self, nil, '', getPDocPos())
+    else
+      Result := TLapeType_Union.Create(Self, nil, '', getPDocPos());
+
+    ParseFields(IsPacked);
+
+    Result := addManagedType(Result);
+  end;
+
+  procedure ParseObject;
+  begin
+    Result := TLapeType_Object.Create(Self, nil, '', getPDocPos());
+    SetUniqueTypeID(Result); // important for Dispose
+    Next();
+    ParseFields(True);
+    Result := addManagedType(Result);
   end;
 
   procedure ParseSet;
@@ -3371,6 +3463,7 @@ begin
     case Next() of
       tk_kw_Array: ParseArray();
       tk_kw_Record, tk_kw_Union: ParseRecord();
+      tk_kw_Object: ParseObject();
       tk_kw_Set: ParseSet();
       tk_kw_Packed:
         begin
@@ -3947,6 +4040,26 @@ var
           Method.addParam(EnsureExpression(ParseExpression(ReturnOn, Tokenizer.Tok = tk_kw_At)));
           if (Method is TLapeTree_InternalMethod_Raise) and (Tokenizer.Tok = tk_kw_At) then
             Method.addParam(EnsureExpression(ParseExpression(ReturnOn, True)));
+        end;
+
+      spTypeThenParams:
+        begin
+          Method.addParam(EnsureExpression(getExpression(Tokenizer.TokString)));
+          if Expect([tk_sym_ParenthesisOpen, tk_sym_SemiColon]) = tk_sym_ParenthesisOpen then
+          begin
+            if (Next() <> tk_sym_ParenthesisClose) then
+            begin
+              Method.AddParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True)));
+              while True do
+                case Tokenizer.Tok of
+                  tk_sym_ParenthesisClose: Break;
+                  tk_sym_Comma: Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], True, True)));
+                  else
+                    LapeException(lpeClosingParenthesisExpected, Tokenizer.DocPos);
+                end;
+            end;
+            Expect(tk_sym_ParenthesisClose, False, True);
+          end;
         end;
 
       spType:
