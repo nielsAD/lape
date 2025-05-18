@@ -524,6 +524,8 @@ begin
     Result := FPType
   else if (op = op_Assign) and (BaseType = ltDynArray) and HasType() and (ARight <> nil) and (ARight is ClassType) and FPType.Equals(TLapeType_DynArray(ARight).FPType) then
     Result := Self
+  else if (op = op_Assign) and (BaseType = ltDynArray) and HasType() and (ARight is TLapeType_NilPointer) then
+    Result := Self
   else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(ARight) then
     Result := Self
   else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and (ARight <> nil) and (ARight is ClassType) and FPType.Equals(TLapeType_DynArray(ARight).FPType) then
@@ -749,6 +751,18 @@ begin
       try
         Left := TLapeTree_ResVar.Create(IndexVar.IncLock(), FCompiler, Pos);
         Right := TLapeTree_ResVar.Create(ARight.IncLock(), Left);
+        Compile(Offset);
+      finally
+        Free();
+      end;
+    end
+    else if (ARight.VarType is TLapeType_NilPointer) then
+    begin
+      with TLapeTree_InternalMethod_SetLength.Create(FCompiler, Pos) do
+      try
+        addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), FCompiler, Pos));
+        addParam(TLapeTree_GlobalVar.Create(FCompiler.getConstant(0), FCompiler, Pos));
+
         Compile(Offset);
       finally
         Free();
