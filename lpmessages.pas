@@ -89,6 +89,8 @@ const
   lpeInvalidConstSet = 'Invalid constant set';
   lpeInvalidConstByteSet = 'Invalid constant (Byte) set';
   lpeInvalidConstCharSet = 'Invalid constant (Char) set';
+  lpeInvalidConstructMethod = 'Invalid construct method';
+  lpeInvalidConstructMethod1 = 'Invalid construct method: "%s"';
   lpeInvalidCompareMethod = 'Invalid compare method';
   lpeInvalidEvaluation = 'Invalid evaluation';
   lpeInvalidForward = 'Forwarded declaration "%s" not resolved';

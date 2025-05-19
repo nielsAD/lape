@@ -24,11 +24,11 @@ type
     data: ^Byte;
   end;
 
-procedure TBitmap.Construct(width, height: Integer);
+function TBitmap.Construct(width, height: Integer): TBitmap; static;
 begin
-  Self.width := width;
-  Self.height := height;
-  Self.data := MyAllocMem(width*height*4);
+  Result.width := width;
+  Result.height := height;
+  Result.data := MyAllocMem(width*height*4);
 end;
 
 procedure TBitmap.Destroy;

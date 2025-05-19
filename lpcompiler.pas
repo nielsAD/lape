@@ -689,7 +689,6 @@ begin
   end;
 end;
 
-
 function TLapeCompiler.GetCopyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
 var
   Method: TLapeTree_Method;

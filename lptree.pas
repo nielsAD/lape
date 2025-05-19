@@ -189,6 +189,8 @@ type
     function getParamTypes: TLapeTypeArray; virtual;
     function getParamTypesStr: lpString; virtual;
   public
+    ResultVar: TResVar;
+
     constructor Create(Ident: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(Ident: TLapeTree_ExprBase; ASource: TLapeTree_Base); reintroduce; overload; virtual;
     constructor Create(Ident: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce;overload; virtual;
@@ -223,10 +225,10 @@ type
   TLapeTree_InternalMethod = class(TLapeTree_Invoke)
   public type
     ESpecialParam = (
-      spNo,    // normal parameters
-      spForce, // force the next expression to be the parameter even without parentheses
-      spTypeThenParams,
-      spType   // type parameter in <> like generics
+      spNo,             // normal parameters
+      spForce,          // force the next expression to be the parameter even without parentheses
+      spTypeThenParams, // type then parameters like: TMyType(1, 'abc')
+      spType            // type parameter in <> like generics
     );
   protected
     FSpecialParam: ESpecialParam;
@@ -2412,10 +2414,13 @@ var
       Dest := NullResVar;
       if (Res <> nil) then
       begin
-        Result := _ResVar.New(FCompiler.getTempVar(Res));
-
-        if (lcoAlwaysInitialize in FCompilerOptions) then
-          FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
+        Result := ResultVar;
+        if (Result.VarPos.MemPos = NullResVar.VarPos.MemPos) then
+        begin
+          Result := _ResVar.New(FCompiler.getTempVar(Res));
+          if (lcoAlwaysInitialize in FCompilerOptions) then
+            FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
+        end;
 
         Result.isConstant := True;
         AssignToStack(Result, Self._DocPos);
@@ -2466,19 +2471,23 @@ var
       end
       else
       begin
-        Result.VarType := Res;
-        if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
-          FDest := VarResVar;
-        FCompiler.getDestVar(FDest, Result, op_Unknown);
-
-        if (lcoInitExternalResult in FCompilerOptions) then
+        Result := ResultVar;
+        if (Result.VarPos.MemPos = NullResVar.VarPos.MemPos) then
         begin
-          wasConstant := not Result.Writeable;
-          if wasConstant then
-            Result.Writeable := True;
-          FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
-          if wasConstant then
-            Result.Writeable := False;
+          Result.VarType := Res;
+          if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
+            FDest := VarResVar;
+          FCompiler.getDestVar(FDest, Result, op_Unknown);
+
+          if (lcoInitExternalResult in FCompilerOptions) then
+          begin
+            wasConstant := not Result.Writeable;
+            if wasConstant then
+              Result.Writeable := True;
+            FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
+            if wasConstant then
+              Result.Writeable := False;
+          end;
         end;
 
         FCompiler.Emitter._InvokeImportedFunc(IdentVar, Result, i * SizeOf(Pointer), Offset, @Self._DocPos)

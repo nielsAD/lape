@@ -18,27 +18,27 @@ type
     c: array of TMyObject;
   end;
 
-procedure TMyComplexObject.Construct;
+function TMyComplexObject.Construct: TMyComplexObject; static;
 var
   i: Int32;
   tmp: array[0..Pred((SizeOf(Pointer)*3) + SizeOf(String) + SizeOf(Int32))] of UInt8;
 begin
-  Assert(Self <> nil);
-  Assert(Length(Self) = Length(tmp));
-  Assert(CompareMem(tmp[0], Self[0], Length(Self)));
+  Assert(Result <> nil);
+  Assert(Length(Result) = Length(tmp));
+  Assert(CompareMem(tmp[0], Result[0], Length(Result)));
 
-  self.i := Inc(creates);
-  self.s := 'Number: ' + IntToStr(self.i);
+  Result.i := Inc(creates);
+  Result.s := 'Number: ' + IntToStr(Result.i);
 
-  SetLength(self.b, creates);
-  SetLength(self.c, creates);
+  SetLength(Result.b, creates);
+  SetLength(Result.c, creates);
   for i := 0 to creates-1 do
   begin
-    self.b[i] := i;
-    self.c[i] := new TMyObject;
+    Result.b[i] := i;
+    Result.c[i] := new TMyObject;
   end;
 
-  tracking += self.i;
+  tracking += Result.i;
 end;
 
 procedure TMyComplexObject.Destroy;
@@ -53,18 +53,18 @@ begin
   Inc(destroys);
 end;
 
-procedure TMyObject.Construct;
+function TMyObject.Construct: TMyObject; static;
 var
   tmp: array[0..Pred(SizeOf(Int32) + SizeOf(Pointer))] of UInt8;
 begin
-  Assert(Self <> nil);
-  Assert(Length(Self) = Length(tmp));
-  Assert(CompareMem(tmp[0], Self[0], Length(Self)));
+  Assert(Result <> nil);
+  Assert(Length(Result) = Length(tmp));
+  Assert(CompareMem(tmp[0], Result[0], Length(Result)));
 
-  self.i := Inc(creates);
-  self.s := 'Number: ' + IntToStr(self.i);
+  Result.i := Inc(creates);
+  Result.s := 'Number: ' + IntToStr(Result.i);
 
-  tracking += self.i;
+  tracking += Result.i;
 end;
 
 procedure TMyObject.Destroy;
@@ -96,7 +96,6 @@ procedure testRef;
 var
   obj: TMyObject;
   a,b,c: TMyObject;
-  p: Pointer;
 begin
   obj := new TMyObject;
   a := obj;
