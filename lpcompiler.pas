@@ -5094,7 +5094,7 @@ function TLapeCompiler.Compile: Boolean;
     Decls := GlobalDeclarations.GetByClass(TLapeGlobalVar, bFalse);
     for i := 0 to High(Decls) do
     begin
-      Decl := Decls[i] as TLapeGlobalVar;
+      Decl := TLapeGlobalVar(Decls[i]);
       if (Decl.Used <> duFalse) or (Decl.Name = '') or (Decl.Name[1] = '!') or
          (not Decl.Writeable) or ((Decl._DocPos.Line = NullDocPos.Line) and (Decl._DocPos.Col = NullDocPos.Line)) then
         Continue;
@@ -5103,10 +5103,24 @@ function TLapeCompiler.Compile: Boolean;
     end;
   end;
 
+  procedure GlobalFinalize;
+  var
+    Decls: TLapeDeclArray;
+    Decl: TLapeGlobalVar;
+    i: Integer;
+  begin
+    Decls := GlobalDeclarations.GetByClass(TLapeGlobalVar, bFalse);
+    for i := 0 to High(Decls) do
+    begin
+      Decl := TLapeGlobalVar(Decls[i]);
+      if (Decl.VarType is TLapeType_Object) then
+        FinalizeVar(_ResVar.New(Decl));
+    end;
+  end;
+
 begin
   Result := False;
   try
-
     Reset();
     IncStackInfo(True);
     FTree := ParseFile();
@@ -5124,12 +5138,12 @@ begin
 
     FStackInfo.FullDisposal := lcoFullDisposal in FOptions;
     DecStackInfo(False, True, True);
+    GlobalFinalize();
 
     FDelayedTree.Compile(True, ldfMethods).Spill(1);
 
     FEmitter._op(ocNone);
     Result := True;
-
   except
     Reset();
     raise;
