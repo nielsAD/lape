@@ -666,7 +666,7 @@ implementation
 
 uses
   Math,
-  lpvartypes_ord, lpvartypes_record, lpvartypes_array,
+  lpvartypes_ord, lpvartypes_record, lpvartypes_array, lpvartypes_object,
   lpmessages, lpeval, lpinterpreter_types, lpinternalmethods;
 
 function getFlowStatement(Offset: Integer; Pos: PDocPos = nil; JumpSafe: Boolean = False): TLapeFlowStatement;
@@ -1969,6 +1969,11 @@ var
   Overloaded: TLapeType_OverloadedMethod;
   Msg, Available: String;
 begin
+  // disallow calling object construct methods normally
+  if (VarType is TLapeType_Method) and (TLapeType_Method(VarType).Res is TLapeType_Object) and
+     (VarType.Name = 'Construct') and (not (Parent is TLapeTree_InternalMethod_New)) then
+    LapeException(lpeCannonInvokeConstruct, Pos^);
+
   if (VarType is TLapeType_OverloadedMethod) then
   begin
     Overloaded := TLapeType_OverloadedMethod(VarType);

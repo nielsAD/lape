@@ -1040,6 +1040,8 @@ function TLapeTree_InternalMethod_New.Compile(var Offset: Integer): TResVar;
     if (Expr.resType() <> nil) then
       with TLapeTree_Invoke.Create(Expr, Self) do
       try
+        Parent := Self;
+
         ResultVar := Result;
         while (Self.FParams.Count > 1) do
           addParam(Self.FParams[1]);
