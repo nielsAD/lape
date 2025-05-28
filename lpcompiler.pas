@@ -5113,7 +5113,7 @@ function TLapeCompiler.Compile: Boolean;
     for i := 0 to High(Decls) do
     begin
       Decl := TLapeGlobalVar(Decls[i]);
-      if (Decl.VarType is TLapeType_Object) then
+      if Decl.NeedFinalization then
         FinalizeVar(_ResVar.New(Decl));
     end;
   end;
