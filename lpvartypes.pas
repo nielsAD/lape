@@ -21,7 +21,6 @@ type
     lcoRangeCheck,                     // {$R} {$RANGECHECKS}
     lcoShortCircuit,                   // {$B} {$BOOLEVAL}
     lcoAlwaysInitialize,               // {$M} {$MEMORYINIT}
-    lcoFullDisposal,                   // {$D} {$FULLDISPOSAL}
     lcoLooseSemicolon,                 // {$L} {$LOOSESEMICOLON}
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
     lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
@@ -37,10 +36,17 @@ type
     lcoInheritableRecords,             //
     lcoRelativeFileNames,              //
     lcoInitExternalResult,             // Ensure empty result for external calls (useful for ffi)
-    lcoMethodDeclarationParentheses    //       {$METHODDECLARATIONPARENTHESES}  Require method declarations to have () if no parameters.
+    lcoMethodDeclarationParentheses    // {$METHODDECLARATIONPARENTHESES}  Require method declarations to have () if no parameters.
   );
   ECompilerOptionsSet = set of ECompilerOption;
   PCompilerOptionsSet = ^ECompilerOptionsSet;
+
+  EStackFlags = (
+    lsfEmit,
+    lsfFunction,
+    lsfGlobal
+  );
+  EStackFlagsSet = set of EStackFlags;
 
 const
   Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress, lcoInheritableRecords];
@@ -235,8 +241,6 @@ type
     FCompiler: TLapeCompilerBase;
     FSize: SizeInt;
     FInit: TInitBool;
-    FStatic: Boolean;
-
     FLo: TLapeGlobalVar;
     FHi: TLapeGlobalVar;
     FAsString: lpString;
@@ -296,7 +300,6 @@ type
     property BaseIntType: ELapeBaseType read getBaseIntType;
     property Padding: SizeInt read getPadding;
     property Size: SizeInt read getSize;
-    property IsStatic: Boolean read FStatic;
     property NeedInitialization: Boolean read getInitialization;
     property NeedFinalization: Boolean read getFinalization;
     property AsString: lpString read getAsString;
@@ -505,9 +508,9 @@ type
   protected
     FVarStack: TLapeVarStack;
     FWithStack: TLapeWithDeclarationList;
-
     FOldStackPos: Integer;
     FOldMaxStack: Integer;
+    FReuseVars: Boolean;
 
     function getVar(Index: Integer): TLapeStackVar; virtual;
     function getVarCount: Integer; virtual;
@@ -522,11 +525,10 @@ type
     CodePos: Integer;
 
     ForceInitialization: Boolean;
-    FullDisposal: Boolean;
 
     FuncName: String;
 
-    constructor Create(AlwaysInitialize: Boolean = True; ForceDisposal: Boolean = False; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True); reintroduce; virtual;
+    constructor Create(AlwaysInitialize: Boolean = True; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True); reintroduce; virtual;
     destructor Destroy; override;
     procedure Clear; override;
 
@@ -558,6 +560,7 @@ type
     property NeedFinalization: Boolean read getFinalization;
     property OldStackPos: Integer read FOldStackPos;
     property OldMaxStack: Integer read FOldMaxStack;
+    property ReuseVars: Boolean read FReuseVars write FReuseVars;
   end;
 
   TLapeDeclStack = class(TLapeStackInfo)
@@ -649,11 +652,11 @@ type
     procedure FinalizeVar(AVar: TResVar; Pos: PDocPos = nil); overload; virtual;
     function PopVarToStack(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil): TResVar; virtual;
 
-    function IncStackInfo(AStackInfo: TLapeStackInfo; var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
-    function IncStackInfo(var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
-    function IncStackInfo(Emit: Boolean = False): TLapeStackInfo; overload; virtual;
-    function DecStackInfo(var Offset: Integer; InFunction: Boolean = False; Emit: Boolean = True; DoFree: Boolean = False; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
-    function DecStackInfo(InFunction: Boolean = False; Emit: Boolean = False; DoFree: Boolean = False): TLapeStackInfo; overload; virtual;
+    function IncStackInfo(AStackInfo: TLapeStackInfo; var Offset: Integer; Flags: EStackFlagsSet; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
+    function IncStackInfo(var Offset: Integer; Flags: EStackFlagsSet; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
+    function IncStackInfo(Flags: EStackFlagsSet): TLapeStackInfo; overload; virtual;
+    function DecStackInfo(var Offset: Integer; Flags: EStackFlagsSet; DoFree: Boolean = False; Pos: PDocPos = nil): TLapeStackInfo; overload; virtual;
+    function DecStackInfo(Flags: EStackFlagsSet; DoFree: Boolean = False): TLapeStackInfo; overload; virtual;
 
     function getBaseType(Name: lpString): TLapeType; overload; virtual;
     function getBaseType(BaseType: ELapeBaseType): TLapeType; overload; virtual;
@@ -1576,7 +1579,6 @@ begin
 
   FBaseType := ABaseType;
   FCompiler := ACompiler;
-  FStatic := False;
   ClearCache();
 end;
 
@@ -2550,7 +2552,6 @@ end;
 constructor TLapeType_Label.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited Create(ACompiler, nil, True, AName, ADocPos);
-  FStatic := True;
 end;
 
 function TLapeType_Label.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
@@ -3540,18 +3541,18 @@ begin
   Result := False;
 end;
 
-constructor TLapeStackInfo.Create(AlwaysInitialize: Boolean = True; ForceDisposal: Boolean = False; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
+constructor TLapeStackInfo.Create(AlwaysInitialize: Boolean = True; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
 begin
   inherited Create(nil, False);
 
   Owner := AOwner;
   FVarStack := TLapeVarStack.Create(nil, dupAccept, False);
   FWithStack := TLapeWithDeclarationList.Create(NullWithDecl, dupAccept, False);
+  FReuseVars := True;
   FreeVars := ManageVars;
   CodePos := -1;
 
   ForceInitialization := AlwaysInitialize;
-  FullDisposal := ForceDisposal;
 end;
 
 destructor TLapeStackInfo.Destroy;
@@ -3622,14 +3623,15 @@ begin
     Exit;
 
   try
-    for i := 0 to FVarStack.Count - 1 do
-      if (FVarStack[i] is TLapeStackTempVar) and (not TLapeStackTempVar(FVarStack[i]).Locked) and FVarStack[i].VarType.Equals(VarType) then
-      begin
-        Result := FVarStack[i] as TLapeStackTempVar;
-        Result.VarType := VarType;
-        Result.isConstant := False;
-        Exit;
-      end;
+    if FReuseVars then
+      for i := 0 to FVarStack.Count - 1 do
+        if (FVarStack[i] is TLapeStackTempVar) and (not TLapeStackTempVar(FVarStack[i]).Locked) and FVarStack[i].VarType.Equals(VarType) then
+        begin
+          Result := FVarStack[i] as TLapeStackTempVar;
+          Result.VarType := VarType;
+          Result.isConstant := False;
+          Exit;
+        end;
     Result := addVar(VarType) as TLapeStackTempVar;
   finally
     if (Result <> nil) then
@@ -3719,7 +3721,7 @@ end;
 constructor TLapeDeclStack.Create(AList: TLapeManagingDeclaration; AOwner: TLapeStackInfo = nil);
 begin
   Assert(AList <> nil);
-  inherited Create(False, False, AOwner, False);
+  inherited Create(False, AOwner, False);
 
   Parent := AList.ManagedDeclarations;
   FManagingList := AList;
@@ -4076,7 +4078,8 @@ begin
 
   if (FEmitter <> nil) then
     FEmitter.Reset();
-  while (DecStackInfo(False, False, (FStackInfo <> nil) and (FStackInfo.Owner = nil)) <> nil) do ;
+
+  while (DecStackInfo([], (FStackInfo <> nil) and (FStackInfo.Owner = nil)) <> nil) do ;
 end;
 
 constructor TLapeCompilerBase.Create(AEmitter: TLapeCodeEmitter = nil; ManageEmitter: Boolean = True);
@@ -4183,7 +4186,7 @@ begin
   end;
 end;
 
-function TLapeCompilerBase.IncStackInfo(AStackInfo: TLapeStackInfo; var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo;
+function TLapeCompilerBase.IncStackInfo(AStackInfo: TLapeStackInfo; var Offset: Integer; Flags: EStackFlagsSet; Pos: PDocPos = nil): TLapeStackInfo;
 begin
   if (AStackInfo <> nil) and (AStackInfo <> EmptyStackInfo) then
   begin
@@ -4193,7 +4196,7 @@ begin
     AStackInfo.FOldMaxStack := Emitter.MaxStack;
     AStackInfo.FOldStackPos := Emitter.NewStack();
 
-    if Emit then
+    if (lsfEmit in Flags) then
     begin
       Emitter.FullEmit := False;
       AStackInfo.CodePos := Emitter._IncTry(0, Try_NoExcept, Offset, Pos);
@@ -4207,30 +4210,22 @@ begin
   Result := FStackInfo;
 end;
 
-function TLapeCompilerBase.IncStackInfo(var Offset: Integer; Emit: Boolean = True; Pos: PDocPos = nil): TLapeStackInfo;
+function TLapeCompilerBase.IncStackInfo(var Offset: Integer; Flags: EStackFlagsSet; Pos: PDocPos = nil): TLapeStackInfo;
 begin
-  Result := IncStackInfo(TLapeStackInfo.Create(lcoAlwaysInitialize in FOptions, lcoFullDisposal in FOptions, FStackInfo), Offset, Emit, Pos);
+  Result := IncStackInfo(TLapeStackInfo.Create(lcoAlwaysInitialize in FOptions, FStackInfo), Offset, Flags, Pos);
 end;
 
-function TLapeCompilerBase.IncStackInfo(Emit: Boolean = False): TLapeStackInfo;
+function TLapeCompilerBase.IncStackInfo(Flags: EStackFlagsSet): TLapeStackInfo;
 var
   Offset: Integer;
 begin
   Offset := -1;
-  Result := IncStackInfo(Offset, Emit);
+  Result := IncStackInfo(Offset, Flags);
 end;
 
-function TLapeCompilerBase.DecStackInfo(var Offset: Integer; InFunction: Boolean = False; Emit: Boolean = True; DoFree: Boolean = False; Pos: PDocPos = nil): TLapeStackInfo;
+function TLapeCompilerBase.DecStackInfo(var Offset: Integer; Flags: EStackFlagsSet; DoFree: Boolean = False; Pos: PDocPos = nil): TLapeStackInfo;
 var
-  i,
   CodePos, IncTryJump, InitStackPos: Integer;
-  Item: TLapeVar;
-
-  procedure RemoveIncTry;
-  begin
-    Emitter.Delete(FStackInfo.CodePos, ocSize + SizeOf(TOC_IncTry), Offset);
-    Dec(InitStackPos, ocSize + SizeOf(TOC_IncTry));
-  end;
 
   procedure RemoveExpandVar;
   begin
@@ -4245,14 +4240,31 @@ var
       Emitter._IncTry(IncTryJump - ocSize - SizeOf(TStackOffset), Try_NoExcept, FStackInfo.CodePos, Pos);
   end;
 
-  function NeedFinalization(v: TLapeVar): Boolean;
+  procedure FinalizeVars;
+  var
+    wasReuseVars: Boolean;
+    GlobalVars: TLapeDeclArray;
+    i: Integer;
   begin
-    Result := v <> nil;
-    if Result then
-      if (not FStackInfo.FullDisposal) then
-        Result := v.NeedFinalization
-      else if (v is TLapeParameterVar) then
-        Result := (not (TLapeParameterVar(v).ParType in Lape_RefParams));
+    wasReuseVars := FStackInfo.ReuseVars;
+
+    FStackInfo.ReuseVars := False;
+    i := 0;
+    while (i < FStackInfo.VarCount) do
+    begin
+      if FStackInfo.Vars[i].NeedFinalization then
+        FinalizeVar(_ResVar.New(FStackInfo.Vars[i]), Offset, Pos);
+      Inc(i);
+    end;
+
+    if (lsfGlobal in Flags) then
+    begin
+      GlobalVars := FGlobalDeclarations.GetByClass(TLapeGlobalVar, bFalse);
+      for i := 0 to High(GlobalVars) do
+        if GlobalVars[i].HasDocPos and TLapeGlobalVar(GlobalVars[i]).NeedFinalization then
+          FinalizeVar(_ResVar.New(TLapeGlobalVar(GlobalVars[i])), Offset);
+    end;
+    FStackInfo.ReuseVars := wasReuseVars;
   end;
 
 begin
@@ -4262,7 +4274,7 @@ begin
   begin
     Result := FStackInfo.Owner;
 
-    if Emit then
+    if (lsfEmit in Flags) then
     begin
       CodePos := FStackInfo.CodePos;
       IncTryJump := 0;
@@ -4270,64 +4282,37 @@ begin
 
       if (FStackInfo.TotalNoParamSize <= 0) then
         RemoveExpandVar();
-      if (FStackInfo.TotalSize <= 0) and (not InFunction) then
-        RemoveIncTry()
+
+      Emitter._DecTry(Offset, Pos);
+      IncTryJump := Offset - CodePos;
+      Emitter._IncTry(IncTryJump, Try_NoExcept, CodePos, Pos);
+
+      FinalizeVars();
+
+      if (lsfFunction in Flags) then
+        Emitter._DecCall_EndTry(Offset, Pos)
       else
       begin
-        Emitter._DecTry(Offset, Pos);
-        IncTryJump := Offset - CodePos;
-        Emitter._IncTry(IncTryJump, Try_NoExcept, CodePos, Pos);
-
-        with FStackInfo.VarStack do
-        begin
-          i := 0;
-          while (i < Count) do
-          begin
-            Item := Items[i];
-            if NeedFinalization(Item) then
-            begin
-              FinalizeVar(_ResVar.New(Item), Offset, Pos);
-              if (Item is TLapeStackTempVar) then
-              begin
-                //if TLapeStackTempVar(Item).Locked then
-                //  WriteLn(Item.Name, ' ', Item.VarType.AsString, ' still locked! ', TLapeStackTempVar(Item).FLock);
-                TLapeStackTempVar(Item).Locked := True;
-              end;
-            end;
-            Inc(i);
-          end;
-          for i := 0 to Count - 1 do
-            if (Item is TLapeStackTempVar) then
-              TLapeStackTempVar(Item).Locked := False;
-        end;
-
-        if InFunction then
-          Emitter._DecCall_EndTry(Offset, Pos)
-        else
-        begin
-          Emitter._PopVar(Offset, Pos);
-          Emitter._EndTry(Offset, Pos);
-        end;
-
-        if (not InFunction) then
-          if FStackInfo.NeedInitialization then
-            Emitter._ExpandVarAndInit(FStackInfo.TotalSize, CodePos, Pos)
-          else
-            Emitter._ExpandVar(FStackInfo.TotalSize, CodePos, Pos)
-        else if (FStackInfo.TotalNoParamSize > 0) then
-          if FStackInfo.NeedInitialization then
-            Emitter._GrowVarAndInit(FStackInfo.TotalNoParamSize, CodePos, Pos)
-          else
-            Emitter._GrowVar(FStackInfo.TotalNoParamSize, CodePos, Pos);
+        Emitter._PopVar(Offset, Pos);
+        Emitter._EndTry(Offset, Pos);
       end;
+
+      if (not (lsfFunction in Flags)) then
+        if FStackInfo.NeedInitialization then
+          Emitter._ExpandVarAndInit(FStackInfo.TotalSize, CodePos, Pos)
+        else
+          Emitter._ExpandVar(FStackInfo.TotalSize, CodePos, Pos)
+      else if (FStackInfo.TotalNoParamSize > 0) then
+        if FStackInfo.NeedInitialization then
+          Emitter._GrowVarAndInit(FStackInfo.TotalNoParamSize, CodePos, Pos)
+        else
+          Emitter._GrowVar(FStackInfo.TotalNoParamSize, CodePos, Pos);
 
       if (Emitter.MaxStack > 0) then
         Emitter._InitStackLen(Emitter.MaxStack, InitStackPos, Pos)
       else
         RemoveInitStack();
-    end
-    else
-      FStackInfo.FullDisposal := lcoFullDisposal in FOptions;
+    end;
 
     Emitter.NewStack(FStackInfo.FOldStackPos, FStackInfo.FOldMaxStack);
     if DoFree then
@@ -4336,12 +4321,12 @@ begin
   end;
 end;
 
-function TLapeCompilerBase.DecStackInfo(InFunction: Boolean = False; Emit: Boolean = False; DoFree: Boolean = False): TLapeStackInfo;
+function TLapeCompilerBase.DecStackInfo(Flags: EStackFlagsSet; DoFree: Boolean = False): TLapeStackInfo;
 var
   Offset: Integer;
 begin
   Offset := -1;
-  Result := DecStackInfo(Offset, InFunction, Emit, DoFree);
+  Result := DecStackInfo(Offset, Flags, DoFree);
 end;
 
 function TLapeCompilerBase.getBaseType(Name: lpString): TLapeType;

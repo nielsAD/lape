@@ -648,6 +648,7 @@ type
     procedure CopyHints(From: TLapeDeclaration); virtual;
     procedure WriteHints(Callback: TLapeDeclarationHintCallback; ADocPos: TDocPos); virtual;
     function HasHints: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    function HasDocPos: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
     property DeclarationList: TLapeDeclarationList read FList write setList;
     property Name: lpString read FName write setName;
@@ -2981,6 +2982,11 @@ end;
 function TLapeDeclaration.HasHints: Boolean;
 begin
   Result := FHints.Types <> [];
+end;
+
+function TLapeDeclaration.HasDocPos: Boolean;
+begin
+  Result := (DocPos.Line <> NullDocPos.Line) and (DocPos.Col <> NullDocPos.Col);
 end;
 
 constructor TLapeManagingDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil);

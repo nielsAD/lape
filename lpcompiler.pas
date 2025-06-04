@@ -566,7 +566,7 @@ begin
     Exit;
 
   AType := TLapeType_MethodOfObject(AObjectType);
-  IncStackInfo();
+  IncStackInfo([]);
 
   try
     Result := addManagedDecl(AType.NewGlobalVar(EndJump)) as TLapeGlobalVar;
@@ -594,7 +594,7 @@ begin
 
     addDelayedExpression(Method);
   finally
-    DecStackInfo(True, False, Method = nil);
+    DecStackInfo([lsfFunction], Method = nil);
   end;
 end;
 
@@ -607,12 +607,12 @@ begin
   Method := nil;
   if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or (AResult <> nil) then
     Exit;
-  if (not (lcoFullDisposal in FOptions)) and (not AParams[0].NeedFinalization) then
+  if (not AParams[0].NeedFinalization) then
     Exit;
 
   Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptVar], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
-  IncStackInfo();
+  IncStackInfo([]);
   try
     Result := Header.NewGlobalVar(EndJump);
     Result.VarType.Name := '_Dispose';
@@ -623,7 +623,7 @@ begin
     Method.Statements.addStatement(TLapeTree_FinalizeVar.Create(FStackInfo.addVar(lptVar, AParams[0], '!AVar'), Self));
     addDelayedExpression(Method);
   finally
-    DecStackInfo(True, False, Method = nil);
+    DecStackInfo([lsfFunction], Method = nil);
   end;
 end;
 
@@ -645,7 +645,7 @@ begin
 
   Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptConstRef], [TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
-  IncStackInfo();
+  IncStackInfo([]);
   try
     Result := Header.NewGlobalVar(EndJump);
     Result.VarType.Name := '_DisposeObject';
@@ -685,7 +685,7 @@ begin
 
     addDelayedExpression(Method);
   finally
-    DecStackInfo(True, False, Method = nil);
+    DecStackInfo([lsfFunction], Method = nil);
   end;
 end;
 
@@ -704,7 +704,7 @@ begin
 
   Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0], AParams[1]], [lptConstRef, lptOut], [TLapeGlobalVar(nil), TLapeGlobalVar(nil)], AResult)) as TLapeType_Method;
 
-  IncStackInfo();
+  IncStackInfo([]);
   try
     Result := Header.NewGlobalVar(EndJump);
     Result.VarType.Name := '_Assign';
@@ -719,7 +719,7 @@ begin
     Method.Statements.addStatement(Assignment);
     addDelayedExpression(Method);
   finally
-    DecStackInfo(True, False, Method = nil);
+    DecStackInfo([lsfFunction], Method = nil);
   end;
 end;
 
@@ -1996,9 +1996,6 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (Name = 'memoryinit') then
       Result := (lcoAlwaysInitialize in FOptions)
     else
-    if (Name = 'fulldisposal') then
-      Result := (lcoFullDisposal in FOptions)
-    else
     if (Name = 'loosesemicolon') then
       Result := (lcoLooseSemicolon in FOptions)
     else
@@ -2213,9 +2210,6 @@ begin
     else
     if (Directive = 'm') or (Directive = 'memoryinit') then
       setOption(lcoAlwaysInitialize)
-    else
-    if (Directive = 'd') or (Directive = 'fulldisposal') then
-      setOption(lcoFullDisposal)
     else
     if (Directive = 'l') or (Directive = 'loosesemicolon') then
       setOption(lcoLooseSemicolon)
@@ -3043,7 +3037,7 @@ var
   i: Integer;
 begin
   Result := nil;
-  IncStackInfo();
+  IncStackInfo([]);
 
   try
     if (FuncHeader <> nil) then
@@ -3059,7 +3053,7 @@ begin
     end;
     Result := ParseMethod(FuncForwards, FuncHeader, FuncName, False);
   finally
-    DecStackInfo(True, False, (Result = nil));
+    DecStackInfo([lsfFunction], (Result = nil));
   end;
 end;
 
@@ -3069,14 +3063,14 @@ var
   FuncName: lpString;
 begin
   Result := nil;
-  IncStackInfo();
+  IncStackInfo([]);
 
   try
     FuncHeader := ParseMethodHeader(FuncName, not isExternal);
     ParseExpressionEnd(tk_sym_SemiColon, True, False);
     Result := ParseMethod(FuncForwards, FuncHeader, FuncName, isExternal);
   finally
-    DecStackInfo(True, False, (Result = nil));
+    DecStackInfo([lsfFunction], (Result = nil));
   end;
 end;
 
@@ -3305,9 +3299,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     repeat
       Expect(tk_Identifier, True, False);
       Name := Tokenizer.TokString;
-      if (Scoped and Enum.hasMember(Name)) or
-         ((not Scoped) and hasDeclaration(Name, StackOwner, True))
-      then
+      if (Scoped and Enum.hasMember(Name)) or ((not Scoped) and hasDeclaration(Name, StackOwner, True)) then
       begin
         Result := nil; // Do not free type, because enum members rely on it
 
@@ -3626,7 +3618,7 @@ begin
         if hasDeclaration(Identifiers[i], True) then
           LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], Tokenizer.DocPos);
 
-        if isConst or VarType.IsStatic then
+        if isConst then
           VarDecl.VarDecl := TLapeVar(addLocalDecl(VarType.NewGlobalVarP(nil, Identifiers[i])))
         else
           VarDecl.VarDecl := addLocalVar(VarType, Identifiers[i]);
@@ -5103,26 +5095,12 @@ function TLapeCompiler.Compile: Boolean;
     end;
   end;
 
-  procedure GlobalFinalize;
-  var
-    Decls: TLapeDeclArray;
-    Decl: TLapeGlobalVar;
-    i: Integer;
-  begin
-    Decls := GlobalDeclarations.GetByClass(TLapeGlobalVar, bFalse);
-    for i := 0 to High(Decls) do
-    begin
-      Decl := TLapeGlobalVar(Decls[i]);
-      if Decl.NeedFinalization then
-        FinalizeVar(_ResVar.New(Decl));
-    end;
-  end;
-
 begin
   Result := False;
   try
     Reset();
-    IncStackInfo(True);
+
+    IncStackInfo([lsfEmit]);
     FTree := ParseFile();
     if (FTree = nil) and (FDelayedTree.GlobalCount(False) <= 0) then
       LapeException(lpeExpressionExpected);
@@ -5135,11 +5113,7 @@ begin
       FTree.Compile().Spill(1);
 
     FDelayedTree.Compile(True, ldfStatements).Spill(1);
-
-    FStackInfo.FullDisposal := lcoFullDisposal in FOptions;
-    DecStackInfo(False, True, True);
-    GlobalFinalize();
-
+    DecStackInfo([lsfGlobal, lsfEmit], True);
     FDelayedTree.Compile(True, ldfMethods).Spill(1);
 
     FEmitter._op(ocNone);

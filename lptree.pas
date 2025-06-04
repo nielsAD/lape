@@ -3686,28 +3686,9 @@ begin
   PCodePos(Method.Ptr)^ := mo;
   FCompiler.Emitter.addCodePointer(Method.Ptr, GetMethodName(Method.VarType));
 
-  FCompiler.IncStackInfo(FStackInfo, Offset, True, @_DocPos);
+  FCompiler.IncStackInfo(FStackInfo, Offset, [lsfEmit], @_DocPos);
   try
-    if MethodOfObject(Method.VarType) then
-      with TLapeTree_InternalMethod_Assert.Create(Self) do
-      try
-        addParam(TLapeTree_Operator.Create(op_cmp_NotEqual, Self));
-        addParam(TLapeTree_String.Create(lpeVariableExpected, Self));
-
-        with TLapeTree_Operator(Params[0]) do
-        begin
-          Left := TLapeTree_Operator.Create(op_Addr, Self);
-          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.Vars[0]), Self);
-          Right := TLapeTree_GlobalVar.Create('nil', ltPointer, Self);
-        end;
-
-        Compile(Offset).Spill(1);
-      finally
-        Free();
-      end;
-
     FStatements.Compile(Offset).Spill(1);
-
     for i := 0 to FExitStatements.Count - 1 do
       with FExitStatements[i] do
       begin
@@ -3715,7 +3696,7 @@ begin
         FCompiler.Emitter._JmpSafeR(Offset - co, co, @DocPos);
       end;
   finally
-    FCompiler.DecStackInfo(Offset, True, True, False, @_DocPos);
+    FCompiler.DecStackInfo(Offset, [lsfFunction, lsfEmit], False, @_DocPos);
     FCompiler.Emitter._JmpR(Offset - fo, fo, @_DocPos);
   end;
 
@@ -3890,13 +3871,11 @@ end;
 function TLapeTree_With.Compile(var Offset: Integer): TResVar;
 var
   i: Integer;
-  NewStack: Boolean;
 begin
   Result := NullResVar;
 
-  NewStack := (FCompiler.StackInfo = nil);
-  if NewStack then
-    FCompiler.IncStackInfo(True);
+  if (FCompiler.StackInfo = nil) then
+    LapeException(lpeStatementNotAllowed, DocPos);
 
   for i := 0 to FWithList.Count - 1 do
   begin
@@ -3914,9 +3893,6 @@ begin
 
   for i := 0 to FWithList.Count - 1 do
     FVarList[i] := FVarList[i].DecLock();
-
-  if NewStack then
-    FCompiler.DecStackInfo(False, True, True);
 end;
 
 procedure TLapeTree_If.setCondition(Node: TLapeTree_ExprBase);
