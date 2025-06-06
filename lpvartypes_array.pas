@@ -1273,6 +1273,7 @@ var
   i: Integer;
   tmpVar, IndexVar: TResVar;
   wasConstant: Boolean;
+  IndexOp: TLapeTree_Operator;
 begin
   Assert(AVar.VarType = Self);
   if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) {or (not NeedFinalization)} then
@@ -1294,10 +1295,14 @@ begin
       Counter := TLapeTree_ResVar.Create(IndexVar.IncLock(), FCompiler);
       Limit := TLapeTree_ResVar.Create(_ResVar.New(FCompiler.getConstant(FRange.Hi)), FCompiler);
 
+      IndexOp := TLapeTree_Operator.Create(op_Index, FCompiler);
+      IndexOp.Left := TLapeTree_ResVar.Create(AVar.IncLock(), FCompiler);
+      IndexOp.Right := TLapeTree_ResVar.Create(IndexVar.IncLock(), FCompiler);
+
       // Compiler.FinalizeVar
       Body := TLapeTree_InternalMethod_Dispose.Create(FCompiler);
       TLapeTree_InternalMethod_Dispose(Body).FunctionOnly := True;
-      TLapeTree_InternalMethod_Dispose(Body).addParam(TLapeTree_ResVar.Create(Eval(op_Index, tmpVar, AVar, IndexVar, [], Offset), FCompiler));
+      TLapeTree_InternalMethod_Dispose(Body).addParam(IndexOp);
 
       Compile(Offset);
     finally
