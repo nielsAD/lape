@@ -50,10 +50,36 @@ type
     property TotalFieldSize: Integer read FTotalFieldSize;
   end;
 
+  function hasObject(Typ: TLapeType): Boolean;
+
 implementation
 
 uses
-  lpmessages;
+  lpmessages, lpvartypes_record;
+
+function hasObject(Typ: TLapeType): Boolean;
+
+  function Check(Typ: TLapeType): Boolean;
+  var
+    i: Integer;
+  begin
+    if (Typ is TLapeType_Object) then
+      Exit(True);
+
+    if (Typ is TLapeType_Record) then
+      for i := 0 to TLapeType_Record(Typ).FieldMap.Count - 1 do
+        if Check(TLapeType_Record(Typ).FieldMap.ItemsI[i].FieldType) then
+          Exit(True);
+
+    if (Typ is TLapeType_DynArray) then
+      if Check(TLapeType_DynArray(Typ).PType) then
+        Exit(True);
+    Result := False;
+  end;
+
+begin
+  Result := Check(Typ);
+end;
 
 function TLapeType_Object.getAsString: lpString;
 var
@@ -98,7 +124,12 @@ function TLapeType_Object.VarToStringBody(ToStr: TLapeType_OverloadedMethod): lp
 var
   i: Integer;
 begin
-  Result := 'begin Result := '#39'{'#39;
+  Result :=
+    'begin' +
+    '  if (Param0 = nil) then' +
+    '    Exit("nil");' +
+    '  Result := '#39'{'#39;
+
   for i := 0 to FFieldMap.Count - 1 do
     with FFieldMap.ItemsI[i] do
     begin
@@ -107,6 +138,7 @@ begin
       if (ToStr <> nil) and (ToStr.getMethod(getTypeArray([FieldType])) <> nil) then
         Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(Param0.' + FFieldMap.Key[i] + ')';
     end;
+
   Result := Result + ' + '#39'}'#39'; end;';
 end;
 

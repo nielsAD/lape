@@ -749,7 +749,7 @@ var
 implementation
 
 uses
-  lpvartypes_ord, lpvartypes_array, lptree, lpinternalmethods,
+  lpvartypes_ord, lpvartypes_array, lpvartypes_object, lptree, lpinternalmethods,
   lpmessages, lpeval, lpinterpreter_types, lpeval_extra;
 
 // I think doing a simple check rather than overload.getMethodIndex should be fine for op overloads
@@ -4248,7 +4248,7 @@ var
   begin
     wasReuseVars := FStackInfo.ReuseVars;
 
-    FStackInfo.ReuseVars := False;
+    FStackInfo.ReuseVars := False; // dont allow reusing unlocked vars while doing all this
     i := 0;
     while (i < FStackInfo.VarCount) do
     begin
@@ -4259,9 +4259,12 @@ var
 
     if (lsfGlobal in Flags) then
     begin
+      // need to ensure object destructors are destroyed.
+      // FinalizeVar will set array lengths to 0 to the arrays wont persist post script execution
+      // this could be improved eventually for the array to not be cleared
       GlobalVars := FGlobalDeclarations.GetByClass(TLapeGlobalVar, bFalse);
       for i := 0 to High(GlobalVars) do
-        if GlobalVars[i].HasDocPos and TLapeGlobalVar(GlobalVars[i]).NeedFinalization then
+        if GlobalVars[i].HasDocPos and (not TLapeGlobalVar(GlobalVars[i]).isConstant) and hasObject(TLapeGlobalVar(GlobalVars[i]).VarType) then
           FinalizeVar(_ResVar.New(TLapeGlobalVar(GlobalVars[i])), Offset);
     end;
     FStackInfo.ReuseVars := wasReuseVars;
