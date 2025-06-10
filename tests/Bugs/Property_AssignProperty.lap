@@ -1,0 +1,47 @@
+{$assertions on}
+
+property Int32.Read: Int32;
+begin
+  Result := Self;
+end;
+
+property Int32.Write(i: Int32);
+begin
+  Self := i*2;
+end;
+
+property Int32.Read(x,y: Int32): Int32;
+begin
+  Result := x+y;
+end;
+
+property Int32.Write(x,y: Int32; i: Int32);
+begin
+  Self := i;
+end;
+
+property TIntegerArray.Read: TIntegerArray;
+begin
+  Result := [-1,0,1];
+end;
+
+property TIntegerArray.Write(Value: TIntegerArray);
+begin
+  Self := Value;
+end;
+
+var i: Int32;
+var a: TIntegerArray;
+
+begin
+  i := 333;
+  i.write := i.read;
+  Assert(i = 666);
+  i.Write[10,20] := i.Read[10,20];
+  Assert(i = 30);
+
+  a.write := a.read;
+  Assert(ToString(a) = '[-1, 0, 1]');
+  a.write := TIntegerArray([Int32(1), Int32(2)]);
+  Assert(ToString(a) = '[1, 2]');
+end;

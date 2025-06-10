@@ -3897,10 +3897,7 @@ var
         end else
         begin
           Result := TLapeTree_InvokeProperty.Create(TLapeTree_Operator(Node).Left, Node);
-          if (TLapeTree_Operator(Node).Right is TLapeTree_Operator) and (TLapeTree_Operator(TLapeTree_Operator(Node).Right).OperatorType = op_Addr) then
-            TLapeTree_InvokeProperty(Result).addParam(Resolve(TLapeTree_Operator(Node).Right, True,True, Changed) as TLapeTree_ExprBase)
-          else
-            TLapeTree_InvokeProperty(Result).addParam(TLapeTree_Operator(Node).Right);
+          TLapeTree_InvokeProperty(Result).addParam(Resolve(TLapeTree_Operator(Node).Right, True, True, Changed) as TLapeTree_ExprBase);
           TLapeTree_InvokeProperty(Result).PropertyType := ptWrite;
           TLapeTree_InvokeProperty(Result).AssignOp := TLapeTree_Operator(Node).OperatorType;
 
