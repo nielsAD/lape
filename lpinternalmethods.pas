@@ -1244,6 +1244,21 @@ begin
   else if (not Result.Writeable) then
     LapeException(lpeVariableExpected, DocPos);
 
+
+  if (Result.VarType is TLapeType_Object) then
+  begin
+    with TLapeTree_InternalMethod_SetLength.Create(Self) do
+    try
+      addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
+      addParam(TLapeTree_Integer.Create(TLapeType_Object(Result.VarType).TotalFieldSize, Self));
+      Compile(Offset);
+    finally
+      Free();
+    end;
+    Exit;
+  end;
+
+
   with TLapeTree_Operator.Create(op_Assign, Self) do
   try
     Left := TLapeTree_ResVar.Create(Result.IncLock(), Self.FParams[0]);
