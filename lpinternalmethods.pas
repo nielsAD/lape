@@ -1027,6 +1027,14 @@ function TLapeTree_InternalMethod_New.Compile(var Offset: Integer): TResVar;
     with TLapeTree_InternalMethod_SetLength.Create(Self) do
     try
       addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
+      addParam(TLapeTree_Integer.Create(0, Self));
+      Compile(Offset);
+    finally
+      Free();
+    end;
+    with TLapeTree_InternalMethod_SetLength.Create(Self) do
+    try
+      addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
       addParam(TLapeTree_Integer.Create(ObjType.TotalFieldSize, Self));
       Compile(Offset);
     finally
@@ -1244,9 +1252,17 @@ begin
   else if (not Result.Writeable) then
     LapeException(lpeVariableExpected, DocPos);
 
-
   if (Result.VarType is TLapeType_Object) then
   begin
+    with TLapeTree_InternalMethod_SetLength.Create(Self) do
+    try
+      addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
+      addParam(TLapeTree_Integer.Create(0, Self));
+      Compile(Offset);
+    finally
+      Free();
+    end;
+
     with TLapeTree_InternalMethod_SetLength.Create(Self) do
     try
       addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
@@ -1255,9 +1271,9 @@ begin
     finally
       Free();
     end;
+
     Exit;
   end;
-
 
   with TLapeTree_Operator.Create(op_Assign, Self) do
   try
