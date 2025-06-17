@@ -1,0 +1,44 @@
+{$assertions on}
+
+type
+  TCallback = procedure of object;
+
+  TThing = record a: Integer; end;
+  TFoo = record a: Integer; end;
+
+var _: TCallback;
+
+property TThing.Event(thing: TCallback);
+begin
+  _ := @thing;
+end;
+
+property TThing.Event: TCallback;
+begin
+  Result := @_;
+end;
+
+property TFoo.Thing: TThing;
+begin
+  { nothing }
+end;
+
+procedure TFoo.DoCallback;
+begin
+
+end;
+
+procedure TFoo.Test;
+begin
+  self.thing.Event := @self.DoCallback;
+  Assert(self.thing.event = @self.DoCallback);
+  self.thing.event := self.thing.event;
+  Assert(self.thing.event = @self.DoCallback);
+  self.thing.event := nil;
+  Assert(self.thing.event = nil);
+end;
+
+var f: TFoo;
+begin
+  f.Test();
+end.
