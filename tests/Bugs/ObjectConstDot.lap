@@ -1,0 +1,28 @@
+{$assertions on}
+
+type
+  TBuggy = object
+    a: Byte;
+    b: TIntegerArray;
+    c: TIntegerArray;
+    d: TIntegerArray;
+    e: TIntegerArray;
+    f: TIntegerArray;
+  end;
+
+function TBuggy.Construct(): TBuggy; static;
+begin
+  Result.a := 1;
+  Result.f += 2;
+end;
+
+var
+  buggy: TBuggy;
+begin
+  buggy := new TBuggy();
+  Assert(buggy.a = 1);
+  Assert(buggy.f[0] = 2);
+  buggy := new TBuggy();
+  Assert(buggy.a = 1);
+  Assert(buggy.f[0] = 2);
+end;

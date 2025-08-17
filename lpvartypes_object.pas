@@ -39,7 +39,8 @@ type
     procedure addField(FieldType: TLapeType; AName: lpString); virtual;
     procedure addConstField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: lpString); virtual;
 
-    function HasChild(AName: lpString): Boolean; overload; override;
+    function HasChild(AName: lpString): Boolean; override;
+    function HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean; override;
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
     function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
@@ -226,6 +227,14 @@ begin
     Left.VarType := Self;
   end else
     Result := inherited;
+end;
+
+function TLapeType_Object.HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean;
+begin
+  if FFieldMap.ExistsKey(AName) then
+    Result := False
+  else
+    Result := inherited HasConstantChild(Left, AName);
 end;
 
 function TLapeType_Object.EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
