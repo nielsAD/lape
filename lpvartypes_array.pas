@@ -957,10 +957,14 @@ var
 begin
   if (lcoArrayHelpers in FCompiler.Options) and HasType() then
   begin
-    if (PType.BaseType in [ltDynArray, ltStaticArray]) then
-      Typ := FCompiler.getGlobalType('!arrayhelpers_multidim')
+    Assert(PType <> nil);
+
+    if (PType.BaseType in LapeIntegerTypes + LapeRealTypes) then
+      Typ := FCompiler.getGlobalType('!arrayhelpers_dynordinal')
+    else if (PType.BaseType = ltDynArray) then
+      Typ := FCompiler.getGlobalType('!arrayhelpers_dynmultidim')
     else
-      Typ := FCompiler.getGlobalType('!arrayhelpers_flat');
+      Typ := FCompiler.getGlobalType('!arrayhelpers_dynsingledim');
 
     if (Typ <> nil) then
       FManagedDecls.Parent := TLapeType(Typ).ManagedDeclarations;

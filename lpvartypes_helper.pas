@@ -838,103 +838,67 @@ end;
 
 procedure LapeCreateArrayHelpers(Compiler: TLapeCompilerBase);
 
-  procedure Add(Typ: TLapeType; Helper: TLapeType_HelperClass; Name: lpString);
+  procedure Build(Helper: TLapeType_HelperClass; Name: lpString; Types: array of TLapeType);
+  var
+    Typ: TLapeType;
   begin
-    Typ.ManagedDeclarations.addDeclaration(
-      TLapeType_Helper(Compiler.addManagedType(Helper.Create(Compiler, Name))).NewGlobalVar(Name)
-    );
+    for Typ in Types do
+      Typ.ManagedDeclarations.addDeclaration(
+        TLapeType_Helper(Compiler.addManagedType(Helper.Create(Compiler, Name))).NewGlobalVar(Name)
+      );
   end;
 
 var
-  Typ: TLapeType;
+  dynSingle: TLapeType;
+  dynMulti: TLapeType;
+  dynOrdinal: TLapeType;
+  staticArr: TLapeType;
 begin
-  // helpers for one dimensional arrays
-  Typ := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_flat')) as TLapeType;
+  dynSingle  := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynsingledim')) as TLapeType;
+  dynMulti   := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynmultidim')) as TLapeType;
+  dynOrdinal := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynordinal')) as TLapeType;
+  staticArr := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_static')) as TLapeType;
 
-  Add(Typ, TLapeType_ArrayHelper_SetLength, 'SetLength');
-  Add(Typ, TLapeType_ArrayHelper_Low, 'Low');
-  Add(Typ, TLapeType_ArrayHelper_High, 'High');
-  Add(Typ, TLapeType_ArrayHelper_Length, 'Length');
-  Add(Typ, TLapeType_ArrayHelper_First, 'First');
-  Add(Typ, TLapeType_ArrayHelper_Last, 'Last');
-  Add(Typ, TLapeType_ArrayHelper_Swap, 'Swap');
-  Add(Typ, TLapeType_ArrayHelper_Copy, 'Copy');
-  Add(Typ, TLapeType_ArrayHelper_CopyRange, 'CopyRange');
-  Add(Typ, TLapeType_ArrayHelper_Random, 'Random');
-  Add(Typ, TLapeType_ArrayHelper_Slice, 'Slice');
-  Add(Typ, TLapeType_ArrayHelper_IsEmpty, 'IsEmpty');
-  Add(Typ, TLapeType_ArrayHelper_Clear, 'Clear');
-  Add(Typ, TLapeType_ArrayHelper_Pop, 'Pop');
-  Add(Typ, TLapeType_ArrayHelper_Delete, 'Delete');
-  Add(Typ, TLapeType_ArrayHelper_DeleteRange, 'DeleteRange');
-  Add(Typ, TLapeType_ArrayHelper_Remove, 'Remove');
-  Add(Typ, TLapeType_ArrayHelper_Insert, 'Insert');
-  Add(Typ, TLapeType_ArrayHelper_Reverse, 'Reverse');
-  Add(Typ, TLapeType_ArrayHelper_Reversed, 'Reversed');
-  Add(Typ, TLapeType_ArrayHelper_Equals, 'Equals');
-  Add(Typ, TLapeType_ArrayHelper_Unique, 'Unique');
-  Add(Typ, TLapeType_ArrayHelper_Contains, 'Contains');
-  Add(Typ, TLapeType_ArrayHelper_IndexOf, 'IndexOf');
-  Add(Typ, TLapeType_ArrayHelper_IndicesOf, 'IndicesOf');
-  Add(Typ, TLapeType_ArrayHelper_Sort, 'Sort');
-  Add(Typ, TLapeType_ArrayHelper_Sorted, 'Sorted');
-  Add(Typ, TLapeType_ArrayHelper_Reverse, 'Reverse');
-  Add(Typ, TLapeType_ArrayHelper_Reversed, 'Reversed');
-  Add(Typ, TLapeType_ArrayHelper_Difference, 'Difference');
-  Add(Typ, TLapeType_ArrayHelper_SymDifference, 'SymDifference');
-  Add(Typ, TLapeType_ArrayHelper_Intersection, 'Intersection');
-  Add(Typ, TLapeType_ArrayHelper_Median, 'Median');
-  Add(Typ, TLapeType_ArrayHelper_Mode, 'Mode');
-  Add(Typ, TLapeType_ArrayHelper_Min, 'Min');
-  Add(Typ, TLapeType_ArrayHelper_Max, 'Max');
-  Add(Typ, TLapeType_ArrayHelper_Sum, 'Sum');
-  Add(Typ, TLapeType_ArrayHelper_Mean, 'Mean');
-  Add(Typ, TLapeType_ArrayHelper_Variance, 'Variance');
-  Add(Typ, TLapeType_ArrayHelper_Stdev, 'Stdev');
-
-  // limited helpers for multi dimensional arrays
-  Typ := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_multidim')) as TLapeType;
-
-  Add(Typ, TLapeType_ArrayHelper_SetLength, 'SetLength');
-  Add(Typ, TLapeType_ArrayHelper_Low, 'Low');
-  Add(Typ, TLapeType_ArrayHelper_High, 'High');
-  Add(Typ, TLapeType_ArrayHelper_Length, 'Length');
-  Add(Typ, TLapeType_ArrayHelper_First, 'First');
-  Add(Typ, TLapeType_ArrayHelper_Last, 'Last');
-  Add(Typ, TLapeType_ArrayHelper_Swap, 'Swap');
-  Add(Typ, TLapeType_ArrayHelper_Copy, 'Copy');
-  Add(Typ, TLapeType_ArrayHelper_CopyRange, 'CopyRange');
-  Add(Typ, TLapeType_ArrayHelper_Random, 'Random');
-  Add(Typ, TLapeType_ArrayHelper_Slice, 'Slice');
-  Add(Typ, TLapeType_ArrayHelper_IsEmpty, 'IsEmpty');
-  Add(Typ, TLapeType_ArrayHelper_Clear, 'Clear');
-  Add(Typ, TLapeType_ArrayHelper_Pop, 'Pop');
-  Add(Typ, TLapeType_ArrayHelper_Delete, 'Delete');
-  Add(Typ, TLapeType_ArrayHelper_DeleteRange, 'DeleteRange');
-  Add(Typ, TLapeType_ArrayHelper_Insert, 'Insert');
-  Add(Typ, TLapeType_ArrayHelper_Reverse, 'Reverse');
-  Add(Typ, TLapeType_ArrayHelper_Reversed, 'Reversed');
-  Add(Typ, TLapeType_ArrayHelper_Equals, 'Equals');
-
-  // limited helpers for static arrays
-  Typ := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_static')) as TLapeType;
-
-  Add(Typ, TLapeType_ArrayHelper_Low, 'Low');
-  Add(Typ, TLapeType_ArrayHelper_High, 'High');
-  Add(Typ, TLapeType_ArrayHelper_Length, 'Length');
-  Add(Typ, TLapeType_ArrayHelper_First, 'First');
-  Add(Typ, TLapeType_ArrayHelper_Last, 'Last');
-  Add(Typ, TLapeType_ArrayHelper_Swap, 'Swap');
-  Add(Typ, TLapeType_ArrayHelper_Copy, 'Copy');
-  Add(Typ, TLapeType_ArrayHelper_CopyRange, 'CopyRange');
-  Add(Typ, TLapeType_ArrayHelper_Random, 'Random');
-  Add(Typ, TLapeType_ArrayHelper_Slice, 'Slice');
-  Add(Typ, TLapeType_ArrayHelper_Reverse, 'Reverse');
-  Add(Typ, TLapeType_ArrayHelper_Reversed, 'Reversed');
-  Add(Typ, TLapeType_ArrayHelper_Equals, 'Equals');
-  Add(Typ, TLapeType_ArrayHelper_Contains, 'Contains');
-  Add(Typ, TLapeType_ArrayHelper_IndexOf, 'IndexOf');
-  Add(Typ, TLapeType_ArrayHelper_IndicesOf, 'IndicesOf');
+  Build(TLapeType_ArrayHelper_SetLength, 'SetLength', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Low, 'Low', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_High, 'High', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Length, 'Length', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_First, 'First', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Last, 'Last', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Swap, 'Swap', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Copy, 'Copy', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_CopyRange, 'CopyRange', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Random, 'Random', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Slice, 'Slice', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_IsEmpty, 'IsEmpty', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Clear, 'Clear', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Pop, 'Pop', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Delete, 'Delete', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_DeleteRange, 'DeleteRange', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Remove, 'Remove', [dynSingle, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Insert, 'Insert', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Reverse, 'Reverse', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Reversed, 'Reversed', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Equals, 'Equals', [dynSingle, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Unique, 'Unique', [dynSingle, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Contains, 'Contains', [dynSingle, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_IndexOf, 'IndexOf', [dynSingle, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_IndicesOf, 'IndicesOf', [dynSingle, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Sort, 'Sort', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Sorted, 'Sorted', [dynSingle, dynMulti, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Reverse, 'Reverse', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Reversed, 'Reversed', [dynSingle, dynMulti, dynOrdinal, staticArr]);
+  Build(TLapeType_ArrayHelper_Difference, 'Difference', [dynSingle, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_SymDifference, 'SymDifference', [dynSingle, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Intersection, 'Intersection', [dynSingle, dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Median, 'Median', [dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Mode, 'Mode', [dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Min, 'Min', [dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Max, 'Max', [dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Sum, 'Sum', [dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Mean, 'Mean', [dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Variance, 'Variance', [dynOrdinal]);
+  Build(TLapeType_ArrayHelper_Stdev, 'Stdev', [dynOrdinal]);
 end;
 
 end.
