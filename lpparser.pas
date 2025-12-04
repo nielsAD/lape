@@ -237,8 +237,8 @@ type
 
   TLapeTokenizerFile = class(TLapeTokenizerString)
   public
-    constructor Create(AFileName: UnicodeString = ''); reintroduce; overload; virtual;
-    constructor Create(AFileName: AnsiString = ''); reintroduce; overload; virtual;
+    constructor Create(AFileName: UnicodeString = ''; AEncoding:TEncoding = nil); reintroduce; overload; virtual;
+    constructor Create(AFileName: AnsiString = ''; AEncoding:TEncoding = nil); reintroduce; overload; virtual;
   end;
 
 const
@@ -1309,22 +1309,25 @@ begin
     Result := FDoc[FPos + Offset + 1];
 end;
 
-constructor TLapeTokenizerFile.Create(AFileName: UnicodeString = '');
+constructor TLapeTokenizerFile.Create(AFileName: UnicodeString = ''; AEncoding:TEncoding = nil);
 var
   StrList: TStringList;
 begin
   StrList := TStringList.Create();
   try
-    StrList.LoadFromFile(string(AFileName), TEncoding.ANSI);
+    if AEncoding=nil then
+      StrList.LoadFromFile(string(AFileName), TEncoding.ANSI)
+    else
+      StrList.LoadFromFile(string(AFileName), AEncoding);
     inherited Create(lpString(StrList.Text), lpString(AFileName));
   finally
     StrList.Free();
   end;
 end;
 
-constructor TLapeTokenizerFile.Create(AFileName: AnsiString = '');
+constructor TLapeTokenizerFile.Create(AFileName: AnsiString = ''; AEncoding:TEncoding = nil);
 begin
-  Create(UnicodeString(AFileName));
+  Create(UnicodeString(AFileName),AEncoding);
 end;
 
 procedure LapeInitKeywordDictionary;
