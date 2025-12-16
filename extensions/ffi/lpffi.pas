@@ -108,7 +108,7 @@ const
 
 procedure _ClosureDisposer(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  FreeAndNil(Params^[0]^);
+  FreeAndNil(TObject(Params^[0]^));
 end;
 
 function AddNatifyClosure(var l: TFFINatifyClosures; c: TExportClosure): SizeInt;
@@ -673,7 +673,7 @@ begin
   else if (AVar.VarPos.MemPos <> mpMem) then
     LapeException(lpeImpossible)
   else
-    FreeAndNil(AVar.VarPos.GlobalVar.Ptr^);
+    FreeAndNil(TObject(AVar.VarPos.GlobalVar.Ptr^));
 end;
 
 constructor TLapeTree_InternalMethod_Native.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
