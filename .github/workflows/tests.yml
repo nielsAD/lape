@@ -31,14 +31,14 @@ jobs:
               https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.6/fpc-laz_3.2.2-210709_amd64.deb
               https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.6/fpc-src_3.2.2-210709_amd64.deb
           
-          - os: macos-13
+          - os: macos-15-intel
             name: Mac
             ffi: default
             laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.8/lazarus-darwin-x86_64-3.8.zip
             fpc-url: |
               https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.8/fpc-3.2.2.intelarm64-macosx.dmg
 
-          - os: macos-14
+          - os: macos-15
             name: Mac Arm
             ffi: '' # currently has some fails
             laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20aarch64/Lazarus%203.8/lazarus-darwin-aarch64-3.8.zip
