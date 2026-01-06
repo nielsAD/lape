@@ -610,16 +610,12 @@ type
     property Step: TLapeTree_ExprBase read FStep write setStep;
   end;
 
-  TLapeTree_Repeat = class(TLapeTree_Base, ILapeTree_CanBreak, ILapeTree_CanContinue)
+  TLapeTree_Repeat = class(TLapeTree_If, ILapeTree_CanBreak, ILapeTree_CanContinue)
   protected
-    FCondition: TLapeTree_ExprBase;
-    FBody: TLapeTree_Base;
     FBreakStatements: TLapeFlowStatementList;
     FContinueStatements: TLapeFlowStatementList;
 
-    procedure setCondition(Node: TLapeTree_ExprBase); virtual;
-    procedure setBody(Node: TLapeTree_Base); virtual;
-    procedure DeleteChild(Node: TLapeTree_Base); override;
+    function CompileBody(var Offset: Integer): TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
@@ -629,9 +625,6 @@ type
     function canContinue: Boolean; virtual;
     procedure addBreakStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
     procedure addContinueStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
-
-    property Condition: TLapeTree_ExprBase read FCondition write setCondition;
-    property Body: TLapeTree_Base read FBody write setBody;
   end;
 
   TLapeTree_Try = class(TLapeTree_Base)
@@ -4633,37 +4626,9 @@ begin
   end;
 end;
 
-procedure TLapeTree_Repeat.setCondition(Node: TLapeTree_ExprBase);
-begin
-  if (FCondition <> nil) and (FCondition <> Node) then
-    FCondition.Free();
-  FCondition := Node;
-  if (Node <> nil) then
-    Node.Parent := Self;
-end;
-
-procedure TLapeTree_Repeat.setBody(Node: TLapeTree_Base);
-begin
-  if (FBody <> nil) and (FBody <> Node) then
-    FBody.Free();
-  FBody := Node;
-  if (Node <> nil) then
-    Node.Parent := Self;
-end;
-
-procedure TLapeTree_Repeat.DeleteChild(Node: TLapeTree_Base);
-begin
-  if (FCondition = Node) then
-    FCondition := nil
-  else if (FBody = Node) then
-    FBody := nil;
-end;
-
 constructor TLapeTree_Repeat.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited;
-  FCondition := nil;
-  FBody := nil;
 
   FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
   FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
@@ -4671,25 +4636,17 @@ end;
 
 destructor TLapeTree_Repeat.Destroy;
 begin
-  setCondition(nil);
-  setBody(nil);
   FBreakStatements.Free();
   FContinueStatements.Free();
   inherited;
 end;
 
-function TLapeTree_Repeat.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Repeat.CompileBody(var Offset: Integer): TResVar;
 var
-  i, co, StartOffset: Integer;
+  i, co: Integer;
   ConditionVar: TResVar;
 begin
-  FBreakStatements.Clear();
-  FContinueStatements.Clear();
-
-  Result := NullResVar;
-  StartOffset := FCompiler.Emitter.CheckOffset(Offset);
-  if (FBody <> nil) then
-    FBody.CompileToTempVar(Offset, Result);
+  Result := inherited;
 
   for i := 0 to FContinueStatements.Count - 1 do
     with FContinueStatements[i] do
@@ -4703,7 +4660,20 @@ begin
 
   if (not FCondition.CompileToBoolVar(Offset, ConditionVar)) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
-  FCompiler.Emitter._JmpRIfNot(StartOffset - Offset, ConditionVar, Offset, @_DocPos);
+  FCompiler.Emitter._JmpRIfNot(FStartBodyOffset - Offset, ConditionVar, Offset, @_DocPos);
+  ConditionVar.Spill(1);
+end;
+
+function TLapeTree_Repeat.Compile(var Offset: Integer): TResVar;
+var
+  i, co, StartOffset: Integer;
+begin
+  FStartBodyOffset := 0;
+
+  FBreakStatements.Clear();
+  FContinueStatements.Clear();
+
+  Result := CompileBody(Offset);
 
   for i := 0 to FBreakStatements.Count - 1 do
     with FBreakStatements[i] do
@@ -4714,8 +4684,6 @@ begin
       else
         FCompiler.Emitter._JmpR(Offset - co, co, @DocPos);
     end;
-
-  ConditionVar.Spill(1);
 end;
 
 function TLapeTree_Repeat.canBreak: Boolean;

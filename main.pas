@@ -45,6 +45,7 @@ uses
   {$IFDEF WINDOWS}
   Windows,
   {$ENDIF}
+  LCLType,
   lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, lpmessages, lpffi, ffi;
 
 {$R *.lfm}
