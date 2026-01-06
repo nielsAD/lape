@@ -103,7 +103,6 @@ type
     function Evaluate: TLapeGlobalVar; virtual;
 
     function FoldConstants(DoFree: Boolean = True): TLapeTree_Base; override;
-    function CompileToBoolVar(var Offset: Integer; out ConditionVar: TResVar): Boolean; virtual;
   end;
 
   TLapeTree_DestExprBase = class(TLapeTree_ExprBase)
@@ -498,6 +497,7 @@ type
     procedure setBody(Node: TLapeTree_Base); virtual;
     procedure setElse(Node: TLapeTree_Base); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
+    function CompileCondition(var Offset: Integer): TResVar; virtual;
     function CompileBody(var Offset: Integer): TResVar; virtual;
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
@@ -917,33 +917,6 @@ begin
       Result := Replacement;
     end;
   end;
-end;
-
-function TLapeTree_ExprBase.CompileToBoolVar(var Offset: Integer; out ConditionVar: TResVar): Boolean;
-var
-  tmpVar, tmpCondition: TResVar;
-begin
-  Result := False;
-  tmpVar := NullResVar;
-  
-  ConditionVar := Compile(Offset);
-  if (not ConditionVar.HasType()) or (not (ConditionVar.VarType.BaseType in LapeIfTypes)) then
-    Exit;
-
-  if (not (ConditionVar.VarType.Size in [1, 2, 4, 8])) then
-    with FCompiler do
-    begin
-      tmpCondition := ConditionVar;
-      if getBaseType(ltEvalBool).CompatibleWith(ConditionVar.VarType) then
-        ConditionVar := getBaseType(ltEvalBool).Eval(op_Assign, tmpVar, getTempStackVar(ltEvalBool), ConditionVar, [], Offset, @_DocPos)
-      else if (ConditionVar.VarType.BaseType in LapeStringTypes) then
-        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, _ResVar.New(getConstant('')), [], Offset, @_DocPos)
-      else
-        ConditionVar := ConditionVar.VarType.Eval(op_cmp_NotEqual, tmpVar, ConditionVar, _ResVar.New(getConstant(0)), [], Offset, @_DocPos);
-      tmpCondition.Spill(1);
-    end;
-
-  Result := True;
 end;
 
 procedure TLapeTree_DestExprBase.setDest(ResVar: TResVar);
@@ -3924,6 +3897,28 @@ begin
     FElse := nil;
 end;
 
+function TLapeTree_If.CompileCondition(var Offset: Integer): TResVar;
+begin
+  Assert(FCondition <> nil);
+
+  Result := FCondition.Compile(Offset);
+  if (not Result.HasType()) or (not (Result.VarType.BaseType in LapeIfTypes)) then
+    Exit(NullResVar);
+
+  // Variant but possible others
+  if (not (Result.VarType.BaseType in LapeBoolTypes)) then
+  begin
+    with TLapeTree_Cast.Create(Self) do
+    try
+      Param := TLapeTree_ResVar.Create(Result.IncLock(), Self);
+      CastTo := TLapeTree_VarType.Create(FCompiler.getBaseType(ltEvalBool), Self);
+      Result := Compile(Offset);
+    finally
+      Free();
+    end;
+  end;
+end;
+
 function TLapeTree_If.CompileBody(var Offset: Integer): TResVar;
 begin
   if (FStartBodyOffset <= 0) then
@@ -3960,7 +3955,8 @@ begin
   Result := NullResVar;
   FStartBodyOffset := 0;
 
-  if (not FCondition.CompileToBoolVar(Offset, ConditionVar)) then
+  ConditionVar := CompileCondition(Offset);
+  if (not ConditionVar.HasType) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
 
   FCompiler.Emitter.FullEmit := False;
@@ -4280,7 +4276,8 @@ begin
       end;
   end;
 
-  if (not FCondition.CompileToBoolVar(Offset, ConditionVar)) then
+  ConditionVar := CompileCondition(Offset);
+  if (not ConditionVar.HasType) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
 
   FCompiler.Emitter._JmpRIf(FStartBodyOffset - Offset, ConditionVar, Offset, @_DocPos);
@@ -4382,7 +4379,8 @@ begin
         FCompiler.Emitter._JmpR(Offset - co, co, @DocPos);
     end;
 
-  if (not FCondition.CompileToBoolVar(Offset, ConditionVar)) then
+  ConditionVar := CompileCondition(Offset);
+  if (not ConditionVar.HasType) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
   FCompiler.Emitter._JmpRIfNot(FStartBodyOffset - Offset, ConditionVar, Offset, @_DocPos);
   ConditionVar.Spill(1);
