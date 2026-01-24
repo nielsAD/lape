@@ -756,7 +756,7 @@ const
   LapeRefTypes = LapeArrayTypes - [ltShortString, ltStaticArray];
   LapePointerTypes = [ltPointer] + LapeProcTypes + LapeRefTypes;
   LapeStackTypes = LapeOrdinalTypes + LapeRealTypes + LapeSetTypes;
-  LapeIfTypes = LapeOrdinalTypes + LapeStringTypes + LapePointerTypes + LapeRealTypes + [ltVariant];
+  LapeIfTypes = LapeOrdinalTypes + LapeStringTypes + LapePointerTypes + LapeRealTypes + [ltVariant, ltRecord];
   LapeNoInitTypes = LapeOrdinalTypes + LapeRealTypes + [ltUnknown, ltPointer, ltScriptMethod, ltImportedMethod, ltShortString];
 
   NullDocPos: TDocPos = (Line: 0; Col: 0; FileName: '');

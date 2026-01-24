@@ -3905,13 +3905,20 @@ begin
   if (not Result.HasType()) or (not (Result.VarType.BaseType in LapeIfTypes)) then
     Exit(NullResVar);
 
-  // Variant but possible others
+  // Need bool expression:
+  // Example `if ptr then` to `if ptr <> 0 then`
   if (not (Result.VarType.BaseType in LapeBoolTypes)) then
   begin
-    with TLapeTree_Cast.Create(Self) do
+    with TLapeTree_Operator.Create(op_cmp_NotEqual, Self) do
     try
-      Param := TLapeTree_ResVar.Create(Result.IncLock(), Self);
-      CastTo := TLapeTree_VarType.Create(FCompiler.getBaseType(ltEvalBool), Self);
+      Left := TLapeTree_ResVar.Create(Result, Self);
+      if (Result.VarType.BaseType in LapeIntegerTypes + [ltPointer]) then
+        Right := TLapeTree_GlobalVar.Create(FCompiler.getConstant(0), Self)
+      else if (Result.VarType.BaseType = ltVariant) then
+        Right := TLapeTree_GlobalVar.Create(FCompiler.getConstant(0, ltEvalBool), Self)
+      else
+        Right := TLapeTree_GlobalVar.Create(Result.VarType.NewGlobalVarP(), Self);
+
       Result := Compile(Offset);
     finally
       Free();

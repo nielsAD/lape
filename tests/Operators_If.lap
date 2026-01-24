@@ -1,0 +1,79 @@
+{$assertions on}
+
+type
+  TPoint = record
+    x, y: Integer;
+  end;
+  TPointArray = array of TPoint;
+
+var str: String;
+var arr: TPointArray;
+var i: Int32;
+var v: Variant;
+var rec: TPoint;
+begin
+  // string
+  str := '';
+  if str then
+    Assert(Str <> '')
+  else
+    Assert(Str = '');
+  str := 'abc';
+  if str then
+    Assert(Str <> '')
+  else
+    Assert(Str = '');
+
+  // dynarr
+  arr := nil;
+  if arr then
+    Assert(arr <> nil)
+  else
+    Assert(arr = nil);
+  SetLength(arr,0);
+  if arr then
+    Assert(arr <> nil)
+  else
+    Assert(arr = nil);
+  SetLength(arr, 1);
+  if arr then
+    Assert(arr <> nil)
+  else
+    Assert(arr = nil);
+
+  // int
+  i := 0;
+  if i then
+    Assert(i <> 0)
+  else
+    Assert(i = 0);
+  i := 123;
+  if i then
+    Assert(i <> 0)
+  else
+    Assert(i = 0);
+
+  // variant
+  v := 0;
+  if v then
+    Assert(v)
+  else
+    Assert(not v);
+  v := 1;
+  if v then
+    Assert(v)
+  else
+    Assert(not v);
+
+  // records
+  rec := [0,0];
+  if rec then
+    Assert(rec <> [])
+  else
+    Assert(rec = []);
+  rec := [0,1];
+  if rec then
+    Assert(rec <> [])
+  else
+    Assert(rec = []);
+end;
