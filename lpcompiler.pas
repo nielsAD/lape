@@ -1,7 +1,7 @@
 {
   Author: Niels A.D
   Project: Lape (https://github.com/nielsAD/lape)
-  License: GNU Lesser GPL (http://www.gnu.org/licenses/lgpl.html)
+  License: Mozilla Public License (http://mozilla.org/MPL/2.0) 
 
   Script compiler, which turns a script into a syntax tree.
 }
