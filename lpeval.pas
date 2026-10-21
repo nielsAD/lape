@@ -523,7 +523,7 @@ uses
   {$IFDEF DELPHI}
   System.WideStrings, System.WideStrUtils,
   {$ENDIF}
-  lpmessages, lpparser;
+  lpmessages, lptokenizer;
 
 {$RangeChecks Off}
 {$OverflowChecks Off}

@@ -188,7 +188,7 @@ function _ParseMethodHeader(Compiler: TLapeCompiler; Header: lpString): TLapeTyp
 implementation
 
 uses
-  lpmessages, lpparser, lpeval, lpinterpreter_types, lpvartypes_array, lpvartypes_record, lpffi;
+  lpmessages, lptokenizer, lpeval, lpinterpreter_types, lpvartypes_array, lpvartypes_record, lpffi;
 
 const
   PowerTwoRegs = [SizeOf(UInt8), SizeOf(UInt16), SizeOf(UInt32), SizeOf(UInt64)];

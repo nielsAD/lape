@@ -109,7 +109,7 @@
 			<DCCReference Include="..\lpeval.pas"/>
 			<DCCReference Include="..\lpmessages.pas"/>
 			<DCCReference Include="..\lpinterpreter.pas"/>
-			<DCCReference Include="..\lpparser.pas"/>
+			<DCCReference Include="..\lptokenizer.pas"/>
 			<DCCReference Include="..\lptree.pas"/>
 			<DCCReference Include="..\lptypes.pas"/>
 			<DCCReference Include="..\lputils.pas"/>

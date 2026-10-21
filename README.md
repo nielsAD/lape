@@ -35,7 +35,7 @@ Lape is:
 
 ```pascal
 uses
-  Classes, Sysutils, lpparser, lpcompiler, lpinterpreter;   
+  Classes, Sysutils, lptokenizer, lpcompiler, lpinterpreter;   
 
 const
   MyScript = 'function DiceRoll: Int32;'           + LineEnding +

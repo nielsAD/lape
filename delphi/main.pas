@@ -23,7 +23,7 @@ implementation
 {$R *.dfm}
 
 uses
-  lptypes, lpcompiler, lpparser, lpvartypes, lputils, lpinterpreter;
+  lptypes, lpcompiler, lptokenizer, lpvartypes, lputils, lpinterpreter;
 
 procedure _Write(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin

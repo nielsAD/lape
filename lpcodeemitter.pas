@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpinterpreter_types, lpparser;
+  lptypes, lpinterpreter_types, lptokenizer;
 
 type
   PLapeEvalProc = ^TLapeEvalProc;

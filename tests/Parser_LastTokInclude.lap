@@ -1,0 +1,8 @@
+// What follows an include is read with the include's last token before it: "5 -" then "-2", "then" then "else"
+var
+  x: Int32;
+begin
+  x := {$I ../Parser_LastTokInclude.inc} -2;
+  WriteLn(x);
+  if (x > 0) then {$I ../Parser_LastTokInclude2.inc} else WriteLn('no');
+end.

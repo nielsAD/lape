@@ -1,0 +1,6 @@
+// What Parser_Notation and Parser_Comments don't cover
+begin
+  WriteLn(9223372036854775807, ' ', 18446744073709551615, ' ', 1_000_000);
+  WriteLn('it''s', ' ', "a""b", ' ', 'a'#66'c');
+  { (* } WriteLn(1); (* { *) WriteLn(2); // { (*
+end.

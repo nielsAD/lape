@@ -113,7 +113,7 @@ type
 implementation
 
 uses
-  lpparser, lpvartypes_array, lpmessages, lpinternalmethods;
+  lptokenizer, lpvartypes_array, lpmessages, lpinternalmethods;
 
 // sort(arr)
 // sort(arr, comparefunc)

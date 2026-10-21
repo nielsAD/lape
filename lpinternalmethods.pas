@@ -319,7 +319,7 @@ type
 implementation
 
 uses
-  lpparser, lpvartypes_array, lpmessages, lpeval, lpvartypes_ord, lpinterpreter_types,
+  lptokenizer, lpvartypes_array, lpmessages, lpeval, lpvartypes_ord, lpinterpreter_types,
   lpvartypes_record, lpvartypes_object;
 
 type
@@ -1043,7 +1043,7 @@ function TLapeTree_InternalMethod_New.Compile(var Offset: Integer): TResVar;
 
     Expr := TLapeTree_Operator.Create(op_Dot, Self);
     Expr.Left := TLapeTree_VarType.Create(resType(), Self);
-    Expr.Right := TLapeTree_Field.Create('Construct', Self);
+    Expr.Right := TLapeTree_Field.Create(lpString('Construct'), Self);
 
     if (Expr.resType() <> nil) then
       with TLapeTree_Invoke.Create(Expr, Self) do
@@ -2652,7 +2652,7 @@ begin
       with Left as TLapeTree_Operator do
       begin
         Left := TLapeTree_ResVar.Create(_Method.IncLock(), Self);
-        Right := TLapeTree_String.Create('Self', Self);
+        Right := TLapeTree_String.Create(lpString('Self'), Self);
       end;
 
       Right := TLapeTree_Operator.Create(op_Addr, Self);

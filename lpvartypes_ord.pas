@@ -206,7 +206,7 @@ implementation
 
 uses
   Variants,
-  lpparser, lpeval, lpmessages, lpvartypes_array;
+  lptokenizer, lpeval, lpmessages, lpvartypes_array;
 
 function TLapeType_Integer{$IFNDEF FPC}<_Type>{$ENDIF}.NewGlobalVar(Val: _Type; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin

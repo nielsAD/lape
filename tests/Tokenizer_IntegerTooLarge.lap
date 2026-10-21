@@ -1,0 +1,4 @@
+// More than 64 bits
+begin
+  WriteLn(18446744073709551616);
+end.
