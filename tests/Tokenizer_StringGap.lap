@@ -1,0 +1,4 @@
+// A blank between two strings ends the first: the second is not part of it (as in FPC)
+begin
+  WriteLn('a' 'b');
+end.

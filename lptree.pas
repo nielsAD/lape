@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpvartypes, lpparser;
+  lptypes, lpvartypes, lptokenizer;
 
 type
   TLapeTree_Base = class;
@@ -360,8 +360,8 @@ type
 
   TLapeTree_Char = class(TLapeTree_GlobalVar)
   public
-    constructor Create(AValue: WideChar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload;
-    constructor Create(AValue: WideChar; ASource: TLapeTree_Base); overload;
+    constructor Create(ACode: UInt32; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload;
+    constructor Create(ACode: UInt32; ASource: TLapeTree_Base); overload;
   end;
 
   TLapeTree_Range = class(TLapeTree_Base)
@@ -3387,18 +3387,21 @@ begin
   inherited Create(AValue, ltString, ASource);
 end;
 
-constructor TLapeTree_Char.Create(AValue: WideChar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+constructor TLapeTree_Char.Create(ACode: UInt32; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
-  if (AValue > #255) then
-    inherited Create(lpString(AValue), ltWideChar, ACompiler, ADocPos)
+  Assert(ACode <= $FFFF);
+  if (ACode > 255) then
+    inherited Create('#' + lpString(IntToStr(ACode)), ltWideChar, ACompiler, ADocPos)
   else
-    inherited Create(lpString(AValue), ltChar, ACompiler, ADocPos);
+    inherited Create('#' + lpString(IntToStr(ACode)), ltChar, ACompiler, ADocPos);
 end;
 
-constructor TLapeTree_Char.Create(AValue: WideChar; ASource: TLapeTree_Base);
+constructor TLapeTree_Char.Create(ACode: UInt32; ASource: TLapeTree_Base);
 begin
-  inherited Create(lpString(AValue), ltWideChar, ASource);
+  Assert(ASource <> nil);
+  Create(ACode, ASource.Compiler, @ASource._DocPos);
+  FCompilerOptions := ASource.CompilerOptions;
 end;
 
 procedure TLapeTree_Range.setLo(Node: TLapeTree_ExprBase);

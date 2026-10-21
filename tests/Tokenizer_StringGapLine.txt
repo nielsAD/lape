@@ -1,0 +1,1 @@
+Operator expected at line 4, column 5 in file "Tokenizer_StringGapLine.lap"

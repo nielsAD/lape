@@ -1,0 +1,5 @@
+// One digit more than 64 bits: it is not the lower 64 of them
+begin
+  WriteLn($FFFFFFFFFFFFFFFF);
+  WriteLn($1_0000_0000_0000_0000);
+end.

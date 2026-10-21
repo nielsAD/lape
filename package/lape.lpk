@@ -214,8 +214,8 @@ https://github.com/nielsAD/lape"/>
         <Type Value="Include"/>
       </Item44>
       <Item45>
-        <Filename Value="..\lpparser.pas"/>
-        <UnitName Value="lpparser"/>
+        <Filename Value="..\lptokenizer.pas"/>
+        <UnitName Value="lptokenizer"/>
       </Item45>
       <Item46>
         <Filename Value="..\lptree.pas"/>

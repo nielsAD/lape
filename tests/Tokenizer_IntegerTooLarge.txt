@@ -1,0 +1,1 @@
+Integer "18446744073709551616" does not fit in 64 bits at line 4, column 11 in file "Tokenizer_IntegerTooLarge.lap"

@@ -1,0 +1,4 @@
+// What comes after the end of the script is not looked at: a file can have anything there
+begin
+  WriteLn(1);
+end. ? \ and whatever else

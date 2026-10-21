@@ -1,0 +1,5 @@
+// A character is 16 bits at most
+begin
+  WriteLn(Ord(#65535));
+  WriteLn(Ord(#65536));
+end.

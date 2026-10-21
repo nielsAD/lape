@@ -1,0 +1,12 @@
+// Where something is on a line that a string over lines ends on, and where such a string is itself: where it starts.
+// (What the line end in a string is, is what the file has: one character or two. So that is not printed.)
+var
+  a: array of Int32;
+begin
+  WriteLn("one
+two
+three", ' ', Length("x
+y") > 2);
+  WriteLn("a
+b", a[5]);
+end.

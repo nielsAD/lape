@@ -1,0 +1,5 @@
+// (*) is the start of a comment, not a whole one: this one never ends
+begin
+  WriteLn(1);
+  (*) WriteLn(2);
+end.

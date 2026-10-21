@@ -1,0 +1,8 @@
+// A character that means nothing right after a dot is said as that, as anywhere else
+type
+  TRec = record x: Int32; end;
+var
+  r: TRec;
+begin
+  r.? := 1;
+end.

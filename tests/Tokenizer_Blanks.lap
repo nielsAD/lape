@@ -1,0 +1,4 @@
+// A tab, a form feed and a vertical tab are blanks, like a space
+begin
+	WriteLn(1);	WriteLn(	2);
+end.

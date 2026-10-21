@@ -1,0 +1,6 @@
+﻿// A file can start with the mark that says it is UTF-8 (the three bytes before this line): that is
+// no part of the script, and the file is read as UTF-8. (The é is two bytes in the file: two characters of a
+// string of characters of one byte, and one of a string of characters of two, see Tokenizer_Utf8Mark.unicode.txt.)
+begin
+  WriteLn(Length('éa'), ' ', Length('abc'));
+end.

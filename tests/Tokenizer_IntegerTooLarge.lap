@@ -1,0 +1,5 @@
+// A whole number that is more than 64 bits hold is no number: said where it is
+begin
+  WriteLn(18446744073709551615);
+  WriteLn(18446744073709551616);
+end.

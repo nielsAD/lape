@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpvartypes, lpparser, lptree;
+  lptypes, lpvartypes, lptokenizer, lptree;
 
 const
   ParserToken_ExpressionEnd = [tk_sym_SemiColon];
@@ -52,6 +52,8 @@ type
     Tokenizer: Integer;
     Tokenizers: array of TLapeTokenizerBase;
     TokStates: array of Pointer;
+    InPeek: Boolean;
+    LastTok: EParserToken;
     Options: ECompilerOptionsSet;
     Options_PackRecords: UInt8;
     Defines: TLapeDefines;
@@ -73,12 +75,13 @@ type
     function hasMoreTokenizers: Boolean; inline;
     function incTokenizerLock(ATokenizer: TLapeTokenizerBase): TLapeTokenizerBase;
     procedure decTokenizerLock(var ATokenizer: TLapeTokenizerBase; DoFree: Boolean = True);
-    procedure setTokenizersPeek(Peek: Boolean);
   protected
     FTypeID: Integer;
 
     FTokenizers: TLapeTokenizerArray;
     FTokenizer: Integer;
+    FInPeek: Boolean;
+	FLastTok: EParserToken;
 
     FInternalMethodMap: TLapeInternalMethodMap;
     FTree: TLapeTree_Base;
@@ -162,6 +165,7 @@ type
 
     function HandleDirective(Sender: TLapeTokenizerBase; Directive, Argument: lpString): Boolean; virtual;
     function InIgnore: Boolean; virtual;
+    procedure UnknownCharacter; virtual;
     function Next: EParserToken; virtual;
     function isNext(Tokens: EParserTokenSet; out Token: EParserToken): Boolean; overload; virtual;
     function isNext(Tokens: EParserTokenSet): Boolean; overload; virtual;
@@ -351,17 +355,6 @@ begin
   end;
 end;
 
-type
-  __LapeTokenizerBase = class(TLapeTokenizerBase);
-procedure TLapeCompiler.setTokenizersPeek(Peek: Boolean);
-var
-  i: Integer;
-begin
-  for i := 0 to High(FTokenizers) do
-    if (FTokenizers[i] <> nil) then
-      __LapeTokenizerBase(FTokenizers[i]).FInPeek := Peek;
-end;
-
 function TLapeCompiler.getDocPos: TDocPos;
 begin
   if hasTokenizer() then
@@ -448,36 +441,19 @@ begin
 end;
 
 procedure TLapeCompiler.pushTokenizer(ATokenizer: TLapeTokenizerBase);
-var
-  InPeek: Boolean;
 begin
-  InPeek := (Tokenizer <> nil) and Tokenizer.InPeek;
   Inc(FTokenizer);
   setTokenizer(ATokenizer);
 
   if (ATokenizer <> nil) then
-  begin
     ATokenizer.RelativeFileNames := (lcoRelativeFileNames in FOptions);
-    if InPeek then
-      __LapeTokenizerBase(Tokenizer).FInPeek := True;
-  end;
 end;
 
 function TLapeCompiler.popTokenizer: TLapeTokenizerBase;
-var
-  LastTok: EParserToken;
 begin
   Result := Tokenizer;
-  if (Tokenizer <> nil) then
-    LastTok := Tokenizer.LastTok
-  else
-    LastTok := tk_NULL;
-
   setTokenizer(nil);
   Dec(FTokenizer);
-
-  if (Tokenizer <> nil) then
-    __LapeTokenizerBase(Tokenizer).FLastTok := LastTok;
 end;
 
 procedure TLapeCompiler.pushConditional(AEval: Boolean; ADocPos: TDocPos);
@@ -661,7 +637,7 @@ begin
     begin
       Op := TLapeTree_Operator.Create(op_Dot, Self);
       Op.Left := TLapeTree_ResVar.Create(ParamVar.IncLock(), Self);
-      Op.Right := TLapeTree_Field.Create('Destroy', Self);
+      Op.Right := TLapeTree_Field.Create(lpString('Destroy'), Self);
 
       Method.Statements.addStatement(TLapeTree_Invoke.Create(Op, Self));
     end;
@@ -2123,7 +2099,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (Directive = 'include_once') and (FIncludes.IndexOf(string(IncludeFile)) > -1) then
       Exit;
 
-    if (not Sender.InPeek) then
+    if (not FInPeek) then
       FIncludes.Add(string(IncludeFile));
 
     if (FTokenizer + 1 < Length(FTokenizers)) and (FTokenizers[FTokenizer + 1] <> nil) and (FTokenizers[FTokenizer + 1].FileName = IncludeFile) then
@@ -2142,7 +2118,7 @@ begin
   Result := True;
 
   if ({$IFNDEF FPC}@{$ENDIF}FOnHandleDirective <> nil) then
-    if FOnHandleDirective(Self, Directive, Argument, Sender.InPeek, InIgnore()) then
+    if FOnHandleDirective(Self, Directive, Argument, FInPeek, InIgnore()) then
       Exit;
 
   Directive := LowerCase(Directive);
@@ -2266,6 +2242,16 @@ begin
   Result := (FConditionalStack.Cur >= 0) and (not FConditionalStack.Top.Eval);
 end;
 
+procedure TLapeCompiler.UnknownCharacter;
+var
+  Text: lpString;
+begin
+  Text := Tokenizer.TokString;
+  if (Length(Text) = 1) and ((Text[1] < #33) or (Text[1] > #126)) then
+    Text := '#' + lpString(IntToStr(Ord(Text[1])));
+  LapeExceptionFmt(lpeUnknownCharacter, [Text], Tokenizer.DocPos);
+end;
+
 function TLapeCompiler.Next: EParserToken;
 var
   PrevTok: EParserToken;
@@ -2275,14 +2261,17 @@ begin
     Result := Tokenizer.Next{NoWhiteSpace}();
     if (Result = tk_NULL) and hasMoreTokenizers() then
     begin
-      if Tokenizer.InPeek then
+      if FInPeek then
         Dec(FTokenizer)
       else
         popTokenizer();
       Result := Tokenizer.Next{NoWhiteSpace}();
     end;
   until (Result = tk_NULL) or ((not (Result in TokJunk)) and (not InIgnore()));
-  __LapeTokenizerBase(Tokenizer).FLastTok := PrevTok;
+  FLastTok := PrevTok;
+
+  if (Result = tk_Unknown) then
+    UnknownCharacter();
 end;
 
 function TLapeCompiler.isNext(Tokens: EParserTokenSet; out Token: EParserToken): Boolean;
@@ -2292,7 +2281,7 @@ begin
   Result := False;
   OldState := getState();
   try
-    setTokenizersPeek(True);
+    FInPeek := True;
     Token := Next();
     Result := Token in Tokens;
   finally
@@ -2301,7 +2290,7 @@ begin
     else
     begin
       freeState(OldState);
-      setTokenizersPeek(False);
+      FInPeek := False;
     end;
   end;
 end;
@@ -2319,7 +2308,7 @@ var
 begin
   OldState := getState();
   try
-    setTokenizersPeek(True);
+    FInPeek := True;
     Result := Next();
   finally
     setState(OldState);
@@ -2360,7 +2349,7 @@ begin
         if (Peek() in [tk_typ_String, tk_typ_HereString]) then
         begin
           Next();
-          Decl.AddHint(ldhDeprecated, Copy(Tokenizer.TokString, 2, Tokenizer.TokLen - 2));
+          Decl.AddHint(ldhDeprecated, Copy(Tokenizer.TokString, 2, Length(Tokenizer.TokString) - 2));
         end else
           Decl.AddHint(ldhDeprecated);
 
@@ -2440,7 +2429,7 @@ begin
                 Statement := ParseBeginEnd()
               else
                 Statement := ParseBeginEnd(ParserToken_ExpressionEnd + [tk_sym_Dot]);
-              DoBreak := (Tokenizer.LastTok = tk_sym_Dot) or StopAfterBeginEnd;
+              DoBreak := (Tokenizer.Tok = tk_sym_Dot) or StopAfterBeginEnd;
             end;
           tk_kw_Const, tk_kw_Var: Statement := ParseVarBlock();
           tk_kw_Function, tk_kw_Procedure, tk_kw_Operator, tk_kw_Property:
@@ -2568,7 +2557,7 @@ begin
           tk_NULL: Break;
           tk_sym_ParenthesisClose:
             begin
-              if (Tokenizer.LastTok <> tk_sym_ParenthesisOpen) then
+              if (FLastTok <> tk_sym_ParenthesisOpen) then
                 Expect(tk_sym_SemiColon, False, False);
               Break;
             end;
@@ -3181,7 +3170,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       FieldType := ParseType(nil, addToStackOwner);
       if (not (FieldType is TLapeType_Record)) or (IsRecord <> (FieldType.BaseType = ltRecord)) then
         LapeException(lpeUnknownParent, Tokenizer.DocPos);
-      Tokenizer.Expect(tk_sym_ParenthesisClose, True, False);
+      Expect(tk_sym_ParenthesisClose, True, False);
       Result := FieldType.CreateCopy(True) as TLapeType_Record;
       if (Peek() = tk_sym_SemiColon) then
       begin
@@ -3390,7 +3379,8 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     finally
       if (TypeExpr <> nil) then
       begin
-        Tokenizer.tempRollBack();
+        Tokenizer.tempRollBack(FLastTok);
+        FLastTok := tk_NULL;
         TypeExpr.Free();
       end;
     end;
@@ -3441,7 +3431,8 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     finally
       if (TypeExpr <> nil) then
       begin
-        Tokenizer.tempRollBack();
+        Tokenizer.tempRollBack(FLastTok);
+        FLastTok := tk_NULL;
         TypeExpr.Free();
       end;
     end;
@@ -3744,53 +3735,60 @@ var
     end;
   end;
 
-  function getString: lpString;
-  begin
-    Result := Tokenizer.TokString;
-    if (Length(Result) > 1) then
-    begin
-      Delete(Result, 1, 1);
-      Delete(Result, Length(Result), 1);
-    end;
-  end;
-
-  procedure ParseAndPushString(ForceString: Boolean = False);
+  procedure ParseAndPushString;
   var
-    Str: lpString;
+    Str, Text, FirstText: lpString;
     DocPos: TDocPos;
     Token: EParserToken;
+    Code, FirstCode: UInt32;
+    Count: Integer;
+    FirstIsChar: Boolean;
   begin
     DocPos := Tokenizer.DocPos;
-    case Tokenizer.Tok of
-      tk_typ_String, tk_typ_HereString: Str := getString();
-      tk_typ_Char: Str := lpString(Tokenizer.TokChar);
-      else
-        LapeException(lpeImpossible);
-    end;
+    Token := Tokenizer.Tok;
+    FirstIsChar := (Token = tk_typ_Char);
+    FirstCode := 0;
+    Count := 0;
 
-    while isNext([tk_typ_String, tk_typ_HereString, tk_typ_Char], Token) do
-    begin
+    repeat
       case Token of
-        tk_typ_String:
-          if (Tokenizer.LastTok = tk_typ_String) then
-            Str := Str + #39 + getString()
-          else
-            Str := Str + getString();
-        tk_typ_HereString:
-          if (Tokenizer.LastTok = tk_typ_HereString) then
-            Str := Str + #34 + getString()
-          else
-            Str := Str + getString();
+        tk_typ_String, tk_typ_HereString:
+          begin
+            Text := Tokenizer.TokString;
+            if (Count > 0) and (FLastTok = Token) then
+              Str := Str + Text[1];
+            Str := Str + Copy(Text, 2, Length(Text) - 2);
+          end;
         tk_typ_Char:
-          Str := Str + lpString(Tokenizer.TokChar);
+          begin
+            if (not Tokenizer.TokCharCode(Code)) then
+              LapeExceptionFmt(lpeInvalidCharacter, [Tokenizer.TokString], Tokenizer.DocPos);
+            if (Count = 0) then
+            begin
+              FirstCode := Code;
+              FirstText := Tokenizer.TokString;
+            end;
+
+            // A string is of characters of one size. (The first can also be a character by itself, of any size:
+            // which it is, is seen at the end.)
+            if (Code <= Ord(High(lpChar))) then
+              Str := Str + lpChar(Code)
+            else if (Count > 0) then
+              LapeExceptionFmt(lpeInvalidCharacterInString, [Tokenizer.TokString, Ord(High(lpChar))], Tokenizer.DocPos);
+          end;
         else
           LapeException(lpeImpossible);
       end;
-      ForceString := True;
-    end;
+      Inc(Count);
+    until (not (Tokenizer.getChar(1) in [#39, #34, '#'])) or
+          (not isNext([tk_typ_String, tk_typ_HereString, tk_typ_Char], Token));
 
-    if (Length(Str) = 1) and (not ForceString) then
-      PushVarStack(TLapeTree_Char.Create(WideChar(Str[1]), Self, @DocPos))
+    if FirstIsChar and (Count = 1) then
+      PushVarStack(TLapeTree_Char.Create(FirstCode, Self, @DocPos))
+    else if FirstIsChar and (FirstCode > Ord(High(lpChar))) then
+      LapeExceptionFmt(lpeInvalidCharacterInString, [FirstText, Ord(High(lpChar))], DocPos)
+    else if (Count = 1) and (Length(Str) = 1) then
+      PushVarStack(TLapeTree_Char.Create(Ord(Str[1]), Self, @DocPos))
     else
       PushVarStack(TLapeTree_String.Create(Str, Self, @DocPos));
   end;
@@ -3838,15 +3836,15 @@ var
     //Unary minus and double negation
     if (op in [op_Minus, op_Plus]) then
       if (_LastNode = _None) or
-           ((Tokenizer.LastTok in ParserToken_Operators) and
-           (not (ParserTokenToOperator(Tokenizer.LastTok) in UnaryOperators)) and
-           (OperatorPrecedence[ParserTokenToOperator(Tokenizer.LastTok)] <> OperatorPrecedence[op]))
+           ((FLastTok in ParserToken_Operators) and
+           (not (ParserTokenToOperator(FLastTok) in UnaryOperators)) and
+           (OperatorPrecedence[ParserTokenToOperator(FLastTok)] <> OperatorPrecedence[op]))
       then
         if (op = op_Minus) then
           op := op_UnaryMinus
         else
           Exit
-      else if (op = op_Minus) and (Tokenizer.LastTok in [tk_op_Plus, tk_op_Minus]) then
+      else if (op = op_Minus) and (FLastTok in [tk_op_Plus, tk_op_Minus]) then
       begin
         case opStack.Top.OperatorType of
           op_Plus: opStack.Top.OperatorType := op_Minus;
@@ -4069,6 +4067,8 @@ var
 
 var
   Signed: Boolean;
+  IntValue: UInt64;
+  FloatValue: lpFloat;
   Cast: TLapeTree_Cast;
   InExpr: Integer;
   Expr: TLapeTree_ExprBase;
@@ -4095,29 +4095,31 @@ begin
             // FCachedDeclarations are used - Need to know if signed or not. Remove op_UnaryMinus node too.
             Signed := (OpStack.Cur >= 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) and (opStack.Top.OperatorType = op_UnaryMinus);
 
-            if Signed then
+            if (Tokenizer.Tok = tk_typ_Float) then
             begin
-              case Tokenizer.Tok of
-                tk_typ_Integer:
-                  PushVarStack(TLapeTree_Integer.Create(lpString('-' + Tokenizer.TokString), Self, getPDocPos()));
-                tk_typ_Integer_Hex, tk_typ_Integer_Bin:
-                  PushVarStack(TLapeTree_Integer.Create(lpString('-' + UIntToStr(Tokenizer.TokUInt64)), Self, getPDocPos()));
-                tk_typ_Float:
-                  PushVarStack(TLapeTree_Float.Create(lpString('-' + Tokenizer.TokString), Self, getPDocPos()));
-              end;
+              if (not Tokenizer.TokFloat(FloatValue)) then
+                LapeExceptionFmt(lpeInvalidNumber, [Tokenizer.TokString], Tokenizer.DocPos);
 
-              OpStack.Pop.Free();
-            end else
+              if Signed then
+                PushVarStack(TLapeTree_Float.Create(lpString('-') + Tokenizer.TokString, Self, getPDocPos()))
+              else
+                PushVarStack(TLapeTree_Float.Create(Tokenizer.TokString, Self, getPDocPos()));
+            end
+            else
             begin
-              case Tokenizer.Tok of
-                tk_typ_Integer:
-                  PushVarStack(TLapeTree_Integer.Create(lpString(Tokenizer.TokString), Self, getPDocPos()));
-                tk_typ_Integer_Hex, tk_typ_Integer_Bin:
-                  PushVarStack(TLapeTree_Integer.Create(lpString(UIntToStr(Tokenizer.TokUInt64)), Self, getPDocPos()));
-                tk_typ_Float:
-                  PushVarStack(TLapeTree_Float.Create(lpString(Tokenizer.TokString), Self, getPDocPos()));
-              end;
+              if (not Tokenizer.TokInteger(IntValue)) then
+                LapeExceptionFmt(lpeIntegerTooLarge, [Tokenizer.TokString], Tokenizer.DocPos);
+              if Signed and (IntValue > UInt64(High(Int64)) + 1) then
+                LapeExceptionFmt(lpeIntegerTooLarge, [lpString('-') + Tokenizer.TokString], Tokenizer.DocPos);
+
+              if Signed then
+                PushVarStack(TLapeTree_Integer.Create(lpString('-' + UIntToStr(IntValue)), Self, getPDocPos()))
+              else
+                PushVarStack(TLapeTree_Integer.Create(lpString(UIntToStr(IntValue)), Self, getPDocPos()));
             end;
+
+            if Signed then
+              OpStack.Pop.Free();
           end;
 
         tk_typ_String, tk_typ_HereString, tk_typ_Char:
@@ -4336,8 +4338,8 @@ begin
     {$IFDEF Lape_PascalLabels}
     if (Result is TLapeTree_InternalMethod_Label) then
     begin
-      if (Tokenizer.LastTok <> tk_sym_Colon) then
-        LapeExceptionFmt(lpeExpectedOther, [LapeTokenToString(Tokenizer.LastTok), LapeTokenToString(tk_sym_Colon)], Tokenizer.DocPos);
+      if (FLastTok <> tk_sym_Colon) then
+        LapeExceptionFmt(lpeExpectedOther, [LapeTokenToString(FLastTok), LapeTokenToString(tk_sym_Colon)], Tokenizer.DocPos);
       Exit;
     end;
     {$ENDIF}
@@ -4375,7 +4377,7 @@ begin
       end
       else if (Statement = nil) and
         (lcoLooseSemicolon in FOptions) and
-        (Tokenizer.LastTok = tk_sym_SemiColon) and
+        (FLastTok = tk_sym_SemiColon) and
         (not (Tokenizer.Tok in ParserToken_BlockEnd + [tk_NULL]))
       then
       begin
@@ -4397,6 +4399,8 @@ begin
   try
 
     Expect(tk_kw_End, False, True);
+    if (tk_sym_Dot in ExprEnd) and (Tokenizer.Tok = tk_sym_Dot) then
+      Exit;
     ParseExpressionEnd(ExprEnd);
 
   except
@@ -4440,7 +4444,7 @@ begin
     end;
 
     Expect([tk_kw_Else, tk_kw_End], False, True);
-    if (Tokenizer.LastTok = tk_kw_Else) then
+    if (FLastTok = tk_kw_Else) then
     begin
       Result.ElseBody := ParseStatement(False);
       Expect(tk_kw_End, False, True);
@@ -4553,7 +4557,7 @@ begin
     end;
 
     Result.Body := ParseStatement(True, ExprEnd + [tk_kw_Else]);
-    if (Tokenizer.LastTok = tk_kw_Else) then
+    if (FLastTok = tk_kw_Else) then
       Result.ElseBody := ParseStatement(False, ExprEnd);
   except
     Result.Free();
@@ -4570,7 +4574,7 @@ begin
     Result.Condition := ParseExpression();
     Expect(tk_kw_Then, False, False);
     Result.Body := ParseStatement(True, ExprEnd + [tk_kw_Else]);
-    if (Tokenizer.LastTok = tk_kw_Else) then
+    if (FLastTok = tk_kw_Else) then
       Result.ElseBody := ParseStatement(False, ExprEnd);
 
   except
@@ -4630,7 +4634,7 @@ begin
     Result.Condition := ParseExpression();
     Expect(tk_kw_Do, False, False);
     Result.Body := ParseStatement(True, ExprEnd + [tk_kw_Else]);
-    if (Tokenizer.LastTok = tk_kw_Else) then
+    if (FLastTok = tk_kw_Else) then
       Result.ElseBody := ParseStatement(False, ExprEnd);
 
   except
@@ -4824,6 +4828,8 @@ begin
   with PCompilerState(Result)^ do
   begin
     Tokenizer := FTokenizer;
+    InPeek := FInPeek;
+    LastTok := FLastTok;
 
     SetLength(Tokenizers, Length(FTokenizers));
     SetLength(TokStates, Length(FTokenizers));
@@ -4852,11 +4858,13 @@ begin
     Assert(Length(FTokenizers) >= Length(Tokenizers));
     Assert(Length(Tokenizers) = Length(TokStates));
     FTokenizer := Tokenizer;
+    FInPeek := InPeek;
+    FLastTok := LastTok;
 
     for i := 0 to High(Tokenizers) do
     begin
       if (TokStates[i] <> nil) then
-        Tokenizers[i].setState(TokStates[i], False);
+        Tokenizers[i].setState(TokStates[i]);
       if (FTokenizers[i] <> Tokenizers[i]) then
       begin
         decTokenizerLock(FTokenizers[i]);

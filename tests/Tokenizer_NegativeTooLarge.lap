@@ -1,0 +1,5 @@
+// With its minus sign a number is what an Int64 holds below 0, and no more
+begin
+  WriteLn(-9223372036854775808);
+  WriteLn(-9223372036854775809);
+end.

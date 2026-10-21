@@ -1,0 +1,5 @@
+// Nothing after the dot that ends a script is read: not even what could not be read, like a comment that is never
+// closed
+begin
+  WriteLn(1);
+end.{ this is not closed

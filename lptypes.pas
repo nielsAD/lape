@@ -175,7 +175,7 @@ type
   EOperator = (
     op_Unknown,
 
-    //Same order as lpparser.EParserToken
+    //Same order as lptokenizer.EParserToken
     op_cmp_Equal,
     op_cmp_GreaterThan,
     op_cmp_GreaterThanOrEqual,
@@ -803,6 +803,10 @@ var
   );
 
 function LapeCase(const Str: lpString): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
+// A letter a-z as its capital, anything else as it is
+function LapeUpcaseAlpha(c: lpChar): lpChar; {$IFDEF Lape_Inline}inline;{$ENDIF}
+// Same string with LapeUpcaseAlpha comparison (a..z matches A..Z)
+function LapeSameStringAlpha(P: PlpChar; Len: Integer; const Str: lpString): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeHash(Data: Pointer; Len: UInt32; const Seed: UInt32 = 0): UInt32; overload;
 function LapeHash(const Str: lpString): UInt32; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeTypeToString(Token: ELapeBaseType): lpString;
@@ -856,6 +860,38 @@ begin
   {$ELSE}
   Result := LowerCase(Str);
   {$ENDIF}
+end;
+
+function LapeUpcaseAlpha(c: lpChar): lpChar;
+begin
+  if (c >= 'a') and (c <= 'z') then
+    Result := lpChar(Ord(c) - 32)
+  else
+    Result := c;
+end;
+
+function LapeSameStringAlpha(P: PlpChar; Len: Integer; const Str: lpString): Boolean;
+var
+  S, Last: PlpChar;
+  c: UInt32;
+begin
+  if (Len <> Length(Str)) then
+    Exit(False);
+
+  S := PlpChar(Str);
+  Last := P + Len;
+  while (P < Last) do
+  begin
+    if (P^ <> S^) then
+    begin
+      c := Ord(P^) or $20;
+      if (c <> (Ord(S^) or $20)) or (c < Ord('a')) or (c > Ord('z')) then
+        Exit(False);
+    end;
+    Inc(P);
+    Inc(S);
+  end;
+  Result := True;
 end;
 
 //MurMurHas2 by Tommi Prami & optimizations by Patrick van Logchem

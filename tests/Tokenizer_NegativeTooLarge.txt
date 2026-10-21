@@ -1,0 +1,1 @@
+Integer "-9223372036854775809" does not fit in 64 bits at line 4, column 12 in file "Tokenizer_NegativeTooLarge.lap"

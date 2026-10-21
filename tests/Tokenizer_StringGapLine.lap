@@ -1,0 +1,5 @@
+// The end of a line between two strings ends the first, as a blank does (as in FPC)
+begin
+  WriteLn('a'
+    'b');
+end.

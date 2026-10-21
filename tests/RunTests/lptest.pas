@@ -27,7 +27,7 @@ implementation
 
 uses
   {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF} strutils,
-  lpvartypes, lpcompiler, lpparser, lpmessages, lpinterpreter, lputils;
+  lpvartypes, lpcompiler, lptokenizer, lpmessages, lpinterpreter, lputils;
 
 constructor TLapeTester.Create(AFolder: string = '..'; ADebug: Boolean = False);
 begin
@@ -131,6 +131,7 @@ var
   var
     Res: TSearchRec;
     StartTime: UInt64;
+    ExpectFile: string;
   begin
     Result := 0;
 
@@ -145,8 +146,14 @@ var
         Output := '';
         StartTime := GetTickCount();
         try
-          if FileExists(Folder + ChangeFileExt(Res.Name, '.txt')) then
-            TestFile(Folder + Res.Name, Output, Folder + ChangeFileExt(Res.Name, '.txt'))
+          ExpectFile := Folder + ChangeFileExt(Res.Name, '.txt');
+          {$IFDEF Lape_Unicode}
+          if FileExists(Folder + ChangeFileExt(Res.Name, '.unicode.txt')) then
+            ExpectFile := Folder + ChangeFileExt(Res.Name, '.unicode.txt');
+          {$ENDIF}
+
+          if FileExists(ExpectFile) then
+            TestFile(Folder + Res.Name, Output, ExpectFile)
           else
             TestFile(Folder + Res.Name, Output);
 

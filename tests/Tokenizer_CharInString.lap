@@ -1,0 +1,11 @@
+// A string is of characters of one size: of one byte, or of two when Lape is built with Lape_Unicode. A character
+// that is written by its number and is more than that size holds is no part of a string: #256 is not in one of
+// characters of one byte. (With those of two it is: see Tokenizer_CharInString.unicode.txt.)
+var
+  s: String;
+begin
+  s := 'a'#255'b';
+  WriteLn(Length(s), ' ', Ord(s[2]));
+  s := 'a'#256'b';
+  WriteLn(Length(s), ' ', Ord(s[2]));
+end.

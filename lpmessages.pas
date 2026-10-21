@@ -97,6 +97,11 @@ const
   lpeInvalidForward = 'Forwarded declaration "%s" not resolved';
   lpeInvalidLabel = 'Invalid label';
   lpeInvalidIndex = 'Invalid index "%s"';
+  lpeIntegerTooLarge = 'Integer "%s" does not fit in 64 bits';
+  lpeInvalidNumber = 'Invalid number "%s"';
+  lpeInvalidCharacter = 'Character "%s" is more than a character can be';
+  lpeInvalidCharacterInString = 'Character "%s" does not fit in a string: it is more than #%d';
+  lpeUnknownCharacter = 'Unknown character "%s"';
   lpeInvalidIterator = 'Variable cannot be used for iteration';
   lpeInvalidJump = 'Invalid jump';
   lpeInvalidOpenArrayElement = 'Invalid open array element (%s) (index: %d)';

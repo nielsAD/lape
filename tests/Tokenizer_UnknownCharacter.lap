@@ -1,0 +1,5 @@
+// A character that means nothing is said as that
+begin
+  WriteLn(1);
+  WriteLn(2 ? 3);
+end.

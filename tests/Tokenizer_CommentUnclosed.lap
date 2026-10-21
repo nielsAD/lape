@@ -1,0 +1,8 @@
+// A comment that never ends is said where it starts
+begin
+  WriteLn(1);
+
+     { this one { has another } but
+
+  never its own end
+end.

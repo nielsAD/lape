@@ -1,0 +1,33 @@
+// Characters written by their numbers, given to an AnsiString. With characters of one byte (String is an
+// AnsiString) they are those bytes. With Lape_Unicode a written string is a String of characters of two bytes, and
+// giving it to an AnsiString is the conversion that any String has: through the code page of the system, so the
+// bytes that come out are the system's (#150 is "?" with code page 1252, #200 is two bytes with UTF-8). Nothing
+// else is done for what is written: an AnsiString gets the same from it as from a String that holds it.
+var
+  s: String;
+  a, b: AnsiString;
+  c: Char;
+begin
+  a := #200;
+  s := #200;
+  b := s;
+  WriteLn(a = b);
+
+  a := 'x'#150#200;
+  s := 'x'#150#200;
+  b := s;
+  WriteLn(a = b);
+
+  c := #150;
+  a := c;
+  s := c;
+  b := s;
+  WriteLn(a = b);
+
+  // (the bytes themselves, with characters of one byte)
+  if (SizeOf(Char) = 1) then
+  begin
+    a := 'x'#150#200;
+    WriteLn(Length(a), ' ', Ord(a[2]), ' ', Ord(a[3]));
+  end;
+end.

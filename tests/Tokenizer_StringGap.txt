@@ -1,0 +1,1 @@
+Operator expected at line 3, column 15 in file "Tokenizer_StringGap.lap"

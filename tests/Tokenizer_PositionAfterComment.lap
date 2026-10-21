@@ -1,0 +1,9 @@
+// Where something is on a line that a comment over lines ends on: counted from where that line starts
+begin
+  WriteLn(1);
+  {
+    a comment
+    of some lines } (*
+    and another
+  *) WriteLn(NotThere);
+end.

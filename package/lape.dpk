@@ -39,7 +39,7 @@ contains
   lpeval in '..\lpeval.pas',
   lpmessages in '..\lpmessages.pas',
   lpinterpreter in '..\lpinterpreter.pas',
-  lpparser in '..\lpparser.pas',
+  lptokenizer in '..\lptokenizer.pas',
   lptree in '..\lptree.pas',
   lptypes in '..\lptypes.pas',
   lputils in '..\lputils.pas',

@@ -1,0 +1,1 @@
+Character "#256" does not fit in a string: it is more than #255 at line 9, column 11 in file "Tokenizer_CharInString.lap"

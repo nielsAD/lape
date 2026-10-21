@@ -33,7 +33,7 @@ const
 implementation
 
 uses
-  lpparser, lpeval,
+  lptokenizer, lpeval,
   SysUtils, Classes;
 
 procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);

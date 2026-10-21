@@ -1,0 +1,4 @@
+// A comment between two strings ends the first, as a blank does (as in FPC)
+begin
+  WriteLn('a'{x}#66);
+end.

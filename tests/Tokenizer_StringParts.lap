@@ -1,0 +1,6 @@
+// Strings and characters that follow each other are one string when each is right where the one before it ends, as
+// in FPC. A quote in a string is written twice: two strings next to each other are one with that quote in it.
+begin
+  WriteLn('it''s', ' ', 'a'#66'c', ' ', #72#105, ' ', 'x'#39'y', ' ', Length(''''), ' ', '''''');
+  WriteLn("a""b", ' ', 'a'"b", ' ', Length('ab'#13#10'cd'));
+end.

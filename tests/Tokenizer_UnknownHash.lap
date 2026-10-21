@@ -1,0 +1,5 @@
+// A # with no number after it is no character
+begin
+  WriteLn(#65);
+  WriteLn(#x41);
+end.

@@ -1,0 +1,37 @@
+// Keywords are keywords in whatever case they are written. A name that starts or ends like one is a name.
+
+TYPE
+  TRec = RECORD x: Int32; END;
+
+VAR
+  beginx: Int32 = 1; end_: Int32 = 2; _end: Int32 = 3; xend: Int32 = 4;
+  unimplementedx: Int32 = 5; unimplemente: Int32 = 6; i_f: Int32 = 7; do1: Int32 = 8; t0: Int32 = 9;
+  // (a keyword with more after it is a name)
+  constrefx: Int32 = 10; outx: Int32 = 11;
+  a1b2_c3: Int32 = 12;
+  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx: Int32 = 13;
+
+FUNCTION Twice(n: Int32): Int32;
+BeGiN
+  Result := n * 2;
+eNd;
+
+PROCEDURE Bump(VAR n: Int32);
+bEgIn
+  n := n + 1;
+EnD;
+
+VAR
+  r: TRec;
+  i: Int32;
+BEGIN
+  WriteLn(beginx + end_ + _end + xend, ' ', unimplementedx + unimplemente, ' ', i_f + do1 + t0, ' ', constrefx + outx, ' ', a1b2_c3);
+  WriteLn(xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx);
+
+  IF (Twice(2) = 4) AND NOT (1 > 2) OR FALSE THEN WriteLn('if') ELSE WriteLn('else');
+  FOR i := 1 TO 3 DO Write(i); FOR i := 3 DOWNTO 1 DO Write(i); WriteLn();
+  i := 0; WHILE (i < 3) DO Bump(i); REPEAT i := i - 1; UNTIL (i <= 0); WriteLn(i);
+  CASE Twice(i) OF 0: WriteLn('zero'); ELSE WriteLn('other'); END;
+  TRY r.x := 7 DIV 2 MOD 2 SHL 3 SHR 1 XOR 1; FINALLY WriteLn(r.x); END;
+  WITH r DO WriteLn(x IN [5]);
+END.

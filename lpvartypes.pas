@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpparser, lpcodeemitter;
+  lptypes, lptokenizer, lpcodeemitter;
 
 type
   ECompilerOption = (

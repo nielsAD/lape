@@ -1,0 +1,25 @@
+// A character by its number: #65, #$41. It is that number, whatever character the program that runs Lape has under
+// it. Up to #255 it is a Char, above that a WideChar. In a string it is one of the characters of the string.
+
+var
+  c: Char;
+  w: WideChar;
+  s: String;
+begin
+  WriteLn(#65, #$41, #$61, ' ', Ord(#0), ' ', Ord(#127), ' ', Ord(#128), ' ', Ord(#200), ' ', Ord(#255));
+  WriteLn(Ord(#256), ' ', Ord(#8364), ' ', Ord(#$20AC), ' ', Ord(#65535), ' ', Ord(#$FFFF));
+  WriteLn(SizeOf(#65), ' ', SizeOf(#255), ' ', SizeOf(#256), ' ', SizeOf(#65535));
+
+  c := #255; w := #8364;
+  WriteLn(Ord(c), ' ', Ord(w), ' ', c = #$FF, ' ', w = #$20AC);
+  c := #200;
+  WriteLn(c = #200, ' ', c = #$C8, ' ', c > #199, ' ', #255 > #254, ' ', #65 = 'A', ' ', #128 > #127);
+
+  // in a string
+  s := 'a'#200'b';
+  WriteLn(Length(s), ' ', Ord(s[1]), ' ', Ord(s[2]), ' ', Ord(s[3]));
+  s := #1#2#255;
+  WriteLn(Length(s), ' ', Ord(s[1]), ' ', Ord(s[3]));
+  WriteLn(#72#105, ' ', #72'i', ' ', 'H'#105, ' ', 'it'#39's', ' ', Length(#0'x'#0), ' ', Length(#13#10));
+  WriteLn('it''s', ' ', '''', ' ', Length(''), ' ', Length(''''''));
+end.

@@ -1,0 +1,11 @@
+// Lines end with CR LF, with LF alone or with CR alone: each of them is one line, also in a comment and in a
+// string that goes over lines. (This file has all three: line 14 is where what is wrong is.)
+var  a: Int32;
+begin
+  a := Length("12
+3
+4");  { a comment over
+ lines
+ } WriteLn(a);
+  WriteLn(NotThere);
+end.

@@ -46,7 +46,7 @@ uses
   Windows,
   {$ENDIF}
   LCLType,
-  lpparser, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, lpmessages, lpffi, ffi;
+  lptokenizer, lpcompiler, lputils, lpeval, lpinterpreter, lpdisassembler, lpmessages, lpffi, ffi;
 
 {$R *.lfm}
 

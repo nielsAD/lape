@@ -102,7 +102,7 @@
         <UnitName Value="Main"/>
       </Unit1>
       <Unit2>
-        <Filename Value="lpparser.pas"/>
+        <Filename Value="lptokenizer.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
       <Unit3>

@@ -1,0 +1,33 @@
+// Comments: to the end of the line, in braces and in (* *). The last two can have a comment of their own kind in
+// them, and go over lines.
+
+var a{x}:{y}Int32{z}={w}5;
+var b(*x*):(*y*)Int32(*z*)=(*w*)2;
+begin
+  {x} WriteLn(1); { a { b } c } WriteLn(2); { a { b { c } } } WriteLn(3);
+  (* x *) WriteLn(4); (* a (* b *) c *) WriteLn(5); (**) WriteLn(6); (***) WriteLn(7); (*****) WriteLn(8);
+
+  // one kind in the other is nothing to it
+  { (* } WriteLn(9); (* { *) WriteLn(10); { // } WriteLn(11); // { (* 'never
+  { don't "mind" what is in it } WriteLn(12); (* nor 'here *) WriteLn(13);
+  { {$IFDEF NOPE} {$ELSE} } WriteLn(14);
+
+  // What opens one is no part of what closes it: (*) starts a comment that has a ) in it
+  (*) WriteLn('not this'); *) WriteLn(15);
+  (*
+    (*)
+    WriteLn('nor this');
+  *) *) WriteLn(16);
+
+  // between everything, and next to what looks like one
+  WriteLn(a{}+{}1, ' ', (*c*)b(*d*), ' ', (a)*(b), ' ', 2*(a), ' ', (a*b));
+  WriteLn('{ // (* } *)', ' ', "{ // (* } *)");
+
+  {
+    over
+    lines
+  } (*
+    and
+    again
+  *) WriteLn(17);
+end. // and after the last line, without an end of line
