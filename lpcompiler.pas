@@ -2575,7 +2575,7 @@ begin
           Param.VarType._DocPos := Tokenizer.DocPos;
           if (Param.VarType = nil) then
             LapeException(lpeTypeExpected, Tokenizer.DocPos);
-          Expect([tk_sym_Equals, tk_sym_SemiColon, tk_sym_ParenthesisClose], True, False);
+          Expect([tk_sym_Equals, tk_sym_SemiColon, tk_sym_ParenthesisClose], False, False);
 
           if (Tokenizer.Tok = tk_sym_Equals) then
           begin
@@ -2618,9 +2618,10 @@ begin
         LapeExceptionFmt(lpeCannotOverrideOperator, [op_name[op], ltyp.AsString, rtyp.AsString], Pos);
     end;
 
-    if ExpectResult or ((Result.MethodDef = mdProperty) and (Peek() = tk_sym_Colon)) then
+    Next();
+    if ExpectResult or ((Result.MethodDef = mdProperty) and (Tokenizer.Tok = tk_sym_Colon)) then
     begin
-      Expect(tk_sym_Colon, True, False);
+      Expect(tk_sym_Colon, False, False);
       Result.Res := ParseType(nil);
       Result.Res._DocPos := Tokenizer.DocPos;
       if (Result.Res = nil) then
@@ -3056,7 +3057,7 @@ begin
 
   try
     FuncHeader := ParseMethodHeader(FuncName, not isExternal);
-    ParseExpressionEnd(tk_sym_SemiColon, True, False);
+    ParseExpressionEnd(tk_sym_SemiColon, False, False);
     Result := ParseMethod(FuncForwards, FuncHeader, FuncName, isExternal);
   finally
     DecStackInfo([lsfFunction], (Result = nil));
@@ -3114,7 +3115,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         if Expect([tk_sym_Colon, tk_sym_Equals], False, False) = tk_sym_Colon then
           FieldType := ParseType(nil);
 
-        if Expect([tk_sym_SemiColon, tk_sym_Equals], FieldType <> nil, False) = tk_sym_Equals then
+        if Expect([tk_sym_SemiColon, tk_sym_Equals], False, False) = tk_sym_Equals then
         begin
           Expression := EnsureExpression(ParseExpression([tk_sym_SemiColon], True, False)).setExpectedType(FieldType) as TLapeTree_ExprBase;
           if (Expression <> nil) and (not Expression.isConstant()) then
@@ -3135,7 +3136,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         Identifiers := ParseIdentifierList();
         Expect(tk_sym_Colon, False, False);
         FieldType := ParseType(nil, addToStackOwner);
-        Expect(tk_sym_SemiColon, True, False);
+        Expect(tk_sym_SemiColon, False, False);
 
         for i := 0 to High(Identifiers) do
         begin
@@ -3170,14 +3171,14 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       FieldType := ParseType(nil, addToStackOwner);
       if (not (FieldType is TLapeType_Record)) or (IsRecord <> (FieldType.BaseType = ltRecord)) then
         LapeException(lpeUnknownParent, Tokenizer.DocPos);
-      Expect(tk_sym_ParenthesisClose, True, False);
+      Expect(tk_sym_ParenthesisClose, False, True);
       Result := FieldType.CreateCopy(True) as TLapeType_Record;
-      if (Peek() = tk_sym_SemiColon) then
+      // record(TParent); is the parent's fields only
+      if (Tokenizer.Tok = tk_sym_SemiColon) then
       begin
         Result := addManagedType(Result);
         Exit;
-      end else
-        Next();
+      end;
     end
     else if IsRecord then
       Result := TLapeType_Record.Create(Self, nil, '', getPDocPos())
@@ -3185,6 +3186,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       Result := TLapeType_Union.Create(Self, nil, '', getPDocPos());
 
     ParseFields(IsPacked);
+    Next();
 
     Result := addManagedType(Result);
   end;
@@ -3195,6 +3197,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     SetUniqueTypeID(Result); // important for Dispose
     Next();
     ParseFields(True);
+    Next();
     Result := addManagedType(Result);
   end;
 
@@ -3234,6 +3237,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       else
         Result := addManagedType(PointerType.CreateCopy(True));
 
+      Next();
       Exit;
     end;
 
@@ -3258,6 +3262,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       Result := TLapeType_Pointer.Create(Self, PointerType, ConstPointer, '', @DocPos);
       TypeForwards.Add(Tokenizer.TokString, Result);
     end;
+    Next();
   end;
 
   procedure ParseEnum;
@@ -3326,6 +3331,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         TLapeGlobalVar(addLocalDecl(Enum.NewGlobalVar(Val, Name), StackOwner)).isConstant := True;
 
     until (Tokenizer.Tok in [tk_NULL, tk_sym_ParenthesisClose]);
+    Next();
   end;
 
   procedure ParseMethodType;
@@ -3355,9 +3361,9 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     Result.BaseType := BaseType;
     Result := addManagedType(Result);
 
-    if isNext([tk_kw_Of]) then
+    if (Tokenizer.Tok = tk_kw_Of) then
     begin
-      Expect(tk_kw_Object, True, False);
+      Expect(tk_kw_Object, True, True);
       Result := addManagedType(TLapeType_MethodOfObject.Create(Result as TLapeType_Method));
     end;
   end;
@@ -3378,11 +3384,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         LapeException(lpeTypeExpected, Tokenizer.DocPos);
     finally
       if (TypeExpr <> nil) then
-      begin
-        Tokenizer.tempRollBack(FLastTok);
-        FLastTok := tk_NULL;
         TypeExpr.Free();
-      end;
     end;
   end;
 
@@ -3430,19 +3432,19 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         LapeException(lpeTypeExpected, Tokenizer.DocPos);
     finally
       if (TypeExpr <> nil) then
-      begin
-        Tokenizer.tempRollBack(FLastTok);
-        FLastTok := tk_NULL;
         TypeExpr.Free();
-      end;
     end;
   end;
 
+var
+  TypePos: TDocPos;
 begin
   Result := nil;
   try
 
-    case Next() of
+    Next();
+    TypePos := Tokenizer.DocPos;
+    case Tokenizer.Tok of
       tk_kw_Array: ParseArray();
       tk_kw_Record, tk_kw_Union: ParseRecord();
       tk_kw_Object: ParseObject();
@@ -3461,12 +3463,12 @@ begin
 
     if (Result <> nil) then
       if (TypeForwards = nil) and (lcoHints in FOptions) and Result.HasHints() then
-        Result.WriteHints({$IFDEF FPC}@{$ENDIF}Hint, Tokenizer.DocPos)
+        Result.WriteHints({$IFDEF FPC}@{$ENDIF}Hint, TypePos)
       else
       // TypeForwards<>nil means ParseTypeBlock
       // type TPoint = record X,Y: Integer deprecated;
-      if (TypeForwards <> nil) and (Peek() in ParserToken_Hints) then
-        ParseDeclHint(Result, True, False);
+      if (TypeForwards <> nil) and (Tokenizer.Tok in ParserToken_Hints) then
+        ParseDeclHint(Result, False, True);
   except
     if (Result <> nil) then
       FreeAndNil(Result);
@@ -3499,7 +3501,7 @@ begin
       Typ.Name := Name;
       addLocalDecl(Typ);
 
-      ParseExpressionEnd(tk_sym_SemiColon, True, False);
+      ParseExpressionEnd(tk_sym_SemiColon, False, False);
     until (Next() <> tk_Identifier);
 
     while (TypeForwards.Count > 0) do
@@ -3566,9 +3568,9 @@ begin
       begin
         VarType := ParseType(nil);
         if isConst then
-          Expect([tk_op_Assign, tk_sym_Equals], True, False)
+          Expect([tk_op_Assign, tk_sym_Equals], False, False)
         else
-          ParseExpressionEnd([tk_op_Assign, tk_sym_Equals] + ValidEnd, True, False);
+          ParseExpressionEnd([tk_op_Assign, tk_sym_Equals] + ValidEnd, False, False);
       end;
 
       if (Tokenizer.Tok = tk_sym_Equals) then
@@ -4126,7 +4128,10 @@ begin
           ParseAndPushString();
 
         tk_kw_Type:
-          PushVarStack(TLapeTree_VarType.Create(parseType(nil), Self));
+          begin
+            PushVarStack(TLapeTree_VarType.Create(parseType(nil), Self));
+            DoNext := False;
+          end;
 
         tk_Identifier:
           begin

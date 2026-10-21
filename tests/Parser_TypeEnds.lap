@@ -1,0 +1,101 @@
+// Ensure all type ends are parsed correctly.
+
+type
+  TEnum = (eA, eB, eC);
+  TScoped = enum(sA, sB = 5, sC);
+  TEnumRange = eA..eB;
+  TRange = 0..2;
+  TChars = 'a'..'z';
+  TNums = 1..5;
+  TSet = set of TEnum;
+  TRangeSet = set of TRange;
+  TEnumRangeSet = set of TEnumRange;
+  TDistinct = type Int32;
+  TArr = array of Int32;
+  TStatic = array[0..2] of TEnum;
+  TShort = string[10];
+  TArrArr = array of array of TEnum;
+  PInt = ^Int32;
+  PConstInt = ^const Int32;
+  PNode = ^TNode;
+  TNode = record Value: Int32; Next: PNode; end;
+  THandle = strict Pointer;
+  TPacked = packed record a: UInt8; b: Int32; end;
+  TUnion = union i: Int32; b: UInt8; end;
+  TRec = record
+    const Zero: Int32 = 0;
+    const Name = 'rec';
+    a: TEnum;
+    r: TRange;
+    er: TEnumRange;
+    s: TSet;
+    p: ^Int32;
+    f: function(x: Int32): Int32;
+    n: record x, y: Int32; end;
+  end;
+  TRecChild = record(TRec) extra: TNums; end;
+  TRecSame = record(TRec);
+  TFunc = function(a: TEnum; b: TRange = 2): TSet;
+  TNoParams = procedure;
+  TAnswer = function: Int32;
+  TNotify = procedure(x: TArr) of object;
+  TObj = object Name: String; Lives: Int32; end;
+  TOld = Int32 deprecated;
+  TOlder = TRec deprecated 'use TRec';
+  TNewer = array of TEnum experimental;
+
+const
+  CE: TEnum = eB;
+  CS: TSet = [eA, eC];
+  CR: TRange = 0;
+  CA: TStatic = [eC, eA, eB];
+
+var
+  e: TEnum = eC;
+  r: TRange := 1;
+  c: TChars = 'q';
+  nums: TNums = 3;
+  s: TSet = [eA, eC];
+  rs: TRangeSet = [1];
+  ers: TEnumRangeSet;
+  d: TDistinct = 7;
+  a: TArr = [1, 2, 3];
+  st: TStatic;
+  sh: TShort = 'short';
+  aa: TArrArr;
+  n1, n2: TNode;
+  ip: PInt;
+  cpi: PConstInt = nil;
+  h: THandle;
+  pk: TPacked;
+  u: TUnion;
+  rec: TRec;
+  child: TRecChild;
+  same: TRecSame;
+  fn: TFunc;
+  np: TNoParams;
+  an: TAnswer;
+  o: TObj;
+  m: procedure(x: Int32) of object;
+  x, y: record a: Int32; b: TEnum; end;
+  z: (zA, zB) = zB;
+  q: set of TEnum := [eB];
+  ptr: ^TEnum = nil;
+  arr: array of TEnum = [eA];
+  sa: array[1..2] of string[3];
+  sc: TScoped = TScoped.sC;
+  fromInc: {$I ../Parser_TypeEnds.inc} = [eC];
+  intoInc: TRange {$I ../Parser_TypeEnds2.inc}
+  spread: array
+    of
+    TEnum (* a comment
+    over lines *) = [eB, eC];
+  dir: Int32 {$IFDEF Lape_CaseInsensitive}= 5{$ELSE}= 6{$ENDIF};
+
+procedure TypeExpressions;
+begin
+  WriteLn(SizeOf(type record a, b: Int16; end), ' ', SizeOf(type TEnum), ' ', SizeOf(type array of TEnum) = SizeOf(Pointer));
+end;
+
+begin
+end.
