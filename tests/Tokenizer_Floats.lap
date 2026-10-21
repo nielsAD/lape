@@ -1,22 +1,36 @@
-// Numbers with a fraction or an exponent as they are written. (What is printed is rounded or compared: how a
-// Double is written out is by where the program runs.)
+// Numbers with a fraction or an exponent as they are written. They are of the widest float there is: an Extended,
+// which is wider than a Double on x86 (but for Win64). (What is printed is rounded or compared: how a float is
+// written out is by where the program runs.)
 
+{$IFDEF Lape_NoExtended}
+type TFloat = Double;
+{$ELSE}
+type TFloat = Extended;
+{$ENDIF}
+
+var
+  a, b, c, d, e, f, g: Double;
 begin
   // a fraction, an exponent with or without its sign, both
   WriteLn(Round(1.5 * 10), ' ', Round(1e3), ' ', Round(1E3), ' ', Round(1e+3), ' ', Round(1e-3 * 1e6), ' ', Round(1.5e3));
   WriteLn(Round(1.5e2), ' ', Round(15E1), ' ', Round(1500e-1), ' ', Round(0.15E+3), ' ', Round(-2.5 * 2));
-  WriteLn(SizeOf(1.5), ' ', SizeOf(1e3));
+  WriteLn(SizeOf(1.5) = SizeOf(TFloat), ' ', SizeOf(1e3) = SizeOf(TFloat));
 
   // _ between digits
   WriteLn(Round(1_000.5_0), ' ', Round(1_0e0_2), ' ', Round(1_0.2_5 * 100));
 
-  // read as the nearest Double, to the last bit
-  WriteLn(0.1 + 0.2 = 0.30000000000000004, ' ', 1e23 = 9.999999999999999e22, ' ', 9007199254740993.0 = 9007199254740992.0);
-  WriteLn(3.14159265358979323846264338327950288 = 3.141592653589793, ' ', 0.1 = 0.1000000000000000055511151231257827);
+  // read as the nearest float, to the last bit: put in a Double, that is the nearest Double
+  a := 0.1; b := 0.2; c := 0.30000000000000004;
+  d := 1e23; e := 9.999999999999999e22;
+  f := 9007199254740993.0; g := 9007199254740992.0;
+  WriteLn(a + b = c, ' ', d = e, ' ', f = g);
+  b := 0.1000000000000000055511151231257827;
+  d := 3.14159265358979323846264338327950288; e := 3.141592653589793;
+  WriteLn(d = e, ' ', a = b);
   WriteLn(1.7976931348623157e308 > 1e308, ' ', 4.9e-324 > 0, ' ', 2.2250738585072014e-308 > 0);
 
-  // more than a Double can be is infinite, less than it can be is nothing
-  WriteLn(1.8e308 > 1.7976931348623157e308, ' ', 1e999 = 1.8e308, ' ', 1e-400 = 0, ' ', -1e999 < 0);
+  // more than the float can be is infinite, less than it can be is nothing
+  WriteLn(1e9999 > 1.7976931348623157e308, ' ', 1e9999 = 1e99999, ' ', 1e-9999 = 0, ' ', -1e9999 < 0);
 
   // a whole number with something after it that is no fraction
   WriteLn(Round(1e1) + 1, ' ', 2.5 > 2);

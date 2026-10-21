@@ -1,5 +1,5 @@
 // Whole numbers as they are written: in digits, in hexadecimal ($) and in bits (%), with _ anywhere between those.
-// A minus sign in front is part of the number.
+// One is a NativeInt when that holds it, and bigger when it is more. A minus sign in front is part of the number.
 
 begin
   // how big they can be
@@ -7,7 +7,7 @@ begin
   WriteLn(2147483647, ' ', 2147483648, ' ', 4294967295, ' ', 4294967296);
   WriteLn(9223372036854775807, ' ', 9223372036854775808, ' ', 18446744073709551615);
   WriteLn(-128, ' ', -32768, ' ', -2147483648, ' ', -9223372036854775808, ' ', - 5, ' ', - -5);
-  WriteLn(000000000000000000000000000042, ' ', SizeOf(1), ' ', SizeOf(18446744073709551615));
+  WriteLn(000000000000000000000000000042, ' ', SizeOf(1) = SizeOf(NativeInt), ' ', SizeOf(18446744073709551615));
 
   // hexadecimal, in either case
   WriteLn($0, ' ', $FF, ' ', $ff, ' ', $7FFFFFFFFFFFFFFF, ' ', $8000000000000000, ' ', $FFFFFFFFFFFFFFFF);
