@@ -1,0 +1,37 @@
+type
+  TArr = array of Int32;
+  TRec = record s: String; a: TArr; end;
+
+procedure Run;
+type
+  TLocalArr = array of TRec;
+  TLocal = record
+    const A: TArr = [1, 2, 3];
+    const R: TRec = ['x', [4, 5]];
+    const S: String = 'abc';
+    n: Int32;
+  end;
+  TOther = record
+    const L: TLocalArr = [['y', [6]], ['z', []]];
+  end;
+
+  procedure Inner;
+  type
+    TInner = record
+      const B: TLocalArr = [['w', [7, 8, 9]]];
+    end;
+  begin
+    WriteLn(TInner.B[0].s, Length(TInner.B[0].a));
+  end;
+
+var
+  l: TLocal;
+begin
+  WriteLn(Length(TLocal.A), ' ', TLocal.R.s, Length(TLocal.R.a), ' ', TLocal.S, ' ', l.n);
+  WriteLn(Length(TOther.L), TOther.L[0].s, TOther.L[1].s);
+  Inner();
+end;
+
+begin
+  Run();
+end.

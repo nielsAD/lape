@@ -2098,7 +2098,7 @@ begin
   FCount := 0;
   FreeAndNil(FNames);
 
-  for i := 0 to High(Decls) do
+  for i := High(Decls) downto 0 do
   begin
     if (Decls[i].FList = Self) then
       Decls[i].FList := nil;

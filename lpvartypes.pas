@@ -4209,12 +4209,15 @@ end;
 procedure TLapeCompilerBase.Clear;
 var
   BaseType: ELapeBaseType;
+  i: Integer;
 begin
   ClearBaseTypes(FBaseTypes, False);
   FGlobalDeclarations.Delete(TLapeVar, True);
-  FGlobalDeclarations.Delete(TLapeType_OverloadedMethod, True);
   FManagedDeclarations.Delete(TLapeVar, True);
-  FManagedDeclarations.Delete(TLapeType_OverloadedMethod, True);
+  for i := FGlobalDeclarations.Count - 1 downto 0 do
+    FGlobalDeclarations[i].ClearDeclarations();
+  for i := FManagedDeclarations.Count - 1 downto 0 do
+    FManagedDeclarations[i].ClearDeclarations();
   FGlobalDeclarations.Clear();
   FManagedDeclarations.Clear();
   for BaseType in LapeBaseTypes do
