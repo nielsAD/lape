@@ -33,7 +33,7 @@ type
     FreeFieldMap: Boolean;
 
     constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    function CreateCopy: TLapeType; override;
     destructor Destroy; override;
 
     procedure ClearCache; override;
@@ -44,7 +44,6 @@ type
     function VarToString(AVar: Pointer): lpString; override;
     function NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; virtual;
 
-    function HasChild(AName: lpString): Boolean; override;
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
 
@@ -142,7 +141,7 @@ procedure TLapeType_Record.addField(FieldType: TLapeType; AName: lpString; AAlig
     if (Typ = nil) then
       Exit(AAlignment);
 
-    if Typ.IsOrdinal() or (Typ.BaseType in LapePointerTypes) then
+    if (Typ.BaseType in LapeOrdinalTypes + LapePointerTypes) then
       Result := Typ.Size
     else
     case Typ.BaseType of
@@ -208,7 +207,7 @@ begin
     FieldType.EvalConst(op_Assign, Field, FieldValue, [lefAssigning]);
   Field.isConstant := True;
 
-  addSubDeclaration(Field);
+  addDeclaration(Field);
 end;
 
 function TLapeType_Record.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
@@ -241,40 +240,30 @@ begin
   Result := Result + '}';
 end;
 
-function TLapeType_Record.CreateCopy(DeepCopy: Boolean = False): TLapeType;
+function TLapeType_Record.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_Record;
 var
   i: Integer;
 begin
-  if DeepCopy then
-  begin
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name, @_DocPos);
-    for i := 0 to FFieldMap.Count - 1 do
-      TLapeType_Record(Result).FieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
-  end
-  else
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FFieldMap, Name, @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name, @_DocPos);
+  for i := 0 to FFieldMap.Count - 1 do
+    TLapeType_Record(Result).FieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
 
   with TLapeType_Record(Result) do
   begin
-    inheritManagedDecls(Self, not DeepCopy);
-    TypeID := Self.TypeID;
     FInit := Self.FInit;
     FSize := Self.FSize;
     FAlignment := Self.FAlignment;
     CopyHints(Self);
   end;
+  Result.ParentType := Self;
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_Record.NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
   Result := NewGlobalVarP(nil, AName, ADocPos);
-end;
-
-function TLapeType_Record.HasChild(AName: lpString): Boolean;
-begin
-  Result := FFieldMap.ExistsKey(AName) or HasSubDeclaration(AName, bTrue);
 end;
 
 function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;

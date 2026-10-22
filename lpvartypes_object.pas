@@ -26,11 +26,12 @@ type
     FTotalFieldSize: Integer;
 
     function getAsString: lpString; override;
+    function HasMembers: Boolean; override;
   public
     FreeFieldMap: Boolean;
 
     constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TObjectFieldMap = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    function CreateCopy: TLapeType; override;
     destructor Destroy; override;
 
     procedure ClearCache; override;
@@ -39,10 +40,9 @@ type
     procedure addField(FieldType: TLapeType; AName: lpString); virtual;
     procedure addConstField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: lpString); virtual;
 
-    function HasChild(AName: lpString): Boolean; override;
-    function HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean; override;
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; override;
     function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
 
     procedure addArrayHelpers; override;
@@ -96,6 +96,11 @@ begin
   Result := inherited;
 end;
 
+function TLapeType_Object.HasMembers: Boolean;
+begin
+  Result := (FFieldMap.Count > 0) or inherited;
+end;
+
 constructor TLapeType_Object.Create(ACompiler: TLapeCompilerBase; AFieldMap: TObjectFieldMap; AName: lpString; ADocPos: PDocPos);
 const
   InvalidRec: TObjectField = (Offset: Word(-1); FieldType: nil);
@@ -143,28 +148,23 @@ begin
   Result := Result + ' + '#39'}'#39'; end;';
 end;
 
-function TLapeType_Object.CreateCopy(DeepCopy: Boolean): TLapeType;
+function TLapeType_Object.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_Object;
 var
   i: Integer;
 begin
-  if DeepCopy then
-  begin
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name);
-    for i := 0 to FFieldMap.Count - 1 do
-      TLapeType_Object(Result).FFieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
-  end
-  else
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FFieldMap, Name);
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name);
+  for i := 0 to FFieldMap.Count - 1 do
+    TLapeType_Object(Result).FFieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
 
   with TLapeType_Object(Result) do
   begin
-    inheritManagedDecls(Self, not DeepCopy);
-    TypeID := Self.TypeID;
     FTotalFieldSize := Self.FTotalFieldSize;
     CopyHints(Self);
   end;
+  Result.ParentType := Self;
+  Result.TypeID := TypeID;
 end;
 
 procedure TLapeType_Object.addField(FieldType: TLapeType; AName: lpString);
@@ -191,12 +191,7 @@ begin
     FieldType.EvalConst(op_Assign, Field, FieldValue, [lefAssigning]);
   Field.isConstant := True;
 
-  addSubDeclaration(Field);
-end;
-
-function TLapeType_Object.HasChild(AName: lpString): Boolean;
-begin
-  Result := FFieldMap.ExistsKey(AName) or HasSubDeclaration(AName, bTrue);
+  addDeclaration(Field);
 end;
 
 function TLapeType_Object.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeType;
@@ -232,12 +227,12 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Object.HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean;
+function TLapeType_Object.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
 begin
-  if FFieldMap.ExistsKey(AName) then
+  if (Op = op_Dot) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.Ptr)^) then
     Result := False
   else
-    Result := inherited HasConstantChild(Left, AName);
+    Result := inherited;
 end;
 
 function TLapeType_Object.EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;

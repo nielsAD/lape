@@ -151,7 +151,7 @@ var
     begin
       if not (
           (Params.Count = 2) and
-          (Res.IsOrdinal()) and
+          (Res.BaseType in LapeOrdinalTypes) and
           (ArrayElementType.Equals(Params[0].VarType)) and
           (ArrayElementType.Equals(Params[1].VarType))
       ) then

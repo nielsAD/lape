@@ -609,7 +609,7 @@ begin
 
   _Write := ACompiler['_Write'];
   if (_Write <> nil) and (_Write.VarType is TLapeType_OverloadedMethod) then
-    _Write := _Write.VarType.ManagedDeclarations[0] as TLapeGlobalVar;
+    _Write := TLapeType_OverloadedMethod(_Write.VarType).Methods[0];
 
   Assert(_Write <> nil);
   setExpr(TLapeTree_GlobalVar.Create(_Write, Self));
@@ -659,7 +659,7 @@ begin
 
   _WriteLn := FCompiler['_WriteLn'];
   if (_WriteLn <> nil) and (_WriteLn.VarType is TLapeType_OverloadedMethod) then
-    _WriteLn := _WriteLn.VarType.ManagedDeclarations[0] as TLapeGlobalVar;
+    _WriteLn := TLapeType_OverloadedMethod(_WriteLn.VarType).Methods[0];
   Assert(_WriteLn <> nil);
 
   with TLapeTree_Invoke.Create(_WriteLn, Self) do
@@ -1367,8 +1367,8 @@ begin
       ParamType := FParams[0].resType();
       if (ParamType <> nil) and (ParamType is TLapeType_Type) then
         ParamType := TLapeType_Type(ParamType).TType;
-      if (ParamType <> nil) then
-        FResType := FCompiler.getBaseType(ParamType.BaseIntType);
+      if (ParamType <> nil) and (ParamType.BaseType in LapeOrdinalTypes) then
+        FResType := FCompiler.getBaseType(DetermineIntType(ParamType.Size, ParamType.BaseType in LapeSignedIntegerTypes));
     end;
   Result := inherited;
 end;
@@ -1637,7 +1637,7 @@ begin
 
       ltSmallEnum, ltLargeEnum:
         with TLapeType_Enum(ParamType) do
-          FRes := FCompiler.getConstant(MemberMap.Count - GapCount, ltSizeInt);
+          FRes := FCompiler.getConstant(ElementMap.Count - GapCount, ltSizeInt);
     end;
   end;
 
@@ -1861,11 +1861,11 @@ begin
 
   if isEmpty(Start) then
     StartRes := NullResVar
-  else if (not Start.CompileToTempVar(Offset, StartRes)) or (not StartRes.HasType()) or (StartRes.VarType.BaseIntType = ltUnknown) then
+  else if (not Start.CompileToTempVar(Offset, StartRes)) or (not StartRes.HasType()) or (not (StartRes.VarType.BaseType in LapeOrdinalTypes)) then
     LapeException(lpeInvalidEvaluation, DocPos)
   else
   begin
-    StartRes.VarType := FCompiler.getBaseType(StartRes.VarType.BaseIntType);
+    StartRes.VarType := FCompiler.getBaseType(DetermineIntType(StartRes.VarType.Size, StartRes.VarType.BaseType in LapeSignedIntegerTypes));
     Start := TLapeTree_ResVar.Create(StartRes, Self.FParams[1]);
   end;
 
@@ -2167,7 +2167,7 @@ begin
       CountParam := FCompiler.getConstant(1);
 
     VarParam := FParams[0].Evaluate();
-    if (VarParam = nil) or (not VarParam.HasType()) or (not VarParam.VarType.IsOrdinal(True)) then
+    if (VarParam = nil) or (not VarParam.HasType()) or (not (VarParam.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
       LapeException(lpeInvalidEvaluation, DocPos);
 
     if (VarParam.VarType.BaseType = ltPointer) then
@@ -2182,7 +2182,7 @@ begin
     else
     begin
       ResultType := VarParam.VarType;
-      VarParam := FCompiler.getBaseType(VarParam.VarType.BaseIntType).NewGlobalVarP(VarParam.Ptr);
+      VarParam := FCompiler.getBaseType(DetermineIntType(VarParam.VarType.Size, VarParam.VarType.BaseType in LapeSignedIntegerTypes)).NewGlobalVarP(VarParam.Ptr);
 
       with TLapeTree_Cast.Create(FCompiler) do
       try
@@ -2226,7 +2226,7 @@ begin
 
   try
     VarParam := FParams[0].Compile(Offset);
-    if (not VarParam.HasType()) or (not VarParam.VarType.IsOrdinal(True)) then
+    if (not VarParam.HasType()) or (not (VarParam.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
       LapeException(lpeInvalidEvaluation, DocPos);
 
     if (VarParam.VarType.BaseType = ltPointer) then
@@ -2243,7 +2243,7 @@ begin
     else
     begin
       ResultType := VarParam.VarType;
-      VarParam.VarType := FCompiler.getBaseType(VarParam.VarType.BaseIntType);
+      VarParam.VarType := FCompiler.getBaseType(DetermineIntType(VarParam.VarType.Size, VarParam.VarType.BaseType in LapeSignedIntegerTypes));
 
       with TLapeTree_Cast.Create(FCompiler) do
       try

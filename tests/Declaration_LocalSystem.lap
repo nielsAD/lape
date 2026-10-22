@@ -1,0 +1,10 @@
+// A local cannot be called System: `System.Name` would not reach the System unit then
+procedure P;
+var
+  system: Int32;
+begin
+end;
+
+begin
+  P();
+end.

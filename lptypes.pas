@@ -420,23 +420,17 @@ type
     procedure NameChanged(const Decl: TLapeDeclaration; const OldName: lpString; OldHash: UInt32); virtual;
 
     function getItem(Index: Integer): TLapeDeclaration; virtual;
-    function getItemCount: Integer; virtual;
   public
-    Parent: TLapeDeclarationList;
     FreeDecls: Boolean;
 
     constructor Create(ManageDeclarations: Boolean = True); reintroduce; virtual;
     destructor Destroy; override;
 
-    function HasParent: Boolean; virtual;
     procedure Clear; virtual;
-    procedure ClearSubDeclarations; virtual;
 
     // Declares it here, at the end: it is taken out of the list that it was in
     procedure addDeclaration(Decl: TLapeDeclaration); virtual;
-    // Whether it is declared here (and, by CheckParent, in Parent)
-    function HasSubDeclaration(Name: lpString; CheckParent: TInitBool): Boolean; overload; virtual;
-    function HasSubDeclaration(Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean; overload; virtual;
+    function Has(Decl: TLapeDeclaration): Boolean; virtual;
 
     function IndexOf(Decl: TLapeDeclaration): Integer; virtual;
 
@@ -444,15 +438,14 @@ type
     procedure Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False); overload; virtual;
 
     // The first that was declared with the name
-    function Get(Name: lpString; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean; overload; virtual;
-    function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean; overload; virtual;
-    function GetByClass(AClass: TLapeDeclarationClass; CheckParent: TInitBool): TLapeDeclArray; virtual;
+    function Get(Name: lpString; out Decl: TLapeDeclaration): Boolean; overload; virtual;
+    function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean; overload; virtual;
+    function GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray; virtual;
 
     function ExportToArray: TLapeDeclArray; virtual;
 
     property Count: Integer read FCount;
     property Items[Index: Integer]: TLapeDeclaration read getItem; default;
-    property ItemCount: Integer read getItemCount;
   end;
 
   EDeclarationUsed = (duFalse, duTrue, duIgnore);
@@ -476,7 +469,6 @@ type
     FHints: TLapeDeclarationHints;
 
     function getDocPos: TDocPos; override;
-    procedure setList(AList: TLapeDeclarationList); virtual;
     procedure setName(const AName: lpString); virtual;
   public
     _DocPos: TDocPos;
@@ -490,32 +482,14 @@ type
     procedure WriteHints(Callback: TLapeDeclarationHintCallback; ADocPos: TDocPos); virtual;
     function HasHints: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
     function HasDocPos: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    // What is declared in it goes (of a type: what the type declares)
+    procedure ClearDeclarations; virtual;
 
-    property DeclarationList: TLapeDeclarationList read FList write setList;
+    // The list that it is declared in (a list adds it, and deletes it)
+    property DeclarationList: TLapeDeclarationList read FList;
     property Name: lpString read FName write setName;
     property NameHash: UInt32 read FNameHash;
     property Hints: TLapeDeclarationHints read FHints;
-  end;
-
-  TLapeManagingDeclaration = class(TLapeDeclaration)
-  protected
-    FManagedDecls: TLapeDeclarationList;
-  public
-    FreeDecls: Boolean;
-
-    constructor Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil); override;
-    destructor Destroy; override;
-
-    procedure setManagedDecls(ADecls: TLapeDeclarationList; DoManage: Boolean); overload; virtual;
-    procedure setManagedDecls(ADecls: TLapeDeclarationList); overload; virtual;
-    procedure inheritManagedDecls(ADecls: TLapeManagingDeclaration; AReplace: Boolean = False); virtual;
-
-    procedure addSubDeclaration(ADecl: TLapeDeclaration); virtual;
-    function HasSubDeclaration(AName: lpString; CheckParent: TInitBool): Boolean; overload; virtual;
-    function HasSubDeclaration(ADecl: TLapeDeclaration; CheckParent: TInitBool): Boolean; overload; virtual;
-    procedure ClearSubDeclarations; virtual;
-
-    property ManagedDeclarations: TLapeDeclarationList read FManagedDecls write setManagedDecls;
   end;
 
 const
@@ -2099,13 +2073,6 @@ begin
     Result := nil;
 end;
 
-function TLapeDeclarationList.getItemCount: Integer;
-begin
-  Result := Count;
-  if HasParent() then
-    Inc(Result, Parent.ItemCount);
-end;
-
 constructor TLapeDeclarationList.Create(ManageDeclarations: Boolean = True);
 begin
   inherited Create();
@@ -2118,18 +2085,14 @@ begin
   inherited;
 end;
 
-function TLapeDeclarationList.HasParent: Boolean;
-begin
-  Result := Parent <> nil;
-end;
-
 procedure TLapeDeclarationList.Clear;
 var
   Decls: TLapeDeclArray;
   i: Integer;
 begin
   if FreeDecls then
-    ClearSubDeclarations();
+    for i := FCount - 1 downto 0 do
+      FItems[i].ClearDeclarations();
 
   Decls := ExportToArray();
   FCount := 0;
@@ -2144,19 +2107,9 @@ begin
   end;
 end;
 
-procedure TLapeDeclarationList.ClearSubDeclarations;
-var
-  Decls: TLapeDeclArray;
-  i: Integer;
-begin
-  Decls := GetByClass(TLapeManagingDeclaration, bFalse);
-  for i := High(Decls) downto 0 do
-    TLapeManagingDeclaration(Decls[i]).ClearSubDeclarations();
-end;
-
 procedure TLapeDeclarationList.addDeclaration(Decl: TLapeDeclaration);
 begin
-  if (Decl = nil) or HasSubDeclaration(Decl, bFalse) then
+  if (Decl = nil) or Has(Decl) then
     Exit;
 
   if (Decl.FList <> nil) then
@@ -2165,21 +2118,9 @@ begin
   Decl.FList := Self;
 end;
 
-function TLapeDeclarationList.HasSubDeclaration(Name: lpString; CheckParent: TInitBool): Boolean;
-var
-  Decl: TLapeDeclaration;
-begin
-  Result := Get(Name, Decl, CheckParent);
-end;
-
-function TLapeDeclarationList.HasSubDeclaration(Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
+function TLapeDeclarationList.Has(Decl: TLapeDeclaration): Boolean;
 begin
   Result := Exists(Decl);
-  if (not Result) and HasParent() then
-    if (CheckParent = bUnknown) then
-      Result := Parent.HasSubDeclaration(Decl, bFalse)
-    else if (CheckParent = bTrue) then
-      Result := Parent.HasSubDeclaration(Decl, bTrue);
 end;
 
 function TLapeDeclarationList.IndexOf(Decl: TLapeDeclaration): Integer;
@@ -2250,7 +2191,7 @@ begin
   end;
 end;
 
-function TLapeDeclarationList.Get(Name: lpString; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
+function TLapeDeclarationList.Get(Name: lpString; out Decl: TLapeDeclaration): Boolean;
 var
   Hash: UInt32;
   i: Integer;
@@ -2271,15 +2212,9 @@ begin
         Result := True;
         Break;
       end;
-
-  if (not Result) and HasParent() then
-    if (CheckParent = bUnknown) then
-      Result := Parent.Get(Name, Decl, bFalse)
-    else if (CheckParent = bTrue) then
-      Result := Parent.Get(Name, Decl, bTrue);
 end;
 
-function TLapeDeclarationList.Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
+function TLapeDeclarationList.Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean;
 var
   Hash: UInt32;
   Found: TLapeDeclArray;
@@ -2310,15 +2245,9 @@ begin
         Result := True;
         Break;
       end;
-
-  if (not Result) and HasParent() then
-    if (CheckParent = bUnknown) then
-      Result := Parent.Get(Name, AClass, Decl, bFalse)
-    else if (CheckParent = bTrue) then
-      Result := Parent.Get(Name, AClass, Decl, bTrue);
 end;
 
-function TLapeDeclarationList.GetByClass(AClass: TLapeDeclarationClass; CheckParent: TInitBool): TLapeDeclArray;
+function TLapeDeclarationList.GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray;
 var
   i, Found: Integer;
 begin
@@ -2331,12 +2260,6 @@ begin
       Inc(Found);
     end;
   SetLength(Result, Found);
-
-  if (Result = nil) and HasParent() then
-    if (CheckParent = bUnknown) then
-      Result := Parent.GetByClass(AClass, bFalse)
-    else if (CheckParent = bTrue) then
-      Result := Parent.GetByClass(AClass, bTrue);
 end;
 
 function TLapeDeclarationList.ExportToArray: TLapeDeclArray;
@@ -2347,23 +2270,6 @@ end;
 function TLapeDeclaration.getDocPos: TDocPos;
 begin
   Result := _DocPos;
-end;
-
-procedure TLapeDeclaration.setList(AList: TLapeDeclarationList);
-begin
-  if (AList = FList) then
-    Exit;
-
-  if (FList <> nil) then
-    FList.Delete(Self);
-  FList := nil;
-  if (AList <> nil) then
-  begin
-    AList.addDeclaration(Self);
-    // (a stack has what is declared in it without being its list: it is its list from here on, as it always was, so
-    // that it is taken out of the stack when it goes)
-    FList := AList;
-  end;
 end;
 
 procedure TLapeDeclaration.setName(const AName: lpString);
@@ -2398,12 +2304,14 @@ begin
   else
     _DocPos := NullDocPos;
 
-  setList(AList);
+  if (AList <> nil) then
+    AList.addDeclaration(Self);
 end;
 
 destructor TLapeDeclaration.Destroy;
 begin
-  setList(nil);
+  if (FList <> nil) then
+    FList.Delete(Self);
   inherited;
 end;
 
@@ -2446,63 +2354,8 @@ begin
   Result := (DocPos.Line <> NullDocPos.Line) and (DocPos.Col <> NullDocPos.Col);
 end;
 
-constructor TLapeManagingDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil);
+procedure TLapeDeclaration.ClearDeclarations;
 begin
-  inherited;
-  FreeDecls := True;
-  FManagedDecls := TLapeDeclarationList.Create();
-end;
-
-destructor TLapeManagingDeclaration.Destroy;
-begin
-  if FreeDecls then
-    FManagedDecls.Free();
-  inherited;
-end;
-
-procedure TLapeManagingDeclaration.setManagedDecls(ADecls: TLapeDeclarationList; DoManage: Boolean);
-begin
-  Assert(ADecls <> nil);
-  if FreeDecls then
-    FManagedDecls.Free();
-  FManagedDecls := ADecls;
-  FreeDecls := DoManage;
-end;
-
-procedure TLapeManagingDeclaration.setManagedDecls(ADecls: TLapeDeclarationList);
-begin
-  setManagedDecls(ADecls, False);
-end;
-
-procedure TLapeManagingDeclaration.inheritManagedDecls(ADecls: TLapeManagingDeclaration; AReplace: Boolean = False);
-begin
-  Assert(ADecls <> nil);
-  Assert(ADecls.ManagedDeclarations <> nil);
-
-  if AReplace then
-    setManagedDecls(ADecls.ManagedDeclarations)
-  else
-    FManagedDecls.Parent := ADecls.ManagedDeclarations;
-end;
-
-procedure TLapeManagingDeclaration.addSubDeclaration(ADecl: TLapeDeclaration);
-begin
-  FManagedDecls.addDeclaration(ADecl);
-end;
-
-function TLapeManagingDeclaration.HasSubDeclaration(AName: lpString; CheckParent: TInitBool): Boolean;
-begin
-  Result := FManagedDecls.HasSubDeclaration(AName, CheckParent);
-end;
-
-function TLapeManagingDeclaration.HasSubDeclaration(ADecl: TLapeDeclaration; CheckParent: TInitBool): Boolean;
-begin
-  Result := FManagedDecls.HasSubDeclaration(ADecl, CheckParent);
-end;
-
-procedure TLapeManagingDeclaration.ClearSubDeclarations;
-begin
-  FManagedDecls.Clear();
 end;
 
 {$IFDEF Lape_TrackObjects}

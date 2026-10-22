@@ -22,13 +22,12 @@ type
   TLapeDisassemblerPointerMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<string>;
 
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap); overload;
-procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase); overload;
 procedure DisassembleCode(Code: PByte; PointerNames: array of TLapeDeclArray); overload;
 
 implementation
 
 uses
-  lpmessages, lpinterpreter_types, lpeval, lputils;
+  lpmessages, lpinterpreter_types, lpeval;
 
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap);
 var
@@ -318,28 +317,6 @@ begin
           else
             pMap[lpString(IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0))] := 'lpe'+string(LapeTypeToString(t1))+'_'+string(op_name[op]+'_'+LapeTypeToString(t2));
       end;
-  end;
-end;
-
-procedure Disassemble__PointerMap(v: TLapeGlobalVar; AName: lpString; Compiler: TLapeCompilerBase; var Arg);
-begin
-  if (AName = '') then
-    TLapeDisassemblerPointerMap(Arg)[lpString(IntToHex(PtrUInt(v.Ptr), 0))] := string(v.AsString)
-  else
-    TLapeDisassemblerPointerMap(Arg)[lpString(IntToHex(PtrUInt(v.Ptr), 0))] := string(AName);
-end;
-
-procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase);
-var
-  pMap: TLapeDisassemblerPointerMap;
-begin
-  pMap := TLapeDisassemblerPointerMap.Create('');
-  try
-    Disassemble__EvalProcs(pMap);
-    TraverseGlobals(PointerNames, @Disassemble__PointerMap, pMap);
-    DisassembleCode(Code, pMap);
-  finally
-    pMap.Free();
   end;
 end;
 
