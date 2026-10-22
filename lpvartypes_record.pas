@@ -397,7 +397,7 @@ begin
     with FFieldMap[PlpString(Right.VarPos.GlobalVar.Ptr)^] do
     begin
       Dest := NullResVar;
-      Result := Left.IncLock();
+      Result := Left;
       Result.VarType :=FieldType;
       case Left.VarPos.MemPos of
         mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedDecl(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + Offset))));
@@ -453,8 +453,6 @@ begin
             FCompiler.Emitter._GrowStack(FieldOffset, Offset, Pos);
         end;
 
-        LeftVar.Spill(1);
-        RightVar.Spill(1);
       end;
       Result := Left;
     end
@@ -511,8 +509,6 @@ begin
           Result.VarType.Eval(op_Assign, Dest, Result, tmpVar, [], Offset, Pos);
         LoopOffset[i] := FCompiler.Emitter._JmpRIfNot(0, Result, Offset, Pos);
 
-        LeftVar.Spill(1);
-        RightVar.Spill(1);
       end;
 
       for i := 0 to FFieldMap.Count - 1 do
@@ -555,7 +551,6 @@ begin
   finally
     if ((not UseCompiler) or (FCompiler = nil)) and (FieldVar.VarPos.MemPos = mpMem) and (FieldVar.VarPos.GlobalVar <> nil) then
       FreeAndNil(FieldVar.VarPos.GlobalVar);
-    FieldVar.Spill(1);
   end;
 end;
 

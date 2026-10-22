@@ -1,0 +1,52 @@
+Int8 8 10 13
+UInt8 8 10 13
+Int16 8 10 13
+UInt16 8 10 13
+Int32 8 10 13
+UInt32 8 10 13
+Int64 8 10 13
+UInt64 8 10 13
+Single 8 10 13
+Double 8 10 13
+Currency 8 10 13
+records -10 2 2 0
+strings as0us1 ss0Aa 45
+ordinals 3 True False
+pointers 22 7 14 0
+managed 0 0 0 4
+exceptions 48
+Int8 10 12 13
+UInt8 10 12 13
+Int16 10 12 13
+UInt16 10 12 13
+Int32 10 12 13
+UInt32 10 12 13
+Int64 10 12 13
+UInt64 10 12 13
+Single 10 12 13
+Double 10 12 13
+Currency 10 12 13
+records -10 5 4 5
+strings as1us2 ss1Bb 45
+ordinals 5 False True
+pointers 24 9 3 2
+managed 0 0 0 4
+exceptions 60
+Int8 12 14 12
+UInt8 12 14 12
+Int16 12 14 12
+UInt16 12 14 12
+Int32 12 14 12
+UInt32 12 14 12
+Int64 12 14 12
+UInt64 12 14 12
+Single 12 14 12
+Double 12 14 12
+Currency 12 14 12
+records -10 8 6 12
+strings as2us3 ss2Cc 45
+ordinals 7 True False
+pointers 26 13 14 4
+managed 0 0 0 4
+exceptions 72
+main 8 as4F 3

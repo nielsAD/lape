@@ -1,0 +1,896 @@
+{$assertions on}
+
+type
+  TE = (e0, e1, e2, e3, e4, e5);
+  TSmallSet = set of TE;
+  TLargeSet = set of UInt8;
+  TP = record x, y: Int32; end;
+  TQ = record a: Int32; d: Double; p: TP; end;
+  TSA = array[0..3] of Int32;
+  TRA = record n: Int32; sa: TSA; end;
+  TRS = record s: String; n: Int32; end;
+  TIntArray = array of Int32;
+  TStrArray = array of String;
+  TFn = function(x: Int32): Int32;
+  TAR = record a: TIntArray; b, c: String; end;
+
+var
+  Pool: array[0..9] of Int32 = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
+
+function Twice(x: Int32): Int32; begin Result := x * 2; end;
+function Idx(v: Int32): Int32; begin Result := Abs(v) mod 4; end;
+function P(a, b: Int32): TP; begin Result.x := a; Result.y := b; end;
+function Q(a: Int32): TQ; begin Result.a := a; Result.d := a / 2; Result.p := P(a, a + 1); end;
+function SumP(const p: TP): Int32; begin Result := p.x + p.y * 2; end;
+function SumPRef(constref p: TP): Int32; begin Result := p.x * 3 + p.y; end;
+function SumPVal(p: TP): Int32; begin p.x += 1; Result := p.x - p.y; end;
+procedure BumpP(var p: TP); begin p.x += 10; end;
+procedure MakeP(out r: TP; v: Int32); begin r := P(v, -v); end;
+function TP.Len(): Int32; begin Result := Self.x * Self.x + Self.y; end;
+function RA(v: Int32): TRA; begin Result.n := v; Result.sa := [v, v + 1, v + 2, v + 3]; end;
+function SA(v: Int32): TSA; begin Result := [v * 2, v * 3, v * 4, v * 5]; end;
+function RS(v: Int32): TRS; begin Result.s := 'rs' + IntToStr(v); Result.n := v; end;
+function IA(v: Int32): TIntArray; begin Result := [v, v * v, v + 7]; end;
+function StrA(v: Int32): TStrArray; begin Result := ['a' + IntToStr(v), 'b' + IntToStr(v * 2)]; end;
+function Fn(v: Int32): TFn; begin if (v mod 2 = 0) then Result := @Twice else Result := @Idx; end;
+function PoolPtr(v: Int32): ^Int32; begin Result := @Pool[Abs(v) mod 10]; end;
+function MkE(v: Int32): TE; begin Result := TE(Abs(v) mod 6); end;
+function MkSmall(v: Int32): TSmallSet; begin Result := [MkE(v), MkE(v + 2)]; end;
+function MkLarge(v: Int32): TLargeSet; begin Result := [Abs(v) mod 256, (Abs(v) * 7) mod 256]; end;
+function MkB(v: Int32): Boolean; begin Result := (v mod 3) <> 0; end;
+function MkC(v: Int32): Char; begin Result := Chr(65 + Abs(v) mod 26); end;
+function MkW(v: Int32): WideChar; begin Result := WideChar(97 + Abs(v) mod 26); end;
+function MkSS(v: Int32): ShortString; begin Result := 'ss' + IntToStr(v); end;
+function MkAS(v: Int32): AnsiString; begin Result := 'as' + IntToStr(v); end;
+function MkUS(v: Int32): UnicodeString; begin Result := 'us' + IntToStr(v); end;
+function MkV(v: Int32): Variant; begin Result := v; end;
+function Def(a: Int32; b: Int32 = 4): Int32; begin Result := a * b; end;
+function Rec(n: Int32): Int32; begin if (n <= 1) then Result := 1 else Result := Rec(n - 1) + Twice(n); end;
+
+var
+  Made: Int32;
+
+function GetArr(): TIntArray; begin Result := [Made + 1, Made + 2, Made + 3]; Made += 3; end;
+function GetStr(): String; begin Made += 1; Result := 'str' + IntToStr(Made); end;
+function GetAR(): TAR; begin Made += 1; Result.a := [Made]; Result.b := IntToStr(Made); Result.c := 'c'; end;
+function ARV(r: TAR): Int32; begin Result := Length(r.a) + Length(r.b) + Length(r.c); end;
+function ARC(const r: TAR): Int32; begin Result := Length(r.a) + Length(r.b) + Length(r.c); end;
+function ARRef(constref r: TAR): Int32; begin Result := Length(r.a) + Length(r.b) + Length(r.c); end;
+function ArrV(a: TIntArray): Int32; begin Result := Length(a); end;
+function ArrC(const a: TIntArray): Int32; begin Result := Length(a); end;
+function StrV(s: String): Int32; begin Result := Length(s); end;
+function StrC(const s: String): Int32; begin Result := Length(s); end;
+
+
+function MkInt8(v: Int32): Int8; begin Result := Abs(v) mod 20; end;
+function IdInt8(const v: Int8): Int8; begin Result := v; end;
+procedure AddInt8(var v: Int8; d: Int8); begin v := v + d; end;
+
+procedure TestInt8(k: Int32);
+var
+  a, b, c: Int8;
+  arr: array of Int8;
+  sa: array[0..3] of Int8;
+  i: Int32;
+begin
+  a := MkInt8(k + 3);
+  b := MkInt8(k + 5);
+  Assert(MkInt8(k + 3) + MkInt8(k + 5) = a + b);
+  Assert(MkInt8(k + 3) * MkInt8(k + 5) - MkInt8(k + 3) = a * b - a);
+  Assert(IdInt8(IdInt8(MkInt8(k + 3))) + IdInt8(MkInt8(k + 5)) = a + b);
+  Assert((MkInt8(k + 3) < MkInt8(k + 5)) = (a < b));
+  Assert((MkInt8(k + 3) = MkInt8(k + 3)) and (MkInt8(k + 5) <> MkInt8(k + 3) + 1));
+  c := MkInt8(k + 3);
+  c += MkInt8(k + 5);
+  Assert(c = a + b);
+  AddInt8(c, MkInt8(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkInt8(1), MkInt8(2), MkInt8(3), MkInt8(4)];
+  arr[Idx(k)] := MkInt8(k + 5) + MkInt8(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkInt8(k + 3) * MkInt8(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkInt8(i) + IdInt8(MkInt8(i));
+  Assert(c = 90);
+  if (MkInt8(k + 3) > MkInt8(k + 5)) then c := MkInt8(k + 3) else c := MkInt8(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkInt8(k + 3) of
+    MkInt8(0), MkInt8(1) + MkInt8(0): i := 1;
+    MkInt8(2)..MkInt8(Twice(2)): i := 2;
+    MkInt8(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkInt8(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkInt8(5), MkInt8(6), MkInt8(7), MkInt8(8)];
+  c := arr.Remove(MkInt8(k + 6)) + MkInt8(k + 3);
+  Assert((c = MkInt8(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkInt8(99)) + MkInt8(k + 5) = b);
+  WriteLn('Int8 ', MkInt8(k + 3) + MkInt8(k + 5), ' ', MkInt8(k + 5) * MkInt8(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkUInt8(v: Int32): UInt8; begin Result := Abs(v) mod 20; end;
+function IdUInt8(const v: UInt8): UInt8; begin Result := v; end;
+procedure AddUInt8(var v: UInt8; d: UInt8); begin v := v + d; end;
+
+procedure TestUInt8(k: Int32);
+var
+  a, b, c: UInt8;
+  arr: array of UInt8;
+  sa: array[0..3] of UInt8;
+  i: Int32;
+begin
+  a := MkUInt8(k + 3);
+  b := MkUInt8(k + 5);
+  Assert(MkUInt8(k + 3) + MkUInt8(k + 5) = a + b);
+  Assert(MkUInt8(k + 3) * MkUInt8(k + 5) - MkUInt8(k + 3) = a * b - a);
+  Assert(IdUInt8(IdUInt8(MkUInt8(k + 3))) + IdUInt8(MkUInt8(k + 5)) = a + b);
+  Assert((MkUInt8(k + 3) < MkUInt8(k + 5)) = (a < b));
+  Assert((MkUInt8(k + 3) = MkUInt8(k + 3)) and (MkUInt8(k + 5) <> MkUInt8(k + 3) + 1));
+  c := MkUInt8(k + 3);
+  c += MkUInt8(k + 5);
+  Assert(c = a + b);
+  AddUInt8(c, MkUInt8(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkUInt8(1), MkUInt8(2), MkUInt8(3), MkUInt8(4)];
+  arr[Idx(k)] := MkUInt8(k + 5) + MkUInt8(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkUInt8(k + 3) * MkUInt8(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkUInt8(i) + IdUInt8(MkUInt8(i));
+  Assert(c = 90);
+  if (MkUInt8(k + 3) > MkUInt8(k + 5)) then c := MkUInt8(k + 3) else c := MkUInt8(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkUInt8(k + 3) of
+    MkUInt8(0), MkUInt8(1) + MkUInt8(0): i := 1;
+    MkUInt8(2)..MkUInt8(Twice(2)): i := 2;
+    MkUInt8(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkUInt8(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkUInt8(5), MkUInt8(6), MkUInt8(7), MkUInt8(8)];
+  c := arr.Remove(MkUInt8(k + 6)) + MkUInt8(k + 3);
+  Assert((c = MkUInt8(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkUInt8(99)) + MkUInt8(k + 5) = b);
+  WriteLn('UInt8 ', MkUInt8(k + 3) + MkUInt8(k + 5), ' ', MkUInt8(k + 5) * MkUInt8(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkInt16(v: Int32): Int16; begin Result := Abs(v) mod 20; end;
+function IdInt16(const v: Int16): Int16; begin Result := v; end;
+procedure AddInt16(var v: Int16; d: Int16); begin v := v + d; end;
+
+procedure TestInt16(k: Int32);
+var
+  a, b, c: Int16;
+  arr: array of Int16;
+  sa: array[0..3] of Int16;
+  i: Int32;
+begin
+  a := MkInt16(k + 3);
+  b := MkInt16(k + 5);
+  Assert(MkInt16(k + 3) + MkInt16(k + 5) = a + b);
+  Assert(MkInt16(k + 3) * MkInt16(k + 5) - MkInt16(k + 3) = a * b - a);
+  Assert(IdInt16(IdInt16(MkInt16(k + 3))) + IdInt16(MkInt16(k + 5)) = a + b);
+  Assert((MkInt16(k + 3) < MkInt16(k + 5)) = (a < b));
+  Assert((MkInt16(k + 3) = MkInt16(k + 3)) and (MkInt16(k + 5) <> MkInt16(k + 3) + 1));
+  c := MkInt16(k + 3);
+  c += MkInt16(k + 5);
+  Assert(c = a + b);
+  AddInt16(c, MkInt16(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkInt16(1), MkInt16(2), MkInt16(3), MkInt16(4)];
+  arr[Idx(k)] := MkInt16(k + 5) + MkInt16(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkInt16(k + 3) * MkInt16(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkInt16(i) + IdInt16(MkInt16(i));
+  Assert(c = 90);
+  if (MkInt16(k + 3) > MkInt16(k + 5)) then c := MkInt16(k + 3) else c := MkInt16(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkInt16(k + 3) of
+    MkInt16(0), MkInt16(1) + MkInt16(0): i := 1;
+    MkInt16(2)..MkInt16(Twice(2)): i := 2;
+    MkInt16(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkInt16(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkInt16(5), MkInt16(6), MkInt16(7), MkInt16(8)];
+  c := arr.Remove(MkInt16(k + 6)) + MkInt16(k + 3);
+  Assert((c = MkInt16(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkInt16(99)) + MkInt16(k + 5) = b);
+  WriteLn('Int16 ', MkInt16(k + 3) + MkInt16(k + 5), ' ', MkInt16(k + 5) * MkInt16(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkUInt16(v: Int32): UInt16; begin Result := Abs(v) mod 20; end;
+function IdUInt16(const v: UInt16): UInt16; begin Result := v; end;
+procedure AddUInt16(var v: UInt16; d: UInt16); begin v := v + d; end;
+
+procedure TestUInt16(k: Int32);
+var
+  a, b, c: UInt16;
+  arr: array of UInt16;
+  sa: array[0..3] of UInt16;
+  i: Int32;
+begin
+  a := MkUInt16(k + 3);
+  b := MkUInt16(k + 5);
+  Assert(MkUInt16(k + 3) + MkUInt16(k + 5) = a + b);
+  Assert(MkUInt16(k + 3) * MkUInt16(k + 5) - MkUInt16(k + 3) = a * b - a);
+  Assert(IdUInt16(IdUInt16(MkUInt16(k + 3))) + IdUInt16(MkUInt16(k + 5)) = a + b);
+  Assert((MkUInt16(k + 3) < MkUInt16(k + 5)) = (a < b));
+  Assert((MkUInt16(k + 3) = MkUInt16(k + 3)) and (MkUInt16(k + 5) <> MkUInt16(k + 3) + 1));
+  c := MkUInt16(k + 3);
+  c += MkUInt16(k + 5);
+  Assert(c = a + b);
+  AddUInt16(c, MkUInt16(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkUInt16(1), MkUInt16(2), MkUInt16(3), MkUInt16(4)];
+  arr[Idx(k)] := MkUInt16(k + 5) + MkUInt16(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkUInt16(k + 3) * MkUInt16(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkUInt16(i) + IdUInt16(MkUInt16(i));
+  Assert(c = 90);
+  if (MkUInt16(k + 3) > MkUInt16(k + 5)) then c := MkUInt16(k + 3) else c := MkUInt16(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkUInt16(k + 3) of
+    MkUInt16(0), MkUInt16(1) + MkUInt16(0): i := 1;
+    MkUInt16(2)..MkUInt16(Twice(2)): i := 2;
+    MkUInt16(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkUInt16(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkUInt16(5), MkUInt16(6), MkUInt16(7), MkUInt16(8)];
+  c := arr.Remove(MkUInt16(k + 6)) + MkUInt16(k + 3);
+  Assert((c = MkUInt16(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkUInt16(99)) + MkUInt16(k + 5) = b);
+  WriteLn('UInt16 ', MkUInt16(k + 3) + MkUInt16(k + 5), ' ', MkUInt16(k + 5) * MkUInt16(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkInt32(v: Int32): Int32; begin Result := Abs(v) mod 20; end;
+function IdInt32(const v: Int32): Int32; begin Result := v; end;
+procedure AddInt32(var v: Int32; d: Int32); begin v := v + d; end;
+
+procedure TestInt32(k: Int32);
+var
+  a, b, c: Int32;
+  arr: array of Int32;
+  sa: array[0..3] of Int32;
+  i: Int32;
+begin
+  a := MkInt32(k + 3);
+  b := MkInt32(k + 5);
+  Assert(MkInt32(k + 3) + MkInt32(k + 5) = a + b);
+  Assert(MkInt32(k + 3) * MkInt32(k + 5) - MkInt32(k + 3) = a * b - a);
+  Assert(IdInt32(IdInt32(MkInt32(k + 3))) + IdInt32(MkInt32(k + 5)) = a + b);
+  Assert((MkInt32(k + 3) < MkInt32(k + 5)) = (a < b));
+  Assert((MkInt32(k + 3) = MkInt32(k + 3)) and (MkInt32(k + 5) <> MkInt32(k + 3) + 1));
+  c := MkInt32(k + 3);
+  c += MkInt32(k + 5);
+  Assert(c = a + b);
+  AddInt32(c, MkInt32(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkInt32(1), MkInt32(2), MkInt32(3), MkInt32(4)];
+  arr[Idx(k)] := MkInt32(k + 5) + MkInt32(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkInt32(k + 3) * MkInt32(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkInt32(i) + IdInt32(MkInt32(i));
+  Assert(c = 90);
+  if (MkInt32(k + 3) > MkInt32(k + 5)) then c := MkInt32(k + 3) else c := MkInt32(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkInt32(k + 3) of
+    MkInt32(0), MkInt32(1) + MkInt32(0): i := 1;
+    MkInt32(2)..MkInt32(Twice(2)): i := 2;
+    MkInt32(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkInt32(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkInt32(5), MkInt32(6), MkInt32(7), MkInt32(8)];
+  c := arr.Remove(MkInt32(k + 6)) + MkInt32(k + 3);
+  Assert((c = MkInt32(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkInt32(99)) + MkInt32(k + 5) = b);
+  WriteLn('Int32 ', MkInt32(k + 3) + MkInt32(k + 5), ' ', MkInt32(k + 5) * MkInt32(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkUInt32(v: Int32): UInt32; begin Result := Abs(v) mod 20; end;
+function IdUInt32(const v: UInt32): UInt32; begin Result := v; end;
+procedure AddUInt32(var v: UInt32; d: UInt32); begin v := v + d; end;
+
+procedure TestUInt32(k: Int32);
+var
+  a, b, c: UInt32;
+  arr: array of UInt32;
+  sa: array[0..3] of UInt32;
+  i: Int32;
+begin
+  a := MkUInt32(k + 3);
+  b := MkUInt32(k + 5);
+  Assert(MkUInt32(k + 3) + MkUInt32(k + 5) = a + b);
+  Assert(MkUInt32(k + 3) * MkUInt32(k + 5) - MkUInt32(k + 3) = a * b - a);
+  Assert(IdUInt32(IdUInt32(MkUInt32(k + 3))) + IdUInt32(MkUInt32(k + 5)) = a + b);
+  Assert((MkUInt32(k + 3) < MkUInt32(k + 5)) = (a < b));
+  Assert((MkUInt32(k + 3) = MkUInt32(k + 3)) and (MkUInt32(k + 5) <> MkUInt32(k + 3) + 1));
+  c := MkUInt32(k + 3);
+  c += MkUInt32(k + 5);
+  Assert(c = a + b);
+  AddUInt32(c, MkUInt32(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkUInt32(1), MkUInt32(2), MkUInt32(3), MkUInt32(4)];
+  arr[Idx(k)] := MkUInt32(k + 5) + MkUInt32(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkUInt32(k + 3) * MkUInt32(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkUInt32(i) + IdUInt32(MkUInt32(i));
+  Assert(c = 90);
+  if (MkUInt32(k + 3) > MkUInt32(k + 5)) then c := MkUInt32(k + 3) else c := MkUInt32(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkUInt32(k + 3) of
+    MkUInt32(0), MkUInt32(1) + MkUInt32(0): i := 1;
+    MkUInt32(2)..MkUInt32(Twice(2)): i := 2;
+    MkUInt32(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkUInt32(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkUInt32(5), MkUInt32(6), MkUInt32(7), MkUInt32(8)];
+  c := arr.Remove(MkUInt32(k + 6)) + MkUInt32(k + 3);
+  Assert((c = MkUInt32(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkUInt32(99)) + MkUInt32(k + 5) = b);
+  WriteLn('UInt32 ', MkUInt32(k + 3) + MkUInt32(k + 5), ' ', MkUInt32(k + 5) * MkUInt32(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkInt64(v: Int32): Int64; begin Result := Abs(v) mod 20; end;
+function IdInt64(const v: Int64): Int64; begin Result := v; end;
+procedure AddInt64(var v: Int64; d: Int64); begin v := v + d; end;
+
+procedure TestInt64(k: Int32);
+var
+  a, b, c: Int64;
+  arr: array of Int64;
+  sa: array[0..3] of Int64;
+  i: Int32;
+begin
+  a := MkInt64(k + 3);
+  b := MkInt64(k + 5);
+  Assert(MkInt64(k + 3) + MkInt64(k + 5) = a + b);
+  Assert(MkInt64(k + 3) * MkInt64(k + 5) - MkInt64(k + 3) = a * b - a);
+  Assert(IdInt64(IdInt64(MkInt64(k + 3))) + IdInt64(MkInt64(k + 5)) = a + b);
+  Assert((MkInt64(k + 3) < MkInt64(k + 5)) = (a < b));
+  Assert((MkInt64(k + 3) = MkInt64(k + 3)) and (MkInt64(k + 5) <> MkInt64(k + 3) + 1));
+  c := MkInt64(k + 3);
+  c += MkInt64(k + 5);
+  Assert(c = a + b);
+  AddInt64(c, MkInt64(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkInt64(1), MkInt64(2), MkInt64(3), MkInt64(4)];
+  arr[Idx(k)] := MkInt64(k + 5) + MkInt64(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkInt64(k + 3) * MkInt64(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkInt64(i) + IdInt64(MkInt64(i));
+  Assert(c = 90);
+  if (MkInt64(k + 3) > MkInt64(k + 5)) then c := MkInt64(k + 3) else c := MkInt64(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkInt64(k + 3) of
+    MkInt64(0), MkInt64(1) + MkInt64(0): i := 1;
+    MkInt64(2)..MkInt64(Twice(2)): i := 2;
+    MkInt64(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkInt64(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkInt64(5), MkInt64(6), MkInt64(7), MkInt64(8)];
+  c := arr.Remove(MkInt64(k + 6)) + MkInt64(k + 3);
+  Assert((c = MkInt64(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkInt64(99)) + MkInt64(k + 5) = b);
+  WriteLn('Int64 ', MkInt64(k + 3) + MkInt64(k + 5), ' ', MkInt64(k + 5) * MkInt64(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkUInt64(v: Int32): UInt64; begin Result := Abs(v) mod 20; end;
+function IdUInt64(const v: UInt64): UInt64; begin Result := v; end;
+procedure AddUInt64(var v: UInt64; d: UInt64); begin v := v + d; end;
+
+procedure TestUInt64(k: Int32);
+var
+  a, b, c: UInt64;
+  arr: array of UInt64;
+  sa: array[0..3] of UInt64;
+  i: Int32;
+begin
+  a := MkUInt64(k + 3);
+  b := MkUInt64(k + 5);
+  Assert(MkUInt64(k + 3) + MkUInt64(k + 5) = a + b);
+  Assert(MkUInt64(k + 3) * MkUInt64(k + 5) - MkUInt64(k + 3) = a * b - a);
+  Assert(IdUInt64(IdUInt64(MkUInt64(k + 3))) + IdUInt64(MkUInt64(k + 5)) = a + b);
+  Assert((MkUInt64(k + 3) < MkUInt64(k + 5)) = (a < b));
+  Assert((MkUInt64(k + 3) = MkUInt64(k + 3)) and (MkUInt64(k + 5) <> MkUInt64(k + 3) + 1));
+  c := MkUInt64(k + 3);
+  c += MkUInt64(k + 5);
+  Assert(c = a + b);
+  AddUInt64(c, MkUInt64(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkUInt64(1), MkUInt64(2), MkUInt64(3), MkUInt64(4)];
+  arr[Idx(k)] := MkUInt64(k + 5) + MkUInt64(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkUInt64(k + 3) * MkUInt64(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkUInt64(i) + IdUInt64(MkUInt64(i));
+  Assert(c = 90);
+  if (MkUInt64(k + 3) > MkUInt64(k + 5)) then c := MkUInt64(k + 3) else c := MkUInt64(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkUInt64(k + 3) of
+    MkUInt64(0), MkUInt64(1) + MkUInt64(0): i := 1;
+    MkUInt64(2)..MkUInt64(Twice(2)): i := 2;
+    MkUInt64(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkUInt64(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkUInt64(5), MkUInt64(6), MkUInt64(7), MkUInt64(8)];
+  c := arr.Remove(MkUInt64(k + 6)) + MkUInt64(k + 3);
+  Assert((c = MkUInt64(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkUInt64(99)) + MkUInt64(k + 5) = b);
+  WriteLn('UInt64 ', MkUInt64(k + 3) + MkUInt64(k + 5), ' ', MkUInt64(k + 5) * MkUInt64(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkSingle(v: Int32): Single; begin Result := Abs(v) mod 20; end;
+function IdSingle(const v: Single): Single; begin Result := v; end;
+procedure AddSingle(var v: Single; d: Single); begin v := v + d; end;
+
+procedure TestSingle(k: Int32);
+var
+  a, b, c: Single;
+  arr: array of Single;
+  sa: array[0..3] of Single;
+  i: Int32;
+begin
+  a := MkSingle(k + 3);
+  b := MkSingle(k + 5);
+  Assert(MkSingle(k + 3) + MkSingle(k + 5) = a + b);
+  Assert(MkSingle(k + 3) * MkSingle(k + 5) - MkSingle(k + 3) = a * b - a);
+  Assert(IdSingle(IdSingle(MkSingle(k + 3))) + IdSingle(MkSingle(k + 5)) = a + b);
+  Assert((MkSingle(k + 3) < MkSingle(k + 5)) = (a < b));
+  Assert((MkSingle(k + 3) = MkSingle(k + 3)) and (MkSingle(k + 5) <> MkSingle(k + 3) + 1));
+  c := MkSingle(k + 3);
+  c += MkSingle(k + 5);
+  Assert(c = a + b);
+  AddSingle(c, MkSingle(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkSingle(1), MkSingle(2), MkSingle(3), MkSingle(4)];
+  arr[Idx(k)] := MkSingle(k + 5) + MkSingle(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkSingle(k + 3) * MkSingle(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkSingle(i) + IdSingle(MkSingle(i));
+  Assert(c = 90);
+  if (MkSingle(k + 3) > MkSingle(k + 5)) then c := MkSingle(k + 3) else c := MkSingle(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkSingle(k + 3) of
+    MkSingle(0), MkSingle(1) + MkSingle(0): i := 1;
+    MkSingle(2)..MkSingle(Twice(2)): i := 2;
+    MkSingle(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkSingle(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkSingle(5), MkSingle(6), MkSingle(7), MkSingle(8)];
+  c := arr.Remove(MkSingle(k + 6)) + MkSingle(k + 3);
+  Assert((c = MkSingle(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkSingle(99)) + MkSingle(k + 5) = b);
+  WriteLn('Single ', MkSingle(k + 3) + MkSingle(k + 5), ' ', MkSingle(k + 5) * MkSingle(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkDouble(v: Int32): Double; begin Result := Abs(v) mod 20; end;
+function IdDouble(const v: Double): Double; begin Result := v; end;
+procedure AddDouble(var v: Double; d: Double); begin v := v + d; end;
+
+procedure TestDouble(k: Int32);
+var
+  a, b, c: Double;
+  arr: array of Double;
+  sa: array[0..3] of Double;
+  i: Int32;
+begin
+  a := MkDouble(k + 3);
+  b := MkDouble(k + 5);
+  Assert(MkDouble(k + 3) + MkDouble(k + 5) = a + b);
+  Assert(MkDouble(k + 3) * MkDouble(k + 5) - MkDouble(k + 3) = a * b - a);
+  Assert(IdDouble(IdDouble(MkDouble(k + 3))) + IdDouble(MkDouble(k + 5)) = a + b);
+  Assert((MkDouble(k + 3) < MkDouble(k + 5)) = (a < b));
+  Assert((MkDouble(k + 3) = MkDouble(k + 3)) and (MkDouble(k + 5) <> MkDouble(k + 3) + 1));
+  c := MkDouble(k + 3);
+  c += MkDouble(k + 5);
+  Assert(c = a + b);
+  AddDouble(c, MkDouble(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkDouble(1), MkDouble(2), MkDouble(3), MkDouble(4)];
+  arr[Idx(k)] := MkDouble(k + 5) + MkDouble(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkDouble(k + 3) * MkDouble(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkDouble(i) + IdDouble(MkDouble(i));
+  Assert(c = 90);
+  if (MkDouble(k + 3) > MkDouble(k + 5)) then c := MkDouble(k + 3) else c := MkDouble(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkDouble(k + 3) of
+    MkDouble(0), MkDouble(1) + MkDouble(0): i := 1;
+    MkDouble(2)..MkDouble(Twice(2)): i := 2;
+    MkDouble(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkDouble(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkDouble(5), MkDouble(6), MkDouble(7), MkDouble(8)];
+  c := arr.Remove(MkDouble(k + 6)) + MkDouble(k + 3);
+  Assert((c = MkDouble(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkDouble(99)) + MkDouble(k + 5) = b);
+  WriteLn('Double ', MkDouble(k + 3) + MkDouble(k + 5), ' ', MkDouble(k + 5) * MkDouble(2), ' ', arr[0] + arr[2]);
+end;
+
+function MkCurrency(v: Int32): Currency; begin Result := Abs(v) mod 20; end;
+function IdCurrency(const v: Currency): Currency; begin Result := v; end;
+procedure AddCurrency(var v: Currency; d: Currency); begin v := v + d; end;
+
+procedure TestCurrency(k: Int32);
+var
+  a, b, c: Currency;
+  arr: array of Currency;
+  sa: array[0..3] of Currency;
+  i: Int32;
+begin
+  a := MkCurrency(k + 3);
+  b := MkCurrency(k + 5);
+  Assert(MkCurrency(k + 3) + MkCurrency(k + 5) = a + b);
+  Assert(MkCurrency(k + 3) * MkCurrency(k + 5) - MkCurrency(k + 3) = a * b - a);
+  Assert(IdCurrency(IdCurrency(MkCurrency(k + 3))) + IdCurrency(MkCurrency(k + 5)) = a + b);
+  Assert((MkCurrency(k + 3) < MkCurrency(k + 5)) = (a < b));
+  Assert((MkCurrency(k + 3) = MkCurrency(k + 3)) and (MkCurrency(k + 5) <> MkCurrency(k + 3) + 1));
+  c := MkCurrency(k + 3);
+  c += MkCurrency(k + 5);
+  Assert(c = a + b);
+  AddCurrency(c, MkCurrency(k + 3));
+  Assert(c = a + b + a);
+  arr := [MkCurrency(1), MkCurrency(2), MkCurrency(3), MkCurrency(4)];
+  arr[Idx(k)] := MkCurrency(k + 5) + MkCurrency(k + 3);
+  Assert(arr[Idx(k)] = a + b);
+  sa[Idx(k + 1)] := MkCurrency(k + 3) * MkCurrency(2);
+  Assert(sa[Idx(k + 1)] = a * 2);
+  c := 0;
+  for i := 0 to 9 do
+    c := c + MkCurrency(i) + IdCurrency(MkCurrency(i));
+  Assert(c = 90);
+  if (MkCurrency(k + 3) > MkCurrency(k + 5)) then c := MkCurrency(k + 3) else c := MkCurrency(k + 5);
+  if (a > b) then Assert(c = a) else Assert(c = b);
+  case MkCurrency(k + 3) of
+    MkCurrency(0), MkCurrency(1) + MkCurrency(0): i := 1;
+    MkCurrency(2)..MkCurrency(Twice(2)): i := 2;
+    MkCurrency(k + 3): i := 3;
+  else
+    i := 4;
+  end;
+  if (a <= MkCurrency(4)) then Assert(i = 2) else Assert(i = 3);
+  arr := [MkCurrency(5), MkCurrency(6), MkCurrency(7), MkCurrency(8)];
+  c := arr.Remove(MkCurrency(k + 6)) + MkCurrency(k + 3);
+  Assert((c = MkCurrency(k + 6) + a) and (Length(arr) = 3));
+  Assert(arr.Remove(MkCurrency(99)) + MkCurrency(k + 5) = b);
+  WriteLn('Currency ', MkCurrency(k + 3) + MkCurrency(k + 5), ' ', MkCurrency(k + 5) * MkCurrency(2), ' ', arr[0] + arr[2]);
+end;
+
+procedure TestRecords(k: Int32);
+var
+  t, u: TP;
+  vq: TQ;
+  vra: TRA;
+  vrs: TRS;
+  i, s: Int32;
+
+  function Inner(v: Int32): Int32;
+  begin
+    Result := P(v, k).Len() + SumP(P(k, v));
+  end;
+
+begin
+  t := P(k, k + 1);
+  u := P(k + 2, k + 3);
+  Assert(SumP(P(k, k + 1)) + SumPRef(P(k + 2, k + 3)) = SumP(t) + SumPRef(u));
+  Assert(SumPVal(P(k, k + 1)) + SumPVal(P(k + 2, k + 3)) = SumPVal(t) + SumPVal(u));
+  Assert(P(k, k + 1).Len() + P(k + 2, k + 3).Len() = t.Len() + u.Len());
+  Assert(P(k, k + 1).x + P(k + 2, k + 3).y = t.x + u.y);
+  Assert(Q(k).p.y + Q(k + 1).a = k + 1 + k + 1);
+  Assert(Q(k).d + Q(k + 2).d = (k + k + 2) / 2);
+  Assert((P(k, k + 1) = t) and (P(k + 2, k + 3) <> t));
+  BumpP(t);
+  Assert(t.x = k + 10);
+  MakeP(u, Twice(k));
+  Assert((u.x = k * 2) and (u.y = -k * 2));
+  with P(Twice(k), Idx(k)) do
+    Assert(x + y = Twice(k) + Idx(k));
+  with Q(Twice(k)) do
+    Assert(p.x + a = Twice(k) * 2);
+  vra := RA(k);
+  Assert(RA(k).sa[Idx(k)] + RA(k + 1).sa[3] = vra.sa[Idx(k)] + k + 4);
+  Assert(SA(k)[Idx(k + 1)] + SA(k + 1)[0] = SA(k)[Idx(k + 1)] + (k + 1) * 2);
+  vrs := RS(k);
+  Assert(RS(k).s + RS(k + 1).s = vrs.s + 'rs' + IntToStr(k + 1));
+  Assert(RS(k).n + RS(k + 1).n = 2 * k + 1);
+  s := 0;
+  for i := 1 to 5 do
+    s += Inner(i) - Inner(i - 1);
+  Assert(s = Inner(5) - Inner(0));
+  s := 0;
+  i := 0;
+  while (i < 4) do
+  begin
+    s += SumP(P(i, Twice(i)));
+    Inc(i);
+  end;
+  repeat
+    s -= P(i, i).Len();
+    Dec(i);
+  until (i < 0);
+  WriteLn('records ', s, ' ', SumP(P(k, k + 1)), ' ', Q(k).p.x + RA(k).sa[2], ' ', Inner(k));
+end;
+
+procedure TestStrings(k: Int32);
+var
+  a, b: String;
+  ssa, ssb: ShortString;
+  ua, ub: UnicodeString;
+  arr: TStrArray;
+  i: Int32;
+begin
+  a := MkAS(k);
+  b := MkAS(k + 1);
+  Assert(MkAS(k) + MkAS(k + 1) = a + b);
+  Assert((MkAS(k) + 'x') + (MkAS(k + 1) + 'y') = a + 'x' + b + 'y');
+  Assert((MkAS(k) < MkAS(k + 1)) = (a < b));
+  Assert(Length(MkAS(k) + MkAS(k + 1)) = Length(a) + Length(b));
+  ssa := MkSS(k);
+  ssb := MkSS(k + 1);
+  Assert(MkSS(k) + MkSS(k + 1) = ssa + ssb);
+  ua := MkUS(k);
+  ub := MkUS(k + 1);
+  Assert(MkUS(k) + MkUS(k + 1) = ua + ub);
+  Assert(MkC(k) + MkC(k + 1) = Chr(65 + k mod 26) + Chr(65 + (k + 1) mod 26));
+  Assert((MkC(k) < MkC(k + 1)) or (k mod 26 = 25));
+  Assert(MkW(k) + MkW(k + 1) = WideChar(97 + k mod 26) + WideChar(97 + (k + 1) mod 26));
+  arr := StrA(k) + StrA(k + 1);
+  Assert(Length(arr) = 4);
+  Assert(StrA(k)[0] + StrA(k + 1)[1] = arr[0] + arr[3]);
+  a := '';
+  for i := 0 to 4 do
+    a += MkAS(i) + MkSS(i) + MkUS(i);
+  Assert(Length(a) = 45);
+  case MkAS(k) of
+    'as0': i := 0;
+    'as1', 'as2': i := 1;
+  else
+    i := 2;
+  end;
+  if (k = 0) then Assert(i = 0) else if (k <= 2) then Assert(i = 1) else Assert(i = 2);
+  case MkAS(k) of
+    MkAS(1), MkAS(2): i := 1;
+    MkAS(0): i := 0;
+  else
+    i := 2;
+  end;
+  if (k = 0) then Assert(i = 0) else if (k <= 2) then Assert(i = 1) else Assert(i = 2);
+  case MkC(k) of
+    MkC(1), MkC(2): i := 1;
+    MkC(0)..MkC(Idx(3)): i := 2;
+  else
+    i := 3;
+  end;
+  if (k = 0) then Assert(i = 2) else if (k <= 2) then Assert(i = 1) else Assert(i = 2);
+  WriteLn('strings ', MkAS(k) + MkUS(k + 1), ' ', MkSS(k) + MkC(k) + MkW(k), ' ', Length(a));
+end;
+
+procedure TestOrdinals(k: Int32);
+var
+  e: TE;
+  ss: TSmallSet;
+  ls: TLargeSet;
+  bl: Boolean;
+  i: Int32;
+begin
+  e := MkE(k);
+  Assert(Ord(MkE(k)) + Ord(MkE(k + 1)) = Ord(e) + (k + 1) mod 6);
+  Assert((MkE(k) < MkE(k + 1)) = (k mod 6 < 5));
+  Assert(MkE(k) in MkSmall(k));
+  ss := MkSmall(k);
+  Assert(MkSmall(k) + MkSmall(k + 1) = ss + MkSmall(k + 1));
+  Assert(MkSmall(k) * MkSmall(k + 2) = ss * MkSmall(k + 2));
+  Assert((MkSmall(k) - MkSmall(k + 2)) <= ss);
+  ls := MkLarge(k);
+  Assert(MkLarge(k) + MkLarge(k + 1) = ls + MkLarge(k + 1));
+  Assert((Abs(k) mod 256) in MkLarge(k));
+  bl := MkB(k);
+  Assert((MkB(k) and MkB(k + 1)) = (bl and MkB(k + 1)));
+  Assert((MkB(k) or not MkB(k + 2)) = (bl or not MkB(k + 2)));
+  case MkE(k + 1) of
+    e0, e1: i := 1;
+    e2..e4: i := 2;
+  else
+    i := 3;
+  end;
+  if ((k + 1) mod 6 <= 1) then Assert(i = 1) else if ((k + 1) mod 6 <= 4) then Assert(i = 2) else Assert(i = 3);
+  i := 0;
+  case MkE(k + 2) of
+    MkE(0): i := 1;
+    MkE(1)..MkE(Twice(1)): i := 2;
+    MkE(k + 2): i := 3;
+  end;
+  if (k = 0) then Assert(i = 2) else Assert(i = 3);
+  case MkB(k) of
+    MkB(0), MkB(3): i := 1;
+    MkB(1): i := 2;
+  end;
+  if MkB(k) then Assert(i = 2) else Assert(i = 1);
+  i := 0;
+  for e := MkE(1) to MkE(4) do
+    i += Ord(e) + Ord(MkE(Ord(e)));
+  Assert(i = 20);
+  WriteLn('ordinals ', Ord(MkE(k)) + Ord(MkE(k + 3)), ' ', MkB(k) xor MkB(k + 1), ' ', e1 in MkSmall(k));
+end;
+
+procedure TestPointersAndArrays(k: Int32);
+var
+  a: TIntArray;
+  pp: ^Int32;
+  f: TFn;
+  v: Variant;
+  i, s: Int32;
+begin
+  pp := PoolPtr(k);
+  Assert(PoolPtr(k)^ + PoolPtr(k + 1)^ = pp^ + Pool[(k + 1) mod 10]);
+  Assert((PoolPtr(k) = pp) and (PoolPtr(k + 1) <> pp));
+  PoolPtr(k)^ := PoolPtr(k)^ + 0;
+  a := IA(k);
+  Assert(IA(k)[Idx(k) mod 3] + IA(k + 1)[2] = a[Idx(k) mod 3] + k + 8);
+  Assert(Length(IA(k) + IA(k + 1)) = 6);
+  a := IA(k) + IA(k + 1);
+  Assert(a[3] + a[5] = k + 1 + k + 8);
+  s := 0;
+  for i in IA(k) do
+    s += i;
+  Assert(s = k + k * k + k + 7);
+  f := Fn(k);
+  Assert(Fn(k)(5) + Fn(k + 1)(6) = f(5) + Fn(k + 1)(6));
+  v := MkV(k);
+  Assert(MkV(k) + MkV(k + 1) = v + k + 1);
+  Assert(Def(Twice(k)) + Def(k, Twice(2)) = Twice(k) * 4 + k * 4);
+  Assert(Rec(Idx(k) + 2) + Rec(3) = Rec(Idx(k) + 2) + 11);
+  WriteLn('pointers ', PoolPtr(k)^ + PoolPtr(k + 2)^, ' ', IA(k)[1] + IA(k)[2], ' ', Fn(k)(7), ' ', MkV(k) * MkV(2));
+end;
+
+// After managed call results, empty and literal values of the same types are made and read: such a value is read
+// before it is written, which counts on its temporary being new (nil). That needs memory to be initialized.
+procedure TestManaged(k: Int32);
+var
+  arr: TIntArray;
+  str: String;
+  r: TAR;
+  i, s: Int32;
+begin
+  arr := GetArr();
+  GetArr();
+  Assert(ARV([]) + ARC([]) + ARRef([]) = 0);
+  str := GetStr();
+  GetStr();
+  Assert(StrV('') + StrC('') = 0);
+  Assert(ArrV([]) + ArrC([]) = 0);
+  r := GetAR();
+  GetAR();
+  Assert(ARV([]) = 0);
+  Assert(ARC(GetAR()) + ARV(GetAR()) = ARRef(GetAR()) * 2);
+  Assert(ArrV(GetArr()) + ArrC([]) + ArrV([k]) = 4);
+  Assert(StrV(GetStr()) + StrC('') > 0);
+  Assert(ARV([[k, k], 'ab', '']) = 4);
+  Assert(ARC([GetArr(), GetStr(), '']) = 3 + Length(IntToStr(Made)) + 3);
+  s := 0;
+  for i := 0 to 4 do
+  begin
+    arr := GetArr();
+    s += ArrV(GetArr()) + ArrV([]) + ARV([]) + StrV(GetStr()) - StrV(GetStr());
+    GetAR();
+  end;
+  Assert(s = 15);
+  Assert(Length(arr) = 3);
+  WriteLn('managed ', ARV([]), ' ', ArrV([]), ' ', StrV(''), ' ', ARV([[1], 'x', 'yz']));
+end;
+
+procedure TestExceptions(k: Int32);
+var
+  i, s: Int32;
+begin
+  s := 0;
+  for i := 0 to 5 do
+    try
+      s += SumP(P(i, k));
+      if (i mod 2 = 0) then
+        raise 'odd ' + MkAS(i);
+      s += Twice(i);
+    except
+      s += Idx(i) + Length(MkAS(i));
+    finally
+      s += P(i, i).Len() mod 3;
+    end;
+  Assert(s > 0);
+  WriteLn('exceptions ', s);
+end;
+
+procedure TestAll(k: Int32);
+begin
+  TestInt8(k);
+  TestUInt8(k);
+  TestInt16(k);
+  TestUInt16(k);
+  TestInt32(k);
+  TestUInt32(k);
+  TestInt64(k);
+  TestUInt64(k);
+  TestSingle(k);
+  TestDouble(k);
+  TestCurrency(k);
+  TestRecords(k);
+  TestStrings(k);
+  TestOrdinals(k);
+  TestPointersAndArrays(k);
+  TestManaged(k);
+  TestExceptions(k);
+end;
+
+var
+  m: Int32;
+  t: TP;
+begin
+  // (only with memory initialized: TestManaged counts on it)
+  {$IFDEF memoryinit}
+  for m := 0 to 2 do
+    TestAll(m);
+
+  // and in the main block, where it is not a method's frame
+  t := P(Twice(3), Idx(5));
+  Assert(SumP(P(Twice(3), Idx(5))) + P(1, 2).Len() = SumP(t) + 3);
+  Assert(MkAS(1) + MkUS(2) + MkSS(3) = 'as1us2ss3');
+  Assert(MkInt64(3) + MkUInt64(4) * MkDouble(2) = 11);
+  case Twice(4) of
+    Twice(1), Twice(2): m := 1;
+    Twice(3)..Twice(5): m := 2;
+  else
+    m := 3;
+  end;
+  Assert(m = 2);
+  GetArr();
+  GetArr();
+  Assert(ARV([]) + ARC([]) + ARRef([]) = 0);
+  GetStr();
+  Assert(StrV('') = 0);
+  WriteLn('main ', SumP(P(Twice(3), Idx(5))), ' ', MkAS(4) + MkC(5), ' ', Ord(MkE(9)));
+  {$ENDIF}
+end.

@@ -862,7 +862,6 @@ begin
         FCompiler.getDestVar(Dest, Result, Op);
 
         Result := Left.VarType.Eval(op_Assign, Dest, Result, tmpRes, [], Offset, Pos);
-        tmpRes.Spill(1);
       end;
       Result.VarType := Self;
     end;

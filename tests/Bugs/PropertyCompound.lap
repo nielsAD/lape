@@ -1,0 +1,63 @@
+{$assertions on}
+
+type
+  TBox = record
+    v: array[0..9] of Int32;
+    s: String;
+  end;
+
+var
+  Calls: Int32;
+
+property TBox.Item(i: Int32): Int32;
+begin
+  Result := Self.v[i];
+end;
+
+property TBox.Item(i: Int32; Value: Int32);
+begin
+  Self.v[i] := Value;
+end;
+
+property TBox.Named(Name: String): String;
+begin
+  Result := Self.s + Name;
+end;
+
+property TBox.Named(Name: String; Value: String);
+begin
+  Self.s := Value;
+end;
+
+function Idx(i: Int32): Int32;
+begin
+  Inc(Calls);
+  Result := i;
+end;
+
+var
+  b: TBox;
+  k: Int32;
+begin
+  // a param is compiled once, for the read and the write
+  b.Item[3] := 5;
+  b.Item[Idx(3)] += 2;
+  Assert(b.v[3] = 7);
+  Assert(Calls = 1);
+
+  // a param that is on the stack
+  for k := 0 to 2 do
+    b.Item[Idx(k) + 1] += k;
+  Assert((b.v[1] = 0) and (b.v[2] = 1) and (b.v[3] = 9));
+  Assert(Calls = 4);
+
+  k := 4;
+  b.Item[k + 1] += k * 2;
+  Assert(b.v[5] = 8);
+
+  b.s := 'a';
+  b.Named['b' + IntToStr(k)] += 'c';
+  Assert(b.s = 'ab4c');
+
+  WriteLn('ok');
+end.

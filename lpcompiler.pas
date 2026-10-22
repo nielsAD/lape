@@ -554,7 +554,7 @@ begin
     Callback := _ResVar.New(FStackInfo.addSelfVar(lptConstRef, getGlobalType('ConstPointer')));
     Callback.VarType := addManagedType(TLapeType_Method.Create(AType));
 
-    Invoke := TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Callback.IncLock(), Self), Self);
+    Invoke := TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Callback, Self), Self);
     for i := 0 to AType.Params.Count - 1 do
       Invoke.addParam(TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(AType.Params[i].ParType, AType.Params[i].VarType)), Self));
 
@@ -636,7 +636,7 @@ begin
     if ParamVar.VarType.HasSubDeclaration('Destroy', bTrue) then
     begin
       Op := TLapeTree_Operator.Create(op_Dot, Self);
-      Op.Left := TLapeTree_ResVar.Create(ParamVar.IncLock(), Self);
+      Op.Left := TLapeTree_ResVar.Create(ParamVar, Self);
       Op.Right := TLapeTree_Field.Create(lpString('Destroy'), Self);
 
       Method.Statements.addStatement(TLapeTree_Invoke.Create(Op, Self));
@@ -649,7 +649,7 @@ begin
           Continue;
 
         Op := TLapeTree_Operator.Create(op_Dot, Self);
-        Op.Left := TLapeTree_ResVar.Create(ParamVar.IncLock(), Self);
+        Op.Left := TLapeTree_ResVar.Create(ParamVar, Self);
         Op.Right := TLapeTree_Field.Create(FieldMap.Key[i], Self);
 
         Dispose := TLapeTree_InternalMethod_Dispose.Create(Method.Statements);
@@ -5118,13 +5118,13 @@ begin
 
     FAfterParsing.Notify(Self);
 
-    FDelayedTree.Compile(False).Spill(1);
+    FDelayedTree.Compile(False);
     if (FTree <> nil) then
-      FTree.Compile().Spill(1);
+      FTree.Compile();
 
-    FDelayedTree.Compile(True, ldfStatements).Spill(1);
+    FDelayedTree.Compile(True, ldfStatements);
     DecStackInfo([lsfGlobal, lsfEmit], True);
-    FDelayedTree.Compile(True, ldfMethods).Spill(1);
+    FDelayedTree.Compile(True, ldfMethods);
 
     FEmitter._op(ocNone);
     Result := True;
@@ -5148,8 +5148,8 @@ begin
   if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() then
     with TLapeTree_InternalMethod_Default.Create(Self, Pos) do
     try
-      addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Self, Pos));
-      Compile(Offset).Spill(1);
+      addParam(TLapeTree_ResVar.Create(AVar, Self, Pos));
+      Compile(Offset);
     finally
       Free();
     end;
@@ -5168,8 +5168,8 @@ begin
         AVar.Writeable := True;
 
       FunctionOnly := True;
-      addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Self, Pos));
-      Compile(Offset).Spill(1);
+      addParam(TLapeTree_ResVar.Create(AVar, Self, Pos));
+      Compile(Offset);
     finally
       if wasConstant then
         AVar.Writeable := False;

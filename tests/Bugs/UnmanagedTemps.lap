@@ -1,0 +1,69 @@
+{$assertions on}
+
+type
+  TP = record x, y: Int32; end;
+
+function I(v: Int32): Int32;
+begin
+  Result := v * 3 - 1;
+end;
+
+function P(a, b: Int32): TP;
+begin
+  Result.x := a;
+  Result.y := b;
+end;
+
+function SumP(const p: TP): Int32;
+begin
+  Result := p.x + p.y * 2;
+end;
+
+function TP.Len(): Int32;
+begin
+  Result := Self.x * Self.x + Self.y;
+end;
+
+procedure Run;
+var
+  k, n: Integer;
+  arr: array of Int32;
+  t: TP;
+begin
+  k := I(2) + I(3);
+  Assert(k = 13);
+  Assert(I(I(1)) + I(2) * I(3) = 45);
+  Assert((I(1) > I(0)) and (I(2) <> I(3)));
+
+  t := P(I(1), I(2));
+  Assert((t.x = 2) and (t.y = 5));
+  Assert(SumP(P(I(1), I(2))) + P(3, 4).Len() = 25);
+
+  k := 0;
+  for n := 1 to 5 do
+    k += I(n) - I(n - 1);
+  Assert(k = 15);
+
+  case I(3) - I(2) of
+    3: k := 1;
+    2..4: k := 2;
+  else
+    k := 3;
+  end;
+  Assert(k = 1);
+
+  arr := [10, 20, 30, 40];
+  Assert(arr[I(1) - 1] + arr[I(1)] = 50);
+  arr.Remove(I(10));
+  arr.Remove(30);
+  Assert(Length(arr) = 3);
+
+  with P(I(4), I(5)) do
+    Assert(x + y = 25);
+end;
+
+begin
+  Run();
+  Run();
+  WriteLn('ok');
+end.

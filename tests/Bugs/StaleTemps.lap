@@ -1,0 +1,82 @@
+{$assertions on}
+
+type
+  TRec = record
+    a: TIntegerArray;
+    b, c: String;
+  end;
+
+var
+  Calls: Int32;
+
+function Rec(r: TRec): Int32;
+begin
+  Inc(Calls);
+  Result := Length(r.a) + Length(r.b) + Length(r.c);
+end;
+
+function Arr(n: Int32): TIntegerArray;
+begin
+  SetLength(Result, n);
+end;
+
+function Boom(): Boolean;
+begin
+  raise 'boom';
+end;
+
+function Left(): Int32;
+var
+  i: Int32;
+begin
+  for i := 0 to 1 do
+    if (Length(Arr(3)) > 0) then
+      Exit(Rec([]));
+end;
+
+procedure Test;
+var
+  i: Int32;
+begin
+  Arr(3);
+  Assert(Rec([]) = 0);
+
+  for i := 0 to 2 do
+  begin
+    if (Length(Arr(3)) > 0) then
+      Break;
+    Arr(4);
+  end;
+  Assert(Rec([]) = 0);
+
+  for i := 0 to 2 do
+  begin
+    if (Length(Arr(3)) > 0) then
+      Continue;
+    Arr(4);
+  end;
+  Assert(Rec([]) = 0);
+
+  try
+    if (Length(Arr(3)) > 0) and Boom() then
+      Arr(4);
+  except
+  end;
+  Assert(Rec([]) = 0);
+
+  Assert(Left() = 0);
+
+  for i := 0 to 2 do
+  begin
+    Assert(Rec([]) = 0);
+    Arr(i + 1);
+  end;
+end;
+
+begin
+  Test();
+  Arr(3);
+  Assert(Rec([]) = 0);
+  Assert(Calls = 9);
+  WriteLn('ok');
+end.

@@ -78,16 +78,16 @@ begin
       bmps += bmp;
   end;
   Assert(creates = 21);
-  Assert(destroys = 10);
+  Assert(destroys = 11);
 
   Assert(creates = 21);
   TestParams(bmps[7], bmps[6], bmps[5], bmps[4], bmps[3]);
   Assert(creates = 23);
 
-  Assert(destroys = 12);
+  Assert(destroys = 13);
   for i := 2 to 5 do
     bmps[i] := [];
-  Assert(destroys = 16);
+  Assert(destroys = 17);
 end;
 
 begin
