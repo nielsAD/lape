@@ -1,6 +1,6 @@
-OPEN IN:{X = 10, Y = 20} OUT:{X = 20, Y = 10}
-CONST IN:{X = 10, Y = 20} OUT:{X = 20, Y = 10}
-FUNC IN:{X = 10, Y = 20} OUT:{X = 20, Y = 10}
+OPEN IN:{x = 10, y = 20} OUT:{x = 20, y = 10}
+CONST IN:{x = 10, y = 20} OUT:{x = 20, y = 10}
+FUNC IN:{x = 10, y = 20} OUT:{x = 20, y = 10}
 OPEN IN:[30, 40] OUT:[40, 30]
 CONST IN:[30, 40] OUT:[40, 30]
 FUNC IN:[30, 40] OUT:[40, 30]

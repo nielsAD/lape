@@ -64,7 +64,7 @@ type
   TLapeBaseTypes = array[ELapeBaseType] of TLapeType;
   TLapeTypeArray = array of TLapeType;
   TLapeVarStack = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeStackVar>;
-  TLapeVarMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeGlobalVar>;
+  TLapeVarMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TLapeGlobalVar>;
 
   TVarPos = record
     isPointer: Boolean;
@@ -504,6 +504,7 @@ type
     FOldMaxStack: Integer;
     FTemps: TLapeVarStack; // the temporary variables that are handed out, in that order
 
+    function ByName: Boolean; override;
     function getVar(Index: Integer): TLapeStackVar; virtual;
     function getVarCount: Integer; virtual;
     function getTotalSize: SizeInt; virtual;
@@ -597,8 +598,13 @@ type
   end;
 
   TLapeHint = procedure(Sender: TLapeCompilerBase; Msg: lpString) of object;
-  TLapeBaseTypesDictionary = {$IFDEF FPC}specialize{$ENDIF}TLapeUniqueStringDictionary<TLapeType>;
-  TLapeCachedTypeVars = {$IFDEF FPC}specialize{$ENDIF}TLapeKeyValueList<Pointer, TLapeGlobalVar>;
+  TLapeBaseTypesDictionary = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TLapeType>;
+
+  TLapeCachedTypeVar = record
+    VarType: TLapeType;
+    TypeVar: TLapeGlobalVar;
+  end;
+  TLapeCachedTypeVars = array of TLapeCachedTypeVar;
 
   // no duplicate checking
   TLapeCompilerManagedDeclList = class(TLapeDeclarationList)
@@ -1582,7 +1588,7 @@ begin
     (ContextOnly or (ClassType = Other.ClassType)) and
     (Other.BaseType = BaseType) and
     (Other.Size = Size) and
-    (Other.AsString = AsString)
+    LapeSameString(Other.AsString, AsString)
   );
 end;
 
@@ -2309,7 +2315,7 @@ end;
 
 function TLapeType_Pointer.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
 begin
-  if (LapeCase(lpString(Str)) = 'nil') then
+  if LapeSameString(lpString(Str), 'nil') then
     Result := NewGlobalVar(nil, AName, ADocPos)
   else
     Result := NewGlobalVar(Pointer(StrToInt64(string(Str))), AName, ADocPos);
@@ -3060,8 +3066,6 @@ constructor TLapeType_OverloadedMethod.Create(ACompiler: TLapeCompilerBase; ANam
 begin
   inherited Create(ltUnknown, ACompiler, AName, ADocPos);
 
-  // Use unsorted list for indexing
-  //setManagedDecls(TLapeDeclarationList.Create(TLapeDeclCollection_List.Create()), True);
 
   FOfObject := bUnknown;
   FHiddenSelf := bUnknown;
@@ -3410,6 +3414,11 @@ begin
   FWithDeclRec := AWithDeclRec;
 end;
 
+function TLapeStackInfo.ByName: Boolean;
+begin
+  Result := False;
+end;
+
 function TLapeStackInfo.getVar(Index: Integer): TLapeStackVar;
 begin
   Result := FVarStack[Index];
@@ -3474,7 +3483,7 @@ end;
 
 constructor TLapeStackInfo.Create(AlwaysInitialize: Boolean = True; AOwner: TLapeStackInfo = nil; ManageVars: Boolean = True);
 begin
-  inherited Create(nil, False);
+  inherited Create(False);
 
   Owner := AOwner;
   FVarStack := TLapeVarStack.Create(nil, dupAccept, False);
@@ -3599,10 +3608,10 @@ procedure TLapeStackInfo.addDeclaration(Decl: TLapeDeclaration);
 begin
   if (Decl <> nil) then
   begin
-    if FList.Exists(Decl) or ((Decl.Name <> '') and hasDeclaration(Decl.Name, bTrue, True)) or (Pos(LapeCase('|'+Decl.Name+'|'), LapeReservedLocals) > 0) then
+    if (IndexOf(Decl) > -1) or ((Decl.Name <> '') and hasDeclaration(Decl.Name, bTrue, True)) or (Pos(LapeLowerCase('|'+Decl.Name+'|'), LapeReservedLocals) > 0) then
       LapeExceptionFmt(lpeDuplicateDeclaration, [Decl.Name]);
 
-    FList.Add(Decl);
+    AddItem(Decl);
   end;
 end;
 
@@ -4002,7 +4011,7 @@ end;
 
 constructor TLapeCompilerGlobalDeclList.Create;
 begin
-  inherited Create(TLapeDeclCollectionDict.Create());
+  inherited Create();
 end;
 
 procedure TLapeCompilerBase.setEmitter(AEmitter: TLapeCodeEmitter);
@@ -4057,9 +4066,8 @@ begin
 
   FGlobalDeclarations := TLapeCompilerGlobalDeclList.Create();
   FManagedDeclarations := TLapeCompilerManagedDeclList.Create();
-  FCachedTypeVars := TLapeCachedTypeVars.Create(nil, nil, dupAccept);
   for BaseType in LapeBaseTypes do
-    FCachedDeclarations[BaseType] := TLapeVarMap.Create(nil, dupIgnore, True, '', True);
+    FCachedDeclarations[BaseType] := TLapeVarMap.Create(nil, True);
 
   LoadBaseTypes(FBaseTypes, Self);
 
@@ -4079,7 +4087,6 @@ begin
   FreeAndNil(FBaseTypesDictionary);
   FreeAndNil(FGlobalDeclarations);
   FreeAndNil(FManagedDeclarations);
-  FreeAndNil(FCachedTypeVars);
   for BaseType in LapeBaseTypes do
     FreeAndNil(FCachedDeclarations[BaseType]);
 
@@ -4101,6 +4108,7 @@ begin
   FManagedDeclarations.Clear();
   for BaseType in LapeBaseTypes do
     FCachedDeclarations[BaseType].Clear();
+  FCachedTypeVars := nil;
   Reset();
 end;
 
@@ -4435,21 +4443,24 @@ begin
 end;
 
 function TLapeCompilerBase.getTypeVar(AType: TLapeType): TLapeGlobalVar;
+var
+  i: Integer;
 begin
-  Result := FCachedTypeVars[AType];
+  for i := 0 to High(FCachedTypeVars) do
+    if (FCachedTypeVars[i].VarType = AType) then
+      Exit(FCachedTypeVars[i].TypeVar);
 
-  if (Result = nil) then
-  begin
-    if (AType is TLapeType_Set) then
-      AType := TLapeType_Set(AType).Range;
+  if (AType is TLapeType_Set) then
+    AType := TLapeType_Set(AType).Range;
 
-    if (AType is TLapeType_Enum) then
-      Result := addManagedDecl(addManagedType(TLapeType_TypeEnum.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar
-    else
-      Result := addManagedDecl(addManagedType(TLapeType_Type.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
+  if (AType is TLapeType_Enum) then
+    Result := addManagedDecl(addManagedType(TLapeType_TypeEnum.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar
+  else
+    Result := addManagedDecl(addManagedType(TLapeType_Type.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
 
-    FCachedTypeVars[AType] := Result;
-  end;
+  SetLength(FCachedTypeVars, Length(FCachedTypeVars) + 1);
+  FCachedTypeVars[High(FCachedTypeVars)].VarType := AType;
+  FCachedTypeVars[High(FCachedTypeVars)].TypeVar := Result;
 end;
 
 function TLapeCompilerBase.getGlobalVar(AName: lpString): TLapeGlobalVar;
@@ -4561,7 +4572,7 @@ begin
 end;
 
 initialization
-  LapeReservedLocals := LapeCase(LapeReservedLocals);
+  LapeReservedLocals := LapeLowerCase(LapeReservedLocals);
   EmptyStackInfo := TLapeEmptyStack.Create();
 finalization
   EmptyStackInfo.Free();

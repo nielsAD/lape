@@ -1,0 +1,8 @@
+2 42 abab 0
+before, hello
+7 (6, 8) (2, 2) 9x16 25
+True False
+True
+[{X = 3, Y = 1}, {X = 1, Y = 2}, {X = 2, Y = 3}] {Lo = {X = 0, Y = 0}, Hi = {X = 2, Y = 3}}
+1 True
+56 local!

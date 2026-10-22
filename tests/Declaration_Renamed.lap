@@ -1,0 +1,147 @@
+// Test when declarations are renamed internally, that everything still works as expected
+
+type
+  TPoint = record
+    X, Y: Int32;
+  end;
+
+  TBox = record
+    Lo, Hi: TPoint;
+  end;
+
+var
+  a1, a2, a3, a4, a5, a6, a7, a8, a9, a10: Int32;
+  Points: array of TPoint;
+  Box: TBox;
+
+// a name that is looked for, so that the global list makes its dictionary
+procedure Touch;
+begin
+  a1 := a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10;
+end;
+
+function Twice(x: Int32): Int32;
+begin
+  Result := x * 2;
+end;
+
+// becomes an overloaded method of Twice, which is named Twice after it is declared
+function Twice(s: String): String; overload;
+begin
+  Result := s + s;
+end;
+
+function Twice(p: TPoint): TPoint; overload;
+begin
+  Result.X := p.X * 2;
+  Result.Y := p.Y * 2;
+end;
+
+procedure Hello;
+begin
+  WriteLn('hello');
+end;
+
+procedure Hello; override;
+begin
+  Write('before, ');
+  inherited();
+end;
+
+function TPoint.Sum: Int32;
+begin
+  Result := Self.X + Self.Y;
+end;
+
+function TPoint.Scaled(f: Int32): TPoint;
+begin
+  Result.X := Self.X * f;
+  Result.Y := Self.Y * f;
+end;
+
+function TPoint.Scaled(f: Double): TPoint; overload;
+begin
+  Result.X := Round(Self.X * f);
+  Result.Y := Round(Self.Y * f);
+end;
+
+function TPoint.Scaled(p: TPoint): TPoint; overload;
+begin
+  Result.X := Self.X * p.X;
+  Result.Y := Self.Y * p.Y;
+end;
+
+function TPoint.ToStr: String;
+begin
+  Result := '(' + IntToStr(Self.X) + ', ' + IntToStr(Self.Y) + ')';
+end;
+
+function TPoint.ToStr(Sep: String): String; overload;
+begin
+  Result := IntToStr(Self.X) + Sep + IntToStr(Self.Y);
+end;
+
+procedure TPoint.Clear;
+begin
+  Self.X := 0;
+  Self.Y := 0;
+end;
+
+function TPoint.IsZero: Boolean;
+begin
+  Result := (Self.X = 0) and (Self.Y = 0);
+end;
+
+function TPoint.Equals(p: TPoint): Boolean;
+begin
+  Result := (Self.X = p.X) and (Self.Y = p.Y);
+end;
+
+function TPoint.Dot(p: TPoint): Int32;
+begin
+  Result := Self.X * p.X + Self.Y * p.Y;
+end;
+
+procedure Locals;
+var
+  b1, b2, b3, b4, b5, b6, b7, b8, b9, b10: Int32;
+
+  function Inner(x: Int32): Int32;
+  begin
+    Result := x + 1;
+  end;
+
+  function Inner(s: String): String; overload;
+  begin
+    Result := s + '!';
+  end;
+
+begin
+  b1 := 1; b2 := 2; b3 := 3; b4 := 4; b5 := 5; b6 := 6; b7 := 7; b8 := 8; b9 := 9; b10 := 10;
+  WriteLn(Inner(b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9 + b10), ' ', Inner('local'));
+end;
+
+var
+  p: TPoint;
+begin
+  a2 := 2;
+  Touch();
+  WriteLn(a1, ' ', Twice(21), ' ', Twice('ab'), ' ', Twice(p).X);
+
+  Hello();
+
+  p.X := 3;
+  p.Y := 4;
+  WriteLn(p.Sum(), ' ', p.Scaled(2).ToStr(), ' ', p.Scaled(0.5).ToStr(), ' ', p.Scaled(p).ToStr('x'), ' ', p.Dot(p));
+  WriteLn(p.Equals(p), ' ', p.IsZero());
+  p.Clear();
+  WriteLn(p.IsZero());
+
+  // helpers that are made, and then named
+  Points := [[3, 1], [1, 2], [2, 3]];
+  Box.Hi := Points[2];
+  WriteLn(Points, ' ', Box);
+  WriteLn(Points.IndexOf(Points[1]), ' ', Points.Contains(Box.Hi));
+
+  Locals();
+end.

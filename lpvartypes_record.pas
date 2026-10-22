@@ -20,7 +20,7 @@ type
     Offset: Word;
     FieldType: TLapeType;
   end;
-  TRecordFieldMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TRecordField>;
+  TRecordFieldMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TRecordField>;
 
   TLapeType_Record = class(TLapeType)
   protected
@@ -117,7 +117,7 @@ begin
   FSize := 0;
   FreeFieldMap := (AFieldMap = nil);
   if (AFieldMap = nil) then
-    AFieldMap := TRecordFieldMap.Create(InvalidRec, dupError, False);
+    AFieldMap := TRecordFieldMap.Create(InvalidRec);
   FFieldMap := AFieldMap;
   FAlignment := 1;
 end;
@@ -244,11 +244,14 @@ end;
 function TLapeType_Record.CreateCopy(DeepCopy: Boolean = False): TLapeType;
 type
   TLapeClassType = class of TLapeType_Record;
+var
+  i: Integer;
 begin
   if DeepCopy then
   begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name, @_DocPos);
-    TLapeType_Record(Result).FieldMap.ImportFromArrays(FFieldMap.ExportToArrays());
+    for i := 0 to FFieldMap.Count - 1 do
+      TLapeType_Record(Result).FieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
   end
   else
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, FFieldMap, Name, @_DocPos);
@@ -282,7 +285,7 @@ begin
     if (op = op_Assign) then
     begin
       for i := 0 to FFieldMap.Count - 1 do
-        if (FFieldMap.Key[i] <> TLapeType_Record(Right).FieldMap.Key[i]) or
+        if (not LapeSameString(FFieldMap.Key[i], TLapeType_Record(Right).FieldMap.Key[i])) or
            (not FFieldMap.ItemsI[i].FieldType.CompatibleWith(TLapeType_Record(Right).FieldMap.ItemsI[i].FieldType))
         then
         begin
@@ -294,7 +297,7 @@ begin
     else if (Op in [op_cmp_Equal, op_cmp_NotEqual]) then
     begin
       for i := 0 to FFieldMap.Count - 1 do
-        if (FFieldMap.Key[i] <> TLapeType_Record(Right).FieldMap.Key[i]) or
+        if (not LapeSameString(FFieldMap.Key[i], TLapeType_Record(Right).FieldMap.Key[i])) or
            (FFieldMap.ItemsI[i].FieldType.EvalRes(Op, TLapeType_Record(Right).FieldMap.ItemsI[i].FieldType, Flags) = nil)
         then
         begin

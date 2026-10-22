@@ -1,0 +1,10 @@
+abc is ABC
+Gone is not defined
+NeverDefined is not defined
+Val was 1 and is 2
+Again is 6
+IFDEF Lape
+not Defined(Lape)
+Defined(ABC) and not Defined(Gone)
+AfterHeader is not defined
+AfterUndef is defined

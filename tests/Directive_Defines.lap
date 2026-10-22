@@ -1,0 +1,52 @@
+// {$DEFINE} and {$UNDEF}: by name in either case, with a value or without, over the base defines, and where the
+// compiler looks ahead past them
+
+{$DEFINE abc}
+{$IFDEF ABC} {$DEFINE SeenAbc} {$ENDIF}
+
+// undefined: and undefining what is not defined does nothing
+{$DEFINE Gone}
+{$UNDEF gone}
+{$UNDEF NeverDefined}
+
+// defined again without one it is kept, with one it is changed
+{$DEFINE Val := 1}
+{$DEFINE Val}
+const Before = {$MACRO Val};
+{$DEFINE Val := 2}
+
+// undefined and defined again: without the value it had
+{$DEFINE Again := 5}
+{$UNDEF Again}
+{$DEFINE Again := 6}
+
+// a base define, undefined: {$IFDEF} still sees it, Defined() does not
+{$UNDEF Lape}
+
+// what the compiler looked ahead past is done once
+procedure AfterHeader; {$DEFINE AfterHeader}
+begin
+end;
+
+procedure UndefAfterHeader; {$UNDEF AfterHeader} {$DEFINE AfterUndef}
+begin
+end;
+
+const
+  Val = {$MACRO Val};
+  Again = {$MACRO Again};
+
+begin
+  {$IFDEF SeenAbc} WriteLn('abc is ABC'); {$ENDIF}
+  {$IFDEF Gone} WriteLn('Gone is defined'); {$ELSE} WriteLn('Gone is not defined'); {$ENDIF}
+  {$IFNDEF NeverDefined} WriteLn('NeverDefined is not defined'); {$ENDIF}
+  WriteLn('Val was ', Before, ' and is ', Val);
+  WriteLn('Again is ', Again);
+
+  {$IFDEF Lape} WriteLn('IFDEF Lape'); {$ENDIF}
+  {$IF Defined(Lape)} WriteLn('Defined(Lape)'); {$ELSE} WriteLn('not Defined(Lape)'); {$ENDIF}
+  {$IF Defined(ABC) and not Defined(Gone)} WriteLn('Defined(ABC) and not Defined(Gone)'); {$ENDIF}
+
+  {$IFDEF AfterHeader} WriteLn('AfterHeader is defined'); {$ELSE} WriteLn('AfterHeader is not defined'); {$ENDIF}
+  {$IFDEF AfterUndef} WriteLn('AfterUndef is defined'); {$ENDIF}
+end.

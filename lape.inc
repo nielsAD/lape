@@ -6,7 +6,6 @@
   Defines for the Lape project.
 }
 
-{.$DEFINE Lape_CaseSensitive}            //Case sentive in script
 {.$DEFINE Lape_CDECL}                    //CDECL function headers for callbacks/evaluations (useful for plugins/ffi)
 {$DEFINE Lape_EmitPos}                  //Emit source position when compiling (more memory)
 {$DEFINE Lape_Inline}                   //Compile with function inlining where it could be benefitial (faster, harder debugging)

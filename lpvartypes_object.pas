@@ -18,7 +18,7 @@ type
     Offset: Word;
     FieldType: TLapeType;
   end;
-  TObjectFieldMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TObjectField>;
+  TObjectFieldMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TObjectField>;
 
   TLapeType_Object = class(TLapeType_DynArray)
   protected
@@ -104,7 +104,7 @@ begin
 
   FreeFieldMap := (AFieldMap = nil);
   if (AFieldMap = nil) then
-    AFieldMap := TObjectFieldMap.Create(InvalidRec, dupError, False);
+    AFieldMap := TObjectFieldMap.Create(InvalidRec);
   FFieldMap := AFieldMap;
 end;
 
@@ -146,11 +146,14 @@ end;
 function TLapeType_Object.CreateCopy(DeepCopy: Boolean): TLapeType;
 type
   TLapeClassType = class of TLapeType_Object;
+var
+  i: Integer;
 begin
   if DeepCopy then
   begin
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name);
-    TLapeType_Object(Result).FFieldMap.ImportFromArrays(FFieldMap.ExportToArrays());
+    for i := 0 to FFieldMap.Count - 1 do
+      TLapeType_Object(Result).FFieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
   end
   else
     Result := TLapeClassType(Self.ClassType).Create(FCompiler, FFieldMap, Name);

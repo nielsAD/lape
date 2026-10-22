@@ -197,7 +197,7 @@ begin
   then
     Exit;
 
-  AName := LapeCase(AName);
+  AName := LapeLowerCase(AName);
   VariantType := Compiler.getBaseType(ltVariant);
 
   with TLapeType_Method(v.VarType) do
@@ -239,7 +239,7 @@ begin
   else
     Exit;
 
-  AName := LapeCase(AName);
+  AName := LapeLowerCase(AName);
   TLapeStringList(Arg).Add(#39 + AName + #39': Result := ' + Temp + AName);
 end;
 
@@ -268,7 +268,7 @@ begin
   then
     Exit;
 
-  AName := LapeCase(AName);
+  AName := LapeLowerCase(AName);
   TLapeStringList(Arg).Add(#39 + AName + #39': Result := ' + AName);
 end;
 
@@ -276,7 +276,7 @@ function TraverseGlobals_String(Compiler: TLapeCompiler; Callback: TTraverseCall
 var
   Builder: TLapeStringList;
 begin
-  Builder := TLapeStringList.Create('', dupIgnore, True, False);
+  Builder := TLapeStringList.Create('', dupIgnore);
 
   try
     TraverseGlobals(Compiler, Callback, Builder);
@@ -296,11 +296,7 @@ begin
     'var ParamsLen: SizeInt := Length(Params);'                                               + LineEnding +
     'begin'                                                                                   + LineEnding +
     '  Result := Unassigned;'                                                                 + LineEnding +
-    {$IFDEF Lape_CaseSensitive}
-    '  case Name of '                                                                         + LineEnding +
-    {$ELSE}
     '  case LowerCase(Name) of '                                                              + LineEnding +
-    {$ENDIF}
     '    ' + TraverseGlobals_String(Compiler, @_ExposeGlobals_Invoke_Callback)                + LineEnding +
     '    else raise '#39'Cannot invoke "'#39' + Name + '#39'" using VariantInvoke'#39';'      + LineEnding +
     '  end;'                                                                                  + LineEnding +
@@ -315,11 +311,7 @@ begin
     'function GetGlobalPtr(Name: string): ConstPointer; override;'                            + LineEnding +
     'begin'                                                                                   + LineEnding +
     '  Result := nil;'                                                                        + LineEnding +
-    {$IFDEF Lape_CaseSensitive}
-    '  case Name of '                                                                         + LineEnding +
-    {$ELSE}
     '  case LowerCase(Name) of '                                                              + LineEnding +
-    {$ENDIF}
     '    ' + TraverseGlobals_String(Compiler, @_ExposeGlobals_GetPtr_Callback)                 + LineEnding +
     '  end;'                                                                                  + LineEnding +
     'end;',
@@ -334,11 +326,7 @@ begin
     'function GetGlobal(Name: string): Variant; override;'                                    + LineEnding +
     'begin'                                                                                   + LineEnding +
     '  Result := Unassigned;'                                                                 + LineEnding +
-    {$IFDEF Lape_CaseSensitive}
-    '  case Name of '                                                                         + LineEnding +
-    {$ELSE}
     '  case LowerCase(Name) of '                                                              + LineEnding +
-    {$ENDIF}
     '    ' + TraverseGlobals_String(Compiler, @_ExposeGlobals_GetVal_Callback)                + LineEnding +
     '    else raise '#39'Cannot get value of "'#39' + Name + '#39'" using GetGlobal'#39';'    + LineEnding +
     '  end;'                                                                                  + LineEnding +

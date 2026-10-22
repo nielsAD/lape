@@ -213,7 +213,7 @@ begin
   if (AVar <> nil) and HasType() then
   try
     p := PPointer(AVar)^;
-    Builder := TLapeStringList.Create('', dupAccept, True, False);
+    Builder := TLapeStringList.Create('', dupAccept);
     for i := 0 to Length(PCodeArray(AVar)^) - 1 do
       Builder.Add(FPType.VarToString(Pointer(PtrUInt(p) + PtrUInt(FPType.Size * i))));
     Result := Result + Builder.Implode(', ');
@@ -1019,7 +1019,7 @@ begin
   Result := '[';
   if (AVar <> nil) and HasType() then
     try
-      Builder := TLapeStringList.Create('', dupAccept, True, False);
+      Builder := TLapeStringList.Create('', dupAccept);
       for i := 0 to FRange.Hi - FRange.Lo do
         Builder.Add(FPType.VarToString(Pointer(PtrInt(AVar) + (FPType.Size * i))));
       Result := Result + Builder.Implode(', ');
