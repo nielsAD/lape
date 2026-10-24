@@ -1,0 +1,17 @@
+script function, called at once: 42
+script procedure, called twice: 2
+strings in and out: HELLO!
+recursive: 120
+host function: QUIET
+host function from a variable: 9
+script function from a variable: 49
+from a parameter, called after its method returned: 42
+host function from a parameter, called after its method returned: -2
+from a local variable, called after its method returned: 10
+again, of the other method: 25
+from what a call gave: 81
+three in an array, each of its own method: 20 100 11
+variable changed after: 12, what the variable calls now: 36
+kept in a record: 100 holder
+a var parameter, twice: 21
+copied, then the first given another: 9 6

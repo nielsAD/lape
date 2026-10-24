@@ -1,0 +1,12 @@
+type
+  TIntMethod = function(x: Int32): Int32 of object;
+
+var
+  m: TIntMethod;
+
+function Twice(x: Int32): Int32; begin Result := x * 2; end;
+
+begin
+  m := Objectify(@Twice);
+  m := Objectify(@m);
+end.

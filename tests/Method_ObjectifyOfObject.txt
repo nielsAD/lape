@@ -1,0 +1,1 @@
+Normal method expected at line 11, column 8 in file "Method_ObjectifyOfObject.lap"

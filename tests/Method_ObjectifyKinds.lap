@@ -1,0 +1,158 @@
+{$assertions on}
+type
+  TIntFunc = function(x: Int32): Int32;
+  TIntMethod = function(x: Int32): Int32 of object;
+  THostMax = function(x, y: Int64): Int64;
+  THostMaxMethod = function(x, y: Int64): Int64 of object;
+  TStrMethod = function(s: String): String of object;
+  TProcMethod = procedure of object;
+  TRefMethod = procedure(var x: Int32) of object;
+  THolder = record
+    Name: String;
+    M: TIntMethod;
+  end;
+
+var
+  Calls, n, i: Int32;
+  Kept: TIntMethod;
+  KeptHost: THostMaxMethod;
+  Many: array of TIntMethod;
+  Holder: THolder;
+  m: TIntMethod;
+  f: TIntFunc;
+  hm: THostMax;
+  s: TStrMethod;
+  p: TProcMethod;
+  r: TRefMethod;
+
+function Twice(x: Int32): Int32; begin Result := x * 2; end;
+function Square(x: Int32): Int32; begin Result := x * x; end;
+function AddOne(x: Int32): Int32; begin Result := x + 1; end;
+procedure Count(); begin Calls += 1; end;
+procedure Bump(var x: Int32); begin x += 10; end;
+function Shout(s: String): String; begin Result := UpperCase(s) + '!'; end;
+
+function Fact(x: Int32): Int32;
+begin
+  if (x <= 1) then
+    Result := 1
+  else
+    Result := x * Fact(x - 1);
+end;
+
+// what a parameter holds
+function FromParam(g: TIntFunc): TIntMethod;
+begin
+  Result := Objectify(@g);
+end;
+
+function FromHostParam(g: THostMax): THostMaxMethod;
+begin
+  Result := Objectify(@g);
+end;
+
+// what a local variable holds
+function FromLocal(Which: Int32): TIntMethod;
+var
+  g: TIntFunc;
+begin
+  if (Which = 1) then
+    g := @Twice
+  else
+    g := @Square;
+  Result := Objectify(@g);
+end;
+
+function Pick(Which: Int32): TIntFunc;
+begin
+  case Which of
+    1: Result := @Twice;
+    2: Result := @Square;
+  else
+    Result := @AddOne;
+  end;
+end;
+
+// what the calls before had on the stack is written over
+function Churn(Depth: Int32): Int32;
+var
+  a, b, c: Int64;
+begin
+  a := -1;
+  b := -1;
+  c := -1;
+  if (Depth > 0) then
+    Result := Churn(Depth - 1) + a + b + c + 3
+  else
+    Result := 0;
+end;
+
+begin
+  WriteLn('script function, called at once: ', Objectify(@Twice)(21));
+
+  p := Objectify(@Count);
+  p();
+  p();
+  WriteLn('script procedure, called twice: ', Calls);
+
+  s := Objectify(@Shout);
+  WriteLn('strings in and out: ', s('hello'));
+
+  WriteLn('recursive: ', Objectify(@Fact)(5));
+
+  WriteLn('host function: ', Objectify(@UpperCase)('quiet'));
+
+  hm := @Max;
+  WriteLn('host function from a variable: ', Objectify(@hm)(3, 9));
+
+  f := @Square;
+  WriteLn('script function from a variable: ', Objectify(@f)(7));
+
+  Kept := FromParam(@AddOne);
+  Churn(20);
+  WriteLn('from a parameter, called after its method returned: ', Kept(41));
+
+  KeptHost := FromHostParam(@Max);
+  Churn(20);
+  WriteLn('host function from a parameter, called after its method returned: ', KeptHost(-4, -2));
+
+  Kept := FromLocal(1);
+  Churn(20);
+  WriteLn('from a local variable, called after its method returned: ', Kept(5));
+  Kept := FromLocal(2);
+  Churn(20);
+  WriteLn('again, of the other method: ', Kept(5));
+
+  WriteLn('from what a call gave: ', Objectify(Pick(2))(9));
+
+  SetLength(Many, 3);
+  for i := 0 to 2 do
+    Many[i] := Objectify(Pick(i + 1));
+  Churn(20);
+  Write('three in an array, each of its own method:');
+  for i := 0 to 2 do
+    Write(' ', Many[i](10));
+  WriteLn();
+
+  // (the variable it was made of is changed after: what was made keeps the method that it was given)
+  f := @Twice;
+  m := Objectify(@f);
+  f := @Square;
+  WriteLn('variable changed after: ', m(6), ', what the variable calls now: ', f(6));
+
+  Holder.Name := 'holder';
+  Holder.M := Objectify(@AddOne);
+  Churn(20);
+  WriteLn('kept in a record: ', Holder.M(99), ' ', Holder.Name);
+
+  n := 1;
+  r := Objectify(@Bump);
+  r(n);
+  r(n);
+  WriteLn('a var parameter, twice: ', n);
+
+  m := Objectify(@Square);
+  Kept := @m;
+  m := Objectify(@Twice);
+  WriteLn('copied, then the first given another: ', Kept(3), ' ', m(3));
+end.

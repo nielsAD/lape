@@ -1,0 +1,5 @@
+function Twice(x: Int32): Int32; begin Result := x * 2; end;
+
+begin
+  Objectify(@Twice, @Twice);
+end.

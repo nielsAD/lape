@@ -1,0 +1,68 @@
+{$autoobjectify on}
+type
+  TIntFunc = function(x: Int32): Int32;
+  TIntMethod = function(x: Int32): Int32 of object;
+  THolder = record
+    M: TIntMethod;
+  end;
+
+var
+  m, Kept: TIntMethod;
+  Holder: THolder;
+  Many: array of TIntMethod;
+  i: Int32;
+
+function Twice(x: Int32): Int32; begin Result := x * 2; end;
+function Square(x: Int32): Int32; begin Result := x * x; end;
+
+function CallWith(g: TIntMethod; x: Int32): Int32;
+begin
+  Result := g(x);
+end;
+
+function FromParam(g: TIntFunc): TIntMethod;
+begin
+  Result := @g;
+end;
+
+function FromLocal(): TIntMethod;
+var
+  g: TIntFunc;
+begin
+  g := @Square;
+  Result := @g;
+end;
+
+function Churn(Depth: Int32): Int32;
+var
+  a, b: Int64;
+begin
+  a := -1;
+  b := -1;
+  if (Depth > 0) then
+    Result := Churn(Depth - 1) + a + b + 2
+  else
+    Result := 0;
+end;
+
+begin
+  m := @Square;
+  WriteLn('given to a variable: ', m(4));
+  WriteLn('given to a parameter: ', CallWith(@Twice, 8));
+
+  Holder.M := @Twice;
+  WriteLn('given to a field: ', Holder.M(50));
+
+  SetLength(Many, 2);
+  Many[0] := @Twice;
+  Many[1] := @Square;
+  WriteLn('given to elements: ', Many[0](3), ' ', Many[1](3));
+
+  Kept := FromParam(@Twice);
+  Churn(20);
+  WriteLn('a parameter, kept: ', Kept(11));
+
+  Kept := FromLocal();
+  Churn(20);
+  WriteLn('a local variable, kept: ', Kept(11));
+end.

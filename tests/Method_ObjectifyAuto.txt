@@ -1,0 +1,6 @@
+given to a variable: 16
+given to a parameter: 16
+given to a field: 100
+given to elements: 6 9
+a parameter, kept: 22
+a local variable, kept: 121

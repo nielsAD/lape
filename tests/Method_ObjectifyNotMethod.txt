@@ -1,0 +1,1 @@
+Normal method expected at line 4, column 3 in file "Method_ObjectifyNotMethod.lap"

@@ -2584,8 +2584,7 @@ end;
 function TLapeTree_InternalMethod_Objectify.Compile(var Offset: Integer): TResVar;
 var
   Method: TLapeGlobalVar;
-  Param: TResVar;
-  _Method, _Callback: TResVar;
+  Param, AsRecord: TResVar;
 begin
   Result := NullResVar;
   Dest := NullResVar;
@@ -2598,64 +2597,38 @@ begin
   with FCompiler['_Objectify'].VarType as TLapeType_OverloadedMethod do
     Method := OnFunctionNotFound(TLapeType_OverloadedMethod(GetSelf()), TLapeType_Method(resType()));
 
-  Result := _ResVar.New(Method);
-
+  // (Self is the method itself, not where it is kept: what is made can be kept after that is gone)
   Param := FParams[0].Compile(Offset);
+  Param.VarType := FCompiler.getBaseType(ltPointer);
 
-  if (Param.VarPos.MemPos = mpMem) then
-  begin
-    if (Param.VarPos.GlobalVar.Ptr = nil) then
-      LapeException(lpeImpossible, DocPos);
-
-    PMethod(Method.Ptr)^.Data := Param.VarPos.GlobalVar.Ptr;
-  end else
-  begin
-    _Callback := _ResVar.New(FCompiler.getTempVar(ltPointer));
-    _Callback.isConstant := False;
-
-    with TLapeTree_Operator.Create(op_Assign, Self) do
-    try
-      Left := TLapeTree_ResVar.Create(_Callback, Self);
-      Right := TLapeTree_ResVar.Create(Param, Self);
-
-      Compile(Offset);
-    finally
-      Free();
-    end;
-
-    Result.isConstant := False;
-
-    with TLapeTree_Operator.Create(op_Deref, Self) do
-    try
-      Left := TLapeTree_Operator.Create(op_Addr, Self);
-      with Left as TLapeTree_Operator do
-        Left := TLapeTree_ResVar.Create(Result, Self);
-
-      _Method := Compile(Offset);
-    finally
-      Free();
-    end;
-
-    with TLapeTree_Operator.Create(op_Assign, Self) do
-    try
-      Left := TLapeTree_Operator.Create(op_Dot, Self);
-      with Left as TLapeTree_Operator do
-      begin
-        Left := TLapeTree_ResVar.Create(_Method, Self);
-        Right := TLapeTree_String.Create(lpString('Self'), Self);
-      end;
-
-      Right := TLapeTree_Operator.Create(op_Addr, Self);
-      with Right as TLapeTree_Operator do
-        Left := TLapeTree_ResVar.Create(_Callback, Self);
-
-      Compile(Offset);
-    finally
-      Free();
-    end;
-
-    Result.isConstant := True;
+  Result := _ResVar.New(FCompiler.getTempVar(Method.VarType));
+  Result.isConstant := False;
+  with TLapeTree_Operator.Create(op_Assign, Self) do
+  try
+    Left := TLapeTree_ResVar.Create(Result, Self);
+    Right := TLapeTree_GlobalVar.Create(Method, Self);
+    Compile(Offset);
+  finally
+    Free();
   end;
+
+  AsRecord := Result;
+  AsRecord.VarType := FCompiler.getGlobalType('TMethod');
+  with TLapeTree_Operator.Create(op_Assign, Self) do
+  try
+    Left := TLapeTree_Operator.Create(op_Dot, Self);
+    with Left as TLapeTree_Operator do
+    begin
+      Left := TLapeTree_ResVar.Create(AsRecord, Self);
+      Right := TLapeTree_String.Create(lpString('Self'), Self);
+    end;
+    Right := TLapeTree_ResVar.Create(Param, Self);
+    Compile(Offset);
+  finally
+    Free();
+  end;
+
+  Result.isConstant := True;
 end;
 
 constructor TLapeTree_InternalMethod_GetCallerAddress.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
