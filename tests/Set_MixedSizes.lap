@@ -1,0 +1,50 @@
+type
+  TKey = (k0, k1, k2, k3, k31 = 31, k32, k33, k100 = 100, k254 = 254, k255);
+  TKeys = set of TKey;
+  TLowKey = k0..k3;
+  TLowKeys = set of TLowKey;
+  THigh = k32..k100;
+  THighs = set of THigh;
+
+var
+  a: TKeys;
+  sm, sm2: TLowKeys;
+  hi: THighs;
+  e: TKey;
+
+procedure Show(s: TKeys);
+var
+  i: Int32;
+begin
+  for i := 0 to 255 do
+    if (TKey(i) in s) then
+      Write(i, ' ');
+  WriteLn('|');
+end;
+
+begin
+  a := [k1, k3, k100, k255];
+  sm := a;
+  Show(sm);
+  sm := [k0, k2];
+  a := sm;
+  Show(a);
+  a := [k1, k100];
+  Show(a + sm);
+  Show(sm + a);
+  Show(a - sm);
+  Show(sm - a);
+  Show(a * sm);
+  WriteLn(a = sm, ' ', sm = a, ' ', sm <= a, ' ', a >= sm, ' ', sm <> a);
+  sm2 := sm + a;
+  Show(sm2);
+  a := [k1, k2];
+  WriteLn(a = sm, ' ', [k0, k2] = sm);
+  hi := [k32, k100];
+  Show(hi + sm);
+  a := hi;
+  Show(a);
+  e := k100;
+  WriteLn(e in sm, ' ', e in a);
+  WriteLn(SizeOf(sm + a), ' ', SizeOf(sm + sm));
+end;

@@ -1,0 +1,8 @@
+type
+  TDay = (Mon, Tue, Wed, Thu, Fri, Sat, Sun);
+  TWorkDay = Mon..Fri;
+const
+  First: TWorkDay = Mon;
+  Last: TWorkDay = Sat;
+begin
+end;

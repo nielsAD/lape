@@ -1,0 +1,5 @@
+Near Mid Far 
+Low1 Zero High1 
+TScopedFar.First TScopedFar.Last 
+InvalidEnum(1) InvalidEnum(69999) InvalidEnum(1999999999)
+InvalidEnum(-1) InvalidEnum(5)

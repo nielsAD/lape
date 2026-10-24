@@ -1,0 +1,14 @@
+1 3 |
+0 2 |
+0 1 2 100 |
+0 1 2 100 |
+1 100 |
+0 2 |
+|
+False False False False True
+0 1 2 |
+False True
+0 2 32 100 |
+32 100 |
+False True
+32 4

@@ -1,0 +1,4 @@
+type
+  TTooBig = (big = 2147483648);
+begin
+end.

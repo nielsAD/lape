@@ -1720,9 +1720,8 @@ begin
 
   addDelayedCode(
     LapeDelayedFlags +
-    _LapeToString_Enum +
-    Format(_LapeToString_Set, ['Small', Ord(High(ELapeSmallEnum))]) +
-    Format(_LapeToString_Set, ['Large', Ord(High(ELapeLargeEnum))]) +
+    Format(_LapeToString_Set, ['Small', High(TLapeSmallSetItem)]) +
+    Format(_LapeToString_Set, ['Large', High(TLapeLargeSetItem)]) +
     _LapeToString_Array +
     _LapeSwap +
     _LapeSetLength +
@@ -2624,6 +2623,7 @@ var
   Default: TLapeTree_ExprBase;
   op: EOperator;
   LeftType, RightType: TLapeType;
+  InRange: TLapeGlobalVar;
 begin
   Pos := Tokenizer.DocPos;
   NamePos := Pos;
@@ -2732,6 +2732,22 @@ begin
               Param.Default := Default.Evaluate();
               if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or (not Param.Default.Writeable)) then
                 LapeException(lpeVariableExpected, Default.DocPos);
+              // (one outside of a range of an enum is known here)
+              if (Param.Default is TLapeGlobalVar) and (Param.VarType is TLapeType_SubRange) and
+                 (TLapeType_SubRange(Param.VarType).VarType <> nil) and (TLapeType_SubRange(Param.VarType).VarType.ClassType = TLapeType_Enum) then
+              begin
+                InRange := Param.VarType.NewGlobalVarP();
+                try
+                  Param.VarType.EvalConst(op_Assign, InRange, TLapeGlobalVar(Param.Default), []);
+                except
+                  on E: lpException do
+                  begin
+                    InRange.Free();
+                    LapeExceptionReraise(E, Default.DocPos);
+                  end;
+                end;
+                InRange.Free();
+              end;
             finally
               Default.Free();
             end;
@@ -3431,7 +3447,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     if Scoped and (Tokenizer.Tok = tk_kw_Enum) then
       Expect(tk_sym_ParenthesisOpen, True, False);
 
-    Enum := TLapeType_Enum.Create(Self, nil, Scoped, '', getPDocPos());
+    Enum := TLapeType_Enum.Create(Self, Scoped, '', getPDocPos());
     if (not addToStackOwner) then
       StackOwner := FStackInfo
     else
@@ -3727,6 +3743,7 @@ var
   VarType: TLapeType;
   DefExpr: TLapeTree_ExprBase;
   DefConst: TLapeGlobalVar;
+  DefPos: TDocPos;
   VarDecl: TLapeVarDecl;
 begin
   ValidEnd := ValidEnd + [tk_kw_Deprecated, tk_kw_UnImplemented, tk_kw_Experimental];
@@ -3762,6 +3779,7 @@ begin
         if (DefExpr <> nil) and (not DefExpr.isConstant()) then
           LapeException(lpeConstantExpected, DefExpr.DocPos);
 
+        DefPos := DefExpr.DocPos;
         try
           Expect(ValidEnd, False, False);
           DefConst := DefExpr.Evaluate();
@@ -3811,7 +3829,12 @@ begin
           if (not (VarDecl.VarDecl is TLapeGlobalVar)) or (VarType is TLapeType_Method) then
             VarDecl.Default := TLapeTree_GlobalVar.Create(DefConst, Self, GetPDocPos())
           else
-            VarDecl.VarDecl.VarType.EvalConst(op_Assign, TLapeGlobalVar(VarDecl.VarDecl), DefConst, [])
+          try
+            VarDecl.VarDecl.VarType.EvalConst(op_Assign, TLapeGlobalVar(VarDecl.VarDecl), DefConst, []);
+          except
+            on E: lpException do
+              LapeExceptionReraise(E, DefPos);
+          end
         else if (DefExpr <> nil) then
         begin
           VarDecl.Default := DefExpr;
@@ -4679,11 +4702,13 @@ function TLapeCompiler.ParseFor(ExprEnd: EParserTokenSet = ParserToken_Expressio
     Result.LoopType := loopOver;
     Result.LoopOverWhat := loopOverArray;
 
-    if (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_Set) then
+    LimitType := TLapeTree_Operator(counterExpr).Right.resType();
+    if (LimitType is TLapeType_Set) then
       Result.LoopOverWhat := loopOverSet
     else
-    if (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_SubRange) or
-       (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_TypeEnum) then
+    // (a range, or the name of an enum or of a range)
+    if (LimitType is TLapeType_SubRange) or (LimitType is TLapeType_TypeEnum) or
+       ((LimitType is TLapeType_Type) and (TLapeType_Type(LimitType).TType is TLapeType_SubRange)) then
       Result.LoopOverWhat := loopOverEnum;
 
     if Result.LoopOverWhat in [loopOverEnum, loopOverSet] then

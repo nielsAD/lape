@@ -1819,8 +1819,8 @@ begin
 
       if (not VarType.CompatibleWith(Result.VarType)) then
       begin
-        Result.VarType := FCompiler.getBaseType(DetermineIntType(Result.VarType.Size, Result.VarType.BaseType in LapeSignedIntegerTypes));
-        DestVar.VarType := FCompiler.getBaseType(DetermineIntType(DestVar.VarType.Size, DestVar.VarType.BaseType in LapeSignedIntegerTypes));
+        Result.VarType := FCompiler.getBaseType(DetermineIntType(Result.VarType.Size, Result.VarType.BaseType in LapeSignedOrdinalTypes));
+        DestVar.VarType := FCompiler.getBaseType(DetermineIntType(DestVar.VarType.Size, DestVar.VarType.BaseType in LapeSignedOrdinalTypes));
       end;
 
       Result := DestVar.VarType.Eval(op_Assign, tmpVar, DestVar, Result, [], Offset, @Self._DocPos);
@@ -1865,8 +1865,8 @@ begin
       tmpTyp := tmpRes.VarType;
       Result := VarType.NewGlobalVarP();
 
-      tmpRes.VarType := FCompiler.getBaseType(DetermineIntType(tmpTyp.Size, tmpTyp.BaseType in LapeSignedIntegerTypes));
-      Result.VarType := FCompiler.getBaseType(DetermineIntType(VarType.Size, VarType.BaseType in LapeSignedIntegerTypes));
+      tmpRes.VarType := FCompiler.getBaseType(DetermineIntType(tmpTyp.Size, tmpTyp.BaseType in LapeSignedOrdinalTypes));
+      Result.VarType := FCompiler.getBaseType(DetermineIntType(VarType.Size, VarType.BaseType in LapeSignedOrdinalTypes));
 
       Result := Result.VarType.EvalConst(op_Assign, Result, tmpRes, []);
       Result.VarType := VarType;
@@ -4659,8 +4659,8 @@ begin
 
     loopOverEnum:
       begin
-        if (Container.VarType is TLapeType_TypeEnum) then
-          Container.VarType := TLapeType_TypeEnum(Container.VarType).TType;
+        if (Container.VarType is TLapeType_Type) then
+          Container.VarType := TLapeType_Type(Container.VarType).TType;
         if (not (Container.VarType is TLapeType_SubRange)) then
           LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 

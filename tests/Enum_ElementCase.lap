@@ -1,0 +1,16 @@
+type
+  TColor = enum(Red, Green, Blue);
+  TColour = enum(red, GREEN, blue);
+  TOther = enum(Red, Green, Purple);
+
+var
+  c: TColor;
+  d: TColour;
+begin
+  d := TColour.green;
+  c := d;
+  WriteLn(c);
+  c := TColor.Blue;
+  d := c;
+  WriteLn(Ord(d), ' ', d = TColour.BLUE);
+end.

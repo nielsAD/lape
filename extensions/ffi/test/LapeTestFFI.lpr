@@ -155,20 +155,24 @@ begin
   Result := Success;
 end;
 
-procedure Proc7(a: ELapeSmallEnum; b: TLapeSmallSet; c: ELapeLargeEnum; d: TLapeLargeSet); {$I cconv.inc}
+type
+  ETestSmall = (etsFirst = Low(TLapeSmallSetItem), etsLast = High(TLapeSmallSetItem));
+  ETestLarge = (etlFirst = Low(TLapeLargeSetItem), etlLast = High(TLapeLargeSetItem));
+
+procedure Proc7(a: ETestSmall; b: TLapeSmallSet; c: ETestLarge; d: TLapeLargeSet); {$I cconv.inc}
 begin
-  Success := (a = __LapeSmallEnum3) and (b = [__LapeSmallEnum1, __LapeSmallEnum32])
-         and (c = __LapeLargeEnum5) and (d = [__LapeLargeEnum1, __LapeLargeEnum256]);
+  Success := (Ord(a) = 2) and (b = [Low(TLapeSmallSetItem), High(TLapeSmallSetItem)])
+         and (Ord(c) = 4) and (d = [Low(TLapeLargeSetItem), High(TLapeLargeSetItem)]);
   Assert(Success);
 end;
 
 function RunProc7(p: Pointer): Boolean;
 type
-  TP = procedure(a: ELapeSmallEnum; b: TLapeSmallSet; c: ELapeLargeEnum; d: TLapeLargeSet); {$I cconv.inc}
+  TP = procedure(a: ETestSmall; b: TLapeSmallSet; c: ETestLarge; d: TLapeLargeSet); {$I cconv.inc}
 begin
   Success := False;
-  TP(p)(__LapeSmallEnum3, [__LapeSmallEnum1, __LapeSmallEnum32],
-        __LapeLargeEnum5, [__LapeLargeEnum1, __LapeLargeEnum256]);
+  TP(p)(ETestSmall(2), [Low(TLapeSmallSetItem), High(TLapeSmallSetItem)],
+        ETestLarge(4), [Low(TLapeLargeSetItem), High(TLapeLargeSetItem)]);
   Result := Success;
 end;
 
@@ -368,28 +372,28 @@ end;
 
 function Func11(const a: TLapeSmallSet): TLapeSmallSet; {$I cconv.inc}
 begin
-  Assert(a = [Low(ELapeSmallEnum)]);
-  Result := [High(ELapeSmallEnum)];
+  Assert(a = [Low(TLapeSmallSetItem)]);
+  Result := [High(TLapeSmallSetItem)];
 end;
 
 function RunFunc11(f: Pointer): Boolean;
 type
   TF = function(const a: TLapeSmallSet): TLapeSmallSet; {$I cconv.inc}
 begin
-  Result := TF(f)([Low(ELapeSmallEnum)]) = [High(ELapeSmallEnum)];
+  Result := TF(f)([Low(TLapeSmallSetItem)]) = [High(TLapeSmallSetItem)];
 end;
 
 function Func12(const a: TLapeLargeSet): TLapeLargeSet; {$I cconv.inc}
 begin
-  Assert(a = [High(ELapeLargeEnum)]);
-  Result := [Low(ELapeLargeEnum)];
+  Assert(a = [High(TLapeLargeSetItem)]);
+  Result := [Low(TLapeLargeSetItem)];
 end;
 
 function RunFunc12(f: Pointer): Boolean;
 type
   TF = function(const a: TLapeLargeSet): TLapeLargeSet; {$I cconv.inc}
 begin
-  Result := TF(f)([High(ELapeLargeEnum)]) = [Low(ELapeLargeEnum)];
+  Result := TF(f)([High(TLapeLargeSetItem)]) = [Low(TLapeLargeSetItem)];
 end;
 
 function Func13(const a: TIntArr): TIntArr; {$I cconv.inc}
@@ -941,8 +945,8 @@ begin
 
       addGlobalVar('TFFI_ABI', 'TFFI_ABI('+IntToStr(Ord(ExportABI))+')', 'TEST_ABI').isConstant := True;
 
-      addGlobalType('(ESmallFirst = ' + IntToStr(Ord(Low(ELapeSmallEnum))) + ', ESmallLast = ' + IntToStr(Ord(High(ELapeSmallEnum))) + ')', 'TSmallEnum');
-      addGlobalType('(ELargeFirst = ' + IntToStr(Ord(Low(ELapeSmallEnum))) + ', ELargeLast = ' + IntToStr(Ord(High(ELapeLargeEnum))) + ')', 'TLargeEnum');
+      addGlobalType('(ESmallFirst = ' + IntToStr(Low(TLapeSmallSetItem)) + ', ESmallLast = ' + IntToStr(High(TLapeSmallSetItem)) + ')', 'TSmallEnum');
+      addGlobalType('(ELargeFirst = ' + IntToStr(Low(TLapeLargeSetItem)) + ', ELargeLast = ' + IntToStr(High(TLapeLargeSetItem)) + ')', 'TLargeEnum');
       addGlobalType('set of TSmallEnum', 'TSmallSet');
       addGlobalType('set of TLargeEnum', 'TLargeSet');
 

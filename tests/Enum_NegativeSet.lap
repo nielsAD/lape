@@ -1,0 +1,7 @@
+type
+  TLevel = (below = -2, ground = 0, above = 5);
+  TLevels = set of TLevel;
+
+begin
+  WriteLn('not reached');
+end.

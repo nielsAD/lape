@@ -1597,7 +1597,7 @@ begin
   else if (not (BaseType in LapeOrdinalTypes)) then
     Result := -1
   else
-    case DetermineIntType(Size, BaseType in LapeSignedIntegerTypes) of
+    case DetermineIntType(Size, BaseType in LapeSignedOrdinalTypes) of
       ltInt8: Result := PInt8(AVar)^;
       ltUInt8: Result := PUInt8(AVar)^;
       ltInt16: Result := PInt16(AVar)^;
@@ -1614,7 +1614,7 @@ function TLapeType.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FLo = nil) and (FCompiler <> nil) and (BaseType in LapeOrdinalTypes) then
     with FCompiler do
-      Self.FLo := addManagedDecl(NewGlobalVarP(LapeTypeLow[DetermineIntType(Size, BaseType in LapeSignedIntegerTypes)])) as TLapeGlobalVar;
+      Self.FLo := addManagedDecl(NewGlobalVarP(LapeTypeLow[DetermineIntType(Size, BaseType in LapeSignedOrdinalTypes)])) as TLapeGlobalVar;
   Result := FLo;
 end;
 
@@ -1622,7 +1622,7 @@ function TLapeType.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
   if (FHi = nil) and (FCompiler <> nil) and (BaseType in LapeOrdinalTypes) then
     with FCompiler do
-      Self.FHi := addManagedDecl(NewGlobalVarP(LapeTypeHigh[DetermineIntType(Size, BaseType in LapeSignedIntegerTypes)])) as TLapeGlobalVar;
+      Self.FHi := addManagedDecl(NewGlobalVarP(LapeTypeHigh[DetermineIntType(Size, BaseType in LapeSignedOrdinalTypes)])) as TLapeGlobalVar;
   Result := FHi;
 end;
 
@@ -2458,7 +2458,7 @@ begin
       else
         LapeException(lpeInvalidEvaluation)
     else
-      Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedIntegerTypes));
+      Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));
 
     if HasType() then
       TypeSize := FCompiler.getConstant(FPType.Size)
@@ -2516,7 +2516,7 @@ begin
       else
         LapeException(lpeInvalidEvaluation)
     else
-      Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedIntegerTypes));
+      Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));
 
     IndexVar := Right;
 
@@ -2525,7 +2525,7 @@ begin
       Result := NullResVar;
       Result.VarType := FCompiler.getPointerType(PType, PConst);
       FCompiler.getDestVar(Dest, Result, op_Index);
-      FCompiler.Emitter._Eval(getEvalProc_PointerIndex(PType.Size, DetermineIntType(IndexVar.VarType.Size, IndexVar.VarType.BaseType in LapeSignedIntegerTypes)), Result, Left, IndexVar, Offset, Pos);
+      FCompiler.Emitter._Eval(getEvalProc_PointerIndex(PType.Size, DetermineIntType(IndexVar.VarType.Size, IndexVar.VarType.BaseType in LapeSignedOrdinalTypes)), Result, Left, IndexVar, Offset, Pos);
     end else
     begin
       if HasType() and (FPType.Size <> 1) then

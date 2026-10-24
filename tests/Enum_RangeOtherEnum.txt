@@ -1,0 +1,1 @@
+Can't assign "(Red=0, Green=1, Blue=2)" to "Mon..Fri" at line 9, column 5 in file "Enum_RangeOtherEnum.lap"

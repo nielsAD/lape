@@ -6,6 +6,7 @@ type
 var
   e: EEnum;
   i: Int32;
+  small: set of 0..31;
   c: AnsiChar;
 begin
   e := e1;
@@ -18,6 +19,15 @@ begin
   i := 100;
   Assert(not (i in [1..99]));
   Assert(i in [1..200]);
+
+  // (a number the set cannot hold is not in it, also where it would wrap onto one that is)
+  small := [4];
+  i := 36;
+  Assert(not (i in small));
+  i := 356;
+  Assert(not (i in [100]));
+  i := -252;
+  Assert(not (i in [4]));
 
   c := 'z';
   Assert(not (c in ['a', 'd'..'y', '0']));

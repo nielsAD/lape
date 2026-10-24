@@ -1,0 +1,10 @@
+type
+  TDay = (Mon, Tue, Wed, Thu, Fri, Sat, Sun);
+  TWorkDay = Mon..Fri;
+  TColor = (Red, Green, Blue);
+var
+  w: TWorkDay;
+begin
+  w := Tue;
+  w := Green;
+end;

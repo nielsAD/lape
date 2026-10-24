@@ -1,0 +1,59 @@
+type
+  TLevel = (below = -2, ground = 0, above = 5);
+  TDepth = (deepest = -100, deeper, deep = -1);
+  // (the least and the most that an element can be: what a number of 4 bytes with a sign holds)
+  TEnds = (least = -2147483648, most = 2147483647);
+
+var
+  l: TLevel;
+  d: TDepth;
+  i: Int32;
+begin
+  l := below;
+  WriteLn(l, ' ', Ord(l), ' ', Ord(ground), ' ', Ord(above), ' ', SizeOf(l));
+  WriteLn(Low(TLevel), ' ', High(TLevel), ' ', Ord(Low(TLevel)), ' ', Ord(High(TLevel)), ' ', Length(TLevel));
+
+  // in order: one that is below zero is less than the others
+  WriteLn(below < ground, ' ', below < above, ' ', ground > below, ' ', above < below, ' ', l = below, ' ', l <> ground, ' ', l <= below, ' ', above >= l);
+
+  // over its elements, and over every number from the first to the last
+  for l in TLevel do
+    Write(l, ' ');
+  WriteLn();
+  for l := below to above do
+    Write(Ord(l), ' ');
+  WriteLn();
+  for l := above downto below do
+    Write(Ord(l), ' ');
+  WriteLn();
+
+  // the one after it and the one before it: by its number, also where no element has that
+  l := below;
+  Inc(l);
+  WriteLn(l, ' ', Ord(l));
+  l := Succ(l);
+  WriteLn(l, ' ', Ord(l));
+  l := Pred(Pred(Pred(l)));
+  WriteLn(l, ' ', Ord(l));
+
+  // made of a number, and a number made of it
+  l := TLevel(-2);
+  i := Ord(l) * 10;
+  WriteLn(l, ' ', i, ' ', TLevel(5), ' ', Ord(l) < 0);
+
+  for l in TLevel do
+    case l of
+      below: Write('below ');
+      ground..above: Write('not below ');
+    end;
+  WriteLn();
+
+  // all of its elements below zero
+  d := deeper;
+  WriteLn(deepest, ' ', Ord(deepest), ' ', d, ' ', Ord(d), ' ', deep, ' ', Ord(deep), ' ', deepest < deep, ' ', d > deep, ' ', Length(TDepth));
+  for d in TDepth do
+    Write(Ord(d), ' ');
+  WriteLn();
+
+  WriteLn(Ord(least), ' ', Ord(most), ' ', least < most, ' ', most > least);
+end.

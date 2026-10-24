@@ -1,0 +1,25 @@
+type
+  TFar = (Near, Mid = 70000, Far = 2000000000);
+  TBelow = (Low1 = -2000000000, Zero = 0, High1 = 2000000000);
+  {$scopedenums on}
+  TScopedFar = (First, Last = 1000000);
+  {$scopedenums off}
+
+var
+  f: TFar;
+  b: TBelow;
+  s: TScopedFar;
+begin
+  for f in TFar do
+    Write(f, ' ');
+  WriteLn();
+  for b in TBelow do
+    Write(b, ' ');
+  WriteLn();
+  for s in TScopedFar do
+    Write(s, ' ');
+  WriteLn();
+
+  WriteLn(TFar(1), ' ', TFar(69999), ' ', TFar(1999999999));
+  WriteLn(TBelow(-1), ' ', TScopedFar(5));
+end.

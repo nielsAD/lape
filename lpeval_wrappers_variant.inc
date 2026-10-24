@@ -138,7 +138,7 @@ end;
 
 procedure _LapeVarCompareValue(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PLapeSmallEnum(Result)^ := ELapeSmallEnum(VarCompareValue(PVariant(Params^[0])^, PVariant(Params^[1])^));
+  PInt32(Result)^ := Ord(VarCompareValue(PVariant(Params^[0])^, PVariant(Params^[1])^));
 end;
 
 type

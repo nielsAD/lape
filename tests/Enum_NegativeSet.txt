@@ -1,0 +1,1 @@
+Out of type range (value:-2, low:0, high:255) at line 3, column 26 in file "Enum_NegativeSet.lap"

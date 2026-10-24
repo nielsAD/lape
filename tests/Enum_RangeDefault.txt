@@ -1,0 +1,1 @@
+Out of type range (value:6, low:0, high:4) at line 5, column 30 in file "Enum_RangeDefault.lap"

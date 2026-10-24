@@ -1,0 +1,1 @@
+Can't assign "Int64" to "Mon..Fri" at line 8, column 5 in file "Enum_RangeNumber.lap"

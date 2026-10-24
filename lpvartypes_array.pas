@@ -468,17 +468,17 @@ begin
 
   if (BaseType = ltDynArray) then
   begin
-    AIndex.VarType := FCompiler.getBaseType(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedIntegerTypes));
+    AIndex.VarType := FCompiler.getBaseType(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedOrdinalTypes));
     if (AIndex.VarPos.MemPos = mpStack) then
     begin
       AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
       FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset, @_DocPos);
     end;
 
-    FCompiler.Emitter._Eval(getEvalProc_DynArrayRangeCheck(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedIntegerTypes)), AVar, AVar, AIndex, Offset, Pos);
+    FCompiler.Emitter._Eval(getEvalProc_DynArrayRangeCheck(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedOrdinalTypes)), AVar, AVar, AIndex, Offset, Pos);
   end else
   begin
-    AIndex.VarType := FCompiler.getBaseType(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedIntegerTypes));
+    AIndex.VarType := FCompiler.getBaseType(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedOrdinalTypes));
     if (AIndex.VarPos.MemPos = mpStack) then
     begin
       AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
@@ -1155,7 +1155,7 @@ begin
       else
       begin
         if Right.HasType() and (Right.VarType.BaseType in LapeOrdinalTypes) then
-          Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedIntegerTypes));
+          Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));
 
         IndexLow := FCompiler.getConstant(FRange.Lo, ltSizeInt);
         tmpVar := Right.VarType.Eval(op_Minus, tmpVar, Right, _ResVar.New(IndexLow), [], Offset, Pos);

@@ -1,0 +1,173 @@
+type
+  TDay = (Mon, Tue, Wed, Thu, Fri, Sat, Sun);
+  TWorkDay = Mon..Fri;
+  TMidWeek = Tue..Thu;
+  TWeekend = Sat..Sun;
+  TPlan = record Day: TWorkDay; Hours: Int32; end;
+
+const
+  FirstDay: TWorkDay = Mon;
+
+procedure TakesRange(d: TWorkDay);
+begin
+  Write('range ', d, '. ');
+end;
+
+procedure TakesEnum(d: TDay);
+begin
+  Write('enum ', d, '. ');
+end;
+
+procedure TakesDefault(d: TWorkDay = Wed);
+begin
+  Write('default ', d, '. ');
+end;
+
+procedure ChangesRange(var d: TWorkDay);
+begin
+  d := Succ(d);
+end;
+
+function GivesRange: TWorkDay;
+begin
+  Result := Thu;
+end;
+
+// (the one that takes the type itself is the nearest)
+function Which(d: TWorkDay): string;
+begin
+  Result := 'range';
+end;
+
+function Which(d: TDay): string; overload;
+begin
+  Result := 'enum';
+end;
+
+function TWorkDay.IsLast: Boolean;
+begin
+  Result := (Self = High(TWorkDay));
+end;
+
+var
+  w, w2: TWorkDay;
+  m: TMidWeek;
+  e: TWeekend;
+  d: TDay;
+  plan: TPlan;
+  days: array of TWorkDay;
+  p: ^TWorkDay;
+  workSet: set of TWorkDay;
+  daySet: set of TDay;
+begin
+  // a new one is all zeroes, as any variable: also when the range has no such element
+  WriteLn(w, ' ', Ord(w), ' ', e, ' ', Ord(e));
+  WriteLn(SizeOf(TWorkDay) = SizeOf(TDay), ' ', FirstDay);
+
+  // given an element, and to and from a variable of the enum
+  w := Wed;
+  d := w;
+  WriteLn(w, ' ', d, ' ', Ord(w));
+  d := Fri;
+  w := d;
+  WriteLn(w);
+  // (what a variable holds is not checked)
+  d := Sun;
+  w := d;
+  WriteLn(w, ' ', Ord(w));
+
+  // one range to another
+  m := Thu;
+  w := m;
+  w2 := w;
+  e := Sat;
+  WriteLn(w, ' ', w2, ' ', e);
+
+  // compared: with an element, a variable of the enum, another range
+  w := Wed;
+  d := Thu;
+  WriteLn(w = Wed, ' ', w <> Wed, ' ', w < Thu, ' ', w >= Fri);
+  WriteLn(w = d, ' ', w < d, ' ', d > w, ' ', d <= w);
+  WriteLn(w = m, ' ', w < m, ' ', m <> w, ' ', e > w);
+
+  // counted with
+  WriteLn(Low(TWorkDay), ' ', High(TWorkDay), ' ', Low(w), ' ', High(w), ' ', Low(TWeekend), ' ', High(e));
+  WriteLn(Succ(w), ' ', Pred(w), ' ', Ord(w), ' ', Ord(High(TMidWeek)));
+  Inc(w);
+  Write(w, ' ');
+  Dec(w, 2);
+  WriteLn(w);
+  w := w + 2;
+  WriteLn(w, ' ', TWorkDay(1), ' ', TWorkDay(d), ' ', TDay(w), ' ', ToString(w) + '!');
+
+  // looped over: from and to, down, the type, a set
+  for w := Tue to Thu do
+    Write(w, ' ');
+  for w := High(TWorkDay) downto Thu do
+    Write(w, ' ');
+  WriteLn();
+  for w in TWorkDay do
+    Write(w, ' ');
+  for e in TWeekend do
+    Write(e, ' ');
+  WriteLn();
+  for m in [Thu, Tue] do
+    Write(m, ' ');
+  WriteLn();
+
+  // in a case
+  for w in TWorkDay do
+    case w of
+      Mon: Write('first ');
+      Tue..Thu: Write('middle ');
+      else Write('last ');
+    end;
+  WriteLn();
+
+  // in a set: of the range, and of the enum. The two are kept the same and are given to each other.
+  w := Wed;
+  workSet := [Mon, w];
+  WriteLn(workSet, ' ', w in workSet, ' ', Tue in workSet, ' ', w in [Tue..Thu], ' ', SizeOf(workSet) = SizeOf(daySet));
+  workSet := workSet + [Fri] - [Mon];
+  workSet := workSet + w + Thu;
+  WriteLn(workSet, ' ', workSet = [Wed..Fri], ' ', workSet <= [Tue..Fri], ' ', workSet * [Mon..Wed]);
+  daySet := workSet;
+  daySet := daySet + [Sun, w];
+  WriteLn(daySet, ' ', w in daySet);
+  daySet := [Mon, Tue];
+  workSet := daySet;
+  WriteLn(workSet, ' ', workSet = daySet);
+  for w in workSet do
+    Write(w, ' ');
+  WriteLn();
+
+  // passed: for a range and for the enum, by default, to be changed, and given back
+  w := Tue;
+  d := Thu;
+  TakesRange(w);
+  TakesRange(d);
+  TakesRange(Fri);
+  TakesEnum(w);
+  TakesDefault();
+  TakesDefault(w);
+  WriteLn();
+  ChangesRange(w);
+  d := GivesRange();
+  WriteLn(w, ' ', d, ' ', GivesRange() = Thu, ' ', Which(w), ' ', Which(d), ' ', Which(Mon));
+  WriteLn(w.IsLast(), ' ', GivesRange().IsLast(), ' ', TWorkDay(Fri).IsLast());
+
+  // in a record, an array, behind a pointer
+  plan.Day := Thu;
+  plan.Hours := 8;
+  d := plan.Day;
+  plan := [Tue, 4];
+  WriteLn(plan, ' ', d, ' ', plan.Day = Tue);
+  days := [Mon, Wed];
+  days += Fri;
+  days[0] := days[2];
+  WriteLn(days, ' ', Length(days));
+  w := Mon;
+  p := @w;
+  p^ := Thu;
+  WriteLn(w, ' ', p^);
+end;

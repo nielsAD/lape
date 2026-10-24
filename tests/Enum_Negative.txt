@@ -1,0 +1,14 @@
+below -2 0 5 4
+below above -2 5 3
+True True True False True True True True
+below ground above 
+-2 -1 0 1 2 3 4 5 
+5 4 3 2 1 0 -1 -2 
+InvalidEnum(-1) -1
+ground 0
+InvalidEnum(-3) -3
+below -20 above True
+below not below not below 
+deepest -100 deeper -99 deep -1 True False 3
+-100 -99 -1 
+-2147483648 2147483647 True True

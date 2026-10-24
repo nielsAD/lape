@@ -263,17 +263,17 @@ end;
 
 procedure _LapeStringReplace(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PlpString(Result)^ := StringReplace(PlpString(Params^[0])^, PlpString(Params^[1])^, PlpString(Params^[2])^, TReplaceFlags(PLapeSmallEnum(Params^[3])^));
+  PlpString(Result)^ := StringReplace(PlpString(Params^[0])^, PlpString(Params^[1])^, PlpString(Params^[2])^, TReplaceFlags(PLapeSmallSet(Params^[3])^));
 end;
 
 procedure _LapeWideStringReplace(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PWideString(Result)^ := WideStringReplace(PWideString(Params^[0])^, PWideString(Params^[1])^, PWideString(Params^[2])^, TReplaceFlags(PLapeSmallEnum(Params^[3])^));
+  PWideString(Result)^ := WideStringReplace(PWideString(Params^[0])^, PWideString(Params^[1])^, PWideString(Params^[2])^, TReplaceFlags(PLapeSmallSet(Params^[3])^));
 end;
 
 procedure _LapeUnicodeStringReplace(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PUnicodeString(Result)^ := {$IFDEF FPC}UnicodeStringReplace{$ELSE}StringReplace{$ENDIF}(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, PUnicodeString(Params^[2])^, TReplaceFlags(PLapeSmallEnum(Params^[3])^));
+  PUnicodeString(Result)^ := {$IFDEF FPC}UnicodeStringReplace{$ELSE}StringReplace{$ENDIF}(PUnicodeString(Params^[0])^, PUnicodeString(Params^[1])^, PUnicodeString(Params^[2])^, TReplaceFlags(PLapeSmallSet(Params^[3])^));
 end;
 
 procedure _LapeIsDelimiter(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

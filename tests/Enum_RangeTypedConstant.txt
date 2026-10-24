@@ -1,0 +1,1 @@
+Out of type range (value:5, low:0, high:4) at line 6, column 20 in file "Enum_RangeTypedConstant.lap"

@@ -131,17 +131,6 @@ var
 
   LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
 
-  _LapeToString_Enum: lpString =
-    'function _EnumToString(s: ^const string; Index, Lo, Hi: SizeInt): string;'          + LineEnding +
-    'begin'                                                                              + LineEnding +
-    '  if (Index >= Lo) and (Index <= Hi) then'                                          + LineEnding +
-    '    Result := s[Index-Lo]^'                                                         + LineEnding +
-    '  else '                                                                            + LineEnding +
-    '    Result := '#39#39';'                                                            + LineEnding +
-    '  if (Result = '#39#39') then'                                                      + LineEnding +
-    '    Result := '#39'InvalidEnum('#39'+ToString(Index)+'#39')'#39';'                  + LineEnding +
-    'end;';
-
   _LapeToString_Set: lpString =
     'function _%sSetToString(ASet: ConstPointer;'                                        + LineEnding +
     '  AToString: private function(constref AEnum): string;'                              + LineEnding +

@@ -1,0 +1,28 @@
+Mon 0 Mon 0
+True Mon
+Wed Wed 2
+Fri
+Sun 6
+Thu Thu Sat
+True False True False
+False True True False
+False True True True
+Mon Fri Mon Fri Sat Sun
+Thu Tue 2 3
+Thu Tue
+Thu Tue Thu Thu Thu!
+Tue Wed Thu Fri Thu 
+Mon Tue Wed Thu Fri Sat Sun 
+Tue Thu 
+first middle middle middle last 
+[Mon, Wed] True False True True
+[Wed, Thu, Fri] True True [Wed]
+[Wed, Thu, Fri, Sun] True
+[Mon, Tue] True
+Mon Tue 
+range Tue. range Thu. range Fri. enum Tue. default Wed. default Tue. 
+Wed Thu True range enum enum
+False False True
+{Day = Tue, Hours = 4} Thu True
+[Fri, Wed, Fri] 3
+Thu Thu
