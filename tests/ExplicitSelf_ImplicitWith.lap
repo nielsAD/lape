@@ -1,0 +1,67 @@
+type
+  TPoint = record
+    x, y: Int32;
+    const Scale = 10;
+  end;
+
+{$explicitself off}
+
+procedure TPoint.Show;
+var
+  y: Int32 = -1;
+begin
+  WriteLn('x=', x, ' y=', y, ' Scale=', Scale);
+end;
+
+procedure TPoint.SetX(x: Int32);
+begin
+  WriteLn('param x=', x);
+  x := x + 1;
+end;
+
+function TPoint.Half: Int32; static;
+begin
+  Result := Scale div 2;
+end;
+
+procedure TPoint.Make; static;
+begin
+  WriteLn('static Scale=', Scale, ' Half=', Half());
+end;
+
+procedure TPoint.Bar;
+begin
+  WriteLn('TPoint.Bar');
+end;
+
+procedure TPoint.Nest;
+
+  procedure Bar;
+  begin
+    WriteLn('nested Bar x=', x);
+  end;
+
+begin
+  Bar();
+end;
+
+{$explicitself on}
+
+procedure TPoint.ShowExplicit;
+begin
+  WriteLn('explicit x=', Self.x, ' Scale=', TPoint.Scale);
+end;
+
+var
+  p: TPoint;
+begin
+  p.x := 1;
+  p.y := 2;
+  p.Show();
+  p.SetX(5);
+  WriteLn('after SetX(5): ', p.x);
+  TPoint.Make();
+  p.Nest();
+  p.Bar();
+  p.ShowExplicit();
+end;

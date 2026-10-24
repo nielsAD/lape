@@ -1,0 +1,48 @@
+{$assertions on}
+procedure A(const Start: Int32; var Total: Int32);
+var
+  x: Int32;
+  s: String;
+  z: Int32 = 1;
+
+  procedure B;
+  var
+    z: Int32 = 20;
+
+    procedure C;
+      procedure D;
+        procedure E;
+        begin
+          x := x + 1000;
+          s := s + 'e';
+          z := z + 1;
+          Total := Start + x;
+        end;
+      begin
+        x := x + 100;
+        s := s + 'd';
+        E();
+        WriteLn('D: ', z);
+      end;
+    begin
+      x := x + 10;
+      s := s + 'c';
+      D();
+    end;
+  begin
+    x := x + 1;
+    s := s + 'b';
+    C();
+    WriteLn('B: ', z);
+  end;
+begin
+  B();
+  WriteLn(x, ' ', s, ' ', z);
+end;
+
+var
+  t: Int32;
+begin
+  A(5, t);
+  WriteLn(t);
+end;

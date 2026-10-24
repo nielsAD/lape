@@ -1,0 +1,16 @@
+type
+  TRec = record
+    x: Int32;
+  end;
+
+procedure TRec.Show;
+begin
+  WriteLn(x);
+end;
+
+var
+  r: TRec;
+begin
+  r.x := 5;
+  r.Show();
+end;

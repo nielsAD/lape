@@ -108,6 +108,7 @@ type
     Line, Col: {$IFDEF Lape_SmallCode}UInt16{$ELSE}UInt32{$ENDIF};
     FileName: lpString;
   end;
+  TDocPosArray = array of TDocPos;
 
   TLapeRange = record
     Lo, Hi: Int64;
@@ -414,10 +415,8 @@ type
     FNames: TDict;
 
     function ByName: Boolean; virtual;
-    procedure AddNames; virtual;
-    procedure AddItem(Decl: TLapeDeclaration); virtual;
-    function Exists(Decl: TLapeDeclaration): Boolean; virtual;
-    procedure NameChanged(const Decl: TLapeDeclaration; const OldName: lpString; OldHash: UInt32); virtual;
+    procedure addNames; virtual;
+    procedure addItem(ADecl: TLapeDeclaration); virtual;
 
     function getItem(Index: Integer): TLapeDeclaration; virtual;
   public
@@ -429,17 +428,17 @@ type
     procedure Clear; virtual;
 
     // Declares it here, at the end: it is taken out of the list that it was in
-    procedure addDeclaration(Decl: TLapeDeclaration); virtual;
-    function Has(Decl: TLapeDeclaration): Boolean; virtual;
+    procedure addDeclaration(ADecl: TLapeDeclaration); virtual;
+    function Has(ADecl: TLapeDeclaration): Boolean; virtual;
 
-    function IndexOf(Decl: TLapeDeclaration): Integer; virtual;
+    function IndexOf(ADecl: TLapeDeclaration): Integer; virtual;
 
-    procedure Delete(Decl: TLapeDeclaration; DoFree: Boolean = False); overload; virtual;
+    procedure Delete(ADecl: TLapeDeclaration; DoFree: Boolean = False); overload; virtual;
     procedure Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False); overload; virtual;
 
     // The first that was declared with the name
-    function Get(Name: lpString; out Decl: TLapeDeclaration): Boolean; overload; virtual;
-    function Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean; overload; virtual;
+    function Get(AName: lpString; out Decl: TLapeDeclaration): Boolean; overload; virtual;
+    function Get(AName: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean; overload; virtual;
     function GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray; virtual;
 
     function ExportToArray: TLapeDeclArray; virtual;
@@ -447,8 +446,6 @@ type
     property Count: Integer read FCount;
     property Items[Index: Integer]: TLapeDeclaration read getItem; default;
   end;
-
-  EDeclarationUsed = (duFalse, duTrue, duIgnore);
 
   TLapeDeclarationHintCallback = procedure(Msg: lpString; Args: array of const; ADocPos: TDocPos) of object;
 
@@ -472,7 +469,7 @@ type
     procedure setName(const AName: lpString); virtual;
   public
     _DocPos: TDocPos;
-    Used: EDeclarationUsed;
+    IsUsed: Boolean; // false (default value) var has not been used yet
 
     constructor Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil); reintroduce; virtual;
     destructor Destroy; override;
@@ -482,6 +479,8 @@ type
     procedure WriteHints(Callback: TLapeDeclarationHintCallback; ADocPos: TDocPos); virtual;
     function HasHints: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
     function HasDocPos: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    // no name, or one the compiler made (script cannot write it)
+    function isHidden: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
     // What is declared in it goes (of a type: what the type declares)
     procedure ClearDeclarations; virtual;
 
@@ -2016,12 +2015,12 @@ begin
   if (FNames = nil) and (FCount > LookedThrough) then
   begin
     FNames := TDict.Create(nil);
-    AddNames();
+    addNames();
   end;
   Result := (FNames <> nil);
 end;
 
-procedure TLapeDeclarationList.AddNames;
+procedure TLapeDeclarationList.addNames;
 var
   i: Integer;
 begin
@@ -2030,39 +2029,15 @@ begin
       FNames.Add(FItems[i].FName, FItems[i].FNameHash, FItems[i]);
 end;
 
-procedure TLapeDeclarationList.AddItem(Decl: TLapeDeclaration);
+procedure TLapeDeclarationList.addItem(ADecl: TLapeDeclaration);
 begin
   if (FCount >= Length(FItems)) then
     SetLength(FItems, 4 + (Length(FItems) * 2));
-  FItems[FCount] := Decl;
+  FItems[FCount] := ADecl;
   Inc(FCount);
 
-  if (FNames <> nil) and (Decl.FName <> '') then
-    FNames.Add(Decl.FName, Decl.FNameHash, Decl);
-end;
-
-function TLapeDeclarationList.Exists(Decl: TLapeDeclaration): Boolean;
-begin
-  Result := (Decl <> nil) and (Decl.FList = Self);
-end;
-
-procedure TLapeDeclarationList.NameChanged(const Decl: TLapeDeclaration; const OldName: lpString; OldHash: UInt32);
-begin
-  if (FNames = nil) then
-    Exit;
-
-  if (OldName <> '') then
-    FNames.Remove(OldName, OldHash, Decl);
-  // (one that is declared before it can have the new name: the first of a name is the one that was declared first,
-  // so they are put in again in the order that they were declared, in the room that there is)
-  if (Decl.FName <> '') then
-    if FNames.ExistsKey(Decl.FName) then
-    begin
-      FNames.Clear(True);
-      AddNames();
-    end
-    else
-      FNames.Add(Decl.FName, Decl.FNameHash, Decl);
+  if (FNames <> nil) and (ADecl.FName <> '') then
+    FNames.Add(ADecl.FName, ADecl.FNameHash, ADecl);
 end;
 
 function TLapeDeclarationList.getItem(Index: Integer): TLapeDeclaration;
@@ -2107,40 +2082,40 @@ begin
   end;
 end;
 
-procedure TLapeDeclarationList.addDeclaration(Decl: TLapeDeclaration);
+procedure TLapeDeclarationList.addDeclaration(ADecl: TLapeDeclaration);
 begin
-  if (Decl = nil) or Has(Decl) then
+  if (ADecl = nil) or Has(ADecl) then
     Exit;
 
-  if (Decl.FList <> nil) then
-    Decl.FList.Delete(Decl);
-  AddItem(Decl);
-  Decl.FList := Self;
+  if (ADecl.FList <> nil) then
+    ADecl.FList.Delete(ADecl);
+  addItem(ADecl);
+  ADecl.FList := Self;
 end;
 
-function TLapeDeclarationList.Has(Decl: TLapeDeclaration): Boolean;
+function TLapeDeclarationList.Has(ADecl: TLapeDeclaration): Boolean;
 begin
-  Result := Exists(Decl);
+  Result := (ADecl <> nil) and (ADecl.FList = Self);
 end;
 
-function TLapeDeclarationList.IndexOf(Decl: TLapeDeclaration): Integer;
+function TLapeDeclarationList.IndexOf(ADecl: TLapeDeclaration): Integer;
 begin
   for Result := 0 to FCount - 1 do
-    if (FItems[Result] = Decl) then
+    if (FItems[Result] = ADecl) then
       Exit;
   Result := -1;
 end;
 
-procedure TLapeDeclarationList.Delete(Decl: TLapeDeclaration; DoFree: Boolean);
+procedure TLapeDeclarationList.Delete(ADecl: TLapeDeclaration; DoFree: Boolean);
 var
   i: Integer;
 begin
-  if (Decl = nil) then
+  if (ADecl = nil) then
     Exit;
 
   // (what was declared last is often what goes)
   i := FCount - 1;
-  while (i > -1) and (FItems[i] <> Decl) do
+  while (i > -1) and (FItems[i] <> ADecl) do
     Dec(i);
   if (i < 0) then
     Exit;
@@ -2148,13 +2123,13 @@ begin
   if (i < FCount - 1) then
     Move(FItems[i + 1], FItems[i], (FCount - (i + 1)) * SizeOf(TLapeDeclaration));
   Dec(FCount);
-  if (FNames <> nil) and (Decl.FName <> '') then
-    FNames.Remove(Decl.FName, Decl.FNameHash, Decl);
+  if (FNames <> nil) and (ADecl.FName <> '') then
+    FNames.Remove(ADecl.FName, ADecl.FNameHash, ADecl);
 
-  if (Decl.FList = Self) then
-    Decl.FList := nil;
+  if (ADecl.FList = Self) then
+    ADecl.FList := nil;
   if DoFree then
-    Decl.Free();
+    ADecl.Free();
 end;
 
 procedure TLapeDeclarationList.Delete(AClass: TLapeDeclarationClass; DoFree: Boolean = False);
@@ -2191,22 +2166,22 @@ begin
   end;
 end;
 
-function TLapeDeclarationList.Get(Name: lpString; out Decl: TLapeDeclaration): Boolean;
+function TLapeDeclarationList.Get(AName: lpString; out Decl: TLapeDeclaration): Boolean;
 var
   Hash: UInt32;
   i: Integer;
 begin
   Decl := nil;
   Result := False;
-  if (Name = '') then
+  if (AName = '') then
     Exit;
 
-  Hash := LapeHashAlpha(Name);
+  Hash := LapeHashAlpha(AName);
   if ByName() then
-    Result := FNames.Find(Name, Hash, TLapeBaseDeclClass(Decl))
+    Result := FNames.Find(AName, Hash, TLapeBaseDeclClass(Decl))
   else
     for i := 0 to FCount - 1 do
-      if (FItems[i].FNameHash = Hash) and LapeSameString(FItems[i].FName, Name) then
+      if (FItems[i].FNameHash = Hash) and LapeSameString(FItems[i].FName, AName) then
       begin
         Decl := FItems[i];
         Result := True;
@@ -2214,7 +2189,7 @@ begin
       end;
 end;
 
-function TLapeDeclarationList.Get(Name: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean;
+function TLapeDeclarationList.Get(AName: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean;
 var
   Hash: UInt32;
   Found: TLapeDeclArray;
@@ -2222,13 +2197,13 @@ var
 begin
   Decl := nil;
   Result := False;
-  if (Name = '') then
+  if (AName = '') then
     Exit;
 
-  Hash := LapeHashAlpha(Name);
+  Hash := LapeHashAlpha(AName);
   if ByName() then
   begin
-    Found := TLapeDeclArray(FNames.FindAll(Name, Hash));
+    Found := TLapeDeclArray(FNames.FindAll(AName, Hash));
     for i := 0 to High(Found) do
       if (Found[i] is AClass) then
       begin
@@ -2239,7 +2214,7 @@ begin
   end
   else
     for i := 0 to FCount - 1 do
-      if (FItems[i].FNameHash = Hash) and LapeSameString(FItems[i].FName, Name) and (FItems[i] is AClass) then
+      if (FItems[i].FNameHash = Hash) and LapeSameString(FItems[i].FName, AName) and (FItems[i] is AClass) then
       begin
         Decl := FItems[i];
         Result := True;
@@ -2273,32 +2248,24 @@ begin
 end;
 
 procedure TLapeDeclaration.setName(const AName: lpString);
-var
-  OldName: lpString;
-  OldHash: UInt32;
 begin
-  if (FName <> AName) then
-  begin
-    OldName := FName;
-    OldHash := FNameHash;
+  if (FName = AName) then
+    Exit;
+  if (FName <> '') or (FList <> nil) then
+    LapeExceptionFmt(lpeCannotRename, [FName, AName]);
 
-    FName := AName;
-    FNameHash := LapeHashAlpha(FName);
-
-    // (the list that it is in can find it by its name)
-    if (FList <> nil) then
-      FList.NameChanged(Self, OldName, OldHash);
-  end;
+  FName := AName;
+  FNameHash := LapeHashAlpha(FName);
 end;
 
 constructor TLapeDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil);
 begin
   inherited Create();
+  IsUsed := True;
 
   if (AName <> '') then
     Name := AName;
 
-  Used := duIgnore;
   if (ADocPos <> nil) then
     _DocPos := ADocPos^
   else
@@ -2347,6 +2314,11 @@ end;
 function TLapeDeclaration.HasHints: Boolean;
 begin
   Result := FHints.Types <> [];
+end;
+
+function TLapeDeclaration.isHidden: Boolean;
+begin
+  Result := (FName = '') or (FName[1] = '!');
 end;
 
 function TLapeDeclaration.HasDocPos: Boolean;

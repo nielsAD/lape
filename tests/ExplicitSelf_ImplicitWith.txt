@@ -1,0 +1,7 @@
+x=1 y=-1 Scale=10
+param x=5
+after SetX(5): 1
+static Scale=10 Half=5
+nested Bar x=1
+TPoint.Bar
+explicit x=1 Scale=10

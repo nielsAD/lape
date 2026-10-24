@@ -1,0 +1,49 @@
+{$HINTS ON}
+{$DUPLICATELOCALNAMEHINTS ON}
+type
+  TColour = (Red, Green);
+var
+  Blue: Int32;
+
+procedure Foo;
+begin
+end;
+
+procedure Outer;
+type
+  TLocal = (Green, Blue);
+var
+  Red, Unused, OnlyNested: Int32;
+
+  procedure Foo;
+  begin
+    OnlyNested := 1;
+  end;
+
+begin
+  Red := 1;
+  Foo();
+end;
+
+procedure Plain;
+var
+  NeverUsed: Int32;
+const
+  NeverRead = 1;
+begin
+end;
+
+function Exits: Int32;
+begin
+  Exit(1);
+end;
+
+function Forgets: Int32;
+begin
+end;
+
+begin
+  Outer();
+  Plain();
+  WriteLn(Exits(), Forgets());
+end;

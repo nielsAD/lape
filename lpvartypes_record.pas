@@ -246,7 +246,7 @@ type
 var
   i: Integer;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name, @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, '', @_DocPos);
   for i := 0 to FFieldMap.Count - 1 do
     TLapeType_Record(Result).FieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
 

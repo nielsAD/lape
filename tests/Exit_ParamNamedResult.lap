@@ -1,0 +1,8 @@
+procedure P(Result: Int32);
+begin
+  Exit(3);
+end;
+
+begin
+  P(1);
+end;

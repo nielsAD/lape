@@ -1,0 +1,17 @@
+{$explicitself off}
+type
+  TRec = record
+    x: Int32;
+  end;
+
+procedure TRec.Foo;
+
+  procedure x.Bar;
+  begin
+  end;
+
+begin
+end;
+
+begin
+end;

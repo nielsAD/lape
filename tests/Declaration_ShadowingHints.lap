@@ -1,0 +1,27 @@
+{$HINTS ON}
+{$DUPLICATELOCALNAMEHINTS ON}
+
+type
+  TColour = (Red, Green);
+var
+  x: Int32 = 1;
+
+procedure Test;
+type
+  TColour = Int32;
+  TLocal = (Green, Blue);
+const
+  x = 2;
+label
+  Red;
+var
+  Fresh: Int32;
+begin
+  Fresh := x;
+  WriteLn(Fresh, ' ', Ord(Blue));
+end;
+
+begin
+  Test();
+  WriteLn(x);
+end;

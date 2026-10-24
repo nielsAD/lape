@@ -303,10 +303,10 @@ begin
 
   with FCompiler as TLapeCompiler do
   begin
-    if (not hasDeclaration(VarType)) and (VarType.Name = '') then // for `var a: array of x` otherwise "parent declaration out of scope"
-      GlobalDeclarations.addDeclaration(VarType);
+    if (not HasDeclaration(VarType)) and (VarType.Name = '') then // for `var a: array of x` otherwise "parent declaration out of scope"
+      addGlobalType(VarType);
 
-    Header := addManagedType(TLapeType_MethodOfType.Create(FCompiler, VarType, nil, ResultType)) as TLapeType_Method;
+    Header := addManagedType(TLapeType_MethodOfType.Create(FCompiler, VarType, nil, ResultType, FName)) as TLapeType_Method;
     for i := 0 to High(ParamTypes) do
     begin
       Param.Default := nil;
@@ -328,7 +328,6 @@ begin
       Pos);
 
     Result := Method.Method;
-    Result.VarType.Name := FName;
 
     FDeclarations.addDeclaration(Result);
   end;
@@ -858,10 +857,10 @@ begin
   dynMulti   := TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynmultidim');
   dynOrdinal := TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynordinal');
   staticArr  := TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_static');
-  Compiler.GlobalDeclarations.addDeclaration(dynSingle);
-  Compiler.GlobalDeclarations.addDeclaration(dynMulti);
-  Compiler.GlobalDeclarations.addDeclaration(dynOrdinal);
-  Compiler.GlobalDeclarations.addDeclaration(staticArr);
+  Compiler.addGlobalType(dynSingle);
+  Compiler.addGlobalType(dynMulti);
+  Compiler.addGlobalType(dynOrdinal);
+  Compiler.addGlobalType(staticArr);
 
   Build(TLapeType_ArrayHelper_SetLength, 'SetLength', [dynSingle, dynMulti, dynOrdinal]);
   Build(TLapeType_ArrayHelper_Low, 'Low', [dynSingle, dynMulti, dynOrdinal, staticArr]);

@@ -1,0 +1,6 @@
+operator (a, b: Int32): Int32;
+begin
+end;
+
+begin
+end;

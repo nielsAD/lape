@@ -1,0 +1,30 @@
+{$HINTS ON}
+{$DUPLICATELOCALNAMEHINTS ON}
+var
+  g: Int32;
+
+procedure Outer;
+var
+  OuterLocal, y: Int32;
+
+  procedure Inner;
+  var
+    y: Int32;
+  begin
+    {$IFDECL OuterLocal} WriteLn('ifdecl: yes'); {$ELSE} WriteLn('ifdecl: no'); {$ENDIF}
+    {$IFNDECL OuterLocal} WriteLn('ifndecl: yes'); {$ELSE} WriteLn('ifndecl: no'); {$ENDIF}
+    {$IF DECLARED(OuterLocal)} WriteLn('declared: yes'); {$ELSE} WriteLn('declared: no'); {$ENDIF}
+    {$IFDECL Nothing} WriteLn('nothing: yes'); {$ELSE} WriteLn('nothing: no'); {$ENDIF}
+    y := 1;
+    OuterLocal := y + g;
+  end;
+
+begin
+  Inner();
+  WriteLn(OuterLocal);
+end;
+
+begin
+  g := 2;
+  Outer();
+end;

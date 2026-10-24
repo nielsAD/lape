@@ -49,6 +49,7 @@ const
   lpeCannonInvokeConstruct = 'Cannot invoke construct like this. The `new` operator is requried';
   lpeCannotMixStaticOverload = 'Cannot mix static with non-static method overload';
   lpeCannotOverload = 'Cannot overload function';
+  lpeCannotRename = 'A declaration cannot be renamed ("%s" to "%s")';
   lpeCannotOverload2 = 'Cannot overload "%s" with a "%s"';
   lpeCannotOverloadOperator = 'Cannot overload operator "%s"';
   lpeCannotOverrideOperator = 'Cannot override operator "%s" with types "%s" and "%s"';
@@ -154,14 +155,12 @@ const
   lpeMethodDeclarationParenthesesExpected = 'Missing parentheses in function declaration';
 
   lphVariableNotUsed = 'Variable "%s" not used';
-  lphParameterNotUsed = 'Parameter "%s" not used';
-  lphParamterNotSet = 'Parameter "%s" not set';
-  lphResultNotSet = 'Result not set';
+  lphResultNotSet = 'Result never set';
   lphDeprecatedMethod = 'Method "%s" is deprecated';
   lphDeprecatedMethodHint = 'Method "%s" is deprecated "%s"';
   lphUnImplementedMethod = 'Method "%s" is not implemented';
   lphExperimentalMethod = 'Method "%s" is experimental';
-  lphDuplicateLocalName = 'Local declaration "%s" exists globally';
+  lphDuplicateLocalName = 'Local declaration "%s" hides another';
   lphUserDefined = 'User defined hint: "%s"';
   lphExpectedParameters = 'Expected parameters for "%s":' + LineEnding + '> %s';
   lphAvailableMethods = 'Available "%s" methods:' + LineEnding;

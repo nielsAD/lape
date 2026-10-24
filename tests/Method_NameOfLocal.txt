@@ -1,0 +1,1 @@
+Duplicate declaration "Foo" at line 5, column 16 in file "Method_NameOfLocal.lap"

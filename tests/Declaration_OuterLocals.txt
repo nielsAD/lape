@@ -1,0 +1,6 @@
+Local declaration "y" hides another at line 12, column 5 in file "Declaration_OuterLocals.lap"
+ifdecl: yes
+ifndecl: no
+declared: yes
+nothing: no
+3

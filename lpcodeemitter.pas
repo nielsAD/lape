@@ -68,7 +68,7 @@ type
     destructor Destroy; override;
     procedure Reset; virtual;
 
-    function addCodePointer(p: PCodePos; Name: lpString = ''): Integer; virtual;
+    function addCodePointer(p: PCodePos; AName: lpString = ''): Integer; virtual;
     procedure adjustCodePointers(Pos, Offset: Integer); virtual;
 
     procedure Delete(StartOffset, Len: Integer); overload; virtual;
@@ -285,12 +285,12 @@ begin
   NewStack();
 end;
 
-function TLapeCodeEmitterBase.addCodePointer(p: PCodePos; Name: lpString): Integer;
+function TLapeCodeEmitterBase.addCodePointer(p: PCodePos; AName: lpString): Integer;
 begin
   if (p <> nil) then
   begin
     Result := FCodePointers.Add(p);
-              FCodePointerNames.Add(Name);
+              FCodePointerNames.Add(AName);
   end else
     Result := -1;
 end;

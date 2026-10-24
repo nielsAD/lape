@@ -51,14 +51,14 @@ type
     property TotalFieldSize: Integer read FTotalFieldSize;
   end;
 
-  function hasObject(Typ: TLapeType): Boolean;
+  function HasObject(Typ: TLapeType): Boolean;
 
 implementation
 
 uses
   lpmessages, lpvartypes_record;
 
-function hasObject(Typ: TLapeType): Boolean;
+function HasObject(Typ: TLapeType): Boolean;
 
   function Check(Typ: TLapeType): Boolean;
   var
@@ -154,7 +154,7 @@ type
 var
   i: Integer;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Name);
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, '');
   for i := 0 to FFieldMap.Count - 1 do
     TLapeType_Object(Result).FFieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
 

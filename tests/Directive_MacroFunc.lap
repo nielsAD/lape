@@ -1,0 +1,29 @@
+type
+  TBox = record
+    v: Int32;
+  end;
+
+procedure TBox.Show;
+begin
+  WriteLn({$macro func});
+end;
+
+procedure Outer;
+
+  procedure Inner;
+  begin
+    WriteLn({$macro func});
+  end;
+
+begin
+  WriteLn({$macro func});
+  Inner();
+end;
+
+var
+  b: TBox;
+begin
+  WriteLn('[', {$macro func}, ']');
+  Outer();
+  b.Show();
+end;

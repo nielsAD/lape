@@ -1,0 +1,8 @@
+Local declaration "Green" hides another at line 14, column 13 in file "Declaration_HintPositions.lap"
+Local declaration "Blue" hides another at line 14, column 20 in file "Declaration_HintPositions.lap"
+Local declaration "Red" hides another at line 16, column 3 in file "Declaration_HintPositions.lap"
+Local declaration "Foo" hides another at line 18, column 13 in file "Declaration_HintPositions.lap"
+Variable "NeverUsed" not used at line 30, column 3 in file "Declaration_HintPositions.lap"
+Result never set at line 41, column 24 in file "Declaration_HintPositions.lap"
+Variable "Blue" not used at line 6, column 3 in file "Declaration_HintPositions.lap"
+10

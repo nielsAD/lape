@@ -1,0 +1,54 @@
+type
+  TCounter = record
+    n: Int32;
+  end;
+
+procedure TCounter.Add(x: Int32);
+begin
+  Self.n := Self.n + x;
+end;
+
+procedure TCounter.Add(x: Int32); override;
+begin
+  inherited(x * 10);
+  inherited;
+end;
+
+function TCounter.Show(Prefix: string): string;
+begin
+  Result := Prefix + IntToStr(Self.n);
+end;
+
+function TCounter.Show(Prefix: string): string; override;
+begin
+  Result := '[' + inherited() + '|' + inherited('x') + ']';
+end;
+
+procedure Outer;
+var
+  Total: Int32;
+
+  procedure Step(i: Int32);
+  begin
+    Total := Total + i;
+  end;
+
+  procedure Step(i: Int32); override;
+  begin
+    inherited(i + 1);
+    inherited;
+  end;
+
+begin
+  Step(3);
+  WriteLn(Total);
+end;
+
+var
+  c: TCounter;
+begin
+  c.Add(2);
+  WriteLn(c.n);
+  WriteLn(c.Show('n='));
+  Outer();
+end;
