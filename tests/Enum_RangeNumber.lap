@@ -5,5 +5,5 @@ var
   w: TWorkDay;
 begin
   w := Tue;
-  w := 1;
+  w := Int32(1);
 end;
