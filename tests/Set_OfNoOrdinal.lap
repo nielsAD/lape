@@ -1,0 +1,4 @@
+type
+  TValues = set of Double;
+begin
+end;

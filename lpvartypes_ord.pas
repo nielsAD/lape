@@ -417,14 +417,34 @@ var
   CounterVar, ValueVar: Integer;
   Counter, Value: TLapeGlobalVar;
   Element: TLapeGlobalVar;
+  Values: array of Int32;
+  i: Integer;
 begin
   if (FAsArray = nil) then
   begin
+    Values := nil;
+    if (FVarType <> nil) and (FVarType.ClassType = TLapeType_Enum) then
+    begin
+      for i := 0 to TLapeType_Enum(FVarType).ElementCount - 1 do
+        with TLapeType_Enum(FVarType).Elements[i] do
+          if (Value >= FRange.Lo) and (Value <= FRange.Hi) then
+          begin
+            SetLength(Values, Length(Values) + 1);
+            Values[High(Values)] := Value;
+          end;
+    end
+    else
+    begin
+      SetLength(Values, (FRange.Hi - FRange.Lo) + 1);
+      for i := 0 to High(Values) do
+        Values[i] := FRange.Lo + i;
+    end;
+
     with TLapeType_DynArray(FCompiler.addManagedType(TLapeType_DynArray.Create(FVarType, FCompiler))) do
     begin
       FAsArray := TLapeGlobalVar(FCompiler.addManagedDecl(NewGlobalVarP()));
 
-      VarSetLength(FAsArray, (FRange.Hi - FRange.Lo) + 1);
+      VarSetLength(FAsArray, Length(Values));
     end;
 
     CounterVar := 0;
@@ -439,8 +459,9 @@ begin
       Value := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@ValueVar);
 
     try
-      for ValueVar := FRange.Lo to FRange.Hi do
+      for i := 0 to High(Values) do
       try
+        ValueVar := Values[i];
         Element := FAsArray.VarType.EvalConst(op_Index, FAsArray, Counter, []);
         Element.VarType.EvalConst(op_Assign, Element, Value, [lefAssigning]);
 

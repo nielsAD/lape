@@ -3370,12 +3370,20 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
 
   procedure ParseSet;
   var
-    SetType: TLapeType;
+    SetType, Given: TLapeType;
+    TypePos: TDocPos;
   begin
     Expect(tk_kw_Of, True, False);
-    SetType := EnsureRange(ParseType(nil, addToStackOwner));
+    Given := ParseType(nil, addToStackOwner);
+    TypePos := Tokenizer.DocPos;
+    try
+      SetType := EnsureRange(Given);
+    except
+      on E: lpException do
+        LapeExceptionFmt(lpeInvalidSetType, [Given.AsString], TypePos);
+    end;
     if (not (SetType is TLapeType_SubRange)) then
-      LapeException(lpeInvalidRange, Tokenizer.DocPos);
+      LapeExceptionFmt(lpeInvalidSetType, [Given.AsString], TypePos);
 
     try
       Result := addManagedType(TLapeType_Set.Create(TLapeType_SubRange(SetType), Self, '', getPDocPos));

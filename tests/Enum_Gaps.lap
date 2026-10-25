@@ -1,0 +1,63 @@
+type
+  TLevel = (None = 1, Some = 5, Much = 9, Most);
+  {$scopedenums on}
+  TScoped = (Off = 2, Half = 4, Full = 8);
+  {$scopedenums off}
+
+const
+  Base = 10;
+
+type
+  // (a value can be a constant that has a name, and the elements after it count on from there)
+  TFromConst = (First = Base, Second, Third = 20);
+  // (a range of such an enum)
+  THigher = Some..Most;
+
+var
+  l: TLevel;
+  h: THigher;
+  s: TScoped;
+  levels: set of TLevel;
+begin
+  WriteLn(Ord(None), ' ', Ord(Some), ' ', Ord(Much), ' ', Ord(Most));
+  WriteLn(Ord(First), ' ', Ord(Second), ' ', Ord(Third));
+  WriteLn(Low(TLevel), ' ', High(TLevel), ' ', Ord(Low(TScoped)), ' ', Ord(High(TScoped)));
+
+  // looped over: the elements
+  for l in TLevel do
+    Write(l, '=', Ord(l), ' ');
+  WriteLn();
+  for s in TScoped do
+    Write(s, ' ');
+  WriteLn();
+  for h in THigher do
+    Write(h, ' ');
+  WriteLn(Low(THigher), ' ', High(THigher));
+
+  // counted: every number, with a name or without
+  for l := None to Some do
+    Write(l, ' ');
+  WriteLn();
+  WriteLn(Succ(None), ' ', Pred(Much), ' ', Succ(Much), ' ', Pred(Most));
+  l := Some;
+  Inc(l, 4);
+  Write(l, ' ');
+  Dec(l);
+  WriteLn(l, ' ', Ord(l));
+
+  // a value that no element has
+  l := TLevel(3);
+  s := TScoped(3);
+  WriteLn(l, ' ', s, ' ', TLevel(0), ' ', TLevel(11), ' ', ToString(TLevel(7)));
+  WriteLn(l = None, ' ', l > None, ' ', l < Some, ' ', TScoped(4), ' ', TScoped(4) = TScoped.Half);
+
+  // in a set: a place for every number up to the highest element
+  levels := [None, Much];
+  WriteLn(levels, ' ', Some in levels, ' ', Much in levels, ' ', l in levels, ' ', SizeOf(levels));
+  levels := levels + Most - [None];
+  WriteLn(levels);
+  for l in levels do
+    Write(Ord(l), ' ');
+  WriteLn();
+  WriteLn([TScoped.Off, TScoped.Full]);
+end;

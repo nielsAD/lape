@@ -1,0 +1,15 @@
+1 5 9 10
+10 11 20
+None Most 2 8
+None=1 Some=5 Much=9 Most=10 
+TScoped.Off TScoped.Half TScoped.Full 
+Some Much Most Some Most
+None InvalidEnum(2) InvalidEnum(3) InvalidEnum(4) Some 
+InvalidEnum(2) InvalidEnum(8) Most Much
+Much InvalidEnum(8) 8
+InvalidEnum(3) InvalidEnum(3) InvalidEnum(0) InvalidEnum(11) InvalidEnum(7)
+False True True TScoped.Half True
+[None, Much] False True False 4
+[Much, Most]
+9 10 
+[TScoped.Off, TScoped.Full]

@@ -1,0 +1,1 @@
+Invalid set type "Double": a set is of an enum, AnsiChar, Byte or a range within 0..255 at line 2, column 26 in file "Set_OfNoOrdinal.lap"

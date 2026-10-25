@@ -114,6 +114,7 @@ const
   lpeInvalidValueForType = 'Invalid value for type "%s"';
   lpeInvalidWithReference = 'Invalid with-reference';
   lpeInvalidSet = 'Invalid set';
+  lpeInvalidSetType = 'Invalid set type "%s": a set is of an enum, AnsiChar, Byte or a range within 0..255';
   lpeLostClosingParenthesis = 'Found closing parenthesis without matching opening parenthesis';
   lpeLostConditional = 'Found conditional without matching opening statement';
   lpeMethodOfObjectExpected = 'Expected method of object';
