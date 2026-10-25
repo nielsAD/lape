@@ -1,0 +1,43 @@
+type
+  R1 = record a, b, c, d, e, f, g, h: Int64; end;
+  R2 = record a, b, c, d, e, f, g, h: R1; end;
+  R3 = record a, b, c, d, e, f, g, h: R2; end;
+  R4 = record a, b, c, d, e, f, g, h: R3; end;
+  TBig = record First, Second, Third: R4; Last: Int32; end;
+
+// (what is passed is a copy: more than 64 KB of arguments)
+function Sum(Big: TBig; Extra: Int32): Int64;
+begin
+  Result := Big.First.a.a.a.a + Big.Second.a.a.a.a + Big.Third.h.h.h.h + Big.Last + Extra;
+  Big.Third.h.h.h.h := 0;
+end;
+
+function Make(n: Int64): TBig;
+begin
+  Result.First.a.a.a.a := n;
+  Result.Second.a.a.a.a := n * 10;
+  Result.Third.h.h.h.h := n * 100;
+  Result.Last := 7;
+end;
+
+var
+  v, w: TBig;
+begin
+  WriteLn(SizeOf(R4), ' ', SizeOf(TBig), ' ', SizeOf(v));
+
+  // the fields are apart: one that is past 64 KB is not one that is before it
+  v.First.a.a.a.a := 1;
+  v.Second.a.a.a.a := 2;
+  v.Third.a.a.a.a := 3;
+  v.Third.h.h.h.h := 4;
+  v.Last := 5;
+  WriteLn(v.First.a.a.a.a, ' ', v.Second.a.a.a.a, ' ', v.Third.a.a.a.a, ' ', v.Third.h.h.h.h, ' ', v.Last);
+  WriteLn(PtrUInt(@v.Second) - PtrUInt(@v), ' ', PtrUInt(@v.Third) - PtrUInt(@v), ' ', PtrUInt(@v.Last) - PtrUInt(@v));
+
+  WriteLn(Sum(v, 10), ' ', v.Third.h.h.h.h);
+
+  w := Make(6);
+  WriteLn(w.First.a.a.a.a, ' ', w.Second.a.a.a.a, ' ', w.Third.h.h.h.h, ' ', w.Last);
+  w := v;
+  WriteLn(w.First.a.a.a.a, ' ', w.Second.a.a.a.a, ' ', w.Third.a.a.a.a, ' ', w.Third.h.h.h.h, ' ', w.Last);
+end;

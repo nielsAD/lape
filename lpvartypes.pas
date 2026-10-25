@@ -620,13 +620,13 @@ type
 
   TLapeCodeEmitter = class(TLapeCodeEmitterBase)
   public
-    function _IncCall(ACodePos: TResVar; AParamSize: UInt16; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
-    function _IncCall(ACodePos: TResVar; AParamSize: UInt16; Pos: PDocPos = nil): Integer; overload;
+    function _IncCall(ACodePos: TResVar; AParamSize: TParamSize; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _IncCall(ACodePos: TResVar; AParamSize: TParamSize; Pos: PDocPos = nil): Integer; overload;
 
-    function _InvokeImportedProc(AMemPos: TResVar; AParamSize: UInt16; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
-    function _InvokeImportedProc(AMemPos: TResVar; AParamSize: UInt16; Pos: PDocPos = nil): Integer; overload;
-    function _InvokeImportedFunc(AMemPos, AResPos: TResVar; AParamSize: UInt16; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
-    function _InvokeImportedFunc(AMemPos, AResPos: TResVar; AParamSize: UInt16; Pos: PDocPos = nil): Integer; overload;
+    function _InvokeImportedProc(AMemPos: TResVar; AParamSize: TParamSize; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _InvokeImportedProc(AMemPos: TResVar; AParamSize: TParamSize; Pos: PDocPos = nil): Integer; overload;
+    function _InvokeImportedFunc(AMemPos, AResPos: TResVar; AParamSize: TParamSize; var Offset: Integer; Pos: PDocPos = nil): Integer; overload;
+    function _InvokeImportedFunc(AMemPos, AResPos: TResVar; AParamSize: TParamSize; Pos: PDocPos = nil): Integer; overload;
 
     function _JmpRIf(Jmp: TCodeOffset; Cond: TResVar; var Offset: Integer; Pos: PDocPos = nil): Integer; overload; virtual;
     function _JmpRIf(Jmp: TCodeOffset; Cond: TResVar; Pos: PDocPos = nil): Integer; overload; virtual;
@@ -3856,7 +3856,7 @@ begin
   end;
 end;
 
-function TLapeCodeEmitter._IncCall(ACodePos: TResVar; AParamSize: UInt16; var Offset: Integer; Pos: PDocPos = nil): Integer;
+function TLapeCodeEmitter._IncCall(ACodePos: TResVar; AParamSize: TParamSize; var Offset: Integer; Pos: PDocPos = nil): Integer;
 var
   e: Boolean;
 begin
@@ -3874,7 +3874,7 @@ begin
     LapeException(lpeInvalidEvaluation);
 end;
 
-function TLapeCodeEmitter._IncCall(ACodePos: TResVar; AParamSize: UInt16; Pos: PDocPos = nil): Integer;
+function TLapeCodeEmitter._IncCall(ACodePos: TResVar; AParamSize: TParamSize; Pos: PDocPos = nil): Integer;
 var
   Offset: Integer;
 begin
@@ -3882,7 +3882,7 @@ begin
   Result := _IncCall(ACodePos, AParamSize, Offset, Pos);
 end;
 
-function TLapeCodeEmitter._InvokeImportedProc(AMemPos: TResVar; AParamSize: UInt16; var Offset: Integer; Pos: PDocPos = nil): Integer;
+function TLapeCodeEmitter._InvokeImportedProc(AMemPos: TResVar; AParamSize: TParamSize; var Offset: Integer; Pos: PDocPos = nil): Integer;
 var
   e: Boolean;
 begin
@@ -3900,7 +3900,7 @@ begin
     LapeException(lpeInvalidEvaluation);
 end;
 
-function TLapeCodeEmitter._InvokeImportedProc(AMemPos: TResVar; AParamSize: UInt16; Pos: PDocPos = nil): Integer;
+function TLapeCodeEmitter._InvokeImportedProc(AMemPos: TResVar; AParamSize: TParamSize; Pos: PDocPos = nil): Integer;
 var
   Offset: Integer;
 begin
@@ -3908,7 +3908,7 @@ begin
   Result := _InvokeImportedProc(AMemPos, AParamSize, Offset, Pos);
 end;
 
-function TLapeCodeEmitter._InvokeImportedFunc(AMemPos, AResPos: TResVar; AParamSize: UInt16; var Offset: Integer; Pos: PDocPos = nil): Integer;
+function TLapeCodeEmitter._InvokeImportedFunc(AMemPos, AResPos: TResVar; AParamSize: TParamSize; var Offset: Integer; Pos: PDocPos = nil): Integer;
 var
   e: Boolean;
 begin
@@ -3945,7 +3945,7 @@ begin
     LapeException(lpeInvalidEvaluation);
 end;
 
-function TLapeCodeEmitter._InvokeImportedFunc(AMemPos, AResPos: TResVar; AParamSize: UInt16; Pos: PDocPos = nil): Integer;
+function TLapeCodeEmitter._InvokeImportedFunc(AMemPos, AResPos: TResVar; AParamSize: TParamSize; Pos: PDocPos = nil): Integer;
 var
   Offset: Integer;
 begin
