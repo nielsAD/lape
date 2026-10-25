@@ -1,0 +1,3 @@
+begin
+  WriteLn(Unique(5));
+end.

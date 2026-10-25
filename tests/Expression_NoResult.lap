@@ -1,0 +1,9 @@
+procedure Hello;
+begin
+end;
+
+var
+  a: Int32;
+begin
+  a := Hello() + 1;
+end.

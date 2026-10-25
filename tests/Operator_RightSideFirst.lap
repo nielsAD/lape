@@ -1,0 +1,194 @@
+type
+  TPoint = record x, y: Int32; end;
+  TThing = object
+    n: Int32;
+  end;
+
+var
+  Log: String;
+  a, other: array of Int32;
+  grid: array of array of Int32;
+  pts: array of TPoint;
+  s: String;
+  p: ^Int32;
+  q: ^TPoint;
+  thing: TThing;
+  i, x: Int32;
+
+function GrowA: Int32;
+begin
+  SetLength(a, Length(a) + 100000);
+  Result := 7;
+end;
+
+function SwapA: Int32;
+begin
+  a := other;
+  Result := 7;
+end;
+
+function GrowRow: Int32;
+begin
+  SetLength(grid[0], Length(grid[0]) + 100000);
+  Result := 7;
+end;
+
+function GrowPts: Int32;
+begin
+  SetLength(pts, Length(pts) + 100000);
+  Result := 7;
+end;
+
+function GrowS: Char;
+begin
+  SetLength(s, Length(s) + 100000);
+  Result := 'Z';
+end;
+
+function MoveP: Int32;
+begin
+  FreeMem(p);
+  p := AllocMem(4000000);
+  Result := 7;
+end;
+
+function MoveQ: Int32;
+begin
+  FreeMem(q);
+  q := AllocMem(4000000);
+  Result := 7;
+end;
+
+function Replace: Int32;
+begin
+  thing := new TThing;
+  Result := 7;
+end;
+
+function SetI: Int32;
+begin
+  i := 2;
+  Result := 7;
+end;
+
+function One: Int32;
+begin
+  Log := Log + 'One ';
+  Result := 1;
+end;
+
+function Two: Int32;
+begin
+  Log := Log + 'Two ';
+  Result := 2;
+end;
+
+begin
+  WriteLn('an assignment: what the right side calls moves what the left side is in');
+
+  SetLength(a, 1);
+  a[0] := GrowA();
+  WriteLn('  element := call that makes the array longer: ', a[0]);
+
+  SetLength(a, 1);
+  a[0] := 1;
+  a[0] += GrowA();
+  WriteLn('  element += call that makes the array longer: ', a[0]);
+
+  SetLength(a, 1);
+  SetLength(other, 1);
+  a[0] := SwapA();
+  WriteLn('  element := call that gives the variable another array: ', a[0]);
+
+  SetLength(grid, 1);
+  SetLength(grid[0], 1);
+  grid[0][0] := GrowRow();
+  WriteLn('  element of a row := call that makes the row longer: ', grid[0][0]);
+
+  SetLength(pts, 1);
+  pts[0].y := GrowPts();
+  WriteLn('  field of an element := call that makes the array longer: ', pts[0].y);
+
+  s := 'abc';
+  s[1] := GrowS();
+  WriteLn('  character := call that makes the string longer: ', s[1], s[2], s[3]);
+
+  p := AllocMem(64);
+  p^ := MoveP();
+  WriteLn('  p^ := call that frees p and has it point to other memory: ', p^);
+  FreeMem(p);
+
+  q := AllocMem(64);
+  q^.y := MoveQ();
+  WriteLn('  q^.y := call that frees q and has it point to other memory: ', q^.y);
+  FreeMem(q);
+
+  thing := new TThing;
+  thing.n := Replace();
+  WriteLn('  field of an object := call that gives the variable another object: ', thing.n);
+
+  WriteLn('an assignment: which element it is, is found after the call');
+
+  SetLength(a, 3);
+  a[0] := 0;
+  a[2] := 0;
+  i := 0;
+  a[i] := SetI();
+  WriteLn('  a[i] := call that sets i to 2: ', a[0], ' ', a[2]);
+
+  WriteLn('High, Length, Low or SizeOf on the left: the right side is first');
+
+  SetLength(a, 1);
+  a[High(a)] := GrowA();
+  WriteLn('  a[High(a)] := call that makes the array longer: ', a[0], ' ', a[High(a)]);
+
+  SetLength(a, 1);
+  a[Length(a) - 1] := GrowA();
+  WriteLn('  a[Length(a) - 1] := call that makes the array longer: ', a[0], ' ', a[High(a)]);
+
+  SetLength(a, 1);
+  a[Low(a)] := GrowA();
+  WriteLn('  a[Low(a)] := call that makes the array longer: ', a[0], ' ', a[High(a)]);
+
+  SetLength(a, 1);
+  a[SizeOf(Int32) - 4] := GrowA();
+  WriteLn('  a[SizeOf(Int32) - 4] := call that makes the array longer: ', a[0], ' ', a[High(a)]);
+
+  WriteLn('an assignment with a call on both sides: the right side is first, the element is found after both');
+
+  // (a new array, which is moved for certain when it is made longer)
+  a := nil;
+  SetLength(a, 1);
+  a[One() - 1] := GrowA();
+  WriteLn('  a[One() - 1] := call that makes the array longer: ', a[0]);
+
+  a := nil;
+  SetLength(a, 1);
+  i := 0;
+  a[Abs(i)] := GrowA();
+  WriteLn('  a[Abs(i)] := call that makes the array longer: ', a[0]);
+
+  Log := '';
+  SetLength(a, 3);
+  a[One()] := Two();
+  WriteLn('  a[One()] := Two(): ', a[1], ', calls ', Log);
+
+  WriteLn('every other operator: the left side is first');
+
+  Log := '';
+  x := One() - Two();
+  WriteLn('  One() - Two(): ', x, ', calls ', Log);
+
+  Log := '';
+  x := a[One()] + Two();
+  WriteLn('  a[One()] + Two(): ', x, ', calls ', Log);
+
+  // (i * 10 is worked out before the call; a variable by itself is read when it is added, which is after it)
+  i := 1;
+  x := (i * 10) + SetI();
+  WriteLn('  (i * 10) + call that sets i to 2: ', x);
+
+  i := 1;
+  x := i + SetI();
+  WriteLn('  i + call that sets i to 2: ', x);
+end.

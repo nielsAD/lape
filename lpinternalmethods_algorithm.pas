@@ -151,11 +151,11 @@ var
     begin
       if not (
           (Params.Count = 2) and
-          (Res.BaseType in LapeOrdinalTypes) and
+          (Res <> nil) and (Res.BaseType in LapeOrdinalTypes) and
           (ArrayElementType.Equals(Params[0].VarType)) and
           (ArrayElementType.Equals(Params[1].VarType))
       ) then
-        LapeException(lpeInvalidCompareMethod, DocPos);
+        LapeException(lpeInvalidCompareMethod, Self.DocPos);
     end;
 
     with TLapeTree_Invoke.Create('_ArraySort', Self) do
@@ -434,6 +434,8 @@ begin
 
    if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
+  if (not (resType() is TLapeType_DynArray)) then
+    LapeExceptionFmt(lpeExpected, ['Array'], DocPos);
   ArrayElementType := TLapeType_DynArray(resType()).PType;
 
   // ensure we can generate such a method

@@ -374,11 +374,9 @@ var
     '    Exit;'                                                                          + LineEnding +
     ''                                                                                   + LineEnding +
     '  Len := PSizeInt(p)[-1]^' {$IFDEF FPC}+'+1'{$ENDIF}+';'                            + LineEnding +
-    '  if (Start < 0) then'                                                              + LineEnding +
-    '    Start := 0'                                                                     + LineEnding +
-    '  else if (Start >= Len) then'                                                      + LineEnding +
-    '    Exit'                                                                           + LineEnding +
-    '  else if (Len - Count < Start) then'                                               + LineEnding +
+    '  if (Start < 0) or (Start >= Len) then'                                            + LineEnding +
+    '    Exit;'                                                                          + LineEnding +
+    '  if (Len - Count < Start) then'                                                    + LineEnding +
     '    Count := Len - Start;'                                                          + LineEnding +
     ''                                                                                   + LineEnding +
     '  _ArraySetLength(p, Len, ElSize, Dispose, Copy);'                                  + LineEnding +

@@ -1,0 +1,1 @@
+Invalid compare method at line 8, column 3 in file "Algorithm_SortCompareProcedure.lap"

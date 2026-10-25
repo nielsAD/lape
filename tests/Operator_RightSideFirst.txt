@@ -1,0 +1,26 @@
+an assignment: what the right side calls moves what the left side is in
+  element := call that makes the array longer: 7
+  element += call that makes the array longer: 8
+  element := call that gives the variable another array: 7
+  element of a row := call that makes the row longer: 7
+  field of an element := call that makes the array longer: 7
+  character := call that makes the string longer: Zbc
+  p^ := call that frees p and has it point to other memory: 7
+  q^.y := call that frees q and has it point to other memory: 7
+  field of an object := call that gives the variable another object: 7
+an assignment: which element it is, is found after the call
+  a[i] := call that sets i to 2: 0 7
+High, Length, Low or SizeOf on the left: the right side is first
+  a[High(a)] := call that makes the array longer: 0 7
+  a[Length(a) - 1] := call that makes the array longer: 0 7
+  a[Low(a)] := call that makes the array longer: 7 0
+  a[SizeOf(Int32) - 4] := call that makes the array longer: 7 0
+an assignment with a call on both sides: the right side is first, the element is found after both
+  a[One() - 1] := call that makes the array longer: 7
+  a[Abs(i)] := call that makes the array longer: 7
+  a[One()] := Two(): 2, calls Two One 
+every other operator: the left side is first
+  One() - Two(): -1, calls One Two 
+  a[One()] + Two(): 4, calls One Two 
+  (i * 10) + call that sets i to 2: 17
+  i + call that sets i to 2: 9

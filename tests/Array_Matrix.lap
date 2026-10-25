@@ -1,0 +1,149 @@
+const
+  Width = 500;
+  Height = 500;
+
+type
+  TMatrix = array of array of Int32;
+
+function Make(W, H: Int32): TMatrix;
+begin
+  SetLength(Result, H, W);
+end;
+
+procedure Fill(var M: TMatrix; Value: Int32);
+var
+  x, y: Int32;
+begin
+  for y := 0 to High(M) do
+    for x := 0 to High(M[y]) do
+      M[y][x] := Value;
+end;
+
+// every number another one than those around it
+procedure Pattern(var M: TMatrix);
+var
+  x, y: Int32;
+begin
+  for y := 0 to High(M) do
+    for x := 0 to High(M[y]) do
+      M[y][x] := (x * 31 + y * 17 + x * y) mod 251;
+end;
+
+function Sum(M: TMatrix): Int64;
+var
+  x, y: Int32;
+begin
+  Result := 0;
+  for y := 0 to High(M) do
+    for x := 0 to High(M[y]) do
+      Result := Result + M[y][x];
+end;
+
+// a sum in which where a number is counts
+function Check(M: TMatrix): Int64;
+var
+  x, y: Int32;
+begin
+  Result := 0;
+  for y := 0 to High(M) do
+    for x := 0 to High(M[y]) do
+      Result := Result + Int64(M[y][x]) * (x + 1) + Int64(M[y][x]) * (y + 1) * 3;
+end;
+
+function Same(A, B: TMatrix): Boolean;
+var
+  x, y: Int32;
+begin
+  if (Length(A) <> Length(B)) then
+    Exit(False);
+  for y := 0 to High(A) do
+  begin
+    if (Length(A[y]) <> Length(B[y])) then
+      Exit(False);
+    for x := 0 to High(A[y]) do
+      if (A[y][x] <> B[y][x]) then
+        Exit(False);
+  end;
+  Result := True;
+end;
+
+// a quarter turn to the right: the first column, from the bottom up, becomes the first row
+function Rot90(M: TMatrix): TMatrix;
+var
+  x, y, W, H: Int32;
+begin
+  H := Length(M);
+  W := Length(M[0]);
+  Result := Make(H, W);
+  for y := 0 to H - 1 do
+    for x := 0 to W - 1 do
+      Result[x][H - 1 - y] := M[y][x];
+end;
+
+function Kernel3(a, b, c, d, e, f, g, h, i: Int32): TMatrix;
+begin
+  Result := Make(3, 3);
+  Result[0][0] := a; Result[0][1] := b; Result[0][2] := c;
+  Result[1][0] := d; Result[1][1] := e; Result[1][2] := f;
+  Result[2][0] := g; Result[2][1] := h; Result[2][2] := i;
+end;
+
+// Every number becomes the sum of itself and those around it, each times what the kernel has there, divided by
+// Divisor. Past an edge it is the number at the edge that counts.
+function Convolute(M, Kernel: TMatrix; Divisor: Int32): TMatrix;
+var
+  x, y, kx, ky, sx, sy, W, H, R, Acc: Int32;
+begin
+  H := Length(M);
+  W := Length(M[0]);
+  R := Length(Kernel) div 2;
+  Result := Make(W, H);
+
+  for y := 0 to H - 1 do
+    for x := 0 to W - 1 do
+    begin
+      Acc := 0;
+      for ky := -R to R do
+      begin
+        sy := y + ky;
+        if (sy < 0) then
+          sy := 0
+        else if (sy >= H) then
+          sy := H - 1;
+
+        for kx := -R to R do
+        begin
+          sx := x + kx;
+          if (sx < 0) then
+            sx := 0
+          else if (sx >= W) then
+            sx := W - 1;
+
+          Acc := Acc + M[sy][sx] * Kernel[ky + R][kx + R];
+        end;
+      end;
+      Result[y][x] := Acc div Divisor;
+    end;
+end;
+
+var
+  M, R: TMatrix;
+  i: Int32;
+begin
+  M := Make(Width, Height);
+  Fill(M, 7);
+  WriteLn('fill: ', Length(M[0]), 'x', Length(M), ' ', Sum(M));
+
+  Pattern(M);
+  WriteLn('pattern: ', Sum(M), ' ', Check(M), ' ', M[0][0], ' ', M[Height - 1][Width - 1], ' ', M[Height div 3][Width div 2]);
+
+  // (a quarter turn has the sides the other way around; four of them is where it started)
+  R := Rot90(M);
+  WriteLn('rot90: ', Length(R[0]), 'x', Length(R), ' ', Check(R), ' ', R[0][0], ' ', R[0][Height - 1], ' ', R[Width - 1][Height - 1], ' ', R[Width - 1][0]);
+  for i := 1 to 3 do
+    R := Rot90(R);
+  WriteLn('four quarter turns: ', Same(R, M));
+
+  R := Convolute(M, Kernel3(1, 1, 1, 1, 1, 1, 1, 1, 1), 9);
+  WriteLn('blurred: ', Sum(R), ' ', Check(R), ' ', R[0][0], ' ', R[Height div 2][Width div 2], ' ', R[Height - 1][Width - 1]);
+end.
