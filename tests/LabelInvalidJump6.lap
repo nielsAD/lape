@@ -1,0 +1,10 @@
+label a;
+
+procedure P;
+begin
+  a:
+end;
+
+begin
+  goto a;
+end.

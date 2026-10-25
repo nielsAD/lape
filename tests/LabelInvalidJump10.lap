@@ -1,0 +1,7 @@
+label a;
+var r: record x: Int32; end;
+begin
+  goto a;
+  with r do
+    begin a: WriteLn(x); end;
+end.

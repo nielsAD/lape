@@ -1,0 +1,8 @@
+label a;
+begin
+  try
+    goto a;
+  except
+    begin a: WriteLn('except'); end;
+  end;
+end.

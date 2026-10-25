@@ -1,0 +1,9 @@
+label a;
+begin
+  try
+    a:
+    raise 'x';
+  except
+    goto a;
+  end;
+end.

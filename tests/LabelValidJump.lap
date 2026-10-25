@@ -1,0 +1,202 @@
+procedure ForwardAndBack;
+label a, b;
+begin
+  goto a;
+  WriteLn('skipped');
+  b:
+  WriteLn('back');
+  Exit;
+  a:
+  WriteLn('forward');
+  goto b;
+end;
+
+procedure WithinAndBackInLoop;
+label a, b;
+var i, n: Int32;
+begin
+  for i := 1 to 2 do
+  begin
+    goto a;
+    WriteLn('skipped');
+    a:
+    n := 0;
+    b:
+    Inc(n);
+    if (n < 3) then
+      goto b;
+    WriteLn(i, ' ', n);
+  end;
+end;
+
+procedure OutOfLoops;
+label a, b, c, d;
+var i: Int32;
+begin
+  while True do
+    goto a;
+  a:
+  repeat
+    goto b;
+  until False;
+  b:
+  for i := 1 to 10 do
+    if (i = 3) then
+      goto c;
+  c:
+  for i in [1, 2, 3] do
+    goto d;
+  d:
+  WriteLn('out of loops ', i);
+end;
+
+procedure OutOfStatements;
+label a, b, c;
+var x: Boolean;
+var r: record i: Int32; end;
+begin
+  x := True;
+  if x then
+    if x then
+    begin
+      goto a;
+      WriteLn('skipped');
+    end;
+  a:
+  case 1 of
+    1: goto b;
+    else WriteLn('skipped');
+  end;
+  b:
+  with r do
+    goto c;
+  c:
+  WriteLn('out of statements');
+end;
+
+procedure IntoNestedLists;
+label a;
+begin
+  goto a;
+  begin
+    begin
+      WriteLn('skipped');
+      a:
+      WriteLn('nested lists');
+    end;
+  end;
+end;
+
+procedure IntoStatements;
+label a, b, c, d, e, f;
+var x: Boolean;
+var i: Int32;
+begin
+  x := True;
+  if x then
+    goto a
+  else
+    begin a: WriteLn('into else'); end;
+
+  x := False;
+  goto b;
+  if x then
+    begin b: WriteLn('into then'); end;
+
+  goto c;
+  while x do
+    begin c: WriteLn('into while'); end;
+
+  i := 0;
+  goto d;
+  repeat d: Inc(i); until i > 2;
+  WriteLn('into repeat ', i);
+
+  case 1 of
+    1: goto e;
+    2: begin e: WriteLn('into case branch'); goto f; end;
+    else begin f: WriteLn('into case else'); end;
+  end;
+end;
+
+procedure TryFinally;
+label a, b;
+begin
+  try
+    goto a;
+    WriteLn('skipped');
+    a:
+    WriteLn('within try');
+  finally
+    WriteLn('finally');
+  end;
+
+  try
+    goto b;
+  finally
+    WriteLn('finally again');
+  end;
+  WriteLn('skipped');
+  b:
+  WriteLn('out of try');
+end;
+
+procedure TryExcept;
+label a, b;
+begin
+  try
+    raise 'x';
+  except
+    goto a;
+    WriteLn('skipped');
+    a:
+    WriteLn('within except');
+  end;
+
+  try
+    raise 'y';
+  except
+    goto b;
+  end;
+  WriteLn('skipped');
+  b:
+  WriteLn('out of except');
+end;
+
+procedure Outer;
+label a;
+
+  procedure Inner;
+  label a;
+  begin
+    goto a;
+    WriteLn('skipped');
+    a:
+    WriteLn('inner');
+  end;
+
+begin
+  goto a;
+  WriteLn('skipped');
+  a:
+  Inner();
+  WriteLn('outer');
+end;
+
+label a;
+begin
+  ForwardAndBack();
+  WithinAndBackInLoop();
+  OutOfLoops();
+  OutOfStatements();
+  IntoNestedLists();
+  IntoStatements();
+  TryFinally();
+  TryExcept();
+  Outer();
+
+  goto a;
+  WriteLn('skipped');
+  a:
+  WriteLn('top level');
+end.

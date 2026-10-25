@@ -97,6 +97,7 @@ const
   lpeInvalidEvaluation = 'Invalid evaluation';
   lpeInvalidForward = 'Forwarded declaration "%s" not resolved';
   lpeInvalidLabel = 'Invalid label';
+  lpeCannotJumpToLabel = 'Cannot jump to label "%s"';
   lpeInvalidIndex = 'Invalid index "%s"';
   lpeIntegerTooLarge = 'Integer "%s" does not fit in 64 bits';
   lpeInvalidNumber = 'Invalid number "%s"';

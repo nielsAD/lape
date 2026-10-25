@@ -196,6 +196,8 @@ type
   end;
 
   TLapeTree_InternalMethod_Goto = class(TLapeTree_InternalMethod)
+  protected
+    function PlacesLabel(Node: TLapeTree_Base): Boolean; virtual;
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     function Compile(var Offset: Integer): TResVar; override;
@@ -2481,9 +2483,22 @@ begin
   FSpecialParam := spForce;
 end;
 
+// Whether Node places the label this goes to, or holds where it does in statements that can be jumped into
+function TLapeTree_InternalMethod_Goto.PlacesLabel(Node: TLapeTree_Base): Boolean;
+begin
+  if (Node is TLapeTree_InternalMethod_Label) then
+    with TLapeTree_InternalMethod_Label(Node) do
+      Result := (Params.Count = 1) and (Params[0] is TLapeTree_GlobalVar) and
+                (TLapeTree_GlobalVar(Params[0]).GlobalVar = TLapeTree_GlobalVar(Self.FParams[0]).GlobalVar)
+  else
+    Result := ((Node is TLapeTree_StatementList) or (Node is TLapeTree_Case) or
+               ((Node is TLapeTree_If) and (not (Node is TLapeTree_For)))) and Node.Walk(@Self.PlacesLabel);
+end;
+
 function TLapeTree_InternalMethod_Goto.Compile(var Offset: Integer): TResVar;
 var
   tmpVar, ResVar, Param: TResVar;
+  Node: TLapeTree_Base;
 begin
   Result := NullResVar;
   tmpVar := NullResVar;
@@ -2493,6 +2508,16 @@ begin
   Param := FParams[0].Compile(Offset);
   if (not Param.HasType()) or (not (Param.VarType.BaseType in [ltPointer] + LapeProcTypes)) then
     LapeException(lpeInvalidLabel, [FParams[0]]);
+
+  if (FParams[0] is TLapeTree_GlobalVar) and (TLapeTree_GlobalVar(FParams[0]).GlobalVar.VarType is TLapeType_Label) then
+  begin
+    Node := Self;
+    repeat
+      Node := Node.Parent;
+      if (Node = nil) or (Node is TLapeTree_Method) then
+        LapeExceptionFmt(lpeCannotJumpToLabel, [TLapeTree_GlobalVar(FParams[0]).GlobalVar.Name], DocPos);
+    until PlacesLabel(Node);
+  end;
 
   ResVar := FCompiler.getTempStackVar(FCompiler.getGlobalType('ConstPointer'));
   ResVar := ResVar.VarType.Eval(op_Assign, tmpVar, ResVar, Param, [], Offset, @_DocPos);

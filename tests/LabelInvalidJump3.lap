@@ -1,0 +1,5 @@
+label a;
+begin
+  goto a;
+  try a: WriteLn(1); finally WriteLn(2); end;
+end.

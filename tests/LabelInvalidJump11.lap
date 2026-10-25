@@ -1,0 +1,9 @@
+label a;
+var i: Int32;
+var x: Boolean;
+begin
+  goto a;
+  for i := 1 to 2 do
+    while x do
+      begin a: WriteLn(i); end;
+end.

@@ -1,0 +1,22 @@
+forward
+back
+1 3
+2 3
+out of loops 1
+out of statements
+nested lists
+into else
+into then
+into while
+into repeat 3
+into case branch
+into case else
+within try
+finally
+finally again
+out of try
+within except
+out of except
+inner
+outer
+top level

@@ -18,7 +18,7 @@ uses
 type
   TLapeTree_Base = class;
   TLapeTree_ExprBase = class;
-  TLapeTree_Visit = function(Node: TLapeTree_Base; const Data): Boolean; // True: stop the walk
+  TLapeTree_Visit = function(Node: TLapeTree_Base): Boolean of object; // True: stop the walk
 
   TLapeFlowStatement = record
     CodeOffset: Integer;
@@ -85,7 +85,7 @@ type
     function Compile: TResVar; overload; virtual;
     function CompileToTempVar(var Offset: Integer; out v: TResVar): Boolean; virtual;
     function isInvoking: Boolean; virtual;
-    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; virtual;
+    function Walk(Visit: TLapeTree_Visit): Boolean; virtual;
 
     property Parent: TLapeTree_Base read FParent write setParent;
     property Compiler: TLapeCompilerBase read FCompiler;
@@ -409,7 +409,7 @@ type
 
     function addStatement(Statement: TLapeTree_Base; Prepend: Boolean = False): Integer; virtual;
     function Compile(var Offset: Integer): TResVar; override;
-    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
+    function Walk(Visit: TLapeTree_Visit): Boolean; override;
 
     property Statements: TLapeStatementList read FStatements;
   end;
@@ -448,7 +448,7 @@ type
     destructor Destroy; override;
 
     function Compile(var Offset: Integer): TResVar; override;
-    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
+    function Walk(Visit: TLapeTree_Visit): Boolean; override;
 
     function canExit: Boolean; virtual;
     procedure addExitStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
@@ -500,7 +500,7 @@ type
 
     function addWith(AWith: TLapeTree_ExprBase): TLapeWithDeclRec; virtual;
     function Compile(var Offset: Integer): TResVar; override;
-    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
+    function Walk(Visit: TLapeTree_Visit): Boolean; override;
 
     property WithList: TLapeExpressionList read FWithList;
     property Body: TLapeTree_Base read FBody write setBody;
@@ -524,7 +524,7 @@ type
     destructor Destroy; override;
     function Compile(var Offset: Integer): TResVar; override;
     function isInvoking: Boolean; override;
-    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
+    function Walk(Visit: TLapeTree_Visit): Boolean; override;
 
     property Condition: TLapeTree_ExprBase read FCondition write setCondition;
     property Body: TLapeTree_Base read FBody write setBody;
@@ -582,7 +582,7 @@ type
     procedure addBranch(Branch: TLapeTree_CaseBranch); virtual;
 
     function Compile(var Offset: Integer): TResVar; override;
-    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
+    function Walk(Visit: TLapeTree_Visit): Boolean; override;
 
     property Condition: TLapeTree_ExprBase read FCondition write setCondition;
     property ElseBody: TLapeTree_Base read FElse write setElse;
@@ -663,7 +663,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
     function Compile(var Offset: Integer): TResVar; override;
-    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
+    function Walk(Visit: TLapeTree_Visit): Boolean; override;
 
     property Body: TLapeTree_Base read FBody write setBody;
     property ExceptBody: TLapeTree_Base read FExcept write setExcept;
@@ -880,7 +880,7 @@ begin
   Result := False;
 end;
 
-function TLapeTree_Base.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+function TLapeTree_Base.Walk(Visit: TLapeTree_Visit): Boolean;
 begin
   Result := False;
 end;
@@ -3616,12 +3616,12 @@ begin
       Result := CompileStatement(FStatements[i], Offset);
 end;
 
-function TLapeTree_StatementList.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+function TLapeTree_StatementList.Walk(Visit: TLapeTree_Visit): Boolean;
 var
   i: Integer;
 begin
   for i := 0 to FStatements.Count - 1 do
-    if (FStatements[i] <> nil) and Visit(FStatements[i], Data) then
+    if (FStatements[i] <> nil) and Visit(FStatements[i]) then
       Exit(True);
   Result := False;
 end;
@@ -3790,9 +3790,9 @@ begin
   end;
 end;
 
-function TLapeTree_Method.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+function TLapeTree_Method.Walk(Visit: TLapeTree_Visit): Boolean;
 begin
-  Result := (FStatements <> nil) and Visit(FStatements, Data);
+  Result := (FStatements <> nil) and Visit(FStatements);
 end;
 
 function TLapeTree_method.canExit: Boolean;
@@ -3973,9 +3973,9 @@ begin
       FVarList[i] := NullResVar;
 end;
 
-function TLapeTree_With.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+function TLapeTree_With.Walk(Visit: TLapeTree_Visit): Boolean;
 begin
-  Result := (FBody <> nil) and Visit(FBody, Data);
+  Result := (FBody <> nil) and Visit(FBody);
 end;
 
 procedure TLapeTree_If.setCondition(Node: TLapeTree_ExprBase);
@@ -4115,9 +4115,9 @@ begin
             ((FElse <> nil) and FElse.isInvoking());
 end;
 
-function TLapeTree_If.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+function TLapeTree_If.Walk(Visit: TLapeTree_Visit): Boolean;
 begin
-  Result := ((FBody <> nil) and Visit(FBody, Data)) or ((FElse <> nil) and Visit(FElse, Data));
+  Result := ((FBody <> nil) and Visit(FBody)) or ((FElse <> nil) and Visit(FElse));
 end;
 
 procedure TLapeTree_CaseBranch.DeleteChild(Node: TLapeTree_Base);
@@ -4388,14 +4388,14 @@ begin
 
 end;
 
-function TLapeTree_Case.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+function TLapeTree_Case.Walk(Visit: TLapeTree_Visit): Boolean;
 var
   i: Integer;
 begin
   for i := 0 to FBranches.Count - 1 do
-    if (FBranches[i].FStatement <> nil) and Visit(FBranches[i].FStatement, Data) then
+    if (FBranches[i].FStatement <> nil) and Visit(FBranches[i].FStatement) then
       Exit(True);
-  Result := (FElse <> nil) and Visit(FElse, Data);
+  Result := (FElse <> nil) and Visit(FElse);
 end;
 
 function TLapeTree_While.CompileBody(var Offset: Integer): TResVar;
@@ -4938,10 +4938,10 @@ begin
   FCompiler.Emitter._EndTry(Offset, @_DocPos);
 end;
 
-function TLapeTree_Try.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+function TLapeTree_Try.Walk(Visit: TLapeTree_Visit): Boolean;
 begin
-  Result := ((FBody <> nil) and Visit(FBody, Data)) or ((FExcept <> nil) and Visit(FExcept, Data)) or
-            ((FFinally <> nil) and Visit(FFinally, Data));
+  Result := ((FBody <> nil) and Visit(FBody)) or ((FExcept <> nil) and Visit(FExcept)) or
+            ((FFinally <> nil) and Visit(FFinally));
 end;
 
 end.
