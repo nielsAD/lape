@@ -1,0 +1,264 @@
+type
+  // (64 Int32: a.a is the first of them, h.h the last, and PInt32(@block)[i]^ the one at i)
+  TRow = record a, b, c, d, e, f, g, h: Int32; end;
+  TBlock = record a, b, c, d, e, f, g, h: TRow; end;
+  PInt32 = ^Int32;
+  TInfo = record depth: Int32; name: String; data: array of Int32; end;
+  PNode = ^TNode;
+  TNode = record value: Int64; prev: PNode; tag: String; end;
+
+var
+  Errors: Int32;
+
+procedure Fail(msg: String);
+begin
+  Errors := Errors + 1;
+  if (Errors <= 5) then
+    WriteLn('FAIL: ' + msg);
+end;
+
+// Every level fills a block of its own and checks it again after the levels below have run
+function Blocks(depth: Int32; var total: Int64): Int32;
+var
+  before: Int32;
+  block: TBlock;
+  after: Int32;
+  i: Int32;
+begin
+  before := depth * 7;
+  after := depth * 13;
+  for i := 0 to 63 do
+    PInt32(@block)[i]^ := depth * 1000 + i;
+
+  total := total + depth;
+  if (depth > 0) then
+    Result := Blocks(depth - 1, total) + 1
+  else
+    Result := 0;
+
+  if (before <> depth * 7) or (after <> depth * 13) then
+    Fail('locals at depth ' + ToStr(depth));
+  for i := 0 to 63 do
+    if (PInt32(@block)[i]^ <> depth * 1000 + i) then
+    begin
+      Fail('block at depth ' + ToStr(depth));
+      Break;
+    end;
+  total := total + before - after + PInt32(@block)[depth mod 64]^ - depth * 1000;
+end;
+
+// The same variable of the very first caller is changed by every level
+procedure Shared(depth: Int32; var count: Int32; var text: String; var list: array of Int32);
+var
+  mine: Int32;
+begin
+  mine := count;
+  count := count + 1;
+  if (depth mod 100 = 0) then
+  begin
+    text := text + ToStr(depth) + ' ';
+    list += depth;
+  end;
+
+  if (depth > 0) then
+    Shared(depth - 1, count, text, list);
+
+  if (mine + 1 > count) then
+    Fail('count at depth ' + ToStr(depth));
+  count := count + 1;
+end;
+
+// What is passed by value belongs to the level that got it
+function Copies(depth: Int32; n: Int64; s: String; info: TInfo; block: TBlock): Int64;
+var
+  i: Int32;
+begin
+  if (n <> depth * 3) or (s <> 's' + ToStr(depth)) or (info.depth <> depth) or (info.name <> 'i' + ToStr(depth)) or
+     (Length(info.data) <> depth mod 5) or (PInt32(@block)[depth mod 64]^ <> depth)
+  then
+    Fail('arguments at depth ' + ToStr(depth));
+
+  Result := n;
+  if (depth > 0) then
+  begin
+    i := depth - 1;
+    info.depth := i;
+    info.name := 'i' + ToStr(i);
+    SetLength(info.data, i mod 5);
+    PInt32(@block)[i mod 64]^ := i;
+    Result := Result + Copies(i, n - 3, 's' + ToStr(i), info, block);
+
+    // changed for the call only, the rest is what this level was given
+    if (n <> depth * 3) or (s <> 's' + ToStr(depth)) or (PInt32(@block)[depth mod 64]^ <> depth) then
+      Fail('arguments after the call at depth ' + ToStr(depth));
+  end;
+end;
+
+// Every level adds a node to a list that runs through all the frames above it
+function Chain(depth: Int32; prev: PNode): Int64;
+var
+  pad: record a, b, c, d, e, f, g, h, i, j: Int64; end;
+  node: TNode;
+  p: PNode;
+  seen: Int32;
+begin
+  pad.a := depth;
+  pad.j := -depth;
+  node.value := depth;
+  node.prev := prev;
+  node.tag := 't' + ToStr(depth);
+
+  if (depth > 0) then
+    Result := Chain(depth - 1, @node)
+  else
+  begin
+    // walk all the way up, changing every frame on the way
+    Result := 0;
+    seen := 0;
+    p := @node;
+    while (p <> nil) do
+    begin
+      Result := Result + p^.value;
+      p^.value := p^.value * 2;
+      p^.tag := p^.tag + '!';
+      p := p^.prev;
+      seen := seen + 1;
+    end;
+    Result := Result * 1000 + seen;
+  end;
+
+  if (node.value <> depth * 2) or (node.tag <> 't' + ToStr(depth) + '!') or (pad.a <> depth) or (pad.j <> -depth) then
+    Fail('node at depth ' + ToStr(depth));
+end;
+
+// A method inside a method that calls itself, using the variables of the method around it
+function Outer(levels: Int32): String;
+var
+  calls: Int32;
+  sum: Int64;
+  deepest: Int32;
+  marks: array of Int32;
+
+  function Inner(depth: Int32; var up: Int32): Int32;
+  var
+    here: Int32;
+  begin
+    calls := calls + 1;
+    sum := sum + depth;
+    here := depth * 2;
+    if (depth > deepest) then
+      deepest := depth;
+    if (depth mod 250 = 0) then
+      marks += depth;
+
+    if (depth < levels) then
+      Result := Inner(depth + 1, here) + 1
+    else
+      Result := 1;
+
+    if (here <> depth * 2 + 1) and (depth < levels) then
+      Fail('inner local at depth ' + ToStr(depth));
+    up := up + 1;
+  end;
+
+var
+  top: Int32;
+begin
+  top := 100;
+  Result := ToStr(Inner(1, top));
+  Result := Result + ' ' + ToStr(calls) + ' ' + ToStr(sum) + ' ' + ToStr(deepest) + ' ' + ToStr(marks) + ' ' + ToStr(top);
+end;
+
+// Two methods calling each other, with intermediate values kept across the calls
+// (a method is declared before it is used: the first reaches the second through a variable)
+var
+  EvenRef: function(n: Int32; acc: Int64): Int64;
+
+function Odd(n: Int32; acc: Int64): Int64;
+begin
+  if (n = 0) then
+    Exit(acc);
+  Result := (n * 2 + 1) + EvenRef(n - 1, acc + n) * 1 - (n * 2 + 1);
+end;
+
+function Even(n: Int32; acc: Int64): Int64;
+var
+  keep: Int64;
+begin
+  if (n = 0) then
+    Exit(acc);
+  keep := acc * 3 + n;
+  Result := Odd(n - 1, acc + n) + (keep - acc * 3 - n);
+end;
+
+function Ackermann(m, n: Int32): Int32;
+begin
+  if (m = 0) then
+    Result := n + 1
+  else if (n = 0) then
+    Result := Ackermann(m - 1, 1)
+  else
+    Result := Ackermann(m - 1, Ackermann(m, n - 1));
+end;
+
+// Leaving many levels at once, with every level cleaning up after itself
+procedure Unwind(depth: Int32; var cleaned: Int32);
+var
+  s: String;
+  block: TBlock;
+begin
+  s := 'level ' + ToStr(depth);
+  block.h.h := depth;
+  try
+    if (depth = 0) then
+      raise 'bottom';
+    Unwind(depth - 1, cleaned);
+  finally
+    if (s = 'level ' + ToStr(depth)) and (block.h.h = depth) then
+      cleaned := cleaned + 1;
+  end;
+end;
+
+var
+  total: Int64;
+  count, cleaned, i: Int32;
+  text: String;
+  list: array of Int32;
+  info: TInfo;
+  block: TBlock;
+begin
+  total := 0;
+  WriteLn(Blocks(2000, total));
+  WriteLn(total);
+
+  count := 0;
+  Shared(1500, count, text, list);
+  WriteLn(ToStr(count) + ' ' + text + ToStr(list));
+
+  info.depth := 600;
+  info.name := 'i600';
+  SetLength(info.data, 600 mod 5);
+  PInt32(@block)[600 mod 64]^ := 600;
+  WriteLn(Copies(600, 1800, 's600', info, block));
+  WriteLn(ToStr(info.depth) + ' ' + info.name + ' ' + ToStr(Length(info.data)) + ' ' + ToStr(PInt32(@block)[600 mod 64]^));
+
+  WriteLn(Chain(1000, nil));
+  WriteLn(Outer(1000));
+
+  EvenRef := @Even;
+  WriteLn(Even(2000, 0));
+  WriteLn(Odd(1999, 5));
+  WriteLn(Ackermann(2, 3) + Ackermann(3, 3) * 2);
+
+  for i := 1 to 3 do
+  begin
+    cleaned := 0;
+    try
+      Unwind(i * 400, cleaned);
+    except
+      WriteLn(GetExceptionMessage() + ' ' + ToStr(cleaned));
+    end;
+  end;
+
+  WriteLn(Errors);
+end;

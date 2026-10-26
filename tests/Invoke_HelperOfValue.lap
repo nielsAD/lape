@@ -1,0 +1,11 @@
+function String.Shout: String; begin Result := Self + '!'; end;
+function Int32.Plus(x: Int32): Int32; begin Result := Self + x; end;
+function Int32.Bump: Int32; begin Self += 1; Result := Self; end;
+var s: String; i: Int32; a: array of Int32;
+begin
+  s := 'hi'; i := 5;
+  WriteLn(s.Shout(), ' ', 'lit'.Shout(), ' ', i.Plus(2), ' ', i.Bump(), ' ', i);
+  a := [3, 1, 2];
+  WriteLn(a.Contains(2), ' ', a.IndexOf(1), ' ', Length(a));
+  WriteLn(IntToStr(i).Shout());
+end.

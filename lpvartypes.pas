@@ -265,7 +265,6 @@ type
     function getDeclarations: TLapeDeclarationList; virtual;
     // Whether it has anything that Left.Name could be
     function HasMembers: Boolean; virtual;
-
   public
     TypeID: Integer;
 
@@ -474,6 +473,9 @@ type
     property ObjectType: TLapeType read FObjectType;
   end;
 
+  // Whether argument Index, that has no type of its own yet (an open array), fits a parameter of ParamType
+  TLapeArgFits = function(Index: Integer; ParamType: TLapeType): Boolean of object;
+
   TLapeGetOverloadedMethod = function(Sender: TLapeType_OverloadedMethod;
     AObjectType: TLapeType = nil; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar of object;
 
@@ -495,10 +497,11 @@ type
 
     procedure addDeclaration(ADecl: TLapeDeclaration); override;
     procedure addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False); virtual;
-    function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; virtual;
+    function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; overload; virtual;
+    function overrideMethod(AMethod, Old: TLapeGlobalVar): TLapeGlobalVar; overload; virtual;
 
     function getMethodIndex(AType: TLapeType_Method; Pos: PDocPos = nil): Integer; overload; virtual;
-    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType = nil; AObjectType: TLapeType = nil; Pos: PDocPos = nil): Integer; overload; virtual;
+    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType = nil; AObjectType: TLapeType = nil; Pos: PDocPos = nil; Fits: TLapeArgFits = nil): Integer; overload; virtual;
     function getMethod(AType: TLapeType_Method): TLapeGlobalVar; overload; virtual;
     function getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil; AObjectType: TLapeType = nil): TLapeGlobalVar; overload; virtual;
 
@@ -3225,8 +3228,9 @@ begin
   end
   else if DoOverride then
   begin
+    // (what it replaces was this one's own)
     AMethod := overrideMethod(AMethod);
-    if FList.FreeDecls and (AMethod <> nil) then
+    if FDeclarations.FreeDecls and (AMethod <> nil) then
       AMethod.Free();
   end
   else
@@ -3242,27 +3246,29 @@ end;
 function TLapeType_OverloadedMethod.overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar;
 var
   i: Integer;
-  OldMethod: TLapeGlobalVar;
 begin
   if (AMethod = nil) or (not AMethod.HasType()) or
      (not ((AMethod.VarType is TLapeType_Method) or (AMethod.VarType is TLapeType_OverloadedMethod)))
   then
     LapeException(lpeImpossible);
 
-  Result := nil;
-  AMethod.setReadWrite(False, False);
-
   for i := 0 to MethodCount - 1 do
-  begin
-    OldMethod := Methods[i];
-    if TLapeType_Method(OldMethod.VarType).EqualParams(AMethod.VarType as TLapeType_Method) then
-    begin
-      Result := OldMethod;
-      FDeclarations.Delete(OldMethod);
-      Break;
-    end;
-  end;
+    if TLapeType_Method(Methods[i].VarType).EqualParams(AMethod.VarType as TLapeType_Method) then
+      Exit(overrideMethod(AMethod, Methods[i]));
+  Result := overrideMethod(AMethod, nil);
+end;
 
+function TLapeType_OverloadedMethod.overrideMethod(AMethod, Old: TLapeGlobalVar): TLapeGlobalVar;
+begin
+  if (AMethod = nil) or (not AMethod.HasType()) or
+     (not ((AMethod.VarType is TLapeType_Method) or (AMethod.VarType is TLapeType_OverloadedMethod)))
+  then
+    LapeException(lpeImpossible);
+
+  Result := Old;
+  AMethod.setReadWrite(False, False);
+  if (Old <> nil) then
+    FDeclarations.Delete(Old);
   FDeclarations.addDeclaration(AMethod);
 end;
 
@@ -3293,7 +3299,7 @@ begin
     Result := -1;
 end;
 
-function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Pos: PDocPos): Integer;
+function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Pos: PDocPos; Fits: TLapeArgFits): Integer;
 
   function SizeWeight(a, b: TLapeType): SizeInt; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
@@ -3372,6 +3378,8 @@ begin
 
         if ((AIndx >= Length(AParams)) or (AParams[AIndx] = nil)) and (Params[i].Default = nil) then
           Break
+        else if Assigned(Fits) and (AIndx < Length(AParams)) and (Params[i].VarType <> nil) and Fits(AIndx, Params[i].VarType) then
+          Weight := Weight - 4
         else if (AIndx >= Length(AParams)) or (AParams[AIndx] = nil) or (Params[i].VarType = nil) or Params[i].VarType.Equals(AParams[AIndx]) then
           if (AIndx >= Length(AParams)) or (AParams[AIndx] = nil) or ((Params[i].VarType <> nil) and Params[i].VarType.Equals(AParams[AIndx], False)) then
             Weight := Weight - 4
@@ -3392,16 +3400,16 @@ begin
       end;
 
       if Match then
-        if (Weight = MinWeight) then
-          Result := -1
-        else if (Weight < MinWeight) then
+        if (Weight < MinWeight) then
         begin
           Result := MethodIndex;
           MinWeight := Weight;
-        end;
+        end
+        else if (Weight = MinWeight) and (not Assigned(Fits)) then
+          Result := -1;
     end;
 
-  if (Result < 0) and ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
+  if (Result < 0) and (not Assigned(Fits)) and ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
     Result := FDeclarations.IndexOf(OnFunctionNotFound(Self, AObjectType, AParams, AResult));
 end;
 

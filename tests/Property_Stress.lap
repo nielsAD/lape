@@ -1,0 +1,53 @@
+type
+  TGrid = record FW, FH: Int32; FCells: array of Int32; FReads, FWrites: Int32; end;
+
+property TGrid.Width(): Int32;
+begin
+  Result := Self.FW;
+end;
+
+property TGrid.Height(): Int32;
+begin
+  Result := Self.FH;
+end;
+
+property TGrid.Cell(x, y: Int32): Int32;
+begin
+  Inc(Self.FReads);
+  Result := Self.FCells[y * Self.FW + x];
+end;
+
+property TGrid.Cell(x, y: Int32; v: Int32);
+begin
+  Inc(Self.FWrites);
+  Self.FCells[y * Self.FW + x] := v;
+end;
+
+procedure TGrid.Init(w, h: Int32);
+begin
+  Self.FW := w;
+  Self.FH := h;
+  SetLength(Self.FCells, w * h);
+end;
+
+var
+  g: TGrid;
+  x, y, Sum: Int32;
+begin
+  g.Init(20, 15);
+  for y := 0 to g.Height - 1 do
+    for x := 0 to g.Width - 1 do
+      g.Cell[x, y] := x * y;
+
+  for y := 1 to g.Height - 1 do
+    for x := 1 to g.Width - 1 do
+      g.Cell[x, y] += g.Cell[x - 1, y] + g.Cell[x, y - 1] - g.Cell[x - 1, y - 1];
+
+  Sum := 0;
+  for y := 0 to g.Height - 1 do
+    for x := 0 to g.Width - 1 do
+      Sum := (Sum + g.Cell[x, y] * (x + 1)) mod 1000000007;
+
+  g.Cell[g.Width - 1, g.Height - 1] *= 2;
+  WriteLn(Sum, ' ', g.Cell[g.Width - 1, g.Height - 1], ' ', g.FReads, ' ', g.FWrites);
+end.

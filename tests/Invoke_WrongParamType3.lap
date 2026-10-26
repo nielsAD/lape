@@ -1,0 +1,10 @@
+type
+  TR = record a: Int32; end;
+
+procedure P(const x: Int32); begin end;
+
+var
+  r: TR;
+begin
+  P(r);
+end.

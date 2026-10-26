@@ -1,0 +1,7 @@
+strings 63890 xya!Bcd
+nested GO!!!!!
+fold 99999 1000 500500
+mixed 9
+depth 2000 1500
+counters 6 3 -4
+caught 1000

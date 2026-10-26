@@ -1,0 +1,12 @@
+global, a number: 4
+global, a string: d
+global, a boolean: True
+in Outer, a number: 2
+global, a string: b
+global, a boolean: False
+in Outer, a number: 1
+in Inner, a string: a
+global, a boolean: True
+of TThing, a number: 103
+of TThing, a number: 103
+of TThing, a number: 105

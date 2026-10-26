@@ -1,0 +1,1 @@
+Expected variable of type "Int32", got "record [0]a: Int32; end" at line 9, column 5 in file "Invoke_WrongParamType3.lap"

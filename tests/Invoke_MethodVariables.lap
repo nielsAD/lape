@@ -1,0 +1,33 @@
+type
+  TF = function(x: Int32): Int32;
+  TR = record n: Int32; end;
+
+function Twice(x: Int32): Int32;
+begin
+  Result := x * 2;
+end;
+
+function TR.Add(x: Int32): Int32;
+begin
+  Self.n += x;
+  Result := Self.n;
+end;
+
+var
+  f: TF;
+  g: function(x: Int64): String;
+  m: function(x: Int32): Int32 of object;
+  r: TR;
+  i: Int32;
+begin
+  f := @Twice;
+  WriteLn(f(21), ' ', f(f(1)) + 1);
+
+  g := @IntToStr;
+  WriteLn(g(7) + '!', ' ', g(f(4)));
+
+  m := @r.Add;
+  for i := 1 to 3 do
+    m(i);
+  WriteLn(r.n, ' ', m(10));
+end.

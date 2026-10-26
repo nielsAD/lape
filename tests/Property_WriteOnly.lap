@@ -1,0 +1,9 @@
+type TB = record FW: Int32; end;
+property TB.Count(): Int32; begin Result := 3; end;
+property TB.Sink(v: Int32); begin Self.FW := v; end;
+property TB.Item(i: Int32): Int32; begin Result := i; end;
+property TB.Item(i: Int32; v: Int32); begin end;
+var b: TB; x: Int32;
+begin
+  x := b.Sink;
+end.

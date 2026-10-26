@@ -1,0 +1,18 @@
+type
+  TThing = record
+    x: Int32;
+  end;
+
+procedure Outer;
+
+  procedure TThing.Show;
+  begin
+    WriteLn(Self.x);
+  end;
+
+begin
+end;
+
+begin
+  Outer();
+end.

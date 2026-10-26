@@ -55,6 +55,18 @@ begin
   _Write(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
+// function TestHeapUsed: PtrUInt
+// How many bytes of memory are in use: a script that does the same thing a number of times and sees this stay what it
+// was leaks nothing in what it does (tests/Invoke_StressLeaks). (Delphi: always 0.)
+procedure _TestHeapUsed(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  {$IFDEF FPC}
+  PPtrUInt(Result)^ := GetFPCHeapStatus().CurrHeapUsed;
+  {$ELSE}
+  PPtrUInt(Result)^ := 0;
+  {$ENDIF}
+end;
+
 procedure _WriteLnWrap(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   _WriteLn(PlpString(Params^[0])^);
@@ -83,6 +95,7 @@ begin
 
     addGlobalMethod('procedure _Write(s: string); override;', @_WriteWrap, @Output);
     addGlobalMethod('procedure _WriteLn; override;', @_WriteLnWrap, @Output);
+    addGlobalFunc('function TestHeapUsed: PtrUInt;', @_TestHeapUsed);
 
     try
       if (not Compile()) then

@@ -1,0 +1,12 @@
+wide 7919: 4000 calls, 60 deep, 139 raised, 139 caught
+wide 15838: 4000 calls, 60 deep, 125 raised, 125 caught
+wide 23757: 4000 calls, 60 deep, 142 raised, 142 caught
+wide 31676: 4000 calls, 60 deep, 143 raised, 143 caught
+wide 39595: 3420 calls, 60 deep, 125 raised, 125 caught
+wide 47514: 4000 calls, 60 deep, 138 raised, 138 caught
+wide 55433: 4000 calls, 60 deep, 144 raised, 144 caught
+wide 63352: 4000 calls, 60 deep, 147 raised, 147 caught
+deep 104729: 6000 calls, 3000 deep, 0 raised, 0 caught
+deep 209458: 6000 calls, 3000 deep, 0 raised, 0 caught
+deep 314187: 6000 calls, 3000 deep, 0 raised, 0 caught
+wrong: 0

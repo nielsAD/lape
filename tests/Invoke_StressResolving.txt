@@ -1,0 +1,6 @@
+i8 i32 i64 dbl chr chr bool
+point box ints strs two
+point box strs
+<3> 6 75
+91200 <0>
+2097151 3145727

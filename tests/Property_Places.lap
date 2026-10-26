@@ -1,0 +1,109 @@
+type
+  TBox = record
+    FItems: array of Int32;
+    FName: String;
+    FWidth: Int32;
+  end;
+
+var
+  Log: String;
+
+property TBox.Count(): Int32;
+begin
+  Result := Length(Self.FItems);
+end;
+
+property TBox.Item(i: Int32): Int32;
+begin
+  Log += 'r' + ToStr(i);
+  Result := Self.FItems[i];
+end;
+
+property TBox.Item(i: Int32; v: Int32);
+begin
+  Log += 'w' + ToStr(i);
+  Self.FItems[i] := v;
+end;
+
+property TBox.Name(): String;
+begin
+  Result := Self.FName;
+end;
+
+property TBox.Name(v: String);
+begin
+  Self.FName := v + '.';
+end;
+
+property TBox.Width(): Int32;
+begin
+  Result := Self.FWidth;
+end;
+
+property TBox.Width(v: Int32);
+begin
+  Self.FWidth := v;
+end;
+
+type
+  TOuter = record
+    Inner: TBox;
+    List: array of TBox;
+  end;
+
+function MakeBox(n: Int32): TBox;
+begin
+  SetLength(Result.FItems, n);
+  Result.FWidth := n;
+end;
+
+procedure Show(x: Int32; s: String);
+begin
+  WriteLn(x, ' ', s);
+end;
+
+var
+  b: TBox;
+  o: TOuter;
+  i: Int32;
+begin
+  b.FItems := [1, 2, 3];
+  WriteLn(b.Count, ' ', b.Item[1], ' ', b.Count + b.Item[2]);
+  b.Item[1] := 20;
+  b.Item[2] += 5;
+  b.Item[0] -= 1;
+  b.Item[1] *= 2;
+  WriteLn(b.FItems, ' ', Log);
+
+  b.Name := 'box';
+  b.Name += 'x';
+  WriteLn(b.Name);
+
+  b.Width := 3;
+  b.Width += 4;
+  b.Width := b.Width * 2;
+  WriteLn(b.Width);
+
+  o.Inner.Width := 7;
+  o.Inner.Name := 'in';
+  WriteLn(o.Inner.Width);
+
+  SetLength(o.List, 2);
+  o.List[1].Width := 9;
+  o.List[1].Width += 1;
+  WriteLn(o.List[1].Width, ' ', o.List[0].Width);
+
+  WriteLn(MakeBox(4).Count, ' ', MakeBox(5).Width);
+  Show(o.Inner.Width, o.Inner.Name);
+
+  with o.Inner do
+  begin
+    Width := 11;
+    Width += 1;
+    WriteLn(Width);
+  end;
+
+  for i := 0 to 1 do
+    o.List[i].Width := i * 10;
+  WriteLn(o.List[0].Width + o.List[1].Width);
+end.

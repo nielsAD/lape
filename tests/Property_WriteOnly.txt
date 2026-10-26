@@ -1,0 +1,1 @@
+Property "TB.Sink" can only be written at line 8, column 9 in file "Property_WriteOnly.lap"

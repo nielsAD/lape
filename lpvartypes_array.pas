@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lptree, lpvartypes, lpvartypes_helper;
+  lptypes, lptree, lpinvoke, lpvartypes, lpvartypes_helper;
 
 type
   TLapeType_DynArray = class(TLapeType_Pointer)

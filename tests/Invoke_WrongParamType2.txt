@@ -1,0 +1,1 @@
+Expected variable of type "Int32", got "Int64" at line 6, column 5 in file "Invoke_WrongParamType2.lap"

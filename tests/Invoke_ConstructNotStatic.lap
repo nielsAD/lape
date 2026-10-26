@@ -1,0 +1,14 @@
+type
+  TObj = object
+    x: Int32;
+  end;
+
+function TObj.Construct: TObj;
+begin
+end;
+
+var
+  o: TObj;
+begin
+  o := new TObj();
+end.

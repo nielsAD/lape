@@ -1,0 +1,18 @@
+type
+  TObj = object
+    x: Int32;
+  end;
+
+function TObj.Construct(i: Int32): TObj; static; overload;
+begin
+end;
+
+function TObj.Construct(s: String): TObj; static; overload;
+begin
+end;
+
+var
+  o: TObj;
+begin
+  o := new TObj(1.5, Int64(2));
+end.

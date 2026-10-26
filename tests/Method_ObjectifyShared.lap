@@ -1,0 +1,54 @@
+// Objectify makes one method for each type of method (and way to call it): what is objectified is still what is called
+type
+  TF = function(x: Int32): Int32 of object;
+
+function Twice(x: Int32): Int32;
+begin
+  Result := x * 2;
+end;
+
+function Squared(x: Int32): Int32;
+begin
+  Result := x * x;
+end;
+
+procedure AddOne(var x: Int32);
+begin
+  x := x + 1;
+end;
+
+procedure Show(x: Int32);
+begin
+  x := x + 100;
+  WriteLn('show ', x);
+end;
+
+var
+  a, b: TF;
+  ByRef: procedure(var x: Int32) of object;
+  ByValue: procedure(x: Int32) of object;
+  Host, Script: function(Min, Max: Int64): Int64 of object;
+  n: Int32;
+
+function Fixed(Min, Max: Int64): Int64;
+begin
+  Result := Min + Max;
+end;
+
+begin
+  a := Objectify(@Twice);
+  b := Objectify(@Squared);
+  WriteLn(a(5), ' ', b(5), ' ', a(7), ' ', b(7));
+
+  n := 1;
+  ByRef := Objectify(@AddOne);
+  ByValue := Objectify(@Show);
+  ByRef(n);
+  ByRef(n);
+  ByValue(n);
+  WriteLn('n ', n);
+
+  Host := Objectify(@Random[0]);
+  Script := Objectify(@Fixed);
+  WriteLn(Host(4, 4), ' ', Script(4, 4), ' ', Host(6, 6), ' ', Script(6, 6));
+end.

@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpvartypes, lptokenizer, lptree;
+  lptypes, lpvartypes, lptokenizer, lptree, lpinvoke;
 
 const
   ParserToken_ExpressionEnd = [tk_sym_SemiColon];
@@ -108,7 +108,8 @@ type
     FTokenizers: TLapeTokenizerArray;
     FTokenizer: Integer;
     FInPeek: Boolean;
-	FLastTok: EParserToken;
+    FNoInvokeNext: Boolean;
+    FLastTok: EParserToken;
 
     FInternalMethodMap: TLapeInternalMethodMap;
     FTree: TLapeTree_Base;
@@ -2012,6 +2013,7 @@ begin
       Insert(Value, Expr, startPos);
     end;
 
+  ExprBase := nil;
   try
     OldState := getTempTokenizerState(Expr);
     Tokenizer.OverridePos := @ADocPos;
@@ -2025,6 +2027,7 @@ begin
 
     Result := Res.AsInteger <> 0;
   finally
+    ExprBase.Free();
     resetTokenizerState(OldState);
   end;
 end;
@@ -2822,6 +2825,7 @@ var
   OfType: TLapeType;
   DeclList: TLapeDeclarationList;
   LocalDecl: Boolean;
+  Old: TLapeGlobalVar;
 
   procedure RemoveSelfVar;
   begin
@@ -2920,6 +2924,36 @@ var
     FStackInfo.addDeclaration(Inh);
   end;
 
+  function FromParent(Old: TLapeGlobalVar): Boolean;
+  var
+    Typ: TLapeType;
+    Decl: TLapeDeclaration;
+    j: Integer;
+  begin
+    Result := False;
+    if (OfType = nil) or Old.DoManage then
+      Exit;
+
+    Typ := OfType;
+    while (Typ.AliasType <> nil) do
+      Typ := Typ.AliasType;
+    if (Typ.ParentType = nil) then
+      Exit;
+
+    Decl := Typ.ParentType.getDeclaration(FuncName);
+    if (not (Decl is TLapeGlobalVar)) or (Decl = Old) then
+      Exit;
+    if (TLapeGlobalVar(Decl).VarType is TLapeType_OverloadedMethod) then
+    begin
+      with TLapeType_OverloadedMethod(TLapeGlobalVar(Decl).VarType) do
+        for j := 0 to MethodCount - 1 do
+          if (Methods[j] <> Old) and (Methods[j].Ptr = Old.Ptr) then
+            Exit(True);
+    end
+    else
+      Result := (TLapeGlobalVar(Decl).Ptr = Old.Ptr);
+  end;
+
 begin
   Result := nil;
   Pos := Tokenizer.DocPos;
@@ -2993,7 +3027,9 @@ begin
         begin
           if (OldDeclaration <> nil) then
           begin
-            if (not LocalDecl) and (OldDeclaration.DeclarationList <> nil) then
+            if (not LocalDecl) and (OldDeclaration.DeclarationList <> nil) and
+               (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_OverloadedMethod))
+            then
               OldDeclaration := TLapeGlobalVar(OldDeclaration).CreateCopy(False);
             addMethod(OldDeclaration as TLapeGlobalVar);
           end;
@@ -3026,16 +3062,25 @@ begin
         if (not LocalDecl) then
         begin
           Overloads := TLapeType_OverloadedMethod.Create(Self, '', @Pos);
+          Overloads.MethodDef := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).MethodDef;
           DeclList.addDeclaration(Overloads);
           Overloads.addMethod(TLapeGlobalVar(OldDeclaration));
           OldDeclaration := Overloads.NewGlobalVar(FuncName, @FuncHeader._DocPos);
           DeclList.addDeclaration(OldDeclaration);
         end;
 
-        if LocalDecl then
-          OldDeclaration := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).getMethod(FuncHeader)
-        else
-          OldDeclaration := TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType).overrideMethod(Result.Method)
+        with TLapeType_OverloadedMethod(TLapeGlobalVar(OldDeclaration).VarType) do
+          if LocalDecl then
+          begin
+            Old := getMethod(FuncHeader);
+            LocalDecl := (Old = nil) or (not FromParent(Old));
+            if LocalDecl then
+              OldDeclaration := Old
+            else
+              OldDeclaration := overrideMethod(Result.Method, Old);
+          end
+          else
+            OldDeclaration := overrideMethod(Result.Method);
       end;
 
       if (OldDeclaration = nil) or (not (OldDeclaration is TLapeGlobalVar)) or TLapeGlobalVar(OldDeclaration).Readable or TLapeGlobalVar(OldDeclaration).Writeable or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
@@ -3154,7 +3199,8 @@ begin
     if isExternal then
       Exit;
 
-    if (FuncForwards <> nil) and (OldDeclaration is TLapeGlobalVar) then
+    // (the body of a forward: not of a parent's that this overrides, whose own body is still to come)
+    if (FuncForwards <> nil) and (OldDeclaration is TLapeGlobalVar) and (Result.Method = OldDeclaration) then
       FuncForwards.DeleteItem(TLapeGlobalVar(OldDeclaration));
 
     // (implicit Self: the body is in a with of Self, or of the type in a static method, while it is read)
@@ -4100,9 +4146,45 @@ var
     end;
   end;
 
-  function ResolveMethods(Node: TLapeTree_Base; SkipTop: Boolean): TLapeTree_Base;
+  function ResolveMethods(Node: TLapeTree_Base; SkipTop: Boolean; NoInvoke: Boolean = False): TLapeTree_Base;
 
-    function Resolve(Node: TLapeTree_Base; Top, Recurse: Boolean; out HasChanged: Boolean): TLapeTree_Base;
+    // (@Method: the method)
+    function AddrOfMethod(Node: TLapeTree_ExprBase): Boolean;
+    begin
+      Result := (Node is TLapeTree_Operator) and (TLapeTree_Operator(Node).OperatorType = op_Addr) and
+                (TLapeTree_Operator(Node).Left <> nil) and IsMethod(TLapeTree_Operator(Node).Left.resType());
+    end;
+
+    function MethodOrNil(Node: TLapeTree_ExprBase; out IsNil: Boolean): Boolean;
+    begin
+      IsNil := (Node <> nil) and (Node.resType() is TLapeType_NilPointer);
+      Result := IsNil or AddrOfMethod(Node) or
+                ((Node <> nil) and IsMethod(Node.resType()) and (not IsProperty(Node.resType())));
+    end;
+
+    // f = nil, f <> nil: what is compared with nil is the method, not what calling it gives (between two methods it is
+    // what they give, with autoinvoke: @f is the method then)
+    function ComparesMethods(Op: TLapeTree_Operator): Boolean;
+    var
+      LeftNil, RightNil: Boolean;
+    begin
+      Result := (Op.OperatorType in [op_cmp_Equal, op_cmp_NotEqual]) and MethodOrNil(Op.Left, LeftNil) and
+                MethodOrNil(Op.Right, RightNil) and (LeftNil <> RightNil);
+    end;
+
+    function StripAddr(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
+    begin
+      Result := Node;
+      if AddrOfMethod(Node) then
+      begin
+        Result := TLapeTree_Operator(Node).Left;
+        Result.Parent := nil;
+        Node.Free();
+      end;
+    end;
+
+    // (IsRoot: Node is the whole expression)
+    function Resolve(Node: TLapeTree_Base; Top, Recurse: Boolean; out HasChanged: Boolean; IsRoot: Boolean = False): TLapeTree_Base;
 
       function ResolveProperty(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
       var
@@ -4136,7 +4218,8 @@ var
 
         if IsProperty(Node.resType) or ((Op in AssignOperators) and IsProperty(TLapeTree_Operator(Node).Left.resType())) then
           Result := ResolveProperty(Node)
-        else if (lcoAutoInvoke in Node.CompilerOptions) and (not (Op in AssignOperators)) and IsMethod(Node.resType()) then
+        else if (lcoAutoInvoke in Node.CompilerOptions) and (not (Op in AssignOperators)) and IsMethod(Node.resType()) and
+                (not (NoInvoke and IsRoot)) then
           Result := TLapeTree_Invoke.Create(Node, Node)
         else if (Op = op_Addr) and IsMethod(TLapeTree_Operator(Node).Left.resType()) then
         begin
@@ -4163,6 +4246,13 @@ var
 
       if (Result <> Node) then
         HasChanged := Recurse
+      else if (Node is TLapeTree_Operator) and ComparesMethods(TLapeTree_Operator(Node)) then
+        with TLapeTree_Operator(Node) do
+        begin
+          Left := StripAddr(Left);
+          Right := StripAddr(Right);
+          HasChanged := False;
+        end
       else if (Node is TLapeTree_Operator) then
         with TLapeTree_Operator(Node) do
         begin
@@ -4181,7 +4271,7 @@ var
   var
     HasChanged: Boolean;
   begin
-    Result := Resolve(Node, not SkipTop, not SkipTop, HasChanged);
+    Result := Resolve(Node, not SkipTop, not SkipTop, HasChanged, True);
   end;
 
   // return false = need parseOperator
@@ -4293,9 +4383,30 @@ var
   InExpr: Integer;
   Expr: TLapeTree_ExprBase;
   Method: TLapeTree_Invoke;
+  NoInvoke: Boolean;
+
+  // Whether parameter Index of what Call calls takes anything (no type): of one method, not of overloads
+  function UntypedParam(Call: TLapeTree_Invoke; Index: Integer): Boolean;
+  var
+    Typ: TLapeType;
+  begin
+    Result := False;
+    if TLapeTree_Base.isEmpty(Call.Callee) then
+      Exit;
+    Typ := Call.Callee.resType();
+    if (Typ is TLapeType_Method) then
+      with TLapeType_Method(Typ) do
+      begin
+        Index := Index + ImplicitParams;
+        Result := (Index < Params.Count) and (Params[Index].VarType = nil);
+      end;
+  end;
+
 begin
   Result := nil;
   Method := nil;
+  NoInvoke := FNoInvokeNext;
+  FNoInvokeNext := False;
   VarStack := TLapeTree_NodeStack.Create();
   OpStack := TLapeTree_OpStack.Create();
   _LastNode := _None;
@@ -4408,11 +4519,16 @@ begin
 
               if (Next() <> tk_sym_ParenthesisClose) then
               begin
+                FNoInvokeNext := UntypedParam(Method, 0);
                 Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True)));
                 while True do
                   case Tokenizer.Tok of
                     tk_sym_ParenthesisClose: Break;
-                    tk_sym_Comma: Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], True, True)));
+                    tk_sym_Comma:
+                      begin
+                        FNoInvokeNext := UntypedParam(Method, Method.Params.Count);
+                        Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], True, True)));
+                      end;
                     else
                       LapeException(lpeClosingParenthesisExpected, Tokenizer.DocPos);
                   end;
@@ -4482,7 +4598,7 @@ begin
       else
         LapeException(lpeInvalidEvaluation, Tokenizer.DocPos);
 
-    Result := TLapeTree_ExprBase(ResolveMethods(VarStack.Pop(), False));
+    Result := TLapeTree_ExprBase(ResolveMethods(VarStack.Pop(), False, NoInvoke));
     if DoFold and (not TLapeTree_Base.isEmpty(Result)) then
       Result := TLapeTree_ExprBase(Result.FoldConstants());
   finally
@@ -5492,7 +5608,7 @@ begin
         Free();
       end
     else if (Decl is TLapeInheritedMethod) then
-      Result := TLapeTree_Inherited.Create(TLapeGlobalVar(Decl), Self, Pos)
+      Result := TLapeTree_Inherited.Create(TLapeInheritedMethod(Decl), Self, Pos)
     else if (Decl is TLapeGlobalVar) then
       Result := TLapeTree_GlobalVar.Create(TLapeGlobalVar(Decl), Self, Pos)
     else if (Decl is TLapeVar) then

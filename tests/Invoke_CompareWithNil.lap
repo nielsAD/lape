@@ -1,0 +1,14 @@
+type TF = function: Int32;
+function Five: Int32; begin Result := 5; end;
+procedure Say(s: String); begin WriteLn('say ', s); end;
+var f: TF; m: procedure(s: String);
+begin
+  f := nil;
+  WriteLn(f = nil, ' ', f <> nil, ' ', nil = f, ' ', Assigned(@f));
+  if (f <> nil) and (f() > 0) then WriteLn('not here');
+  f := @Five;
+  WriteLn(f = nil, ' ', f <> nil, ' ', nil <> f, ' ', f() + 1, ' ', Five = 5);
+  m := nil; WriteLn(m = nil);
+  m := @Say; WriteLn(m = nil);
+  if (m <> nil) then m('called');
+end.

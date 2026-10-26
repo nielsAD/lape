@@ -1,0 +1,77 @@
+type
+  TPoint = record X, Y: Int32; end;
+  TPointArray = array of TPoint;
+  TBox = record X1, Y1, X2, Y2: Int32; end;
+  TCounter = record n: Int32; end;
+
+procedure TCounter.Add(p: TPoint); overload;
+begin
+  Self.n += p.X + p.Y;
+  WriteLn('Add TPoint ', Self.n);
+end;
+
+procedure TCounter.Add(a: TPointArray); overload;
+begin
+  Self.n += Length(a);
+  WriteLn('Add TPointArray ', Self.n);
+end;
+
+procedure TCounter.Add(s: String); overload;
+begin
+  WriteLn('Add String ', s);
+end;
+
+function Pick(b: TBox): String; overload;
+begin
+  Result := 'TBox ' + ToString(b.X2);
+end;
+
+function Pick(p: TPoint; i: Int32 = 7): String; overload;
+begin
+  Result := 'TPoint ' + ToString(p.Y + i);
+end;
+
+procedure Outer;
+var
+  Seen: String;
+
+  procedure Show(p: TPoint); overload;
+  begin
+    Seen += 'P';
+    WriteLn(Seen, ' ', p.X, ' ', p.Y);
+  end;
+
+  procedure Show(b: TBox); overload;
+  begin
+    Seen += 'B';
+    WriteLn(Seen, ' ', b.X1, ' ', b.Y2);
+  end;
+
+  procedure Show(s: String); overload;
+  begin
+    WriteLn('String ', s);
+  end;
+
+begin
+  Seen := '';
+  Show([1, 2]);
+  Show([1, 2, 3, 4]);
+  Show('x');
+  Show([5, 6]);
+end;
+
+var
+  c: TCounter;
+begin
+  Outer();
+
+  c.Add([1, 2]);
+  c.Add([[1, 2], [3, 4], [5, 6]]);
+  c.Add('s');
+
+  // every field first, then not every field
+  WriteLn(Pick([1, 2, 3, 4]));
+  WriteLn(Pick([1, 2]));
+  WriteLn(Pick([1, 2], 1));
+  WriteLn(Pick([1, 2, 3]));
+end.

@@ -1,0 +1,1 @@
+Invalid construct method: "Result is not object type" at line 6, column 15 in file "Invoke_ConstructResult.lap"

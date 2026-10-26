@@ -1,0 +1,77 @@
+type
+  TCounter = record n: Int32; end;
+  TF = function(n: Int32): Int64;
+
+function Fib(n: Int32): Int64;
+begin
+  if n < 2 then
+    Result := n
+  else
+    Result := Fib(n - 1) + Fib(n - 2);
+end;
+
+function IsEven(n: Int32): Boolean; forward;
+
+function IsOdd(n: Int32): Boolean;
+begin
+  if n = 0 then
+    Result := False
+  else
+    Result := IsEven(n - 1);
+end;
+
+function IsEven(n: Int32): Boolean;
+begin
+  if n = 0 then
+    Result := True
+  else
+    Result := IsOdd(n - 1);
+end;
+
+function Outer(depth: Int32): Int32;
+var
+  calls: Int32;
+
+  function Inner(n: Int32): Int32;
+  begin
+    Inc(calls);
+    if n <= 0 then
+      Result := depth
+    else
+      Result := Inner(n - 1) + 1;
+  end;
+
+begin
+  calls := 0;
+  Result := Inner(depth) * 1000 + calls;
+end;
+
+var
+  F: TF;
+
+function Down(n: Int32): Int64;
+begin
+  if n = 0 then
+    Result := 0
+  else
+    Result := F(n - 1) + n;
+end;
+
+procedure TCounter.CountDown(k: Int32);
+begin
+  Inc(Self.n);
+  if k > 0 then
+    Self.CountDown(k - 1);
+end;
+
+var
+  c: TCounter;
+begin
+  WriteLn(Fib(22));
+  WriteLn(IsEven(3000), ' ', IsOdd(3001), ' ', IsEven(2999));
+  WriteLn(Outer(500));
+  F := @Down;
+  WriteLn(F(2000));
+  c.CountDown(1500);
+  WriteLn(c.n);
+end.

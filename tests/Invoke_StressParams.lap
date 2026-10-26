@@ -1,0 +1,39 @@
+type
+  TR = record a: Int32; s: String; arr: array of Int32; end;
+
+function Many(a: Int32; b: Int64; c: Double; d: String; e: Char; f: Boolean; g: TR; h: array of Int32;
+  i: UInt8; j: Int16; k: String = 'k'; l: Int32 = 12; m: Double = 0.5): String;
+begin
+  Result := IntToStr(a) + IntToStr(b) + IntToStr(Round(c * 100)) + d + e + BoolToStr(f, 'T', 'F') + IntToStr(g.a) + g.s +
+    IntToStr(Length(g.arr)) + IntToStr(Length(h)) + IntToStr(i) + IntToStr(j) + k + IntToStr(l) + IntToStr(Round(m * 100));
+end;
+
+procedure Refs(var a: Int32; var s: String; var r: TR; out o: Int32; const c: String; constref cr: TR);
+begin
+  a := a * 2;
+  s := s + c + cr.s;
+  r.a := r.a + cr.a;
+  r.arr += a;
+  o := a + Length(s);
+end;
+
+var
+  r, q: TR;
+  i, x, o, Total: Int32;
+  s: String;
+begin
+  r.a := 7; r.s := 'r'; r.arr := [1, 2, 3];
+  WriteLn(Many(1, 2, 3.5, 'd', 'e', True, r, [1, 2], 9, -10));
+  WriteLn(Many(1, 2, 3.5, 'd', 'e', False, r, [], 9, -10, 'K', 1, 2.25));
+
+  x := 1; s := ''; q.a := 1; q.s := 'q';
+  Total := 0;
+  for i := 1 to 20 do
+  begin
+    Refs(x, s, r, o, IntToStr(i), q);
+    Total := Total + o;
+    if x > 1000 then
+      x := 1;
+  end;
+  WriteLn(x, ' ', Length(s), ' ', r.a, ' ', Length(r.arr), ' ', Total);
+end.

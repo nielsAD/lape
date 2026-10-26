@@ -1,0 +1,1 @@
+Invalid construct method: "Not static method" at line 6, column 15 in file "Invoke_ConstructNotStatic.lap"

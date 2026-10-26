@@ -1,0 +1,22 @@
+type
+  TR = record n: Int32; s: String; end;
+  PR = ^TR;
+procedure TR.Add(x: Int32); begin Self.n += x; end;
+function TR.Get: Int32; begin Result := Self.n; end;
+function TR.Twice: Int32; overload; begin Result := Self.n * 2; end;
+function TR.Twice(k: Int32): Int32; overload; begin Result := Self.n * 2 * k; end;
+procedure TR.Inner; begin Add(5); Self.Add(1); end;
+function MakeR(n: Int32): TR; begin Result.n := n; end;
+const C: TR = [7, 'c'];
+var r: TR; p: PR; arr: array of TR; i: Int32; Calls: Int32;
+function Pick(i: Int32): Int32; begin Inc(Calls); Result := i; end;
+begin
+  r.Add(2); r.Inner(); WriteLn(r.Get(), ' ', r.Twice(), ' ', r.Twice(3));
+  WriteLn(C.Get(), ' ', C.Twice(2), ' ', MakeR(4).Get(), ' ', MakeR(5).Twice());
+  p := @r; p^.Add(10); WriteLn(p^.Get(), ' ', r.n);
+  SetLength(arr, 3);
+  for i := 0 to 2 do arr[i].Add(i * 10);
+  arr[Pick(1)].Add(1);
+  WriteLn(arr[0].Get(), ' ', arr[1].Get(), ' ', arr[2].Twice(), ' ', Calls);
+  with arr[2] do begin Add(1); WriteLn(Get()); end;
+end.

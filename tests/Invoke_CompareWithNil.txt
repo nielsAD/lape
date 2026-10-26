@@ -1,0 +1,5 @@
+True False True False
+False True True 6 True
+True
+False
+say called

@@ -1,0 +1,9 @@
+procedure Outer;
+var
+  a: Int32;
+  procedure N(x: Int32); begin a := x; end;
+begin
+  N(1,   2);
+end;
+begin
+end.

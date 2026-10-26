@@ -1,0 +1,49 @@
+type
+  TR = record v: Int32; end;
+
+var
+  r: TR;
+  Calls, Gets: Int32;
+
+property TR.P: Int32;
+begin
+  Result := Self.v;
+end;
+
+property TR.P(x: Int32);
+begin
+  Self.v := x;
+end;
+
+property TR.Q(i: Int32): Int32;
+begin
+  Result := Self.v + i;
+end;
+
+property TR.Q(i: Int32; x: Int32);
+begin
+  Self.v := x - i;
+end;
+
+function Get: ^TR;
+begin
+  Inc(Calls);
+  Result := @r;
+end;
+
+function Idx: Int32;
+begin
+  Inc(Gets);
+  Result := 10;
+end;
+
+begin
+  r.v := 1;
+  Get()^.P += 5;
+  WriteLn(r.v, ' calls ', Calls);
+  Get()^.Q[Idx()] += 3;
+  WriteLn(r.v, ' calls ', Calls, ' gets ', Gets);
+  Get()^.P *= 2;
+  Get()^.Q[Idx()] -= 1;
+  WriteLn(r.v, ' calls ', Calls, ' gets ', Gets);
+end.

@@ -122,6 +122,8 @@ const
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';
   lpeNoMatchingProperty = 'No matching property found';
   lpeNoProperty = 'Don''t know which property to call with params (%s)';
+  lpePropertyReadOnly = 'Property "%s" can only be read';
+  lpePropertyWriteOnly = 'Property "%s" can only be written';
   lpeNoOverloadedMethod = 'Don''t know which overloaded method to call with params (%s)';
   lpeNeedMoreBuckets = 'Need more hash buckets (currently %d)';
   lpeOperatorExpected = 'Operator expected';

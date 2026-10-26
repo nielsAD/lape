@@ -1,0 +1,14 @@
+procedure Outer(const c: Int32);
+
+  procedure Inner;
+  begin
+    c := 2;
+  end;
+
+begin
+  Inner();
+end;
+
+begin
+  Outer(1);
+end.

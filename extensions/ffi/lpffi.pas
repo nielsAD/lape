@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes, lpvartypes, lpvartypes_array, lpcompiler, lptree,
+  lptypes, lpvartypes, lpvartypes_array, lpcompiler, lptree, lpinvoke,
   ffi, lpffiwrappers;
 
 type

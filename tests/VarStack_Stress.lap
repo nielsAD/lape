@@ -1,0 +1,309 @@
+type
+  PInt = ^Int32;
+  TPad8 = record a, b, c, d, e, f, g, h: Int64; end;
+  TPad64 = record a, b, c, d, e, f, g, h: TPad8; end;
+  TPad512 = record a, b, c, d, e, f, g, h: TPad64; end;
+  // (32768 bytes: more than a part of the varstack holds)
+  TPad4096 = record a, b, c, d, e, f, g, h: TPad512; end;
+
+  // A shape: a method that is called `depth` deep. It counts itself in acc, writes how deep it is where p points
+  // (a local of what called it), and gives back how many calls it came to in all, itself included.
+  TShape = function(depth: Int32; var acc: Int64; p: PInt): Int64;
+
+var
+  Shapes: array of TShape;
+  Seed: UInt32;
+  Budget, MaxDepth: Int32;
+  Narrow: Boolean;
+  Entered, Deepest, Raised, Caught, Failures: Int32;
+
+function Rnd(n: Int32): Int32;
+begin
+  Seed := (Seed * 1103515245 + 12345) and $7FFFFFFF;
+  Result := (Seed shr 8) mod n;
+end;
+
+procedure Wrong(what: String; depth: Int32);
+begin
+  Inc(Failures);
+  if (Failures <= 8) then
+    WriteLn('  WRONG, ', depth, ' deep: ', what);
+end;
+
+// What every shape starts with
+procedure Enter(depth: Int32; var acc: Int64; p: PInt);
+begin
+  Inc(Entered);
+  if (depth > Deepest) then
+    Deepest := depth;
+  acc := acc + 1;
+  p^ := depth;
+end;
+
+// Calls a shape, one deeper: or nothing, when it has gone on long enough
+function Deeper(depth: Int32; var acc: Int64; p: PInt): Int64;
+var
+  f: TShape;
+  which: Int32;
+begin
+  if (Entered >= Budget) or (depth >= MaxDepth) or ((not Narrow) and (Rnd(100) < 10)) then
+    Exit(0);
+
+  // (the first one has a frame that is too big to have a few thousand of)
+  which := Rnd(Length(Shapes));
+  if Narrow and (which = 0) then
+    which := 1;
+
+  f := @Shapes[which];
+  Result := f(depth + 1, acc, p);
+end;
+
+// (one more, unless it is to go deep and not wide)
+function DeeperToo(depth: Int32; var acc: Int64; p: PInt): Int64;
+begin
+  if Narrow then
+    Exit(0);
+  Result := Deeper(depth, acc, p);
+end;
+
+// --- the shapes
+
+// a frame that does not fit where it is called
+function Big(depth: Int32; var acc: Int64; p: PInt): Int64;
+var
+  first: Int64;
+  pad: TPad4096;
+  mine: Int32;
+  last: Int64;
+begin
+  Enter(depth, acc, p);
+  first := depth;
+  pad.a.a.a.a := depth;
+  pad.h.h.h.h := -depth;
+  last := depth * 3;
+  mine := -1;
+
+  Result := 1 + Deeper(depth, acc, @mine);
+
+  if (first <> depth) or (pad.a.a.a.a <> depth) or (pad.h.h.h.h <> -depth) or (last <> depth * 3) then
+    Wrong('a big frame', depth);
+  if (pad.d.d.d.d <> 0) or (pad.e.a.a.a <> 0) then
+    Wrong('a big frame that did not start empty', depth);
+  if (Result > 1) and (mine <> depth + 1) then
+    Wrong('a local of a big frame, written through a pointer', depth);
+end;
+
+function Small(depth: Int32; var acc: Int64; p: PInt): Int64;
+var
+  first, mine: Int32;
+  before: Int64;
+  last: Int32;
+begin
+  Enter(depth, acc, p);
+  first := depth * 7 + 1;
+  last := -first;
+  mine := -1;
+  before := acc;
+
+  Result := 1 + Deeper(depth, acc, @mine) + DeeperToo(depth, acc, @mine);
+
+  if (first <> depth * 7 + 1) or (last <> -first) then
+    Wrong('locals', depth);
+  if (acc - before <> Result - 1) then
+    Wrong('what was counted through a var parameter', depth);
+  if (Result > 1) and (mine <> depth + 1) then
+    Wrong('a local written through a pointer', depth);
+end;
+
+// something to clean up, which is looked at on the way out whatever the way is
+function Managed(depth: Int32; var acc: Int64; p: PInt): Int64;
+var
+  s: String;
+  a: array of Int32;
+  mine: Int32;
+begin
+  Enter(depth, acc, p);
+  s := 'depth' + ToString(depth);
+  SetLength(a, depth + 1);
+  a[depth] := depth;
+  mine := -1;
+
+  try
+    Result := 1 + Deeper(depth, acc, @mine);
+  finally
+    if (s <> 'depth' + ToString(depth)) or (Length(a) <> depth + 1) or (a[depth] <> depth) then
+      Wrong('what a frame has to clean up', depth);
+  end;
+end;
+
+// (a call that is made while what it is for is being passed: what came of it deeper goes into below)
+function Through(depth: Int32; var acc: Int64; p: PInt; var below: Int64): Int64;
+begin
+  below := below + Deeper(depth, acc, p);
+  Result := 100;
+end;
+
+function Mix(a: Int32; b: TPad8; c: Int64; d: TPad64; e: Int32; f: Int64; g: UInt8; h: Double; i: Int32): Int64;
+begin
+  Result := a + b.a + b.h + c + d.a.a + d.h.h + e + f + g + Round(h) + i;
+end;
+
+// a lot is passed, of every size, and some of it is worked out by calls while the rest is passed already
+function ManyArgs(depth: Int32; var acc: Int64; p: PInt): Int64;
+var
+  b: TPad8;
+  d: TPad64;
+  mine: Int32;
+  below, got: Int64;
+begin
+  Enter(depth, acc, p);
+  b.a := depth;
+  b.h := 2;
+  d.a.a := 3;
+  d.h.h := depth;
+  mine := -1;
+  below := 0;
+
+  got := Mix(depth, b, Through(depth, acc, @mine, below), d, 5, Through(depth, acc, @mine, below), 7, 8.0, depth);
+
+  if (got <> 4 * depth + 225) then
+    Wrong('what was passed, with calls in between', depth);
+  if (b.a <> depth) or (b.h <> 2) or (d.a.a <> 3) or (d.h.h <> depth) then
+    Wrong('what was passed by value, afterwards', depth);
+  Result := 1 + below;
+end;
+
+function Catches(depth: Int32; var acc: Int64; p: PInt): Int64;
+var
+  first, mine: Int32;
+  before: Int64;
+begin
+  Enter(depth, acc, p);
+  first := depth * 11;
+  mine := -1;
+  before := acc;
+
+  try
+    Result := 1 + Deeper(depth, acc, @mine) + DeeperToo(depth, acc, @mine);
+  except
+    // (what was called before it was raised is counted all the same)
+    Inc(Caught);
+    Result := acc - before + 1;
+  end;
+
+  if (first <> depth * 11) or (acc - before <> Result - 1) then
+    Wrong('the frame that caught', depth);
+end;
+
+function Raises(depth: Int32; var acc: Int64; p: PInt): Int64;
+var
+  mine: Int32;
+begin
+  Enter(depth, acc, p);
+  mine := -1;
+  Result := 1 + Deeper(depth, acc, @mine);
+
+  if (not Narrow) and (Rnd(100) < 35) then
+  begin
+    Inc(Raised);
+    raise 'raised ' + ToString(depth) + ' deep';
+  end;
+end;
+
+// a method in it uses what it has, also when that method calls itself and what it calls comes back here
+function Nests(depth: Int32; var acc: Int64; p: PInt): Int64;
+var
+  mine, local: Int32;
+  below: Int64;
+
+  procedure Inner(times: Int32);
+  begin
+    local := local + 1;
+    below := below + Deeper(depth, acc, @mine);
+    if (times > 1) and (not Narrow) then
+      Inner(times - 1);
+  end;
+
+begin
+  Enter(depth, acc, p);
+  local := depth;
+  mine := -1;
+  below := 0;
+
+  Inner(2);
+
+  if Narrow then
+    local := local + 1;
+  if (local <> depth + 2) then
+    Wrong('a local used by a method in the method', depth);
+  if (below > 0) and (mine <> depth + 1) then
+    Wrong('a local written through a pointer, passed on by a method in the method', depth);
+  Result := 1 + below;
+end;
+
+function GivesBig(depth: Int32): TPad512;
+begin
+  Result.a.a.a := depth;
+  Result.h.h.h := -depth;
+end;
+
+// what a call gives is written where it goes: into this frame, after calls that could have moved things
+function Results(depth: Int32; var acc: Int64; p: PInt): Int64;
+var
+  r: TPad512;
+  mine: Int32;
+  list: array of TPad64;
+begin
+  Enter(depth, acc, p);
+  mine := -1;
+  r.d.d.d := 77;
+  Result := 1 + Deeper(depth, acc, @mine);
+
+  r := GivesBig(depth);
+  SetLength(list, 3);
+  list[2] := GivesBig(depth + 1).h;
+  if (r.a.a.a <> depth) or (r.h.h.h <> -depth) or (r.d.d.d <> 0) or (list[2].h.h <> -(depth + 1)) then
+    Wrong('what a call gave', depth);
+end;
+
+// --- a walk, from one seed
+
+procedure Walk(name: String; ASeed: UInt32; ABudget, AMaxDepth: Int32; ANarrow: Boolean);
+var
+  acc, n: Int64;
+  mine: Int32;
+begin
+  Seed := ASeed;
+  Budget := ABudget;
+  MaxDepth := AMaxDepth;
+  Narrow := ANarrow;
+  Entered := 0;
+  Deepest := 0;
+  Raised := 0;
+  Caught := 0;
+
+  acc := 0;
+  mine := -1;
+  try
+    n := Catches(0, acc, @mine);
+  except
+    n := -1;
+  end;
+
+  if (n <> acc) or (acc <> Entered) then
+    Wrong('every call counted, by all three ways of counting', 0);
+  WriteLn(name, ' ', ASeed, ': ', Entered, ' calls, ', Deepest, ' deep, ', Raised, ' raised, ', Caught, ' caught');
+end;
+
+var
+  i: Int32;
+begin
+  Shapes := [@Big, @Small, @Managed, @ManyArgs, @Catches, @Raises, @Nests, @Results];
+
+  for i := 1 to 8 do
+    Walk('wide', i * 7919, 4000, 60, False);
+  for i := 1 to 3 do
+    Walk('deep', i * 104729, 6000, 3000, True);
+
+  WriteLn('wrong: ', Failures);
+end;

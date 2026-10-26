@@ -1,0 +1,31 @@
+type
+  TA = record a: Int32; end;
+  TB = type TA;
+
+function TA.F(x: Int32): String; overload;
+begin
+  Result := 'A1';
+end;
+
+function TA.F(x, y: Int32): String; overload;
+begin
+  Result := 'A2';
+end;
+
+function TB.F(x: Int32): String; override;
+begin
+  Result := 'B1 ' + inherited();
+end;
+
+function TB.F(x, y: Int32): String; override;
+begin
+  Result := 'B2 ' + inherited();
+end;
+
+var
+  a: TA;
+  b: TB;
+begin
+  WriteLn(a.F(1), ' ', a.F(1, 2));
+  WriteLn(b.F(1), ' ', b.F(1, 2));
+end.

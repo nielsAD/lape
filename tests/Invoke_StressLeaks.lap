@@ -1,0 +1,70 @@
+type
+  TR = record s: String; arr: array of String; end;
+  TObj = object s: String; list: array of TR; end;
+  TF = function(a: String; r: TR): TR;
+
+function TObj.Construct(s: String): TObj; static;
+begin
+  Result.s := s;
+  SetLength(Result.list, 2);
+  Result.list[1].s := s + s;
+end;
+
+function TObj.Get(): String;
+begin
+  Result := Self.s + Self.list[1].s;
+end;
+
+property TR.Text(): String;
+begin
+  Result := Self.s;
+end;
+
+property TR.Text(v: String);
+begin
+  Self.s := v;
+  Self.arr += v;
+end;
+
+function Make(s: String): TR;
+begin
+  Result.s := s;
+  Result.arr := [s, s + '!'];
+end;
+
+function Join(a: String; r: TR): TR;
+begin
+  Result := r;
+  Result.s := a + r.s + r.arr[High(r.arr)];
+end;
+
+procedure Once(n: Int32);
+var
+  r: TR;
+  o: TObj;
+  f: TF;
+  s: String;
+  i: Int32;
+begin
+  f := @Join;
+  r := Make(IntToStr(n));
+  for i := 1 to 5 do
+  begin
+    o := new TObj(r.s);
+    s := o.Get() + Join(Make('a').s, Make(o.Get())).s;
+    r := f(s, Make(Copy(s, 1, 8)));
+    r.Text := r.Text + 'x';
+  end;
+end;
+
+var
+  h0, h1: PtrUInt;
+  i: Int32;
+begin
+  Once(0);
+  h0 := TestHeapUsed();
+  for i := 1 to 300 do
+    Once(i);
+  h1 := TestHeapUsed();
+  WriteLn(h1 = h0, ' ', Int64(h1) - Int64(h0));
+end.

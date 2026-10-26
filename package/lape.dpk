@@ -41,6 +41,7 @@ contains
   lpinterpreter in '..\lpinterpreter.pas',
   lptokenizer in '..\lptokenizer.pas',
   lptree in '..\lptree.pas',
+  lpinvoke in '..\lpinvoke.pas',
   lptypes in '..\lptypes.pas',
   lputils in '..\lputils.pas',
   lpvartypes in '..\lpvartypes.pas',

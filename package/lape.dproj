@@ -111,6 +111,7 @@
 			<DCCReference Include="..\lpinterpreter.pas"/>
 			<DCCReference Include="..\lptokenizer.pas"/>
 			<DCCReference Include="..\lptree.pas"/>
+			<DCCReference Include="..\lpinvoke.pas"/>
 			<DCCReference Include="..\lptypes.pas"/>
 			<DCCReference Include="..\lputils.pas"/>
 			<DCCReference Include="..\lpvartypes.pas"/>

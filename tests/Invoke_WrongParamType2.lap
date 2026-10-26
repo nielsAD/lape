@@ -1,0 +1,7 @@
+procedure P(var x: Int32); begin end;
+
+var
+  i: Int64;
+begin
+  P(i);
+end.

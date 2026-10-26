@@ -4,12 +4,13 @@
 
 unit lape;
 
+{$warn 5023 off : no warning about unused units}
 interface
 
 uses
-  lpcodeemitter, lpcompiler, lpdisassembler, lpeval, lpinterpreter, lptokenizer, 
-  lptree, lptypes, lpvartypes, lpvartypes_array, lpvartypes_ord, 
-  lpvartypes_record, lputils, lpmessages;
+  lpcodeemitter, lpcompiler, lpdisassembler, lpeval, lpinterpreter, 
+  lptokenizer, lptree, lptypes, lpvartypes, lpvartypes_array, lpvartypes_ord, 
+  lpvartypes_record, lputils, lpmessages, lpinvoke;
 
 implementation
 

@@ -1,0 +1,11 @@
+P 1 2
+PB 1 4
+String x
+PBP 5 6
+Add TPoint 3
+Add TPointArray 6
+Add String s
+TBox 3
+TPoint 9
+TPoint 3
+TBox 3

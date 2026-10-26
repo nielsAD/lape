@@ -88,7 +88,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="61">
+    <Units Count="62">
       <Unit0>
         <Filename Value="lape.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -337,6 +337,10 @@
         <Filename Value="lpeval_wrappers_variant.inc"/>
         <IsPartOfProject Value="True"/>
       </Unit60>
+      <Unit61>
+        <Filename Value="lpinvoke.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit61>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

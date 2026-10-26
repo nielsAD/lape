@@ -1,0 +1,69 @@
+procedure Show(i: Int32); overload;
+begin
+  WriteLn('global, a number: ', i);
+end;
+
+procedure Show(s: String); overload;
+begin
+  WriteLn('global, a string: ', s);
+end;
+
+procedure Show(b: Boolean); overload;
+begin
+  WriteLn('global, a boolean: ', b);
+end;
+
+procedure Outer;
+
+  procedure Show(i: Int32); overload;
+  begin
+    WriteLn('in Outer, a number: ', i);
+  end;
+
+  procedure Inner;
+
+    procedure Show(s: String); overload;
+    begin
+      WriteLn('in Inner, a string: ', s);
+    end;
+
+  begin
+    Show(1);      // Outer's: nothing nearer takes a number
+    Show('a');    // Inner's own
+    Show(True);   // the global one: nothing nearer takes a boolean
+  end;
+
+begin
+  Show(2);        // Outer's own
+  Show('b');      // the global one
+  Show(False);
+  Inner();
+end;
+
+type
+  TThing = record
+    x: Int32;
+  end;
+
+procedure TThing.Show(i: Int32);
+begin
+  WriteLn('of TThing, a number: ', i + Self.x);
+end;
+
+procedure TThing.Run;
+begin
+  Self.Show(3);   // its own, through Self
+  Show(3);        // its own too: a name alone is of Self first (implicit Self)
+end;
+
+var
+  t: TThing;
+begin
+  Show(4);
+  Show('d');
+  Show(True);
+  Outer();
+  t.x := 100;
+  t.Run();
+  t.Show(5);
+end.

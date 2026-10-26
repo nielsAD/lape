@@ -1,0 +1,6 @@
+var
+  y, m: UInt16;
+  i: Int64;
+begin
+  DecodeDate(0, y, m, i);
+end.
