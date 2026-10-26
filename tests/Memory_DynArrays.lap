@@ -1,0 +1,1254 @@
+
+type
+  TIntArray = array of Int32;
+  TStrArray = array of String;
+  TGrid = array of TIntArray;
+  TItem = record name: String; values: TIntArray; n: Int32; end;
+  TItemArray = array of TItem;
+  TBox = object items: TIntArray; names: TStrArray; id: Int32; end;
+  TBoxArray = array of TBox;
+  TScenario = procedure;
+  TArrayFunc = function(a: TIntArray): TIntArray;
+
+const
+  Runs = 20;
+  Slots = 8;
+
+var
+  Failures: Int32;
+  Quiet: Boolean;
+  Seed: Int64;
+  Made, Destroyed: Int32;
+  Data: String;
+
+  // (what is global: a call can change these while something else is being done with them)
+  Kept: TIntArray;
+  Grid: TGrid;
+  Strs: TStrArray;
+  Items: TItemArray;
+
+  // (the places that the last part keeps its arrays in)
+  Pool: TGrid;
+  Recs: TItemArray;
+
+// An array is a pointer to its elements. In front of those is how long it is, and in front of that how many have it.
+function RefCount(Arr: Pointer): SizeInt;
+begin
+  if (Arr = nil) then
+    Exit(0);
+  Result := PtrInt((Arr - SizeOf(SizeInt) - SizeOf(PtrInt))^);
+end;
+
+procedure Expect(ok: Boolean; what: String);
+begin
+  if ok then
+    Exit;
+  Inc(Failures);
+  if (not Quiet) then
+    WriteLn('  WRONG: ', what);
+end;
+
+// what a part ends up with: shown on the first run, and the same on every run after it
+procedure Show(s: String);
+begin
+  Data := Data + s + ';';
+  if (not Quiet) then
+    WriteLn('  ', s);
+end;
+
+// the same, only put into the digest
+procedure Digest(s: String);
+begin
+  Data := Data + s + ';';
+end;
+
+function Hash(s: String): Int64;
+var
+  i: Int32;
+begin
+  for i := 1 to Length(s) do
+    Result := (Result * 131 + Ord(s[i])) mod 1000000007;
+end;
+
+// n numbers that follow each other, from first on
+function Make(n, first: Int32): TIntArray;
+var
+  i: Int32;
+begin
+  SetLength(Result, n);
+  for i := 0 to n - 1 do
+    Result[i] := first + i;
+end;
+
+function Sum(a: TIntArray): Int64;
+var
+  i: Int32;
+begin
+  for i := 0 to High(a) do
+    Result := Result + a[i];
+end;
+
+function MakeStrs(n: Int32; start: String): TStrArray;
+var
+  i: Int32;
+begin
+  SetLength(Result, n);
+  for i := 0 to n - 1 do
+    Result[i] := start + ToString(i);
+end;
+
+function Joined(a: TStrArray): String;
+var
+  i: Int32;
+begin
+  for i := 0 to High(a) do
+    Result := Result + a[i] + ',';
+end;
+
+function Join(a, b: TIntArray): TIntArray;
+begin
+  Result := a + b;
+end;
+
+procedure Fail(why: String);
+begin
+  raise why;
+end;
+
+// makes what it gives, and then fails
+function Failing(n: Int32): TIntArray;
+begin
+  Result := Make(n, 1);
+  raise 'failing ' + ToString(n);
+end;
+
+// The same thing a number of times: it uses as much memory after them as before, or something stays behind
+procedure Run(name: String; scenario: TScenario);
+var
+  before, after: PtrUInt;
+  i, was: Int32;
+  first: String;
+  same: Boolean;
+begin
+  was := Failures;
+  Made := 0;
+  Destroyed := 0;
+
+  Quiet := False;
+  Data := '';
+  scenario();
+  first := Data;
+  Data := '';
+  Quiet := True;
+  same := True;
+
+  before := TestHeapUsed();
+  for i := 1 to Runs do
+  begin
+    scenario();
+    if (Data <> first) then
+      same := False;
+    Data := '';
+  end;
+  after := TestHeapUsed();
+
+  if (after <> before) then
+    WriteLn(name, ': LEAKS, ', (Int64(after) - Int64(before)) div Runs, ' bytes each time')
+  else if (Failures <> was) then
+    WriteLn(name, ': WRONG')
+  else if (not same) then
+    WriteLn(name, ': WRONG, a later run ended up with something else')
+  else if (Made <> Destroyed) then
+    WriteLn(name, ': ', Made, ' objects made, ', Destroyed, ' destroyed')
+  else
+    WriteLn(name, ': ok');
+end;
+
+// --- shared, overwritten, cleared
+
+procedure Sharing;
+var
+  a, b, c: TIntArray;
+begin
+  a := Make(5, 1);
+  Expect(RefCount(Pointer(a)) = 2, 'made: it has it, and what the call gave it in');
+  b := a;
+  c := b;
+  Expect(RefCount(Pointer(a)) = 4, 'three have it, and what the call gave it in');
+  b[2] := 100;
+  Expect((a[2] = 100) and (c[2] = 100), 'a write is seen by all that have it');
+  b := Make(3, 7);
+  Expect((RefCount(Pointer(a)) = 2) and (RefCount(Pointer(b)) = 2), 'one of them has another now (and so has what the call gave it in)');
+  c := nil;
+  Expect(RefCount(Pointer(a)) = 1, 'one has it again');
+  a := a;
+  Expect((RefCount(Pointer(a)) = 1) and (Sum(a) = 112), 'assigned to itself');
+  c := a;
+  a := b;
+  b := c;
+  c := a;
+  // (a has the array that the last call of Make gave: c, and the variable it gave it in, have it too)
+  Expect((Sum(a) = 24) and (Sum(b) = 112) and (RefCount(Pointer(a)) = 3) and (RefCount(Pointer(b)) = 1), 'handed round');
+  Show('handed round: ' + ToString(a) + ' ' + ToString(b) + ' ' + ToString(c));
+  Swap(a, b);
+  Expect((Sum(a) = 112) and (Sum(b) = 24) and (Pointer(b) = Pointer(c)), 'swapped');
+  a := nil;
+  b := nil;
+  Expect(RefCount(Pointer(c)) = 2, 'the last one that has it (and what the call gave it in)');
+  Show('sharing: ' + ToString(a) + ' ' + ToString(b) + ' ' + ToString(c));
+end;
+
+procedure Lengths;
+var
+  a, b: TIntArray;
+  i: Int32;
+begin
+  SetLength(a, 4);
+  Expect((Length(a) = 4) and (Sum(a) = 0), 'new elements are 0');
+  a := Make(4, 1);
+  SetLength(a, 8);
+  Expect((Length(a) = 8) and (Sum(a) = 10) and (a[7] = 0), 'longer: what it had, then 0');
+  SetLength(a, 2);
+  Expect((Length(a) = 2) and (Sum(a) = 3), 'shorter: the first of what it had');
+
+  // another variable has it too: the one that changes how long it is gets its own
+  b := a;
+  SetLength(b, 3);
+  b[0] := 50;
+  Expect((a[0] = 1) and (Length(a) = 2), 'the other one is as it was');
+  Expect((RefCount(Pointer(a)) = 1) and (RefCount(Pointer(b)) = 1), 'each has its own');
+
+  for i := 1 to 60 do
+  begin
+    SetLength(a, (i * 7) mod 31);
+    if (Length(a) > 0) then
+      a[High(a)] := i;
+  end;
+  Show('lengths: ' + ToString(a));
+  SetLength(a, 0);
+  Expect(Pointer(a) = nil, 'no length is nothing');
+  SetLength(a, 0);
+
+  SetLength(b, 100000);
+  Expect((b[0] = 50) and (b[99999] = 0), 'a lot longer');
+  Show('a lot longer: ' + ToString(Copy(b, 0, 4)) + ' ' + ToString(Length(b)) + ' ' + ToString(Sum(b)));
+  b := [];
+  Expect(Length(b) = 0, 'emptied');
+end;
+
+// --- passed
+
+procedure ByValue(a: TIntArray);
+begin
+  Expect(Sum(a) = 10, 'by value: what was passed');
+  a[0] := 100;      // the array is the one that was passed: this is seen there
+  SetLength(a, 2);  // its own from here on
+  a[1] := -1;
+  a := Make(3, 50);
+  a := nil;
+end;
+
+procedure ByConst(const a: TIntArray);
+begin
+  Expect(Sum(a) = 109, 'const');
+end;
+
+procedure ByConstRef(constref a: TIntArray);
+begin
+  Expect(Sum(a) = 109, 'constref');
+end;
+
+procedure ByVar(var a: TIntArray);
+begin
+  a[1] := 200;
+  SetLength(a, 6);
+  a[5] := 1;
+end;
+
+procedure ByOut(out a: TIntArray);
+begin
+  a := Make(2, 7);
+end;
+
+// the same array both ways
+procedure Twice(var a: TIntArray; b: TIntArray);
+begin
+  a := nil;
+  Expect(Sum(b) = 15, 'let go of by reference, still there by value');
+  a := b;
+  a += 5;
+  Expect((Length(b) = 2) and (Length(a) = 3), 'longer through one of them only');
+end;
+
+procedure Parameters;
+var
+  a, b: TIntArray;
+begin
+  a := Make(4, 1);
+  ByValue(a);
+  Expect((a[0] = 100) and (a[1] = 2) and (Length(a) = 4), 'after by value');
+  ByConst(a);
+  ByConstRef(a);
+  ByVar(a);
+  Expect((a[1] = 200) and (Length(a) = 6) and (a[5] = 1), 'after var');
+  ByOut(b);
+  Expect(Sum(b) = 15, 'after out');
+  ByOut(a);
+  Expect(Sum(a) = 15, 'out, into what had something');
+  Twice(a, a);
+  Expect((Length(a) = 3) and (Sum(a) = 20), 'after both ways');
+
+  // what a call gives, and what is written out
+  ByValue(Make(4, 1));
+  ByValue([1, 2, 3, 4]);
+  ByConst(Join(Make(2, 100), [-92]));
+  ByValue(Join(Make(2, 1), Make(2, 3)));
+  Show('parameters: ' + ToString(a) + ' ' + ToString(b));
+end;
+
+// --- given back
+
+function Grown(a: TIntArray): TIntArray;
+begin
+  Result := a;
+  Result += Length(a);
+end;
+
+function Same(a: TIntArray): TIntArray;
+begin
+  Result := a;
+end;
+
+function FromKept: TIntArray;
+begin
+  Result := Kept;
+end;
+
+function Nothing: TIntArray;
+begin
+end;
+
+function Early(n: Int32): TIntArray;
+begin
+  if (n = 0) then
+    Exit;
+  Result := Make(n, 1);
+  if (n > 2) then
+    Exit(Make(1, 9));
+end;
+
+function Build(n: Int32): TIntArray;
+begin
+  if (n = 0) then
+    Exit;
+  Result := Build(n - 1);
+  Result += n;
+end;
+
+procedure Results;
+var
+  a, b: TIntArray;
+  i: Int32;
+begin
+  a := Make(3, 1);
+  a := Grown(a);
+  Expect((Length(a) = 4) and (Sum(a) = 9), 'a := f(a)');
+  a := Grown(Grown(a));
+  Expect((Length(a) = 6) and (Sum(a) = 18), 'a := f(f(a))');
+  b := Same(a);
+  Expect(Pointer(b) = Pointer(a), 'the same array given back');
+  a := Same(a);
+  a := Join(a, a);
+  Expect((Length(a) = 12) and (Sum(a) = 36) and (Sum(b) = 18), 'joined with itself');
+  Show('joined with itself: ' + ToString(a) + ' ' + ToString(b));
+  a := Join(Make(2, 1), Join(Make(2, 3), Make(2, 5)));
+  Expect(Sum(a) = 21, 'calls in calls');
+
+  // what a call gives and nothing uses
+  Make(100, 1);
+  Build(5);
+  Join(a, b);
+
+  a := Build(30);
+  Expect((Length(a) = 30) and (Sum(a) = 465), 'built by calls of itself');
+  Kept := Make(3, 1);
+  b := FromKept();
+  Kept := nil;
+  Expect((Sum(b) = 6) and (RefCount(Pointer(b)) = 2), 'what was global, given back (and what the call gave it in has it)');
+  a := Nothing();
+  Expect(Pointer(a) = nil, 'nothing given');
+  a := Early(0);
+  Expect(Pointer(a) = nil, 'left before anything');
+  a := Early(2);
+  Expect(Sum(a) = 3, 'to the end');
+  a := Early(5);
+  Expect(Sum(a) = 9, 'left with something else');
+  for i := 1 to 10 do
+    a := Grown(a);
+  Expect(Length(a) = 11, 'again and again');
+  Expect(Sum(Same(Same(Same(b)))) = 6, 'through three calls');
+  Expect(Length(Join(a, b)) = 14, 'what a call gives, asked how long');
+  Show('results: ' + ToString(a) + ' ' + ToString(b) + ' ' + ToString(Build(5)) + ' ' + ToString(Join(a, b)));
+end;
+
+// --- as Self
+
+function TIntArray.Total: Int64;
+var
+  i: Int32;
+begin
+  for i := 0 to Self.High do
+    Result := Result + Self[i];
+end;
+
+procedure TIntArray.Add(v: Int32);
+begin
+  Self += v;
+end;
+
+function TIntArray.Doubled: TIntArray;
+var
+  i: Int32;
+begin
+  Result := Self.Copy();
+  for i := 0 to Result.High do
+    Result[i] := Result[i] * 2;
+end;
+
+function TIntArray.AndAlso(v: Int32): TIntArray;
+begin
+  Result := Self.Copy();
+  Result += v;
+end;
+
+function TIntArray.Me: TIntArray;
+begin
+  Result := Self;
+end;
+
+procedure TIntArray.Wipe;
+begin
+  Self := nil;
+end;
+
+procedure TIntArray.Refill(n: Int32);
+begin
+  Self := Make(n, 1);
+end;
+
+procedure Methods;
+var
+  a, b: TIntArray;
+  g: TGrid;
+  it: TItem;
+begin
+  a := Make(3, 1);
+  a.Add(4);
+  b := a.Doubled();
+  Expect((a.Total() = 10) and (b.Total() = 20), 'a method that gives another array');
+  Expect(a.Doubled().Doubled().Total() = 40, 'of what a method gives');
+  Expect(Make(3, 1).AndAlso(4).AndAlso(5).Total() = 15, 'of what a call gives');
+  b := a.Me();
+  Expect(Pointer(b) = Pointer(a), 'itself given back');
+  a.Wipe();
+  Expect((Pointer(a) = nil) and (b.Total() = 10), 'let go of by itself');
+  a.Refill(5);
+  a.Refill(2);
+  a.Add(3);
+  Expect(a.Total() = 6, 'made again by itself');
+
+  // an element, and a field
+  SetLength(g, 2);
+  g[0].Add(1);
+  g[1].Refill(3);
+  g[0] := g[1].Doubled();
+  g[1].Wipe();
+  Expect((g[0].Total() = 12) and (Pointer(g[1]) = nil), 'of an element');
+  it.values.Add(7);
+  it.values.Refill(4);
+  it.values := it.values.Doubled();
+  Expect(it.values.Total() = 20, 'of a field');
+
+  // what every array can do
+  a := [5, 3, 9, 3, 1];
+  b := a.Sorted();
+  Show('sorted: ' + ToString(a) + ' ' + ToString(b));
+  Expect((b[0] = 1) and (b[4] = 9) and (a[0] = 5), 'sorted: another array');
+  a.Sort();
+  a.Reverse();
+  b := a.Reversed();
+  b := a.Unique();
+  Expect((Length(b) = 4) and (a.Total() = 21), 'unique');
+  Expect((a.Delete(1) = 5) and (a.Pop = 1) and (Length(a) = 3), 'taken out');
+  a.Insert(4, 0);
+  a.Remove(3);
+  Show('put in and taken out: ' + ToString(a));
+  b := a.Copy();
+  b := a.Slice(0, 2, 1);
+  a.Clear();
+  Expect((Pointer(a) = nil) and (b.Total() > 0), 'cleared');
+  Show('methods: ' + ToString(g) + ' ' + ToString(it.values) + ' ' + ToString(a) + ' ' + ToString(b));
+end;
+
+// --- copied
+
+procedure Copies;
+var
+  a, b, c: TIntArray;
+begin
+  a := Make(5, 1);
+  b := Copy(a);
+  b[0] := 100;
+  Expect((a[0] = 1) and (RefCount(Pointer(a)) = 1) and (RefCount(Pointer(b)) = 2), 'a copy is another array (which what Copy gave it in has too)');
+  b := Copy(a, 1, 3);
+  Expect((Length(b) = 3) and (Sum(b) = 9), 'part of it');
+  c := a + b;
+  Expect((Length(c) = 8) and (Sum(c) = 24), 'two joined');
+  c := c + 7;
+  Expect((Length(c) = 9) and (Sum(c) = 31), 'one more');
+  a += 6;
+  a := a + a;
+  Expect((Length(a) = 12) and (Sum(a) = 42), 'joined with itself');
+  Insert(0, a, 0);
+  Insert([8, 9], a, 2);
+  Expect((Length(a) = 15) and (Sum(a) = 59) and (a[2] = 8) and (a[3] = 9), 'put in');
+  Show('put in: ' + ToString(a));
+  Delete(a, 0, 2);
+  Delete(a, 5);
+  Expect((Length(a) = 5) and (Sum(a) = 26) and (a[0] = 8), 'taken out');
+
+  // another variable has it: what changes it does that to its own
+  b := a;
+  Insert(1, b, 0);
+  Expect((Length(a) = 5) and (Length(b) = 6) and (Sum(b) = 27), 'put in what is shared');
+  Delete(b, 0, 1);
+  Expect((Sum(b) = 26) and (Pointer(a) <> Pointer(b)), 'taken out again');
+  b := Copy(a, 0, 0);
+  Expect(Length(b) = 0, 'a copy of nothing');
+  a := Copy(a);
+  a := Copy(Copy(Copy(a)));
+  Expect((Sum(a) = 26) and (RefCount(Pointer(a)) = 2), 'a copy of itself');
+  Show('copies: ' + ToString(a) + ' ' + ToString(b) + ' ' + ToString(c));
+end;
+
+// --- arrays in arrays
+
+procedure Nested;
+var
+  g, h: TGrid;
+  row: TIntArray;
+  i: Int32;
+begin
+  SetLength(g, 3);
+  for i := 0 to 2 do
+    g[i] := Make(i + 2, i * 10);
+  row := g[1];
+  Expect(RefCount(Pointer(row)) = 2, 'a row that a variable has too');
+  g[1] := g[0];
+  Expect((Sum(row) = 33) and (RefCount(Pointer(row)) = 1) and (RefCount(Pointer(g[0])) = 2), 'a row overwritten by another row');
+  g[0][1] := 5;
+  Expect(g[1][1] = 5, 'written through one row, read through the other');
+
+  h := Copy(g);
+  // (g[2] is also had by the variable that the last call of Make gave it in)
+  Expect((RefCount(Pointer(g[2])) = 3) and (RefCount(Pointer(g[0])) = 4), 'a copy has the same rows');
+  h[2] := nil;
+  Expect(RefCount(Pointer(g[2])) = 2, 'a row let go of by the copy');
+  // (what Copy gave it in has it too: it is copied, and that still has all of its rows)
+  SetLength(h, 1);
+  Expect((RefCount(Pointer(g[0])) = 5) and (RefCount(Pointer(h)) = 1), 'the copy shorter: copied');
+
+  SetLength(g, 6);
+  Expect((Pointer(g[5]) = nil) and (Sum(g[2]) = 86), 'longer: rows that are new are nothing');
+  Show('longer: ' + ToString(g) + ' ' + ToString(h));
+  g[5] := row;
+  g[4] := g[5];
+  Expect(RefCount(Pointer(row)) = 3, 'the same row twice more');
+  SetLength(g, 2);
+  Expect(RefCount(Pointer(row)) = 1, 'shorter: rows let go of');
+  Swap(g[0], g[1]);
+  g[0] := g[0];
+  g += row;
+  h := g;
+  g := nil;
+  Expect((Length(h) = 3) and (RefCount(Pointer(h)) = 1) and (RefCount(Pointer(row)) = 2), 'handed over');
+  h[0] := Copy(h[2]);
+  h := h + h;
+  Expect((Length(h) = 6) and (RefCount(Pointer(row)) = 3) and (RefCount(Pointer(h[0])) = 3), 'joined with itself: every row twice');
+  h[5][0] := -1;
+  Expect((row[0] = -1) and (h[2][0] = -1), 'one row, seen from three places');
+  Show('nested: ' + ToString(h) + ' ' + ToString(row));
+end;
+
+// --- strings in arrays
+
+procedure Strings;
+var
+  a, b: TStrArray;
+  s, t: String;
+  i: Int32;
+begin
+  a := MakeStrs(4, 'item');
+  s := a[1];
+  a[1] := a[1] + '!';
+  Expect((s = 'item1') and (a[1] = 'item1!'), 'an element written: a variable has what it was');
+  t := s;
+  t[1] := 'I';
+  Expect((s = 'item1') and (t = 'Item1'), 'a character written: its own string first');
+  b := a;
+  b[0] := 'changed';
+  Expect(a[0] = 'changed', 'one array, two variables');
+  b := Copy(a);
+  b[0] := b[0] + b[1] + b[2];
+  Expect((a[0] = 'changed') and (b[0] = 'changeditem1!item2'), 'a copy: its own elements, the same strings');
+  SetLength(a, 2);
+  SetLength(a, 5);
+  Expect((a[4] = '') and (a[1] = 'item1!'), 'shorter and longer');
+  for i := 0 to High(a) do
+    a[i] := a[i] + ToString(i) + s;
+  Expect((a[0] = 'changed0item1') and (a[4] = '4item1'), 'every element written');
+  Show('every element written: ' + ToString(a));
+  a += 'more';
+  a := a + b;
+  Expect((Length(a) = 10) and (a[5] = 'more') and (a[9] = 'item3'), 'joined');
+  s := Joined(a);
+  a := nil;
+  Expect(Length(s) = 91, 'all of them as one');
+  Delete(b, 1, 2);
+  Insert('x', b, 0);
+  Expect(Joined(b) = 'x,changeditem1!item2,item3,', 'taken out and put in');
+  b[0] := b[1];
+  b[1] := b[0];
+  b[2] := b[2];
+  Expect((b[0] = b[1]) and (b[2] = 'item3'), 'elements assigned to each other');
+  Show('strings: ' + ToString(b) + ' ' + s + ' ' + t);
+end;
+
+// --- arrays in records
+
+function ItemsText(list: TItemArray): String;
+var
+  i: Int32;
+begin
+  for i := 0 to High(list) do
+    Result := Result + list[i].name + ToString(list[i].values) + ToString(list[i].n) + ' ';
+end;
+
+function MakeItem(name: String; n: Int32): TItem;
+begin
+  Result.name := name;
+  Result.values := Make(n, 1);
+  Result.n := n;
+end;
+
+procedure ChangeItem(var it: TItem);
+begin
+  it.name := it.name + '+';
+  it.values += it.n;
+  it.n := it.n + 1;
+end;
+
+// (by value: its own record, the array in it is the one that was passed)
+function ItemSum(it: TItem): Int64;
+begin
+  Result := Sum(it.values);
+  it.values := nil;
+  it.name := '';
+end;
+
+procedure Records;
+var
+  a, b: TItem;
+  list, other: TItemArray;
+  i: Int32;
+  had: SizeInt;
+begin
+  // (how many have an array is compared with what it was: the variable that a call gave a record in can have its
+  // array too, until that variable is used for something else)
+  a := MakeItem('a', 3);
+  had := RefCount(Pointer(a.values));
+  b := a;
+  b.name := 'b';
+  b.values[0] := 10;
+  Expect((a.name = 'a') and (a.values[0] = 10) and (RefCount(Pointer(a.values)) = had + 1), 'a record copied: the array in it is shared');
+  b.values := Make(2, 5);
+  Expect(RefCount(Pointer(a.values)) = had, 'the copy has another array');
+  ChangeItem(a);
+  Expect((a.name = 'a+') and (Length(a.values) = 4) and (a.n = 4), 'by reference');
+  Expect((ItemSum(a) = 18) and (Length(a.values) = 4) and (a.name = 'a+'), 'by value');
+  a := MakeItem('again', 2);
+  a := a;
+  Expect((a.name = 'again') and (Sum(a.values) = 3), 'overwritten, and assigned to itself');
+
+  for i := 1 to 5 do
+    list += MakeItem('n' + ToString(i), i);
+  list[0] := list[4];
+  list[1] := a;
+  list[2].values := list[3].values;
+  ChangeItem(list[3]);
+  Expect((Length(list[2].values) = 4) and (Length(list[3].values) = 5) and (list[3].name = 'n4+'), 'an element by reference');
+  had := RefCount(Pointer(list[0].values));
+  other := Copy(list);
+  other[0].name := 'other';
+  Expect((list[0].name = 'n5') and (RefCount(Pointer(list[0].values)) = had + 2), 'a copy of the array: its own records, the same arrays in them');
+  SetLength(list, 2);
+  SetLength(list, 4);
+  Expect((list[3].name = '') and (Pointer(list[3].values) = nil) and (RefCount(Pointer(other[0].values)) = had + 1), 'shorter and longer');
+  Show('before: ' + ItemsText(other) + '| ' + ItemsText(list));
+  list := other + list;
+  Delete(list, 1, 3);
+  Show('taken out: ' + ItemsText(list));
+  b := list[0];
+  list := nil;
+  other := nil;
+  Expect((b.name = 'other') and (Sum(b.values) = 15), 'the last one that has it');
+  a := ['written', [7, 8, 9], 3];
+  Expect((a.name = 'written') and (Sum(a.values) = 24), 'written out');
+  list := [a, b, ['more', [1], 1]];
+  Expect((Length(list) = 3) and (list[2].name = 'more') and (Sum(list[0].values) = 24), 'an array of them written out');
+  Show('records: ' + ItemsText(list));
+end;
+
+// --- arrays in objects
+
+function TBox.Construct(n: Int32): TBox; static;
+begin
+  Result.items := Make(n, 1);
+  Result.names := MakeStrs(n, 'box');
+  Result.id := n;
+  Inc(Made);
+end;
+
+procedure TBox.Destroy;
+begin
+  Inc(Destroyed);
+end;
+
+function TBox.Total: Int64;
+begin
+  Result := Sum(Self.items);
+end;
+
+procedure TBox.Fill(n: Int32);
+begin
+  Self.items := Make(n, 1);
+end;
+
+procedure Objects;
+var
+  a, b: TBox;
+  list: TBoxArray;
+  i: Int32;
+begin
+  a := new TBox(3);
+  b := a;
+  b.items[0] := 10;
+  Expect(a.Total() = 15, 'one object, two variables');
+  b := new TBox(2);
+  b.Fill(6);
+  Expect((b.Total() = 21) and (Joined(b.names) = 'box0,box1,'), 'its array made again');
+  for i := 1 to 5 do
+    list += new TBox(i);
+  list[0] := a;
+  list[1] := list[0];
+  a := b;
+  Expect(list[1].Total() = 15, 'kept by an array');
+  SetLength(list, 3);
+  list := Copy(list);
+  list[2].items := list[0].items;
+  b := list[2];
+  list := nil;
+  Expect((b.Total() = 15) and (b.id = 3), 'the last one that has it');
+  Show('objects: ' + ToString(a.items) + Joined(a.names) + ToString(a.id) + ' ' + ToString(b.items) + Joined(b.names) + ToString(b.id));
+end;
+
+// --- left by what is raised
+
+procedure Deep(n: Int32; a: TIntArray; var into: TGrid);
+var
+  mine: TIntArray;
+  names: TStrArray;
+begin
+  mine := Copy(a);
+  mine += n;
+  names := MakeStrs(3, 'deep');
+  into += mine;
+  if (n = 0) then
+    raise 'bottom';
+  try
+    Deep(n - 1, mine, into);
+  finally
+    names += 'done';
+    mine := nil;
+  end;
+end;
+
+function LeavesEarly(a: TIntArray): TIntArray;
+var
+  i: Int32;
+  mine: TIntArray;
+begin
+  for i := 0 to 9 do
+    try
+      mine := Copy(a);
+      mine += i;
+      if (i = 3) then
+        Exit(mine);
+    finally
+      a += i;
+    end;
+end;
+
+procedure Exceptions;
+var
+  a, b: TIntArray;
+  g: TGrid;
+  s, caught: String;
+  i: Int32;
+begin
+  a := Make(3, 1);
+  try
+    Deep(6, a, g);
+  except
+    caught := GetExceptionMessage();
+  end;
+  Expect((caught = 'bottom') and (Length(g) = 7) and (Length(g[6]) = 10) and (Sum(g[6]) = 27), 'through calls that each have arrays');
+  Expect(RefCount(Pointer(a)) = 2, 'nothing of them has it still (only a, and what Make gave it in)');
+
+  // a call that fails after it made what it gives: what is assigned to is what it was, or what was made
+  b := Make(2, 1);
+  try
+    b := Failing(5);
+  except
+  end;
+  Expect((Sum(b) = 3) or (Sum(b) = 15), 'assigned what a call that failed made');
+
+  // in a loop over what a call gives, with something that is always done
+  for i := 1 to 3 do
+    try
+      try
+        for s in MakeStrs(4, 'loop') do
+          if (s = 'loop2') then
+            Fail('in a loop');
+      finally
+        a += i;
+      end;
+    except
+      b := a;
+    end;
+  Expect((Sum(a) = 12) and (Pointer(a) = Pointer(b)), 'three times round');
+
+  // handled, and raised again from there
+  try
+    try
+      Fail('first');
+    except
+      a := Make(4, 4);
+      raise 'second';
+    end;
+  except
+    caught := GetExceptionMessage();
+  end;
+  Expect((caught = 'second') and (Sum(a) = 22), 'raised again');
+
+  b := LeavesEarly(a);
+  Expect((Length(b) = 8) and (b[7] = 3) and (Length(a) = 4), 'left from a loop and a try');
+  Show('exceptions: ' + ToString(g) + ' ' + ToString(a) + ' ' + ToString(b) + ' ' + caught);
+end;
+
+// --- used while it changes
+
+// an array that is one shorter every time it is asked for
+function Shorter(var n: Int32): TIntArray;
+begin
+  Dec(n);
+  Result := Make(n, 1);
+end;
+
+procedure Flow;
+var
+  a, b: TIntArray;
+  g: TGrid;
+  s: String;
+  x, n, total: Int32;
+begin
+  for x in Make(5, 1) do
+    total += x;
+  Expect(total = 15, 'a loop over what a call gives');
+
+  // (a loop reads the variable it goes over, as FPC's does: the array is kept by another one while it changes)
+  a := Make(4, 1);
+  b := a;
+  for x in b do
+  begin
+    a := nil;
+    total += x;
+  end;
+  Expect((total = 25) and (Pointer(a) = nil) and (Sum(b) = 10), 'let go of in a loop over it');
+  a := Make(3, 1);
+  b := a;
+  for x in b do
+  begin
+    SetLength(a, Length(a) + 1000);
+    total += x;
+  end;
+  Expect((total = 31) and (Length(a) = 3003) and (Sum(a) = 6) and (Length(b) = 3), 'made longer in a loop over it');
+  a := Make(3, 1);
+  b := a;
+  for x in b do
+    a := Make(3, 10);
+  Expect((Sum(a) = 33) and (Sum(b) = 6), 'made again in a loop over it');
+
+  n := 5;
+  while (Length(Shorter(n)) > 0) do
+    total += n;
+  Expect(total = 41, 'a call in what a loop goes on for');
+  n := 4;
+  repeat
+    total += 1;
+  until (Length(Shorter(n)) = 0);
+  Expect(total = 45, 'a call in what a loop ends on');
+
+  a := nil;
+  for s in MakeStrs(4, 's') do
+  begin
+    if (s = 's1') then
+      Continue;
+    a += Length(s);
+    if (s = 's2') then
+      Break;
+  end;
+  Expect(Length(a) = 2, 'a loop that is left');
+
+  g := [Make(2, 1), Make(3, 1)];
+  for a in g do
+    total += Length(a);
+  if (Make(3, 5)[1] = 6) then
+    total += 1;
+  case Length(Make(2, 1)) of
+    2: total += 1;
+  end;
+  Expect(total = 52, 'an element of what a call gives');
+  Show('flow: ' + ToString(total) + ' ' + ToString(a) + ' ' + ToString(g));
+end;
+
+// --- in a method that is in a method
+
+procedure Nesting;
+var
+  mine: TIntArray;
+  rows: TGrid;
+  i: Int32;
+
+  procedure Add(v: Int32);
+  begin
+    mine += v;
+    rows += mine;
+  end;
+
+  function Last: TIntArray;
+  begin
+    Result := rows[High(rows)];
+  end;
+
+begin
+  for i := 1 to 5 do
+    Add(i);
+  Expect((Length(rows) = 5) and (Sum(Last()) = 15) and (Length(rows[0]) = 1), 'of the method around it');
+  mine := nil;
+  Expect((Length(rows[4]) = 5) and (Sum(rows[4]) = 15) and (Pointer(rows[4]) <> Pointer(rows[3])), 'kept by the other one');
+  Show('nesting: ' + ToString(rows));
+end;
+
+// --- through a variable that has a method
+
+function Doubler(a: TIntArray): TIntArray;
+begin
+  Result := a.Doubled();
+end;
+
+procedure Callbacks;
+var
+  f: TArrayFunc;
+  fs: array of TArrayFunc;
+  a: TIntArray;
+  i: Int32;
+begin
+  a := Make(3, 1);
+  f := @Doubler;
+  a := f(a);
+  a := f(f(a));
+  fs := [@Doubler, @Same, @Grown];
+  for i := 0 to High(fs) do
+  begin
+    f := @fs[i];
+    a := f(a);
+  end;
+  Expect((Length(a) = 4) and (Sum(a) = 99), 'called through a variable');
+  Show('callbacks: ' + ToString(a));
+end;
+
+// --- changed by a call while it is being assigned to, or read
+
+function GrowKept: Int32;
+begin
+  SetLength(Kept, Length(Kept) + 5000);
+  Result := 7;
+end;
+
+function GrowGrid: TIntArray;
+begin
+  SetLength(Grid, Length(Grid) + 5000);
+  Result := Make(2, 9);
+end;
+
+function GrowStrs: String;
+begin
+  SetLength(Strs, Length(Strs) + 5000);
+  Result := 'new';
+end;
+
+function GrowItems: TIntArray;
+begin
+  SetLength(Items, Length(Items) + 5000);
+  Result := Make(3, 4);
+end;
+
+function DropKept(a: TIntArray): TIntArray;
+begin
+  Kept := nil;
+  Result := a;
+end;
+
+procedure TakeTwo(a, b: Int32);
+begin
+  Expect((a = 1) and (b = 7), 'an element, and a call that makes the array longer, passed');
+end;
+
+procedure AddTo(var x: Int32; y: Int32);
+begin
+  x := x + y;
+end;
+
+procedure TItem.Grew(v: Int32);
+begin
+  Self.values += v;
+  Self.n := Self.n + 1;
+end;
+
+procedure Aliasing;
+begin
+  Kept := Make(4, 1);
+  Kept[1] := GrowKept();
+  Expect((Kept[1] = 7) and (Length(Kept) = 5004), 'element := call that makes the array longer');
+  Kept[2] += GrowKept();
+  Expect((Kept[2] = 10) and (Length(Kept) = 10004), 'element += call that makes the array longer');
+  // (the call is on the left: `Kept[0] + GrowKept()` would read Kept[0] where it was before the call)
+  Kept[3] := GrowKept() + Kept[0];
+  Expect(Kept[3] = 8, 'call that makes the array longer + element');
+  TakeTwo(Kept[0], GrowKept());
+  Expect(Sum(Kept) = 26, 'what it had is there still');
+  Show('Kept: ' + ToString(Copy(Kept, 0, 4)) + ' ' + ToString(Length(Kept)));
+  Kept := DropKept(Kept);
+  Expect(Sum(Kept) = 26, 'a := f(a), where f lets go of a');
+
+  Grid := [Make(2, 1), Make(2, 3)];
+  Grid[0] := GrowGrid();
+  Expect((Sum(Grid[0]) = 19) and (Sum(Grid[1]) = 7) and (Length(Grid) = 5002), 'row := call that makes the grid longer');
+  Grid[1][0] := Length(GrowGrid());
+  Expect(Grid[1][0] = 2, 'element of a row := call that makes the grid longer');
+  Show('Grid: ' + ToString(Copy(Grid, 0, 2)) + ' ' + ToString(Length(Grid)));
+  Grid := nil;
+
+  Strs := ['a', 'b'];
+  Strs[0] := GrowStrs();
+  Expect((Strs[0] = 'new') and (Strs[1] = 'b') and (Length(Strs) = 5002), 'string := call that makes the array longer');
+  Show('Strs: ' + ToString(Copy(Strs, 0, 2)) + ' ' + ToString(Length(Strs)));
+  Strs := nil;
+
+  SetLength(Items, 2);
+  Items[1].name := 'one';
+  Items[0].values := GrowItems();
+  Items[1].n := Length(GrowItems());
+  Expect((Sum(Items[0].values) = 15) and (Items[1].n = 3) and (Items[1].name = 'one') and (Length(Items) = 10002), 'field of an element := call that makes the array longer');
+  Show('Items: ' + ItemsText(Copy(Items, 0, 2)) + ToString(Length(Items)));
+  Items := nil;
+end;
+
+// --- anything, in any order
+
+function Rnd(n: Int32): Int32;
+begin
+  Seed := (Seed * 1103515245 + 12345) and $7FFFFFFF;
+  Result := (Seed shr 8) mod n;
+end;
+
+// Every array that is made here is numbers that follow each other, and whatever is done to one keeps it that: so an
+// array that is not, has been written by something that should not have it.
+function Follows(a: TIntArray): Boolean;
+var
+  i: Int32;
+begin
+  if (Length(a) > 100000) then
+    Exit(False);
+  for i := 1 to High(a) do
+    if (a[i] <> a[0] + i) then
+      Exit(False);
+  Result := True;
+end;
+
+procedure Longer(var a: TIntArray);
+begin
+  if (Length(a) = 0) then
+    a += 1
+  else
+    a += a[High(a)] + 1;
+end;
+
+function Rest(a: TIntArray): TIntArray;
+begin
+  Result := Copy(a, 1);
+end;
+
+// How many of the places that the arrays are kept in, have the array that is at p
+function Holders(p: Pointer): Int32;
+var
+  j: Int32;
+begin
+  for j := 0 to High(Pool) do
+    if (Pointer(Pool[j]) = p) then
+      Inc(Result);
+  for j := 0 to High(Recs) do
+    if (Pointer(Recs[j].values) = p) then
+      Inc(Result);
+end;
+
+// What has to be so after every step: an array is what it was made as, and as many have it as there are places
+// with it. More would be something that still has it and never lets go; less would let it go while a place has it.
+procedure CheckAll;
+var
+  j: Int32;
+  p: Pointer;
+begin
+  for j := 0 to High(Pool) do
+  begin
+    p := Pointer(Pool[j]);
+    Expect((p = nil) or (RefCount(p) = Holders(p)), 'as many have an array as there are places with it');
+    Expect(Follows(Pool[j]), 'an array that something else wrote to');
+  end;
+  for j := 0 to High(Recs) do
+  begin
+    p := Pointer(Recs[j].values);
+    Expect((p = nil) or (RefCount(p) = Holders(p)), 'as many have an array in a record as there are places with it');
+    Expect(Follows(Recs[j].values), 'an array in a record that something else wrote to');
+  end;
+end;
+
+// One thing done to the arrays. (In a method of its own: the variables that the calls in it give their arrays in
+// are gone when it is done, so that only the places have them.)
+procedure Step(what, a, b: Int32);
+var
+  j, n: Int32;
+begin
+  case what of
+    0: begin
+         n := Rnd(24);
+         Pool[a] := Make(n, Rnd(1000));
+       end;
+    1: Pool[a] := Pool[b];
+    2: Pool[a] := Copy(Pool[b]);
+    3: if (Length(Pool[b]) > 2) then
+         Pool[a] := Copy(Pool[b], 1, Rnd(Length(Pool[b]) - 1));
+    4: SetLength(Pool[a], Rnd(Length(Pool[a]) + 1));
+    5: Longer(Pool[a]);
+    6: Pool[a] := nil;
+    7: Pool[a] := Same(Pool[b]);
+    8: Swap(Pool[a], Pool[b]);
+    9: if (Length(Pool[a]) > 0) then
+         Delete(Pool[a], 0, 1);
+    10: Pool[a] := Rest(Pool[b]);
+    11: Recs[a div 2].values := Pool[b];
+    12: Pool[a] := Recs[b div 2].values;
+    13: if (Length(Pool[a]) > 0) then
+        begin
+          j := Rnd(Length(Pool[a]));
+          Pool[a][j] := Pool[a][0] + j;
+        end;
+    14: Recs[a div 2] := Recs[b div 2];
+    15: Pool[a] := Rest(Rest(Pool[a]));
+    16: Pool[a] := Join(Copy(Pool[b], 0, 1), Rest(Pool[b]));
+    17: for j in Pool[b] do
+          if (j mod 3 = 0) then
+            Pool[a] := Pool[b];
+    18: Recs[a div 2] := MakeItem('r', Rnd(6));
+    19: Pool[a] := Pool[a].Me();
+    20: if (Length(Pool[a]) > 0) then
+          Insert(Pool[a][0] - 1, Pool[a], 0);
+    21: if (Length(Pool[a]) > 1) then
+          Delete(Pool[a], Rnd(Length(Pool[a])));
+    22: begin
+          n := Rnd(Length(Recs) + 1);
+          Insert(MakeItem('i', Rnd(4)), Recs, n);
+          Delete(Recs, Rnd(Length(Recs)), 1);
+        end;
+    23: begin
+          n := Rnd(Length(Recs));
+          SetLength(Recs, n);
+          SetLength(Recs, Slots div 2);
+          for j := n to High(Recs) do
+            Expect((Recs[j].name = '') and (Pointer(Recs[j].values) = nil) and (Recs[j].n = 0), 'a new record in an array');
+        end;
+  end;
+end;
+
+function PoolText: String;
+var
+  j: Int32;
+begin
+  Result := ToString(Pool) + ' ';
+  for j := 0 to High(Recs) do
+    Result := Result + Recs[j].name + ToString(Recs[j].values) + ToString(Recs[j].n) + ' ';
+end;
+
+procedure Stress;
+var
+  i, a, b: Int32;
+begin
+  Seed := 20261008;
+  SetLength(Pool, Slots);
+  SetLength(Recs, Slots div 2);
+
+  for i := 1 to 1200 do
+  begin
+    a := Rnd(Slots);
+    b := Rnd(Slots);
+    Step(Rnd(24), a, b);
+    CheckAll();
+    if (i mod 100 = 0) then
+      Digest(PoolText());
+  end;
+  Show('stress: ' + PoolText());
+  Show('stress digest: ' + ToString(Hash(Data)));
+
+  Pool := nil;
+  Recs := nil;
+end;
+
+begin
+  Run('sharing', @Sharing);
+  Run('lengths', @Lengths);
+  Run('parameters', @Parameters);
+  Run('results', @Results);
+  Run('methods', @Methods);
+  Run('copies', @Copies);
+  Run('nested', @Nested);
+  Run('strings', @Strings);
+  Run('records', @Records);
+  Run('objects', @Objects);
+  Run('exceptions', @Exceptions);
+  Run('flow', @Flow);
+  Run('nesting', @Nesting);
+  Run('callbacks', @Callbacks);
+  Run('aliasing', @Aliasing);
+  Run('stress', @Stress);
+end;

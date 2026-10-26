@@ -417,17 +417,6 @@ type
     property Vars: TLapeVarDeclList read FVars;
   end;
 
-  TLapeTree_FinalizeVar = class(TLapeTree_Base)
-  protected
-    FVariable: TLapeVar;
-  public
-    constructor Create(AVar: TLapeVar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
-    constructor Create(AVar: TLapeVar; ASource: TLapeTree_Base); overload; virtual;
-
-    function Compile(var Offset: Integer): TResVar; override;
-    property Variable: TLapeVar read FVariable;
-  end;
-
   TLapeTree_With = class(TLapeTree_Base)
   protected
     FWithList: TLapeExpressionList;
@@ -3084,26 +3073,6 @@ begin
       Inc(i);
 end;
 
-constructor TLapeTree_FinalizeVar.Create(AVar: TLapeVar; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
-begin
-  inherited Create(ACompiler, ADocPos);
-  FVariable := AVar;
-end;
-
-constructor TLapeTree_FinalizeVar.Create(AVar: TLapeVar; ASource: TLapeTree_Base);
-begin
-  Assert(ASource <> nil);
-  Create(AVar, ASource.Compiler, @ASource._DocPos);
-  FCompilerOptions := ASource.CompilerOptions;
-end;
-
-function TLapeTree_FinalizeVar.Compile(var Offset: Integer): TResVar;
-begin
-  Result := NullResVar;
-  if (FVariable <> nil) and FVariable.HasType() then
-    FVariable.VarType.Finalize(FVariable, Offset, True, @_DocPos);
-end;
-
 procedure TLapeTree_With.setBody(Node: TLapeTree_Base);
 begin
   if (FBody <> nil) and (FBody <> Node) then
@@ -3251,7 +3220,7 @@ begin
       else if (Result.VarType.BaseType = ltVariant) then
         Right := TLapeTree_GlobalVar.Create(FCompiler.getConstant(0, ltEvalBool), Self)
       else
-        Right := TLapeTree_GlobalVar.Create(Result.VarType.NewGlobalVarP(), Self);
+        Right := TLapeTree_GlobalVar.Create(FCompiler.getEmptyValue(Result.VarType), Self);
 
       Result := Compile(Offset);
     finally

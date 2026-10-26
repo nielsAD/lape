@@ -49,7 +49,7 @@ type
 
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
-    procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); override;
+    procedure FinalizeConst(AVar: TLapeGlobalVar); override;
 
     property FieldMap: TRecordFieldMap read FFieldMap;
     property Alignment: UInt16 read FAlignment;
@@ -509,36 +509,22 @@ begin
     Result := inherited;
 end;
 
-procedure TLapeType_Record.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
+procedure TLapeType_Record.FinalizeConst(AVar: TLapeGlobalVar);
 var
   i: Integer;
-  FieldVar: TResVar;
+  Field: TLapeGlobalVar;
 begin
-  Assert(AVar.VarType = Self);
-  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) {or (not NeedFinalization)} then
+  if (AVar = nil) or (not NeedFinalization) then
     Exit;
 
   for i := 0 to FFieldMap.Count - 1 do
-  try
-    FieldVar := AVar;
-    FieldVar.VarType := FFieldMap.ItemsI[i].FieldType;
-    case FieldVar.VarPos.MemPos of
-      mpMem:
-        if UseCompiler and (FCompiler <> nil) then
-          FieldVar.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedDecl(FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset))))
-        else
-          FieldVar.VarPos.GlobalVar := FieldVar.VarType.NewGlobalVarP(Pointer(PtrUInt(FieldVar.VarPos.GlobalVar.Ptr) + FFieldMap.ItemsI[i].Offset));
-      mpVar: FieldVar.IncOffset(FFieldMap.ItemsI[i].Offset);
-      else LapeException(lpeImpossible);
+  begin
+    Field := FFieldMap.ItemsI[i].FieldType.NewGlobalVarP(Pointer(PtrUInt(AVar.Ptr) + FFieldMap.ItemsI[i].Offset));
+    try
+      Field.VarType.FinalizeConst(Field);
+    finally
+      Field.Free();
     end;
-
-    if UseCompiler and (FCompiler <> nil) then
-      FCompiler.FinalizeVar(FieldVar, Offset, Pos)
-    else if NeedFinalization then
-      FieldVar.VarType.Finalize(FieldVar, Offset, UseCompiler, Pos);
-  finally
-    if ((not UseCompiler) or (FCompiler = nil)) and (FieldVar.VarPos.MemPos = mpMem) and (FieldVar.VarPos.GlobalVar <> nil) then
-      FreeAndNil(FieldVar.VarPos.GlobalVar);
   end;
 end;
 

@@ -325,6 +325,16 @@ uses
   lptokenizer, lpvartypes_array, lpmessages, lpeval, lpvartypes_ord, lpinterpreter_types,
   lpvartypes_record, lpvartypes_object;
 
+// (where an empty one of a type is: an element is cleaned up by assigning it, see _ArraySetLength)
+function EmptyOf(Compiler: TLapeCompilerBase; AType: TLapeType): TResVar;
+var
+  Empty: TLapeGlobalVar;
+begin
+  Empty := Compiler.getEmptyValue(AType);
+  Result := _ResVar.New(Compiler.addManagedDecl(Compiler.getBaseType(ltPointer).NewGlobalVarP()) as TLapeGlobalVar);
+  PPointer(Result.VarPos.GlobalVar.Ptr)^ := Empty.Ptr;
+end;
+
 type
   __TLapeTree_Operator = class(TLapeTree_Operator);
   __TLapeTree_ResVar = class(TLapeTree_ResVar);
@@ -1102,7 +1112,7 @@ begin
       TLapeTree_Invoke(Right).addParam(TLapeTree_Integer.Create(VarType.Size, Self.FParams[0]));
     end
     else
-      Right := TLapeTree_GlobalVar.Create(VarType.NewGlobalVarP(), Self.FParams[0]);
+      Right := TLapeTree_GlobalVar.Create(FCompiler.getEmptyValue(VarType), Self.FParams[0]);
 
     Compile(Offset);
   finally
@@ -1123,7 +1133,6 @@ var
   Param: TResVar;
   VarType: TLapeType;
   IsPointer: Boolean;
-  _Dispose: TLapeGlobalVar;
 begin
   Result := NullResVar;
   Dest := NullResVar;
@@ -1146,24 +1155,18 @@ begin
   if ((VarType = nil) and (not IsPointer)) or Param.isConstant then
     LapeException(lpeVariableExpected, [FParams[0], Self]);
 
-  _Dispose := FCompiler['_Dispose'];
-  Assert((_Dispose <> nil) and (_Dispose.VarType is TLapeType_OverloadedMethod));
-  _Dispose := TLapeType_OverloadedMethod(_Dispose.VarType).getMethod(getTypeArray([VarType]));
-
-  if (_Dispose <> nil) then
-    with TLapeTree_Invoke.Create(_Dispose, Self) do
-    try
-      if IsPointer then
-      begin
-        addParam(TLapeTree_Operator.Create(op_Deref, Self.FParams[0]));
-        TLapeTree_Operator(Params[0]).Left := TLapeTree_ResVar.Create(Param, Self.FParams[0]);
+  // (cleaned up: it is given what an empty one has)
+  if (VarType <> nil) and VarType.NeedFinalization then
+    if IsPointer then
+      with TLapeTree_Operator.Create(op_Deref, Self.FParams[0]) do
+      try
+        Left := TLapeTree_ResVar.Create(Param, Self.FParams[0]);
+        FCompiler.FinalizeVar(Compile(Offset), Offset, @Self._DocPos);
+      finally
+        Free();
       end
-      else
-        addParam(TLapeTree_ResVar.Create(Param, Self.FParams[0]));
-      Compile(Offset);
-    finally
-      Free();
-    end;
+    else
+      FCompiler.FinalizeVar(Param, Offset, @_DocPos);
 
   if (not FunctionOnly) then
     if isPointer then
@@ -1174,7 +1177,7 @@ begin
       finally
         Free();
       end
-    else if (_Dispose = nil) then
+    else if (not VarType.NeedFinalization) then
       FCompiler.VarToDefault(Param, Offset, @_DocPos);
 
 end;
@@ -1264,7 +1267,7 @@ begin
   with TLapeTree_Operator.Create(op_Assign, Self) do
   try
     Left := TLapeTree_ResVar.Create(Result, Self.FParams[0]);
-    Right := TLapeTree_GlobalVar.Create(Result.VarType.NewGlobalVarP(), Self);
+    Right := TLapeTree_GlobalVar.Create(FCompiler.getEmptyValue(Result.VarType), Self);
     Compile(Offset);
   finally
     Free();
@@ -1759,7 +1762,7 @@ begin
       else if (not (Param.VarType.BaseType in LapeStringTypes)) then
       begin
         addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
-        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(EmptyOf(FCompiler, ArrayType), Self));
         addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Assign', [ArrayType, ArrayType]), Self));
       end;
       Result := Compile(Offset);
@@ -1973,7 +1976,7 @@ begin
       if (not (Param.VarType.BaseType in LapeStringTypes)) then
       begin
         addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
-        addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
+        addParam(TLapeTree_ResVar.Create(EmptyOf(FCompiler, ArrayType), Self));
         addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Assign', [ArrayType, ArrayType]), Self));
       end;
 
@@ -2078,7 +2081,7 @@ begin
       addParam(TLapeTree_ExprBase(TmpExpr.FoldConstants()));
 
       addParam(TLapeTree_Integer.Create(ArrayType.Size, Self.FParams[0]));
-      addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Dispose', [ArrayType]), Self));
+      addParam(TLapeTree_ResVar.Create(EmptyOf(FCompiler, ArrayType), Self));
       addParam(TLapeTree_ResVar.Create(GetMagicMethodOrNil(FCompiler, '_Assign', [ArrayType, ArrayType]), Self));
     end;
 

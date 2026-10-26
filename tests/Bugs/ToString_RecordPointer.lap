@@ -12,4 +12,5 @@ begin
   New(myVar);
   //Writeln(myVar^); // Doesn't throw error if uncommented
   Writeln(myVar); // Throws error
+  Dispose(myVar);
 end.

@@ -1,0 +1,463 @@
+
+type
+  TIntArray = array of Int32;
+  TStrArray = array of String;
+  TGrid = array of TIntArray;
+  TInner = record id: Int32; name: String; end;
+  TOuter = record a, b: Int32; inner: TInner; names: TStrArray; grid: TGrid; v: Variant; end;
+  TOuterArray = array of TOuter;
+  TThing = object name: String; values: TIntArray; end;
+  THow = (ToEnd, ByExit, ByRaise);
+  TScenario = procedure(how: THow);
+
+const
+  Runs = 20;
+  O1 = '1,0,1,inner1,[name1],[[1, 2]],variant1';
+  O2 = '2,0,2,inner2,[name1, name2],[[1, 2], [2, 4]],variant2';
+  O3 = '3,0,3,inner3,[name1, name2, name3],[[1, 2], [2, 4], [3, 6]],variant3';
+  O4 = '4,0,4,inner4,[name1, name2, name3, name4],[[1, 2], [2, 4], [3, 6], [4, 8]],variant4';
+  OEmpty = '0,0,0,,[],[],';
+
+var
+  Made, Destroyed, Failures: Int32;
+  Quiet: Boolean;
+  Log: String;
+
+procedure Expect(ok: Boolean; what: String);
+begin
+  if ok then
+    Exit;
+  Inc(Failures);
+  if (not Quiet) then
+    WriteLn('  WRONG: ', what);
+end;
+
+// what a part has made, shown once
+procedure Show(how: THow; s: String);
+begin
+  if (how = ToEnd) and (not Quiet) then
+    WriteLn('  ', s);
+end;
+
+function TThing.Construct(name: String): TThing; static;
+begin
+  Result.name := name;
+  Result.values := [1, 2, 3];
+  Inc(Made);
+end;
+
+procedure TThing.Destroy;
+begin
+  Inc(Destroyed);
+end;
+
+function Outer(n: Int32): TOuter;
+var
+  i: Int32;
+begin
+  Result.a := n;
+  Result.inner.id := n;
+  Result.inner.name := 'inner' + ToStr(n);
+  for i := 1 to n do
+  begin
+    Result.names += 'name' + ToStr(i);
+    Result.grid += [i, i * 2];
+  end;
+  Result.v := 'variant' + ToStr(n);
+end;
+
+function OuterText(r: TOuter): String;
+begin
+  Result := ToStr(r.a) + ',' + ToStr(r.b) + ',' + ToStr(r.inner.id) + ',' + r.inner.name + ',' + ToString(r.names) + ',' + ToString(r.grid) + ',' + ToString(r.v);
+end;
+
+function ThingText(t: TThing): String;
+begin
+  Result := t.name + ToString(t.values);
+end;
+
+procedure Leave(how: THow);
+begin
+  if (how = ByRaise) then
+    raise 'left';
+end;
+
+// what the method has itself
+procedure Locals(how: THow);
+var
+  s: String;
+  u: UnicodeString;
+  a: TIntArray;
+  m: TStrArray;
+  g: TGrid;
+  r: TOuter;
+  rs: TOuterArray;
+  v, w: Variant;
+  t: TThing;
+  n: Int32;
+begin
+  s := 'string' + ToStr(Ord(how));
+  u := 'unicode' + ToStr(Ord(how));
+  a := [1, 2, 3];
+  m := [s, s + s];
+  g := [a, a, [4, 5]];
+  r := Outer(3);
+  rs := [r, Outer(2)];
+  v := s;
+  w := 12.5;
+  t := new TThing(s);
+  n := Length(s) + Length(u) + Length(a) + Length(m) + Length(g) + Length(r.names) + Length(rs) + Length(t.values);
+  Log := Log + ToStr(n) + ' ';
+  Expect((OuterText(r) = O3) and (OuterText(rs[0]) = O3) and (OuterText(rs[1]) = O2), 'locals: records made');
+
+  // written to: what is shared with another variable stays what it was there
+  rs[0].names += 'more';
+  rs[0].inner.name := 'changed';
+  g[2] += 6;
+  m[1] := m[1] + '!';
+  t.values += 4;
+  Expect(OuterText(r) = O3, 'locals: a record copied into an array is as it was: ' + OuterText(r));
+  Expect(OuterText(rs[0]) = '3,0,3,changed,[name1, name2, name3, more],[[1, 2], [2, 4], [3, 6]],variant3', 'locals: the copy written: ' + OuterText(rs[0]));
+  Expect((ToString(g) = '[[1, 2, 3], [1, 2, 3], [4, 5, 6]]') and (ToString(a) = '[1, 2, 3]'), 'locals: grid ' + ToString(g));
+  Expect(ToString(m) = '[' + s + ', ' + s + s + '!]', 'locals: strings ' + ToString(m));
+  Expect(ThingText(t) = s + '[1, 2, 3, 4]', 'locals: object ' + ThingText(t));
+  Expect((u = 'unicode' + ToStr(Ord(how))) and (ToString(v) = s) and (w = 12.5), 'locals: unicode and variants');
+
+  // taken out, put in, shorter and longer: what is left is what it was, what is new is empty
+  rs += Outer(1);
+  Delete(rs, 0, 1);
+  Expect((Length(rs) = 2) and (OuterText(rs[0]) = O2) and (OuterText(rs[1]) = O1), 'locals: a record taken out');
+  Insert(r, rs, 1);
+  Expect((Length(rs) = 3) and (OuterText(rs[0]) = O2) and (OuterText(rs[1]) = O3) and (OuterText(rs[2]) = O1), 'locals: a record put in');
+  SetLength(rs, 2);
+  SetLength(rs, 4);
+  Expect((OuterText(rs[0]) = O2) and (OuterText(rs[1]) = O3) and (OuterText(rs[2]) = OEmpty) and (OuterText(rs[3]) = OEmpty), 'locals: shorter and longer: ' + OuterText(rs[2]) + ' ' + OuterText(rs[3]));
+  rs[2].names += 'x';
+  rs[2].grid += [9];
+  rs[3].inner.name := 'y';
+  rs[3].v := 'z';
+  Delete(g, 0, 1);
+  Insert(TIntArray([7]), g, 0);
+  SetLength(g, 2);
+  SetLength(g, 3);
+  g[2] += 8;
+  Expect((ToString(g) = '[[7], [1, 2, 3], [8]]') and (ToString(a) = '[1, 2, 3]'), 'locals: grid taken out and put in ' + ToString(g));
+  Show(how, 'locals: ' + OuterText(rs[2]) + ' | ' + OuterText(rs[3]) + ' | ' + ToString(g) + ' | ' + ToString(m) + ' | ' + ThingText(t));
+
+  if (how = ByExit) then
+    Exit;
+  Leave(how);
+end;
+
+// what it was called with, by value: a copy of each, which it lets go of; what the caller has stays as it was
+procedure PassedValue(s: String; a: TIntArray; m: TStrArray; r: TOuter; v: Variant; t: TThing; how: THow);
+begin
+  Log := Log + ToStr(Length(s) + Length(a) + Length(m) + Length(r.grid) + Length(t.name)) + ' ';
+  Expect((s = 'passed') and (ToString(a) = '[1, 2]') and (ToString(m) = '[x, y, z]') and (OuterText(r) = O2) and (ToString(v) = 'v') and (ThingText(t) = 'thing[1, 2, 3]'), 'by value: what was passed');
+  s += '!';
+  a += 9;
+  a[0] := 100;
+  m += 'w';
+  r.names += 'more';
+  r.inner.name := 'mine';
+  r.grid += [7];
+  v := 'other';
+  t := new TThing('mine');
+  Expect((s = 'passed!') and (ToString(a) = '[100, 2, 9]') and (ToString(m) = '[x, y, z, w]') and (ToString(v) = 'other') and (ThingText(t) = 'mine[1, 2, 3]'), 'by value: written');
+  Expect(OuterText(r) = '2,0,2,mine,[name1, name2, more],[[1, 2], [2, 4], [7]],variant2', 'by value: record written ' + OuterText(r));
+  if (how = ByExit) then
+    Exit;
+  Leave(how);
+end;
+
+procedure ParamsByValue(how: THow);
+var
+  r: TOuter;
+  s: String;
+  a: TIntArray;
+  m: TStrArray;
+  v: Variant;
+  t: TThing;
+begin
+  r := Outer(2);
+  s := 'passed';
+  a := [1, 2];
+  m := ['x', 'y', 'z'];
+  v := 'v';
+  t := new TThing('thing');
+  try
+    PassedValue(s, a, m, r, v, t, how);
+  finally
+    Expect((s = 'passed') and (ToString(a) = '[1, 2]') and (ToString(m) = '[x, y, z]') and (ToString(v) = 'v') and (ThingText(t) = 'thing[1, 2, 3]'), 'by value: what was passed is as it was');
+    Expect(OuterText(r) = O2, 'by value: the record passed is as it was ' + OuterText(r));
+    Show(how, 'by value: ' + s + ToString(a) + ToString(m) + ToString(v) + ThingText(t) + ' ' + OuterText(r));
+  end;
+end;
+
+// what is written out and what calls give, passed: let go of after the call
+procedure ParamsWrittenOut(how: THow);
+begin
+  PassedValue('passed', [1, 2], ['x', 'y', 'z'], Outer(2), 'v', new TThing('thing'), how);
+end;
+
+procedure PassedConst(const s: String; const a: TIntArray; const m: TStrArray; const r: TOuter; const v: Variant; const t: TThing; how: THow);
+var
+  mine: TOuter;
+begin
+  Log := Log + ToStr(Length(s) + Length(a) + Length(m) + Length(r.grid) + Length(t.name)) + ' ';
+  Expect((s = 'passed') and (ToString(a) = '[1, 2]') and (ToString(m) = '[x, y, z]') and (OuterText(r) = O2) and (ToString(v) = 'v') and (ThingText(t) = 'thing[1, 2, 3]'), 'const: what was passed');
+  mine := r;
+  mine.names += 'mine';
+  Expect((OuterText(r) = O2) and (Length(mine.names) = 3), 'const: a copy of it written');
+  if (how = ByExit) then
+    Exit;
+  Leave(how);
+end;
+
+procedure PassedConstRef(constref s: String; constref a: TIntArray; constref m: TStrArray; constref r: TOuter; constref v: Variant; constref t: TThing; how: THow);
+var
+  mine: TIntArray;
+begin
+  Log := Log + ToStr(Length(s) + Length(a) + Length(m) + Length(r.grid) + Length(t.name)) + ' ';
+  Expect((s = 'passed') and (ToString(a) = '[1, 2]') and (ToString(m) = '[x, y, z]') and (OuterText(r) = O2) and (ToString(v) = 'v') and (ThingText(t) = 'thing[1, 2, 3]'), 'constref: what was passed');
+  mine := a;
+  mine += 3;
+  Expect((ToString(a) = '[1, 2]') and (ToString(mine) = '[1, 2, 3]'), 'constref: a copy of it written');
+  if (how = ByExit) then
+    Exit;
+  Leave(how);
+end;
+
+procedure ParamsConst(how: THow);
+var
+  r: TOuter;
+  s: String;
+  a: TIntArray;
+  m: TStrArray;
+  v: Variant;
+  t: TThing;
+begin
+  r := Outer(2);
+  s := 'passed';
+  a := [1, 2];
+  m := ['x', 'y', 'z'];
+  v := 'v';
+  t := new TThing('thing');
+  try
+    PassedConst(s, a, m, r, v, t, how);
+  except
+    Log := Log + GetExceptionMessage() + ' ';
+  end;
+  try
+    PassedConstRef(s, a, m, r, v, t, how);
+  finally
+    Expect((s = 'passed') and (ToString(a) = '[1, 2]') and (ToString(m) = '[x, y, z]') and (ToString(v) = 'v') and (ThingText(t) = 'thing[1, 2, 3]') and (OuterText(r) = O2), 'const: what was passed is as it was');
+  end;
+end;
+
+// by var: what it writes is what the caller has
+procedure PassedVar(var s: String; var a: TIntArray; var m: TStrArray; var r, other: TOuter; var v: Variant; var t: TThing; how: THow);
+begin
+  Log := Log + ToStr(Length(s) + Length(a) + Length(m) + Length(r.grid) + Length(t.name)) + ' ';
+  s += '!';
+  a += 9;
+  a[0] := 100;
+  m[1] := 'Y';
+  m += 'w';
+  r.names += 'more';
+  r.inner.name := 'theirs';
+  other := Outer(1);
+  v := 'other';
+  t := new TThing('replaced');
+  if (how = ByExit) then
+    Exit;
+  Leave(how);
+end;
+
+procedure ParamsVar(how: THow);
+var
+  r, other: TOuter;
+  s: String;
+  a: TIntArray;
+  m: TStrArray;
+  v: Variant;
+  t: TThing;
+begin
+  r := Outer(2);
+  other := Outer(4);
+  s := 'passed';
+  a := [1, 2];
+  m := ['x', 'y', 'z'];
+  v := 'v';
+  t := new TThing('thing');
+  try
+    PassedVar(s, a, m, r, other, v, t, how);
+  finally
+    Expect((s = 'passed!') and (ToString(a) = '[100, 2, 9]') and (ToString(m) = '[x, Y, z, w]') and (ToString(v) = 'other') and (ThingText(t) = 'replaced[1, 2, 3]'), 'var: written');
+    Expect((OuterText(r) = '2,0,2,theirs,[name1, name2, more],[[1, 2], [2, 4]],variant2') and (OuterText(other) = O1), 'var: records written ' + OuterText(r) + ' ' + OuterText(other));
+    Show(how, 'var: ' + s + ToString(a) + ToString(m) + ToString(v) + ThingText(t) + ' ' + OuterText(r) + ' ' + OuterText(other));
+  end;
+end;
+
+// by out: what it gives the caller replaces what the caller had
+procedure PassedOut(out s: String; out a: TIntArray; out r: TOuter; out t: TThing; how: THow);
+begin
+  s := 'out';
+  a := [5, 6];
+  r := Outer(1);
+  r.names += 'out';
+  t := new TThing('out');
+  t.values += 4;
+  if (how = ByExit) then
+    Exit;
+  Leave(how);
+end;
+
+procedure ParamsOut(how: THow);
+var
+  r: TOuter;
+  s: String;
+  a, kept: TIntArray;
+  t: TThing;
+begin
+  r := Outer(3);
+  s := 'had';
+  a := [1, 2, 3];
+  kept := a;
+  t := new TThing('had');
+  try
+    PassedOut(s, a, r, t, how);
+  finally
+    Expect((s = 'out') and (ToString(a) = '[5, 6]') and (ToString(kept) = '[1, 2, 3]') and (ThingText(t) = 'out[1, 2, 3, 4]'), 'out: given');
+    Expect(OuterText(r) = '1,0,1,inner1,[name1, out],[[1, 2]],variant1', 'out: record given ' + OuterText(r));
+    Show(how, 'out: ' + s + ToString(a) + ToString(kept) + ThingText(t) + ' ' + OuterText(r));
+  end;
+end;
+
+// what it gives back is not let go of: what gets it has it
+function Gives(how: THow): TOuter;
+var
+  mine: TOuter;
+begin
+  mine := Outer(4);
+  Result := mine;
+  Result.inner.name := Result.inner.name + '!';
+  Result.names += 'given';
+  Expect(OuterText(mine) = O4, 'results: what the result was copied from is as it was ' + OuterText(mine));
+  if (how = ByExit) then
+    Exit;
+  Leave(how);
+end;
+
+function GivesMany(how: THow): TOuterArray;
+begin
+  Result := [Outer(1), Outer(2)];
+  Result[0].names += 'given';
+  Insert(Outer(3), Result, 1);
+  Delete(Result, 0, 1);
+  if (how = ByExit) then
+    Exit;
+  Leave(how);
+end;
+
+procedure Results(how: THow);
+var
+  r: TOuter;
+  rs: TOuterArray;
+begin
+  Gives(how);
+  r := Gives(how);
+  Log := Log + r.inner.name + ToStr(Length(r.grid)) + ' ';
+  Expect(OuterText(r) = '4,0,4,inner4!,[name1, name2, name3, name4, given],[[1, 2], [2, 4], [3, 6], [4, 8]],variant4', 'results: given ' + OuterText(r));
+  rs := GivesMany(how);
+  Expect((Length(rs) = 2) and (OuterText(rs[0]) = O3) and (OuterText(rs[1]) = O2), 'results: records given');
+  Show(how, 'results: ' + OuterText(r) + ' | ' + OuterText(rs[0]) + ' | ' + OuterText(rs[1]));
+end;
+
+// in a loop, in a try, and one in the other: every round has let go of the one before
+procedure Rounds(how: THow);
+var
+  i: Int32;
+  s: String;
+  r: TOuter;
+  t: TThing;
+begin
+  for i := 1 to 3 do
+    try
+      s := s + ToStr(i);
+      if (i = 1) then
+        Expect(OuterText(r) = OEmpty, 'rounds: a new one is empty ' + OuterText(r))
+      else
+        Expect(OuterText(r) = OuterText(Outer(i - 1)), 'rounds: what the round before left');
+      r := Outer(i);
+      t := new TThing(s);
+      if (i = 2) and (how = ByExit) then
+        Exit;
+      if (i = 3) then
+        Leave(how);
+    finally
+      Log := Log + s + ':' + ToStr(Length(r.names)) + ' ';
+      Expect((OuterText(r) = OuterText(Outer(i))) and (ThingText(t) = s + '[1, 2, 3]'), 'rounds: what this round has');
+    end;
+end;
+
+procedure Run(name: String; scenario: TScenario);
+var
+  before, after: PtrUInt;
+  how: THow;
+  i, was: Int32;
+  line: String;
+begin
+  was := Failures;
+  Made := 0;
+  Destroyed := 0;
+
+  Quiet := False;
+  for how := ToEnd to ByRaise do
+    try
+      scenario(how);
+    except
+      Log := Log + GetExceptionMessage() + ' ';
+    end;
+  Quiet := True;
+  line := Log;
+  Log := '';
+
+  // (once more, quietly: what is made the first time a thing is done, and kept, is not counted)
+  for how := ToEnd to ByRaise do
+    try
+      scenario(how);
+    except
+    end;
+  Log := '';
+
+  before := TestHeapUsed();
+  for i := 1 to Runs do
+    for how := ToEnd to ByRaise do
+      try
+        scenario(how);
+      except
+      end;
+  Log := '';
+  after := TestHeapUsed();
+
+  if (after <> before) then
+    WriteLn(name, ': LEAKS, ', (Int64(after) - Int64(before)) div Runs, ' bytes each time')
+  else if (Failures <> was) then
+    WriteLn(name, ': WRONG')
+  else if (Made <> Destroyed) then
+    WriteLn(name, ': ', Made, ' objects made, ', Destroyed, ' destroyed')
+  else
+    WriteLn(name, ': ok, ', Made, ' objects: ', line);
+end;
+
+begin
+  Run('locals', @Locals);
+  Run('params by value', @ParamsByValue);
+  Run('params written out', @ParamsWrittenOut);
+  Run('params const', @ParamsConst);
+  Run('params var', @ParamsVar);
+  Run('params out', @ParamsOut);
+  Run('results', @Results);
+  Run('rounds', @Rounds);
+end.

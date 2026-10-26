@@ -1,0 +1,688 @@
+
+type
+  TIntArray = array of Int32;
+  TStrArray = array of String;
+  TGrid = array of TIntArray;
+  TCube = array of TGrid;
+  TInner = record id: Int32; name: String; values: TIntArray; end;
+  TInnerArray = array of TInner;
+  TOuter = record a, b: Int32; inner: TInner; names: TStrArray; grid: TGrid; v: Variant; inners: TInnerArray; end;
+  TOuterArray = array of TOuter;
+  TOuterGrid = array of TOuterArray;
+  TThing = object name: String; grid: TGrid; parts: TOuterArray; end;
+  TThings = array of TThing;
+  TScenario = procedure;
+
+const
+  Runs = 10;
+  Rounds = 4;
+
+var
+  Failures: Int32;
+  Quiet: Boolean;
+  Made, Destroyed: Int32;
+  Data: String;
+  GA: TIntArray;
+  GG: TGrid;
+  GR: TOuter;
+
+function RefCount(Arr: Pointer): SizeInt;
+begin
+  if (Arr = nil) then
+    Exit(0);
+  Result := PtrInt((Arr - SizeOf(SizeInt) - SizeOf(PtrInt))^);
+end;
+
+procedure Expect(ok: Boolean; what: String);
+begin
+  if ok then
+    Exit;
+  Inc(Failures);
+  if (not Quiet) then
+    WriteLn('  WRONG: ', what);
+end;
+
+// what a part ends up with: shown on the first run, and the same on every run after it
+procedure Show(s: String);
+begin
+  Data := Data + s + ';';
+  if (not Quiet) then
+    WriteLn('  ', s);
+end;
+
+// the same, only put into the digest
+procedure Digest(s: String);
+begin
+  Data := Data + s + ';';
+end;
+
+function Hash(s: String): Int64;
+var
+  i: Int32;
+begin
+  for i := 1 to Length(s) do
+    Result := (Result * 131 + Ord(s[i])) mod 1000000007;
+end;
+
+function TThing.Construct(name: String): TThing; static;
+begin
+  Result.name := name;
+  Inc(Made);
+end;
+
+procedure TThing.Destroy;
+begin
+  Inc(Destroyed);
+end;
+
+function InnerText(r: TInner): String;
+begin
+  Result := ToStr(r.id) + '/' + r.name + '/' + ToString(r.values);
+end;
+
+function OuterText(r: TOuter): String;
+var
+  i: Int32;
+begin
+  Result := ToStr(r.a) + ',' + ToStr(r.b) + ',' + InnerText(r.inner) + ',' + ToString(r.names) + ',' + ToString(r.grid) + ',' + ToString(r.v) + ',[';
+  for i := 0 to High(r.inners) do
+    Result := Result + InnerText(r.inners[i]) + ' ';
+  Result := Result + ']';
+end;
+
+function OutersText(rs: TOuterArray): String;
+var
+  i: Int32;
+begin
+  Result := ToStr(Length(rs)) + ':';
+  for i := 0 to High(rs) do
+    Result := Result + '{' + OuterText(rs[i]) + '}';
+end;
+
+function ThingText(t: TThing): String;
+begin
+  if (t = nil) then
+    Exit('nil');
+  Result := t.name + ToString(t.grid) + OutersText(t.parts);
+end;
+
+function EmptyInner(r: TInner): Boolean;
+begin
+  Result := (r.id = 0) and (r.name = '') and (Length(r.values) = 0) and (Pointer(r.values) = nil);
+end;
+
+function EmptyOuter(r: TOuter): Boolean;
+begin
+  Result := (r.a = 0) and (r.b = 0) and EmptyInner(r.inner) and (Length(r.names) = 0) and (Length(r.grid) = 0) and
+    (Pointer(r.names) = nil) and (Pointer(r.grid) = nil) and (Length(r.inners) = 0) and (Pointer(r.inners) = nil) and
+    (ToStr(r.v) = ToStr(Default(Variant))) and (OuterText(r) = '0,0,0//[],[],[],,[]');
+end;
+
+// Everything that can be done to a record and to what is in it
+procedure Fill(var r: TOuter; n: Int32);
+var
+  i: Int32;
+begin
+  r.a := n;
+  r.b := n * 2;
+  r.inner.id := n;
+  r.inner.name := r.inner.name + 'inner' + ToStr(n);
+  r.inner.values += n;
+  r.inner.values += n + 1;
+  SetLength(r.inner.values, 5);
+  r.inner.values[4] := n;
+  for i := 1 to n do
+  begin
+    r.names += 'name' + ToStr(i);
+    r.names[High(r.names)] += '!';
+    r.grid += [i];
+    r.grid[High(r.grid)] += i * 2;
+    SetLength(r.inners, Length(r.inners) + 1);
+    r.inners[High(r.inners)].name := 'in' + ToStr(i);
+    r.inners[High(r.inners)].values += i;
+  end;
+  SetLength(r.grid, n + 2, 3);
+  r.grid[n + 1][2] := n;
+  r.v := 'variant' + ToStr(n);
+end;
+
+function Sum(g: TGrid): Int32;
+var
+  i, j: Int32;
+begin
+  for i := 0 to High(g) do
+    for j := 0 to High(g[i]) do
+      Result := Result + g[i][j];
+end;
+
+// Default(x), over and over at the same place: each time empty, whatever was done with the last one
+procedure ByDefault;
+var
+  round, i: Int32;
+  s: String;
+  u: UnicodeString;
+  a: TIntArray;
+  m: TStrArray;
+  g: TGrid;
+  c: TCube;
+  r: TOuter;
+  before: String;
+  rs: TOuterArray;
+  rg: TOuterGrid;
+  v: Variant;
+  t: TThing;
+  ts: TThings;
+  rd: String;
+begin
+  for round := 1 to Rounds do
+  begin
+    rd := ToStr(round);
+
+    Default(s);
+    Expect(s = '', 'string');
+    s += 'x';
+    s := s + s;
+    s[1] := 'y';
+    Expect(s = 'yx', 'string written: ' + s);
+
+    Default(u);
+    Expect(u = '', 'unicode string');
+    u += 'x';
+    u[1] := 'z';
+    Expect(u = 'z', 'unicode string written');
+
+    Default(a);
+    Expect((Length(a) = 0) and (Pointer(a) = nil), 'array');
+    a += round;
+    a += round;
+    SetLength(a, 10);
+    a[9] := round;
+    Insert(7, a, 0);
+    Expect(ToString(a) = '[7, ' + rd + ', ' + rd + ', 0, 0, 0, 0, 0, 0, 0, ' + rd + ']', 'array written: ' + ToString(a));
+
+    Default(m);
+    Expect((Length(m) = 0) and (Pointer(m) = nil), 'array of strings');
+    m += 'one';
+    m[0] += 'more';
+    SetLength(m, 4);
+    m[3] := m[0] + m[0];
+    Expect(ToString(m) = '[onemore, , , onemoreonemore]', 'array of strings written: ' + ToString(m));
+
+    Default(g);
+    Expect((Length(g) = 0) and (Pointer(g) = nil), 'two dimensions');
+    g += [1, 2];
+    g[0] += 3;
+    g += g[0];
+    g[1] += 4;
+    Expect(ToString(g) = '[[1, 2, 3], [1, 2, 3, 4]]', 'two dimensions: a shared row added to: ' + ToString(g));
+    SetLength(g, 4, 4);
+    g[3][3] := round;
+    Expect(Sum(g) = 16 + round, 'two dimensions written: ' + ToStr(Sum(g)));
+    Expect(ToString(g) = '[[1, 2, 3, 0], [1, 2, 3, 4], [0, 0, 0, 0], [0, 0, 0, ' + rd + ']]', 'two dimensions written: ' + ToString(g));
+
+    Default(c);
+    Expect((Length(c) = 0) and (Pointer(c) = nil), 'three dimensions');
+    c += g;
+    c += TGrid([[1], [2, 3]]);
+    c[1] += [4, 5, 6];
+    c[1][0] += 7;
+    SetLength(c, 3, 2, 2);
+    c[2][1][1] := round;
+    Expect(ToString(c) = '[[[1, 2], [1, 2]], [[1, 7], [2, 3]], [[0, 0], [0, ' + rd + ']]]', 'three dimensions written: ' + ToString(c));
+    Expect(ToString(g) = '[[1, 2, 3, 0], [1, 2, 3, 4], [0, 0, 0, 0], [0, 0, 0, ' + rd + ']]', 'two dimensions, after what had it was made shorter: ' + ToString(g));
+
+    Default(r);
+    Expect(EmptyOuter(r), 'record: ' + OuterText(r));
+    Fill(r, round);
+    Fill(r, 2);
+
+    Default(rs);
+    Expect((Length(rs) = 0) and (Pointer(rs) = nil), 'array of records');
+    before := OuterText(r);
+    rs += r;
+    SetLength(rs, 3);
+    Expect(EmptyOuter(rs[1]) and EmptyOuter(rs[2]), 'new records in an array');
+    Fill(rs[1], round);
+    Fill(rs[0], 1);
+    rs[2] := rs[1];
+    Fill(rs[2], 1);
+    Expect(OuterText(r) = before, 'a record, after its copy in an array was written: ' + OuterText(r));
+
+    Default(rg);
+    Expect(Length(rg) = 0, 'two dimensions of records');
+    rg += rs;
+    SetLength(rg, 2, 2);
+    Expect(EmptyOuter(rg[1][0]) and EmptyOuter(rg[1][1]), 'new records in two dimensions');
+    Fill(rg[1][1], round);
+    Fill(rg[0][0], 1);
+    Expect((Length(rs) = 3) and (OuterText(rg[0][1]) = OuterText(rs[1])), 'records in two dimensions: the array copied from');
+
+    Default(v);
+    Expect(ToStr(v) = ToStr(Default(Variant)), 'variant');
+    v := 'text' + rd;
+    v := v + '!';
+
+    // (Default of an object is a new empty object, not nil; it is destroyed like any other)
+    Default(t);
+    Inc(Made);
+    Expect((t <> nil) and (ThingText(t) = '[]0:'), 'object: ' + ThingText(t));
+    t.name := 'default';
+    t.grid += [round];
+    SetLength(t.parts, 1);
+    Fill(t.parts[0], round);
+    Digest(ThingText(t));
+    t := new TThing('thing');
+    t.grid += [round];
+    t.grid[0] += 1;
+    SetLength(t.parts, 2);
+    Expect(EmptyOuter(t.parts[0]) and EmptyOuter(t.parts[1]), 'new records in an object');
+    Fill(t.parts[1], round);
+
+    Default(ts);
+    Expect(Length(ts) = 0, 'array of objects');
+    ts += t;
+    ts += new TThing('other');
+    ts[1].grid += [1, 2];
+    SetLength(ts, 3);
+    Expect(ts[2] = nil, 'a new object in an array');
+    ts[2] := new TThing('third');
+    ts[2].parts += r;
+    Fill(ts[2].parts[0], 1);
+    Expect(OuterText(r) = before, 'a record, after its copy in an object was written');
+
+    Show(s + '|' + u + '|' + ToString(a) + '|' + ToString(m) + '|' + ToString(g) + '|' + ToString(c) + '|' + ToString(v));
+    Digest(OuterText(r));
+    Digest(OutersText(rs));
+    for i := 0 to High(rg) do
+      Digest(OutersText(rg[i]));
+    Digest(ThingText(t));
+    for i := 0 to High(ts) do
+      Digest(ThingText(ts[i]));
+  end;
+end;
+
+// The same by `x := []`
+procedure ByLiteral;
+var
+  round: Int32;
+  a: TIntArray;
+  m: TStrArray;
+  g: TGrid;
+  c: TCube;
+  r: TOuter;
+  rs: TOuterArray;
+  rd: String;
+begin
+  for round := 1 to Rounds do
+  begin
+    rd := ToStr(round);
+
+    a := [];
+    Expect((Length(a) = 0) and (Pointer(a) = nil), 'array');
+    a += round;
+    SetLength(a, 6);
+    a[5] := round;
+    Expect(ToString(a) = '[' + rd + ', 0, 0, 0, 0, ' + rd + ']', 'array written');
+
+    m := [];
+    Expect(Length(m) = 0, 'array of strings');
+    m += 'x';
+    m[0] += 'y';
+    Expect(ToString(m) = '[xy]', 'array of strings written');
+
+    g := [];
+    Expect(Length(g) = 0, 'two dimensions');
+    g += [round];
+    g[0] += round;
+    SetLength(g, 3, 2);
+    g[2][1] := 1;
+    Expect(ToString(g) = '[[' + rd + ', ' + rd + '], [0, 0], [0, 1]]', 'two dimensions written');
+
+    c := [];
+    Expect(Length(c) = 0, 'three dimensions');
+    c += g;
+    c[0] += [round];
+    c[0][0] += round;
+    Expect(ToString(c) = '[[[' + rd + ', ' + rd + ', ' + rd + '], [0, 0], [0, 1], [' + rd + ']]]', 'three dimensions written: ' + ToString(c));
+    Expect(ToString(g) = '[[' + rd + ', ' + rd + '], [0, 0], [0, 1]]', 'two dimensions, after a copy of it was written');
+
+    r := [];
+    Expect(EmptyOuter(r), 'record');
+    Fill(r, round);
+
+    rs := [];
+    Expect(Length(rs) = 0, 'array of records');
+    rs += r;
+    SetLength(rs, 2);
+    Expect(EmptyOuter(rs[1]), 'a new record in an array');
+    Fill(rs[1], round);
+
+    Show(ToString(a) + '|' + ToString(m) + '|' + ToString(g) + '|' + ToString(c));
+    Digest(OuterText(r));
+    Digest(OutersText(rs));
+  end;
+end;
+
+// What an array lets go of when it is made shorter, when elements are taken out and when they are replaced by Insert,
+// is made empty; what it has new when it is made longer is empty. Over and over at the same place, with what was let
+// go of still had by another variable.
+procedure ByArray;
+var
+  round, i: Int32;
+  rs: TOuterArray;
+  kept: TOuter;
+  keptText, s, rd: String;
+  ms: TStrArray;
+  g: TGrid;
+  row: TIntArray;
+begin
+  for round := 1 to Rounds do
+  begin
+    rd := ToStr(round);
+
+    SetLength(rs, 4);
+    for i := 0 to 3 do
+      Fill(rs[i], i + round);
+    kept := rs[2];
+    keptText := OuterText(kept);
+    SetLength(rs, 2);
+    Expect(OuterText(kept) = keptText, 'a record kept from an element that was let go of');
+    SetLength(rs, 4);
+    Expect(EmptyOuter(rs[2]) and EmptyOuter(rs[3]), 'records, made longer after shorter');
+    Fill(rs[3], 1);
+    Delete(rs, 0, 1);
+    Expect((Length(rs) = 3) and EmptyOuter(rs[1]), 'records, one taken out');
+    Insert(kept, rs, 1);
+    Insert(kept, rs, 0, 2);
+    Expect((Length(rs) = 3) and (OuterText(rs[0]) = keptText) and EmptyOuter(rs[1]), 'records, one put in instead of two');
+    rs[1].inners += kept.inner;
+    Fill(rs[1], round);
+    Fill(rs[0], 1);
+    Expect(OuterText(kept) = keptText, 'a record, after its copy in the array was written');
+    Digest(OutersText(rs));
+    SetLength(rs, 1);
+    SetLength(rs, 3);
+    Expect(EmptyOuter(rs[1]) and EmptyOuter(rs[2]), 'records, made longer again');
+    Fill(rs[2], round);
+    Digest(OutersText(rs) + ' ' + OuterText(kept));
+
+    ms := ['a', 'b', 'c' + rd, 'd'];
+    s := ms[2];
+    SetLength(ms, 2);
+    SetLength(ms, 4);
+    Expect((ms[2] = '') and (ms[3] = '') and (s = 'c' + rd), 'strings, made longer after shorter');
+    ms[3] += 'x';
+    Delete(ms, 0, 1);
+    Expect(ToString(ms) = '[b, , x]', 'strings, one taken out: ' + ToString(ms));
+    Insert(s, ms, 1, 1);
+    Expect(ToString(ms) = '[b, c' + rd + ', x]', 'strings, one put in instead of one: ' + ToString(ms));
+    Insert('y', ms, 0, 5);
+    Expect(ToString(ms) = '[y]', 'strings, one put in instead of all: ' + ToString(ms));
+    ms += s;
+    SetLength(ms, 4);
+    Expect((ms[2] = '') and (ms[3] = ''), 'strings, made longer again');
+    ms[3] := 'z' + rd;
+
+    g := [[1], [2, round], [3]];
+    row := g[1];
+    SetLength(g, 1);
+    SetLength(g, 3);
+    Expect((Pointer(g[1]) = nil) and (Pointer(g[2]) = nil) and (ToString(row) = '[2, ' + rd + ']'), 'rows, made longer after shorter');
+    g[1] += 5;
+    Delete(g, 0, 1);
+    Expect(ToString(g) = '[[5], []]', 'rows, one taken out: ' + ToString(g));
+    Insert(row, g, 1, 1);
+    g[1] += 6;
+    Insert(TIntArray([7]), g, 0, 1);
+    Expect((ToString(g) = '[[7], [2, ' + rd + ', 6]]') and (ToString(row) = '[2, ' + rd + ']'), 'rows, put in instead of one: ' + ToString(g));
+
+    Show(ToString(ms) + ' ' + s + '|' + ToString(g) + ' ' + ToString(row) + '|' + ToStr(Length(rs)));
+  end;
+end;
+
+// What a call gives its result in is made empty before the call: what is called adds to it right away
+function MakeArray(n: Int32): TIntArray;
+var
+  i: Int32;
+begin
+  Expect((Length(Result) = 0) and (Pointer(Result) = nil), 'result: array');
+  for i := 1 to n do
+    Result += i;
+end;
+
+function MakeGrid(n: Int32): TGrid;
+var
+  i: Int32;
+begin
+  Expect(Length(Result) = 0, 'result: two dimensions');
+  for i := 1 to n do
+  begin
+    Result += MakeArray(i);
+    Result[High(Result)] += i;
+  end;
+  SetLength(Result, n + 1, n + 1);
+end;
+
+function MakeCube(n: Int32): TCube;
+var
+  i: Int32;
+begin
+  Expect(Length(Result) = 0, 'result: three dimensions');
+  for i := 1 to n do
+  begin
+    Result += MakeGrid(i);
+    Result[High(Result)] += MakeArray(i);
+    Result[High(Result)][0] += i;
+  end;
+end;
+
+function MakeOuter(n: Int32): TOuter;
+begin
+  Expect(EmptyOuter(Result), 'result: record');
+  Fill(Result, n);
+end;
+
+function MakeOuters(n: Int32): TOuterArray;
+var
+  i: Int32;
+begin
+  Expect(Length(Result) = 0, 'result: array of records');
+  for i := 1 to n do
+  begin
+    Result += MakeOuter(i);
+    Fill(Result[High(Result)], 1);
+  end;
+end;
+
+function MakeString(n: Int32): String;
+var
+  i: Int32;
+begin
+  Expect(Result = '', 'result: string');
+  for i := 1 to n do
+    Result += Chr(Ord('a') + i);
+end;
+
+procedure ByResult;
+var
+  round, n: Int32;
+  g: TGrid;
+  rs: TOuterArray;
+begin
+  for round := 1 to Rounds do
+  begin
+    // taken by a variable, and not taken by anything
+    n := Length(MakeArray(round)) + Length(MakeGrid(round)) + Length(MakeCube(round)) + Length(MakeOuters(round)) + Length(MakeString(round));
+    Expect(n = round * 5 + 1, 'results: ' + ToStr(n));
+    MakeArray(round);
+    MakeGrid(round);
+    MakeCube(round);
+    MakeOuter(round);
+    MakeOuters(round);
+    MakeString(round);
+
+    // written to by what took it, and made again at the same place
+    g := MakeGrid(2);
+    g[0] += round;
+    g += [round, round];
+    Expect(ToString(g) = '[[1, 1, 0, ' + ToStr(round) + '], [1, 2, 2], [0, 0, 0], [' + ToStr(round) + ', ' + ToStr(round) + ']]', 'written: ' + ToString(g));
+    Expect(ToString(MakeGrid(2)) = '[[1, 1, 0], [1, 2, 2], [0, 0, 0]]', 'made again: ' + ToString(MakeGrid(2)));
+    Expect(Sum(MakeGrid(2)) = 7, 'made again: ' + ToStr(Sum(MakeGrid(2))));
+    Expect(Sum(MakeCube(2)[1]) = 12, 'cube made again: ' + ToStr(Sum(MakeCube(2)[1])));
+    Expect(MakeOuter(3).inner.name = 'inner3', 'record made again: ' + MakeOuter(3).inner.name);
+    Expect(Length(MakeOuters(2)[1].names) = 3, 'records made again');
+    rs := MakeOuters(2);
+    rs[0].names += 'more';
+    rs[1].inner.values[0] := -1;
+
+    Show(ToString(g) + '|' + ToString(MakeCube(2)) + '|' + MakeString(round) + '|' + ToString(MakeArray(round)));
+    Digest(OuterText(MakeOuter(round)));
+    Digest(OutersText(rs));
+    Digest(OutersText(MakeOuters(2)));
+  end;
+end;
+
+// When a method ends: what it has and what it was called with, written to in every way first. Something that
+// is shared with what called it stays what it was there.
+procedure Callee(a: TIntArray; g: TGrid; r: TOuter; rs: TOuterArray; s: String; depth: Int32);
+var
+  mine: TGrid;
+  cube: TCube;
+  local: TOuter;
+begin
+  a += depth;
+  g += a;
+  s += 'x';
+  Fill(r, 2);
+  rs += r;
+  SetLength(rs, Length(rs) + 2);
+  Expect(EmptyOuter(rs[High(rs)]), 'a new record in what was passed');
+  Fill(rs[High(rs)], depth);
+  mine := g;
+  mine += [depth];
+  cube += mine;
+  cube += g;
+  cube[0] += a;
+  local := r;
+  Fill(local, depth);
+  Expect(EmptyOuter(Default(TOuter)), 'an empty record');
+  if (depth > 0) then
+    Callee(a, mine, local, rs, s, depth - 1);
+  if (depth = 2) then
+    raise 'left';
+end;
+
+procedure AtTheEnd;
+var
+  round: Int32;
+  rs: TOuterArray;
+  left: Boolean;
+  had: String;
+  hadA, hadG: SizeInt;
+begin
+  for round := 1 to Rounds do
+  begin
+    GA := [1, 2, 3];
+    GG := [GA, [4, 5]];
+    Default(GR);
+    Fill(GR, 3);
+    rs := [GR, GR];
+    had := OuterText(GR);
+    hadA := RefCount(Pointer(GA));
+    hadG := RefCount(Pointer(GG));
+    left := False;
+    try
+      Callee(GA, GG, GR, rs, 'text', round);
+    except
+      left := True;
+    end;
+    Expect(left = (round >= 2), 'left by what was raised');
+    // (what was passed by value has been let go of, also when the call was left by what was raised)
+    Expect((ToString(GA) = '[1, 2, 3]') and (RefCount(Pointer(GA)) = hadA), 'array after the call: ' + ToString(GA) + ' ' + ToStr(RefCount(Pointer(GA))));
+    Expect((ToString(GG) = '[[1, 2, 3], [4, 5]]') and (RefCount(Pointer(GG)) = hadG) and (Sum(GG) = 15), 'two dimensions after the call');
+    Expect(OuterText(GR) = had, 'record after the call');
+    Expect((Length(rs) = 2) and (OuterText(rs[0]) = had) and (OuterText(rs[1]) = had), 'records after the call');
+    Show(ToString(GA) + '|' + ToString(GG) + '|' + ToStr(left));
+    Digest(OuterText(GR));
+  end;
+  GA := [];
+  GG := [];
+  GR := [];
+  Expect(EmptyOuter(GR), 'a global record');
+end;
+
+// A method in a method writes to what the outer one has, which the outer one lets go of when it ends
+procedure Outer;
+var
+  g: TGrid;
+  r: TOuter;
+  rs: TOuterArray;
+
+  procedure Inner(n: Int32);
+  begin
+    g += [n];
+    g[0] += n;
+    Fill(r, n);
+    rs += r;
+    Fill(rs[High(rs)], 1);
+  end;
+
+begin
+  Expect((Length(g) = 0) and EmptyOuter(r) and (Length(rs) = 0), 'a method in a method: what the outer one starts with');
+  Inner(1);
+  Inner(2);
+  Expect((Length(g) = 2) and (Length(rs) = 2), 'a method in a method');
+  Show(ToString(g));
+  Digest(OuterText(r));
+  Digest(OutersText(rs));
+end;
+
+procedure Run(name: String; scenario: TScenario);
+var
+  before, after: PtrUInt;
+  i, was: Int32;
+  first: String;
+  same: Boolean;
+begin
+  was := Failures;
+  Made := 0;
+  Destroyed := 0;
+
+  Quiet := False;
+  Data := '';
+  scenario();
+  first := Data;
+  Data := '';
+  Quiet := True;
+  same := True;
+
+  before := TestHeapUsed();
+  for i := 1 to Runs do
+  begin
+    scenario();
+    if (Data <> first) then
+      same := False;
+    Data := '';
+  end;
+  after := TestHeapUsed();
+
+  if (after <> before) then
+    WriteLn(name, ': LEAKS, ', (Int64(after) - Int64(before)) div Runs, ' bytes each time')
+  else if (Failures <> was) then
+    WriteLn(name, ': WRONG')
+  else if (not same) then
+    WriteLn(name, ': WRONG, a later run ended up with something else')
+  else if (Made <> Destroyed) then
+    WriteLn(name, ': ', Made, ' objects made, ', Destroyed, ' destroyed')
+  else
+    WriteLn(name, ': ok, ', Made, ' objects, digest ', Hash(first));
+end;
+
+begin
+  Run('Default(x)', @ByDefault);
+  Run('x := []', @ByLiteral);
+  Run('made shorter, taken out, put in', @ByArray);
+  Run('results', @ByResult);
+  Run('at the end of a method', @AtTheEnd);
+  Run('a method in a method', @Outer);
+end.

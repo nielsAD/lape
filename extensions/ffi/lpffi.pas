@@ -51,7 +51,7 @@ type
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
-    procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); override;
+    procedure FinalizeConst(AVar: TLapeGlobalVar); override;
   end;
 
   TLapeTree_InternalMethod_Native = class(TLapeTree_InternalMethod)
@@ -653,27 +653,26 @@ end;
 function TLapeType_ClosureDisposer.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 begin
   Result := NullResVar;
+
+  // (cleaned up: an empty one is assigned, which lets go of the closures)
+  if (Op = op_Assign) and (Right.VarType = Self) and (Right.VarPos.MemPos = mpMem) and (Right.VarPos.GlobalVar <> nil) and
+     (PPointer(Right.VarPos.GlobalVar.Ptr)^ = nil) then
+    with TLapeTree_Invoke.Create('!closuredisposer', FCompiler, Pos) do
+    try
+      addParam(TLapeTree_ResVar.Create(Left, FCompiler, Pos));
+      Compile(Offset);
+      Exit;
+    finally
+      Free();
+    end;
+
   LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), '!ClosureDisposer']);
 end;
 
-procedure TLapeType_ClosureDisposer.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
+procedure TLapeType_ClosureDisposer.FinalizeConst(AVar: TLapeGlobalVar);
 begin
-  Assert(AVar.VarType = Self);
-  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) then
-    Exit;
-
-  if UseCompiler and (FCompiler <> nil) then
-  with TLapeTree_Invoke.Create('!closuredisposer', FCompiler, Pos) do
-  try
-    addParam(TLapeTree_ResVar.Create(AVar, FCompiler, Pos));
-    Compile(Offset);
-  finally
-    Free();
-  end
-  else if (AVar.VarPos.MemPos <> mpMem) then
-    LapeException(lpeImpossible)
-  else
-    FreeAndNil(TObject(AVar.VarPos.GlobalVar.Ptr^));
+  if (AVar <> nil) and (AVar.Ptr <> nil) then
+    FreeAndNil(TObject(AVar.Ptr^));
 end;
 
 constructor TLapeTree_InternalMethod_Native.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);

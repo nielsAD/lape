@@ -64,7 +64,7 @@ type
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
-    procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); override;
+    procedure FinalizeConst(AVar: TLapeGlobalVar); override;
 
     property Range: TLapeRange read FRange;
 
@@ -311,7 +311,7 @@ begin
       begin
         tmpLeft := PType.NewGlobalVarP(Pointer(PtrInt(AVar) + (i * PType.Size)));
         try
-          PType.Finalize(tmpLeft);
+          PType.FinalizeConst(tmpLeft);
         finally
           tmpLeft.Free();
         end;
@@ -915,30 +915,22 @@ begin
           Free();
         end;
     end
-    else if (Typ is TLapeType_ArrayHelper_Low) then
-      with TLapeTree_InternalMethod_Low.Create(FCompiler, Pos) do
+    else if (Typ is TLapeType_ArrayHelper_Low) or (Typ is TLapeType_ArrayHelper_High) or (Typ is TLapeType_ArrayHelper_Length) then
+    begin
+      if (Typ is TLapeType_ArrayHelper_Low) then
+        Node := TLapeTree_InternalMethod_Low.Create(FCompiler, Pos)
+      else if (Typ is TLapeType_ArrayHelper_High) then
+        Node := TLapeTree_InternalMethod_High.Create(FCompiler, Pos)
+      else
+        Node := TLapeTree_InternalMethod_Length.Create(FCompiler, Pos);
       try
-        addParam(TLapeTree_ResVar.Create(ALeft, FCompiler, Pos));
-        Result := FoldConstants(False).Compile(Offset);
+        TLapeTree_InternalMethod(Node).addParam(TLapeTree_ResVar.Create(ALeft, FCompiler, Pos));
+        Node := Node.FoldConstants();
+        Result := Node.Compile(Offset);
       finally
-        Free();
-      end
-    else if (Typ is TLapeType_ArrayHelper_High) then
-      with TLapeTree_InternalMethod_High.Create(FCompiler, Pos) do
-      try
-        addParam(TLapeTree_ResVar.Create(ALeft, FCompiler, Pos));
-        Result := FoldConstants(False).Compile(Offset);
-      finally
-        Free();
-      end
-    else if (Typ is TLapeType_ArrayHelper_Length) then
-      with TLapeTree_InternalMethod_Length.Create(FCompiler, Pos) do
-      try
-        addParam(TLapeTree_ResVar.Create(ALeft, FCompiler, Pos));
-        Result := FoldConstants(False).Compile(Offset);
-      finally
-        Free();
-      end
+        Node.Free();
+      end;
+    end
     else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
     begin
       Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
@@ -1267,56 +1259,23 @@ begin
     Result := inherited;
 end;
 
-procedure TLapeType_StaticArray.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
+procedure TLapeType_StaticArray.FinalizeConst(AVar: TLapeGlobalVar);
 var
   i: Integer;
-  tmpVar, IndexVar: TResVar;
-  IndexOp: TLapeTree_Operator;
+  Element: TLapeGlobalVar;
 begin
-  Assert(AVar.VarType = Self);
-  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) {or (not NeedFinalization)} then
+  if (AVar = nil) or (not NeedFinalization) then
     Exit;
 
-  IndexVar := NullResVar;
-  tmpVar := NullResVar;
-  if UseCompiler and (FCompiler <> nil) then
+  for i := 0 to FRange.Hi - FRange.Lo do
   begin
-    AVar.isConstant := False;
-
-    IndexVar := _ResVar.New(FCompiler.getTempVar(ltSizeInt));
-    IndexVar := IndexVar.VarType.Eval(op_Assign, tmpVar, IndexVar, _ResVar.New(FCompiler.getConstant(FRange.Lo)), [], Offset);
-
-    with TLapeTree_For.Create(FCompiler) do
+    Element := FPType.NewGlobalVarP(Pointer(PtrInt(AVar.Ptr) + (FPType.Size * i)));
     try
-      Counter := TLapeTree_ResVar.Create(IndexVar, FCompiler);
-      Limit := TLapeTree_ResVar.Create(_ResVar.New(FCompiler.getConstant(FRange.Hi)), FCompiler);
-
-      IndexOp := TLapeTree_Operator.Create(op_Index, FCompiler);
-      IndexOp.Left := TLapeTree_ResVar.Create(AVar, FCompiler);
-      IndexOp.Right := TLapeTree_ResVar.Create(IndexVar, FCompiler);
-
-      // Compiler.FinalizeVar
-      Body := TLapeTree_InternalMethod_Dispose.Create(FCompiler);
-      TLapeTree_InternalMethod_Dispose(Body).FunctionOnly := True;
-      TLapeTree_InternalMethod_Dispose(Body).addParam(IndexOp);
-
-      Compile(Offset);
+      FPType.FinalizeConst(Element);
     finally
-      Free();
+      Element.Free();
     end;
-  end
-  else if (AVar.VarPos.MemPos <> mpMem) then
-    LapeException(lpeImpossible)
-  else if NeedFinalization then
-    for i := 0 to FRange.Hi - FRange.Lo do
-    try
-      IndexVar := AVar;
-      IndexVar.VarType := FPType;
-      IndexVar.VarPos.GlobalVar := IndexVar.VarType.NewGlobalVarP(Pointer(PtrInt(IndexVar.VarPos.GlobalVar.Ptr) + (FPType.Size * i)));
-      FPType.Finalize(IndexVar, Offset, UseCompiler, Pos);
-    finally
-      FreeAndNil(IndexVar.VarPos.GlobalVar);
-    end;
+  end;
 end;
 
 procedure TLapeType_StaticArray.addArrayHelpers;

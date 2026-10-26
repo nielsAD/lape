@@ -146,7 +146,6 @@ type
 
     function GetToStringMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetObjectifyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
-    function GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
     function GetDisposeObjectMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     function GetCopyMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
@@ -263,7 +262,6 @@ type
     procedure CheckAfterCompile; virtual;
 
     procedure VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); override;
-    procedure FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil); override;
 
     procedure checkDeclHints(ADecl: TLapeDeclaration); overload; virtual;
     procedure checkDeclHints(AStack: TLapeStackInfo); overload; virtual;
@@ -711,34 +709,6 @@ begin
     end else
       Method.Statements.addStatement(Invoke);
 
-    addDelayedExpression(Method);
-  finally
-    DecStackInfo([lsfFunction], Method = nil);
-  end;
-end;
-
-function TLapeCompiler.GetDisposeMethod(Sender: TLapeType_OverloadedMethod; AObjectType: TLapeType;  AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar;
-var
-  Method: TLapeTree_Method;
-  Header: TLapeType_Method;
-begin
-  Result := nil;
-  Method := nil;
-  if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or (AResult <> nil) then
-    Exit;
-  if (not AParams[0].NeedFinalization) then
-    Exit;
-
-  Header := addManagedType(TLapeType_Method.Create(Self, [AParams[0]], [lptVar], [TLapeGlobalVar(nil)], AResult, '_Dispose')) as TLapeType_Method;
-
-  IncStackInfo([]);
-  try
-    Result := Header.NewGlobalVar(EndJump);
-    Sender.addMethod(Result);
-
-    Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
-    Method.Statements := TLapeTree_StatementList.Create(Self);
-    Method.Statements.addStatement(TLapeTree_FinalizeVar.Create(FStackInfo.addVar(lptVar, AParams[0], '!AVar'), Self));
     addDelayedExpression(Method);
   finally
     DecStackInfo([lsfFunction], Method = nil);
@@ -1691,7 +1661,6 @@ begin
   addGlobalFunc('procedure UniqueString(var Str: UnicodeString); overload;', @_LapeUStr_Unique);
 
   addToString();
-  addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeMethod).NewGlobalVar('_Dispose'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetDisposeObjectMethod).NewGlobalVar('_DisposeObject'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetCopyMethod).NewGlobalVar('_Assign'));
   addGlobalVar(NewMagicMethod({$IFDEF FPC}@{$ENDIF}GetObjectifyMethod).NewGlobalVar('_Objectify'));
@@ -1795,10 +1764,16 @@ begin
   else
     LapeException(lpeInvalidRange, [Node, Self]);
 
-  if (Result.Lo <> nil) and (Result.Hi <> nil) then
-    VarType := Result.Hi.resType();
-  if (VarType = nil) or (not VarType.CompatibleWith(Result.Lo.resType())) then
-    LapeException(lpeInvalidRange, Node.DocPos);
+  try
+    if (Result.Lo <> nil) and (Result.Hi <> nil) then
+      VarType := Result.Hi.resType();
+    if (VarType = nil) or (not VarType.CompatibleWith(Result.Lo.resType())) then
+      LapeException(lpeInvalidRange, Node.DocPos);
+  except
+    if (Result <> Node) then
+      Result.Free();
+    raise;
+  end;
 end;
 
 function TLapeCompiler.EnsureRange(Node: TLapeTree_Base): TLapeTree_Range;
@@ -5470,21 +5445,6 @@ begin
   if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() then
     with TLapeTree_InternalMethod_Default.Create(Self, Pos) do
     try
-      addParam(TLapeTree_ResVar.Create(AVar, Self, Pos));
-      Compile(Offset);
-    finally
-      Free();
-    end;
-end;
-
-procedure TLapeCompiler.FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
-begin
-  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType()  then
-    with TLapeTree_InternalMethod_Dispose.Create(Self, Pos) do
-    try
-      AVar.isConstant := False;
-
-      FunctionOnly := True;
       addParam(TLapeTree_ResVar.Create(AVar, Self, Pos));
       Compile(Offset);
     finally

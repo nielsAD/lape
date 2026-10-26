@@ -188,7 +188,7 @@ var
 
   _LapeSetLength: lpString =
     'procedure _ArraySetLength(var p: Pointer; NewLen, ElSize: SizeInt;'                 + LineEnding +
-    '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
+    '  Empty: ConstPointer;'                                                             + LineEnding +
     '  Copy: private procedure(Src: ConstPointer; Dst: Pointer));'                       + LineEnding +
     'const'                                                                              + LineEnding +
     '  HeaderSize = SizeOf(PtrInt) + SizeOf(SizeInt);'                                   + LineEnding +
@@ -226,11 +226,11 @@ var
     '      Exit;'                                                                        + LineEnding +
     '    end;'                                                                           + LineEnding +
     ''                                                                                   + LineEnding +
-    '    if (NewLen < OldLen) and (Pointer(Dispose) <> nil) then'                        + LineEnding +
+    '    if (NewLen < OldLen) and (Pointer(Copy) <> nil) then'                           + LineEnding +
     '    begin'                                                                          + LineEnding +
     '      Inc(p, HeaderSize);'                                                          + LineEnding +
     '      for i := NewLen * ElSize to (OldLen - 1) * ElSize with ElSize do'             + LineEnding +
-    '        Dispose(p[i]);'                                                             + LineEnding +
+    '        Copy(Empty, p[i]);'                                                         + LineEnding +
     '      Dec(p, HeaderSize);'                                                          + LineEnding +
     '    end;'                                                                           + LineEnding +
     ''                                                                                   + LineEnding +
@@ -253,7 +253,7 @@ var
     '  begin'                                                                            + LineEnding +
     '    Dec(PtrInt(p^));'                                                               + LineEnding +
     '    NewP := nil;'                                                                   + LineEnding +
-    '    _ArraySetLength(NewP, NewLen, ElSize, Dispose, Copy);'                          + LineEnding +
+    '    _ArraySetLength(NewP, NewLen, ElSize, Empty, Copy);'                            + LineEnding +
     ''                                                                                   + LineEnding +
     '    i := OldLen;'                                                                   + LineEnding +
     '    if (NewLen < OldLen) then'                                                      + LineEnding +
@@ -363,7 +363,7 @@ var
     'procedure _ArrayDelete(var p: Pointer;'                                             + LineEnding +
     '  Start: SizeInt; Count: SizeInt = High(SizeInt);'                                  + LineEnding +
     '  ElSize: SizeInt;'                                                                 + LineEnding +
-    '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
+    '  Empty: ConstPointer;'                                                             + LineEnding +
     '  Copy: private procedure(Src: ConstPointer; Dst: Pointer));'                       + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
@@ -379,12 +379,12 @@ var
     '  if (Len - Count < Start) then'                                                    + LineEnding +
     '    Count := Len - Start;'                                                          + LineEnding +
     ''                                                                                   + LineEnding +
-    '  _ArraySetLength(p, Len, ElSize, Dispose, Copy);'                                  + LineEnding +
+    '  _ArraySetLength(p, Len, ElSize, Empty, Copy);'                                    + LineEnding +
     '  Inc(p, Start * ElSize);'                                                          + LineEnding +
     ''                                                                                   + LineEnding +
-    '  if (Pointer(Dispose) <> nil) then'                                                + LineEnding +
+    '  if (Pointer(Copy) <> nil) then'                                                   + LineEnding +
     '    for i := 0 to (Count - 1) * ElSize with ElSize do'                              + LineEnding +
-    '      Dispose(p[i]);'                                                               + LineEnding +
+    '      Copy(Empty, p[i]);'                                                           + LineEnding +
     ''                                                                                   + LineEnding +
     '  if (Start + Count < Len) then'                                                    + LineEnding +
     '    Move(p[Count * ElSize]^, p^, (Len - Start - Count) * ElSize);'                  + LineEnding +
@@ -396,7 +396,7 @@ var
   _LapeInsert: lpString =
     'procedure _ArrayInsert(Src: ConstPointer; var Dst: Pointer;'                        + LineEnding +
     '  Start: SizeInt = 0; Count: SizeInt = 0; LenSrc, ElSize: SizeInt;'                 + LineEnding +
-    '  Dispose: private procedure(p: Pointer);'                                          + LineEnding +
+    '  Empty: ConstPointer;'                                                             + LineEnding +
     '  Copy: private procedure(Src: ConstPointer; Dst: Pointer));'                       + LineEnding +
     'type'                                                                               + LineEnding +
     '  PSizeInt = ^SizeInt;'                                                             + LineEnding +
@@ -418,14 +418,14 @@ var
     '  else if (LenDst - Count < Start) then'                                            + LineEnding +
     '    Count := LenDst - Start;'                                                       + LineEnding +
     ''                                                                                   + LineEnding +
-    '  _ArraySetLength(Dst, LenDst + LenSrc, ElSize, Dispose, Copy);'                    + LineEnding +
+    '  _ArraySetLength(Dst, LenDst + LenSrc, ElSize, Empty, Copy);'                      + LineEnding +
     '  Inc(Dst, Start * ElSize);'                                                        + LineEnding +
     ''                                                                                   + LineEnding +
     '  if (Count <> LenSrc) then'                                                        + LineEnding +
     '  begin'                                                                            + LineEnding +
-    '    if (Count > LenSrc) and (Pointer(Dispose) <> nil) then'                         + LineEnding +
+    '    if (Count > LenSrc) and (Pointer(Copy) <> nil) then'                            + LineEnding +
     '      for i := LenSrc * ElSize to (Count - 1) * ElSize with ElSize do'              + LineEnding +
-    '        Dispose(Dst[i]);'                                                           + LineEnding +
+    '        Copy(Empty, Dst[i]);'                                                       + LineEnding +
     ''                                                                                   + LineEnding +
     '    Move('                                                                          + LineEnding +
     '      Dst[Count * ElSize]^,'                                                        + LineEnding +

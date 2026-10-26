@@ -1,0 +1,13 @@
+  locals: 0,0,0,,[x],[[9]], | 0,0,0,y,[],[],z | [[7], [1, 2, 3], [8]] | [string0, string0string0!] | string0[1, 2, 3, 4]
+locals: ok, 66 objects: 31 31 31 left 
+  by value: passed[1, 2][x, y, z]vthing[1, 2, 3] 2,0,2,inner2,[name1, name2],[[1, 2], [2, 4]],variant2
+params by value: ok, 132 objects: 18 18 18 left 
+params written out: ok, 132 objects: 18 18 18 left 
+params const: ok, 66 objects: 18 18 18 18 18 left 18 left 
+  var: passed![100, 2, 9][x, Y, z, w]otherreplaced[1, 2, 3] 2,0,2,theirs,[name1, name2, more],[[1, 2], [2, 4]],variant2 1,0,1,inner1,[name1],[[1, 2]],variant1
+params var: ok, 132 objects: 18 18 18 left 
+  out: out[5, 6][1, 2, 3]out[1, 2, 3, 4] 1,0,1,inner1,[name1, out],[[1, 2]],variant1
+params out: ok, 132 objects: left 
+  results: 4,0,4,inner4!,[name1, name2, name3, name4, given],[[1, 2], [2, 4], [3, 6], [4, 8]],variant4 | 3,0,3,inner3,[name1, name2, name3],[[1, 2], [2, 4], [3, 6]],variant3 | 2,0,2,inner2,[name1, name2],[[1, 2], [2, 4]],variant2
+results: ok, 0 objects: inner4!4 inner4!4 left 
+rounds: ok, 176 objects: 1:1 12:2 123:3 1:1 12:2 1:1 12:2 123:3 left

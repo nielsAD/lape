@@ -283,10 +283,7 @@ type
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; overload; virtual;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; Pos: PDocPos = nil): TResVar; overload; virtual;
 
-    procedure Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil); overload; virtual;
-    procedure Finalize(AVar: TResVar; UseCompiler: Boolean = True; Pos: PDocPos = nil); overload; virtual;
-    procedure Finalize(AVar: TLapeVar; var Offset: Integer; UseCompiler: Boolean = False; Pos: PDocPos = nil); overload; virtual;
-    procedure Finalize(AVar: TLapeVar; UseCompiler: Boolean = False; Pos: PDocPos = nil); overload; virtual;
+    procedure FinalizeConst(AVar: TLapeGlobalVar); virtual;
 
     // The type that it is another name for (`type TFoo = TBar;`)
     property AliasType: TLapeType read FAliasType write FAliasType;
@@ -620,7 +617,13 @@ type
     VarType: TLapeType;
     TypeVar: TLapeGlobalVar;
   end;
-  TLapeCachedTypeVars = array of TLapeCachedTypeVar;
+  TLapeCachedTypeVarList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeCachedTypeVar>;
+  // What an empty one of a type is (see getEmptyValue)
+  TLapeCachedEmpty = record
+    VarType: TLapeType;
+    Empty: TLapeGlobalVar;
+  end;
+  TLapeCachedEmptyList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeCachedEmpty>;
 
   TLapeCompilerBase = class(TLapeBaseDeclClass)
   protected
@@ -630,8 +633,8 @@ type
     FBaseTypesDictionary: TLapeBaseTypesDictionary;
     FManagedDeclarations: TLapeDeclarationList;
     FCachedDeclarations: array[ELapeBaseType] of TLapeVarMap;
-    FCachedTypeVars: TLapeCachedTypeVars;
-    FCachedTypeVarCount: Integer;
+    FCachedTypeVars: TLapeCachedTypeVarList;
+    FCachedEmpties: TLapeCachedEmptyList;
 
     FBaseOptions: ECompilerOptionsSet;
     FBaseOptions_PackRecords: UInt8;
@@ -687,6 +690,8 @@ type
     function getPointerType(PType: TLapeType; PConst: Boolean): TLapeType_Pointer; overload; virtual;
     function getTypeVar(AType: ELapeBaseType): TLapeGlobalVar; overload; virtual;
     function getTypeVar(AType: TLapeType): TLapeGlobalVar; overload; virtual;
+    // (an empty one of a type: all zeros, one for each type, which nothing writes: what code cleans up with)
+    function getEmptyValue(AType: TLapeType): TLapeGlobalVar; virtual;
     function getGlobalVar(AName: lpString): TLapeGlobalVar; virtual;
     function getGlobalType(AName: lpString): TLapeType; virtual;
 
@@ -741,6 +746,8 @@ const
   StackResVar: TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpStack; ForceVariable: False));
 
   NullParameter: TLapeParameter = (ParType: lptNormal; VarType: nil; Default: nil);
+  NullCachedTypeVar: TLapeCachedTypeVar = (VarType: nil; TypeVar: nil);
+  NullCachedEmpty: TLapeCachedEmpty = (VarType: nil; Empty: nil);
 
   Lape_RefParams   = [lptConstRef, lptOut, lptVar];
   Lape_ConstParams = [lptConst, lptConstRef];
@@ -1325,7 +1332,7 @@ begin
   if (FPtr <> nil) and DoManage then
   begin
     if HasType() then
-      VarType.Finalize(Self, False);
+      VarType.FinalizeConst(Self);
 
     if (FBasePtr <> nil) then
       FreeMem(FBaseptr)
@@ -2082,7 +2089,7 @@ begin
   Result := Eval(op, Dest, Left, Right, Flags, Offset, Pos);
 end;
 
-procedure TLapeType.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Boolean = True; Pos: PDocPos = nil);
+procedure TLapeType.FinalizeConst(AVar: TLapeGlobalVar);
 
   function FullNil(p: Pointer; Size: Integer): Boolean;
   var
@@ -2106,68 +2113,25 @@ procedure TLapeType.Finalize(AVar: TResVar; var Offset: Integer; UseCompiler: Bo
   end;
 
 var
-  EmptyVar, tmpVar: TResVar;
-  wasConstant: Boolean;
-  WasKnown: Boolean;
+  Empty: TLapeGlobalVar;
+  wasConstant, wasKnown: Boolean;
 begin
-  Assert(AVar.VarType = Self);
-  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) or (not NeedFinalization) then
-    Exit;
-  if (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) and FullNil(AVar.VarPos.GlobalVar.Ptr, Size) then
+  if (AVar = nil) or (not NeedFinalization) or FullNil(AVar.Ptr, Size) then
     Exit;
 
+  // (it is given what an empty one has, also a constant)
+  wasConstant := AVar.isConstant;
+  wasKnown := AVar.Known;
   AVar.isConstant := False;
-  wasConstant := (not UseCompiler) and (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) and AVar.VarPos.GlobalVar.isConstant;
-  if wasConstant then
-  begin
-    WasKnown := AVar.VarPos.GlobalVar.Known;
-    AVar.VarPos.GlobalVar.isConstant := False;
-  end;
 
-  tmpVar := NullResVar;
-  EmptyVar := NullResVar;
-  EmptyVar.VarType := Self;
-  EmptyVar.VarPos.MemPos := mpMem;
-  if UseCompiler and (FCompiler <> nil) then
-    EmptyVar.VarPos.GlobalVar := FCompiler.addManagedDecl(NewGlobalVarP()) as TLapeGlobalVar
-  else
-    EmptyVar.VarPos.GlobalVar := NewGlobalVarP();
-
+  Empty := NewGlobalVarP();
   try
-    if UseCompiler and (FCompiler <> nil) then
-      Eval(op_Assign, tmpVar, AVar, EmptyVar, [], Offset, Pos)
-    else if (AVar.VarPos.MemPos = mpMem) and (AVar.VarPos.GlobalVar <> nil) then
-      EvalConst(op_Assign, AVar.VarPos.GlobalVar, EmptyVar.VarPos.GlobalVar, []);
+    EvalConst(op_Assign, AVar, Empty, []);
   finally
-    if (not UseCompiler) or (FCompiler = nil) then
-      FreeAndNil(EmptyVar.VarPos.GlobalVar);
-    if wasConstant then
-    begin
-      AVar.VarPos.GlobalVar.isConstant := True;
-      AVar.VarPos.GlobalVar.Known := WasKnown;
-    end;
+    Empty.Free();
+    AVar.isConstant := wasConstant;
+    AVar.Known := wasKnown;
   end;
-end;
-
-procedure TLapeType.Finalize(AVar: TResVar; UseCompiler: Boolean = True; Pos: PDocPos = nil);
-var
-  Offset: Integer;
-begin
-  Offset := -1;
-  Finalize(AVar, Offset, UseCompiler, Pos);
-end;
-
-procedure TLapeType.Finalize(AVar: TLapeVar; var Offset: Integer; UseCompiler: Boolean = False; Pos: PDocPos = nil);
-begin
-  Finalize(_ResVar.New(AVar), Offset, UseCompiler, Pos);
-end;
-
-procedure TLapeType.Finalize(AVar: TLapeVar; UseCompiler: Boolean = False; Pos: PDocPos = nil);
-var
-  Offset: Integer;
-begin
-  Offset := -1;
-  Finalize(AVar, Offset, UseCompiler, Pos);
 end;
 
 function TLapeType_Type.getAsString: lpString;
@@ -4106,6 +4070,8 @@ begin
   FStackInfo := TLapeStackInfo.Create(Self);
   for BaseType in LapeBaseTypes do
     FCachedDeclarations[BaseType] := TLapeVarMap.Create(nil, True);
+  FCachedTypeVars := TLapeCachedTypeVarList.Create(NullCachedTypeVar, dupAccept, False);
+  FCachedEmpties := TLapeCachedEmptyList.Create(NullCachedEmpty, dupAccept, False);
 
   LoadBaseTypes(FBaseTypes, Self);
 
@@ -4129,6 +4095,8 @@ begin
   FreeAndNil(FManagedDeclarations);
   for BaseType in LapeBaseTypes do
     FreeAndNil(FCachedDeclarations[BaseType]);
+  FreeAndNil(FCachedTypeVars);
+  FreeAndNil(FCachedEmpties);
 
   ClearBaseTypes(FBaseTypes, True);
 
@@ -4152,8 +4120,8 @@ begin
   FManagedDeclarations.Clear();
   for BaseType in LapeBaseTypes do
     FCachedDeclarations[BaseType].Clear();
-  FCachedTypeVars := nil;
-  FCachedTypeVarCount := 0;
+  FCachedTypeVars.Clear();
+  FCachedEmpties.Clear();
   FTypeID := TypeID_User;
 end;
 
@@ -4171,9 +4139,16 @@ begin
 end;
 
 procedure TLapeCompilerBase.FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
+var
+  tmpVar: TResVar;
 begin
-  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and (AVar.VarType <> nil) then
-    AVar.VarType.Finalize(AVar, Offset, True, Pos);
+  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) or (not AVar.HasType()) or (not AVar.VarType.NeedFinalization) then
+    Exit;
+
+  // (cleaned up: it is given what an empty one has, also a constant)
+  AVar.isConstant := False;
+  tmpVar := NullResVar;
+  AVar.VarType.Eval(op_Assign, tmpVar, AVar, _ResVar.New(getEmptyValue(AVar.VarType)), [], Offset, Pos);
 end;
 
 procedure TLapeCompilerBase.FinalizeVar(AVar: TResVar; Pos: PDocPos = nil);
@@ -4501,8 +4476,9 @@ end;
 function TLapeCompilerBase.getTypeVar(AType: TLapeType): TLapeGlobalVar;
 var
   i: Integer;
+  Cached: TLapeCachedTypeVar;
 begin
-  for i := 0 to FCachedTypeVarCount - 1 do
+  for i := 0 to FCachedTypeVars.Count - 1 do
     if (FCachedTypeVars[i].VarType = AType) then
       Exit(FCachedTypeVars[i].TypeVar);
 
@@ -4515,11 +4491,25 @@ begin
   else
     Result := addManagedDecl(addManagedType(TLapeType_Type.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
 
-  if (FCachedTypeVarCount = Length(FCachedTypeVars)) then
-    SetLength(FCachedTypeVars, 4 + FCachedTypeVarCount * 2);
-  FCachedTypeVars[FCachedTypeVarCount].VarType := AType;
-  FCachedTypeVars[FCachedTypeVarCount].TypeVar := Result;
-  Inc(FCachedTypeVarCount);
+  Cached.VarType := AType;
+  Cached.TypeVar := Result;
+  FCachedTypeVars.Add(Cached);
+end;
+
+function TLapeCompilerBase.getEmptyValue(AType: TLapeType): TLapeGlobalVar;
+var
+  i: Integer;
+  Cached: TLapeCachedEmpty;
+begin
+  for i := 0 to FCachedEmpties.Count - 1 do
+    if (FCachedEmpties[i].VarType = AType) then
+      Exit(FCachedEmpties[i].Empty);
+
+  Result := addManagedDecl(AType.NewGlobalVarP()) as TLapeGlobalVar;
+
+  Cached.VarType := AType;
+  Cached.Empty := Result;
+  FCachedEmpties.Add(Cached);
 end;
 
 function TLapeCompilerBase.getGlobalVar(AName: lpString): TLapeGlobalVar;
