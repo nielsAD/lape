@@ -608,7 +608,7 @@ begin
   begin
     // (a constant outside of the range is an error; what a variable holds is not checked, as FPC)
     if (Op = op_Assign) and (Right.VarType <> Self) and (Right.VarPos.MemPos = mpMem) and
-       (Right.VarPos.GlobalVar <> nil) and Right.VarPos.GlobalVar.isConstant and
+       (Right.VarPos.GlobalVar <> nil) and Right.isConstant and
        ((Right.VarPos.GlobalVar.AsInteger < FRange.Lo) or (Right.VarPos.GlobalVar.AsInteger > FRange.Hi))
     then
       if (Pos <> nil) then

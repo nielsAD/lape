@@ -1,0 +1,47 @@
+type
+  TR = record x: Int32; end;
+
+procedure TR.Add(n: Int32); overload;
+begin
+  Self.x := Self.x + n;
+end;
+
+procedure TR.Add(s: String); overload;
+begin
+  Self.x := Self.x + Length(s);
+end;
+
+procedure TR.One(n: Int32);
+begin
+  Self.x := Self.x + n;
+end;
+
+const
+  C: TR = [10];
+
+procedure ConstParam(const p: TR);
+begin
+  p.Add(100);
+  p.One(100);
+  WriteLn('param ', p.x);
+end;
+
+var
+  r: TR;
+  m: procedure(n: Int32) of object;
+begin
+  r.x := 1;
+  r.Add(5);
+  WriteLn('var overloaded ', r.x);
+  r.One(5);
+  WriteLn('var single ', r.x);
+  C.Add(5);
+  WriteLn('const overloaded ', C.x);
+  C.One(5);
+  WriteLn('const single ', C.x);
+  ConstParam(r);
+  WriteLn('after param ', r.x);
+  m := @r.One;
+  m(7);
+  WriteLn('method variable ', r.x);
+end.

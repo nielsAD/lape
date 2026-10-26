@@ -1,0 +1,39 @@
+// More than eight with items at once (there used to be room for eight)
+type
+  TA = record a: Int32; end;
+  TB = record b: Int32; end;
+  TC = record c: Int32; end;
+  TD = record d: Int32; end;
+  TE = record e: Int32; end;
+  TF = record f: Int32; end;
+  TG = record g: Int32; end;
+  TH = record h: Int32; end;
+  TI = record i: Int32; end;
+  TJ = record j: Int32; end;
+
+const
+  K: TJ = [100];
+
+var
+  ra: TA; rb: TB; rc: TC; rd: TD; re: TE;
+  rf: TF; rg: TG; rh: TH; ri: TI;
+  n: Int32;
+
+begin
+  with ra, rb, rc, rd, re, rf, rg, rh, ri, K do
+  begin
+    a := 1; b := 2; c := 3; d := 4; e := 5;
+    f := 6; g := 7; h := 8; i := 9;
+    WriteLn(a + b + c + d + e + f + g + h + i, ' ', j);
+  end;
+  WriteLn(ra.a, ' ', ri.i);
+
+  // (compiled again: the condition of a while)
+  n := 0;
+  while n < 2 do
+    with ra, rb, rc, rd, re, rf, rg, rh, ri do
+    begin
+      Inc(n);
+      WriteLn(n, ': ', i - a);
+    end;
+end.

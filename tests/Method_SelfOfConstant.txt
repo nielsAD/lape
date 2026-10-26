@@ -1,0 +1,7 @@
+var overloaded 6
+var single 11
+const overloaded 10
+const single 10
+param 11
+after param 11
+method variable 18

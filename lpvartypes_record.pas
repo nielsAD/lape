@@ -321,7 +321,8 @@ begin
     with FFieldMap[PlpString(Right.Ptr)^] do
     begin
       Result := FieldType.NewGlobalVarP(Pointer(PtrUInt(Left.Ptr) + Offset));
-      Result.CopyFlags(Left);
+      Result.isConstant := Left.isConstant;
+      Result.Known := Left.Known;
     end
   else if (op = op_Assign) and (Right <> nil) and Right.HasType() and CompatibleWith(Right.VarType) then
   begin
@@ -390,14 +391,9 @@ begin
     begin
       Dest := NullResVar;
       Result := Left;
-      Result.VarType :=FieldType;
-      case Left.VarPos.MemPos of
-        mpMem: Result.VarPos.GlobalVar := TLapeGlobalVar(FCompiler.addManagedDecl(Result.VarType.NewGlobalVarP(Pointer(PtrUInt(Left.VarPos.GlobalVar.Ptr) + Offset))));
-        mpVar,
-        mpStack: Result.IncOffset(Offset);
-        else LapeException(lpeImpossible);
-      end;
-      Result.CopyFlags(Left);
+      Result.VarType := FieldType;
+      Result.IncOffset(Offset);
+      Result.isConstant := Left.isConstant;
     end
   else if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) and ((Left.VarPos.MemPos <> mpStack) or (DetermineIntType(Size, False) <> ltUnknown)) then

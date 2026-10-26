@@ -431,7 +431,7 @@ begin
     LapeException(lpeCannotInvoke);
   Assert(Arg.VarPos.MemPos <> mpStack);
 
-  if (not (Param.ParType in Lape_ValParams)) and (not Arg.Writeable) then
+  if (not (Param.ParType in Lape_ValParams)) and Arg.isConstant then
     LapeException(lpeVariableExpected);
 
   if (Param.VarType <> nil) and (not Param.VarType.Equals(Arg.VarType)) then
@@ -444,7 +444,6 @@ begin
 
     NullVar := NullResVar;
     Copy := _ResVar.New(FCompiler.getTempVar(Param.VarType));
-    Copy.setConstant(False, False);
     Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, [lefAssigningParam], Offset, @_DocPos);
   end;
 
@@ -489,7 +488,6 @@ begin
   Copy.VarType := Param.VarType;
   if Copy.VarType.NeedInitialization then
     FCompiler.Emitter._InitStack(Copy.VarType.Size, Offset, @_DocPos);
-  Copy.setConstant(False, False);
   Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, [lefAssigningParam], Offset, @_DocPos);
   Assert((Arg.VarPos.MemPos = mpStack) and Arg.HasType());
 end;
@@ -509,21 +507,7 @@ begin
     SelfPtr.VarType := FCompiler.getBaseType(ltPointer);
     SelfPtr.IncOffset(SizeOf(Pointer));
 
-    try
-      if (Called.VarType is TLapeType_MethodOfType) and
-         (not (TLapeType_MethodOfType(Called.VarType).SelfParam in Lape_ValParams)) and
-         (not Called.Readable) then
-      begin
-        Copy := _ResVar.New(FCompiler.getTempVar(TLapeType_MethodOfType(Called.VarType).ObjectType));
-        Copy.VarType.Eval(op_Assign, NullVar, Copy, SelfPtr.VarType.Eval(op_Deref, NullVar, SelfPtr, NullResVar, [], Offset, @FCallee._DocPos), [lefAssigning], Offset, @FCallee._DocPos);
-
-        pushToStack(Copy, FCallee.DocPos, Offset);
-      end
-      else
-        pushToStack(SelfPtr, FCallee.DocPos, Offset, False);
-    finally
-      SelfPtr.DecOffset(SizeOf(Pointer));
-    end;
+    pushToStack(SelfPtr, FCallee.DocPos, Offset, False);
   end;
 end;
 
@@ -578,8 +562,8 @@ end;
 
 function TLapeTree_Invoke.CallImported(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar; var Offset: Integer): TResVar;
 var
+  Init: TResVar;
   ParamCount: Integer;
-  Writeable: Boolean;
   Method: TLapeType_Method;
 begin
   Assert(Called.VarType is TLapeType_Method);
@@ -612,10 +596,9 @@ begin
 
     if (lcoInitExternalResult in FCompilerOptions) then
     begin
-      Writeable := Result.Writeable;
-      Result.Writeable := True;
-      FCompiler.VarToDefault(Result, Offset, @Self._DocPos);
-      Result.Writeable := Writeable;
+      Init := Result;
+      Init.isConstant := False;
+      FCompiler.VarToDefault(Init, Offset, @Self._DocPos);
     end;
   end;
 

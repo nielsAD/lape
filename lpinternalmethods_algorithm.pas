@@ -280,7 +280,6 @@ var
   ArrayVar, ArrayPointer: TResVar;
   ArrayHigh: TLapeTree_InternalMethod_High;
   ArrayType: TLapeType;
-  ArrayWasConstant: Boolean;
 begin
   Result := NullResVar;
   Dest := NullResVar;
@@ -290,63 +289,57 @@ begin
   if (not FParams[0].CompileToTempVar(Offset, ArrayVar)) then
     LapeException(lpeInvalidEvaluation, DocPos);
 
-  ArrayWasConstant := ArrayVar.isConstant;
-  if ArrayWasConstant then
-    ArrayVar.isConstant := False;
+  ArrayVar.isConstant := False;
 
-  try
-    case ArrayVar.VarType.BaseType of
-      ltStaticArray:
-        begin
-          with TLapeTree_Operator.Create(op_Addr, Self) do
-          try
-            Left := TLapeTree_Operator.Create(op_Index, Self);
+  case ArrayVar.VarType.BaseType of
+    ltStaticArray:
+      begin
+        with TLapeTree_Operator.Create(op_Addr, Self) do
+        try
+          Left := TLapeTree_Operator.Create(op_Index, Self);
 
-            TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar, Self);
-            TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
+          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar, Self);
+          TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
 
-            ArrayPointer := Compile(Offset);
-          finally
+          ArrayPointer := Compile(Offset);
+        finally
 
-            Free();
-          end;
+          Free();
         end;
-
-      ltDynArray:
-        begin
-          ArrayPointer := ArrayVar;
-          ArrayPointer.VarType := FCompiler.getBaseType(ltPointer);
-        end;
-      else
-        LapeException(lpeExpectedArray, DocPos);
-    end;
-
-    ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
-    with TLapeTree_Invoke.Create('_ArrayReverse', Self) do
-    try
-      addParam(TLapeTree_ResVar.Create(ArrayPointer, Self));
-      addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
-
-      case ArrayVar.VarType.BaseType of
-        ltDynArray:
-          begin
-            ArrayHigh := TLapeTree_InternalMethod_High.Create(Self);
-            ArrayHigh.addParam(TLapeTree_ResVar.Create(ArrayVar, Self));
-
-            addParam(ArrayHigh);
-          end;
-
-        ltStaticArray:
-          addParam(TLapeTree_Integer.Create(TLapeType_StaticArray(ArrayVar.VarType).Range.Hi - TLapeType_StaticArray(ArrayVar.VarType).Range.Lo, Self));
       end;
 
-      Compile(Offset);
-    finally
+    ltDynArray:
+      begin
+        ArrayPointer := ArrayVar;
+        ArrayPointer.VarType := FCompiler.getBaseType(ltPointer);
+      end;
+    else
+      LapeException(lpeExpectedArray, DocPos);
+  end;
 
-      Free();
+  ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
+  with TLapeTree_Invoke.Create('_ArrayReverse', Self) do
+  try
+    addParam(TLapeTree_ResVar.Create(ArrayPointer, Self));
+    addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
+
+    case ArrayVar.VarType.BaseType of
+      ltDynArray:
+        begin
+          ArrayHigh := TLapeTree_InternalMethod_High.Create(Self);
+          ArrayHigh.addParam(TLapeTree_ResVar.Create(ArrayVar, Self));
+
+          addParam(ArrayHigh);
+        end;
+
+      ltStaticArray:
+        addParam(TLapeTree_Integer.Create(TLapeType_StaticArray(ArrayVar.VarType).Range.Hi - TLapeType_StaticArray(ArrayVar.VarType).Range.Lo, Self));
     end;
+
+    Compile(Offset);
   finally
-    ArrayVar.isConstant := ArrayWasConstant;
+
+    Free();
   end;
 end;
 

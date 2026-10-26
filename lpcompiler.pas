@@ -769,7 +769,7 @@ begin
     Sender.addMethod(Result);
 
     ParamVar := _ResVar.New(FStackInfo.addVar(lptConstRef, AParams[0], '!AVar'));
-    ParamVar.Writeable := True;
+    ParamVar.isConstant := False;
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Self);
@@ -1841,7 +1841,7 @@ begin
        (Hi = nil) or (not Hi.HasType()) or (not (Hi.VarType.BaseType in LapeOrdinalTypes))
     then
       LapeException(lpeInvalidRange, Node.DocPos)
-    else if (not Lo.Readable) or (not Hi.Readable) then
+    else if (not Lo.Known) or (not Hi.Known) then
       LapeException(lpeConstantExpected, Node.DocPos);
 
     Result.Lo := Lo.AsInteger;
@@ -2733,7 +2733,7 @@ begin
             Default := EnsureExpression(ParseExpression([tk_sym_ParenthesisClose], True, False)).setExpectedType(Param.VarType) as TLapeTree_ExprBase;
             try
               Param.Default := Default.Evaluate();
-              if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or (not Param.Default.Writeable)) then
+              if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or Param.Default.isConstant) then
                 LapeException(lpeVariableExpected, Default.DocPos);
               // (one outside of a range of an enum is known here)
               if (Param.Default is TLapeGlobalVar) and (Param.VarType is TLapeType_SubRange) and
@@ -2819,7 +2819,6 @@ end;
 function TLapeCompiler.ParseMethod(FuncForwards: TLapeFuncForwards; FuncHeader: TLapeType_Method; FuncName: lpString; isExternal: Boolean): TLapeTree_Method;
 var
   Pos: TDocPos;
-  SelfWith: TLapeWithDeclRec;
   OldDeclaration: TLapeDeclaration;
   Overloads: TLapeType_OverloadedMethod;
   OfType: TLapeType;
@@ -2917,7 +2916,8 @@ var
     end;
 
     Inh := TLapeInheritedMethod.Create(Header, Source.Ptr, False, 'inherited', @FuncHeader._DocPos);
-    Inh.CopyFlags(Source);
+    Inh.isConstant := Source.isConstant;
+    Inh.Known := Source.Known;
     if (First > 0) and (FStackInfo.VarCount > 0) and (FStackInfo[0] is TLapeSelfVar) then
       Inh.SelfVar := FStackInfo[0];
 
@@ -3001,15 +3001,10 @@ begin
   if isExternal then
     Result := TLapeTree_Method.Create(FuncHeader.NewGlobalVar(nil, '', @FuncHeader._DocPos), FStackInfo, Self, @Pos)
   else
-  begin
     Result := TLapeTree_Method.Create(FuncHeader.NewGlobalVar(EndJump, '', @FuncHeader._DocPos), FStackInfo, Self, @Pos);
 
-    // (not of a static method: it has no Self)
-    if (FuncHeader is TLapeType_MethodOfType) then
-      Result.SelfVar := _ResVar.New(FStackInfo.Vars[0]);
-  end;
-
-  Result.Method.setReadWrite(False, False);
+  Result.Method.isConstant := True;
+  Result.Method.Known := False;
 
   try
     if (Tokenizer.Tok = tk_kw_Overload) or ((FuncHeader.MethodDef in [mdOperator, mdProperty]) and (Tokenizer.Tok <> tk_kw_Override)) then
@@ -3083,7 +3078,7 @@ begin
             OldDeclaration := overrideMethod(Result.Method);
       end;
 
-      if (OldDeclaration = nil) or (not (OldDeclaration is TLapeGlobalVar)) or TLapeGlobalVar(OldDeclaration).Readable or TLapeGlobalVar(OldDeclaration).Writeable or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
+      if (OldDeclaration = nil) or (not (OldDeclaration is TLapeGlobalVar)) or (not TLapeGlobalVar(OldDeclaration).isConstant) or TLapeGlobalVar(OldDeclaration).Known or (not (TLapeGlobalVar(OldDeclaration).VarType is TLapeType_Method)) then
         LapeException(lpeUnknownParent, Tokenizer.DocPos);
       if (not TLapeType_Method(TLapeGlobalVar(OldDeclaration).VarType).EqualParams(FuncHeader, False)) then
         LapeException(lpeNoForwardMatch, Tokenizer.DocPos);
@@ -3206,14 +3201,14 @@ begin
     // (implicit Self: the body is in a with of Self, or of the type in a static method, while it is read)
     if (OfType <> nil) and (not (lcoExplicitSelf in FOptions)) then
     begin
-      SelfWith.WithType := OfType;
+      Result.SelfWith := TLapeWithDeclaration.Create(OfType);
       if (FuncHeader is TLapeType_MethodOfType) then
-        SelfWith.WithVar := @Result.SelfVar
+        Result.SelfWith.WithVar := _ResVar.New(FStackInfo.Vars[0])
       else
-        SelfWith.WithVar := nil;
+        Result.SelfWith.IsType := True;
 
-      Assert((FStackInfo.WithStack.Count = 0) and (FStackInfo.SelfWith.WithType = nil));
-      FStackInfo.SelfWith := SelfWith;
+      Assert((FStackInfo.WithStack.Count = 0) and (FStackInfo.SelfWith = nil));
+      FStackInfo.SelfWith := Result.SelfWith;
     end;
 
     Next();
@@ -3223,10 +3218,11 @@ begin
       Expect(tk_kw_Begin, False, False);
 
     Assert(FStackInfo.WithStack.Count = 0);
-    FStackInfo.SelfWith := NullWithDecl;
+    FStackInfo.SelfWith := nil;
 
     checkDeclHints(FStackInfo);
   except
+    FStackInfo.SelfWith := nil;
     if (Result.Method <> nil) and (Result.Method.DeclarationList = nil) then
       Result.Method.Free();
     Result.FreeStackInfo := False;
@@ -3535,7 +3531,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
           else
             Default := nil;
 
-          if (Default = nil) or (not Default.HasType()) or (not (Default.VarType.BaseType in LapeOrdinalTypes)) or (not Default.Readable) then
+          if (Default = nil) or (not Default.HasType()) or (not (Default.VarType.BaseType in LapeOrdinalTypes)) or (not Default.Known) then
             LapeException(lpeExpressionExpected, Tokenizer.DocPos);
           Val := Enum.addElement(Default.AsInteger, Name);
         finally
@@ -3896,7 +3892,11 @@ begin
         end;
 
         if (VarDecl.VarDecl is TLapeVar) then
-          TLapeVar(VarDecl.VarDecl).setReadWrite(isConst and (DefConst <> nil), not isConst);
+        begin
+          TLapeVar(VarDecl.VarDecl).isConstant := isConst;
+          if (VarDecl.VarDecl is TLapeGlobalVar) then
+            TLapeGlobalVar(VarDecl.VarDecl).Known := isConst and (DefConst <> nil);
+        end;
 
         // var a: Integer deprecated
         if (Tokenizer.Tok in ParserToken_Hints) then
@@ -5335,7 +5335,7 @@ var
   Decls: TLapeDeclArray;
   i: Integer;
   VarCopy: TLapeGlobalVar;
-  wasConstant: Boolean;
+  OldConstant, OldKnown: Boolean;
 begin
   Decls := GlobalScope.GetByClass(TLapeGlobalVar);
   if (Length(Decls) <> Length(VarStates)) then
@@ -5344,9 +5344,9 @@ begin
   for i := 0 to High(VarStates) do
     if (VarStates[i] <> nil) then
     begin
-      wasConstant := not TLapeGlobalVar(Decls[i]).Writeable;
-      if wasConstant then
-        TLapeGlobalVar(Decls[i]).Writeable := True;
+      OldConstant := TLapeGlobalVar(Decls[i]).isConstant;
+      OldKnown := TLapeGlobalVar(Decls[i]).Known;
+      TLapeGlobalVar(Decls[i]).isConstant := False;
 
       with TLapeTree_InternalMethod_DeepCopy.Create(Self) do
       try
@@ -5358,8 +5358,8 @@ begin
         VarCopy.Free();
         Free();
 
-        if wasConstant then
-          TLapeGlobalVar(Decls[i]).Writeable := False;
+        TLapeGlobalVar(Decls[i]).isConstant := OldConstant;
+        TLapeGlobalVar(Decls[i]).Known := OldKnown;
       end;
     end;
 end;
@@ -5466,7 +5466,7 @@ end;
 
 procedure TLapeCompiler.VarToDefault(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
 begin
-  Assert(AVar.Writeable);
+  Assert(not AVar.isConstant);
   if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() then
     with TLapeTree_InternalMethod_Default.Create(Self, Pos) do
     try
@@ -5478,23 +5478,16 @@ begin
 end;
 
 procedure TLapeCompiler.FinalizeVar(AVar: TResVar; var Offset: Integer; Pos: PDocPos = nil);
-var
-  wasConstant: Boolean;
 begin
-  wasConstant := False;
   if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType()  then
     with TLapeTree_InternalMethod_Dispose.Create(Self, Pos) do
     try
-      wasConstant := not AVar.Writeable;
-      if wasConstant then
-        AVar.Writeable := True;
+      AVar.isConstant := False;
 
       FunctionOnly := True;
       addParam(TLapeTree_ResVar.Create(AVar, Self, Pos));
       Compile(Offset);
     finally
-      if wasConstant then
-        AVar.Writeable := False;
       Free();
     end;
 end;
@@ -5558,10 +5551,9 @@ begin
   if (Result is TLapeWithDeclaration) then
     with TLapeWithDeclaration(Result), TLapeTree_Operator.Create(op_Dot, Self) do
     try
-      Left := TLapeTree_VarType.Create(WithDeclRec.WithType, Self);
+      Left := TLapeTree_VarType.Create(WithType, Self);
       Right := TLapeTree_Field.Create(AName, Self);
 
-      Result.Free();
       if isConstant() then
         Result := Evaluate()
       else
@@ -5595,17 +5587,15 @@ begin
 
     if (Decl is TLapeWithDeclaration) then
       with TLapeWithDeclaration(Decl) do
-      try
+      begin
         Result := TLapeTree_Operator.Create(op_Dot, Self, Pos);
         // (of a static method: the type)
-        if (WithDeclRec.WithVar = nil) then
-          TLapeTree_Operator(Result).Left := TLapeTree_VarType.Create(WithDeclRec.WithType, Self, Pos)
+        if IsType then
+          TLapeTree_Operator(Result).Left := TLapeTree_VarType.Create(WithType, Self, Pos)
         else
-          TLapeTree_Operator(Result).Left := TLapeTree_WithVar.Create(WithDeclRec, Self, Pos);
+          TLapeTree_Operator(Result).Left := TLapeTree_WithVar.Create(TLapeWithDeclaration(Decl), Self, Pos);
         TLapeTree_Operator(Result).Right := TLapeTree_Field.Create(AName, Self, Pos);
         Result := Result.FoldConstants() as TLapeTree_ExprBase;
-      finally
-        Free();
       end
     else if (Decl is TLapeInheritedMethod) then
       Result := TLapeTree_Inherited.Create(TLapeInheritedMethod(Decl), Self, Pos)
@@ -5836,7 +5826,8 @@ end;
 function TLapeCompiler.addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: Pointer; AName: lpString): TLapeGlobalVar;
 begin
   Result := addGlobalVar(TLapeType_Method(addManagedType(TLapeType_Method.Create(Self, AParams, AParTypes, AParDefaults, ARes))).NewGlobalVar(Value), AName);
-  Result.setReadWrite(False, False);
+  Result.isConstant := True;
+  Result.Known := False;
 end;
 
 function TLapeCompiler.addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: Pointer; AName: lpString): TLapeGlobalVar;
@@ -5849,7 +5840,8 @@ begin
   Assert(AFunc <> nil);
 
   Result := TLapeType_MethodOfObject(addManagedType(TLapeType_MethodOfObject.Create(AFunc.VarType as TLapeType_Method))).NewGlobalVar(Value, AFunc.Name);
-  Result.setReadWrite(False, False);
+  Result.isConstant := True;
+  Result.Known := False;
   TLapeType_MethodOfObject(Result.VarType).HiddenSelf := not (AFunc.VarType is TLapeType_MethodOfObject);
 
   if (AFunc.DeclarationList <> nil) then
@@ -5927,7 +5919,7 @@ end;
 function TLapeType_SystemUnit.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
 begin
   if (Op = op_Dot) and ValidFieldName(Right) then
-    Result := Right.Readable and HasMember(PlpString(Right.Ptr)^)
+    Result := Right.Known and HasMember(PlpString(Right.Ptr)^)
   else
     Result := inherited;
 end;

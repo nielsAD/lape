@@ -219,7 +219,7 @@ begin
 
     Result := Left.VarType.Eval(op_Plus, Dest, Left, _ResVar.New(FCompiler.getConstant(Field.Offset)), Flags, Offset, Pos);
     Result := Result.VarType.Eval(op_Deref, Dest, Result, NullResVar, [], Offset, Pos);
-    Result.CopyFlags(Left);
+    Result.isConstant := Left.isConstant;
     Result.VarType := Field.FieldType;
 
     Left.VarType := Self;
@@ -242,7 +242,8 @@ begin
     with FFieldMap[PlpString(ARight.Ptr)^] do
     begin
       Result := FieldType.NewGlobalVarP(Pointer(PtrUInt(ALeft.Ptr) + Offset));
-      Result.CopyFlags(ALeft);
+      Result.isConstant := ALeft.isConstant;
+      Result.Known := ALeft.Known;
     end
   end else
     Result := inherited;
