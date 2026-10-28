@@ -236,7 +236,7 @@ begin
         if (ParamType.BaseType in LapeStringTypes) then
           FResType := FCompiler.getBaseType(ltAnsiString)
         else with TLapeType_StaticArray(ParamType) do
-          FResType := FCompiler.addManagedType(TLapeType_DynArray.Create(PType, FCompiler));
+          FResType := PType.ArrayOf;
     end;
   end;
 
@@ -360,7 +360,7 @@ begin
         if (ParamType.BaseType in LapeStringTypes) then
           FResType := FCompiler.getBaseType(ltAnsiString)
         else with TLapeType_StaticArray(ParamType) do
-          FResType := FCompiler.addManagedType(TLapeType_DynArray.Create(PType, FCompiler));
+          FResType := PType.ArrayOf;
     end;
   end;
 
@@ -411,7 +411,7 @@ begin
         if (ParamType.BaseType in LapeStringTypes) then
           FResType := FCompiler.getBaseType(ltAnsiString)
         else with TLapeType_StaticArray(ParamType) do
-          FResType := FCompiler.addManagedType(TLapeType_DynArray.Create(PType, FCompiler));
+          FResType := PType.ArrayOf;
     end;
   end;
 

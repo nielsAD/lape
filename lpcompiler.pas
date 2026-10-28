@@ -985,7 +985,7 @@ begin
 
   // Copy() creates dynamic arrays from static arrays
   if (AParams[0] is TLapeType_StaticArray) then
-    AResult := addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(AParams[0]).PType, Self))
+    AResult := TLapeType_DynArray(AParams[0]).PType.ArrayOf
   else
     AResult := AParams[0];
 
@@ -4846,7 +4846,7 @@ function TLapeCompiler.ParseFor(ExprEnd: EParserTokenSet = ParserToken_Expressio
       Result.Limit := TLapeTree_Operator(counterExpr).Right
     else
     begin
-      LimitType := addManagedType(TLapeType_DynArray.Create(Result.Counter.resType(), Self, '', getPDocPos()));
+      LimitType := Result.Counter.resType().ArrayOf;
       with TLapeTree_Operator(counterExpr).Right do
       begin
         Parent := Result;

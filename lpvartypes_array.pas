@@ -735,7 +735,7 @@ begin
           TLapeType_StaticArray(ARight.VarType).Range.Lo + 1)               +
         ');'                                                                +
         'PType(@Left[0])^ := Right;',
-        ['PType', 'Left', 'Right'], [FCompiler.getTypeVar(FCompiler.getPointerType(ARight.VarType))],
+        ['PType', 'Left', 'Right'], [FCompiler.getTypeVar(FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, ARight.VarType, False)))],
         [ALeft, ARight], Offset, Pos)}
 
       with TLapeType_StaticArray(ARight.VarType).Range do
@@ -1147,7 +1147,7 @@ begin
     begin
       LeftVar := Left;
       LeftVar.VarPos.isPointer := False;
-      LeftVar.VarType := FCompiler.getPointerType(PType, PConst);
+      LeftVar.VarType := FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, PType, PConst));
     end;
 
     if (FRange.Lo = 0) then

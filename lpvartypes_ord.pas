@@ -440,7 +440,7 @@ begin
         Values[i] := FRange.Lo + i;
     end;
 
-    with TLapeType_DynArray(FCompiler.addManagedType(TLapeType_DynArray.Create(FVarType, FCompiler))) do
+    with TLapeType_DynArray(FVarType.ArrayOf) do
     begin
       FAsArray := TLapeGlobalVar(FCompiler.addManagedDecl(NewGlobalVarP()));
 
@@ -657,7 +657,7 @@ begin
     if (not (BaseType in LapeOrdinalTypes)) then
       LapeException(lpeImpossible, DocPos);
 
-    with TLapeType_DynArray(FCompiler.addManagedType(TLapeType_DynArray.Create(Self, FCompiler))) do
+    with TLapeType_DynArray(Self.ArrayOf) do
     begin
       FAsArray := TLapeGlobalVar(FCompiler.addManagedDecl(NewGlobalVarP()));
 

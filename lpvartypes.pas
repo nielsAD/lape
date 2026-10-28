@@ -230,6 +230,7 @@ type
     FHi: TLapeGlobalVar;
     FAsString: lpString;
     FEmptyValue: TLapeGlobalVar;
+    FArrayOf: TLapeType;
 
     function getEvalRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType; virtual;
     function getEvalProc(Op: EOperator; Left, Right: ELapeBaseType): TLapeEvalProc; virtual;
@@ -241,6 +242,7 @@ type
     function getFinalization: Boolean; virtual;
     function getAsString: lpString; virtual;
     function getEmptyValue: TLapeGlobalVar; virtual;
+    function getArrayOf: TLapeType; virtual;
     function getDeclarations: TLapeDeclarationList; virtual;
     // Whether it has anything that Left.Name could be
     function HasMembers: Boolean; virtual;
@@ -273,8 +275,8 @@ type
 
     // Declared on it, or (CheckParent) on its ParentType and so on
     function getDeclaration(AName: lpString; CheckParent: Boolean = True): TLapeDeclaration; virtual;
-    function HasDeclaration(AName: lpString; CheckParent: Boolean = True): Boolean; overload; virtual;
-    function HasDeclaration(ADecl: TLapeDeclaration; CheckParent: Boolean = True): Boolean; overload; virtual;
+    function hasDeclaration(AName: lpString; CheckParent: Boolean = True): Boolean; overload; virtual;
+    function hasDeclaration(ADecl: TLapeDeclaration; CheckParent: Boolean = True): Boolean; overload; virtual;
     // Whether .AName means anything: a declaration, or what the type does itself (a field, an element, a helper)
     function HasMember(AName: lpString): Boolean; virtual;
 
@@ -304,6 +306,8 @@ type
     property AsString: lpString read getAsString;
     // A constant of it, all zeros
     property EmptyValue: TLapeGlobalVar read getEmptyValue;
+    // array of it (a TLapeType_DynArray)
+    property ArrayOf: TLapeType read getArrayOf;
     // (what is declared on it; a method of it goes in here as it is, checked by who declares it, see TLapeCompiler.ParseMethod)
     property Declarations: TLapeDeclarationList read getDeclarations;
   end;
@@ -564,8 +568,8 @@ type
 
     // Of a with (CheckWith; a new declaration, that the caller frees), then here, then of SelfWith (CheckWith)
     function getDeclaration(AName: lpString; CheckWith: Boolean): TLapeDeclaration; virtual;
-    function HasDeclaration(AName: lpString; CheckWith: Boolean): Boolean; overload; virtual;
-    function HasDeclaration(ADecl: TLapeDeclaration; CheckWith: Boolean): Boolean; overload; virtual;
+    function hasDeclaration(AName: lpString; CheckWith: Boolean): Boolean; overload; virtual;
+    function hasDeclaration(ADecl: TLapeDeclaration; CheckWith: Boolean): Boolean; overload; virtual;
 
     // To release every temporary variable that is handed out from here on
     // Before statement: note the count of TLapeStackTempVar
@@ -694,8 +698,8 @@ type
 
     function getLabel(CodePos: Integer): TLapeGlobalVar; virtual;
 
-    // ltUnknown: the smallest whole number type that holds it
-    function getIntConst(Value: Int64; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar; virtual;
+    function getConst(Value: Pointer; BaseType: ELapeBaseType): TLapeGlobalVar; virtual;
+    function getIntConst(Value: Int64; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar; virtual; // ltUnknown: the smallest whole number type that holds it
     function getBoolConst(Value: Boolean; BaseType: ELapeBaseType = ltEvalBool): TLapeGlobalVar; virtual;
     function getCharConst(Value: Integer; BaseType: ELapeBaseType = ltAnsiChar): TLapeGlobalVar; virtual;
     function getFloatConst(Value: lpFloat; BaseType: ELapeBaseType = ltFloat): TLapeGlobalVar; virtual;
@@ -707,8 +711,6 @@ type
     function getTempStackVar(VarType: ELapeBaseType): TResVar; overload; virtual;
     function getTempStackVar(VarType: TLapeType): TResVar; overload; virtual;
 
-    function getPointerType(PType: ELapeBaseType; PConst: Boolean): TLapeType_Pointer; overload; virtual;
-    function getPointerType(PType: TLapeType; PConst: Boolean): TLapeType_Pointer; overload; virtual;
     function getTypeVar(AType: ELapeBaseType): TLapeGlobalVar; overload; virtual;
     function getTypeVar(AType: TLapeType): TLapeGlobalVar; overload; virtual;
     function getGlobalVar(AName: lpString): TLapeGlobalVar; virtual;
@@ -716,11 +718,11 @@ type
 
     // (LocalOnly: what is declared in AStackInfo itself, not what a with of it has)
     function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): TLapeDeclaration; virtual;
-    function HasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean; overload; virtual;
-    function HasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean; overload; virtual;
+    function hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean; overload; virtual;
+    function hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean; overload; virtual;
 
     procedure Hint(Msg: lpString; Args: array of const; ADocPos: TDocPos);
-    function getGlobalScope: TLapeStackInfo; inline;
+    function getGlobalScope: TLapeStackInfo;
 
     property StackInfo: TLapeStackInfo read FStackInfo;
     property BaseTypes: TLapeBaseTypes read FBaseTypes;
@@ -1443,6 +1445,13 @@ begin
   Result := FEmptyValue;
 end;
 
+function TLapeType.getArrayOf: TLapeType;
+begin
+  if (FArrayOf = nil) then
+    FArrayOf := FCompiler.addManagedType(TLapeType_DynArray.Create(Self, FCompiler));
+  Result := FArrayOf;
+end;
+
 function TLapeType.getDeclarations: TLapeDeclarationList;
 begin
   if (FAliasType <> nil) then
@@ -1462,6 +1471,7 @@ begin
   FLo := nil;
   FHi := nil;
   FEmptyValue := nil;
+  FArrayOf := nil;
   FAsString := '';
 end;
 
@@ -1609,7 +1619,7 @@ begin
   Result := nil;
 end;
 
-function TLapeType.HasDeclaration(AName: lpString; CheckParent: Boolean = True): Boolean;
+function TLapeType.hasDeclaration(AName: lpString; CheckParent: Boolean = True): Boolean;
 begin
   Result := (getDeclaration(AName, CheckParent) <> nil);
 end;
@@ -1619,7 +1629,7 @@ begin
   Result := (EvalMemberRes(AName) <> nil);
 end;
 
-function TLapeType.HasDeclaration(ADecl: TLapeDeclaration; CheckParent: Boolean = True): Boolean;
+function TLapeType.hasDeclaration(ADecl: TLapeDeclaration; CheckParent: Boolean = True): Boolean;
 var
   Typ: TLapeType;
 begin
@@ -1647,7 +1657,7 @@ begin
     Exit(EvalRes(op_Assign, EvalRes(ResolveCompoundOp(op, Self), Right, flags), flags));
 
   if (Op = op_Addr) then
-    Result := FCompiler.getPointerType(Self, False)
+    Result := FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, Self, False))
   else if (Op in AssignOperators) and (Right <> nil) and (getEvalRes(Op, FBaseType, Right.BaseType) <> ltUnknown) then
     Result := Self
   else if (Right = nil) then
@@ -1761,7 +1771,7 @@ begin
       ResType := EvalRes(Op, TLapeType(nil), Flags);
       if (op = op_Addr) and Left.isConstant then
         if (lefConstAddress in Flags) and (Left.Name <> '') then
-          ResType := FCompiler.getPointerType(Self, True)
+          ResType := FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, Self, True))
         else
           LapeException(lpeVariableExpected);
 
@@ -1906,7 +1916,7 @@ begin
        ((Left.VarPos.MemPos = mpVar) and (not (Left.VarPos.StackVar is TLapeStackTempVar))) or
        ((Left.VarPos.MemPos = mpMem) and (Left.VarPos.GlobalVar.Name <> '')))
     then
-      Result.VarType := FCompiler.getPointerType(Self, True)
+      Result.VarType := FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, Self, True))
     else
       LapeException(lpeVariableExpected)
   else if (not Result.HasType()) and (op = op_Deref) and ((not Left.HasType()) or (Left.VarType.BaseType = ltPointer)) then
@@ -2253,7 +2263,7 @@ begin
       if (not HasType()) and (ClassType = TLapeType_Pointer) then
         Result := Self
       else
-        Result := FCompiler.getPointerType(FPType, PConst);
+        Result := FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, FPType, PConst));
   end;
 end;
 
@@ -2346,7 +2356,7 @@ begin
     begin
       Result := NullResVar;
       if (Self is TLapeType_DynArray) then
-        Result.VarType := FCompiler.getPointerType(PType, PConst)
+        Result.VarType := FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, PType, PConst))
       else
         Result.VarType := Self;
 
@@ -3499,7 +3509,7 @@ begin
     Result := FSelfWith;
 end;
 
-function TLapeStackInfo.HasDeclaration(AName: lpString; CheckWith: Boolean): Boolean;
+function TLapeStackInfo.hasDeclaration(AName: lpString; CheckWith: Boolean): Boolean;
 var
   i: Integer;
 begin
@@ -3512,16 +3522,16 @@ begin
     (CheckWith and (FSelfWith <> nil) and FSelfWith.WithType.HasMember(AName));
 end;
 
-function TLapeStackInfo.HasDeclaration(ADecl: TLapeDeclaration; CheckWith: Boolean): Boolean;
+function TLapeStackInfo.hasDeclaration(ADecl: TLapeDeclaration; CheckWith: Boolean): Boolean;
 var
   i: Integer;
 begin
   if CheckWith then
     for i := FWithStack.Count - 1 downto 0 do
-      if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.HasDeclaration(ADecl) then
+      if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasDeclaration(ADecl) then
         Exit(True);
 
-  Result := Has(ADecl) or (CheckWith and (FSelfWith <> nil) and FSelfWith.WithType.HasDeclaration(ADecl));
+  Result := Has(ADecl) or (CheckWith and (FSelfWith <> nil) and FSelfWith.WithType.hasDeclaration(ADecl));
 end;
 
 function TLapeStackInfo.getTempVar(VarType: TLapeType): TLapeStackTempVar;
@@ -3590,7 +3600,7 @@ begin
   // A global method is not checked: the program that runs Lape can put one in place of another, see addGlobalMethod)
   if (Depth > 0) or (not ((ADecl is TLapeGlobalVar) and (TLapeGlobalVar(ADecl).VarType is TLapeType_Method))) then
     if ((ADecl.Name = '') and Has(ADecl)) or
-       ((ADecl.Name <> '') and (HasDeclaration(ADecl.Name, False) or ((Depth > 0) and LapeSameString(ADecl.Name, LapeSystemName))))
+       ((ADecl.Name <> '') and (hasDeclaration(ADecl.Name, False) or ((Depth > 0) and LapeSameString(ADecl.Name, LapeSystemName))))
     then
       LapeExceptionFmt(lpeDuplicateDeclaration, [ADecl.Name]);
 
@@ -4394,6 +4404,13 @@ begin
   Inc(FTypeID);
 end;
 
+function TLapeCompilerBase.getConst(Value: Pointer; BaseType: ELapeBaseType): TLapeGlobalVar;
+begin
+  Assert(BaseType in LapeIntegerTypes + LapeBoolTypes + LapeCharTypes);
+
+  Result := FConstants.Get(Self, BaseType, Value);
+end;
+
 function TLapeCompilerBase.getIntConst(Value: Int64; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar;
 begin
   if (BaseType = ltUnknown) then
@@ -4442,10 +4459,12 @@ begin
   FManagedDeclarations.addDeclaration(Result);
 end;
 
-// Not shared: few repeat
+// Not shared: few repeat, but '' is the type's empty value
 function TLapeCompilerBase.getStringConst(Value: lpString; BaseType: ELapeBaseType = ltString): TLapeGlobalVar;
 begin
   Assert(BaseType in LapeStringTypes);
+  if (Value = '') then
+    Exit(FBaseTypes[BaseType].EmptyValue);
 
   Result := FBaseTypes[BaseType].NewGlobalVarStr(Value);
   FManagedDeclarations.addDeclaration(Result);
@@ -4510,16 +4529,6 @@ function TLapeCompilerBase.getTempStackVar(VarType: TLapeType): TResVar;
 begin
   Result := StackResVar;
   Result.VarType := VarType;
-end;
-
-function TLapeCompilerBase.getPointerType(PType: ELapeBaseType; PConst: Boolean): TLapeType_Pointer;
-begin
-  Result := getPointerType(FBaseTypes[PType], PConst);
-end;
-
-function TLapeCompilerBase.getPointerType(PType: TLapeType; PConst: Boolean): TLapeType_Pointer;
-begin
-  Result := TLapeType_Pointer(addManagedType(TLapeType_Pointer.Create(Self, PType, PConst)));
 end;
 
 function TLapeCompilerBase.getTypeVar(AType: ELapeBaseType): TLapeGlobalVar;
@@ -4596,7 +4605,7 @@ begin
   end;
 end;
 
-function TLapeCompilerBase.HasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean;
+function TLapeCompilerBase.hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean;
 var
   Stack: TLapeStackInfo;
 begin
@@ -4606,7 +4615,7 @@ begin
   Stack := AStackInfo;
   while (Stack <> nil) do
   begin
-    if Stack.HasDeclaration(AName, not LocalOnly) then
+    if Stack.hasDeclaration(AName, not LocalOnly) then
       if (not LocalOnly) or (not (Stack.getDeclaration(AName, False) is TLapeInternalMethodDeclaration)) then
         Exit(True);
     if LocalOnly then
@@ -4617,7 +4626,7 @@ begin
   Result := False;
 end;
 
-function TLapeCompilerBase.HasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean;
+function TLapeCompilerBase.hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean;
 var
   Stack: TLapeStackInfo;
 begin
@@ -4627,7 +4636,7 @@ begin
   Stack := AStackInfo;
   while (Stack <> nil) do
   begin
-    if Stack.HasDeclaration(ADecl, not LocalOnly) then
+    if Stack.hasDeclaration(ADecl, not LocalOnly) then
       Exit(True);
     if LocalOnly then
       Break;

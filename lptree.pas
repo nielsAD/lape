@@ -1190,12 +1190,12 @@ function TLapeTree_OpenArray.resType: TLapeType;
         if (Result is TLapeType_Enum) and TLapeType_Enum(Result).canSet() then
           Result := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_Enum(Result), FCompiler, '', @_DocPos))
         else if (FRange.Lo < 0) then
-          Result := FCompiler.addManagedType(TLapeType_DynArray.Create(Result, FCompiler, '', @_DocPos))
+          Result := Result.ArrayOf
         else
           Result := FCompiler.addManagedType(TLapeType_StaticArray.Create(FRange, Result, FCompiler, '', @_DocPos));
     end
     else
-      Result := FCompiler.addManagedType(TLapeType_DynArray.Create(FCompiler.getBaseType(ltVariant), FCompiler, '', @_DocPos));
+      Result := FCompiler.getBaseType(ltVariant).ArrayOf;
   end;
 
 begin
@@ -2074,7 +2074,7 @@ begin
         else if (Typ <> nil) and (Typ is TLapeType_Pointer) and (not TLapeType_Pointer(Typ).HasType()) then
         begin
           Cast := TLapeTree_Cast.Create(FCompiler);
-          Cast.CastTo := TLapeTree_VarType.Create(FCompiler.getPointerType(ExpectType, False), Self);
+          Cast.CastTo := TLapeTree_VarType.Create(FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, ExpectType, False)), Self);
           Cast.Param := Left;
           Left := Cast;
         end;
@@ -2253,7 +2253,7 @@ end;
 
 function TLapeTree_Operator.Evaluate: TLapeGlobalVar;
 var
-  LeftVar, RightVar: TLapeGlobalVar;
+  LeftVar, RightVar, Shared: TLapeGlobalVar;
   Short: Boolean;
 
   function canShort(Typ: TLapeType): Boolean;
@@ -2302,6 +2302,17 @@ begin
         FRes := EvalConst(FOperatorType, LeftVar, RightVar, EvalFlags());
       finally
         Free();
+      end;
+
+      // a whole number, boolean or char of a base type that was made here is shared
+      if (FRes <> nil) and (FRes.DeclarationList = nil) and FRes.isConstant and FRes.Known and FRes.HasType() and
+         (FRes.VarType = FCompiler.getBaseType(FRes.VarType.BaseType)) and
+         (FRes.VarType.BaseType in LapeIntegerTypes + LapeBoolTypes + LapeCharTypes)
+      then
+      begin
+        Shared := FCompiler.getConst(FRes.Ptr, FRes.VarType.BaseType);
+        FRes.Free();
+        FRes := Shared;
       end;
 
       FRes := FCompiler.addManagedDecl(FRes) as TLapeGlobalVar;
