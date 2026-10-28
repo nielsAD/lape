@@ -202,7 +202,9 @@ var
   ParamTypes: TLapeTypeArray;
 begin
   ObjectType := nil;
-  if (FCallee is TLapeTree_Operator) and (TLapeTree_Operator(FCallee).Left <> nil) then
+  if (FCallee is TLapeTree_Member) and (TLapeTree_Member(FCallee).Left <> nil) then
+    ObjectType := TLapeTree_Member(FCallee).Left.resType()
+  else if (FCallee is TLapeTree_Operator) and (TLapeTree_Operator(FCallee).Left <> nil) then
     ObjectType := TLapeTree_Operator(FCallee).Left.resType();
 
   // as they are, then with open array casting
@@ -655,7 +657,7 @@ begin
   else
   begin
     Overloaded := TLapeType_OverloadedMethod(FCallee.resType());
-    IndexVar := FCompiler.getConstant(Overloaded.Declarations.IndexOf(Picked));
+    IndexVar := FCompiler.getIntConst(Overloaded.Declarations.IndexOf(Picked));
     Assert(IndexVar.AsInteger >= 0);
 
     if (FCallee is TLapeTree_GlobalVar) and
@@ -720,11 +722,9 @@ end;
 
 constructor TLapeTree_InvokeConstruct.Create(ObjType: TLapeType; ASource: TLapeTree_Base);
 var
-  Construct: TLapeTree_Operator;
+  Construct: TLapeTree_Member;
 begin
-  Construct := TLapeTree_Operator.Create(op_Dot, ASource);
-  Construct.Left := TLapeTree_VarType.Create(ObjType, ASource);
-  Construct.Right := TLapeTree_Field.Create(lpString('Construct'), ASource);
+  Construct := TLapeTree_Member.Create(TLapeTree_VarType.Create(ObjType, ASource), lpString('Construct'), ASource);
   FHasConstruct := (Construct.resType() <> nil);
   inherited Create(Construct, ASource);
   FObjectType := ObjType;
@@ -810,8 +810,8 @@ begin
     Value := FParams[FParams.Count - 1];
     FParams.Delete(FParams.Count - 1);
 
-    if (FCallee is TLapeTree_Operator) and (TLapeTree_Operator(FCallee).OperatorType = op_Dot) and (not isEmpty(TLapeTree_Operator(FCallee).Left)) then
-      with TLapeTree_Operator(FCallee) do
+    if (FCallee is TLapeTree_Member) and (not isEmpty(TLapeTree_Member(FCallee).Left)) then
+      with TLapeTree_Member(FCallee) do
         Left := TLapeTree_ResVar.Create(CompileToVar(Left), Left);
 
     ReadCall := TLapeTree_InvokeProperty.Create(TLapeTree_ResVar.Create(CompileToVar(FCallee), FCallee), Self);

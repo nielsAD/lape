@@ -287,6 +287,25 @@ type
     property Sorted: Boolean read getSorted write setSorted;
   end;
 
+  // Items sorted by a hash of theirs for a binary search
+  {$IFDEF FPC}generic{$ENDIF} TLapeHashList<_T> = class(TLapeBaseClass)
+  protected
+    FHashes: array of UInt32;
+    FItems: {$IFDEF Delphi}TArray<_T>{$ELSE}array of _T{$ENDIF};
+    FCount: Integer;
+
+    function getHash(Index: Integer): UInt32; inline;
+    function getItem(Index: Integer): _T; inline;
+  public
+    function Find(Hash: UInt32): Integer; virtual;
+    procedure Insert(Hash: UInt32; Item: _T); virtual;
+    procedure Clear; virtual;
+
+    property Count: Integer read FCount;
+    property Hashes[Index: Integer]: UInt32 read getHash;
+    property Items[Index: Integer]: _T read getItem; default;
+  end;
+
   {$IFDEF FPC}generic{$ENDIF} TLapeStack<_T> = class(TLapeBaseClass)
   public type
     TTArray = {$IFDEF Delphi}TArray<_T>{$ELSE}array of _T{$ENDIF};
@@ -622,6 +641,8 @@ function LapeUpperCase(const Str: lpString): lpString; {$IFDEF Lape_Inline}inlin
 function LapeLowerCase(const Str: lpString): lpString; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeSameString(const A, B: lpString): Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function LapeHash(const Str: lpString): UInt32; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function LapeHashBytes(Data: PByte; Size: Integer): UInt32;
+function LapeSameValue(BaseType: ELapeBaseType; Ptr, Value: Pointer): Boolean;
 
 function LapeTypeToString(Token: ELapeBaseType): lpString;
 function LapeOperatorToString(Token: EOperator): lpString;
@@ -722,6 +743,41 @@ begin
   end;
   {$IFDEF REDO_Q}{$Q+}{$ENDIF}
   {$IFDEF REDO_R}{$R+}{$ENDIF}
+end;
+
+// FNV-1a, of Size bytes
+function LapeHashBytes(Data: PByte; Size: Integer): UInt32;
+var
+  i: Integer;
+begin
+  {$UNDEF REDO_Q}{$IFOPT Q+}{$Q-}{$DEFINE REDO_Q}{$ENDIF}
+  {$UNDEF REDO_R}{$IFOPT R+}{$R-}{$DEFINE REDO_R}{$ENDIF}
+  Result := 2166136261;
+  for i := 0 to Size - 1 do
+    Result := (Result xor Data[i]) * 16777619;
+  {$IFDEF REDO_Q}{$Q+}{$ENDIF}
+  {$IFDEF REDO_R}{$R+}{$ENDIF}
+end;
+
+function LapeSameValue(BaseType: ELapeBaseType; Ptr, Value: Pointer): Boolean;
+begin
+  case BaseType of
+    // 1 byte
+    ltUInt8, ltInt8, ltBoolean, ltByteBool, ltAnsiChar:
+      Result := (PUInt8(Ptr)^ = PUInt8(Value)^);
+    // 2 byte
+    ltUInt16, ltInt16, ltWordBool, ltWideChar:
+      Result := (PUInt16(Ptr)^ = PUInt16(Value)^);
+    // 4 byte
+    ltUInt32, ltInt32, ltLongBool:
+      Result := (PUInt32(Ptr)^ = PUInt32(Value)^);
+    // 8 byte
+    ltUInt64, ltInt64:
+      Result := (PUInt64(Ptr)^ = PUInt64(Value)^);
+
+    else
+      LapeException(lpeImpossible);
+  end;
 end;
 
 // FNV-1a, of the name with a-z as A-Z: the same of every way that a name can be written
@@ -1681,6 +1737,50 @@ begin
       Len := Len + Length(FItems[i]);
     end;
   end;
+end;
+
+function TLapeHashList{$IFNDEF FPC}<_T>{$ENDIF}.getHash(Index: Integer): UInt32;
+begin
+  Result := FHashes[Index];
+end;
+
+function TLapeHashList{$IFNDEF FPC}<_T>{$ENDIF}.getItem(Index: Integer): _T;
+begin
+  Result := FItems[Index];
+end;
+
+function TLapeHashList{$IFNDEF FPC}<_T>{$ENDIF}.Find(Hash: UInt32): Integer;
+begin
+  Result := _BSearch32(PUInt32(FHashes), Hash, 0, FCount - 1);
+  if (Result < 0) then
+    Result := -(Result + 1);
+end;
+
+procedure TLapeHashList{$IFNDEF FPC}<_T>{$ENDIF}.Insert(Hash: UInt32; Item: _T);
+var
+  Index, i: Integer;
+begin
+  if (FCount >= Length(FItems)) then
+  begin
+    SetLength(FHashes, 8 + (Length(FItems) * 2));
+    SetLength(FItems, Length(FHashes));
+  end;
+
+  Index := FCount;
+  FHashes[Index] := Hash;
+  _Insert32(PUInt32(FHashes), Index);
+
+  for i := FCount downto Index + 1 do
+    FItems[i] := FItems[i - 1];
+  FItems[Index] := Item;
+  Inc(FCount);
+end;
+
+procedure TLapeHashList{$IFNDEF FPC}<_T>{$ENDIF}.Clear;
+begin
+  FHashes := nil;
+  FItems := nil;
+  FCount := 0;
 end;
 
 procedure TLapeDictionary{$IFNDEF FPC}<_T>{$ENDIF}.Rebuild(Grow: Boolean);

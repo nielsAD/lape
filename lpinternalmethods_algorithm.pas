@@ -190,7 +190,7 @@ var
     with TLapeTree_Invoke.Create('_ArraySortWeighted', Self) do
     try
       addParam(TLapeTree_ResVar.Create(ArrayPtr, Self));
-      addParam(TLapeTree_Integer.Create(ArrayElementType.Size, Self));
+      addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(ArrayElementType.Size, ltNativeInt), Self));
       addParam(Len.FoldConstants() as TLapeTree_ExprBase);
       addParam(Weights.FoldConstants() as TLapeTree_ExprBase);
       addParam(Self.Params[1]);
@@ -321,7 +321,7 @@ begin
   with TLapeTree_Invoke.Create('_ArrayReverse', Self) do
   try
     addParam(TLapeTree_ResVar.Create(ArrayPointer, Self));
-    addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
+    addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(ArrayType.Size, ltNativeInt), Self));
 
     case ArrayVar.VarType.BaseType of
       ltDynArray:
@@ -333,7 +333,7 @@ begin
         end;
 
       ltStaticArray:
-        addParam(TLapeTree_Integer.Create(TLapeType_StaticArray(ArrayVar.VarType).Range.Hi - TLapeType_StaticArray(ArrayVar.VarType).Range.Lo, Self));
+        addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(TLapeType_StaticArray(ArrayVar.VarType).Range.Hi - TLapeType_StaticArray(ArrayVar.VarType).Range.Lo, ltNativeInt), Self));
     end;
 
     Compile(Offset);

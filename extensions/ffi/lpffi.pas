@@ -824,7 +824,7 @@ begin
 
       ElseBody := TLapeTree_InternalMethod_Raise.Create(FCompiler);
       with ElseBody as TLapeTree_Invoke do
-        addParam(TLapeTree_String.Create(FormatLocation(lpeScriptMethodExpected, Self.DocPos), FCompiler));
+        addParam(TLapeTree_GlobalVar.Create(FCompiler.getStringConst(FormatLocation(lpeScriptMethodExpected, Self.DocPos)), FCompiler));
 
       Compile(Offset);
     finally
@@ -835,7 +835,7 @@ begin
   try
     addParam(TLapeTree_ResVar.Create(Param, Self));
     addParam(TLapeTree_GlobalVar.Create(FClosures, Self));
-    addParam(TLapeTree_Integer.Create(Index, Self));
+    addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(Index, ltNativeInt), Self));
     Result := Compile(Offset);
     Result.VarType := Method;
   finally
@@ -912,7 +912,7 @@ begin
   try
     addParam(TLapeTree_ResVar.Create(Self.Params[0].Compile(Offset), Self));
     addParam(TLapeTree_GlobalVar.Create(FClosures, Self));
-    addParam(TLapeTree_Integer.Create(Index, Self));
+    addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(Index, ltNativeInt), Self));
     Result := Compile(Offset);
     Result.VarType := Self.resType();
   finally
