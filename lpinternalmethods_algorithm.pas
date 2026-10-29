@@ -131,7 +131,7 @@ var
 
     with TLapeTree_Invoke.Create('_ArraySort', Self) do
     try
-      addParam(TLapeTree_ResVar.Create(ArrayVar, Self));
+      addParam(TLapeTree_Var.Create(ArrayVar, Self));
 
       Compile(Offset);
     finally
@@ -160,8 +160,8 @@ var
 
     with TLapeTree_Invoke.Create('_ArraySort', Self) do
     try
-      addParam(TLapeTree_ResVar.Create(ArrayVar, Self));
-      addParam(TLapeTree_ResVar.Create(CompareVar, Self));
+      addParam(TLapeTree_Var.Create(ArrayVar, Self));
+      addParam(TLapeTree_Var.Create(CompareVar, Self));
 
       Compile(Offset);
     finally
@@ -182,15 +182,15 @@ var
       ArrayPtr := ArrayVar.VarType.Eval(op_Addr, Result, ArrayVar, NullResVar, [], Offset, @_DocPos); // ltStaticArray
 
     Len := TLapeTree_InternalMethod_Length.Create(Self);
-    Len.addParam(TLapeTree_ResVar.Create(ArrayVar, Self));
+    Len.addParam(TLapeTree_Var.Create(ArrayVar, Self));
     Weights := TLapeTree_InternalMethod_Copy.Create(Self);
     Weights.addParam(Params[1]);
 
     // _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: EvalBool)
     with TLapeTree_Invoke.Create('_ArraySortWeighted', Self) do
     try
-      addParam(TLapeTree_ResVar.Create(ArrayPtr, Self));
-      addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(ArrayElementType.Size, ltNativeInt), Self));
+      addParam(TLapeTree_Var.Create(ArrayPtr, Self));
+      addParam(TLapeTree_Var.Create(FCompiler.getIntConst(ArrayElementType.Size, ltNativeInt), Self));
       addParam(Len.FoldConstants() as TLapeTree_ExprBase);
       addParam(Weights.FoldConstants() as TLapeTree_ExprBase);
       addParam(Self.Params[1]);
@@ -263,7 +263,7 @@ begin
 
   with TLapeTree_InternalMethod_Sort.Create(Self) do
   try
-    addParam(TLapeTree_ResVar.Create(Result, Self));
+    addParam(TLapeTree_Var.Create(Result, Self));
     while (Self.FParams.Count > 0) do
       addParam(Self.FParams[0]);
 
@@ -298,8 +298,8 @@ begin
         try
           Left := TLapeTree_Operator.Create(op_Index, Self);
 
-          TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar, Self);
-          TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
+          TLapeTree_Operator(Left).Left := TLapeTree_Var.Create(ArrayVar, Self);
+          TLapeTree_Operator(Left).Right := TLapeTree_Var.Create(ArrayVar.VarType.VarLo(), Self);
 
           ArrayPointer := Compile(Offset);
         finally
@@ -320,20 +320,20 @@ begin
   ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
   with TLapeTree_Invoke.Create('_ArrayReverse', Self) do
   try
-    addParam(TLapeTree_ResVar.Create(ArrayPointer, Self));
-    addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(ArrayType.Size, ltNativeInt), Self));
+    addParam(TLapeTree_Var.Create(ArrayPointer, Self));
+    addParam(TLapeTree_Var.Create(FCompiler.getIntConst(ArrayType.Size, ltNativeInt), Self));
 
     case ArrayVar.VarType.BaseType of
       ltDynArray:
         begin
           ArrayHigh := TLapeTree_InternalMethod_High.Create(Self);
-          ArrayHigh.addParam(TLapeTree_ResVar.Create(ArrayVar, Self));
+          ArrayHigh.addParam(TLapeTree_Var.Create(ArrayVar, Self));
 
           addParam(ArrayHigh);
         end;
 
       ltStaticArray:
-        addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(TLapeType_StaticArray(ArrayVar.VarType).Range.Hi - TLapeType_StaticArray(ArrayVar.VarType).Range.Lo, ltNativeInt), Self));
+        addParam(TLapeTree_Var.Create(FCompiler.getIntConst(TLapeType_StaticArray(ArrayVar.VarType).Range.Hi - TLapeType_StaticArray(ArrayVar.VarType).Range.Lo, ltNativeInt), Self));
     end;
 
     Compile(Offset);
@@ -385,7 +385,7 @@ begin
 
   with TLapeTree_InternalMethod_Reverse.Create(Self) do
   try
-    addParam(TLapeTree_ResVar.Create(Result, Self));
+    addParam(TLapeTree_Var.Create(Result, Self));
 
     Compile(Offset);
   finally
@@ -435,7 +435,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayUnique', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler['_ArrayUnique'], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayUnique'], Self));
   Result := inherited;
 end;
 
@@ -473,7 +473,7 @@ begin
   if (ArrayType = nil) then
     LapeException(lpeExpectedArray, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMedian'], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMedian'], Self));
   Result := inherited;
 end;
 
@@ -512,7 +512,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayMode', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMode'], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMode'], Self));
   Result := inherited;
 end;
 
@@ -548,7 +548,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayMin', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_LessThan], ArrayElementType, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMin'], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMin'], Self));
   Result := inherited;
 end;
 
@@ -584,7 +584,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayMax', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayElementType, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMax'], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMax'], Self));
   Result := inherited;
 end;
 
@@ -629,7 +629,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArraySum', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_Plus], ArrayElementType, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler['_ArraySum'], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler['_ArraySum'], Self));
   Result := inherited;
 end;
 
@@ -671,7 +671,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayMean', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_Plus], ArrayElementType, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler['_ArrayMean'], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMean'], Self));
   Result := inherited;
 end;
 
@@ -706,7 +706,7 @@ begin
   if (not (FParams[0].resType() is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler['_ArrayVariance'], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayVariance'], Self));
   Result := inherited;
 end;
 
@@ -727,7 +727,7 @@ begin
   if (not (FParams[0].resType() is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler['_ArrayStdev'], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayStdev'], Self));
   Result := inherited;
 end;
 
@@ -766,7 +766,7 @@ begin
   if (not HasMagicMethod(Compiler, FMethod, getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType, DocPos);
 
-  setCallee(TLapeTree_GlobalVar.Create(FCompiler[FMethod], Self));
+  setCallee(TLapeTree_Var.Create(FCompiler[FMethod], Self));
   Result := inherited;
 end;
 

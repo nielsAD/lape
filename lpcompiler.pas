@@ -698,14 +698,14 @@ begin
     Callback := _ResVar.New(FStackInfo.addSelfVar(lptNormal, getGlobalType('ConstPointer')));
     Callback.VarType := addManagedType(TLapeType_Method.Create(AType));
 
-    Invoke := TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Callback, Self), Self);
+    Invoke := TLapeTree_Invoke.Create(TLapeTree_Var.Create(Callback, Self), Self);
     for i := 0 to AType.Params.Count - 1 do
-      Invoke.addParam(TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(AType.Params[i].ParType, AType.Params[i].VarType)), Self));
+      Invoke.addParam(TLapeTree_Var.Create(_ResVar.New(FStackInfo.addVar(AType.Params[i].ParType, AType.Params[i].VarType)), Self));
 
     if (AType.Res <> nil) then
     begin
       Assignment := TLapeTree_Operator.Create(op_Assign, Self);
-      Assignment.Left := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptOut, AType.Res)), Self);
+      Assignment.Left := TLapeTree_Var.Create(_ResVar.New(FStackInfo.addVar(lptOut, AType.Res)), Self);
       Assignment.Right := Invoke;
 
       Method.Statements.addStatement(Assignment);
@@ -795,8 +795,8 @@ begin
     Sender.addMethod(Result);
 
     Assignment := TLapeTree_Operator.Create(op_Assign, Self);
-    Assignment.Right := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptConstRef, AParams[0], '!Src')), Self);
-    Assignment.Left  := TLapeTree_ResVar.Create(_ResVar.New(FStackInfo.addVar(lptOut, AParams[1], '!Dst')), Self);
+    Assignment.Right := TLapeTree_Var.Create(_ResVar.New(FStackInfo.addVar(lptConstRef, AParams[0], '!Src')), Self);
+    Assignment.Left  := TLapeTree_Var.Create(_ResVar.New(FStackInfo.addVar(lptOut, AParams[1], '!Dst')), Self);
 
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Self);
@@ -1755,8 +1755,8 @@ begin
     Result := TLapeTree_Range.Create(Self, @Node._DocPos);
     with TLapeTree_VarType(Node).VarType do
     begin
-      Result.Lo := TLapeTree_GlobalVar.Create(VarLo(), Self, @Node._DocPos);
-      Result.Hi := TLapeTree_GlobalVar.Create(VarHi(), Self, @Node._DocPos);
+      Result.Lo := TLapeTree_Var.Create(VarLo(), Self, @Node._DocPos);
+      Result.Hi := TLapeTree_Var.Create(VarHi(), Self, @Node._DocPos);
     end;
   end
   else
@@ -3853,7 +3853,7 @@ begin
           VarDecl.VarDecl.IsUsed := False;
         if (DefConst <> nil) then
           if (not (VarDecl.VarDecl is TLapeGlobalVar)) or (VarType is TLapeType_Method) then
-            VarDecl.Default := TLapeTree_GlobalVar.Create(DefConst, Self, GetPDocPos())
+            VarDecl.Default := TLapeTree_Var.Create(DefConst, Self, GetPDocPos())
           else
           try
             VarDecl.VarDecl.VarType.EvalConst(op_Assign, TLapeGlobalVar(VarDecl.VarDecl), DefConst, []);
@@ -4038,13 +4038,13 @@ var
           (not isNext([tk_typ_String, tk_typ_HereString, tk_typ_Char], Token));
 
     if FirstIsChar and (Count = 1) then
-      PushVarStack(TLapeTree_GlobalVar.Create(CharConst(FirstCode), Self, @DocPos))
+      PushVarStack(TLapeTree_Var.Create(CharConst(FirstCode), Self, @DocPos))
     else if FirstIsChar and (FirstCode > Ord(High(lpChar))) then
       LapeExceptionFmt(lpeInvalidCharacterInString, [FirstText, Ord(High(lpChar))], DocPos)
     else if (Count = 1) and (Length(Str) = 1) then
-      PushVarStack(TLapeTree_GlobalVar.Create(CharConst(Ord(Str[1])), Self, @DocPos))
+      PushVarStack(TLapeTree_Var.Create(CharConst(Ord(Str[1])), Self, @DocPos))
     else
-      PushVarStack(TLapeTree_GlobalVar.Create(getStringConst(Str), Self, @DocPos));
+      PushVarStack(TLapeTree_Var.Create(getStringConst(Str), Self, @DocPos));
   end;
 
   procedure ParseAndPushArray;
@@ -4434,7 +4434,7 @@ begin
                 LapeExceptionFmt(lpeInvalidNumber, [Tokenizer.TokString], Tokenizer.DocPos);
               if Signed then
                 FloatValue := -FloatValue;
-              PushVarStack(TLapeTree_GlobalVar.Create(getFloatConst(FloatValue), Self, getPDocPos()));
+              PushVarStack(TLapeTree_Var.Create(getFloatConst(FloatValue), Self, getPDocPos()));
             end
             else
             begin
@@ -4453,7 +4453,7 @@ begin
                 Value := getBaseType(ltUInt64).NewGlobalVarP();
                 PUInt64(Value.Ptr)^ := IntValue;
               end;
-              PushVarStack(TLapeTree_GlobalVar.Create(Value, Self, getPDocPos()));
+              PushVarStack(TLapeTree_Var.Create(Value, Self, getPDocPos()));
             end;
 
             if Signed then
@@ -4875,12 +4875,12 @@ begin
           Result.Counter := TLapeTree_Operator.Create(op_Assign, Compiler, @_DocPos);
           with TLapeTree_Operator(Result.Counter) do
           begin
-            Left := TLapeTree_ResVar.Create(_ResVar.New(Vars[0].VarDecl), Compiler, @_DocPos);
+            Left := TLapeTree_Var.Create(_ResVar.New(Vars[0].VarDecl), Compiler, @_DocPos);
             Right := Vars[0].Default;
           end;
         end
         else
-          Result.Counter := TLapeTree_ResVar.Create(_ResVar.New(Vars[0].VarDecl), Compiler, @_DocPos);
+          Result.Counter := TLapeTree_Var.Create(_ResVar.New(Vars[0].VarDecl), Compiler, @_DocPos);
       finally
         Free();
       end;
@@ -5368,7 +5368,7 @@ begin
     begin
       with TLapeTree_InternalMethod_DeepCopy.Create(Self) do
       try
-        addParam(TLapeTree_GlobalVar.Create(TLapeGlobalVar(Decls[i]), Self));
+        addParam(TLapeTree_Var.Create(TLapeGlobalVar(Decls[i]), Self));
         Result[I] := Evaluate();
       finally
         Free();
@@ -5396,7 +5396,7 @@ begin
 
       with TLapeTree_InternalMethod_DeepCopy.Create(Self) do
       try
-        addParam(TLapeTree_GlobalVar.Create(TLapeGlobalVar(VarStates[i]), Self));
+        addParam(TLapeTree_Var.Create(TLapeGlobalVar(VarStates[i]), Self));
 
         VarCopy := Evaluate();
         VarStates[i].VarType.EvalConst(op_Assign, TLapeGlobalVar(Decls[i]), VarCopy, []);
@@ -5516,7 +5516,7 @@ begin
   if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() then
     with TLapeTree_InternalMethod_Default.Create(Self, Pos) do
     try
-      addParam(TLapeTree_ResVar.Create(AVar, Self, Pos));
+      addParam(TLapeTree_Var.Create(AVar, Self, Pos));
       Compile(Offset);
     finally
       Free();
@@ -5619,9 +5619,9 @@ begin
     else if (Decl is TLapeInheritedMethod) then
       Result := TLapeTree_Inherited.Create(TLapeInheritedMethod(Decl), Self, Pos)
     else if (Decl is TLapeGlobalVar) then
-      Result := TLapeTree_GlobalVar.Create(TLapeGlobalVar(Decl), Self, Pos)
+      Result := TLapeTree_Var.Create(TLapeGlobalVar(Decl), Self, Pos)
     else if (Decl is TLapeVar) then
-      Result := TLapeTree_ResVar.Create(_ResVar.New(TLapeVar(Decl)), Self, Pos)
+      Result := TLapeTree_Var.Create(_ResVar.New(TLapeVar(Decl)), Self, Pos)
     else if (Decl is TLapeType) then
       Result := TLapeTree_VarType.Create(TLapeType(Decl), Self, Pos)
     else if (Decl is TLapeInternalMethodDeclaration) then

@@ -313,18 +313,18 @@ end;
 constructor TLapeTree_Invoke.Create(Ident: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   Assert(ACompiler <> nil);
-  Create(TLapeTree_GlobalVar.Create(ACompiler[Ident], ACompiler, ADocPos), ACompiler, ADocPos);
+  Create(TLapeTree_Var.Create(ACompiler[Ident], ACompiler, ADocPos), ACompiler, ADocPos);
 end;
 
 constructor TLapeTree_Invoke.Create(Ident: lpString; ASource: TLapeTree_Base);
 begin
   Assert((ASource <> nil) and (ASource.Compiler <> nil));
-  Create(TLapeTree_GlobalVar.Create(ASource.Compiler[Ident], ASource), ASource);
+  Create(TLapeTree_Var.Create(ASource.Compiler[Ident], ASource), ASource);
 end;
 
 constructor TLapeTree_Invoke.Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base);
 begin
-  Create(TLapeTree_GlobalVar.Create(Ident, ASource), ASource);
+  Create(TLapeTree_Var.Create(Ident, ASource), ASource);
 end;
 
 destructor TLapeTree_Invoke.Destroy;
@@ -502,8 +502,8 @@ begin
 
   if (Called.VarType is TLapeType_MethodOfObject) and (Called.VarPos.MemPos <> mpStack) then
   begin
-    if (Called.VarType is TLapeType_MethodOfType) and (FCallee is TLapeTree_GlobalVar) then
-      LapeExceptionFmt(lpeStaticMethodExpected, [GetMethodName(TLapeTree_GlobalVar(FCallee).GlobalVar.VarType)], Callee.DocPos);
+    if (Called.VarType is TLapeType_MethodOfType) and ((FCallee is TLapeTree_Var) and (TLapeTree_Var(FCallee).GlobalVar <> nil)) then
+      LapeExceptionFmt(lpeStaticMethodExpected, [GetMethodName(TLapeTree_Var(FCallee).GlobalVar.VarType)], Callee.DocPos);
 
     SelfPtr := Called;
     SelfPtr.VarType := FCompiler.getBaseType(ltPointer);
@@ -615,7 +615,7 @@ var
 begin
   with TLapeTree_InternalMethod_IsScriptMethod.Create(Self) do
   try
-    addParam(TLapeTree_ResVar.Create(Called, Self));
+    addParam(TLapeTree_Var.Create(Called, Self));
     IsScript := Compile(Offset);
   finally
     Free();
@@ -660,10 +660,10 @@ begin
     IndexVar := FCompiler.getIntConst(Overloaded.Declarations.IndexOf(Picked));
     Assert(IndexVar.AsInteger >= 0);
 
-    if (FCallee is TLapeTree_GlobalVar) and
-       Overloaded.CanEvalConst(op_Index, TLapeTree_GlobalVar(FCallee).GlobalVar, IndexVar)
+    if ((FCallee is TLapeTree_Var) and (TLapeTree_Var(FCallee).GlobalVar <> nil)) and
+       Overloaded.CanEvalConst(op_Index, TLapeTree_Var(FCallee).GlobalVar, IndexVar)
     then
-      Called := _ResVar.New(FCompiler.addManagedDecl(Overloaded.EvalConst(op_Index, TLapeTree_GlobalVar(FCallee).GlobalVar, IndexVar, [])) as TLapeGlobalVar)
+      Called := _ResVar.New(FCompiler.addManagedDecl(Overloaded.EvalConst(op_Index, TLapeTree_Var(FCallee).GlobalVar, IndexVar, [])) as TLapeGlobalVar)
     else
     begin
       Called := FCallee.Compile(Offset);
@@ -812,15 +812,15 @@ begin
 
     if (FCallee is TLapeTree_Member) and (not isEmpty(TLapeTree_Member(FCallee).Left)) then
       with TLapeTree_Member(FCallee) do
-        Left := TLapeTree_ResVar.Create(CompileToVar(Left), Left);
+        Left := TLapeTree_Var.Create(CompileToVar(Left), Left);
 
-    ReadCall := TLapeTree_InvokeProperty.Create(TLapeTree_ResVar.Create(CompileToVar(FCallee), FCallee), Self);
+    ReadCall := TLapeTree_InvokeProperty.Create(TLapeTree_Var.Create(CompileToVar(FCallee), FCallee), Self);
     for i := 0 to FParams.Count - 1 do
     begin
       ArgVar := CompileToVar(FParams[i]);
-      ReadCall.addParam(TLapeTree_ResVar.Create(ArgVar, FParams[i]));
+      ReadCall.addParam(TLapeTree_Var.Create(ArgVar, FParams[i]));
       Arg := FParams[i];
-      FParams[i] := TLapeTree_ResVar.Create(ArgVar, Arg);
+      FParams[i] := TLapeTree_Var.Create(ArgVar, Arg);
       FParams[i].Parent := Self;
       Arg.Free();
     end;

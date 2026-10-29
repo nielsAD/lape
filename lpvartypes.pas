@@ -2890,7 +2890,7 @@ begin
     begin
       with TLapeTree_InternalMethod_Objectify.Create(FCompiler, Pos) do
       try
-        addParam(TLapeTree_ResVar.Create(Right, FCompiler));
+        addParam(TLapeTree_Var.Create(Right, FCompiler));
 
         Right := Compile(Offset);
       finally

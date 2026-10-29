@@ -603,7 +603,7 @@ begin
         if FObjectify then
           with TLapeTree_InternalMethod_Objectify.Create(FCompiler, Pos) do
           try
-            addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
+            addParam(TLapeTree_Var.Create(Right, FCompiler, Pos));
 
             Right := Compile(Offset);
           finally
@@ -612,8 +612,8 @@ begin
 
         with TLapeTree_InternalMethod_Natify.Create(FCompiler, Pos) do
         try
-          addParam(TLapeTree_ResVar.Create(Right, FCompiler, Pos));
-          addParam(TLapeTree_GlobalVar.Create(FCompiler['ffi_' + ABIToStr(FABI)], FCompiler));
+          addParam(TLapeTree_Var.Create(Right, FCompiler, Pos));
+          addParam(TLapeTree_Var.Create(FCompiler['ffi_' + ABIToStr(FABI)], FCompiler));
 
           Right := Compile(Offset);
         finally
@@ -659,7 +659,7 @@ begin
      (PPointer(Right.VarPos.GlobalVar.Ptr)^ = nil) then
     with TLapeTree_Invoke.Create('!closuredisposer', FCompiler, Pos) do
     try
-      addParam(TLapeTree_ResVar.Create(Left, FCompiler, Pos));
+      addParam(TLapeTree_Var.Create(Left, FCompiler, Pos));
       Compile(Offset);
       Exit;
     finally
@@ -820,11 +820,11 @@ begin
     try
       Condition := TLapeTree_InternalMethod_IsScriptMethod.Create(FCompiler);
       with Condition as TLapeTree_Invoke do
-        addParam(TLapeTree_ResVar.Create(Param, Self));
+        addParam(TLapeTree_Var.Create(Param, Self));
 
       ElseBody := TLapeTree_InternalMethod_Raise.Create(FCompiler);
       with ElseBody as TLapeTree_Invoke do
-        addParam(TLapeTree_GlobalVar.Create(FCompiler.getStringConst(FormatLocation(lpeScriptMethodExpected, Self.DocPos)), FCompiler));
+        addParam(TLapeTree_Var.Create(FCompiler.getStringConst(FormatLocation(lpeScriptMethodExpected, Self.DocPos)), FCompiler));
 
       Compile(Offset);
     finally
@@ -833,9 +833,9 @@ begin
 
   with TLapeTree_Invoke.Create(Natify, Self) do
   try
-    addParam(TLapeTree_ResVar.Create(Param, Self));
-    addParam(TLapeTree_GlobalVar.Create(FClosures, Self));
-    addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(Index, ltNativeInt), Self));
+    addParam(TLapeTree_Var.Create(Param, Self));
+    addParam(TLapeTree_Var.Create(FClosures, Self));
+    addParam(TLapeTree_Var.Create(FCompiler.getIntConst(Index, ltNativeInt), Self));
     Result := Compile(Offset);
     Result.VarType := Method;
   finally
@@ -910,9 +910,9 @@ begin
 
   with TLapeTree_Invoke.Create(Lapify, Self) do
   try
-    addParam(TLapeTree_ResVar.Create(Self.Params[0].Compile(Offset), Self));
-    addParam(TLapeTree_GlobalVar.Create(FClosures, Self));
-    addParam(TLapeTree_GlobalVar.Create(FCompiler.getIntConst(Index, ltNativeInt), Self));
+    addParam(TLapeTree_Var.Create(Self.Params[0].Compile(Offset), Self));
+    addParam(TLapeTree_Var.Create(FClosures, Self));
+    addParam(TLapeTree_Var.Create(FCompiler.getIntConst(Index, ltNativeInt), Self));
     Result := Compile(Offset);
     Result.VarType := Self.resType();
   finally
