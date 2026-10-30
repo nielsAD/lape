@@ -73,9 +73,11 @@ type
     procedure DecStack(Size: TStackInc); virtual;
 
     procedure addDocPos(CodeOffset: Integer);
+    // Len bytes more at the end: where they start
+    function Reserve(Len: Integer): Integer; virtual;
+    // Op with Value at At: where it ends
+    function PatchOp(At: Integer; Op: opCode; Value: TStackOffset): Integer; virtual;
   public
-    FullEmit: Boolean;
-
     constructor Create; override;
     procedure Reset; virtual;
 
@@ -87,93 +89,74 @@ type
     procedure WriteTables; virtual;
 
     procedure EnsureCodeGrowth(Len: Integer); virtual;
-    function CheckOffset(var Offset: Integer; Len: Word = 0): Integer; overload; virtual;
-    function CheckOffset(Len: Word = 0): Integer; overload; virtual;
 
     function NewStack(Size: Integer = 0; Max: Integer = 0): Integer; virtual;
+
+    procedure PatchJump(At, Target: Integer); virtual;
+    function PatchTry(At, Target: Integer; JmpFinally: UInt32): Integer; virtual;
+    function PatchUnused(At: Integer): Integer; virtual;
+    function PatchJmpR(At, Target: Integer): Integer; virtual;
+    function PatchExpandVar(At: Integer; Len: TStackOffset): Integer; virtual;
+    function PatchExpandVarAndInit(At: Integer; Len: TStackOffset): Integer; virtual;
+    function PatchGrowVar(At: Integer; Len: TStackOffset): Integer; virtual;
+    function PatchGrowVarAndInit(At: Integer; Len: TStackOffset): Integer; virtual;
+    function PatchInitStackLen(At: Integer; Len: TStackOffset): Integer; virtual;
 
     // Where what is emitted now is from (nil: nowhere); the node compiling sets it
     property CurrentPos: PDocPos read FCurrentPos write FCurrentPos;
 
-    function _Int8(v: Int8; var Offset: Integer): Integer; overload; virtual;
-    function _UInt8(v: UInt8; var Offset: Integer): Integer; overload; virtual;
-    function _Int16(v: Int16; var Offset: Integer): Integer; overload; virtual;
-    function _UInt16(v: UInt16; var Offset: Integer): Integer; overload; virtual;
-    function _Int32(v: Int32; var Offset: Integer): Integer; overload; virtual;
-    function _UInt32(v: UInt32; var Offset: Integer): Integer; overload; virtual;
-    function _Int64(v: Int64; var Offset: Integer): Integer; overload; virtual;
-    function _UInt64(v: UInt64; var Offset: Integer): Integer; overload; virtual;
-    function _Pointer(v: Pointer; var Offset: Integer): Integer; overload; virtual;
+    function _Int8(v: Int8): Integer; overload; virtual;
+    function _UInt8(v: UInt8): Integer; overload; virtual;
+    function _Int16(v: Int16): Integer; overload; virtual;
+    function _UInt16(v: UInt16): Integer; overload; virtual;
+    function _Int32(v: Int32): Integer; overload; virtual;
+    function _UInt32(v: UInt32): Integer; overload; virtual;
+    function _Int64(v: Int64): Integer; overload; virtual;
+    function _UInt64(v: UInt64): Integer; overload; virtual;
+    function _Pointer(v: Pointer): Integer; overload; virtual;
 
-    function _Opcode(v: opCode; var Offset: Integer): Integer; overload; virtual;
-    function _CodePos(v: TCodePos; var Offset: Integer): Integer; overload; virtual;
-    function _CodeOffset(v: TCodeOffset; var Offset: Integer): Integer; overload; virtual;
+    function _Opcode(v: opCode): Integer; overload; virtual;
+    function _CodePos(v: TCodePos): Integer; overload; virtual;
+    function _CodeOffset(v: TCodeOffset): Integer; overload; virtual;
 
-    function _EvalProc(v: TLapeEvalProc; var Offset: Integer): Integer; overload; virtual;
-    function _StackInc(v: TStackInc; var Offset: Integer): Integer; overload; virtual;
-    function _StackOffset(v: TStackOffset; var Offset: Integer): Integer; overload; virtual;
-    function _VarStackOffset(v: TVarStackOffset; var Offset: Integer): Integer; overload; virtual;
-    function _PointerOffset(v: TPointerOffset; var Offset: Integer): Integer; overload; virtual;
-    function _ParamSize(v: TParamSize; var Offset: Integer): Integer; overload; virtual;
+    function _EvalProc(v: TLapeEvalProc): Integer; overload; virtual;
+    function _StackInc(v: TStackInc): Integer; overload; virtual;
+    function _StackOffset(v: TStackOffset): Integer; overload; virtual;
+    function _VarStackOffset(v: TVarStackOffset): Integer; overload; virtual;
+    function _PointerOffset(v: TPointerOffset): Integer; overload; virtual;
+    function _ParamSize(v: TParamSize): Integer; overload; virtual;
 
-    function _op(op: opCode; var Offset: Integer): Integer; overload;
-    function _op(op: opCode): Integer; overload;
+    function _op(op: opCode): Integer;
 
-    function _IsScriptMethod(var Offset: Integer): Integer; overload;
-    function _IsScriptMethod: Integer; overload;
-    function _GetExceptionMessage(var Offset: Integer): Integer; overload;
-    function _GetExceptionMessage: Integer; overload;
-    function _GetExceptionLocation(var Offset: Integer): Integer; overload;
-    function _GetExceptionLocation: Integer; overload;
-    function _GetCallerAddress(var Offset: Integer): Integer; overload;
-    function _GetCallerAddress: Integer; overload;
-    function _GetScriptMethodName(var Offset: Integer): Integer; overload;
-    function _GetScriptMethodName: Integer; overload;
-    function _DumpCallStack(var Offset: Integer): Integer; overload;
-    function _DumpCallStack: Integer; overload;
-    function _ReRaiseException(var Offset: Integer): Integer; overload;
-    function _ReRaiseException: Integer; overload;
-    function _Unused(var Offset: Integer): Integer;
-    function _InitStackLen(Len: TStackOffset; var Offset: Integer): Integer; overload;
-    function _InitStackLen(Len: TStackOffset): Integer; overload;
-    function _InitStack(Len: TStackOffset; var Offset: Integer): Integer; overload;
-    function _InitStack(Len: TStackOffset): Integer; overload;
-    function _GrowStack(Len: TStackOffset; var Offset: Integer): Integer; overload;
-    function _GrowStack(Len: TStackOffset): Integer; overload;
-    function _ExpandVar(Len: TStackOffset; var Offset: Integer): Integer; overload;
-    function _ExpandVar(Len: TStackOffset): Integer; overload;
-    function _ExpandVarAndInit(Len: TStackOffset; var Offset: Integer): Integer; overload;
-    function _ExpandVarAndInit(Len: TStackOffset): Integer; overload;
-    function _GrowVar(Len: TStackOffset; var Offset: Integer): Integer; overload;
-    function _GrowVar(Len: TStackOffset): Integer; overload;
-    function _GrowVarAndInit(Len: TStackOffset; var Offset: Integer): Integer; overload;
-    function _GrowVarAndInit(Len: TStackOffset): Integer; overload;
-    function _PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset; var Offset: Integer): Integer; overload;
-    function _PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset): Integer; overload;
-    function _PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset; var Offset: Integer): Integer; overload;
-    function _PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset): Integer; overload;
-    function _PopVar(var Offset: Integer): Integer; overload;
-    function _PopVar: Integer; overload;
-    function _JmpVar(var Offset: Integer): Integer; overload;
-    function _JmpVar: Integer; overload;
-    function _JmpSafe(Target: TCodePos; var Offset: Integer): Integer; overload;
-    function _JmpSafe(Target: TCodePos): Integer; overload;
-    function _JmpSafeR(Jmp: TCodeOffset; var Offset: Integer): Integer; overload;
-    function _JmpSafeR(Jmp: TCodeOffset): Integer; overload;
+    function _IsScriptMethod: Integer;
+    function _GetExceptionMessage: Integer;
+    function _GetExceptionLocation: Integer;
+    function _GetCallerAddress: Integer;
+    function _GetScriptMethodName: Integer;
+    function _DumpCallStack: Integer;
+    function _ReRaiseException: Integer;
+    function _Unused: Integer;
+    function _InitStackLen(Len: TStackOffset): Integer;
+    function _InitStack(Len: TStackOffset): Integer;
+    function _GrowStack(Len: TStackOffset): Integer;
+    function _ExpandVar(Len: TStackOffset): Integer;
+    function _ExpandVarAndInit(Len: TStackOffset): Integer;
+    function _GrowVar(Len: TStackOffset): Integer;
+    function _GrowVarAndInit(Len: TStackOffset): Integer;
+    function _PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset): Integer;
+    function _PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset): Integer;
+    function _PopVar: Integer;
+    function _JmpVar: Integer;
+    function _JmpSafe(Target: TCodePos): Integer;
+    function _JmpSafeR(Jmp: TCodeOffset): Integer;
 
-    function _IncTry(AJmp: TCodeOffset; AJmpFinally: UInt32; var Offset: Integer): Integer; overload;
-    function _IncTry(AJmp: TCodeOffset; AJmpFinally: UInt32): Integer; overload;
-    function _DecTry(var Offset: Integer): Integer; overload;
-    function _DecTry: Integer; overload;
-    function _EndTry(var Offset: Integer): Integer; overload;
-    function _EndTry: Integer; overload;
-    function _CatchException(var Offset: Integer): Integer; overload;
-    function _CatchException: Integer; overload;
+    function _IncTry(AJmp: TCodeOffset; AJmpFinally: UInt32): Integer;
+    function _DecTry: Integer;
+    function _EndTry: Integer;
+    function _CatchException: Integer;
 
-    function _DecCall(var Offset: Integer): Integer; overload;
-    function _DecCall: Integer; overload;
-    function _DecCall_EndTry(var Offset: Integer): Integer; overload;
-    function _DecCall_EndTry: Integer; overload;
+    function _DecCall: Integer;
+    function _DecCall_EndTry: Integer;
 
     {$I lpcodeemitter_invokeheader.inc}
     {$I lpcodeemitter_jumpheader.inc}
@@ -212,9 +195,6 @@ procedure TLapeCodeEmitterBase._ParamSize(v: TParamSize; Pos: PParamSize);      
 
 procedure TLapeCodeEmitterBase.IncStack(Size: TStackInc);
 begin
-  if (not FullEmit) then
-    Exit;
-
   Inc(FStackPos, Size);
   if (FStackPos < 0) then
     FStackPos := 0;
@@ -227,7 +207,6 @@ begin
   IncStack(-Size);
 end;
 
-// (an instruction added at the end; one from the same place as the one before it needs no entry)
 procedure TLapeCodeEmitterBase.addDocPos(CodeOffset: Integer);
 var
   NewPos: PDocPos;
@@ -250,8 +229,6 @@ begin
   FDocPos[FDocPosCount].Pos := NewPos^;
   Inc(FDocPosCount);
 end;
-
-// (where it is: the lengths of the ones before it, each with its terminating 0)
 function TLapeCodeEmitterBase.addString(const S: lpString): Integer;
 var
   Raw: RawByteString;
@@ -294,7 +271,6 @@ var
   FileNames: array of Integer;
   Trailer: TCodeTrailer;
 begin
-  // (every file name in the string list first: the DocPos entries point to them; mostly the one before)
   SetLength(FileNames, FDocPosCount);
   for i := 0 to FDocPosCount - 1 do
     if (i > 0) and (FDocPos[i].Pos.FileName = FDocPos[i - 1].Pos.FileName) then
@@ -359,7 +335,6 @@ constructor TLapeCodeEmitterBase.Create;
 begin
   inherited;
 
-  FullEmit := True;
   Reset();
 end;
 
@@ -388,16 +363,71 @@ begin
   end;
 end;
 
-function TLapeCodeEmitterBase.CheckOffset(var Offset: Integer; Len: Word = 0): Integer;
+function TLapeCodeEmitterBase.Reserve(Len: Integer): Integer;
 begin
-  if (Offset < 0) or (Offset + Len > FCodeCur) then
-  begin
-    Offset := FCodeCur;
-    EnsureCodeGrowth(Len);
-    Inc(FCodeCur, Len);
-  end;
+  Result := FCodeCur;
+  EnsureCodeGrowth(Len);
+  Inc(FCodeCur, Len);
+end;
 
-  Result := Offset;
+function TLapeCodeEmitterBase.PatchOp(At: Integer; Op: opCode; Value: TStackOffset): Integer;
+begin
+  Result := At + ocSize + SizeOf(TStackOffset);
+  Assert((At >= 0) and (Result <= FCodeCur));
+  opCodeP(@FCode[At])^ := Op;
+  PStackOffset(@FCode[At + ocSize])^ := Value;
+end;
+
+// (every jump has its distance, from where it starts, right after its opcode)
+procedure TLapeCodeEmitterBase.PatchJump(At, Target: Integer);
+begin
+  Assert((At >= 0) and (At + ocSize + SizeOf(TCodeOffset) <= FCodeCur));
+  PCodeOffset(@FCode[At + ocSize])^ := Target - At;
+end;
+
+function TLapeCodeEmitterBase.PatchTry(At, Target: Integer; JmpFinally: UInt32): Integer;
+begin
+  Result := At + ocSize + SizeOf(TOC_IncTry);
+  Assert((At >= 0) and (Result <= FCodeCur));
+  opCodeP(@FCode[At])^ := ocIncTry;
+  POC_IncTry(@FCode[At + ocSize])^.Jmp := Target - At;
+  POC_IncTry(@FCode[At + ocSize])^.JmpFinally := JmpFinally;
+end;
+
+function TLapeCodeEmitterBase.PatchUnused(At: Integer): Integer;
+begin
+  Result := PatchOp(At, ocUnused, 0);
+end;
+
+function TLapeCodeEmitterBase.PatchJmpR(At, Target: Integer): Integer;
+begin
+  Result := PatchOp(At, ocJmpR, 0);
+  PatchJump(At, Target);
+end;
+
+function TLapeCodeEmitterBase.PatchExpandVar(At: Integer; Len: TStackOffset): Integer;
+begin
+  Result := PatchOp(At, ocExpandVar, Len);
+end;
+
+function TLapeCodeEmitterBase.PatchExpandVarAndInit(At: Integer; Len: TStackOffset): Integer;
+begin
+  Result := PatchOp(At, ocExpandVarAndInit, Len);
+end;
+
+function TLapeCodeEmitterBase.PatchGrowVar(At: Integer; Len: TStackOffset): Integer;
+begin
+  Result := PatchOp(At, ocGrowVar, Len);
+end;
+
+function TLapeCodeEmitterBase.PatchGrowVarAndInit(At: Integer; Len: TStackOffset): Integer;
+begin
+  Result := PatchOp(At, ocGrowVarAndInit, Len);
+end;
+
+function TLapeCodeEmitterBase.PatchInitStackLen(At: Integer; Len: TStackOffset): Integer;
+begin
+  Result := PatchOp(At, ocInitStackLen, Len);
 end;
 
 function TLapeCodeEmitterBase.NewStack(Size: Integer = 0; Max: Integer = 0): Integer;
@@ -407,383 +437,297 @@ begin
   FMaxStack := Max;
 end;
 
-function TLapeCodeEmitterBase._Int8(v: Int8; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._Int8(v: Int8): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(Int8));
-  _Int8(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(Int8));
+  Result := Reserve(SizeOf(Int8));
+  _Int8(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._UInt8(v: UInt8; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._UInt8(v: UInt8): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(UInt8));
-  _UInt8(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(UInt8));
+  Result := Reserve(SizeOf(UInt8));
+  _UInt8(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._Int16(v: Int16; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._Int16(v: Int16): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(Int16));
-  _Int16(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(Int16));
+  Result := Reserve(SizeOf(Int16));
+  _Int16(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._UInt16(v: UInt16; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._UInt16(v: UInt16): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(UInt16));
-  _UInt16(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(UInt16));
+  Result := Reserve(SizeOf(UInt16));
+  _UInt16(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._Int32(v: Int32; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._Int32(v: Int32): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(Int32));
-  _Int32(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(Int32));
+  Result := Reserve(SizeOf(Int32));
+  _Int32(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._UInt32(v: UInt32; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._UInt32(v: UInt32): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(UInt32));
-  _UInt32(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(UInt32));
+  Result := Reserve(SizeOf(UInt32));
+  _UInt32(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._Int64(v: Int64; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._Int64(v: Int64): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(Int64));
-  _Int64(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(Int64));
+  Result := Reserve(SizeOf(Int64));
+  _Int64(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._UInt64(v: UInt64; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._UInt64(v: UInt64): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(UInt64));
-  _UInt64(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(UInt64));
+  Result := Reserve(SizeOf(UInt64));
+  _UInt64(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._Pointer(v: Pointer; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._Pointer(v: Pointer): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(Pointer));
-  _Pointer(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(Pointer));
+  Result := Reserve(SizeOf(Pointer));
+  _Pointer(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._Opcode(v: opCode; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._Opcode(v: opCode): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(opCode));
-  _Opcode(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(opCode));
+  Result := Reserve(SizeOf(opCode));
+  _Opcode(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._CodePos(v: TCodePos; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._CodePos(v: TCodePos): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(TCodePos));
-  _CodePos(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(TCodePos));
+  Result := Reserve(SizeOf(TCodePos));
+  _CodePos(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._CodeOffset(v: TCodeOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._CodeOffset(v: TCodeOffset): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(TCodeOffset));
-  _CodeOffset(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(TCodeOffset));
+  Result := Reserve(SizeOf(TCodeOffset));
+  _CodeOffset(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._EvalProc(v: TLapeEvalProc; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._EvalProc(v: TLapeEvalProc): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(TLapeEvalProc));
-  _EvalProc(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(TLapeEvalProc));
+  Result := Reserve(SizeOf(TLapeEvalProc));
+  _EvalProc(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._StackInc(v: TStackInc; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._StackInc(v: TStackInc): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(TStackInc));
-  _StackInc(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(TStackInc));
+  Result := Reserve(SizeOf(TStackInc));
+  _StackInc(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._StackOffset(v: TStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._StackOffset(v: TStackOffset): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(TStackOffset));
-  _StackOffset(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(TStackOffset));
+  Result := Reserve(SizeOf(TStackOffset));
+  _StackOffset(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._VarStackOffset(v: TVarStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._VarStackOffset(v: TVarStackOffset): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(TVarStackOffset));
-  _VarStackOffset(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(TVarStackOffset));
+  Result := Reserve(SizeOf(TVarStackOffset));
+  _VarStackOffset(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._PointerOffset(v: TPointerOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._PointerOffset(v: TPointerOffset): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(TVarStackOffset));
-  _PointerOffset(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(TPointerOffset));
+  Result := Reserve(SizeOf(TPointerOffset));
+  _PointerOffset(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._ParamSize(v: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._ParamSize(v: TParamSize): Integer;
 begin
-  Result := CheckOffset(Offset, SizeOf(TParamSize));
-  _ParamSize(v, @FCode[Offset]);
-  Inc(Offset, SizeOf(TParamSize));
+  Result := Reserve(SizeOf(TParamSize));
+  _ParamSize(v, @FCode[Result]);
 end;
 
-function TLapeCodeEmitterBase._op(op: opCode; var Offset: Integer): Integer;
-{$IFDEF Lape_EmitPos}
-var
-  CodeEnd: Integer;
-{$ENDIF}
+function TLapeCodeEmitterBase._op(op: opCode): Integer;
 begin
+  Result := _Opcode(op);
   {$IFDEF Lape_EmitPos}
-  CodeEnd := FCodeCur;
-  {$ENDIF}
-  Result := _Opcode(op, Offset);
-  {$IFDEF Lape_EmitPos}
-  // (written again in place, an instruction stays where it was first written)
-  if (Result >= CodeEnd) then
-    addDocPos(Result);
+  addDocPos(Result);
   {$ENDIF}
 end;
 
-function TLapeCodeEmitterBase._IsScriptMethod(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._IsScriptMethod: Integer;
 begin
-  Result := _op(ocIsScriptMethod, Offset);
+  Result := _op(ocIsScriptMethod);
   DecStack(SizeOf(Pointer) - SizeOf(EvalBool));
 end;
 
-function TLapeCodeEmitterBase._GetExceptionMessage(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._GetExceptionMessage: Integer;
 begin
-  Result := _op(ocGetExceptionMessage, Offset);
+  Result := _op(ocGetExceptionMessage);
   DecStack(SizeOf(Pointer));
 end;
 
-function TLapeCodeEmitterBase._GetExceptionLocation(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._GetExceptionLocation: Integer;
 begin
-  Result := _op(ocGetExceptionLocation, Offset);
+  Result := _op(ocGetExceptionLocation);
   IncStack(SizeOf(Pointer));
 end;
 
-function TLapeCodeEmitterBase._GetCallerAddress(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._GetCallerAddress: Integer;
 begin
-  Result := _op(ocGetCallerAddress, Offset);
+  Result := _op(ocGetCallerAddress);
   IncStack(SizeOf(Pointer));
 end;
 
-function TLapeCodeEmitterBase._GetScriptMethodName(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._GetScriptMethodName: Integer;
 begin
-  Result := _op(ocGetScriptMethodName, Offset);
+  Result := _op(ocGetScriptMethodName);
   DecStack(SizeOf(Pointer) - SizeOf(ShortString));
 end;
 
-function TLapeCodeEmitterBase._DumpCallStack(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._DumpCallStack: Integer;
 begin
-  Result := _op(ocDumpCallStack, Offset);
+  Result := _op(ocDumpCallStack);
   DecStack(SizeOf(Int32) + SizeOf(Pointer));
 end;
 
-function TLapeCodeEmitterBase._ReRaiseException(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._ReRaiseException: Integer;
 begin
-  Result := _op(ocReRaiseException, Offset);
+  Result := _op(ocReRaiseException);
 end;
 
-function TLapeCodeEmitterBase._Unused(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._Unused: Integer;
 begin
-  Result := _op(ocUnused, Offset);
-  _StackOffset(0, Offset);
+  Result := _op(ocUnused);
+  _StackOffset(0);
 end;
 
-function TLapeCodeEmitterBase._InitStackLen(Len: TStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InitStackLen(Len: TStackOffset): Integer;
 begin
-  Result := _op(ocInitStackLen, Offset);
-  _StackOffset(Len, Offset);
+  Result := _op(ocInitStackLen);
+  _StackOffset(Len);
   IncStack(Integer(Len) - FStackPos);
 end;
 
-function TLapeCodeEmitterBase._InitStack(Len: TStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InitStack(Len: TStackOffset): Integer;
 begin
-  Result := _op(ocInitStack, Offset);
-  _StackOffset(Len, Offset);
+  Result := _op(ocInitStack);
+  _StackOffset(Len);
 end;
 
-function TLapeCodeEmitterBase._GrowStack(Len: TStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._GrowStack(Len: TStackOffset): Integer;
 begin
-  Result := _op(ocGrowStack, Offset);
-  _StackOffset(Len, Offset);
+  Result := _op(ocGrowStack);
+  _StackOffset(Len);
   IncStack(Len);
 end;
 
-function TLapeCodeEmitterBase._ExpandVar(Len: TStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._ExpandVar(Len: TStackOffset): Integer;
 begin
-  Result := _op(ocExpandVar, Offset);
-  _StackOffset(Len, Offset);
+  Result := _op(ocExpandVar);
+  _StackOffset(Len);
 end;
 
-function TLapeCodeEmitterBase._ExpandVarAndInit(Len: TStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._ExpandVarAndInit(Len: TStackOffset): Integer;
 begin
-  Result := _op(ocExpandVarAndInit, Offset);
-  _StackOffset(Len, Offset);
+  Result := _op(ocExpandVarAndInit);
+  _StackOffset(Len);
 end;
 
-function TLapeCodeEmitterBase._GrowVar(Len: TStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._GrowVar(Len: TStackOffset): Integer;
 begin
-  Result := _op(ocGrowVar, Offset);
-  _StackOffset(Len, Offset);
+  Result := _op(ocGrowVar);
+  _StackOffset(Len);
 end;
 
-function TLapeCodeEmitterBase._GrowVarAndInit(Len: TStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._GrowVarAndInit(Len: TStackOffset): Integer;
 begin
-  Result := _op(ocGrowVarAndInit, Offset);
-  _StackOffset(Len, Offset);
+  Result := _op(ocGrowVarAndInit);
+  _StackOffset(Len);
 end;
 
-function TLapeCodeEmitterBase._PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset): Integer;
 begin
-  Result := _op(ocPopStackToVar, Offset);
-  CheckOffset(Offset, SizeOf(TOC_PopStackToVar));
-  with POC_PopStackToVar(@FCode[Offset])^ do
+  Result := _op(ocPopStackToVar);
+  Reserve(SizeOf(TOC_PopStackToVar));
+  with POC_PopStackToVar(@FCode[Result + ocSize])^ do
   begin
     _StackOffset(ASize, @Size);
     _VarStackOffset(VarStackOffset, @VOffset);
   end;
   DecStack(ASize);
-  Inc(Offset, SizeOf(TOC_PopStackToVar));
 end;
 
-function TLapeCodeEmitterBase._PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset): Integer;
 begin
-  Result := _op(ocPopVarToStack, Offset);
-  CheckOffset(Offset, SizeOf(TOC_PopStackToVar));
-  with POC_PopStackToVar(@FCode[Offset])^ do
+  Result := _op(ocPopVarToStack);
+  Reserve(SizeOf(TOC_PopStackToVar));
+  with POC_PopStackToVar(@FCode[Result + ocSize])^ do
   begin
     _StackOffset(ASize, @Size);
     _VarStackOffset(VarStackOffset, @VOffset);
   end;
   IncStack(ASize);
-  Inc(Offset, SizeOf(TOC_PopStackToVar));
 end;
 
-function TLapeCodeEmitterBase._PopVar(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._PopVar: Integer;
 begin
-  Result := _op(ocPopVar, Offset);
+  Result := _op(ocPopVar);
 end;
 
-function TLapeCodeEmitterBase._JmpVar(var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._JmpVar: Integer;
 begin
-  Result := _op(ocJmpVar, Offset);
+  Result := _op(ocJmpVar);
 end;
 
-function TLapeCodeEmitterBase._JmpSafe(Target: TCodePos; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._JmpSafe(Target: TCodePos): Integer;
 begin
-  Result := _op(ocJmpSafe, Offset);
-  _CodePos(Target, Offset);
+  Result := _op(ocJmpSafe);
+  _CodePos(Target);
 end;
 
-function TLapeCodeEmitterBase._JmpSafeR(Jmp: TCodeOffset; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._JmpSafeR(Jmp: TCodeOffset): Integer;
 begin
-  Result := _op(ocJmpSafeR, Offset);
-  _CodeOffset(Jmp, Offset);
+  Result := _op(ocJmpSafeR);
+  _CodeOffset(Jmp);
 end;
 
-function TLapeCodeEmitterBase._IncTry(AJmp: TCodeOffset; AJmpFinally: UInt32; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._IncTry(AJmp: TCodeOffset; AJmpFinally: UInt32): Integer;
 begin
-  Result := _op(ocIncTry, Offset);
-  CheckOffset(Offset, SizeOf(TOC_IncTry));
-  with POC_IncTry(@FCode[Offset])^ do
+  Result := _op(ocIncTry);
+  Reserve(SizeOf(TOC_IncTry));
+  with POC_IncTry(@FCode[Result + ocSize])^ do
   begin
     _CodeOffset(AJmp, @Jmp);
     _UInt32(AJmpFinally, @JmpFinally);
   end;
-  Inc(Offset, SizeOf(TOC_IncTry));
 end;
 
-function TLapeCodeEmitterBase._DecTry(var Offset: Integer): Integer;
-begin
-  Result := _op(ocDecTry, Offset);
-end;
-
-function TLapeCodeEmitterBase._EndTry(var Offset: Integer): Integer;
-begin
-  Result := _op(ocEndTry, Offset);
-end;
-
-function TLapeCodeEmitterBase._CatchException(var Offset: Integer): Integer;
-begin
-  Result := _op(ocCatchException, Offset);
-end;
-
-function TLapeCodeEmitterBase._DecCall(var Offset: Integer): Integer;
-begin
-  Result := _op(ocDecCall, Offset);
-end;
-
-function TLapeCodeEmitterBase._DecCall_EndTry(var Offset: Integer): Integer;
-begin
-  Result := _op(ocDecCall_EndTry, Offset);
-end;
-
-function TLapeCodeEmitterBase.CheckOffset(Len: Word = 0): Integer;
-  var o: Integer; begin o := -1; Result := CheckOffset(o, Len); end;
-function TLapeCodeEmitterBase._op(op: opCode): Integer;
-  var o: Integer; begin o := -1; Result := _op(op, o); end;
-function TLapeCodeEmitterBase._IsScriptMethod: Integer;
-  var o: Integer; begin o := -1; Result := _IsScriptMethod(o); end;
-function TLapeCodeEmitterBase._GetExceptionMessage: Integer;
-  var o: Integer; begin o := -1; Result := _GetExceptionMessage(o); end;
-function TLapeCodeEmitterBase._GetExceptionLocation: Integer;
-  var o: Integer; begin o := -1; Result := _GetExceptionLocation(o); end;
-function TLapeCodeEmitterBase._GetCallerAddress: Integer;
-  var o: Integer; begin o := -1; Result := _GetCallerAddress(o); end;
-function TLapeCodeEmitterBase._GetScriptMethodName: Integer;
-  var o: Integer; begin o := -1; Result := _GetScriptMethodName(o); end;
-function TLapeCodeEmitterBase._DumpCallStack: Integer;
-  var o: Integer; begin o := -1; Result := _DumpCallStack(o); end;
-function TLapeCodeEmitterBase._ReRaiseException: Integer;
-  var o: Integer; begin o := -1; Result := _ReRaiseException(o); end;
-function TLapeCodeEmitterBase._InitStackLen(Len: TStackOffset): Integer;
-  var o: Integer; begin o := -1; Result := _InitStackLen(Len, o); end;
-function TLapeCodeEmitterBase._InitStack(Len: TStackOffset): Integer;
-  var o: Integer; begin o := -1; Result := _InitStack(Len, o); end;
-function TLapeCodeEmitterBase._GrowStack(Len: TStackOffset): Integer;
-  var o: Integer; begin o := -1; Result := _GrowStack(Len, o); end;
-function TLapeCodeEmitterBase._ExpandVar(Len: TStackOffset): Integer;
-  var o: Integer; begin o := -1; Result := _ExpandVar(Len, o); end;
-function TLapeCodeEmitterBase._ExpandVarAndInit(Len: TStackOffset): Integer;
-  var o: Integer; begin o := -1; Result := _ExpandVarAndInit(Len, o); end;
-function TLapeCodeEmitterBase._GrowVar(Len: TStackOffset): Integer;
-  var o: Integer; begin o := -1; Result := _GrowVar(Len, o); end;
-function TLapeCodeEmitterBase._GrowVarAndInit(Len: TStackOffset): Integer;
-  var o: Integer; begin o := -1; Result := _GrowVarAndInit(Len, o); end;
-function TLapeCodeEmitterBase._PopStackToVar(ASize: TStackOffset; VarStackOffset: TVarStackOffset): Integer;
-  var o: Integer; begin o := -1; Result := _PopStackToVar(ASize, VarStackOffset, o); end;
-function TLapeCodeEmitterBase._PopVarToStack(ASize: TStackOffset; VarStackOffset: TVarStackOffset): Integer;
-  var o: Integer; begin o := -1; Result := _PopVarToStack(ASize, VarStackOffset, o); end;
-function TLapeCodeEmitterBase._PopVar: Integer;
-  var o: Integer; begin o := -1; Result := _PopVar(o); end;
-function TLapeCodeEmitterBase._JmpVar: Integer;
-  var o: Integer; begin o := -1; Result := _JmpVar(o); end;
-function TLapeCodeEmitterBase._JmpSafe(Target: TCodePos): Integer;
-  var o: Integer; begin o := -1; Result := _JmpSafe(Target, o); end;
-function TLapeCodeEmitterBase._JmpSafeR(Jmp: TCodeOffset): Integer;
-  var o: Integer; begin o := -1; Result := _JmpSafeR(Jmp, o); end;
-
-function TLapeCodeEmitterBase._IncTry(AJmp: TCodeOffset; AJmpFinally: UInt32): Integer;
-  var o: Integer; begin o := -1; Result := _IncTry(AJmp, AJmpFinally, o); end;
 function TLapeCodeEmitterBase._DecTry: Integer;
-  var o: Integer; begin o := -1; Result := _DecTry(o); end;
+begin
+  Result := _op(ocDecTry);
+end;
+
 function TLapeCodeEmitterBase._EndTry: Integer;
-  var o: Integer; begin o := -1; Result := _EndTry(o); end;
+begin
+  Result := _op(ocEndTry);
+end;
+
 function TLapeCodeEmitterBase._CatchException: Integer;
-  var o: Integer; begin o := -1; Result := _CatchException(o); end;
+begin
+  Result := _op(ocCatchException);
+end;
 
 function TLapeCodeEmitterBase._DecCall: Integer;
-  var o: Integer; begin o := -1; Result := _DecCall(o); end;
+begin
+  Result := _op(ocDecCall);
+end;
+
 function TLapeCodeEmitterBase._DecCall_EndTry: Integer;
-  var o: Integer; begin o := -1; Result := _DecCall_EndTry(o); end;
+begin
+  Result := _op(ocDecCall_EndTry);
+end;
+
+
+
 
 {$I lpcodeemitter_invokebody.inc}
 {$I lpcodeemitter_jumpbody.inc}

@@ -7,55 +7,34 @@
 }
 {%MainUnit lpcodeemitter.pas}
 
-function _IncCall_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _IncCall_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _IncCall_Ptr(APtr: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
+function _IncCall_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize): Integer;
+function _IncCall_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
+function _IncCall_Ptr(APtr: Pointer; AParamSize: TParamSize): Integer;
 
-function _InvokeImported_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_Ptr(APtr: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
+function _InvokeImported_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_Ptr(APtr: Pointer; AParamSize: TParamSize): Integer;
 
-function _InvokeImported_Var_Stk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize; AStackInc: TStackInc; var Offset: Integer): Integer; overload;
-function _InvokeImported_Var_PStk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_Var_Var(AVOffsetS, AVOffsetD: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_Var_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_Var_Ptr(AVOffsetS: TVarStackOffset; APtrD: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
+function _InvokeImported_Var_Stk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize; AStackInc: TStackInc): Integer;
+function _InvokeImported_Var_PStk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_Var_Var(AVOffsetS, AVOffsetD: TVarStackOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_Var_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_Var_Ptr(AVOffsetS: TVarStackOffset; APtrD: Pointer; AParamSize: TParamSize): Integer;
 
-function _InvokeImported_PVar_Stk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; AStackInc: TStackInc; var Offset: Integer): Integer; overload;
-function _InvokeImported_PVar_PStk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_PVar_Var(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_PVar_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS, APOffsetD: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_PVar_Ptr(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; APtrD: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
+function _InvokeImported_PVar_Stk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; AStackInc: TStackInc): Integer;
+function _InvokeImported_PVar_PStk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_PVar_Var(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_PVar_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS, APOffsetD: TPointerOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_PVar_Ptr(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; APtrD: Pointer; AParamSize: TParamSize): Integer;
 
-function _InvokeImported_Ptr_Stk(APtrS: Pointer; AParamSize: TParamSize; AStackInc: TStackInc; var Offset: Integer): Integer; overload;
-function _InvokeImported_Ptr_PStk(APtrS: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_Ptr_Var(APtrS: Pointer; AVOffsetD: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_Ptr_PVar(APtrS: Pointer; AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
-function _InvokeImported_Ptr_Ptr(APtrS, APtrD: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer; overload;
+function _InvokeImported_Ptr_Stk(APtrS: Pointer; AParamSize: TParamSize; AStackInc: TStackInc): Integer;
+function _InvokeImported_Ptr_PStk(APtrS: Pointer; AParamSize: TParamSize): Integer;
+function _InvokeImported_Ptr_Var(APtrS: Pointer; AVOffsetD: TVarStackOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_Ptr_PVar(APtrS: Pointer; AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
+function _InvokeImported_Ptr_Ptr(APtrS, APtrD: Pointer; AParamSize: TParamSize): Integer;
 
 
-function _IncCall_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize): Integer; overload;
-function _IncCall_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer; overload;
-function _IncCall_Ptr(APtr: Pointer; AParamSize: TParamSize): Integer; overload;
 
-function _InvokeImported_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_Ptr(APtr: Pointer; AParamSize: TParamSize): Integer; overload;
 
-function _InvokeImported_Var_Stk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize; AStackInc: TStackInc): Integer; overload;
-function _InvokeImported_Var_PStk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_Var_Var(AVOffsetS, AVOffsetD: TVarStackOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_Var_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_Var_Ptr(AVOffsetS: TVarStackOffset; APtrD: Pointer; AParamSize: TParamSize): Integer; overload;
 
-function _InvokeImported_PVar_Stk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; AStackInc: TStackInc): Integer; overload;
-function _InvokeImported_PVar_PStk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_PVar_Var(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_PVar_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS, APOffsetD: TPointerOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_PVar_Ptr(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; APtrD: Pointer; AParamSize: TParamSize): Integer; overload;
 
-function _InvokeImported_Ptr_Stk(APtrS: Pointer; AParamSize: TParamSize; AStackInc: TStackInc): Integer; overload;
-function _InvokeImported_Ptr_PStk(APtrS: Pointer; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_Ptr_Var(APtrS: Pointer; AVOffsetD: TVarStackOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_Ptr_PVar(APtrS: Pointer; AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer; overload;
-function _InvokeImported_Ptr_Ptr(APtrS, APtrD: Pointer; AParamSize: TParamSize): Integer; overload;

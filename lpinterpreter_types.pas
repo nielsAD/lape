@@ -21,7 +21,7 @@ type
   opCodeP = ^opCode;
   opCode = (
     ocNone,
-    ocUnused,                                                  //Unused TStackOffset (a frame's slot it does not need: never run)
+    ocUnused,                                                  //Unused TStackOffset (in a frame's entry, what it does not need: never run)
     ocIsScriptMethod,                                          //IsScriptMethod
     ocGetExceptionMessage,                                     //GetExceptionMessage
     ocGetExceptionLocation,

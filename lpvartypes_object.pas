@@ -42,7 +42,7 @@ type
 
     function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar; override;
-    function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags): TResVar; override;
 
     procedure addArrayHelpers; override;
 
@@ -210,7 +210,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Object.EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_Object.EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags): TResVar;
 var
   Field: TObjectField;
 begin
@@ -225,8 +225,8 @@ begin
 
     Left.VarType := FCompiler.getBaseType(ltPointer);
 
-    Result := Left.VarType.Eval(op_Plus, Dest, Left, _ResVar.New(FCompiler.getIntConst(Field.Offset)), Flags, Offset);
-    Result := Result.VarType.Eval(op_Deref, Dest, Result, NullResVar, [], Offset);
+    Result := Left.VarType.Eval(op_Plus, Dest, Left, _ResVar.New(FCompiler.getIntConst(Field.Offset)), Flags);
+    Result := Result.VarType.Eval(op_Deref, Dest, Result, NullResVar, []);
     Result.isConstant := Left.isConstant;
     Result.VarType := Field.FieldType;
 

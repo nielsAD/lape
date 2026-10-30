@@ -31,17 +31,17 @@ type
     function VarHi(AVar: Pointer = nil): TLapeGlobalVar; override;
 
     procedure VarSetLength(var AVar: Pointer; ALen: SizeInt); overload; virtual;
-    procedure VarSetLength(AVar, ALen: TResVar; var Offset: Integer); overload; virtual;
+    procedure VarSetLength(AVar, ALen: TResVar); overload; virtual;
     procedure VarSetLength(AVar: TLapeGlobalVar; ALen: SizeInt); overload; virtual;
 
     procedure RangeCheck(AVar, AIndex: TLapeGlobalVar; Flags: ELapeEvalFlags); overload; virtual;
-    procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer); overload; virtual;
+    procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags); overload; virtual;
 
     function EvalRes(Op: EOperator; ARight: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function EvalMember(var Dest: TResVar; ALeft: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function EvalMember(var Dest: TResVar; ALeft: TResVar; AName: lpString; Flags: ELapeEvalFlags): TResVar; override;
     function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight: TResVar; Flags: ELapeEvalFlags): TResVar; override;
 
     procedure addArrayHelpers; virtual;
   end;
@@ -64,7 +64,7 @@ type
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
     procedure FinalizeConst(AVar: TLapeGlobalVar); override;
 
     property Range: TLapeRange read FRange;
@@ -76,7 +76,7 @@ type
   public
     function VarToString(AVar: Pointer): lpString; override;
     procedure VarUnique(var AVar: Pointer); overload; virtual;
-    procedure VarUnique(AVar: TResVar; var Offset: Integer); overload; virtual;
+    procedure VarUnique(AVar: TResVar); overload; virtual;
     function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
     function VarHi(AVar: Pointer = nil): TLapeGlobalVar; override;
 
@@ -86,7 +86,7 @@ type
     function NewGlobalVar(Str: UnicodeString; AName: lpString = ''): TLapeGlobalVar; reintroduce; overload; virtual;
 
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
 
     procedure addArrayHelpers; override;
   end;
@@ -112,7 +112,7 @@ type
     function NewGlobalVar(Str: ShortString; AName: lpString = ''): TLapeGlobalVar; reintroduce; overload; virtual;
 
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
   end;
 
 implementation
@@ -363,7 +363,7 @@ begin
   end;
 end;
 
-procedure TLapeType_DynArray.VarSetLength(AVar, ALen: TResVar; var Offset: Integer);
+procedure TLapeType_DynArray.VarSetLength(AVar, ALen: TResVar);
 begin
   Assert(FCompiler <> nil);
   //FCompiler.EmitCode('System.SetLength(AVar, ALen);', ['AVar', 'ALen'], [], [AVar, ALen], Offset, FCompiler.DocPos);
@@ -372,7 +372,7 @@ begin
   try
     addParam(TLapeTree_Var.Create(AVar, FCompiler));
     addParam(TLapeTree_Var.Create(ALen, FCompiler));
-    Emit(Offset);
+    Emit();
   finally
     Free();
   end;
@@ -418,7 +418,7 @@ begin
       LapeExceptionFmt(lpeIndexOutOfRangeHigh, [idx, Hi.AsInteger]);
 end;
 
-procedure TLapeType_DynArray.RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags; var Offset: Integer);
+procedure TLapeType_DynArray.RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags);
 var
   Idx: SizeInt;
   Lo, Hi: TLapeGlobalVar;
@@ -471,17 +471,17 @@ begin
     if (AIndex.VarPos.MemPos = mpStack) then
     begin
       AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
-      FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset);
+      FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset);
     end;
 
-    FCompiler.Emitter._Eval(getEvalProc_DynArrayRangeCheck(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedOrdinalTypes)), AVar, AVar, AIndex, Offset);
+    FCompiler.Emitter._Eval(getEvalProc_DynArrayRangeCheck(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedOrdinalTypes)), AVar, AVar, AIndex);
   end else
   begin
     AIndex.VarType := FCompiler.getBaseType(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedOrdinalTypes));
     if (AIndex.VarPos.MemPos = mpStack) then
     begin
       AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
-      FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset);
+      FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset);
     end;
 
     Check := TLapeTree_Invoke.Create('_RangeCheck', FCompiler);
@@ -497,7 +497,7 @@ begin
       Len.addParam(TLapeTree_Var.Create(AVar, Check));
       addParam(TLapeTree_ExprBase(Len.FoldConstants()));
 
-      Emit(Offset);
+      Emit();
     finally
       Free();
     end;
@@ -615,7 +615,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_DynArray.Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_DynArray.Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight: TResVar; Flags: ELapeEvalFlags): TResVar;
 var
   tmpType: ELapeBaseType;
   tmpVar: TLapeStackVar;
@@ -635,7 +635,7 @@ begin
     //Cache AsString and NeedInitialization before changing FBaseType
     GetAsString();
     getInitialization();
-    RangeCheck(ALeft, ARight, Flags, Offset);
+    RangeCheck(ALeft, ARight, Flags);
 
     tmpType := FBaseType;
     FBaseType := ltPointer;
@@ -645,21 +645,15 @@ begin
       begin
         if (Dest.VarPos.MemPos = mpStack) then
           Dest := NullResVar;
-        Result := inherited Eval(Op, Dest, ALeft, ARight, Flags, Offset);
+        Result := inherited Eval(Op, Dest, ALeft, ARight, Flags);
         Result.VarPos.isPointer := True;
         Result.VarType := FPType;
       end
       else
       begin
-        IndexVar := inherited Eval(Op, IndexVar, ALeft, ARight, Flags, Offset);
+        IndexVar := inherited Eval(Op, IndexVar, ALeft, ARight, Flags);
         Result := //Result := Pointer[Index]^
-          Eval(
-            op_Deref,
-            Dest,
-            IndexVar,
-            NullResVar,
-            [],
-            Offset);
+          Eval(op_Deref, Dest, IndexVar, NullResVar, []);
       end;
     finally
       FBaseType := tmpType;
@@ -719,7 +713,7 @@ begin
           addParam(TLapeTree_Var.Create(FCompiler.getIntConst(0, ltNativeInt), Body));
         end;
 
-        Emit(Offset);
+        Emit();
       finally
         Free();
       end;
@@ -738,7 +732,7 @@ begin
         [ALeft, ARight], Offset, FCompiler.DocPos)}
 
       with TLapeType_StaticArray(ARight.VarType).Range do
-        VarSetLength(ALeft, _ResVar.New(FCompiler.getIntConst(Hi - Lo + 1)), Offset);
+        VarSetLength(ALeft, _ResVar.New(FCompiler.getIntConst(Hi - Lo + 1)));
 
       with TLapeTree_Operator.Create(op_Index, FCompiler) do
       try
@@ -746,7 +740,7 @@ begin
         Right := TLapeTree_Var.Create(FCompiler.getIntConst(0, ltNativeInt), Left);
 
         CompilerOptions := CompilerOptions - [lcoRangeCheck];
-        IndexVar := Emit(Offset);
+        IndexVar := Emit();
       finally
         Free();
       end;
@@ -756,7 +750,7 @@ begin
       try
         Left := TLapeTree_Var.Create(IndexVar, FCompiler);
         Right := TLapeTree_Var.Create(ARight, Left);
-        Emit(Offset);
+        Emit();
       finally
         Free();
       end;
@@ -768,7 +762,7 @@ begin
         addParam(TLapeTree_Var.Create(ALeft, FCompiler));
         addParam(TLapeTree_Var.Create(FCompiler.getIntConst(0), FCompiler));
 
-        Emit(Offset);
+        Emit();
       finally
         Free();
       end;
@@ -777,7 +771,7 @@ begin
       LapeException(lpeImpossible);
 
     if (tmpVar <> nil) then
-      FCompiler.Emitter._PopVarToStack(Size, tmpVar.Offset, Offset);
+      FCompiler.Emitter._PopVarToStack(Size, tmpVar.Offset);
   end
   else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(ARight.VarType) then
   begin
@@ -793,7 +787,7 @@ begin
 
     wasConstant := Result.isConstant;
     Result.isConstant := False;
-    Result := Eval(op_Assign, tmpResVar, Result, ALeft, [], Offset);
+    Result := Eval(op_Assign, tmpResVar, Result, ALeft, []);
 
     {FCompiler.EmitCode(
       'System.SetLength(Result, System.Length(Result) + 1);' +
@@ -813,12 +807,12 @@ begin
       end;
 
       Dest := VarResVar;
-      tmpResVar := Emit(Offset);
+      tmpResVar := Emit();
     finally
       Free();
     end;
 
-    VarSetLength(Result, tmpResVar, Offset);
+    VarSetLength(Result, tmpResVar);
     with TLapeTree_Operator.Create(op_Assign, FCompiler) do
     try
       Left := TLapeTree_Operator.Create(op_Index, FCompiler);
@@ -829,7 +823,7 @@ begin
         Right := TLapeTree_Var.Create(IndexVar, Left);
       end;
       Right := TLapeTree_Var.Create(ARight, Left);
-      Emit(Offset);
+      Emit();
     finally
       Free();
     end;
@@ -853,7 +847,7 @@ begin
     Dest := NullResVar;
 
 
-    Result := Eval(op_Assign, tmpResVar, Result, ALeft, [], Offset);
+    Result := Eval(op_Assign, tmpResVar, Result, ALeft, []);
     with TLapeTree_InternalMethod_Insert.Create(FCompiler) do
     try
       addParam(TLapeTree_Var.Create(ARight, FCompiler));
@@ -864,7 +858,7 @@ begin
       );
       addParam(Node as TLapeTree_ExprBase);
 
-      Emit(Offset);
+      Emit();
     finally
       Free();
     end;
@@ -872,7 +866,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_DynArray.EvalMember(var Dest: TResVar; ALeft: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_DynArray.EvalMember(var Dest: TResVar; ALeft: TResVar; AName: lpString; Flags: ELapeEvalFlags): TResVar;
 var
   IndexVar, tmpResVar: TResVar;
   Node: TLapeTree_Base;
@@ -895,13 +889,13 @@ begin
         with TLapeTree_InternalMethod_High.Create(FCompiler) do
         try
           addParam(TLapeTree_Var.Create(ALeft, FCompiler));
-          IndexVar := Emit(Offset);
+          IndexVar := Emit();
         finally
           Free();
         end;
 
       Result := _ResVar.New(FCompiler.getTempVar(FPType));
-      Result := FPType.Eval(op_Assign, tmpResVar, Result, Eval(op_Index, tmpResVar, ALeft, IndexVar, [lefRangeCheck], Offset), [], Offset);
+      Result := FPType.Eval(op_Assign, tmpResVar, Result, Eval(op_Index, tmpResVar, ALeft, IndexVar, [lefRangeCheck]), []);
       Result.isConstant := True;
 
       if (Typ is TLapeType_ArrayHelper_Pop) then
@@ -917,7 +911,7 @@ begin
           end else
             addParam(TLapeTree_Var.Create(IndexVar, FCompiler));
 
-          Emit(Offset);
+          Emit();
         finally
           Free();
         end;
@@ -933,7 +927,7 @@ begin
       try
         TLapeTree_InternalMethod(Node).addParam(TLapeTree_Var.Create(ALeft, FCompiler));
         Node := Node.FoldConstants();
-        Result := Node.Emit(Offset);
+        Result := Node.Emit();
       finally
         Node.Free();
       end;
@@ -942,7 +936,7 @@ begin
     begin
       Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
       Result.isConstant := True;
-      inherited Eval(op_cmp_Equal, Result, ALeft, _ResVar.New(FCompiler.getBaseType(ltPointer).EmptyValue), [], Offset);
+      inherited Eval(op_cmp_Equal, Result, ALeft, _ResVar.New(FCompiler.getBaseType(ltPointer).EmptyValue), []);
     end
     else
       LapeException(lpeImpossible, FCompiler.DocPos);
@@ -1118,7 +1112,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_StaticArray.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_StaticArray.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
 var
   wasConstant: Boolean;
   tmpVar, LeftVar, CounterVar: TResVar;
@@ -1132,14 +1126,14 @@ begin
 
   if (op = op_Index) then
   try
-    RangeCheck(Left, Right, Flags, Offset);
+    RangeCheck(Left, Right, Flags);
 
     if (not Left.VarPos.isPointer) or (Left.VarPos.Offset > 0) then
     begin
       // its address to read it through
       LeftVar := Left;
       LeftVar.isConstant := False;
-      LeftVar := Eval(op_Addr, tmpVar, LeftVar, NullResVar, [], Offset);
+      LeftVar := Eval(op_Addr, tmpVar, LeftVar, NullResVar, []);
     end
     else
     begin
@@ -1149,7 +1143,7 @@ begin
     end;
 
     if (FRange.Lo = 0) then
-      Result := inherited Eval(Op, Dest, LeftVar, Right, Flags - [lefRangeCheck], Offset)
+      Result := inherited Eval(Op, Dest, LeftVar, Right, Flags - [lefRangeCheck])
     else
     begin
       if Right.isConstant and (Right.VarPos.MemPos = mpMem) then
@@ -1160,17 +1154,11 @@ begin
           Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));
 
         IndexLow := FCompiler.getIntConst(FRange.Lo, ltSizeInt);
-        tmpVar := Right.VarType.Eval(op_Minus, tmpVar, Right, _ResVar.New(IndexLow), [], Offset);
+        tmpVar := Right.VarType.Eval(op_Minus, tmpVar, Right, _ResVar.New(IndexLow), []);
       end;
 
       Result := //Result := @Pointer[Index - Lo]^
-        inherited Eval(
-          Op,
-          Dest,
-          LeftVar,
-          tmpVar,
-          Flags - [lefRangeCheck],
-          Offset);
+        inherited Eval(Op, Dest, LeftVar, tmpVar, Flags - [lefRangeCheck]);
     end;
   finally
     Result.isConstant := Left.isConstant;
@@ -1183,18 +1171,18 @@ begin
       if Left.HasType() then
       begin
         Right.VarType := Left.VarType;
-        Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, [], Offset);
+        Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, []);
       end
       else
       begin
         Left.VarType := Self;
         if (Left.VarPos.MemPos = mpStack) and (not Left.VarPos.ForceVariable) then
         begin
-          FCompiler.Emitter._GrowStack(Size, Offset);
+          FCompiler.Emitter._GrowStack(Size);
           Left.VarPos.ForceVariable := True;
 
           IndexLow := FCompiler.getTempVar(ltPointer);
-          FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), _ResVar.New(IndexLow), Left, NullResVar, Offset);
+          FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), _ResVar.New(IndexLow), Left, NullResVar);
 
           wasConstant := True;
         end
@@ -1203,13 +1191,13 @@ begin
 
         IndexHigh := FCompiler.getIntConst(Size, ltSizeInt);
         tmpVar := Compiler.getTempStackVar(ltPointer);
-        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar);
         if wasConstant then
-          FCompiler.Emitter._Eval(getEvalProc(op_Assign, ltPointer, ltPointer), tmpVar, _ResVar.New(IndexLow), NullResVar, Offset)
+          FCompiler.Emitter._Eval(getEvalProc(op_Assign, ltPointer, ltPointer), tmpVar, _ResVar.New(IndexLow), NullResVar)
         else
-          FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset);
-        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, _ResVar.New(IndexHigh), NullResVar, Offset);
-        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3, Offset);
+          FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, _ResVar.New(IndexHigh), NullResVar);
+        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3);
         Result := Left;
 
         if wasConstant then
@@ -1221,7 +1209,7 @@ begin
       Assert(HasType());
       if (Left.VarPos.MemPos = mpStack) and (not Left.VarPos.ForceVariable) then
       begin
-        FCompiler.Emitter._GrowStack(Size, Offset);
+        FCompiler.Emitter._GrowStack(Size);
         Left.VarPos.ForceVariable := True;
         wasConstant := True;
       end
@@ -1229,7 +1217,7 @@ begin
         wasConstant := False;
 
       CounterVar := _ResVar.New(FCompiler.getTempVar(ltSizeInt));
-      CounterVar := CounterVar.VarType.Eval(op_Assign, tmpVar, CounterVar, _ResVar.New(FCompiler.getIntConst(FRange.Lo)), [], Offset);
+      CounterVar := CounterVar.VarType.Eval(op_Assign, tmpVar, CounterVar, _ResVar.New(FCompiler.getIntConst(FRange.Lo)), []);
 
       with TLapeTree_For.Create(FCompiler) do
       try
@@ -1251,7 +1239,7 @@ begin
         IndexOperator.Left := TLapeTree_Var.Create(Right, IndexOperator);
         IndexOperator.Right := TLapeTree_Var.Create(CounterVar, IndexOperator);
 
-        Emit(Offset);
+        Emit();
       finally
 
         Free();
@@ -1319,7 +1307,7 @@ begin
     end;
 end;
 
-procedure TLapeType_String.VarUnique(AVar: TResVar; var Offset: Integer);
+procedure TLapeType_String.VarUnique(AVar: TResVar);
 begin
   Assert(FCompiler <> nil);
   //FCompiler.EmitCode('System.UniqueString(AVar);', ['AVar'], [], [AVar], Offset, FCompiler.DocPos);
@@ -1327,7 +1315,7 @@ begin
   with TLapeTree_Invoke.Create('UniqueString', FCompiler) do
   try
     addParam(TLapeTree_Var.Create(AVar, FCompiler));
-    Emit(Offset);
+    Emit();
   finally
     Free();
   end;
@@ -1396,13 +1384,13 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_String.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_String.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
 begin
   Assert(FCompiler <> nil);
   Assert(Left.VarType is TLapeType_Pointer);
 
   if (op = op_Index) and (lefAssigning in Flags) then
-    VarUnique(Left, Offset);
+    VarUnique(Left);
   Result := inherited;
   if (op = op_Index) and HasType() then
   begin
@@ -1530,7 +1518,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_ShortString.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_ShortString.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
 var
   EvalProc: TLapeEvalProc;
   tmpString: TResVar;
@@ -1545,7 +1533,7 @@ begin
     begin
       EvalProc := getEvalProc(op_Assign, ltShortString, ltUInt8);
       Assert(ValidEvalFunction(EvalProc));
-      FCompiler.Emitter._Eval(EvalProc, Left, Right, _ResVar.New(VarHi()), Offset);
+      FCompiler.Emitter._Eval(EvalProc, Left, Right, _ResVar.New(VarHi()));
       Result := Left;
     end
     else
@@ -1554,13 +1542,13 @@ begin
       begin
         tmpString := FCompiler.getTempStackVar(ltShortString);
         FCompiler.getDestVar(Dest, tmpString, op_Unknown);
-        Result := tmpString.VarType.Eval(op_Assign, Dest, tmpString, Right, Flags, Offset)
+        Result := tmpString.VarType.Eval(op_Assign, Dest, tmpString, Right, Flags)
       end
       else
         Result := inherited;
 
       if Result.HasType() and (Result.VarType is TLapeType_ShortString) and (FRange.Hi <> TLapeType_ShortString(Result.VarType).Range.Hi) then
-        Result := Eval(op_Assign, Dest, Left, Result, [], Offset);
+        Result := Eval(op_Assign, Dest, Left, Result, []);
     end
   else
     Result := inherited;

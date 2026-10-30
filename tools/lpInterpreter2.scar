@@ -302,7 +302,7 @@ begin
             t := t + ', ' + p
           else
             t := t + ', 0';
-        t := t + ', Offset)';
+        t := t + ')';
         if (c = 0) then
           WriteLn('      mmpNone: Result := '+Replace(t, 'Right.VarPos.GlobalVar.Ptr', 'nil', [rfReplaceAll])+';');
         WriteLn('      mmp'+s[c]+': Result := '+t+';');
@@ -368,22 +368,16 @@ begin
           t := t + ': ' + zz[i][1];
           Inc(i);
         end;
-        AddToReport('function _Eval__'+q+'('+t+'; var Offset: Integer): Integer; overload;');
-        AddToReport('function _Eval__'+q+'('+t+'): Integer; overload;');
-        WriteLn('function TLapeCodeEmitterBase._Eval__'+q+'('+t+'; var Offset: Integer): Integer; begin');
-        WriteLn('  Result := _op(ocEval_'+q+', Offset);');
-        WriteLn('  CheckOffset(Offset, SizeOf(TOC_Eval__'+q+'));');
-        WriteLn('  with POC_Eval__'+q+'(@FCode[Offset])^ do begin');
+        AddToReport('function _Eval__'+q+'('+t+'): Integer;');
+        WriteLn('function TLapeCodeEmitterBase._Eval__'+q+'('+t+'): Integer; begin');
+        WriteLn('  Result := _op(ocEval_'+q+');');
+        WriteLn('  Reserve(SizeOf(TOC_Eval__'+q+'));');
+        WriteLn('  with POC_Eval__'+q+'(@FCode[Result + ocSize])^ do begin');
         WriteLn('    Proc := AProc;');
         for i := 0 to High(zz) do
           WriteLn('    '+zz[i][0]+' := A'+zz[i][0]+';');
         WriteLn('  end;');
-        WriteLn('  Inc(Offset, SizeOf(TOC_Eval__'+q+'));');
-        WriteLn('end;');
-        t := 'function TLapeCodeEmitterBase._Eval__'+q+'('+t+'): Integer; var o: Integer; begin o := -1; Result := _Eval__'+q+'(AProc';
-        for i := 0 to High(zz) do
-          t := t + ',A' + zz[i][0];
-        WriteLn(t+',o); end;'); *)
+        WriteLn('end;'); *)
       end;
       
       WriteLn('      else e := True;');

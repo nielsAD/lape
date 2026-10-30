@@ -38,7 +38,7 @@ type
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
 
     property Header: TLapeType_Method read FHeader;
     property ABI: TFFIABI read FABI;
@@ -49,7 +49,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''); reintroduce; virtual;
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
 
     procedure FinalizeConst(AVar: TLapeGlobalVar); override;
   end;
@@ -57,7 +57,7 @@ type
   TLapeTree_InternalMethod_Native = class(TLapeTree_InternalMethod)
   protected
     FABIType: TLapeType;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     procedure ClearCache; override;
@@ -69,7 +69,7 @@ type
   TLapeTree_InternalMethod_Natify = class(TLapeTree_InternalMethod_Native)
   protected
     FClosures: TLapeGlobalVar;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     function Evaluate: TLapeGlobalVar; override;
@@ -78,7 +78,7 @@ type
   TLapeTree_InternalMethod_Lapify = class(TLapeTree_InternalMethod)
   protected
     FClosures: TLapeGlobalVar;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     function resType: TLapeType; override;
@@ -569,7 +569,7 @@ begin
   end;
 end;
 
-function TLapeType_NativeMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_NativeMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
 var
   m: TLapeGlobalVar;
 begin
@@ -580,7 +580,7 @@ begin
     Left.VarType := FHeader;
     Right.VarType := FHeader;
     try
-      Result := FHeader.Eval(op, Dest, Left, Right, Flags, Offset);
+      Result := FHeader.Eval(op, Dest, Left, Right, Flags);
     finally
       Left.VarType := Self;
       Right.VarType := Self;
@@ -605,7 +605,7 @@ begin
           try
             addParam(TLapeTree_Var.Create(Right, FCompiler));
 
-            Right := Emit(Offset);
+            Right := Emit();
           finally
             Free();
           end;
@@ -615,7 +615,7 @@ begin
           addParam(TLapeTree_Var.Create(Right, FCompiler));
           addParam(TLapeTree_Var.Create(FCompiler['ffi_' + ABIToStr(FABI)], FCompiler));
 
-          Right := Emit(Offset);
+          Right := Emit();
         finally
           Free();
         end;
@@ -626,7 +626,7 @@ begin
     end;
 
     try
-      Result := FHeader.Eval(op, Dest, Left, Right, Flags, Offset);
+      Result := FHeader.Eval(op, Dest, Left, Right, Flags);
     except
       Result := inherited;
     end;
@@ -650,7 +650,7 @@ begin
   LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), '!ClosureDisposer']);
 end;
 
-function TLapeType_ClosureDisposer.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_ClosureDisposer.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
 begin
   Result := NullResVar;
 
@@ -660,7 +660,7 @@ begin
     with TLapeTree_Invoke.Create('!closuredisposer', FCompiler) do
     try
       addParam(TLapeTree_Var.Create(Left, FCompiler));
-      Emit(Offset);
+      Emit();
       Exit;
     finally
       Free();
@@ -763,7 +763,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeTree_InternalMethod_Native.Compile(var Offset: Integer): TResVar;
+function TLapeTree_InternalMethod_Native.Compile: TResVar;
 begin
   Result := _ResVar.New(Evaluate());
 end;
@@ -783,7 +783,7 @@ begin
   LapeException(lpeCannotEvalConst, DocPos);
 end;
 
-function TLapeTree_InternalMethod_Natify.Compile(var Offset: Integer): TResVar;
+function TLapeTree_InternalMethod_Natify.Compile: TResVar;
 var
   Method: TLapeType_NativeMethod;
   Closure: TExportClosure;
@@ -816,7 +816,7 @@ begin
   else
     Natify := '!ffi_natify';
 
-  Param := Self.Params[0].Emit(Offset);
+  Param := Self.Params[0].Emit();
 
   if (Method.Header.BaseType <> ltScriptMethod) then
     with TLapeTree_If.Create(Self) do
@@ -829,7 +829,7 @@ begin
       with ElseBody as TLapeTree_Invoke do
         addParam(TLapeTree_Var.Create(FCompiler.getStringConst(Self.DocPos.Format(lpeScriptMethodExpected)), Self));
 
-      Emit(Offset);
+      Emit();
     finally
       Free();
     end;
@@ -839,7 +839,7 @@ begin
     addParam(TLapeTree_Var.Create(Param, Self));
     addParam(TLapeTree_Var.Create(FClosures, Self));
     addParam(TLapeTree_Var.Create(FCompiler.getIntConst(Index, ltNativeInt), Self));
-    Result := Emit(Offset);
+    Result := Emit();
     Result.VarType := Method;
   finally
     Free();
@@ -882,7 +882,7 @@ begin
   LapeException(lpeCannotEvalConst, DocPos);
 end;
 
-function TLapeTree_InternalMethod_Lapify.Compile(var Offset: Integer): TResVar;
+function TLapeTree_InternalMethod_Lapify.Compile: TResVar;
 var
   Method: TLapeType_NativeMethod;
   Closure: TImportClosure;
@@ -913,10 +913,10 @@ begin
 
   with TLapeTree_Invoke.Create(Lapify, Self) do
   try
-    addParam(TLapeTree_Var.Create(Self.Params[0].Emit(Offset), Self));
+    addParam(TLapeTree_Var.Create(Self.Params[0].Emit(), Self));
     addParam(TLapeTree_Var.Create(FClosures, Self));
     addParam(TLapeTree_Var.Create(FCompiler.getIntConst(Index, ltNativeInt), Self));
-    Result := Emit(Offset);
+    Result := Emit();
     Result.VarType := Self.resType();
   finally
     Free();

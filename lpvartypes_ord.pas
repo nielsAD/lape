@@ -105,7 +105,7 @@ type
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
 
     property Range: TLapeRange read FRange;
     property VarType: TLapeType read FVarType;
@@ -150,7 +150,7 @@ type
     function EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean; virtual;
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
 
     // (in the order that they were declared, which is that of their values)
     property Elements: TLapeEnumElements read FElements;
@@ -174,7 +174,7 @@ type
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
   end;
 
   TLapeType_ByteBool = class(TLapeType_Bool)
@@ -599,7 +599,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_SubRange.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_SubRange.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
 begin
   if (FVarType <> nil) and (FVarType.ClassType = TLapeType_Enum) and Right.HasType() and (EvalRes(Op, Right.VarType, Flags) <> nil) then
   begin
@@ -613,7 +613,7 @@ begin
     Left.VarType := FVarType;
     if Dest.HasType() and Equals(Dest.VarType) then
       Dest.VarType := FVarType;
-    Result := FVarType.Eval(Op, Dest, Left, Right, Flags, Offset);
+    Result := FVarType.Eval(Op, Dest, Left, Right, Flags);
     if (Op in AssignOperators) then
       Result.VarType := Self;
   end
@@ -944,7 +944,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Enum.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_Enum.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
 var
   tmpRes: TResVar;
 begin
@@ -961,7 +961,7 @@ begin
 
     if Dest.HasType() and Equals(Dest.VarType) then
       Dest.VarType := Left.VarType;
-    Result := Left.VarType.Eval(Op, Dest, Left, Right, Flags, Offset);
+    Result := Left.VarType.Eval(Op, Dest, Left, Right, Flags);
     if Result.HasType() and (not (op in CompareOperators)) then
     begin
       if (DetermineIntType(Result.VarType.Size, Result.VarType.BaseType in LapeSignedOrdinalTypes) <> DetermineIntType(Size, BaseType in LapeSignedOrdinalTypes)) then
@@ -972,7 +972,7 @@ begin
         Result.VarType := Left.VarType;
         FCompiler.getDestVar(Dest, Result, Op);
 
-        Result := Left.VarType.Eval(op_Assign, Dest, Result, tmpRes, [], Offset);
+        Result := Left.VarType.Eval(op_Assign, Dest, Result, tmpRes, []);
       end;
       Result.VarType := Self;
     end;
@@ -1090,7 +1090,7 @@ begin
   end;
 end;
 
-function TLapeType_Bool.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
+function TLapeType_Bool.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
 var
   Res: TLapeType;
 begin
@@ -1105,7 +1105,7 @@ begin
     if Right.HasType() and Equals(Right.VarType) then
       Right.VarType := FVarType;
 
-    Result := FVarType.Eval(Op, Dest, Left, Right, Flags, Offset);
+    Result := FVarType.Eval(Op, Dest, Left, Right, Flags);
     if (Result.VarType = FVarType) then
       Result.VarType := Self;
   end;

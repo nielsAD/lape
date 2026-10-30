@@ -23,7 +23,6 @@ type
   TLapeFlowStatement = record
     CodeOffset: Integer;
     DocPos: TDocPos;
-    JumpSafe: Boolean;
   end;
 
   TLapeExpressionList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeTree_ExprBase>;
@@ -33,19 +32,19 @@ type
   ILapeTree_CanBreak = interface(IInterface)
     ['{F63EF9FB-2DD0-4C2C-B564-1333995EE9AF}']
     function canBreak: Boolean;
-    procedure addBreakStatement(JumpSafe: Boolean; var Offset: Integer);
+    procedure addBreakStatement(JumpSafe: Boolean);
   end;
 
   ILapeTree_CanContinue = interface(IInterface)
     ['{411AF7EA-9D38-48DE-90E9-362E2D0D09E9}']
     function canContinue: Boolean;
-    procedure addContinueStatement(JumpSafe: Boolean; var Offset: Integer);
+    procedure addContinueStatement(JumpSafe: Boolean);
   end;
 
   ILapeTree_CanExit = interface(IInterface)
     ['{D1963640-31F9-4BB3-B03E-0F1DB314D98E}']
     function canExit: Boolean;
-    procedure addExitStatement(JumpSafe: Boolean; var Offset: Integer);
+    procedure addExitStatement(JumpSafe: Boolean);
   end;
 
   TLapeTreeType = class(TLapeType)
@@ -68,7 +67,7 @@ type
 
     procedure setParent(Node: TLapeTree_Base); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); virtual;
-    function Compile(var Offset: Integer): TResVar; virtual;
+    function Compile: TResVar; virtual;
   public
     constructor Create(ACompiler: TLapeCompilerBase); reintroduce; overload; virtual;
     constructor Create(ASource: TLapeTree_Base); reintroduce; overload; virtual;
@@ -79,9 +78,7 @@ type
     function FoldConstants(DoFree: Boolean = True): TLapeTree_Base; virtual;
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; virtual;
 
-    function Emit(var Offset: Integer): TResVar; overload; virtual;
-    function Emit: TResVar; overload; virtual;
-    function EmitToTempVar(var Offset: Integer; out v: TResVar): Boolean; virtual;
+    function Emit: TResVar; virtual;
     function isInvoking: Boolean; virtual;
     function Walk(Visit: TLapeTree_Visit): Boolean; virtual;
 
@@ -111,7 +108,6 @@ type
     FDest: TResVar;
     procedure setDest(ResVar: TResVar); virtual;
   public
-    function EmitToTempVar(var Offset: Integer; out v: TResVar): Boolean; override;
     property Dest: TResVar read FDest write setDest;
   end;
 
@@ -125,7 +121,7 @@ type
 
     procedure setType(AType: TLapeType); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
@@ -158,7 +154,7 @@ type
 
     procedure setCastTo(Node: TLapeTree_ExprBase); virtual;
     procedure setParam(Node: TLapeTree_ExprBase); virtual;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     destructor Destroy; override;
 
@@ -208,7 +204,7 @@ type
     procedure setLeft(Node: TLapeTree_ExprBase); override;
     procedure setRight(Node: TLapeTree_ExprBase); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(AOperatorType: EOperator; ACompiler: TLapeCompilerBase); reintroduce; overload; virtual;
     constructor Create(AOperatorType: EOperator; ASource: TLapeTree_Base); overload; virtual;
@@ -235,7 +231,7 @@ type
   protected
     FName: lpString;
     FPicked: TLapeGlobalVar;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ALeft: TLapeTree_ExprBase; AName: lpString; ACompiler: TLapeCompilerBase); reintroduce; overload; virtual;
     constructor Create(ALeft: TLapeTree_ExprBase; AName: lpString; ASource: TLapeTree_Base); overload; virtual;
@@ -261,7 +257,7 @@ type
   protected
     FResVar: TResVar;
     function getGlobalVar: TLapeGlobalVar; virtual;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(AResVar: TResVar; ACompiler: TLapeCompilerBase); reintroduce; overload; virtual;
     constructor Create(AResVar: TResVar; ASource: TLapeTree_Base); overload; virtual;
@@ -278,7 +274,7 @@ type
   TLapeTree_Inherited = class(TLapeTree_NoFold)
   protected
     FMethod: TLapeInheritedMethod;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(AMethod: TLapeInheritedMethod; ACompiler: TLapeCompilerBase); reintroduce; virtual;
 
@@ -290,7 +286,7 @@ type
   TLapeTree_WithVar = class(TLapeTree_ExprBase)
   protected
     FWithDecl: TLapeWithDeclaration;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(AWithDecl: TLapeWithDeclaration; ACompiler: TLapeCompilerBase); reintroduce; overload; virtual;
     constructor Create(AWithDecl: TLapeWithDeclaration; ASource: TLapeTree_Base); overload; virtual;
@@ -334,7 +330,7 @@ type
   protected
     FStatements: TLapeStatementList;
     procedure DeleteChild(Node: TLapeTree_Base); override;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
@@ -358,7 +354,6 @@ type
 
     function addStatement(Statement: TLapeTree_Base; Prepend: Boolean = False): Integer; overload; override;
     function addStatement(Statement: TLapeTree_Base; AfterCompilation, IsGlobal: Boolean): Integer; reintroduce; overload; virtual;
-    function Emit(var Offset: Integer; AfterCompilation: Boolean; Filter: TLapeDelayedFilter = ldfAll): TResVar; overload; virtual;
     function Emit(AfterCompilation: Boolean; Filter: TLapeDelayedFilter = ldfAll): TResVar; overload; virtual;
   end;
 
@@ -370,7 +365,7 @@ type
 
     procedure setStatements(Node: TLapeTree_StatementList); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     Method: TLapeGlobalVar;
     SelfWith: TLapeWithDeclaration;
@@ -382,7 +377,7 @@ type
     function Walk(Visit: TLapeTree_Visit): Boolean; override;
 
     function canExit: Boolean; virtual;
-    procedure addExitStatement(JumpSafe: Boolean; var Offset: Integer); virtual;
+    procedure addExitStatement(JumpSafe: Boolean); virtual;
 
     property StackInfo: TLapeStackInfo read FStackInfo;
     property Statements: TLapeTree_StatementList read FStatements write setStatements;
@@ -398,7 +393,7 @@ type
   protected
     FVars: TLapeVarDeclList;
     procedure DeleteChild(Node: TLapeTree_Base); override;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
@@ -414,7 +409,7 @@ type
     FWithDecls: array of TLapeWithDeclaration;
     FBody: TLapeTree_Base;
     procedure setBody(Node: TLapeTree_Base); virtual;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
@@ -437,9 +432,9 @@ type
     procedure setBody(Node: TLapeTree_Base); virtual;
     procedure setElse(Node: TLapeTree_Base); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
-    function CompileCondition(var Offset: Integer): TResVar; virtual;
-    function CompileBody(var Offset: Integer): TResVar; virtual;
-    function Compile(var Offset: Integer): TResVar; override;
+    function CompileCondition: TResVar; virtual;
+    function CompileBody: TResVar; virtual;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
@@ -466,13 +461,13 @@ type
     procedure setFallThroughOffset(Offset: Integer); virtual;
     procedure setCondition(Node: TLapeTree_ExprBase); virtual;
     procedure setStatement(Node: TLapeTree_Base); virtual;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
 
     function addValue(Value: TLapeTree_Base): Integer; virtual;
-    procedure addFallThroughStatement(JumpSafe: Boolean; Offset: Integer); virtual;
+    procedure addFallThroughStatement(Offset: Integer); virtual;
 
     property Condition: TLapeTree_ExprBase read FCondition write setCondition;
     property Statement: TLapeTree_Base read FStatement write setStatement;
@@ -494,7 +489,7 @@ type
 
     procedure setCondition(Node: TLapeTree_ExprBase); virtual;
     procedure setElse(Node: TLapeTree_Base); virtual;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
@@ -512,32 +507,32 @@ type
     FContinueCount: Integer;
     FBreakStatements: TLapeFlowStatementList;
     FContinueStatements: TLapeFlowStatementList;
-    function CompileBody(var Offset: Integer): TResVar; override;
-    function Compile(var Offset: Integer): TResVar; override;
+    function CompileBody: TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
 
     function canBreak: Boolean; virtual;
     function canContinue: Boolean; virtual;
-    procedure addBreakStatement(JumpSafe: Boolean; var Offset: Integer); virtual;
-    procedure addContinueStatement(JumpSafe: Boolean; var Offset: Integer); virtual;
+    procedure addBreakStatement(JumpSafe: Boolean); virtual;
+    procedure addContinueStatement(JumpSafe: Boolean); virtual;
   end;
 
   TLapeTree_Repeat = class(TLapeTree_If, ILapeTree_CanBreak, ILapeTree_CanContinue)
   protected
     FBreakStatements: TLapeFlowStatementList;
     FContinueStatements: TLapeFlowStatementList;
-    function CompileBody(var Offset: Integer): TResVar; override;
-    function Compile(var Offset: Integer): TResVar; override;
+    function CompileBody: TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
 
     function canBreak: Boolean; virtual;
     function canContinue: Boolean; virtual;
-    procedure addBreakStatement(JumpSafe: Boolean; var Offset: Integer); virtual;
-    procedure addContinueStatement(JumpSafe: Boolean; var Offset: Integer); virtual;
+    procedure addBreakStatement(JumpSafe: Boolean); virtual;
+    procedure addContinueStatement(JumpSafe: Boolean); virtual;
   end;
 
   TLapeTree_For = class(TLapeTree_While)
@@ -550,10 +545,10 @@ type
     procedure setLimit(Node: TLapeTree_ExprBase); virtual;
     procedure setStep(Node: TLapeTree_ExprBase); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
-    function CompileBody(var Offset: Integer): TResVar; override;
-    procedure CompileBodyForIn(var Offset: Integer); virtual;
-    function CompileForIn(var Offset: Integer): TResVar; virtual;
-    function Compile(var Offset: Integer): TResVar; override;
+    function CompileBody: TResVar; override;
+    procedure CompileBodyForIn; virtual;
+    function CompileForIn: TResVar; virtual;
+    function Compile: TResVar; override;
   public
     LoopType: ELoopType;
     LoopOverWhat: ELoopOverWhat;
@@ -578,7 +573,7 @@ type
     procedure setExcept(Node: TLapeTree_Base); virtual;
     procedure setFinally(Node: TLapeTree_Base); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
@@ -589,13 +584,13 @@ type
     property FinallyBody: TLapeTree_Base read FFinally write setFinally;
   end;
 
-function getFlowStatement(Offset: Integer; const Pos: TDocPos; JumpSafe: Boolean = False): TLapeFlowStatement; {$IFDEF Lape_Inline}inline;{$ENDIF}
+function getFlowStatement(Offset: Integer; const Pos: TDocPos): TLapeFlowStatement; {$IFDEF Lape_Inline}inline;{$ENDIF}
 function EnsureCompound(Compiler: TLapeCompilerBase; Statement: TLapeTree_Base; AllowNil: Boolean = True): TLapeTree_StatementList;
 function GetMagicMethodOrNil(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; AResult: TLapeType = nil): TResVar;
 function HasMagicMethod(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; ARes: TLapeType): Boolean;
 
 const
-  NullFlowStatement: TLapeFlowStatement = (CodeOffset: 0; DocPos: (Line: 0; Col: 0; FileName: ''); JumpSafe: False);
+  NullFlowStatement: TLapeFlowStatement = (CodeOffset: 0; DocPos: (Line: 0; Col: 0; FileName: ''));
 
 implementation
 
@@ -604,12 +599,11 @@ uses
   lpvartypes_ord, lpvartypes_record, lpvartypes_array, lpvartypes_object,
   lpmessages, lpeval, lpinterpreter_types, lpinvoke, lpinternalmethods;
 
-function getFlowStatement(Offset: Integer; const Pos: TDocPos; JumpSafe: Boolean = False): TLapeFlowStatement;
+function getFlowStatement(Offset: Integer; const Pos: TDocPos): TLapeFlowStatement;
 begin
   Result := NullFlowStatement;
   Result.CodeOffset := Offset;
   Result.DocPos := Pos;
-  Result.JumpSafe := JumpSafe;
 end;
 
 function EnsureCompound(Compiler: TLapeCompilerBase; Statement: TLapeTree_Base; AllowNil: Boolean = True): TLapeTree_StatementList;
@@ -765,14 +759,14 @@ begin
   Result := Self;
 end;
 
-function TLapeTree_Base.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Base.Compile: TResVar;
 begin
   Result := NullResVar;
   LapeException(lpeImpossible);
 end;
 
 // What it emits is at its position (or the outer one, when it has none)
-function TLapeTree_Base.Emit(var Offset: Integer): TResVar;
+function TLapeTree_Base.Emit: TResVar;
 var
   PrevPos: PDocPos;
 begin
@@ -781,24 +775,10 @@ begin
     FCompiler.Emitter.CurrentPos := @FDocPos;
 
   try
-    Result := Compile(Offset);
+    Result := Compile();
   finally
     FCompiler.Emitter.CurrentPos := PrevPos;
   end;
-end;
-
-function TLapeTree_Base.Emit: TResVar;
-var
-  Offset: Integer;
-begin
-  Offset := -1;
-  Result := Emit(Offset);
-end;
-
-function TLapeTree_Base.EmitToTempVar(var Offset: Integer; out v: TResVar): Boolean;
-begin
-  v := Emit(Offset);
-  Result := (v.VarPos.MemPos <> mpStack) and v.HasType();
 end;
 
 function TLapeTree_Base.isInvoking: Boolean;
@@ -882,17 +862,6 @@ end;
 procedure TLapeTree_DestExprBase.setDest(ResVar: TResVar);
 begin
   FDest := ResVar;
-end;
-
-function TLapeTree_DestExprBase.EmitToTempVar(var Offset: Integer; out v: TResVar): Boolean;
-var
-  tmpDest: TResVar;
-begin
-  tmpDest := FDest;
-  if (FDest.VarPos.MemPos <> VarResVar.VarPos.MemPos) then
-    FDest := VarResVar;
-  Result := inherited;
-  FDest := tmpDest;
 end;
 
 procedure TLapeTree_OpenArray.setType(AType: TLapeType);
@@ -1363,7 +1332,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
+function TLapeTree_OpenArray.Compile: TResVar;
 
   procedure doSetOrDynArray;
   var
@@ -1382,8 +1351,8 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         try
           Dest := Result;
           Left := TLapeTree_Var.Create(Result, FValues[i]);
-          Right := TLapeTree_Var.Create(FValues[i].Emit(Offset), FValues[i]);
-          Result := Emit(Offset);
+          Right := TLapeTree_Var.Create(FValues[i].Emit(), FValues[i]);
+          Result := Emit();
           Assert(Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos);
         finally
           Free();
@@ -1394,12 +1363,12 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
           Counter := FCompiler.getTempVar(TLapeType_Set(FType).Range)
         else
           Counter := FCompiler.getTempVar(ltSizeInt);
-        tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), TLapeTree_Range(FValues[i]).Lo.Emit(Offset), [], Offset);
+        tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), TLapeTree_Range(FValues[i]).Lo.Emit(), []);
 
         with TLapeTree_For.Create(FValues[i]) do
         try
           Counter := TLapeTree_Var.Create(tmpVar, FValues[i]);
-          Limit := TLapeTree_Var.Create(TLapeTree_Range(FValues[i]).Hi.Emit(Offset), FValues[i]);
+          Limit := TLapeTree_Var.Create(TLapeTree_Range(FValues[i]).Hi.Emit(), FValues[i]);
           Body := TLapeTree_Operator.Create(op_Plus, FValues[i]);
           with TLapeTree_Operator(Body) do
           begin
@@ -1407,7 +1376,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
             Left := TLapeTree_Var.Create(Result, FValues[i]);
             Right := TLapeTree_Var.Create(tmpVar, FValues[i]);
           end;
-          Result := Emit(Offset);
+          Result := Emit();
           Assert(TLapeTree_Operator(Body).Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos);
         finally
           Free();
@@ -1438,8 +1407,8 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
             Left := TLapeTree_Var.Create(Result, FValues[i]);
             Right := TLapeTree_Var.Create(FCompiler.getIntConst(i + TLapeType_StaticArray(FType).Range.Lo, ltNativeInt), FValues[i]);
           end;
-          Right := TLapeTree_Var.Create(FValues[i].Emit(Offset), FValues[i]);
-          Emit(Offset);
+          Right := TLapeTree_Var.Create(FValues[i].Emit(), FValues[i]);
+          Emit();
         finally
           Free();
         end;
@@ -1458,8 +1427,8 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         with TLapeTree_Operator.Create(op_Assign, FValues[i]) do
         try
           Left := TLapeTree_Member.Create(Result, TLapeType_Record(FType).FieldMap.Key[i], FValues[i]);
-          Right := TLapeTree_Var.Create(FValues[i].Emit(Offset), FValues[i]);
-          Emit(Offset);
+          Right := TLapeTree_Var.Create(FValues[i].Emit(), FValues[i]);
+          Emit();
         finally
           Free();
         end
@@ -1468,9 +1437,9 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
       else if (lcoAlwaysInitialize in FCompilerOptions) then
         with TLapeTree_Member.Create(Result, TLapeType_Record(FType).FieldMap.Key[i], Self) do
         try
-          Val := Emit(Offset);
+          Val := Emit();
 
-          FCompiler.VarToDefault(Val, Offset);
+          FCompiler.VarToDefault(Val);
         finally
           Free();
         end;
@@ -1498,7 +1467,7 @@ begin
   Result := _ResVar.New(FCompiler.getTempVar(FType));
 
   if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
-    FCompiler.VarToDefault(Result, Offset);
+    FCompiler.VarToDefault(Result);
 
   Exclude(FCompilerOptions, lcoRangeCheck);
   if (FType is TLapeType_StaticArray) then
@@ -1747,7 +1716,7 @@ begin
   inherited Destroy();
 end;
 
-function TLapeTree_Cast.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Cast.Compile: TResVar;
 var
   tmpVar, DestVar: TResVar;
 begin
@@ -1767,7 +1736,7 @@ begin
       TLapeTree_DestExprBase(FParam).Dest := Dest;
     FParam := FParam.setExpectedType(VarType) as TLapeTree_ExprBase;
 
-    Result := FParam.Emit(Offset);
+    Result := FParam.Emit();
     if (not Result.HasType()) or
        ((VarType.Equals(Result.VarType) or (VarType.Size = Result.VarType.Size)) and
        ((not (VarType.BaseType in LapeRefTypes)) or (not VarType.CompatibleWith(Result.VarType))))
@@ -1793,7 +1762,7 @@ begin
         DestVar.VarType := FCompiler.getBaseType(DetermineIntType(DestVar.VarType.Size, DestVar.VarType.BaseType in LapeSignedOrdinalTypes));
       end;
 
-      Result := DestVar.VarType.Eval(op_Assign, tmpVar, DestVar, Result, [], Offset);
+      Result := DestVar.VarType.Eval(op_Assign, tmpVar, DestVar, Result, []);
 
       Result.VarType := VarType;
       if (FDest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
@@ -2331,7 +2300,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeTree_Operator.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Operator.Compile: TResVar;
 
   function doIf: TResVar;
   var
@@ -2352,20 +2321,20 @@ function TLapeTree_Operator.Compile(var Offset: Integer): TResVar;
         TLapeTree_Operator(ElseBody).Left := TLapeTree_Var.Create(Result, Self);
       end;
 
-      Result := Emit(Offset);
+      Result := Emit();
       if wasConstant then
         Result.isConstant := True;
     end;
   end;
 
-  function doOperatorOverload(): TResVar;
+  function doOperatorOverload: TResVar;
   begin
     Dest := NullResVar;
     with TLapeTree_Invoke.Create('!op_' + op_name[FOperatorType], Self) do
     try
       addParam(Left);
       addParam(Right);
-      Result := Emit(Offset);
+      Result := Emit();
     finally
       Right := Params[1];
       Left := Params[0];
@@ -2379,7 +2348,7 @@ var
   procedure CompileLeft;
   begin
     if (FLeft <> nil) then
-      LeftVar := TLapeTree_ExprBase(FLeft).Emit(Offset);
+      LeftVar := TLapeTree_ExprBase(FLeft).Emit();
 
     if (FLeft <> nil) and (not LeftVar.HasType()) then
       LeftVar.VarType := FCompiler.addManagedType(TLapeType.Create(ltUnknown, FCompiler));
@@ -2448,13 +2417,13 @@ begin
   if RightFirst() and (not (FLeft is TLapeTree_Var)) then
   begin
     ExpectRight(TLapeTree_ExprBase(FLeft).resType());
-    RightVar := FRight.Emit(Offset);
+    RightVar := FRight.Emit();
     // (one on the stack is put in a temporary: the left side is worked out after it)
     if (RightVar.VarPos.MemPos = mpStack) and RightVar.HasType() then
     begin
       Typ := RightVar.VarType;
       RightVar := _ResVar.New(FCompiler.getTempVar(Typ));
-      FCompiler.Emitter._PopStackToVar(Typ.Size, RightVar.VarPos.StackVar.Offset, Offset);
+      FCompiler.Emitter._PopStackToVar(Typ.Size, RightVar.VarPos.StackVar.Offset);
     end;
     CompileLeft();
   end
@@ -2471,7 +2440,7 @@ begin
          (FRight is TLapeTree_DestExprBase) and (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
       begin
         TLapeTree_DestExprBase(FRight).Dest := LeftVar;
-        RightVar := FRight.Emit(Offset);
+        RightVar := FRight.Emit();
         if (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
         begin
           Dest := NullResVar;
@@ -2481,12 +2450,12 @@ begin
           Exit;
         end;
       end else
-        RightVar := FRight.Emit(Offset);
+        RightVar := FRight.Emit();
     end;
   end;
 
   try
-    Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, EvalFlags(), Offset);
+    Result := LeftVar.VarType.Eval(FOperatorType, FDest, LeftVar, RightVar, EvalFlags());
     // (writeable, as through a ^FDerefType)
     if (FDerefType <> nil) then
     begin
@@ -2586,7 +2555,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeTree_Member.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Member.Compile: TResVar;
 var
   LeftVar: TResVar;
 begin
@@ -2594,7 +2563,7 @@ begin
 
   if (FLeft = nil) then
     LapeException(lpeInvalidEvaluation, DocPos);
-  LeftVar := Left.Emit(Offset);
+  LeftVar := Left.Emit();
   if (not LeftVar.HasType()) then
     LeftVar.VarType := FCompiler.addManagedType(TLapeType.Create(ltUnknown, FCompiler));
 
@@ -2602,10 +2571,10 @@ begin
     if (FPicked <> nil) then
     begin
       FDest := NullResVar;
-      Result := LeftVar.VarType.EvalMethodOfObject(LeftVar, FPicked, EvalFlags(), Offset);
+      Result := LeftVar.VarType.EvalMethodOfObject(LeftVar, FPicked, EvalFlags());
     end
     else
-      Result := LeftVar.VarType.EvalMember(FDest, LeftVar, FName, EvalFlags(), Offset);
+      Result := LeftVar.VarType.EvalMember(FDest, LeftVar, FName, EvalFlags());
   except
     on E: lpException do
       LapeExceptionReraise(E, DocPos);
@@ -2671,7 +2640,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeTree_Var.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Var.Compile: TResVar;
 begin
   Result := FResVar;
 end;
@@ -2690,7 +2659,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeTree_Inherited.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Inherited.Compile: TResVar;
 var
   SelfVar: TResVar;
 begin
@@ -2700,7 +2669,7 @@ begin
 
   // (the method with the Self that it is called on, as Self.Method)
   SelfVar := _ResVar.New(FMethod.SelfVar).InScope(FCompiler.StackInfo);
-  Result := SelfVar.VarType.EvalMethodOfObject(SelfVar, FMethod, [lefInvoking], Offset);
+  Result := SelfVar.VarType.EvalMethodOfObject(SelfVar, FMethod, [lefInvoking]);
 end;
 
 constructor TLapeTree_WithVar.Create(AWithDecl: TLapeWithDeclaration; ACompiler: TLapeCompilerBase);
@@ -2733,7 +2702,7 @@ begin
     Result := nil;
 end;
 
-function TLapeTree_WithVar.Compile(var Offset: Integer): TResVar;
+function TLapeTree_WithVar.Compile: TResVar;
 begin
   if (FWithDecl.WithVar.VarPos.MemPos = NullResVar.VarPos.MemPos) then
     LapeException(lpeInvalidWithReference, DocPos);
@@ -2844,7 +2813,7 @@ begin
     Statement.Parent := Self;
 end;
 
-function CompileStatement(Statement: TLapeTree_Base; var Offset: Integer): TResVar;
+function CompileStatement(Statement: TLapeTree_Base): TResVar;
 var
   Stack: TLapeStackInfo;
   Mark: Integer;
@@ -2853,20 +2822,20 @@ begin
   Mark := 0;
   if (Stack <> nil) then
     Mark := Stack.TempMark();
-  Statement.EmitToTempVar(Offset, Result);
+  Result := Statement.Emit();
   Assert(Statement.Compiler.StackInfo = Stack);
   if (Stack <> nil) then
     Stack.ReleaseTemps(Mark);
 end;
 
-function TLapeTree_StatementList.Compile(var Offset: Integer): TResVar;
+function TLapeTree_StatementList.Compile: TResVar;
 var
   i: Integer;
 begin
   Result := NullResVar;
   for i := 0 to FStatements.Count - 1 do
     if (FStatements[i] <> nil) then
-      Result := CompileStatement(FStatements[i], Offset);
+      Result := CompileStatement(FStatements[i]);
 end;
 
 function TLapeTree_StatementList.Walk(Visit: TLapeTree_Visit): Boolean;
@@ -2947,7 +2916,7 @@ begin
   end;
 end;
 
-function TLapeTree_DelayedStatementList.Emit(var Offset: Integer; AfterCompilation: Boolean; Filter: TLapeDelayedFilter = ldfAll): TResVar;
+function TLapeTree_DelayedStatementList.Emit(AfterCompilation: Boolean; Filter: TLapeDelayedFilter = ldfAll): TResVar;
 var
   i: Integer;
 begin
@@ -2958,18 +2927,10 @@ begin
   begin
     if (AfterCompilation = FDelay[i]) and (FStatements[i] <> nil) then
       if (Filter = ldfAll) or ((Filter <> ldfMethods) xor (FStatements[i] is TLapeTree_Method)) then
-        Result := CompileStatement(FStatements[i], Offset);
+        Result := CompileStatement(FStatements[i]);
 
     Inc(i);
   end;
-end;
-
-function TLapeTree_DelayedStatementList.Emit(AfterCompilation: Boolean; Filter: TLapeDelayedFilter = ldfAll): TResVar;
-var
-  Offset: Integer;
-begin
-  Offset := -1;
-  Result := Emit(Offset, AfterCompilation, Filter);
 end;
 
 procedure TLapeTree_Method.setStatements(Node: TLapeTree_StatementList);
@@ -3011,9 +2972,9 @@ begin
   inherited;
 end;
 
-function TLapeTree_Method.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Method.Compile: TResVar;
 var
-  i, co: Integer;
+  i: Integer;
 begin
   Assert(Method <> nil);
 
@@ -3024,20 +2985,16 @@ begin
 
   Result := NullResVar;
 
-  FCompiler.IncStackInfo(FStackInfo, Offset, [lsfEmit]);
+  FCompiler.IncStackInfo(FStackInfo, [lsfEmit]);
   PCodePos(Method.Ptr)^ := FStackInfo.CodePos;
   try
-    FStatements.Emit(Offset);
+    FStatements.Emit();
     for i := 0 to FExitStatements.Count - 1 do
-      with FExitStatements[i] do
-      begin
-        co := CodeOffset;
-        FCompiler.Emitter._JmpSafeR(Offset - co, co);
-      end;
+      FCompiler.Emitter.PatchJump(FExitStatements[i].CodeOffset, FCompiler.Emitter.CodeLen);
   finally
-    FCompiler.DecStackInfo(Offset, [lsfFunction, lsfEmit], False);
+    FCompiler.DecStackInfo([lsfFunction, lsfEmit], False);
 
-    // (it starts after the entry slots it did not need)
+    // (it starts after what of its entry it did not need)
     PCodePos(Method.Ptr)^ := FStackInfo.CodePos;
     FCompiler.Emitter.addMethod(FStackInfo.CodePos, GetMethodName(Method.VarType));
   end;
@@ -3053,9 +3010,9 @@ begin
   Result := True;
 end;
 
-procedure TLapeTree_Method.addExitStatement(JumpSafe: Boolean; var Offset: Integer);
+procedure TLapeTree_Method.addExitStatement(JumpSafe: Boolean);
 begin
-  FExitStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset), FCompiler.DocPos, JumpSafe));
+  FExitStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0), FCompiler.DocPos));
 end;
 
 procedure TLapeTree_VarList.DeleteChild(Node: TLapeTree_Base);
@@ -3094,7 +3051,7 @@ begin
     AVar.Default.Parent := Self;
 end;
 
-function TLapeTree_VarList.Compile(var Offset: Integer): TResVar;
+function TLapeTree_VarList.Compile: TResVar;
 var
   i: Integer;
   InitVar: TResVar;
@@ -3109,7 +3066,7 @@ begin
         InitVar.isConstant := False;
         Left := TLapeTree_Var.Create(InitVar, Self);
         Right := Default;
-        Result := Emit(Offset);
+        Result := Emit();
       finally
         Free();
       end
@@ -3171,7 +3128,7 @@ begin
     LapeException(lpeInvalidWithReference, [AWith, Self])
 end;
 
-function TLapeTree_With.Compile(var Offset: Integer): TResVar;
+function TLapeTree_With.Compile: TResVar;
 var
   i: Integer;
   Compiled: array of Boolean;
@@ -3187,14 +3144,14 @@ begin
     Compiled[i] := (FWithDecls[i].WithVar.VarPos.MemPos = NullResVar.VarPos.MemPos);
     if Compiled[i] then
     begin
-      FWithDecls[i].WithVar := FWithList[i].Emit(Offset);
+      FWithDecls[i].WithVar := FWithList[i].Emit();
       if (not FWithDecls[i].WithVar.HasType()) or (FWithDecls[i].WithVar.VarPos.MemPos in [mpNone, mpStack]) then
         LapeException(lpeInvalidCondition, FWithList[i].DocPos);
     end;
   end;
 
   if (FBody <> nil) then
-    FBody.EmitToTempVar(Offset, Result);
+    Result := FBody.Emit();
 
   // (what it compiled is compiled again when it is compiled again)
   for i := 0 to FWithList.Count - 1 do
@@ -3244,11 +3201,11 @@ begin
     FElse := nil;
 end;
 
-function TLapeTree_If.CompileCondition(var Offset: Integer): TResVar;
+function TLapeTree_If.CompileCondition: TResVar;
 begin
   Assert(FCondition <> nil);
 
-  Result := FCondition.Emit(Offset);
+  Result := FCondition.Emit();
   if (not Result.HasType()) or (not (Result.VarType.BaseType in LapeIfTypes)) then
     Exit(NullResVar);
 
@@ -3266,20 +3223,20 @@ begin
       else
         Right := TLapeTree_Var.Create(Result.VarType.EmptyValue, Self);
 
-      Result := Emit(Offset);
+      Result := Emit();
     finally
       Free();
     end;
   end;
 end;
 
-function TLapeTree_If.CompileBody(var Offset: Integer): TResVar;
+function TLapeTree_If.CompileBody: TResVar;
 begin
   if (FStartBodyOffset <= 0) then
-    FStartBodyOffset := FCompiler.Emitter.CheckOffset(Offset);
+    FStartBodyOffset := FCompiler.Emitter.CodeLen;
 
   if (FBody <> nil) then
-    FBody.EmitToTempVar(Offset, Result)
+    Result := FBody.Emit()
   else
     Result := NullResVar;
 end;
@@ -3300,7 +3257,7 @@ begin
   inherited;
 end;
 
-function TLapeTree_If.Compile(var Offset: Integer): TResVar;
+function TLapeTree_If.Compile: TResVar;
 var
   ConditionVar: TResVar;
   if_o, if_e: Integer;
@@ -3309,31 +3266,33 @@ begin
   Result := NullResVar;
   FStartBodyOffset := 0;
 
-  ConditionVar := CompileCondition(Offset);
+  ConditionVar := CompileCondition();
   if (not ConditionVar.HasType) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
 
-  FCompiler.Emitter.FullEmit := False;
-  if_o := FCompiler.Emitter._JmpRIfNot(0, ConditionVar, Offset);
-  FCompiler.Emitter.FullEmit := True;
+  // (no body: it jumps over the else instead)
+  if (FBody = nil) and (FElse <> nil) then
+    if_o := FCompiler.Emitter._JmpRIf(0, ConditionVar)
+  else
+    if_o := FCompiler.Emitter._JmpRIfNot(0, ConditionVar);
 
   if (FBody <> nil) or (FElse = nil) then
   begin
-    Result := CompileBody(Offset);
+    Result := CompileBody();
 
     if (FElse <> nil) then
-      if_e := FCompiler.Emitter._JmpR(0, Offset);
-    FCompiler.Emitter._JmpRIfNot(Offset - if_o, ConditionVar, if_o);
+      if_e := FCompiler.Emitter._JmpR(0);
+    FCompiler.Emitter.PatchJump(if_o, FCompiler.Emitter.CodeLen);
   end;
 
   if (FElse <> nil) then
   begin
-    FElse.EmitToTempVar(Offset, Result);
+    Result := FElse.Emit();
 
     if (FBody <> nil) then
-      FCompiler.Emitter._JmpR(Offset - if_e, if_e)
+      FCompiler.Emitter.PatchJump(if_e, FCompiler.Emitter.CodeLen)
     else
-      FCompiler.Emitter._JmpRIf(Offset - if_o, ConditionVar, if_o);
+      FCompiler.Emitter.PatchJump(if_o, FCompiler.Emitter.CodeLen);
   end;
 
 end;
@@ -3363,21 +3322,15 @@ end;
 
 procedure TLapeTree_CaseBranch.setCaseEndOffset(Offset: Integer);
 begin
-  FCompiler.Emitter._JmpR(Offset - FCaseEndJump, FCaseEndJump);
+  FCompiler.Emitter.PatchJump(FCaseEndJump, Offset);
 end;
 
 procedure TLapeTree_CaseBranch.setFallThroughOffset(Offset: Integer);
 var
-  i, co: Integer;
+  i: Integer;
 begin
   for i := 0 to FFallThroughStatements.Count - 1 do
-  begin
-    co := FFallThroughStatements[i].CodeOffset;
-    if FFallThroughStatements[i].JumpSafe then
-      FCompiler.Emitter._JmpSafeR(Offset - co, co)
-    else
-      FCompiler.Emitter._JmpR(Offset - co, co);
-  end;
+    FCompiler.Emitter.PatchJump(FFallThroughStatements[i].CodeOffset, Offset);
 end;
 
 procedure TLapeTree_CaseBranch.setCondition(Node: TLapeTree_ExprBase);
@@ -3429,12 +3382,12 @@ begin
     Value.Parent := Self;
 end;
 
-procedure TLapeTree_CaseBranch.addFallThroughStatement(JumpSafe: Boolean; Offset: Integer);
+procedure TLapeTree_CaseBranch.addFallThroughStatement(Offset: Integer);
 begin
-  FFallThroughStatements.Add(getFlowStatement(Offset, FCompiler.DocPos, JumpSafe));
+  FFallThroughStatements.Add(getFlowStatement(Offset, FCompiler.DocPos));
 end;
 
-function TLapeTree_CaseBranch.Compile(var Offset: Integer): TResVar;
+function TLapeTree_CaseBranch.Compile: TResVar;
 var
   i: Integer;
   ConditionVar, CompareVar: TResVar;
@@ -3446,7 +3399,8 @@ begin
   Assert(FValues.Count > 0);
   Assert(FCondition <> nil);
 
-  if (not FCondition.EmitToTempVar(Offset, ConditionVar)) then
+  ConditionVar := FCondition.Emit();
+  if (not ConditionVar.HasType()) then
     LapeException(lpeInvalidCondition, DocPos);
 
   SetLength(JumpOffsets, FValues.Count);
@@ -3462,7 +3416,7 @@ begin
         Right := TLapeTree_ExprBase(Values[i]).FoldConstants(False) as TLapeTree_ExprBase;
         Left := TLapeTree_Var.Create(ConditionVar, Self);
 
-        CompareVar := Emit(Offset);
+        CompareVar := Emit();
       finally
         Free();
       end;
@@ -3489,36 +3443,30 @@ begin
           Right := TLapeTree_Range(Values[i]).Hi.FoldConstants(False) as TLapeTree_ExprBase;
         end;
 
-        CompareVar := Emit(Offset);
+        CompareVar := Emit();
       finally
         Free();
       end;
     end else
       LapeException(lpeInvalidEvaluation, DocPos);
 
-    FCompiler.Emitter.FullEmit := False;
-
     if (i = High(Values)) then
-      JumpOffsets[i] := FCompiler.Emitter._JmpRIfNot(0, CompareVar, Offset) // IF NOT: Jump past statement
+      JumpOffsets[i] := FCompiler.Emitter._JmpRIfNot(0, CompareVar) // IF NOT: Jump past statement
     else
-      JumpOffsets[i] := FCompiler.Emitter._JmpRIf(0, CompareVar, Offset);   // IF: Jump to statement
-
-    FCompiler.Emitter.FullEmit := True;
+      JumpOffsets[i] := FCompiler.Emitter._JmpRIf(0, CompareVar);   // IF: Jump to statement
   end;
 
-  FBodyOffset := Offset;
+  FBodyOffset := FCompiler.Emitter.CodeLen;
   if (FStatement <> nil) then
-    Result := FStatement.Emit(Offset);
+    Result := FStatement.Emit();
 
-  FCompiler.Emitter.FullEmit := False;
-  FCaseEndJump := FCompiler.Emitter._JmpR(0, Offset); // Jump to case statement end. Set after branches are compiled.
-  FCompiler.Emitter.FullEmit := True;
+  FCaseEndJump := FCompiler.Emitter._JmpR(0); // Jump to case statement end. Set after branches are compiled.
 
   for i := 0 to High(JumpOffsets) do
     if (i = High(JumpOffsets)) then
-      FCompiler.Emitter._JmpRIfNot(Offset - JumpOffsets[i], CompareVar, JumpOffsets[i])
+      FCompiler.Emitter.PatchJump(JumpOffsets[i], FCompiler.Emitter.CodeLen)
     else
-      FCompiler.Emitter._JmpRIf(FBodyOffset - JumpOffsets[i], CompareVar, JumpOffsets[i]);
+      FCompiler.Emitter.PatchJump(JumpOffsets[i], FBodyOffset);
 end;
 
 procedure TLapeTree_Case.DeleteChild(Node: TLapeTree_Base);
@@ -3580,7 +3528,7 @@ begin
     Branch.Parent := Self;
 end;
 
-function TLapeTree_Case.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Case.Compile: TResVar;
 var
   i: Integer;
   ConditionVar: TResVar;
@@ -3588,7 +3536,8 @@ begin
   Result := NullResVar;
 
   Assert(FCondition <> nil);
-  if (not FCondition.EmitToTempVar(Offset, ConditionVar)) then
+  ConditionVar := FCondition.Emit();
+  if (not ConditionVar.HasType()) then
     LapeException(lpeInvalidCondition, DocPos);
 
   if (FBranches.Count > 0) then
@@ -3597,19 +3546,19 @@ begin
     begin
       FBranches[i].Condition := TLapeTree_Var.Create(ConditionVar, FCondition);
 
-      Result := FBranches[i].Emit(Offset);
+      Result := FBranches[i].Emit();
     end;
 
     for i := 1 to FBranches.Count - 1 do
       FBranches[i - 1].FallThroughOffset := FBranches[i].BodyOffset;
-    FBranches[FBranches.Count - 1].FallThroughOffset := Offset;
+    FBranches[FBranches.Count - 1].FallThroughOffset := FCompiler.Emitter.CodeLen;
   end;
 
   if (FElse <> nil) then
-    Result := FElse.Emit(Offset);
+    Result := FElse.Emit();
 
   for i := 0 to FBranches.Count - 1 do
-    FBranches[i].CaseEndOffset := Offset;
+    FBranches[i].CaseEndOffset := FCompiler.Emitter.CodeLen;
 
 end;
 
@@ -3623,9 +3572,9 @@ begin
   Result := (FElse <> nil) and Visit(FElse);
 end;
 
-function TLapeTree_While.CompileBody(var Offset: Integer): TResVar;
+function TLapeTree_While.CompileBody: TResVar;
 var
-  i, co: Integer;
+  i: Integer;
   ConditionVar: TResVar;
 begin
   Result := inherited;
@@ -3634,21 +3583,14 @@ begin
   begin
     FContinueCount := FContinueStatements.Count;
     for i := 0 to FContinueCount - 1 do
-      with FContinueStatements[i] do
-      begin
-        co := CodeOffset;
-        if JumpSafe then
-          FCompiler.Emitter._JmpSafeR(Offset - co, co)
-        else
-          FCompiler.Emitter._JmpR(Offset - co, co);
-      end;
+      FCompiler.Emitter.PatchJump(FContinueStatements[i].CodeOffset, FCompiler.Emitter.CodeLen);
   end;
 
-  ConditionVar := CompileCondition(Offset);
+  ConditionVar := CompileCondition();
   if (not ConditionVar.HasType) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
 
-  FCompiler.Emitter._JmpRIf(FStartBodyOffset - Offset, ConditionVar, Offset);
+  FCompiler.Emitter._JmpRIf(FStartBodyOffset - FCompiler.Emitter.CodeLen, ConditionVar);
 end;
 
 constructor TLapeTree_While.Create(ACompiler: TLapeCompilerBase);
@@ -3665,9 +3607,9 @@ begin
   inherited;
 end;
 
-function TLapeTree_While.Compile(var Offset: Integer): TResVar;
+function TLapeTree_While.Compile: TResVar;
 var
-  i, co: Integer;
+  i: Integer;
 begin
   FContinueCount := 0;
   FBreakStatements.Clear();
@@ -3678,14 +3620,7 @@ begin
     LapeException(lpeStatementNotAllowed, FContinueStatements[FContinueCount].DocPos);
 
   for i := 0 to FBreakStatements.Count - 1 do
-    with FBreakStatements[i] do
-    begin
-      co := CodeOffset;
-      if JumpSafe then
-        FCompiler.Emitter._JmpSafeR(Offset - co, co)
-      else
-        FCompiler.Emitter._JmpR(Offset - co, co);
-    end;
+    FCompiler.Emitter.PatchJump(FBreakStatements[i].CodeOffset, FCompiler.Emitter.CodeLen);
 end;
 
 function TLapeTree_While.canBreak: Boolean;
@@ -3698,43 +3633,36 @@ begin
   Result := True;
 end;
 
-procedure TLapeTree_While.addBreakStatement(JumpSafe: Boolean; var Offset: Integer);
+procedure TLapeTree_While.addBreakStatement(JumpSafe: Boolean);
 begin
   if JumpSafe then
-    FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset), FCompiler.DocPos, JumpSafe))
+    FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0), FCompiler.DocPos))
   else
-    FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset), FCompiler.DocPos, JumpSafe));
+    FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0), FCompiler.DocPos));
 end;
 
-procedure TLapeTree_While.addContinueStatement(JumpSafe: Boolean; var Offset: Integer);
+procedure TLapeTree_While.addContinueStatement(JumpSafe: Boolean);
 begin
   if JumpSafe then
-    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset), FCompiler.DocPos, JumpSafe))
+    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0), FCompiler.DocPos))
   else
-    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset), FCompiler.DocPos, JumpSafe));
+    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0), FCompiler.DocPos));
 end;
 
-function TLapeTree_Repeat.CompileBody(var Offset: Integer): TResVar;
+function TLapeTree_Repeat.CompileBody: TResVar;
 var
-  i, co: Integer;
+  i: Integer;
   ConditionVar: TResVar;
 begin
   Result := inherited;
 
   for i := 0 to FContinueStatements.Count - 1 do
-    with FContinueStatements[i] do
-    begin
-      co := CodeOffset;
-      if JumpSafe then
-        FCompiler.Emitter._JmpSafeR(Offset - co, co)
-      else
-        FCompiler.Emitter._JmpR(Offset - co, co);
-    end;
+    FCompiler.Emitter.PatchJump(FContinueStatements[i].CodeOffset, FCompiler.Emitter.CodeLen);
 
-  ConditionVar := CompileCondition(Offset);
+  ConditionVar := CompileCondition();
   if (not ConditionVar.HasType) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
-  FCompiler.Emitter._JmpRIfNot(FStartBodyOffset - Offset, ConditionVar, Offset);
+  FCompiler.Emitter._JmpRIfNot(FStartBodyOffset - FCompiler.Emitter.CodeLen, ConditionVar);
 end;
 
 constructor TLapeTree_Repeat.Create(ACompiler: TLapeCompilerBase);
@@ -3752,26 +3680,19 @@ begin
   inherited;
 end;
 
-function TLapeTree_Repeat.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Repeat.Compile: TResVar;
 var
-  i, co: Integer;
+  i: Integer;
 begin
   FStartBodyOffset := 0;
 
   FBreakStatements.Clear();
   FContinueStatements.Clear();
 
-  Result := CompileBody(Offset);
+  Result := CompileBody();
 
   for i := 0 to FBreakStatements.Count - 1 do
-    with FBreakStatements[i] do
-    begin
-      co := CodeOffset;
-      if JumpSafe then
-        FCompiler.Emitter._JmpSafeR(Offset - co, co)
-      else
-        FCompiler.Emitter._JmpR(Offset - co, co);
-    end;
+    FCompiler.Emitter.PatchJump(FBreakStatements[i].CodeOffset, FCompiler.Emitter.CodeLen);
 end;
 
 function TLapeTree_Repeat.canBreak: Boolean;
@@ -3784,20 +3705,20 @@ begin
   Result := True;
 end;
 
-procedure TLapeTree_Repeat.addBreakStatement(JumpSafe: Boolean; var Offset: Integer);
+procedure TLapeTree_Repeat.addBreakStatement(JumpSafe: Boolean);
 begin
   if JumpSafe then
-    FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset), FCompiler.DocPos, JumpSafe))
+    FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0), FCompiler.DocPos))
   else
-    FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset), FCompiler.DocPos, JumpSafe));
+    FBreakStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0), FCompiler.DocPos));
 end;
 
-procedure TLapeTree_Repeat.addContinueStatement(JumpSafe: Boolean; var Offset: Integer);
+procedure TLapeTree_Repeat.addContinueStatement(JumpSafe: Boolean);
 begin
   if JumpSafe then
-    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0, Offset), FCompiler.DocPos, JumpSafe))
+    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpSafeR(0), FCompiler.DocPos))
   else
-    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset), FCompiler.DocPos, JumpSafe));
+    FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0), FCompiler.DocPos));
 end;
 
 procedure TLapeTree_For.setCounter(Node: TLapeTree_ExprBase);
@@ -3839,9 +3760,9 @@ begin
     inherited;
 end;
 
-function TLapeTree_For.CompileBody(var Offset: Integer): TResVar;
+function TLapeTree_For.CompileBody: TResVar;
 var
-  i, co: Integer;
+  i: Integer;
   IncDec: TLapeTree_InternalMethod;
   tmpBody: TLapeTree_Base;
   tmpContinueStatements: TLapeFlowStatementList;
@@ -3849,26 +3770,19 @@ begin
   Assert((FCondition <> nil) and (FCondition is TLapeTree_Operator));
   Assert((TLapeTree_Operator(FCondition).Right <> nil) and (TLapeTree_Operator(FCondition).Right is TLapeTree_Var));
 
-  FStartBodyOffset := FCompiler.Emitter.CheckOffset(Offset);
+  FStartBodyOffset := FCompiler.Emitter.CodeLen;
 
   if (LoopType = loopOver) then
-    CompileBodyForIn(Offset);
+    CompileBodyForIn();
 
   if (FBody <> nil) then
-    FBody.EmitToTempVar(Offset, Result)
+    Result := FBody.Emit()
   else
     Result := NullResVar;
 
   FContinueCount := FContinueStatements.Count;
   for i := 0 to FContinueCount - 1 do
-    with FContinueStatements[i] do
-    begin
-      co := CodeOffset;
-      if JumpSafe then
-        FCompiler.Emitter._JmpSafeR(Offset - co, co)
-      else
-        FCompiler.Emitter._JmpR(Offset - co, co);
-    end;
+    FCompiler.Emitter.PatchJump(FContinueStatements[i].CodeOffset, FCompiler.Emitter.CodeLen);
 
   if LoopType = loopDown then
     IncDec := TLapeTree_InternalMethod_Dec.Create(Self)
@@ -3876,15 +3790,15 @@ begin
     IncDec := TLapeTree_InternalMethod_Inc.Create(Self);
   
   try
-    IncDec.addParam(TLapeTree_Var.Create(TLapeTree_Operator(FCondition).Left.Emit(Offset), FCondition));
+    IncDec.addParam(TLapeTree_Var.Create(TLapeTree_Operator(FCondition).Left.Emit(), FCondition));
     if (FStep <> nil) then
     begin
       IncDec.addParam(FStep);
-      IncDec.Emit(Offset);
+      IncDec.Emit();
       Step := IncDec.Params.Delete(1);
     end
     else
-      IncDec.Emit(Offset);
+      IncDec.Emit();
   finally
     IncDec.Free();
   end;
@@ -3901,13 +3815,13 @@ begin
   end;
 end;
 
-procedure TLapeTree_For.CompileBodyForIn(var Offset: Integer);
+procedure TLapeTree_For.CompileBodyForIn;
 var
   counterVar: TResVar;
 begin
   Assert(LoopType = loopOver);
 
-  FCounter.EmitToTempVar(Offset, counterVar);
+  counterVar := FCounter.Emit();
 
   with TLapeTree_Operator.Create(op_Assign, FCounter) do
   try
@@ -3917,9 +3831,9 @@ begin
     begin
       CompilerOptions := CompilerOptions - [lcoRangeCheck];
       Left := TLapeTree_Var.Create(Container, FLimit);
-      Right := TLapeTree_Var.Create(TLapeTree_Operator(FCondition).Left.Emit(Offset), FCondition);
+      Right := TLapeTree_Var.Create(TLapeTree_Operator(FCondition).Left.Emit(), FCondition);
     end;
-    Emit(Offset);
+    Emit();
   finally
     Free();
   end;
@@ -3934,7 +3848,7 @@ begin
       ElseBody := TLapeTree_InternalMethod_Continue.Create(Self);
       ElseBody.FParent := Self;
 
-      Emit(Offset);
+      Emit();
     finally
       Free();
     end;
@@ -3957,7 +3871,7 @@ begin
   inherited;
 end;
 
-function TLapeTree_For.Compile(var Offset: Integer): TResVar;
+function TLapeTree_For.Compile: TResVar;
 var
   Count, Lim: TResVar;
   CounterVar: TLapeVar;
@@ -3968,18 +3882,19 @@ begin
   Assert(FLimit <> nil);
 
   if (LoopType = loopOver) then
-    Exit(CompileForIn(Offset));
+    Exit(CompileForIn());
 
   CounterVar := nil;
-  Count := FCounter.Emit(Offset);
+  Count := FCounter.Emit();
   try
-    if (not FLimit.EmitToTempVar(Offset, Lim)) or (not Lim.HasType()) or (not (Lim.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
+    Lim := FLimit.Emit();
+    if (not Lim.HasType()) or (not (Lim.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
       LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
     if Count.HasType() and Count.isConstant then
     begin
       CounterVar := FCompiler.getTempVar(Count.VarType);
-      Count := CounterVar.VarType.Eval(op_Assign, Result, _ResVar.New(CounterVar), Count, [], Offset);
+      Count := CounterVar.VarType.Eval(op_Assign, Result, _ResVar.New(CounterVar), Count, []);
     end;
     if (not Count.HasType()) or Count.isConstant or (not (Count.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
       LapeException(lpeInvalidIterator, FCounter.DocPos);
@@ -3997,7 +3912,7 @@ begin
   end;
 end;
 
-function TLapeTree_For.CompileForIn(var Offset: Integer): TResVar;
+function TLapeTree_For.CompileForIn: TResVar;
 var
   upper, lower: TResVar;
   method: TLapeTree_ExprBase;
@@ -4009,7 +3924,8 @@ begin
   Assert(FCounter <> nil);
   Assert(FLimit <> nil);
 
-  if (not FLimit.EmitToTempVar(Offset, Container)) or (not Container.HasType()) then
+  Container := FLimit.Emit();
+  if (not Container.HasType()) then
     LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
   case loopOverWhat of
@@ -4042,7 +3958,7 @@ begin
   try
     Left := TLapeTree_Var.Create(lower, FCounter);
     Right := method.FoldConstants() as TLapeTree_ExprBase;
-    Emit(Offset);
+    Emit();
   finally
     Free();
   end;
@@ -4053,7 +3969,7 @@ begin
   try
     Left := TLapeTree_Var.Create(upper, FLimit);
     Right := method.FoldConstants() as TLapeTree_ExprBase;
-    Emit(Offset);
+    Emit();
   finally
     Free();
   end;
@@ -4062,7 +3978,7 @@ begin
     FCondition := TLapeTree_Operator.Create(op_cmp_LessThanOrEqual, Self);
     TLapeTree_Operator(FCondition).Left := TLapeTree_Var.Create(lower, FCounter);
     TLapeTree_Operator(FCondition).Right := TLapeTree_Var.Create(upper, FLimit);
-    Result := inherited Compile(Offset);
+    Result := inherited Compile();
   finally
     setCondition(nil);
   end;
@@ -4121,46 +4037,43 @@ begin
   inherited;
 end;
 
-function TLapeTree_Try.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Try.Compile: TResVar;
 var
   o_try, o_except, o_jmp: Integer;
-  tmp: TResVar;
 begin
   Result := NullResVar;
   Assert((FExcept <> nil) or (FFinally <> nil));
 
-  FCompiler.Emitter.FullEmit := False;
-  o_try := FCompiler.Emitter._IncTry(0, 0, Offset);
-  FCompiler.Emitter.FullEmit := True;
+  o_try := FCompiler.Emitter._IncTry(0, 0);
 
   o_except := 0;
   if (FBody <> nil) then
-    FBody.EmitToTempVar(Offset, Result);
+    Result := FBody.Emit();
 
-  FCompiler.Emitter._DecTry(Offset);
+  FCompiler.Emitter._DecTry();
   if (FExcept <> nil) then
   begin
-    o_jmp := FCompiler.Emitter._JmpR(0, Offset);
+    o_jmp := FCompiler.Emitter._JmpR(0);
     if (FFinally = nil) then
-      FCompiler.Emitter._IncTry(Offset - o_try, Try_NoFinally, o_try)
+      FCompiler.Emitter.PatchTry(o_try, FCompiler.Emitter.CodeLen, Try_NoFinally)
     else
-      o_except := Offset;
-    FCompiler.Emitter._CatchException(Offset);
+      o_except := FCompiler.Emitter.CodeLen;
+    FCompiler.Emitter._CatchException();
 
-    FExcept.EmitToTempVar(Offset, tmp);
+    FExcept.Emit();
 
-    FCompiler.Emitter._JmpR(Offset - o_jmp, o_jmp);
+    FCompiler.Emitter.PatchJump(o_jmp, FCompiler.Emitter.CodeLen);
   end;
   if (FFinally <> nil) then
   begin
     if (o_except <> 0) then
-      FCompiler.Emitter._IncTry(o_except - o_try, Offset - o_except, o_try)
+      FCompiler.Emitter.PatchTry(o_try, o_except, FCompiler.Emitter.CodeLen - o_except)
     else
-      FCompiler.Emitter._IncTry(Offset - o_try, Try_NoExcept, o_try);
+      FCompiler.Emitter.PatchTry(o_try, FCompiler.Emitter.CodeLen, Try_NoExcept);
 
-    FFinally.EmitToTempVar(Offset, tmp);
+    FFinally.Emit();
   end;
-  FCompiler.Emitter._EndTry(Offset);
+  FCompiler.Emitter._EndTry();
 end;
 
 function TLapeTree_Try.Walk(Visit: TLapeTree_Visit): Boolean;

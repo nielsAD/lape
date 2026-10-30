@@ -264,7 +264,7 @@ type
     function Compile: Boolean; virtual;
     procedure CheckAfterCompile; virtual;
 
-    procedure VarToDefault(AVar: TResVar; var Offset: Integer); override;
+    procedure VarToDefault(AVar: TResVar); override;
 
     procedure checkDeclHints(ADecl: TLapeDeclaration); overload; virtual;
     procedure checkDeclHints(AStack: TLapeStackInfo); overload; virtual;
@@ -5550,15 +5550,14 @@ end;
 function TLapeCompiler.Compile: Boolean;
 
 var
-  Offset, ToEnd: Integer;
+  ToEnd: Integer;
 begin
   Result := False;
   try
     Reset();
 
-    Offset := -1;
     GlobalScope.ForceInitialization := (lcoAlwaysInitialize in FOptions);
-    IncStackInfo(GlobalScope, Offset, [lsfEmit]);
+    IncStackInfo(GlobalScope, [lsfEmit]);
     FTree := ParseFile();
     if (FTree = nil) and (FDelayedTree.GlobalCount(False) <= 0) then
       LapeException(lpeExpressionExpected);
@@ -5578,7 +5577,7 @@ begin
     ToEnd := FEmitter._JmpR(0);
     FDelayedTree.Emit(False, ldfMethods);
     FDelayedTree.Emit(True, ldfMethods);
-    FEmitter._JmpR(FEmitter.CodeLen - ToEnd, ToEnd);
+    FEmitter.PatchJump(ToEnd, FEmitter.CodeLen);
 
     FEmitter._op(ocNone);
     FEmitter.WriteTables();
@@ -5597,14 +5596,14 @@ begin
     LapeException(lpeConditionalNotClosed, popConditional());
 end;
 
-procedure TLapeCompiler.VarToDefault(AVar: TResVar; var Offset: Integer);
+procedure TLapeCompiler.VarToDefault(AVar: TResVar);
 begin
   Assert(not AVar.isConstant);
   if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and AVar.HasType() then
     with TLapeTree_InternalMethod_Default.Create(Self) do
     try
       addParam(TLapeTree_Var.Create(AVar, Self));
-      Emit(Offset);
+      Emit();
     finally
       Free();
     end;

@@ -7,296 +7,233 @@
 }
 {%MainUnit lpcodeemitter.pas}
 
-function TLapeCodeEmitterBase._IncCall_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._IncCall_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocIncCall_Var, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Var));
-  with POC_Invoke_Var(@FCode[Offset])^ do begin
+  Result := _op(ocIncCall_Var);
+  Reserve(SizeOf(TOC_Invoke_Var));
+  with POC_Invoke_Var(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffset, @VOffset);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Var));
 end;
 
-function TLapeCodeEmitterBase._IncCall_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._IncCall_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocIncCall_PVar, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_PVar));
-  with POC_Invoke_PVar(@FCode[Offset])^ do begin
+  Result := _op(ocIncCall_PVar);
+  Reserve(SizeOf(TOC_Invoke_PVar));
+  with POC_Invoke_PVar(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffset, @VOffset);
     _PointerOffset(APOffset, @POffset);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_PVar));
 end;
 
-function TLapeCodeEmitterBase._IncCall_Ptr(APtr: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._IncCall_Ptr(APtr: Pointer; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocIncCall_Ptr, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr));
-  with POC_Invoke_Ptr(@FCode[Offset])^ do begin
+  Result := _op(ocIncCall_Ptr);
+  Reserve(SizeOf(TOC_Invoke_Ptr));
+  with POC_Invoke_Ptr(@FCode[Result + ocSize])^ do begin
     _Pointer(APtr, @Ptr);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Ptr));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
-var
-  o: Integer;
+function TLapeCodeEmitterBase._InvokeImported_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize): Integer;
 begin
-  o := _IncCall_Var(AVOffset, AParamSize, Offset);
-  Result := _op(ocInvokeImported_Var, o);
+  // (the operands of IncCall, its opcode replaced)
+  Result := _IncCall_Var(AVOffset, AParamSize);
+  opCodeP(@FCode[Result])^ := ocInvokeImported_Var;
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
-var
-  o: Integer;
+function TLapeCodeEmitterBase._InvokeImported_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
 begin
-  o := _IncCall_PVar(AVOffset, APOffset, AParamSize, Offset);
-  Result := _op(ocInvokeImported_PVar, o);
+  // (the operands of IncCall, its opcode replaced)
+  Result := _IncCall_PVar(AVOffset, APOffset, AParamSize);
+  opCodeP(@FCode[Result])^ := ocInvokeImported_PVar;
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Ptr(APtr: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer;
-var
-  o: Integer;
+function TLapeCodeEmitterBase._InvokeImported_Ptr(APtr: Pointer; AParamSize: TParamSize): Integer;
 begin
-  o := _IncCall_Ptr(APtr, AParamSize, Offset);
-  Result := _op(ocInvokeImported_Ptr, o);
+  // (the operands of IncCall, its opcode replaced)
+  Result := _IncCall_Ptr(APtr, AParamSize);
+  opCodeP(@FCode[Result])^ := ocInvokeImported_Ptr;
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Var_Stk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize; AStackInc: TStackInc; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Var_Stk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize; AStackInc: TStackInc): Integer;
 begin
-  Result := _op(ocInvokeImported_Var_Stk, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Var_Stk));
-  with POC_Invoke_Var_Stk(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Var_Stk);
+  Reserve(SizeOf(TOC_Invoke_Var_Stk));
+  with POC_Invoke_Var_Stk(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _ParamSize(AParamSize, @ParamSize);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Var_Stk));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Var_PStk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Var_PStk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_Var_PStk, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Var_PStk));
-  with POC_Invoke_Var_PStk(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Var_PStk);
+  Reserve(SizeOf(TOC_Invoke_Var_PStk));
+  with POC_Invoke_Var_PStk(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Var_PStk));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Var_Var(AVOffsetS, AVOffsetD: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Var_Var(AVOffsetS, AVOffsetD: TVarStackOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_Var_Var, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Var_Var));
-  with POC_Invoke_Var_Var(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Var_Var);
+  Reserve(SizeOf(TOC_Invoke_Var_Var));
+  with POC_Invoke_Var_Var(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Var_Var));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Var_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Var_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_Var_PVar, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Var_PVar));
-  with POC_Invoke_Var_PVar(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Var_PVar);
+  Reserve(SizeOf(TOC_Invoke_Var_PVar));
+  with POC_Invoke_Var_PVar(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APOffset, @POffset);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Var_PVar));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Var_Ptr(AVOffsetS: TVarStackOffset; APtrD: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Var_Ptr(AVOffsetS: TVarStackOffset; APtrD: Pointer; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_Var_Ptr, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Var_Ptr));
-  with POC_Invoke_Var_Ptr(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Var_Ptr);
+  Reserve(SizeOf(TOC_Invoke_Var_Ptr));
+  with POC_Invoke_Var_Ptr(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _Pointer(APtrD, @PtrD);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Var_Ptr));
 end;
 
 
-function TLapeCodeEmitterBase._InvokeImported_PVar_Stk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; AStackInc: TStackInc; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_PVar_Stk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; AStackInc: TStackInc): Integer;
 begin
-  Result := _op(ocInvokeImported_PVar_Stk, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_Stk));
-  with POC_Invoke_PVar_Stk(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_PVar_Stk);
+  Reserve(SizeOf(TOC_Invoke_PVar_Stk));
+  with POC_Invoke_PVar_Stk(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _PointerOffset(APOffsetS, @POffsetS);
     _ParamSize(AParamSize, @ParamSize);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_PVar_Stk));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_PVar_PStk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_PVar_PStk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_PVar_PStk, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_PStk));
-  with POC_Invoke_PVar_PStk(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_PVar_PStk);
+  Reserve(SizeOf(TOC_Invoke_PVar_PStk));
+  with POC_Invoke_PVar_PStk(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _PointerOffset(APOffsetS, @POffsetS);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_PVar_PStk));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_PVar_Var(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_PVar_Var(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_PVar_Var, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_Var));
-  with POC_Invoke_PVar_Var(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_PVar_Var);
+  Reserve(SizeOf(TOC_Invoke_PVar_Var));
+  with POC_Invoke_PVar_Var(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APOffsetS, @POffsetS);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_PVar_Var));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_PVar_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS, APOffsetD: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_PVar_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS, APOffsetD: TPointerOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_PVar_PVar, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_PVar));
-  with POC_Invoke_PVar_PVar(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_PVar_PVar);
+  Reserve(SizeOf(TOC_Invoke_PVar_PVar));
+  with POC_Invoke_PVar_PVar(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APOffsetS, @POffsetS);
     _PointerOffset(APOffsetD, @POffsetD);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_PVar_PVar));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_PVar_Ptr(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; APtrD: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_PVar_Ptr(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; APtrD: Pointer; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_PVar_Ptr, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_PVar_Ptr));
-  with POC_Invoke_PVar_Ptr(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_PVar_Ptr);
+  Reserve(SizeOf(TOC_Invoke_PVar_Ptr));
+  with POC_Invoke_PVar_Ptr(@FCode[Result + ocSize])^ do begin
     _VarStackOffset(AVOffsetS, @VOffsetS);
     _PointerOffset(APOffsetS, @POffsetS);
     _Pointer(APtrD, @PtrD);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_PVar_Ptr));
 end;
 
 
-function TLapeCodeEmitterBase._InvokeImported_Ptr_Stk(APtrS: Pointer; AParamSize: TParamSize; AStackInc: TStackInc; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Ptr_Stk(APtrS: Pointer; AParamSize: TParamSize; AStackInc: TStackInc): Integer;
 begin
-  Result := _op(ocInvokeImported_Ptr_Stk, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_Stk));
-  with POC_Invoke_Ptr_Stk(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Ptr_Stk);
+  Reserve(SizeOf(TOC_Invoke_Ptr_Stk));
+  with POC_Invoke_Ptr_Stk(@FCode[Result + ocSize])^ do begin
     _Pointer(APtrS, @PtrS);
     _ParamSize(AParamSize, @ParamSize);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Ptr_Stk));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Ptr_PStk(APtrS: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Ptr_PStk(APtrS: Pointer; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_Ptr_PStk, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_PStk));
-  with POC_Invoke_Ptr_PStk(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Ptr_PStk);
+  Reserve(SizeOf(TOC_Invoke_Ptr_PStk));
+  with POC_Invoke_Ptr_PStk(@FCode[Result + ocSize])^ do begin
     _Pointer(APtrS, @PtrS);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Ptr_PStk));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Ptr_Var(APtrS: Pointer; AVOffsetD: TVarStackOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Ptr_Var(APtrS: Pointer; AVOffsetD: TVarStackOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_Ptr_Var, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_Var));
-  with POC_Invoke_Ptr_Var(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Ptr_Var);
+  Reserve(SizeOf(TOC_Invoke_Ptr_Var));
+  with POC_Invoke_Ptr_Var(@FCode[Result + ocSize])^ do begin
     _Pointer(APtrS, @PtrS);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Ptr_Var));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Ptr_PVar(APtrS: Pointer; AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Ptr_PVar(APtrS: Pointer; AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_Ptr_PVar, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_PVar));
-  with POC_Invoke_Ptr_PVar(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Ptr_PVar);
+  Reserve(SizeOf(TOC_Invoke_Ptr_PVar));
+  with POC_Invoke_Ptr_PVar(@FCode[Result + ocSize])^ do begin
     _Pointer(APtrS, @PtrS);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APOffset, @POffset);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Ptr_PVar));
 end;
 
-function TLapeCodeEmitterBase._InvokeImported_Ptr_Ptr(APtrS, APtrD: Pointer; AParamSize: TParamSize; var Offset: Integer): Integer;
+function TLapeCodeEmitterBase._InvokeImported_Ptr_Ptr(APtrS, APtrD: Pointer; AParamSize: TParamSize): Integer;
 begin
-  Result := _op(ocInvokeImported_Ptr_Ptr, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Invoke_Ptr_Ptr));
-  with POC_Invoke_Ptr_Ptr(@FCode[Offset])^ do begin
+  Result := _op(ocInvokeImported_Ptr_Ptr);
+  Reserve(SizeOf(TOC_Invoke_Ptr_Ptr));
+  with POC_Invoke_Ptr_Ptr(@FCode[Result + ocSize])^ do begin
     _Pointer(APtrS, @PtrS);
     _Pointer(APtrD, @PtrD);
     _ParamSize(AParamSize, @ParamSize);
   end;
-  Inc(Offset, SizeOf(TOC_Invoke_Ptr_Ptr));
 end;
 
 
-function TLapeCodeEmitterBase._IncCall_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _IncCall_Var(AVOffset, AParamSize, o); end;
-function TLapeCodeEmitterBase._IncCall_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _IncCall_PVar(AVOffset, APOffset, AParamSize, o); end;
-function TLapeCodeEmitterBase._IncCall_Ptr(APtr: Pointer; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _IncCall_Ptr(APtr, AParamSize, o); end;
 
-function TLapeCodeEmitterBase._InvokeImported_Var(AVOffset: TVarStackOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Var(AVOffset, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_PVar(AVOffset: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_PVar(AVOffset, APOffset, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_Ptr(APtr: Pointer; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Ptr(APtr, AParamSize, o); end;
 
-function TLapeCodeEmitterBase._InvokeImported_Var_Stk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize; AStackInc: TStackInc): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Var_Stk(AVOffsetS, AParamSize, AStackInc, o); end;
-function TLapeCodeEmitterBase._InvokeImported_Var_PStk(AVOffsetS: TVarStackOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Var_PStk(AVOffsetS, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_Var_Var(AVOffsetS, AVOffsetD: TVarStackOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Var_Var(AVOffsetS, AVOffsetD, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_Var_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Var_PVar(AVOffsetS, AVOffsetD, APOffset, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_Var_Ptr(AVOffsetS: TVarStackOffset; APtrD: Pointer; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Var_Ptr(AVOffsetS, APtrD, AParamSize, o); end;
 
-function TLapeCodeEmitterBase._InvokeImported_PVar_Stk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize; AStackInc: TStackInc): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_PVar_Stk(AVOffsetS, APOffsetS, AParamSize, AStackInc, o); end;
-function TLapeCodeEmitterBase._InvokeImported_PVar_PStk(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_PVar_PStk(AVOffsetS, APOffsetS, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_PVar_Var(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS: TPointerOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_PVar_Var(AVOffsetS, AVOffsetD, APOffsetS, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_PVar_PVar(AVOffsetS, AVOffsetD: TVarStackOffset; APOffsetS, APOffsetD: TPointerOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_PVar_PVar(AVOffsetS, AVOffsetD, APOffsetS, APOffsetD, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_PVar_Ptr(AVOffsetS: TVarStackOffset; APOffsetS: TPointerOffset; APtrD: Pointer; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_PVar_Ptr(AVOffsetS, APOffsetS, APtrD, AParamSize, o); end;
 
-function TLapeCodeEmitterBase._InvokeImported_Ptr_Stk(APtrS: Pointer; AParamSize: TParamSize; AStackInc: TStackInc): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Ptr_Stk(APtrS, AParamSize, AStackInc, o); end;
-function TLapeCodeEmitterBase._InvokeImported_Ptr_PStk(APtrS: Pointer; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Ptr_PStk(APtrS, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_Ptr_Var(APtrS: Pointer; AVOffsetD: TVarStackOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Ptr_Var(APtrS, AVOffsetD, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_Ptr_PVar(APtrS: Pointer; AVOffsetD: TVarStackOffset; APOffset: TPointerOffset; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Ptr_PVar(APtrS, AVOffsetD, APOffset, AParamSize, o); end;
-function TLapeCodeEmitterBase._InvokeImported_Ptr_Ptr(APtrS, APtrD: Pointer; AParamSize: TParamSize): Integer;
-  var o: Integer; begin o := -1; Result := _InvokeImported_Ptr_Ptr(APtrS, APtrD, AParamSize, o); end;
 

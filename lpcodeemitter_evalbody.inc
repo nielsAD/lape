@@ -7,171 +7,145 @@
 }
 {%MainUnit lpcodeemitter.pas}
 
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_PtrR(AProc: TLapeEvalProc; APtrD, APtrL, APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PtrL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PtrL_PtrR));
-  with POC_Eval__PtrD_PtrL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PtrL_PtrR(AProc: TLapeEvalProc; APtrD, APtrL, APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_PtrD_PtrL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PtrL_PtrR));
+  with POC_Eval__PtrD_PtrL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _Pointer(APtrL, @PtrL);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PtrL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_PtrR(AProc: TLapeEvalProc; APtrD, APtrL, APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PtrL_PtrR(AProc,APtrD,APtrL,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_VarR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PtrL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PtrL_VarR));
-  with POC_Eval__PtrD_PtrL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PtrL_VarR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PtrD_PtrL_VarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PtrL_VarR));
+  with POC_Eval__PtrD_PtrL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _Pointer(APtrL, @PtrL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PtrL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_VarR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PtrL_VarR(AProc,APtrD,APtrL,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_StkR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PtrL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PtrL_StkR));
-  with POC_Eval__PtrD_PtrL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PtrL_StkR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PtrD_PtrL_StkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PtrL_StkR));
+  with POC_Eval__PtrD_PtrL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _Pointer(APtrL, @PtrL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PtrL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_StkR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PtrL_StkR(AProc,APtrD,APtrL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_PVarR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PtrL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PtrL_PVarR));
-  with POC_Eval__PtrD_PtrL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PtrL_PVarR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PtrD_PtrL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PtrL_PVarR));
+  with POC_Eval__PtrD_PtrL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _Pointer(APtrL, @PtrL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PtrL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_PVarR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PtrL_PVarR(AProc,APtrD,APtrL,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_PStkR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PtrL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PtrL_PStkR));
-  with POC_Eval__PtrD_PtrL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PtrL_PStkR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer): Integer; begin
+  Result := _op(ocEval_PtrD_PtrL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PtrL_PStkR));
+  with POC_Eval__PtrD_PtrL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _Pointer(APtrL, @PtrL);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PtrL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PtrL_PStkR(AProc: TLapeEvalProc; APtrD, APtrL: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PtrL_PStkR(AProc,APtrD,APtrL,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_PtrR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_VarL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_VarL_PtrR));
-  with POC_Eval__PtrD_VarL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_VarL_PtrR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_PtrD_VarL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PtrD_VarL_PtrR));
+  with POC_Eval__PtrD_VarL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_VarL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_PtrR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_VarL_PtrR(AProc,APtrD,AVOffsetL,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL, AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_VarL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_VarL_VarR));
-  with POC_Eval__PtrD_VarL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_VarL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL, AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PtrD_VarL_VarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_VarL_VarR));
+  with POC_Eval__PtrD_VarL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_VarL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL, AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_VarL_VarR(AProc,APtrD,AVOffsetL,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_VarL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_VarL_StkR));
-  with POC_Eval__PtrD_VarL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_VarL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PtrD_VarL_StkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_VarL_StkR));
+  with POC_Eval__PtrD_VarL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_VarL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_VarL_StkR(AProc,APtrD,AVOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_VarL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_VarL_PVarR));
-  with POC_Eval__PtrD_VarL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_VarL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PtrD_VarL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_VarL_PVarR));
+  with POC_Eval__PtrD_VarL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_VarL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_VarL_PVarR(AProc,APtrD,AVOffsetL,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_VarL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_VarL_PStkR));
-  with POC_Eval__PtrD_VarL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_VarL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PtrD_VarL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_VarL_PStkR));
+  with POC_Eval__PtrD_VarL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_VarL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_VarL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_VarL_PStkR(AProc,APtrD,AVOffsetL,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_PtrR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_StkL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_StkL_PtrR));
-  with POC_Eval__PtrD_StkL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_StkL_PtrR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PtrD_StkL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PtrD_StkL_PtrR));
+  with POC_Eval__PtrD_StkL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _Pointer(APtrR, @PtrR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_StkL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_PtrR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_StkL_PtrR(AProc,APtrD,ASOffsetL,APtrR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_StkL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_StkL_VarR));
-  with POC_Eval__PtrD_StkL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_StkL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PtrD_StkL_VarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_StkL_VarR));
+  with POC_Eval__PtrD_StkL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_StkL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_StkL_VarR(AProc,APtrD,ASOffsetL,AVOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_StkL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_StkL_StkR));
-  with POC_Eval__PtrD_StkL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_StkL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PtrD_StkL_StkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_StkL_StkR));
+  with POC_Eval__PtrD_StkL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_StkL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_StkL_StkR(AProc,APtrD,ASOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_StkL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_StkL_PVarR));
-  with POC_Eval__PtrD_StkL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_StkL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PtrD_StkL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_StkL_PVarR));
+  with POC_Eval__PtrD_StkL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _StackOffset(ASOffsetL, @SOffsetL);
@@ -179,51 +153,43 @@ function TLapeCodeEmitterBase._Eval__PtrD_StkL_PVarR(AProc: TLapeEvalProc; APtrD
     _PointerOffset(APRightOffset, @PRightOffset);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_StkL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_StkL_PVarR(AProc,APtrD,ASOffsetL,AVOffsetR,APRightOffset,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_StkL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_StkL_PStkR));
-  with POC_Eval__PtrD_StkL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_StkL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PtrD_StkL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_StkL_PStkR));
+  with POC_Eval__PtrD_StkL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_StkL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_StkL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_StkL_PStkR(AProc,APtrD,ASOffsetL,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PtrR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PVarL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PVarL_PtrR));
-  with POC_Eval__PtrD_PVarL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PtrR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_PtrD_PVarL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PVarL_PtrR));
+  with POC_Eval__PtrD_PVarL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PVarL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PtrR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PVarL_PtrR(AProc,APtrD,AVOffsetL,APLeftOffset,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PVarL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PVarL_VarR));
-  with POC_Eval__PtrD_PVarL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PVarL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PtrD_PVarL_VarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PVarL_VarR));
+  with POC_Eval__PtrD_PVarL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PVarL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PVarL_VarR(AProc,APtrD,AVOffsetL,APLeftOffset,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PVarL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PVarL_StkR));
-  with POC_Eval__PtrD_PVarL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PVarL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PtrD_PVarL_StkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PVarL_StkR));
+  with POC_Eval__PtrD_PVarL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
@@ -231,13 +197,11 @@ function TLapeCodeEmitterBase._Eval__PtrD_PVarL_StkR(AProc: TLapeEvalProc; APtrD
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PVarL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PVarL_StkR(AProc,APtrD,AVOffsetL,APLeftOffset,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PVarL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PVarL_PVarR));
-  with POC_Eval__PtrD_PVarL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PtrD_PVarL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PVarL_PVarR));
+  with POC_Eval__PtrD_PVarL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
@@ -245,243 +209,203 @@ function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PVarR(AProc: TLapeEvalProc; APtr
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PVarL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PVarL_PVarR(AProc,APtrD,AVOffsetL,APLeftOffset,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PVarL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PVarL_PStkR));
-  with POC_Eval__PtrD_PVarL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PtrD_PVarL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PVarL_PStkR));
+  with POC_Eval__PtrD_PVarL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PVarL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PVarL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PVarL_PStkR(AProc,APtrD,AVOffsetL,APLeftOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_PtrR(AProc: TLapeEvalProc; APtrD, APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PStkL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PStkL_PtrR));
-  with POC_Eval__PtrD_PStkL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PStkL_PtrR(AProc: TLapeEvalProc; APtrD, APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_PtrD_PStkL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PStkL_PtrR));
+  with POC_Eval__PtrD_PStkL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PStkL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_PtrR(AProc: TLapeEvalProc; APtrD, APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PStkL_PtrR(AProc,APtrD,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PStkL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PStkL_VarR));
-  with POC_Eval__PtrD_PStkL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PStkL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PtrD_PStkL_VarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PStkL_VarR));
+  with POC_Eval__PtrD_PStkL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PStkL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_VarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PStkL_VarR(AProc,APtrD,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PStkL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PStkL_StkR));
-  with POC_Eval__PtrD_PStkL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PStkL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PtrD_PStkL_StkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PStkL_StkR));
+  with POC_Eval__PtrD_PStkL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PStkL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_StkR(AProc: TLapeEvalProc; APtrD: Pointer; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PStkL_StkR(AProc,APtrD,ASOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PStkL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PStkL_PVarR));
-  with POC_Eval__PtrD_PStkL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PStkL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PtrD_PStkL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PStkL_PVarR));
+  with POC_Eval__PtrD_PStkL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PStkL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_PVarR(AProc: TLapeEvalProc; APtrD: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PStkL_PVarR(AProc,APtrD,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PtrD_PStkL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PtrD_PStkL_PStkR));
-  with POC_Eval__PtrD_PStkL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PtrD_PStkL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer): Integer; begin
+  Result := _op(ocEval_PtrD_PStkL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PtrD_PStkL_PStkR));
+  with POC_Eval__PtrD_PStkL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrD, @PtrD);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PtrD_PStkL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PtrD_PStkL_PStkR(AProc: TLapeEvalProc; APtrD: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PtrD_PStkL_PStkR(AProc,APtrD,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL, APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PtrL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PtrL_PtrR));
-  with POC_Eval__VarD_PtrL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PtrL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL, APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_VarD_PtrL_PtrR);
+  Reserve(SizeOf(TOC_Eval__VarD_PtrL_PtrR));
+  with POC_Eval__VarD_PtrL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _Pointer(APtrL, @PtrL);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PtrL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL, APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PtrL_PtrR(AProc,AVOffsetD,APtrL,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PtrL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PtrL_VarR));
-  with POC_Eval__VarD_PtrL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PtrL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_VarD_PtrL_VarR);
+  Reserve(SizeOf(TOC_Eval__VarD_PtrL_VarR));
+  with POC_Eval__VarD_PtrL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _Pointer(APtrL, @PtrL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PtrL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PtrL_VarR(AProc,AVOffsetD,APtrL,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PtrL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PtrL_StkR));
-  with POC_Eval__VarD_PtrL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PtrL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_VarD_PtrL_StkR);
+  Reserve(SizeOf(TOC_Eval__VarD_PtrL_StkR));
+  with POC_Eval__VarD_PtrL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _Pointer(APtrL, @PtrL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PtrL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PtrL_StkR(AProc,AVOffsetD,APtrL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PtrL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PtrL_PVarR));
-  with POC_Eval__VarD_PtrL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PtrL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_VarD_PtrL_PVarR);
+  Reserve(SizeOf(TOC_Eval__VarD_PtrL_PVarR));
+  with POC_Eval__VarD_PtrL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _Pointer(APtrL, @PtrL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PtrL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PtrL_PVarR(AProc,AVOffsetD,APtrL,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PtrL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PtrL_PStkR));
-  with POC_Eval__VarD_PtrL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PtrL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer): Integer; begin
+  Result := _op(ocEval_VarD_PtrL_PStkR);
+  Reserve(SizeOf(TOC_Eval__VarD_PtrL_PStkR));
+  with POC_Eval__VarD_PtrL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _Pointer(APtrL, @PtrL);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PtrL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PtrL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrL: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PtrL_PStkR(AProc,AVOffsetD,APtrL,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_PtrR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_VarL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_VarL_PtrR));
-  with POC_Eval__VarD_VarL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_VarL_PtrR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_VarD_VarL_PtrR);
+  Reserve(SizeOf(TOC_Eval__VarD_VarL_PtrR));
+  with POC_Eval__VarD_VarL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_VarL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_PtrR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_VarL_PtrR(AProc,AVOffsetD,AVOffsetL,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_VarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL, AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_VarL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_VarL_VarR));
-  with POC_Eval__VarD_VarL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_VarL_VarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL, AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_VarD_VarL_VarR);
+  Reserve(SizeOf(TOC_Eval__VarD_VarL_VarR));
+  with POC_Eval__VarD_VarL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_VarL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_VarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL, AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_VarL_VarR(AProc,AVOffsetD,AVOffsetL,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_StkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_VarL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_VarL_StkR));
-  with POC_Eval__VarD_VarL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_VarL_StkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_VarD_VarL_StkR);
+  Reserve(SizeOf(TOC_Eval__VarD_VarL_StkR));
+  with POC_Eval__VarD_VarL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_VarL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_StkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_VarL_StkR(AProc,AVOffsetD,AVOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_PVarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_VarL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_VarL_PVarR));
-  with POC_Eval__VarD_VarL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_VarL_PVarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_VarD_VarL_PVarR);
+  Reserve(SizeOf(TOC_Eval__VarD_VarL_PVarR));
+  with POC_Eval__VarD_VarL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_VarL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_PVarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_VarL_PVarR(AProc,AVOffsetD,AVOffsetL,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_PStkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_VarL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_VarL_PStkR));
-  with POC_Eval__VarD_VarL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_VarL_PStkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_VarD_VarL_PStkR);
+  Reserve(SizeOf(TOC_Eval__VarD_VarL_PStkR));
+  with POC_Eval__VarD_VarL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_VarL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_VarL_PStkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_VarL_PStkR(AProc,AVOffsetD,AVOffsetL,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_StkL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_StkL_PtrR));
-  with POC_Eval__VarD_StkL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_StkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_VarD_StkL_PtrR);
+  Reserve(SizeOf(TOC_Eval__VarD_StkL_PtrR));
+  with POC_Eval__VarD_StkL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _Pointer(APtrR, @PtrR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_StkL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_StkL_PtrR(AProc,AVOffsetD,ASOffsetL,APtrR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_StkL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_StkL_VarR));
-  with POC_Eval__VarD_StkL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_StkL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_VarD_StkL_VarR);
+  Reserve(SizeOf(TOC_Eval__VarD_StkL_VarR));
+  with POC_Eval__VarD_StkL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_StkL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_StkL_VarR(AProc,AVOffsetD,ASOffsetL,AVOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_StkL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_StkL_StkR));
-  with POC_Eval__VarD_StkL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_StkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_VarD_StkL_StkR);
+  Reserve(SizeOf(TOC_Eval__VarD_StkL_StkR));
+  with POC_Eval__VarD_StkL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_StkL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_StkL_StkR(AProc,AVOffsetD,ASOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_StkL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_StkL_PVarR));
-  with POC_Eval__VarD_StkL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_StkL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_VarD_StkL_PVarR);
+  Reserve(SizeOf(TOC_Eval__VarD_StkL_PVarR));
+  with POC_Eval__VarD_StkL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _StackOffset(ASOffsetL, @SOffsetL);
@@ -489,51 +413,43 @@ function TLapeCodeEmitterBase._Eval__VarD_StkL_PVarR(AProc: TLapeEvalProc; AVOff
     _PointerOffset(APRightOffset, @PRightOffset);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_StkL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_StkL_PVarR(AProc,AVOffsetD,ASOffsetL,AVOffsetR,APRightOffset,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_StkL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_StkL_PStkR));
-  with POC_Eval__VarD_StkL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_StkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_VarD_StkL_PStkR);
+  Reserve(SizeOf(TOC_Eval__VarD_StkL_PStkR));
+  with POC_Eval__VarD_StkL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_StkL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_StkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_StkL_PStkR(AProc,AVOffsetD,ASOffsetL,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_PtrR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PVarL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PVarL_PtrR));
-  with POC_Eval__VarD_PVarL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PVarL_PtrR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_VarD_PVarL_PtrR);
+  Reserve(SizeOf(TOC_Eval__VarD_PVarL_PtrR));
+  with POC_Eval__VarD_PVarL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PVarL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_PtrR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PVarL_PtrR(AProc,AVOffsetD,AVOffsetL,APLeftOffset,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_VarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PVarL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PVarL_VarR));
-  with POC_Eval__VarD_PVarL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PVarL_VarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_VarD_PVarL_VarR);
+  Reserve(SizeOf(TOC_Eval__VarD_PVarL_VarR));
+  with POC_Eval__VarD_PVarL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PVarL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_VarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PVarL_VarR(AProc,AVOffsetD,AVOffsetL,APLeftOffset,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_StkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PVarL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PVarL_StkR));
-  with POC_Eval__VarD_PVarL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PVarL_StkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_VarD_PVarL_StkR);
+  Reserve(SizeOf(TOC_Eval__VarD_PVarL_StkR));
+  with POC_Eval__VarD_PVarL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
@@ -541,13 +457,11 @@ function TLapeCodeEmitterBase._Eval__VarD_PVarL_StkR(AProc: TLapeEvalProc; AVOff
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PVarL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_StkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PVarL_StkR(AProc,AVOffsetD,AVOffsetL,APLeftOffset,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_PVarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PVarL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PVarL_PVarR));
-  with POC_Eval__VarD_PVarL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PVarL_PVarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_VarD_PVarL_PVarR);
+  Reserve(SizeOf(TOC_Eval__VarD_PVarL_PVarR));
+  with POC_Eval__VarD_PVarL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
@@ -555,301 +469,251 @@ function TLapeCodeEmitterBase._Eval__VarD_PVarL_PVarR(AProc: TLapeEvalProc; AVOf
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PVarL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_PVarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PVarL_PVarR(AProc,AVOffsetD,AVOffsetL,APLeftOffset,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_PStkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PVarL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PVarL_PStkR));
-  with POC_Eval__VarD_PVarL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PVarL_PStkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_VarD_PVarL_PStkR);
+  Reserve(SizeOf(TOC_Eval__VarD_PVarL_PStkR));
+  with POC_Eval__VarD_PVarL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PVarL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PVarL_PStkR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PVarL_PStkR(AProc,AVOffsetD,AVOffsetL,APLeftOffset,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PStkL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PStkL_PtrR));
-  with POC_Eval__VarD_PStkL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PStkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_VarD_PStkL_PtrR);
+  Reserve(SizeOf(TOC_Eval__VarD_PStkL_PtrR));
+  with POC_Eval__VarD_PStkL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PStkL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PStkL_PtrR(AProc,AVOffsetD,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_VarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PStkL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PStkL_VarR));
-  with POC_Eval__VarD_PStkL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PStkL_VarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_VarD_PStkL_VarR);
+  Reserve(SizeOf(TOC_Eval__VarD_PStkL_VarR));
+  with POC_Eval__VarD_PStkL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PStkL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_VarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PStkL_VarR(AProc,AVOffsetD,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PStkL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PStkL_StkR));
-  with POC_Eval__VarD_PStkL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PStkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_VarD_PStkL_StkR);
+  Reserve(SizeOf(TOC_Eval__VarD_PStkL_StkR));
+  with POC_Eval__VarD_PStkL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PStkL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PStkL_StkR(AProc,AVOffsetD,ASOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_PVarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PStkL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PStkL_PVarR));
-  with POC_Eval__VarD_PStkL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PStkL_PVarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_VarD_PStkL_PVarR);
+  Reserve(SizeOf(TOC_Eval__VarD_PStkL_PVarR));
+  with POC_Eval__VarD_PStkL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PStkL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_PVarR(AProc: TLapeEvalProc; AVOffsetD, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PStkL_PVarR(AProc,AVOffsetD,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_VarD_PStkL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__VarD_PStkL_PStkR));
-  with POC_Eval__VarD_PStkL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__VarD_PStkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_VarD_PStkL_PStkR);
+  Reserve(SizeOf(TOC_Eval__VarD_PStkL_PStkR));
+  with POC_Eval__VarD_PStkL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__VarD_PStkL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__VarD_PStkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__VarD_PStkL_PStkR(AProc,AVOffsetD,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_PtrR(AProc: TLapeEvalProc; APtrL, APtrR: Pointer; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PtrL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PtrL_PtrR));
-  with POC_Eval__StkD_PtrL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PtrL_PtrR(AProc: TLapeEvalProc; APtrL, APtrR: Pointer; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PtrL_PtrR);
+  Reserve(SizeOf(TOC_Eval__StkD_PtrL_PtrR));
+  with POC_Eval__StkD_PtrL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrL, @PtrL);
     _Pointer(APtrR, @PtrR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PtrL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_PtrR(AProc: TLapeEvalProc; APtrL, APtrR: Pointer; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PtrL_PtrR(AProc,APtrL,APtrR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_VarR(AProc: TLapeEvalProc; APtrL: Pointer; AVOffsetR: TVarStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PtrL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PtrL_VarR));
-  with POC_Eval__StkD_PtrL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PtrL_VarR(AProc: TLapeEvalProc; APtrL: Pointer; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PtrL_VarR);
+  Reserve(SizeOf(TOC_Eval__StkD_PtrL_VarR));
+  with POC_Eval__StkD_PtrL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrL, @PtrL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PtrL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_VarR(AProc: TLapeEvalProc; APtrL: Pointer; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PtrL_VarR(AProc,APtrL,AVOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_StkR(AProc: TLapeEvalProc; APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PtrL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PtrL_StkR));
-  with POC_Eval__StkD_PtrL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PtrL_StkR(AProc: TLapeEvalProc; APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PtrL_StkR);
+  Reserve(SizeOf(TOC_Eval__StkD_PtrL_StkR));
+  with POC_Eval__StkD_PtrL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrL, @PtrL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PtrL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_StkR(AProc: TLapeEvalProc; APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PtrL_StkR(AProc,APtrL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_PVarR(AProc: TLapeEvalProc; APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PtrL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PtrL_PVarR));
-  with POC_Eval__StkD_PtrL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PtrL_PVarR(AProc: TLapeEvalProc; APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PtrL_PVarR);
+  Reserve(SizeOf(TOC_Eval__StkD_PtrL_PVarR));
+  with POC_Eval__StkD_PtrL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrL, @PtrL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PtrL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_PVarR(AProc: TLapeEvalProc; APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PtrL_PVarR(AProc,APtrL,AVOffsetR,APRightOffset,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_PStkR(AProc: TLapeEvalProc; APtrL: Pointer; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PtrL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PtrL_PStkR));
-  with POC_Eval__StkD_PtrL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PtrL_PStkR(AProc: TLapeEvalProc; APtrL: Pointer; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PtrL_PStkR);
+  Reserve(SizeOf(TOC_Eval__StkD_PtrL_PStkR));
+  with POC_Eval__StkD_PtrL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrL, @PtrL);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PtrL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PtrL_PStkR(AProc: TLapeEvalProc; APtrL: Pointer; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PtrL_PStkR(AProc,APtrL,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_PtrR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APtrR: Pointer; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_VarL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_VarL_PtrR));
-  with POC_Eval__StkD_VarL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_VarL_PtrR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_VarL_PtrR);
+  Reserve(SizeOf(TOC_Eval__StkD_VarL_PtrR));
+  with POC_Eval__StkD_VarL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _Pointer(APtrR, @PtrR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_VarL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_PtrR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_VarL_PtrR(AProc,AVOffsetL,APtrR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_VarR(AProc: TLapeEvalProc; AVOffsetL, AVOffsetR: TVarStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_VarL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_VarL_VarR));
-  with POC_Eval__StkD_VarL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_VarL_VarR(AProc: TLapeEvalProc; AVOffsetL, AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_VarL_VarR);
+  Reserve(SizeOf(TOC_Eval__StkD_VarL_VarR));
+  with POC_Eval__StkD_VarL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_VarL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_VarR(AProc: TLapeEvalProc; AVOffsetL, AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_VarL_VarR(AProc,AVOffsetL,AVOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_StkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_VarL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_VarL_StkR));
-  with POC_Eval__StkD_VarL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_VarL_StkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_VarL_StkR);
+  Reserve(SizeOf(TOC_Eval__StkD_VarL_StkR));
+  with POC_Eval__StkD_VarL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_VarL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_StkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_VarL_StkR(AProc,AVOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_PVarR(AProc: TLapeEvalProc; AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_VarL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_VarL_PVarR));
-  with POC_Eval__StkD_VarL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_VarL_PVarR(AProc: TLapeEvalProc; AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_VarL_PVarR);
+  Reserve(SizeOf(TOC_Eval__StkD_VarL_PVarR));
+  with POC_Eval__StkD_VarL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_VarL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_PVarR(AProc: TLapeEvalProc; AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_VarL_PVarR(AProc,AVOffsetL,AVOffsetR,APRightOffset,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_PStkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_VarL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_VarL_PStkR));
-  with POC_Eval__StkD_VarL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_VarL_PStkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_VarL_PStkR);
+  Reserve(SizeOf(TOC_Eval__StkD_VarL_PStkR));
+  with POC_Eval__StkD_VarL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_VarL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_VarL_PStkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_VarL_PStkR(AProc,AVOffsetL,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_PtrR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_StkL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_StkL_PtrR));
-  with POC_Eval__StkD_StkL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_StkL_PtrR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_StkL_PtrR);
+  Reserve(SizeOf(TOC_Eval__StkD_StkL_PtrR));
+  with POC_Eval__StkD_StkL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _StackOffset(ASOffsetL, @SOffsetL);
     _Pointer(APtrR, @PtrR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_StkL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_PtrR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_StkL_PtrR(AProc,ASOffsetL,APtrR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_VarR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_StkL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_StkL_VarR));
-  with POC_Eval__StkD_StkL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_StkL_VarR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_StkL_VarR);
+  Reserve(SizeOf(TOC_Eval__StkD_StkL_VarR));
+  with POC_Eval__StkD_StkL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _StackOffset(ASOffsetL, @SOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_StkL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_VarR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_StkL_VarR(AProc,ASOffsetL,AVOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_StkR(AProc: TLapeEvalProc; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_StkL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_StkL_StkR));
-  with POC_Eval__StkD_StkL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_StkL_StkR(AProc: TLapeEvalProc; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_StkL_StkR);
+  Reserve(SizeOf(TOC_Eval__StkD_StkL_StkR));
+  with POC_Eval__StkD_StkL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_StkL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_StkR(AProc: TLapeEvalProc; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_StkL_StkR(AProc,ASOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_PVarR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_StkL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_StkL_PVarR));
-  with POC_Eval__StkD_StkL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_StkL_PVarR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_StkL_PVarR);
+  Reserve(SizeOf(TOC_Eval__StkD_StkL_PVarR));
+  with POC_Eval__StkD_StkL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _StackOffset(ASOffsetL, @SOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_StkL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_PVarR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_StkL_PVarR(AProc,ASOffsetL,AVOffsetR,APRightOffset,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_PStkR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_StkL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_StkL_PStkR));
-  with POC_Eval__StkD_StkL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_StkL_PStkR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_StkL_PStkR);
+  Reserve(SizeOf(TOC_Eval__StkD_StkL_PStkR));
+  with POC_Eval__StkD_StkL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_StkL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_StkL_PStkR(AProc: TLapeEvalProc; ASOffsetL: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_StkL_PStkR(AProc,ASOffsetL,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_PtrR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PVarL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PVarL_PtrR));
-  with POC_Eval__StkD_PVarL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PVarL_PtrR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PVarL_PtrR);
+  Reserve(SizeOf(TOC_Eval__StkD_PVarL_PtrR));
+  with POC_Eval__StkD_PVarL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _Pointer(APtrR, @PtrR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PVarL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_PtrR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PVarL_PtrR(AProc,AVOffsetL,APLeftOffset,APtrR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_VarR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PVarL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PVarL_VarR));
-  with POC_Eval__StkD_PVarL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PVarL_VarR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PVarL_VarR);
+  Reserve(SizeOf(TOC_Eval__StkD_PVarL_VarR));
+  with POC_Eval__StkD_PVarL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PVarL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_VarR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PVarL_VarR(AProc,AVOffsetL,APLeftOffset,AVOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_StkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PVarL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PVarL_StkR));
-  with POC_Eval__StkD_PVarL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PVarL_StkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PVarL_StkR);
+  Reserve(SizeOf(TOC_Eval__StkD_PVarL_StkR));
+  with POC_Eval__StkD_PVarL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PVarL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_StkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PVarL_StkR(AProc,AVOffsetL,APLeftOffset,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_PVarR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PVarL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PVarL_PVarR));
-  with POC_Eval__StkD_PVarL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PVarL_PVarR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PVarL_PVarR);
+  Reserve(SizeOf(TOC_Eval__StkD_PVarL_PVarR));
+  with POC_Eval__StkD_PVarL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
@@ -857,107 +721,89 @@ function TLapeCodeEmitterBase._Eval__StkD_PVarL_PVarR(AProc: TLapeEvalProc; AVOf
     _PointerOffset(APRightOffset, @PRightOffset);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PVarL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_PVarR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PVarL_PVarR(AProc,AVOffsetL,APLeftOffset,AVOffsetR,APRightOffset,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_PStkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PVarL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PVarL_PStkR));
-  with POC_Eval__StkD_PVarL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PVarL_PStkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PVarL_PStkR);
+  Reserve(SizeOf(TOC_Eval__StkD_PVarL_PStkR));
+  with POC_Eval__StkD_PVarL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PVarL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PVarL_PStkR(AProc: TLapeEvalProc; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PVarL_PStkR(AProc,AVOffsetL,APLeftOffset,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_PtrR(AProc: TLapeEvalProc; APtrR: Pointer; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PStkL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PStkL_PtrR));
-  with POC_Eval__StkD_PStkL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PStkL_PtrR(AProc: TLapeEvalProc; APtrR: Pointer; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PStkL_PtrR);
+  Reserve(SizeOf(TOC_Eval__StkD_PStkL_PtrR));
+  with POC_Eval__StkD_PStkL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _Pointer(APtrR, @PtrR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PStkL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_PtrR(AProc: TLapeEvalProc; APtrR: Pointer; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PStkL_PtrR(AProc,APtrR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_VarR(AProc: TLapeEvalProc; AVOffsetR: TVarStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PStkL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PStkL_VarR));
-  with POC_Eval__StkD_PStkL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PStkL_VarR(AProc: TLapeEvalProc; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PStkL_VarR);
+  Reserve(SizeOf(TOC_Eval__StkD_PStkL_VarR));
+  with POC_Eval__StkD_PStkL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PStkL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_VarR(AProc: TLapeEvalProc; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PStkL_VarR(AProc,AVOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_StkR(AProc: TLapeEvalProc; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PStkL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PStkL_StkR));
-  with POC_Eval__StkD_PStkL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PStkL_StkR(AProc: TLapeEvalProc; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PStkL_StkR);
+  Reserve(SizeOf(TOC_Eval__StkD_PStkL_StkR));
+  with POC_Eval__StkD_PStkL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PStkL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_StkR(AProc: TLapeEvalProc; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PStkL_StkR(AProc,ASOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_PVarR(AProc: TLapeEvalProc; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PStkL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PStkL_PVarR));
-  with POC_Eval__StkD_PStkL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PStkL_PVarR(AProc: TLapeEvalProc; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PStkL_PVarR);
+  Reserve(SizeOf(TOC_Eval__StkD_PStkL_PVarR));
+  with POC_Eval__StkD_PStkL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PStkL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_PVarR(AProc: TLapeEvalProc; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PStkL_PVarR(AProc,AVOffsetR,APRightOffset,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_PStkR(AProc: TLapeEvalProc; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_StkD_PStkL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__StkD_PStkL_PStkR));
-  with POC_Eval__StkD_PStkL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__StkD_PStkL_PStkR(AProc: TLapeEvalProc; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_StkD_PStkL_PStkR);
+  Reserve(SizeOf(TOC_Eval__StkD_PStkL_PStkR));
+  with POC_Eval__StkD_PStkL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__StkD_PStkL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__StkD_PStkL_PStkR(AProc: TLapeEvalProc; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__StkD_PStkL_PStkR(AProc,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL, APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PtrL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PtrL_PtrR));
-  with POC_Eval__PVarD_PtrL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL, APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_PVarD_PtrL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PtrL_PtrR));
+  with POC_Eval__PVarD_PtrL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _Pointer(APtrL, @PtrL);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PtrL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL, APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PtrL_PtrR(AProc,AVOffsetD,APDestOffset,APtrL,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PtrL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PtrL_VarR));
-  with POC_Eval__PVarD_PtrL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PtrL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PVarD_PtrL_VarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PtrL_VarR));
+  with POC_Eval__PVarD_PtrL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _Pointer(APtrL, @PtrL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PtrL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PtrL_VarR(AProc,AVOffsetD,APDestOffset,APtrL,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PtrL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PtrL_StkR));
-  with POC_Eval__PVarD_PtrL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PtrL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PVarD_PtrL_StkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PtrL_StkR));
+  with POC_Eval__PVarD_PtrL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -965,13 +811,11 @@ function TLapeCodeEmitterBase._Eval__PVarD_PtrL_StkR(AProc: TLapeEvalProc; AVOff
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PtrL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PtrL_StkR(AProc,AVOffsetD,APDestOffset,APtrL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PtrL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PtrL_PVarR));
-  with POC_Eval__PVarD_PtrL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PVarD_PtrL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PtrL_PVarR));
+  with POC_Eval__PVarD_PtrL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -979,51 +823,43 @@ function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PVarR(AProc: TLapeEvalProc; AVOf
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PtrL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PtrL_PVarR(AProc,AVOffsetD,APDestOffset,APtrL,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PtrL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PtrL_PStkR));
-  with POC_Eval__PVarD_PtrL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer): Integer; begin
+  Result := _op(ocEval_PVarD_PtrL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PtrL_PStkR));
+  with POC_Eval__PVarD_PtrL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _Pointer(APtrL, @PtrL);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PtrL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PtrL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrL: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PtrL_PStkR(AProc,AVOffsetD,APDestOffset,APtrL,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_VarL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_VarL_PtrR));
-  with POC_Eval__PVarD_VarL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_VarL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_PVarD_VarL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PVarD_VarL_PtrR));
+  with POC_Eval__PVarD_VarL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_VarL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_VarL_PtrR(AProc,AVOffsetD,APDestOffset,AVOffsetL,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL, AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_VarL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_VarL_VarR));
-  with POC_Eval__PVarD_VarL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_VarL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL, AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PVarD_VarL_VarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_VarL_VarR));
+  with POC_Eval__PVarD_VarL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_VarL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL, AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_VarL_VarR(AProc,AVOffsetD,APDestOffset,AVOffsetL,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_VarL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_VarL_StkR));
-  with POC_Eval__PVarD_VarL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_VarL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PVarD_VarL_StkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_VarL_StkR));
+  with POC_Eval__PVarD_VarL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1031,13 +867,11 @@ function TLapeCodeEmitterBase._Eval__PVarD_VarL_StkR(AProc: TLapeEvalProc; AVOff
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_VarL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_VarL_StkR(AProc,AVOffsetD,APDestOffset,AVOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_VarL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_VarL_PVarR));
-  with POC_Eval__PVarD_VarL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_VarL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PVarD_VarL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_VarL_PVarR));
+  with POC_Eval__PVarD_VarL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1045,25 +879,21 @@ function TLapeCodeEmitterBase._Eval__PVarD_VarL_PVarR(AProc: TLapeEvalProc; AVOf
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_VarL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL, AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_VarL_PVarR(AProc,AVOffsetD,APDestOffset,AVOffsetL,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_VarL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_VarL_PStkR));
-  with POC_Eval__PVarD_VarL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_VarL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PVarD_VarL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_VarL_PStkR));
+  with POC_Eval__PVarD_VarL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _VarStackOffset(AVOffsetL, @VOffsetL);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_VarL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_VarL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_VarL_PStkR(AProc,AVOffsetD,APDestOffset,AVOffsetL,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_StkL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_StkL_PtrR));
-  with POC_Eval__PVarD_StkL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_StkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PVarD_StkL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PVarD_StkL_PtrR));
+  with POC_Eval__PVarD_StkL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1071,13 +901,11 @@ function TLapeCodeEmitterBase._Eval__PVarD_StkL_PtrR(AProc: TLapeEvalProc; AVOff
     _Pointer(APtrR, @PtrR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_StkL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; APtrR: Pointer; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_StkL_PtrR(AProc,AVOffsetD,APDestOffset,ASOffsetL,APtrR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_StkL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_StkL_VarR));
-  with POC_Eval__PVarD_StkL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_StkL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PVarD_StkL_VarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_StkL_VarR));
+  with POC_Eval__PVarD_StkL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1085,13 +913,11 @@ function TLapeCodeEmitterBase._Eval__PVarD_StkL_VarR(AProc: TLapeEvalProc; AVOff
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_StkL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_StkL_VarR(AProc,AVOffsetD,APDestOffset,ASOffsetL,AVOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_StkL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_StkL_StkR));
-  with POC_Eval__PVarD_StkL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_StkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PVarD_StkL_StkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_StkL_StkR));
+  with POC_Eval__PVarD_StkL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1099,13 +925,11 @@ function TLapeCodeEmitterBase._Eval__PVarD_StkL_StkR(AProc: TLapeEvalProc; AVOff
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_StkL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_StkL_StkR(AProc,AVOffsetD,APDestOffset,ASOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_StkL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_StkL_PVarR));
-  with POC_Eval__PVarD_StkL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_StkL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PVarD_StkL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_StkL_PVarR));
+  with POC_Eval__PVarD_StkL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1114,26 +938,22 @@ function TLapeCodeEmitterBase._Eval__PVarD_StkL_PVarR(AProc: TLapeEvalProc; AVOf
     _PointerOffset(APRightOffset, @PRightOffset);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_StkL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_StkL_PVarR(AProc,AVOffsetD,APDestOffset,ASOffsetL,AVOffsetR,APRightOffset,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_StkL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_StkL_PStkR));
-  with POC_Eval__PVarD_StkL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_StkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PVarD_StkL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_StkL_PStkR));
+  with POC_Eval__PVarD_StkL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _StackOffset(ASOffsetL, @SOffsetL);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_StkL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_StkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_StkL_PStkR(AProc,AVOffsetD,APDestOffset,ASOffsetL,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PVarL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PVarL_PtrR));
-  with POC_Eval__PVarD_PVarL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_PVarD_PVarL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PVarL_PtrR));
+  with POC_Eval__PVarD_PVarL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1141,13 +961,11 @@ function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PtrR(AProc: TLapeEvalProc; AVOf
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PVarL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PVarL_PtrR(AProc,AVOffsetD,APDestOffset,AVOffsetL,APLeftOffset,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PVarL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PVarL_VarR));
-  with POC_Eval__PVarD_PVarL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PVarL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PVarD_PVarL_VarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PVarL_VarR));
+  with POC_Eval__PVarD_PVarL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1155,13 +973,11 @@ function TLapeCodeEmitterBase._Eval__PVarD_PVarL_VarR(AProc: TLapeEvalProc; AVOf
     _PointerOffset(APLeftOffset, @PLeftOffset);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PVarL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PVarL_VarR(AProc,AVOffsetD,APDestOffset,AVOffsetL,APLeftOffset,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PVarL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PVarL_StkR));
-  with POC_Eval__PVarD_PVarL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PVarL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PVarD_PVarL_StkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PVarL_StkR));
+  with POC_Eval__PVarD_PVarL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1170,13 +986,11 @@ function TLapeCodeEmitterBase._Eval__PVarD_PVarL_StkR(AProc: TLapeEvalProc; AVOf
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PVarL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PVarL_StkR(AProc,AVOffsetD,APDestOffset,AVOffsetL,APLeftOffset,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PVarL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PVarL_PVarR));
-  with POC_Eval__PVarD_PVarL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PVarD_PVarL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PVarL_PVarR));
+  with POC_Eval__PVarD_PVarL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1185,50 +999,42 @@ function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PVarR(AProc: TLapeEvalProc; AVO
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PVarL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PVarL_PVarR(AProc,AVOffsetD,APDestOffset,AVOffsetL,APLeftOffset,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PVarL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PVarL_PStkR));
-  with POC_Eval__PVarD_PVarL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PVarD_PVarL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PVarL_PStkR));
+  with POC_Eval__PVarD_PVarL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _VarStackOffset(AVOffsetL, @VOffsetL);
     _PointerOffset(APLeftOffset, @PLeftOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PVarL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PVarL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetL: TVarStackOffset; APLeftOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PVarL_PStkR(AProc,AVOffsetD,APDestOffset,AVOffsetL,APLeftOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrR: Pointer; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PStkL_PtrR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PStkL_PtrR));
-  with POC_Eval__PVarD_PStkL_PtrR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PStkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrR: Pointer): Integer; begin
+  Result := _op(ocEval_PVarD_PStkL_PtrR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PStkL_PtrR));
+  with POC_Eval__PVarD_PStkL_PtrR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _Pointer(APtrR, @PtrR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PStkL_PtrR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_PtrR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; APtrR: Pointer): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PStkL_PtrR(AProc,AVOffsetD,APDestOffset,APtrR,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetR: TVarStackOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PStkL_VarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PStkL_VarR));
-  with POC_Eval__PVarD_PStkL_VarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PStkL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetR: TVarStackOffset): Integer; begin
+  Result := _op(ocEval_PVarD_PStkL_VarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PStkL_VarR));
+  with POC_Eval__PVarD_PStkL_VarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _VarStackOffset(AVOffsetR, @VOffsetR);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PStkL_VarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_VarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetR: TVarStackOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PStkL_VarR(AProc,AVOffsetD,APDestOffset,AVOffsetR,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PStkL_StkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PStkL_StkR));
-  with POC_Eval__PVarD_PStkL_StkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PStkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; begin
+  Result := _op(ocEval_PVarD_PStkL_StkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PStkL_StkR));
+  with POC_Eval__PVarD_PStkL_StkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
@@ -1236,30 +1042,24 @@ function TLapeCodeEmitterBase._Eval__PVarD_PStkL_StkR(AProc: TLapeEvalProc; AVOf
     _StackOffset(ASOffsetR, @SOffsetR);
     _StackInc(AStackInc, @StackInc);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PStkL_StkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_StkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; ASOffsetL, ASOffsetR: TStackOffset; AStackInc: TStackInc): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PStkL_StkR(AProc,AVOffsetD,APDestOffset,ASOffsetL,ASOffsetR,AStackInc,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PStkL_PVarR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PStkL_PVarR));
-  with POC_Eval__PVarD_PStkL_PVarR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PStkL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PVarD_PStkL_PVarR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PStkL_PVarR));
+  with POC_Eval__PVarD_PStkL_PVarR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
     _VarStackOffset(AVOffsetR, @VOffsetR);
     _PointerOffset(APRightOffset, @PRightOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PStkL_PVarR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_PVarR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; AVOffsetR: TVarStackOffset; APRightOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PStkL_PVarR(AProc,AVOffsetD,APDestOffset,AVOffsetR,APRightOffset,o); end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset; var Offset: Integer): Integer; begin
-  Result := _op(ocEval_PVarD_PStkL_PStkR, Offset);
-  CheckOffset(Offset, SizeOf(TOC_Eval__PVarD_PStkL_PStkR));
-  with POC_Eval__PVarD_PStkL_PStkR(@FCode[Offset])^ do begin
+function TLapeCodeEmitterBase._Eval__PVarD_PStkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset): Integer; begin
+  Result := _op(ocEval_PVarD_PStkL_PStkR);
+  Reserve(SizeOf(TOC_Eval__PVarD_PStkL_PStkR));
+  with POC_Eval__PVarD_PStkL_PStkR(@FCode[Result + ocSize])^ do begin
     _EvalProc(AProc, {$IFNDEF FPC}@{$ENDIF}@Proc);
     _VarStackOffset(AVOffsetD, @VOffsetD);
     _PointerOffset(APDestOffset, @PDestOffset);
   end;
-  Inc(Offset, SizeOf(TOC_Eval__PVarD_PStkL_PStkR));
 end;
-function TLapeCodeEmitterBase._Eval__PVarD_PStkL_PStkR(AProc: TLapeEvalProc; AVOffsetD: TVarStackOffset; APDestOffset: TPointerOffset): Integer; var o: Integer; begin o := -1; Result := _Eval__PVarD_PStkL_PStkR(AProc,AVOffsetD,APDestOffset,o); end;

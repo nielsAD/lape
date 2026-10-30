@@ -39,20 +39,20 @@ type
     function getParamTypesStr: lpString; virtual;
 
     // AVar on the stack: its address (Addr), or a copy
-    function pushToStack(AVar: TResVar; var Offset: Integer; Addr: Boolean = True): TResVar; virtual;
-    procedure pushRefParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar; var Offset: Integer); virtual;
-    procedure pushValueParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar; var Offset: Integer); virtual;
+    function pushToStack(AVar: TResVar; Addr: Boolean = True): TResVar; virtual;
+    procedure pushRefParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar); virtual;
+    procedure pushValueParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar); virtual;
     // The Self that a method of an object holds, on the stack
-    procedure pushSelf(Called: TResVar; var Offset: Integer); virtual;
-    procedure pushParams(Method: TLapeType_Method; var Args: TResVarArray; Imported: Boolean; var Offset: Integer); virtual;
+    procedure pushSelf(Called: TResVar); virtual;
+    procedure pushParams(Method: TLapeType_Method; var Args: TResVarArray; Imported: Boolean); virtual;
 
-    function CallScript(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar; var Offset: Integer): TResVar; virtual;
-    function CallImported(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar; var Offset: Integer): TResVar; virtual;
+    function CallScript(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar): TResVar; virtual;
+    function CallImported(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar): TResVar; virtual;
     // Use IsScriptMethod to determine what above to use (for function pointers etc)
-    function CallEither(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar; var Offset: Integer): TResVar; virtual;
+    function CallEither(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar): TResVar; virtual;
 
-    function CompileInto(ResultVar: TResVar; var Offset: Integer): TResVar; virtual;
-    function Compile(var Offset: Integer): TResVar; override;
+    function CompileInto(ResultVar: TResVar): TResVar; virtual;
+    function Compile: TResVar; override;
   public
     constructor Create(Ident: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase); reintroduce; overload; virtual;
     constructor Create(Ident: TLapeTree_ExprBase; ASource: TLapeTree_Base); reintroduce; overload; virtual;
@@ -82,7 +82,7 @@ type
     FHasConstruct: Boolean;
 
     procedure CheckPickedMethod(VarType: TLapeType); override;
-    function CompileInto(ResultVar: TResVar; var Offset: Integer): TResVar; override;
+    function CompileInto(ResultVar: TResVar): TResVar; override;
   public
     constructor Create(ObjType: TLapeType; ASource: TLapeTree_Base); reintroduce; overload; virtual;
     property HasConstruct: Boolean read FHasConstruct;
@@ -95,7 +95,7 @@ type
 
     procedure CheckPickedMethod(VarType: TLapeType); override;
     function PickOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType): Integer; override;
-    function Compile(var Offset: Integer): TResVar; override;
+    function Compile: TResVar; override;
   public
     property PropertyType: EPropertyType read FPropertyType write FPropertyType;
     property AssignOp: EOperator read FAssignOp write FAssignOp;
@@ -393,7 +393,7 @@ begin
   Result := inherited;
 end;
 
-function TLapeTree_Invoke.pushToStack(AVar: TResVar; var Offset: Integer; Addr: Boolean = True): TResVar;
+function TLapeTree_Invoke.pushToStack(AVar: TResVar; Addr: Boolean = True): TResVar;
 var
   NullVar: TResVar;
 begin
@@ -408,26 +408,26 @@ begin
     if Addr then
     begin
       Result.VarType := FCompiler.getBaseType(ltPointer);
-      FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Result, AVar, NullResVar, Offset);
+      FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Result, AVar, NullResVar);
     end
     else
     begin
       if AVar.HasType() and AVar.VarType.NeedInitialization then
-        FCompiler.Emitter._InitStack(AVar.VarType.Size, Offset);
+        FCompiler.Emitter._InitStack(AVar.VarType.Size);
       Result.VarType := AVar.VarType;
-      Result := AVar.VarType.Eval(op_Assign, NullVar, Result, AVar, [lefAssigningParam], Offset);
+      Result := AVar.VarType.Eval(op_Assign, NullVar, Result, AVar, [lefAssigningParam]);
     end;
   end
   else
     LapeException(lpeImpossible, FCompiler.DocPos);
 end;
 
-procedure TLapeTree_Invoke.pushRefParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar; var Offset: Integer);
+procedure TLapeTree_Invoke.pushRefParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar);
 var
   Copy, NullVar: TResVar;
 begin
   if (Arg.VarPos.MemPos = NullResVar.VarPos.MemPos) then
-    ArgExpr.EmitToTempVar(Offset, Arg);
+    Arg := ArgExpr.Emit();
   if (Arg.VarPos.MemPos = NullResVar.VarPos.MemPos) or ((Param.VarType <> Arg.VarType) and (not Arg.HasType())) then
     LapeException(lpeCannotInvoke);
   Assert(Arg.VarPos.MemPos <> mpStack);
@@ -445,13 +445,13 @@ begin
 
     NullVar := NullResVar;
     Copy := _ResVar.New(FCompiler.getTempVar(Param.VarType));
-    Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, [lefAssigningParam], Offset);
+    Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, [lefAssigningParam]);
   end;
 
-  pushToStack(Arg, Offset);
+  pushToStack(Arg);
 end;
 
-procedure TLapeTree_Invoke.pushValueParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar; var Offset: Integer);
+procedure TLapeTree_Invoke.pushValueParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar);
 var
   Copy, NullVar: TResVar;
   Typ: TLapeType;
@@ -460,7 +460,7 @@ begin
 
   if (Arg.VarPos.MemPos = NullResVar.VarPos.MemPos) then
     if (Param.VarType <> nil) and Param.VarType.NeedFinalization then
-      ArgExpr.EmitToTempVar(Offset, Arg)
+      Arg := ArgExpr.Emit()
     else
     begin
       if (ArgExpr is TLapeTree_DestExprBase) then
@@ -469,7 +469,7 @@ begin
         if (Typ <> nil) and (Typ.BaseType in LapeStackTypes) then
           TLapeTree_DestExprBase(ArgExpr).Dest := StackResVar;
       end;
-      Arg := ArgExpr.Emit(Offset);
+      Arg := ArgExpr.Emit();
     end;
   if (Arg.VarPos.MemPos = NullResVar.VarPos.MemPos) or ((Param.VarType <> Arg.VarType) and (not Arg.HasType())) then
     LapeException(lpeCannotInvoke);
@@ -488,12 +488,12 @@ begin
   Copy.VarPos.MemPos := mpStack;
   Copy.VarType := Param.VarType;
   if Copy.VarType.NeedInitialization then
-    FCompiler.Emitter._InitStack(Copy.VarType.Size, Offset);
-  Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, [lefAssigningParam], Offset);
+    FCompiler.Emitter._InitStack(Copy.VarType.Size);
+  Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, [lefAssigningParam]);
   Assert((Arg.VarPos.MemPos = mpStack) and Arg.HasType());
 end;
 
-procedure TLapeTree_Invoke.pushSelf(Called: TResVar; var Offset: Integer);
+procedure TLapeTree_Invoke.pushSelf(Called: TResVar);
 var
   SelfPtr: TResVar;
 begin
@@ -506,11 +506,11 @@ begin
     SelfPtr.VarType := FCompiler.getBaseType(ltPointer);
     SelfPtr.IncOffset(SizeOf(Pointer));
 
-    pushToStack(SelfPtr, Offset, False);
+    pushToStack(SelfPtr, False);
   end;
 end;
 
-procedure TLapeTree_Invoke.pushParams(Method: TLapeType_Method; var Args: TResVarArray; Imported: Boolean; var Offset: Integer);
+procedure TLapeTree_Invoke.pushParams(Method: TLapeType_Method; var Args: TResVarArray; Imported: Boolean);
 var
   i: Integer;
   ArgExpr: TLapeTree_ExprBase;
@@ -520,9 +520,9 @@ begin
     ArgExpr := FParams[i - Method.ImplicitParams];
     try
       if Imported or (Method.Params[i].ParType in Lape_RefParams) then
-        pushRefParam(Method, Method.Params[i], ArgExpr, Args[i], Offset)
+        pushRefParam(Method, Method.Params[i], ArgExpr, Args[i])
       else
-        pushValueParam(Method, Method.Params[i], ArgExpr, Args[i], Offset);
+        pushValueParam(Method, Method.Params[i], ArgExpr, Args[i]);
     except
       on E: lpException do
         LapeExceptionReraise(E, [ArgExpr, Self]);
@@ -530,7 +530,7 @@ begin
   end;
 end;
 
-function TLapeTree_Invoke.CallScript(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar; var Offset: Integer): TResVar;
+function TLapeTree_Invoke.CallScript(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar): TResVar;
 var
   Method: TLapeType_Method;
 begin
@@ -540,7 +540,7 @@ begin
   Result := NullResVar;
   Method := TLapeType_Method(Called.VarType);
 
-  pushParams(Method, Args, False, Offset);
+  pushParams(Method, Args, False);
   Dest := NullResVar;
 
   if (Method.Res <> nil) then
@@ -550,16 +550,16 @@ begin
     begin
       Result := _ResVar.New(FCompiler.getTempVar(Method.Res));
       if (lcoAlwaysInitialize in FCompilerOptions) then
-        FCompiler.VarToDefault(Result, Offset);
+        FCompiler.VarToDefault(Result);
     end;
     Result.isConstant := True;
-    pushToStack(Result, Offset);
+    pushToStack(Result);
   end;
 
-  FCompiler.Emitter._IncCall(Called, Method.ParamSize, Offset);
+  FCompiler.Emitter._IncCall(Called, Method.ParamSize);
 end;
 
-function TLapeTree_Invoke.CallImported(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar; var Offset: Integer): TResVar;
+function TLapeTree_Invoke.CallImported(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar): TResVar;
 var
   Init: TResVar;
   ParamCount: Integer;
@@ -571,7 +571,7 @@ begin
   Result := NullResVar;
   Method := TLapeType_Method(Called.VarType);
 
-  pushParams(Method, Args, True, Offset);
+  pushParams(Method, Args, True);
 
   ParamCount := Method.Params.Count;
   if (Called.VarType is TLapeType_MethodOfObject) then
@@ -580,7 +580,7 @@ begin
   if (Method.Res = nil) then
   begin
     Dest := NullResVar;
-    FCompiler.Emitter._InvokeImportedProc(Called, ParamCount * SizeOf(Pointer), Offset);
+    FCompiler.Emitter._InvokeImportedProc(Called, ParamCount * SizeOf(Pointer));
     Exit;
   end;
 
@@ -597,14 +597,14 @@ begin
     begin
       Init := Result;
       Init.isConstant := False;
-      FCompiler.VarToDefault(Init, Offset);
+      FCompiler.VarToDefault(Init);
     end;
   end;
 
-  FCompiler.Emitter._InvokeImportedFunc(Called, Result, ParamCount * SizeOf(Pointer), Offset);
+  FCompiler.Emitter._InvokeImportedFunc(Called, Result, ParamCount * SizeOf(Pointer));
 end;
 
-function TLapeTree_Invoke.CallEither(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar; var Offset: Integer): TResVar;
+function TLapeTree_Invoke.CallEither(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar): TResVar;
 var
   IsScript, ScriptRes: TResVar;
   ScriptArgs: TResVarArray;
@@ -613,29 +613,27 @@ begin
   with TLapeTree_InternalMethod_IsScriptMethod.Create(Self) do
   try
     addParam(TLapeTree_Var.Create(Called, Self));
-    IsScript := Emit(Offset);
+    IsScript := Emit();
   finally
     Free();
   end;
 
-  FCompiler.Emitter.FullEmit := False;
-  ToImported := FCompiler.Emitter._JmpRIfNot(0, IsScript, Offset);
-  FCompiler.Emitter.FullEmit := True;
+  ToImported := FCompiler.Emitter._JmpRIfNot(0, IsScript);
 
   ScriptArgs := Copy(Args);
-  ScriptRes := CallScript(Called, ScriptArgs, ResultVar, Offset);
-  ToEnd := FCompiler.Emitter._JmpR(0, Offset);
-  FCompiler.Emitter._JmpRIfNot(Offset - ToImported, IsScript, ToImported);
+  ScriptRes := CallScript(Called, ScriptArgs, ResultVar);
+  ToEnd := FCompiler.Emitter._JmpR(0);
+  FCompiler.Emitter.PatchJump(ToImported, FCompiler.Emitter.CodeLen);
 
   Dest := ScriptRes;
-  Result := CallImported(Called, Args, ResultVar, Offset);
-  FCompiler.Emitter._JmpR(Offset - ToEnd, ToEnd);
+  Result := CallImported(Called, Args, ResultVar);
+  FCompiler.Emitter.PatchJump(ToEnd, FCompiler.Emitter.CodeLen);
   Dest := NullResVar;
 
   Assert(Result.VarPos.MemPos = ScriptRes.VarPos.MemPos);
 end;
 
-function TLapeTree_Invoke.CompileInto(ResultVar: TResVar; var Offset: Integer): TResVar;
+function TLapeTree_Invoke.CompileInto(ResultVar: TResVar): TResVar;
 var
   i, ParamCount, ArgIndex: Integer;
   Picked, IndexVar: TLapeGlobalVar;
@@ -650,7 +648,7 @@ begin
 
   Picked := PickedMethod();
   if (Picked = nil) then
-    Called := FCallee.Emit(Offset)
+    Called := FCallee.Emit()
   else
   begin
     Overloaded := TLapeType_OverloadedMethod(FCallee.resType());
@@ -665,16 +663,16 @@ begin
     begin
       TLapeTree_Member(FCallee).Picked := Picked;
       try
-        Called := FCallee.Emit(Offset);
+        Called := FCallee.Emit();
       finally
         TLapeTree_Member(FCallee).Picked := nil;
       end;
     end
     else
     begin
-      Called := FCallee.Emit(Offset);
+      Called := FCallee.Emit();
       NullVar := NullResVar;
-      Called := Overloaded.Eval(op_Index, NullVar, Called, _ResVar.New(IndexVar), [], Offset);
+      Called := Overloaded.Eval(op_Index, NullVar, Called, _ResVar.New(IndexVar), []);
     end;
   end;
 
@@ -689,7 +687,7 @@ begin
   if (lcoInitExternalResult in FCompilerOptions) then
     Dest := NullResVar;
 
-  pushSelf(Called, Offset);
+  pushSelf(Called);
 
   // build param vars
   SetLength(Args, Method.Params.Count);
@@ -709,16 +707,16 @@ begin
   end;
 
   case Method.BaseType of
-    ltScriptMethod:   Result := CallScript(Called, Args, ResultVar, Offset);
-    ltImportedMethod: Result := CallImported(Called, Args, ResultVar, Offset);
+    ltScriptMethod:   Result := CallScript(Called, Args, ResultVar);
+    ltImportedMethod: Result := CallImported(Called, Args, ResultVar);
     else
-      Result := CallEither(Called, Args, ResultVar, Offset);
+      Result := CallEither(Called, Args, ResultVar);
   end;
 end;
 
-function TLapeTree_Invoke.Compile(var Offset: Integer): TResVar;
+function TLapeTree_Invoke.Compile: TResVar;
 begin
-  Result := CompileInto(NullResVar, Offset);
+  Result := CompileInto(NullResVar);
 end;
 
 function TLapeTree_Invoke.isInvoking: Boolean;
@@ -751,7 +749,7 @@ begin
   inherited;
 end;
 
-function TLapeTree_InvokeConstruct.CompileInto(ResultVar: TResVar; var Offset: Integer): TResVar;
+function TLapeTree_InvokeConstruct.CompileInto(ResultVar: TResVar): TResVar;
 begin
   Assert(ResultVar.VarPos.MemPos <> NullResVar.VarPos.MemPos);
   Assert(FObjectType is TLapeType_Object);
@@ -790,7 +788,7 @@ begin
     Result := -1;
 end;
 
-function TLapeTree_InvokeProperty.Compile(var Offset: Integer): TResVar;
+function TLapeTree_InvokeProperty.Compile: TResVar;
 var
   Value, Arg: TLapeTree_ExprBase;
   ReadCall: TLapeTree_InvokeProperty;
@@ -801,7 +799,7 @@ var
   // in a variable not on the stack
   function CompileToVar(Node: TLapeTree_ExprBase): TResVar;
   begin
-    Node.EmitToTempVar(Offset, Result);
+    Result := Node.Emit();
     Assert(Result.VarPos.MemPos <> mpStack);
   end;
 
