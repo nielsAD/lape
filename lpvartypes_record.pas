@@ -32,7 +32,7 @@ type
   public
     FreeFieldMap: Boolean;
 
-    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
+    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''); reintroduce; virtual;
     function CreateCopy: TLapeType; override;
     destructor Destroy; override;
 
@@ -42,15 +42,15 @@ type
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
-    function NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; virtual;
+    function NewGlobalVar(AName: lpString = ''): TLapeGlobalVar; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar; override;
-    function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
 
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
     procedure FinalizeConst(AVar: TLapeGlobalVar); override;
 
     property FieldMap: TRecordFieldMap read FFieldMap;
@@ -61,7 +61,7 @@ type
   protected
     function getAsString: lpString; override;
   public
-    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil); override;
+    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''); override;
     procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); override;
   end;
 
@@ -109,11 +109,11 @@ begin
   end;
 end;
 
-constructor TLapeType_Record.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil);
+constructor TLapeType_Record.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = '');
 const
   InvalidRec: TRecordField = (Offset: -1; FieldType: nil);
 begin
-  inherited Create(ltRecord, ACompiler, AName, ADocPos);
+  inherited Create(ltRecord, ACompiler, AName);
 
   FSize := 0;
   FreeFieldMap := (AFieldMap = nil);
@@ -248,7 +248,8 @@ type
 var
   i: Integer;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, '', @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, '');
+  Result.DocPos := FDocPos;
   for i := 0 to FFieldMap.Count - 1 do
     TLapeType_Record(Result).FieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
 
@@ -263,9 +264,9 @@ begin
   Result.TypeID := TypeID;
 end;
 
-function TLapeType_Record.NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
+function TLapeType_Record.NewGlobalVar(AName: lpString = ''): TLapeGlobalVar;
 begin
-  Result := NewGlobalVarP(nil, AName, ADocPos);
+  Result := NewGlobalVarP(nil, AName);
 end;
 
 function TLapeType_Record.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
@@ -324,7 +325,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Record.EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_Record.EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
 begin
   if FFieldMap.ExistsKey(AName) then
     with FFieldMap[AName] do
@@ -392,7 +393,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Record.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_Record.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
 var
   i: Integer;
   LoopOffset: array of Integer;
@@ -411,17 +412,17 @@ begin
       if Left.HasType() then
       begin
         Right.VarType := Left.VarType;
-        Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, [], Offset, Pos);
+        Result := Left.VarType.Eval(op_Assign, Dest, Left, Right, [], Offset);
         Result.VarType := Self;
       end
       else
       begin
         RightVar := _ResVar.New(FCompiler.getIntConst(Size, ltSizeInt));
         tmpVar := Compiler.getTempStackVar(ltPointer);
-        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
-        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
-        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar, Offset, @Self._DocPos);
-        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3, Offset, @Self._DocPos);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar, Offset);
+        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3, Offset);
         Result := Left;
         Result.VarType := Self;
       end;
@@ -432,9 +433,9 @@ begin
       begin
         Dest := NullResVar;
 
-        LeftVar := EvalMember(tmpVar, Left, FFieldMap.Key[i], [lefAssigning], Offset, Pos);
-        RightVar := Right.VarType.EvalMember(tmpVar, Right, TLapeType_Record(Right.VarType).FieldMap.Key[i], [], Offset, Pos);
-        LeftVar.VarType.Eval(op_Assign, Dest, LeftVar, RightVar, [], Offset, Pos);
+        LeftVar := EvalMember(tmpVar, Left, FFieldMap.Key[i], [lefAssigning], Offset);
+        RightVar := Right.VarType.EvalMember(tmpVar, Right, TLapeType_Record(Right.VarType).FieldMap.Key[i], [], Offset);
+        LeftVar.VarType.Eval(op_Assign, Dest, LeftVar, RightVar, [], Offset);
 
         if (LeftVar.VarPos.MemPos = mpStack) then
         begin
@@ -444,7 +445,7 @@ begin
             FieldOffset := FFieldMap.ItemsI[i + 1].Offset;
           FieldOffset := FieldOffset - (FFieldMap.ItemsI[i].Offset + FFieldMap.ItemsI[i].FieldType.Size);
           if (FieldOffset > 0) then
-            FCompiler.Emitter._GrowStack(FieldOffset, Offset, Pos);
+            FCompiler.Emitter._GrowStack(FieldOffset, Offset);
         end;
 
       end;
@@ -458,7 +459,7 @@ begin
       if Left.HasType() then
       begin
         Right.VarType := Left.VarType;
-        Result := Left.VarType.Eval(op, Dest, Left, Right, [], Offset, Pos);
+        Result := Left.VarType.Eval(op, Dest, Left, Right, [], Offset);
       end
       else
       begin
@@ -466,9 +467,9 @@ begin
 
         RightVar := _ResVar.New(FCompiler.getIntConst(Size, ltSizeInt));
         tmpVar := Compiler.getTempStackVar(ltPointer);
-        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset, @Self._DocPos);
-        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset, @Self._DocPos);
-        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar, Offset, @Self._DocPos);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar, Offset);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar, Offset);
+        FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar, Offset);
 
         //Result := NullResVar;
         //Result.VarType := Compiler.getBaseType(ltEvalBool);
@@ -477,9 +478,9 @@ begin
         Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
         Dest := NullResVar;
 
-        FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!cmp']), Result, SizeOf(Pointer) * 3, Offset, @Self._DocPos);
+        FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!cmp']), Result, SizeOf(Pointer) * 3, Offset);
         if (op = op_cmp_NotEqual) then
-          FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar, Offset, @Self._DocPos);
+          FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar, Offset);
       end;
     end
     else
@@ -492,22 +493,22 @@ begin
       begin
         Dest := NullResVar;
 
-        LeftVar := EvalMember(tmpVar, Left, FFieldMap.Key[i], [], Offset, Pos);
-        RightVar := Right.VarType.EvalMember(tmpVar, Right, TLapeType_Record(Right.VarType).FieldMap.Key[i], [], Offset, Pos);
+        LeftVar := EvalMember(tmpVar, Left, FFieldMap.Key[i], [], Offset);
+        RightVar := Right.VarType.EvalMember(tmpVar, Right, TLapeType_Record(Right.VarType).FieldMap.Key[i], [], Offset);
 
         tmpVar := Result;
-        tmpVar := LeftVar.VarType.Eval(op_cmp_Equal, tmpVar, LeftVar, RightVar, [], Offset, Pos);
+        tmpVar := LeftVar.VarType.Eval(op_cmp_Equal, tmpVar, LeftVar, RightVar, [], Offset);
         if (tmpVar.VarPos.MemPos <> Result.VarPos.MemPos) or (tmpVar.VarPos.StackVar <> Result.VarPos.StackVar) then
-          Result.VarType.Eval(op_Assign, Dest, Result, tmpVar, [], Offset, Pos);
-        LoopOffset[i] := FCompiler.Emitter._JmpRIfNot(0, Result, Offset, Pos);
+          Result.VarType.Eval(op_Assign, Dest, Result, tmpVar, [], Offset);
+        LoopOffset[i] := FCompiler.Emitter._JmpRIfNot(0, Result, Offset);
 
       end;
 
       for i := 0 to FFieldMap.Count - 1 do
-        FCompiler.Emitter._JmpRIfNot(Offset - LoopOffset[i], Result, LoopOffset[i], Pos);
+        FCompiler.Emitter._JmpRIfNot(Offset - LoopOffset[i], Result, LoopOffset[i]);
 
       if (op = op_cmp_NotEqual) then
-        FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar, Offset, @Self._DocPos);
+        FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar, Offset);
     end
   else
     Result := inherited;
@@ -546,7 +547,7 @@ begin
   Result := inherited;
 end;
 
-constructor TLapeType_Union.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil);
+constructor TLapeType_Union.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = '');
 begin
   inherited;
   FBaseType := ltUnion;

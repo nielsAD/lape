@@ -1,0 +1,11 @@
+// A method in code a host delayed to before the program is not run into
+procedure Go(x: Int32);
+begin
+  HostFail(x);
+end;
+
+begin
+  Go(1);
+  WriteLn('still running');
+  Go(5);
+end.

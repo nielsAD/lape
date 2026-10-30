@@ -1,0 +1,8 @@
+Runtime error: "Too deep" at line 11, column 5 in file "StackTrace_Nested.lap"
+Stack Trace:
+  0) Line 11 in function "Fail" in file "StackTrace_Nested.lap"
+  1) Line 16 in function "Check" in file "StackTrace_Nested.lap"
+  2) Line 18 in function "Check" in file "StackTrace_Nested.lap"
+  3) Line 18 in function "Check" in file "StackTrace_Nested.lap"
+  4) Line 23 in function "TCounter.Step" in file "StackTrace_Nested.lap"
+  5) Line 30 in "main" in file "StackTrace_Nested.lap"

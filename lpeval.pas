@@ -29,7 +29,6 @@ procedure _LapeWriteLn(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$EN
 
 procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeRaiseString(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-procedure _LapeRaiseStringWithDocPos(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAssert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeAssertMsg(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeRangeCheck(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -113,6 +112,8 @@ function ValidEvalFunction(p: Pointer): Boolean; overload; {$IFDEF Lape_Inline}i
 function ValidEvalFunction(p: TLapeEvalProc): Boolean; overload; {$IFDEF Lape_Inline}inline;{$ENDIF}
 
 procedure LapeEval_Error(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+// Dest (a TMethod) := the method at Left (nil: none); Self := Right when one is given
+procedure lpeTMethod_ASGN(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure ClearEvalRes(var Arr: TLapeEvalRes);
 procedure ClearEvalArr(var Arr: TLapeEvalArr);
 procedure LoadEvalRes(var Arr: TLapeEvalRes);
@@ -519,21 +520,11 @@ type
   PBoolean = ^Boolean; //Make sure it's not ^Byte
 
 procedure _LapeLocationToStr(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-
-  function LocationToStr(DocPos: TDocPos): String;
-  begin
-    Result := '';
-    if (DocPos.Line > 0) and (DocPos.Col > 0) then
-      Result := 'Line ' + IntToStr(DocPos.Line) + ', Column ' + IntToStr(DocPos.Col);
-    if (DocPos.FileName <> '') then
-      Result := Result + ' in file "' + DocPos.FileName + '"';
-  end;
-
 begin
   if ((Params^[0] = nil) or (PPointer(Params^[0])^ = nil)) then
     PlpString(Result)^ := 'Unknown'
   else
-    PlpString(Result)^ := LocationToStr(PDocPos(Params^[0]^)^);
+    PlpString(Result)^ := PDocPos(Params^[0]^)^.Format();
 end;
 
 procedure _LapeWrite(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -554,11 +545,6 @@ end;
 procedure _LapeRaiseString(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   LapeException(PlpString(Params^[0])^);
-end;
-
-procedure _LapeRaiseStringWithDocPos(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  LapeException(PlpString(Params^[0])^, PDocPos(Params^[1]^)^);
 end;
 
 procedure _LapeAssert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -1038,6 +1024,16 @@ end;
 procedure LoadEvalArr(var Arr: TLapeEvalArr);
 begin
   {$I lpeval_arr.inc}
+end;
+
+procedure lpeTMethod_ASGN(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  if (Left <> nil) then
+    TMethod(Dest^).Code := PPointer(Left)^
+  else
+    TMethod(Dest^).Code := nil;
+  if (Right <> nil) then
+    TMethod(Dest^).Data := Right;
 end;
 
 procedure lpeAddr(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

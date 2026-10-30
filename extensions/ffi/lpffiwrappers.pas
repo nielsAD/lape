@@ -148,6 +148,7 @@ type
   PExportClosureData = ^TExportClosureData;
   TExportClosureData = packed record
     CodeRunner: TLapeCodeRunner;
+    Emitter: TLapeCodeEmitter; // (its code is given to CodeRunner at each call)
     _CodePos: TCodePos;
     CodePos: PCodePos;
     NativeCif: TFFICifManager;
@@ -1038,6 +1039,7 @@ begin
         PPointer(@VarStack[b])^ := Res;
       end;
 
+    CodeRunner.SetCode(Emitter.Code, Emitter.CodeLen);
     CodeRunner.Run(CodePos^, VarStack);
 
     if (NativeCif.Res <> nil) and ({$IFNDEF FPC}@{$ENDIF}ParamInfo[High(ParamInfo)].Eval <> nil) then
@@ -1054,7 +1056,9 @@ begin
   Result := TExportClosure.Create(NativeCif, @LapeExportBinder);
   Result.FreeData := @FreeExportClosureData;
   try
-    Result.UserData.CodeRunner := TLapeCodeRunner.Create(Emitter);
+    // (the script may still be compiling: no code yet)
+    Result.UserData.CodeRunner := TLapeCodeRunner.Create(nil, 0);
+    Result.UserData.Emitter := Emitter;
     with Result.UserData.CodeRunner do
     begin
       DefStackSize := 256 * SizeOf(Pointer);

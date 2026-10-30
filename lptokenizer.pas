@@ -27,7 +27,6 @@ type
     tk_NewLine,
 
     //Keywords
-    tk_kw_At,
     tk_kw_Array,
     tk_kw_Begin,
     tk_kw_Case,
@@ -161,6 +160,7 @@ type
     FLineStart: Integer;
     FTokLines: Integer;
     FTokLineStart: Integer;
+    FFixedPos: TDocPos;
     FDoc: lpString;
 
     FOnHandleDirective: TLapeHandleDirective;
@@ -180,7 +180,6 @@ type
     function getDocPos: TDocPos; override;
   public
     RelativeFileNames: Boolean;
-    OverridePos: PDocPos;
 
     constructor Create(AFileName: lpString = ''); reintroduce; virtual;
     procedure Reset; virtual;
@@ -200,6 +199,8 @@ type
     function NextNoWhiteSpace: EParserToken; virtual;
 
     property FileName: lpString read FFileName write FFileName;
+    // Where every token of it is (a macro: where it is used; empty: where it is in its text)
+    property FixedPos: TDocPos read FFixedPos write FFixedPos;
     property Tok: EParserToken read FTok;
     property TokString: lpString read getTokString;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
@@ -237,8 +238,7 @@ const
     // A
     (
       (Keyword: 'AND'; Token: tk_op_AND),
-      (Keyword: 'ARRAY'; Token: tk_kw_Array),
-      (Keyword: 'AT'; Token: tk_kw_At)
+      (Keyword: 'ARRAY'; Token: tk_kw_Array)
     ),
     // B
     (
@@ -905,24 +905,22 @@ begin
 end;
 
 function TLapeTokenizerBase.getDocPos: TDocPos;
+var
+  Col: UInt32;
+  Name: lpString;
 begin
-  if (OverridePos <> nil) then
-    Exit(OverridePos^);
-
   // (lines and columns are counted from 1)
-  Result.Line := FLine + 1;
-  if (FLineStart > FTokStart) then
-    Result.Col := 0
+  Col := 0;
+  if (FLineStart <= FTokStart) then
+    Col := 1 + UInt32(FTokStart - FLineStart);
+  Name := FFileName;
+  if (FFileName <> '') and RelativeFileNames then
+    Name := FFileNameRelative;
+
+  if (not FFixedPos.isEmpty) then
+    Result := TDocPos.Create(FFixedPos.Line, FFixedPos.Col, Name)
   else
-    Result.Col := 1 + UInt32(FTokStart - FLineStart);
-  if (FFileName <> '') then
-  begin
-    if RelativeFileNames then
-      Result.FileName := FFileNameRelative
-    else
-      Result.FileName := FFileName;
-  end else
-    Result.FileName := '';
+    Result := TDocPos.Create(FLine + 1, Col, Name);
 end;
 
 constructor TLapeTokenizerBase.Create(AFileName: lpString = '');
@@ -932,8 +930,6 @@ begin
   FFileName := AFileName;
   FFileNameRelative := ExtractRelativePath(IncludeTrailingPathDelimiter(GetCurrentDir()), FFileName);
   FOnHandleDirective := nil;
-
-  OverridePos := nil;
 
   Reset();
 end;

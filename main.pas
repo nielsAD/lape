@@ -119,7 +119,7 @@ begin
 
     try
       if Disassemble then
-        DisassembleCode(Compiler.Emitter.Code, [Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar), Compiler.GlobalScope.GetByClass(TLapeGlobalVar)]);
+        DisassembleCode(Compiler.Emitter.Code, Compiler.Emitter.CodeLen, [Compiler.ManagedDeclarations.GetByClass(TLapeGlobalVar), Compiler.GlobalScope.GetByClass(TLapeGlobalVar)]);
 
       if Run then
       begin

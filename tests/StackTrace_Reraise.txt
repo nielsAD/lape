@@ -1,0 +1,4 @@
+Runtime error: "Second after First" at line 12, column 5 in file "StackTrace_Reraise.lap"
+Stack Trace:
+  0) Line 12 in function "Handle" in file "StackTrace_Reraise.lap"
+  1) Line 17 in "main" in file "StackTrace_Reraise.lap"

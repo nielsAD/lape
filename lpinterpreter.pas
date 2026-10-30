@@ -21,14 +21,15 @@ uses
 type
   TStackTraceInfo = array of record
     Address: TCodePos;
-    CalledFrom: PByte;
+    CalledFrom: TCodePos;
   end;
 
   // What was raised and is on its way: what it says and where
   TJumpException = class
     Msg: lpString;
     Loc: TDocPos;
-    Pos: PDocPos;
+    // (where it was raised; Loc is where it says it was)
+    Pos: TDocPos;
     StackTraceInfo: TStackTraceInfo;
   end;
 
@@ -49,7 +50,7 @@ type
 
   TCallStack = array of record
     Address: TCodePos;
-    CalledFrom: PByte;
+    CalledFrom: TCodePos;
     JumpBack: PByte;
     StackP, VarStackP: UInt32;
     Jump: TInJump;
@@ -57,7 +58,8 @@ type
 
   TLapeCodeRunner = class(TLapeBaseClass)
   protected
-    FEmitter: TLapeCodeEmitter;
+    FCode: PByte;
+    FCodeLen: Integer;
     FRunning: TInitBool;
     FStack: TByteArray;
     FStackPos: UInt32;
@@ -88,10 +90,15 @@ type
     function getRunning: Boolean;
     function getPaused: Boolean;
     function getStopped: Boolean;
+    function RaisedAt(const Given: TDocPos): TDocPos; virtual;
   public
-    constructor Create(Emitter: TLapeCodeEmitter); reintroduce;
+    // (the code as it is now: compile before, nothing is emitted after)
+    constructor Create(ACode: PByte; ACodeLen: Integer); reintroduce; overload;
+    constructor Create(Emitter: TLapeCodeEmitter); reintroduce; overload;
     destructor Destroy; override;
 
+    // (code that was still being compiled when the runner was made)
+    procedure SetCode(ACode: PByte; ACodeLen: Integer); virtual;
     procedure Run(const InitialJump: TCodePos = 0; const InitialVarStack: TByteArray = nil);
 
     procedure Resume;
@@ -132,27 +139,37 @@ uses
 const
   InEmptyJump: TInJump = (JumpException: nil; JumpSafe: nil);
 
-function GetStackTrace(Emitter: TLapeCodeEmitter; StackTraceInfo: TStackTraceInfo; Pos: PDocPos): lpString;
+function GetStackTrace(Code: PByte; CodeLen: Integer; StackTraceInfo: TStackTraceInfo; const Pos: TDocPos): lpString;
 
-  function FormatLine(Number: Integer; FuncName: String; Pos: PDocPos): lpString;
+  function FormatLine(Number: Integer; FuncName: String; const Pos: TDocPos): lpString;
   begin
+    if Pos.isInternal then
+    begin
+      // (a method of a type with no name)
+      if (FuncName <> '') and (FuncName[1] = '.') then
+        Delete(FuncName, 1, 1);
+      // (1:1 is a method built without source: no line to show)
+      if (Pos.Line = 1) and (Pos.Col = 1) then
+        Exit(LineEnding + '  ' + IntToStr(Number) + ') internal function "' + FuncName + '"');
+      Exit(LineEnding + '  ' + IntToStr(Number) + ') Line ' + IntToStr(Pos.Line) + ', Col ' + IntToStr(Pos.Col) + ' in internal function "' + FuncName + '"');
+    end;
+
     if (FuncName = 'main') then
       FuncName := '"' + FuncName + '"'
     else
       FuncName := 'function "' + FuncName + '"';
 
-    if (Pos <> nil) and (Pos^.Col <> NullDocPos.Col) and (Pos^.Line <> NullDocPos.Line) then
+    if (not Pos.isEmpty) then
     begin
-      Result := LineEnding + '  ' + IntToStr(Number) + ') Line ' + IntToStr(Pos^.Line) + ' in ' + FuncName;
-      if (Pos^.FileName <> '') then
-        Result := Result + ' in file "' + Pos^.FileName + '"';
+      Result := LineEnding + '  ' + IntToStr(Number) + ') Line ' + IntToStr(Pos.Line) + ' in ' + FuncName;
+      if (Pos.FileName <> '') then
+        Result := Result + ' in file "' + Pos.FileName + '"';
     end else
       Result := LineEnding + '  ' + IntToStr(Number) + ') ' + FuncName;
   end;
 
 var
   i, Number: Integer;
-  DocPos: PDocPos;
 begin
   Result := 'Stack Trace:';
 
@@ -160,20 +177,15 @@ begin
     Result := Result + FormatLine(0, 'main', Pos)
   else
   begin
-    Result := Result + FormatLine(0, Emitter.CodePointerName[StackTraceInfo[High(StackTraceInfo)].Address], Pos);
+    Result := Result + FormatLine(0, CodeMethodName(Code, CodeLen, StackTraceInfo[High(StackTraceInfo)].Address), Pos);
 
     Number := 1;
     for i := High(StackTraceInfo) downto 0 do
     begin
-      DocPos := @NullDocPos;
-      {$IFDEF Lape_EmitPos}
-      DocPos := PPointer(StackTraceInfo[i].CalledFrom + SizeOf(opCode))^;
-      {$ENDIF}
-
       if (i > 0) then
-        Result := Result + FormatLine(Number, Emitter.CodePointerName[StackTraceInfo[i - 1].Address], DocPos)
+        Result := Result + FormatLine(Number, CodeMethodName(Code, CodeLen, StackTraceInfo[i - 1].Address), CodeDocPos(Code, CodeLen, StackTraceInfo[i].CalledFrom))
       else
-        Result := Result + FormatLine(Number, 'main', DocPos);
+        Result := Result + FormatLine(Number, 'main', CodeDocPos(Code, CodeLen, StackTraceInfo[i].CalledFrom));
 
       Inc(Number);
     end;
@@ -199,7 +211,7 @@ end;
 
 function IsLapeException(const E: Exception): Boolean;
 begin
-  Result := (E <> nil) and (E.ClassType = lpException) and (lpException(e).DocPos.Col <> NullDocPos.Col) and (lpException(e).DocPos.Line <> NullDocPos.Line);
+  Result := (E <> nil) and (E.ClassType = lpException) and (not lpException(e).DocPos.isEmpty);
 end;
 
 function TLapeCodeRunner.getRunning: Boolean;
@@ -217,11 +229,37 @@ begin
   Result := FRunning = bFalse;
 end;
 
+// Where something raised at Given is said to be: in an internal method, the nearest call that the script wrote
+function TLapeCodeRunner.RaisedAt(const Given: TDocPos): TDocPos;
+var
+  Pos: TDocPos;
+  i: Integer;
+begin
+  Result := Given;
+  i := FCallStackPos;
+  while Result.isInternal and (i > 0) do
+  begin
+    Dec(i);
+    Pos := CodeDocPos(FCode, FCodeLen, FCallStack[i].CalledFrom);
+    if (not Pos.isEmpty) then
+      Result := Pos;
+  end;
+
+  // (code of Lape that nothing of the script called: as it is)
+  if Result.isInternal then
+    Result := Given;
+end;
+
 constructor TLapeCodeRunner.Create(Emitter: TLapeCodeEmitter);
+begin
+  Create(Emitter.Code, Emitter.CodeLen);
+end;
+
+constructor TLapeCodeRunner.Create(ACode: PByte; ACodeLen: Integer);
 begin
   inherited Create();
 
-  FEmitter := Emitter;
+  SetCode(ACode, ACodeLen);
 
   FDefStackSize         := 1024*8;
   FDefVarStackSize      := 1024*16;
@@ -267,6 +305,12 @@ begin
   {$ENDIF}
 end;
 
+procedure TLapeCodeRunner.SetCode(ACode: PByte; ACodeLen: Integer);
+begin
+  FCode := ACode;
+  FCodeLen := ACodeLen;
+end;
+
 procedure TLapeCodeRunner.Run(const InitialJump: TCodePos = 0; const InitialVarStack: TByteArray = nil);
 const
   opNone: opCode = ocNone;
@@ -274,6 +318,7 @@ var
   Code: PByte;
   CodeBase: PByte;
   CodeUpper: PByte;
+  Trailer: TCodeTrailer;
 
   PreviousException: record
     Exists: Boolean;
@@ -450,21 +495,6 @@ var
     Inc(Code, ocSize);
   end;
 
-  procedure DoGetCallerLocation;
-  begin
-    {$IFDEF Lape_EmitPos}
-    if (FCallStackPos > 0) then
-      PPointer(@FStack[FStackPos])^ := PPointer(FCallStack[FCallStackPos - 1].CalledFrom + SizeOf(opCode))^
-    else
-      PPointer(@FStack[FStackPos])^ := nil;
-    {$ELSE}
-    PPointer(@FStack[FStackPos])^ := nil;
-    {$ENDIF}
-
-    Inc(FStackPos, SizeOf(Pointer));
-    Inc(Code, ocSize);
-  end;
-
   procedure DoGetCallerAddress;
   begin
     if (FCallStackPos < 2) then
@@ -480,7 +510,7 @@ var
   var
     StackTraceInfo: TStackTraceInfo;
     Offset, i: Integer;
-    Pos: PDocPos;
+    Pos: TDocPos;
   begin
     Offset := PInt32(@FStack[FStackPos - (SizeOf(Pointer) + SizeOf(Int32))])^;
 
@@ -493,16 +523,12 @@ var
         StackTraceInfo[i].CalledFrom := FCallStack[i].CalledFrom;
       end;
 
-      {$IFDEF Lape_EmitPos}
       if (Offset > 0) then
-        Pos := PPointer(FCallStack[FCallStackPos - Offset].CalledFrom + SizeOf(opCode))^
+        Pos := CodeDocPos(CodeBase, FCodeLen, FCallStack[FCallStackPos - Offset].CalledFrom)
       else
-        Pos := PPointer(Code + SizeOf(opCode))^;
-      {$ELSE}
-      Pos := nil;
-      {$ENDIF}
+        Pos := CodeDocPos(CodeBase, FCodeLen, PtrUInt(Code) - PtrUInt(CodeBase));
 
-      PlpString(PPointer(@FStack[FStackPos - SizeOf(Pointer)])^)^ := GetStackTrace(FEmitter, StackTraceInfo, Pos);
+      PlpString(PPointer(@FStack[FStackPos - SizeOf(Pointer)])^)^ := GetStackTrace(FCode, FCodeLen, StackTraceInfo, Pos);
     end;
 
     Dec(FStackPos, SizeOf(Int32) + SizeOf(Pointer));
@@ -510,11 +536,19 @@ var
   end;
 
   procedure DoGetScriptMethodName;
+  var
+    At: TCodePos;
+    Name: lpString;
   begin
+    // (any method value: only one that is in the code has a name there)
+    At := PCodePos(@FStack[FStackPos - SizeOf(Pointer)])^;
+    Name := '';
+    if (At < TCodePos(CodeUpper - CodeBase)) then
+      Name := CodeMethodName(CodeBase, FCodeLen, At);
     {$IFDEF Delphi}
-    PShortString(@FStack[FStackPos - SizeOf(Pointer)])^ := UTF8EncodeToShortString(FEmitter.CodePointerName[PCodePos(@FStack[FStackPos - SizeOf(Pointer)])^]);
+    PShortString(@FStack[FStackPos - SizeOf(Pointer)])^ := UTF8EncodeToShortString(Name);
     {$ELSE}
-    PShortString(@FStack[FStackPos - SizeOf(Pointer)])^ := FEmitter.CodePointerName[PCodePos(@FStack[FStackPos - SizeOf(Pointer)])^];
+    PShortString(@FStack[FStackPos - SizeOf(Pointer)])^ := Name;
     {$ENDIF}
 
     Inc(FStackPos, SizeOf(ShortString) - SizeOf(Pointer));
@@ -543,6 +577,11 @@ var
     end;
 
     Inc(Code, ocSize);
+  end;
+
+  procedure DoUnused;
+  begin
+    LapeException(lpeImpossible);
   end;
 
   procedure DoInitStackLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -749,11 +788,11 @@ var
     with FCallStack[FCallStackPos] do
     begin
       {$IFDEF DEBUG_INVOKE}
-      WriteLn('[INVOKE] Name=', FEmitter.CodePointerName[Jmp], ' Depth=', FCallStackPos);
+      WriteLn('[INVOKE] Name=', CodeMethodName(CodeBase, FCodeLen, Jmp), ' Depth=', FCallStackPos);
       {$ENDIF}
 
       Address := Jmp;
-      CalledFrom := Code;
+      CalledFrom := PtrUInt(Code) - PtrUInt(CodeBase);
       JumpBack := PByte(PtrInt(Code) + ocSize + RecSize);
       VarStackP := FVarStackPos;
       PushToVar(ParamSize);
@@ -824,9 +863,14 @@ label
 begin
   FRunning := bTrue;
 
-  Code := PByte(PtrUInt(FEmitter.Code) + InitialJump);
-  CodeBase := FEmitter.Code;
-  CodeUpper := FEmitter.Code + FEmitter.CodeLen;
+  // (0: the program)
+  Code := PByte(PtrUInt(FCode) + InitialJump);
+  CodeBase := FCode;
+  // (where the program ends: a method is only ever in there)
+  if CodeTrailer(FCode, FCodeLen, Trailer) then
+    CodeUpper := FCode + Trailer.ProgramSize
+  else
+    CodeUpper := FCode + FCodeLen;
 
   if not FStacksAllocated then
   begin
@@ -888,10 +932,7 @@ begin
         FInJump.JumpException.StackTraceInfo[i].CalledFrom := FCallStack[i].CalledFrom;
       end;
 
-      FInJump.JumpException.Pos := nil;
-      {$IFDEF Lape_EmitPos}
-      FInJump.JumpException.Pos := PPointer(PtrUInt(Code) + SizeOf(opCode))^;
-      {$ENDIF}
+      FInJump.JumpException.Pos := CodeDocPos(CodeBase, FCodeLen, PtrUInt(Code) - PtrUInt(CodeBase));
 
       if IsLapeException(Exception(ExceptObject)) then
       begin
@@ -900,11 +941,10 @@ begin
       end else
       begin
         FInJump.JumpException.Msg := Exception(ExceptObject).Message;
-        if (FInJump.JumpException.Pos <> nil) then
-          FInJump.JumpException.Loc := FInJump.JumpException.Pos^
-        else
-          FInJump.JumpException.Loc := NullDocPos;
+        FInJump.JumpException.Loc := FInJump.JumpException.Pos;
       end;
+
+      FInJump.JumpException.Loc := RaisedAt(FInJump.JumpException.Loc);
 
       HandleException();
       GoBack := True;
@@ -933,7 +973,7 @@ begin
         LapeExceptionRuntime(E, '', NullDocPos);
 
       try
-        StackTrace := GetStackTrace(FEmitter, FInJump.JumpException.StackTraceInfo, FInJump.JumpException.Pos);
+        StackTrace := GetStackTrace(FCode, FCodeLen, FInJump.JumpException.StackTraceInfo, FInJump.JumpException.Pos);
         UncaughtMsg := FInJump.JumpException.Msg;
         UncaughtLoc := FInJump.JumpException.Loc;
       finally

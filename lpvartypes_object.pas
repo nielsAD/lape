@@ -30,7 +30,7 @@ type
   public
     FreeFieldMap: Boolean;
 
-    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TObjectFieldMap = nil; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce;
+    constructor Create(ACompiler: TLapeCompilerBase; AFieldMap: TObjectFieldMap = nil; AName: lpString = ''); reintroduce;
     function CreateCopy: TLapeType; override;
     destructor Destroy; override;
 
@@ -42,7 +42,7 @@ type
 
     function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar; override;
-    function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
+    function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer): TResVar; override;
 
     procedure addArrayHelpers; override;
 
@@ -100,11 +100,11 @@ begin
   Result := (FFieldMap.Count > 0) or inherited;
 end;
 
-constructor TLapeType_Object.Create(ACompiler: TLapeCompilerBase; AFieldMap: TObjectFieldMap; AName: lpString; ADocPos: PDocPos);
+constructor TLapeType_Object.Create(ACompiler: TLapeCompilerBase; AFieldMap: TObjectFieldMap; AName: lpString);
 const
   InvalidRec: TObjectField = (Offset: -1; FieldType: nil);
 begin
-  inherited Create(ACompiler.getBaseType(ltUInt8), ACompiler, AName, ADocPos);
+  inherited Create(ACompiler.getBaseType(ltUInt8), ACompiler, AName);
 
   FreeFieldMap := (AFieldMap = nil);
   if (AFieldMap = nil) then
@@ -154,6 +154,7 @@ var
   i: Integer;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, '');
+  Result.DocPos := FDocPos;
   for i := 0 to FFieldMap.Count - 1 do
     TLapeType_Object(Result).FFieldMap.Add(FFieldMap.Key[i], FFieldMap.ItemsI[i]);
 
@@ -209,7 +210,7 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Object.EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
+function TLapeType_Object.EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer): TResVar;
 var
   Field: TObjectField;
 begin
@@ -224,8 +225,8 @@ begin
 
     Left.VarType := FCompiler.getBaseType(ltPointer);
 
-    Result := Left.VarType.Eval(op_Plus, Dest, Left, _ResVar.New(FCompiler.getIntConst(Field.Offset)), Flags, Offset, Pos);
-    Result := Result.VarType.Eval(op_Deref, Dest, Result, NullResVar, [], Offset, Pos);
+    Result := Left.VarType.Eval(op_Plus, Dest, Left, _ResVar.New(FCompiler.getIntConst(Field.Offset)), Flags, Offset);
+    Result := Result.VarType.Eval(op_Deref, Dest, Result, NullResVar, [], Offset);
     Result.isConstant := Left.isConstant;
     Result.VarType := Field.FieldType;
 

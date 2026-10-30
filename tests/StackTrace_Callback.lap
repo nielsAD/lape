@@ -1,0 +1,18 @@
+// Script code called by code Lape made: the raise is in the script, the sort between is internal
+function CompareOrFail(L, R: Int32): Int32;
+begin
+  if (L = 13) or (R = 13) then
+    raise 'Unlucky';
+  Result := L - R;
+end;
+
+procedure SortAll(var a: array of Int32);
+begin
+  Sort(a, @CompareOrFail);
+end;
+
+var
+  a: array of Int32 = [5, 13, 1];
+begin
+  SortAll(a);
+end.

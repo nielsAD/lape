@@ -69,7 +69,7 @@ type
   PlpFloat = ^lpFloat;
 
   TVarRecArray = array of TVarRec;
-  TVarRecContainer = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TVarRecContainer = record
     CVar: Variant;
     case SizeInt of
       vtExtended: (CExtended: Extended);
@@ -82,7 +82,7 @@ type
   end;
   TVarRecContainerArray = array of TVarRecContainer;
 
-  TVarRecList = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TVarRecList = record
     Containers: TVarRecContainerArray;
     VarRecs: TVarRecArray;
   end;
@@ -105,8 +105,14 @@ type
 
   PDocPos = ^TDocPos;
   TDocPos = record
-    Line, Col: {$IFDEF Lape_SmallCode}UInt16{$ELSE}UInt32{$ENDIF};
+    Line, Col: UInt32;
     FileName: lpString;
+    class function Create(ALine, ACol: UInt32; AFileName: lpString = ''): TDocPos; static;
+
+    function isEmpty: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    // In something Lape made: FileName[1] is "!"
+    function isInternal: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
+    function Format(Msg: lpString = ''): lpString;
   end;
   TDocPosArray = array of TDocPos;
 
@@ -120,22 +126,12 @@ type
   TCodeOffset = SizeInt;
   PCodeOffset = ^TCodeOffset;
 
-  {$IFDEF Lape_SmallCode}
-  //Means Lape can only locate up to 65kb of local variables (per stackframe)
-  TStackInc = Int16;
-  TStackOffset = UInt16;
-  TVarStackOffset = UInt16;
-  TPointerOffset = Int16;
-  TParamSize = UInt16;
-  EvalBool = Boolean;
-  {$ELSE}
   TStackInc = NativeInt;
   TStackOffset = NativeUInt;
   TVarStackOffset = NativeUInt;
   TPointerOffset = NativeInt;
   TParamSize = NativeUInt;
   EvalBool = LongBool;
-  {$ENDIF}
 
   PStackInc = ^TStackInc;
   PStackOffset = ^TStackOffset;
@@ -240,10 +236,13 @@ type
 
   TLapeBaseDeclClass = class(TLapeBaseClass)
   protected
-    function getDocPos: TDocPos; virtual; abstract;
+    FDocPos: TDocPos;
+    // (the compiler and the tokenizer: where they are now)
+    function getDocPos: TDocPos; virtual;
   public
     Tag: Int64;
-    property DocPos: TDocPos read getDocPos;
+    // Where it is in the script (NullDocPos: made by the compiler, or not known)
+    property DocPos: TDocPos read getDocPos write FDocPos;
   end;
 
   {$IFDEF FPC}generic{$ENDIF} TLapeList<_T> = class(TLapeBaseClass)
@@ -477,20 +476,17 @@ type
 
     FHints: TLapeDeclarationHints;
 
-    function getDocPos: TDocPos; override;
     procedure setName(const AName: lpString); virtual;
   public
-    _DocPos: TDocPos;
     IsUsed: Boolean; // false (default value) var has not been used yet
 
-    constructor Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil); reintroduce; virtual;
+    constructor Create(AName: lpString = ''; AList: TLapeDeclarationList = nil); reintroduce; virtual;
     destructor Destroy; override;
 
     procedure AddHint(Typ: ELapeDeclarationHint; Msg: lpString = ''); virtual;
     procedure CopyHints(From: TLapeDeclaration); virtual;
     procedure WriteHints(Callback: TLapeDeclarationHintCallback; ADocPos: TDocPos); virtual;
     function HasHints: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
-    function HasDocPos: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
     // no name, or one the compiler made (script cannot write it)
     function isHidden: Boolean; {$IFDEF Lape_Inline}inline;{$ENDIF}
     // What is declared in it goes (of a type: what the type declares)
@@ -533,11 +529,7 @@ const
   ltSizeInt = ltNativeInt;
   ltSizeUInt = ltNativeUInt;
 
-  {$IFDEF Lape_SmallCode}
-  ltEvalBool = ltBoolean;
-  {$ELSE}
   ltEvalBool = ltLongBool;
-  {$ENDIF}
 
   {$IFDEF Lape_NoExtended}
   ltFloat = ltDouble;
@@ -685,6 +677,51 @@ implementation
 uses
   typinfo, variants, {$IFNDEF FPC}Generics.Defaults,{$ENDIF}
   lpmessages;
+
+class function TDocPos.Create(ALine, ACol: UInt32; AFileName: lpString = ''): TDocPos;
+begin
+  Result.Line := ALine;
+  Result.Col := ACol;
+  Result.FileName := AFileName;
+end;
+
+function TDocPos.isEmpty: Boolean;
+begin
+  Result := (Line = 0) or (Col = 0);
+end;
+
+function TDocPos.isInternal: Boolean;
+begin
+  Result := (FileName <> '') and (FileName[1] = '!');
+end;
+
+function TDocPos.Format(Msg: lpString = ''): lpString;
+var
+  Where: lpString;
+begin
+  if isInternal then
+    if (Msg = '') then
+      Exit('internal method "' + Copy(FileName, 2, MaxInt) + '"')
+    else
+      Exit(Msg + ' in internal method "' + Copy(FileName, 2, MaxInt) + '"');
+
+  Where := '';
+  if (not isEmpty) then
+    Where := 'line ' + lpString(IntToStr(Line)) + ', column ' + lpString(IntToStr(Col));
+  if (FileName <> '') and (Where <> '') then
+    Where := Where + ' in file "' + FileName + '"'
+  else if (FileName <> '') then
+    Where := 'in file "' + FileName + '"';
+
+  if (Msg = '') then
+    Result := Where
+  else if (not isEmpty) then
+    Result := Msg + ' at ' + Where
+  else if (Where <> '') then
+    Result := Msg + ' ' + Where
+  else
+    Result := Msg;
+end;
 
 function LapeUpcaseAlpha(c: lpChar): lpChar;
 begin
@@ -2336,9 +2373,9 @@ begin
   Result := Copy(FItems, 0, FCount);
 end;
 
-function TLapeDeclaration.getDocPos: TDocPos;
+function TLapeBaseDeclClass.getDocPos: TDocPos;
 begin
-  Result := _DocPos;
+  Result := FDocPos;
 end;
 
 procedure TLapeDeclaration.setName(const AName: lpString);
@@ -2352,18 +2389,13 @@ begin
   FNameHash := LapeHashAlpha(FName);
 end;
 
-constructor TLapeDeclaration.Create(AName: lpString = ''; ADocPos: PDocPos = nil; AList: TLapeDeclarationList = nil);
+constructor TLapeDeclaration.Create(AName: lpString = ''; AList: TLapeDeclarationList = nil);
 begin
   inherited Create();
   IsUsed := True;
 
   if (AName <> '') then
     Name := AName;
-
-  if (ADocPos <> nil) then
-    _DocPos := ADocPos^
-  else
-    _DocPos := NullDocPos;
 
   if (AList <> nil) then
     AList.addDeclaration(Self);
@@ -2413,11 +2445,6 @@ end;
 function TLapeDeclaration.isHidden: Boolean;
 begin
   Result := (FName = '') or (FName[1] = '!');
-end;
-
-function TLapeDeclaration.HasDocPos: Boolean;
-begin
-  Result := (DocPos.Line <> NullDocPos.Line) and (DocPos.Col <> NullDocPos.Col);
 end;
 
 procedure TLapeDeclaration.ClearDeclarations;

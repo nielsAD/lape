@@ -1,1 +1,4 @@
 Runtime error: "Index out of range (index:0, low:0, high:-1)" at line 11, column 7 in file "ArrayHelperExceptionLoc.lap"
+Stack Trace:
+  0) Line 11 in function "TIntArray.Bar" in file "ArrayHelperExceptionLoc.lap"
+  1) Line 18 in "main" in file "ArrayHelperExceptionLoc.lap"

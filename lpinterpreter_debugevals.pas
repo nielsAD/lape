@@ -43,7 +43,6 @@ var
   op: EOperator;
   t1, t2: ELapeBaseType;
   proc: TLapeEvalProc;
-  i: Integer;
   TheName: string;
 begin
   FLo := High(PtrUInt);
