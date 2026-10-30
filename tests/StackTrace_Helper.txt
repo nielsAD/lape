@@ -1,0 +1,6 @@
+Runtime error: "ArrayMedian requires at least two values" at line 4, column 21 in file "StackTrace_Helper.lap"
+Stack Trace:
+  0) Line 9, Col 5 in internal function "_ArrayMedian"
+  1) Line 3, Col 31 in internal function "Median"
+  2) Line 4 in function "Middle" in file "StackTrace_Helper.lap"
+  3) Line 10 in "main" in file "StackTrace_Helper.lap"

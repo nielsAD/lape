@@ -20,211 +20,211 @@ type
   TLapeType_HelperClass = class of TLapeType_Helper;
   TLapeType_Helper = class(TLapeType_OverloadedMethod)
   protected
-    function getFunc(ObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; virtual; abstract;
+    function getFunc(ObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; virtual; abstract;
   public
     procedure addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False); override;
     function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; override;
 
-    function getMethodIndex(AType: TLapeType_Method; Pos: PDocPos = nil): Integer; override;
-    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType=nil; AObjectType: TLapeType=nil; Pos: PDocPos = nil; Fits: TLapeArgFits = nil): Integer; override;
+    function getMethodIndex(AType: TLapeType_Method): Integer; override;
+    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType=nil; AObjectType: TLapeType=nil; Fits: TLapeArgFits = nil): Integer; override;
 
-    function CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType = nil; Pos: PDocPos = nil): TLapeGlobalVar;
+    function CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType = nil): TLapeGlobalVar;
   end;
 
   TLapeType_HelperProperty = class(TLapeType_Helper)
   public
-    constructor Create(ACompiler: TLapeCompilerBase; AName: lpString=''; ADocPos: PDocPos=nil); override;
+    constructor Create(ACompiler: TLapeCompilerBase; AName: lpString=''); override;
   end;
 
   // Low,High,Length,Pop,First,Last are performed inline in DynArray.Eval to reduce function overhead and wont be used like the others
   TLapeType_ArrayHelper_Low = class(TLapeType_HelperProperty)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_High = class(TLapeType_HelperProperty)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Length = class(TLapeType_HelperProperty)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_First = class(TLapeType_HelperProperty)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Last = class(TLapeType_HelperProperty)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Pop = class(TLapeType_HelperProperty)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_IsEmpty = class(TLapeType_HelperProperty)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_SetLength = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Clear = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Contains = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Copy = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_CopyRange = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Remove = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Delete = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_DeleteRange = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Insert = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Swap = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Random = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Reverse = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Reversed = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Unique = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_IndexOf = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_IndicesOf = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Sort = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Sorted = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Median = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Mode = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Min = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Max = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Sum = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Mean = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Variance = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Stdev = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Slice = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Difference = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_SymDifference = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Intersection = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   TLapeType_ArrayHelper_Equals = class(TLapeType_Helper)
   protected
-    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos = nil): TLapeGlobalVar; override;
+    function getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar; override;
   end;
 
   procedure LapeCreateArrayHelpers(Compiler: TLapeCompilerBase);
@@ -244,7 +244,7 @@ begin
   LapeException(lpeImpossible);
 end;
 
-function TLapeType_Helper.getMethodIndex(AType: TLapeType_Method; Pos: PDocPos = nil): Integer;
+function TLapeType_Helper.getMethodIndex(AType: TLapeType_Method): Integer;
 var
   ParamTypes: TLapeTypeArray;
   i: Integer;
@@ -254,12 +254,12 @@ begin
     SetLength(ParamTypes, AType.Params.Count);
     for i := 0 to AType.Params.Count - 1 do
       ParamTypes[i] := AType.Params[i].VarType;
-    Result := getMethodIndex(ParamTypes, AType.Res, TLapeType_MethodOfType(AType).ObjectType, Pos);
+    Result := getMethodIndex(ParamTypes, AType.Res, TLapeType_MethodOfType(AType).ObjectType);
   end else
     Result := -1;
 end;
 
-function TLapeType_Helper.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Pos: PDocPos; Fits: TLapeArgFits): Integer;
+function TLapeType_Helper.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Fits: TLapeArgFits): Integer;
 
   function EqualMethod(Method: TLapeType_MethodOfType): Boolean;
 
@@ -293,10 +293,10 @@ begin
   end;
   if Assigned(Fits) then
     Exit(-1);
-  Result := FDeclarations.IndexOf(getFunc(AObjectType, AParams, AResult, Pos));
+  Result := FDeclarations.IndexOf(getFunc(AObjectType, AParams, AResult));
 end;
 
-function TLapeType_Helper.CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_Helper.CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType): TLapeGlobalVar;
 var
   Header: TLapeType_Method;
   Param: TLapeParameter;
@@ -307,7 +307,7 @@ begin
 
   with FCompiler as TLapeCompiler do
   begin
-    if (not HasDeclaration(VarType)) and (VarType.Name = '') then // for `var a: array of x` otherwise "parent declaration out of scope"
+    if (not hasDeclaration(VarType)) and (VarType.Name = '') then // for `var a: array of x` otherwise "parent declaration out of scope"
       addGlobalType(VarType);
 
     Header := addManagedType(TLapeType_MethodOfType.Create(FCompiler, VarType, nil, ResultType, FName)) as TLapeType_Method;
@@ -320,16 +320,12 @@ begin
       Header.addParam(Param);
     end;
 
+    // (what goes wrong in it is said to be at its caller, see TLapeCodeRunner.RaisedAt)
     Method := addGlobalFunc(Header, '!Helper',
-      '{$X+}'                             + LineEnding +
-      'begin'                             + LineEnding +
-      '  try'                             + LineEnding +
-      '    ' + Body                       + LineEnding +
-      '  except'                          + LineEnding +
-      '    raise at GetCallerLocation();' + LineEnding +
-      '  end;'                            + LineEnding +
-      'end;',
-      Pos);
+      '{$X+}'       + LineEnding +
+      'begin'       + LineEnding +
+      '  ' + Body   + LineEnding +
+      'end;');
 
     Result := Method.Method;
 
@@ -337,56 +333,56 @@ begin
   end;
 end;
 
-constructor TLapeType_HelperProperty.Create(ACompiler: TLapeCompilerBase; AName: lpString; ADocPos: PDocPos);
+constructor TLapeType_HelperProperty.Create(ACompiler: TLapeCompilerBase; AName: lpString);
 begin
-  inherited Create(ACompiler, AName, ADocPos);
+  inherited Create(ACompiler, AName);
 
   MethodDef := mdProperty;
 end;
 
-function TLapeType_ArrayHelper_Low.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Low.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := nil;
   LapeException(lpeCannotOverload);
 end;
 
-function TLapeType_ArrayHelper_High.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_High.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := nil;
   LapeException(lpeCannotOverload);
 end;
 
-function TLapeType_ArrayHelper_Length.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Length.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := nil;
   LapeException(lpeCannotOverload);
 end;
 
-function TLapeType_ArrayHelper_First.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_First.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := nil;
   LapeException(lpeCannotOverload);
 end;
 
-function TLapeType_ArrayHelper_Last.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Last.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := nil;
   LapeException(lpeCannotOverload);
 end;
 
-function TLapeType_ArrayHelper_Pop.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Pop.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := nil;
   LapeException(lpeCannotOverload);
 end;
 
-function TLapeType_ArrayHelper_IsEmpty.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_IsEmpty.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := nil;
   LapeException(lpeCannotOverload);
 end;
 
-function TLapeType_ArrayHelper_SetLength.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_SetLength.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'System.SetLength(Self, Param0);',
@@ -395,7 +391,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Clear.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Clear.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Self := [];',
@@ -404,7 +400,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Contains.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Contains.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.Contains(Param0, Self);',
@@ -414,7 +410,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Copy.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Copy.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -433,7 +429,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_CopyRange.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_CopyRange.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -450,7 +446,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Remove.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Remove.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.Remove(Param0, Self);',
@@ -460,7 +456,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Delete.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Delete.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := Self[Param0];'          + LineEnding +
@@ -471,7 +467,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_DeleteRange.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_DeleteRange.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := Self[Param0];'                            + LineEnding +
@@ -482,7 +478,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Insert.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Insert.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := nil;
   if Length(AParams) = 0 then
@@ -495,7 +491,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Swap.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Swap.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'System.Swap(Self[Param0], Self[Param1]);',
@@ -504,7 +500,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Random.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Random.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := Self[System.Random(System.Low(Self), System.High(Self))];',
@@ -514,7 +510,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Reverse.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Reverse.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'System.Reverse(Self);',
@@ -523,7 +519,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Reversed.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Reversed.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -540,7 +536,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Unique.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Unique.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -557,7 +553,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_IndexOf.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_IndexOf.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.IndexOf(Param0, Self);',
@@ -567,7 +563,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_IndicesOf.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_IndicesOf.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.IndicesOf(Param0, Self);',
@@ -577,7 +573,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Sort.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Sort.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   WeightType: TLapeType;
 begin
@@ -616,7 +612,7 @@ begin
   end;
 end;
 
-function TLapeType_ArrayHelper_Sorted.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Sorted.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType, WeightType: TLapeType;
 begin
@@ -663,7 +659,7 @@ begin
   end;
 end;
 
-function TLapeType_ArrayHelper_Median.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Median.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -680,7 +676,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Mode.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Mode.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.ArrayMode(Self);',
@@ -690,7 +686,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Min.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Min.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.ArrayMin(Self);',
@@ -700,7 +696,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Max.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Max.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.ArrayMax(Self);',
@@ -710,7 +706,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Sum.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Sum.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -730,7 +726,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Mean.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Mean.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -747,7 +743,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Variance.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Variance.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -764,7 +760,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Stdev.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Stdev.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -777,12 +773,11 @@ begin
     'Result := System.ArrayStdev(Self);',
     VarType,
     [],
-    ResType,
-    Pos
+    ResType
   );
 end;
 
-function TLapeType_ArrayHelper_Slice.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Slice.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 var
   ResType: TLapeType;
 begin
@@ -799,7 +794,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Difference.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Difference.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.ArrayDifference(Self, Param0);',
@@ -809,7 +804,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_SymDifference.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_SymDifference.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.ArraySymDifference(Self, Param0);',
@@ -819,7 +814,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Intersection.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Intersection.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.ArrayIntersection(Self, Param0);',
@@ -829,7 +824,7 @@ begin
   );
 end;
 
-function TLapeType_ArrayHelper_Equals.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType; Pos: PDocPos): TLapeGlobalVar;
+function TLapeType_ArrayHelper_Equals.getFunc(VarType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
 begin
   Result := CreateFunction(
     'Result := System.ArrayEquals(Self, Param0);',

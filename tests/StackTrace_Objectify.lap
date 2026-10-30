@@ -1,0 +1,16 @@
+// A method objectified by Lape: its frame has no line
+{$autoobjectify on}
+
+procedure Fail(x: Int32);
+begin
+  raise 'Bad ' + ToString(x);
+end;
+
+procedure Call(Callback: procedure(x: Int32) of object);
+begin
+  Callback(5);
+end;
+
+begin
+  Call(@Fail);
+end.

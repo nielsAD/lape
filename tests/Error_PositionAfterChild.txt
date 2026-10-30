@@ -1,0 +1,3 @@
+Runtime error: "Division by zero" at line 12, column 8 in file "Error_PositionAfterChild.lap"
+Stack Trace:
+  0) Line 12 in "main" in file "Error_PositionAfterChild.lap"

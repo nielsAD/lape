@@ -1,0 +1,29 @@
+// A range and a value after a call that emits: elements and clean-up of a literal
+type TRec = record a: Int32; s: String; end;
+
+function One: Int32;
+begin
+  Result := 1;
+end;
+
+function Str: String;
+begin
+  Result := 'x';
+end;
+
+var
+  arr: array of Int32;
+  st: array[0..1] of String;
+  r: TRec;
+  s: set of 0..9;
+  q: array of Int32 = [1];
+begin
+  arr := [One(), One() + 1];
+  st := [Str(), Str() + 'y'];
+  r := [One(), Str()];
+  s := [One()..One() + 2, 5];
+  WriteLn(arr, ' ', st, ' ', r, ' ', s);
+  q += 2;
+  WriteLn(q);
+  WriteLn(Succ(@q[0]) = @q[1]);
+end.

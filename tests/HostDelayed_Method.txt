@@ -1,0 +1,6 @@
+still running
+Runtime error: "host 5" at line 4, column 11 in file "HostDelayed_Method.lap"
+Stack Trace:
+  0) Line 4, Col 5 in internal function "HostFail"
+  1) Line 4 in function "Go" in file "HostDelayed_Method.lap"
+  2) Line 10 in "main" in file "HostDelayed_Method.lap"

@@ -1,0 +1,14 @@
+// A node's own instructions are at the node, not at the child compiled before them
+var
+  a: Int32 = 1;
+
+function Zero: Int32;
+begin
+  Result := 0;
+end;
+
+begin
+  WriteLn(a +
+    (a div
+      (Zero() + Zero())));
+end.

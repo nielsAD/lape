@@ -1,0 +1,6 @@
+Runtime error: "Bad 5" at line 6, column 3 in file "StackTrace_Objectify.lap"
+Stack Trace:
+  0) Line 6 in function "Fail" in file "StackTrace_Objectify.lap"
+  1) internal function "_Objectify"
+  2) Line 11 in function "Call" in file "StackTrace_Objectify.lap"
+  3) Line 15 in "main" in file "StackTrace_Objectify.lap"

@@ -1,0 +1,11 @@
+// Raised in code Lape made (a helper and what it calls): said to be at the script's call, the internal frames in the trace
+function Middle(a: array of Int32): Double;
+begin
+  Result := a.Median();
+end;
+
+var
+  a: array of Int32 = [1];
+begin
+  WriteLn(Middle(a));
+end.

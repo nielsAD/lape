@@ -1,0 +1,13 @@
+type
+  TBox = record v: Int32; end;
+operator := (var L: TBox; R: Int32): TBox;
+begin
+  L.v := R * 2;
+  Result := L;
+end;
+var
+  a: array of Int32 = [1, 2];
+  b: TBox;
+begin
+  for b in a do WriteLn(b.v);
+end.

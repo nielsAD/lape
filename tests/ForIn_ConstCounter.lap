@@ -1,0 +1,5 @@
+const C: Int32 = 1;
+var a: array of Int32 = [1, 2];
+begin
+  for C in a do WriteLn(C);
+end.

@@ -1,0 +1,12 @@
+// Code given by a macro is at the macro, where it is used
+{$define d:=a div b}
+var a, b: Int32;
+
+function F: Int32;
+begin
+  Result := {$macro d};
+end;
+
+begin
+  WriteLn(F());
+end.

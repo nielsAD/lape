@@ -1,0 +1,18 @@
+// Raised again in an except block: the trace is of the second raise
+procedure Fail;
+begin
+  raise 'First';
+end;
+
+procedure Handle;
+begin
+  try
+    Fail();
+  except
+    raise 'Second after ' + GetExceptionMessage();
+  end;
+end;
+
+begin
+  Handle();
+end.

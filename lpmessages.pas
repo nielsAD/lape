@@ -63,9 +63,7 @@ const
   lpeDuplicateDeclaration = 'Duplicate declaration "%s"';
   lpeDuplicateHashBucket = 'Duplicate hash bucket with "%s" and "%s"';
   lpeErrorScanningString = '%s while scanning string literal';
-  lpeExceptionAt = '%s at line %d, column %d';
   lpeExceptionIn = '%s in "%s"';
-  lpeExceptionInFile = '%s in file "%s"';
   lpeExpected = '%s expected';
   lpeExpectedAssignOperator = 'Expected assign operator';
   lpeExpectedArray = 'Array expected';
@@ -183,14 +181,12 @@ procedure LapeExceptionRuntime(e: Exception; StackTrace: lpString; DocPos: TDocP
 procedure LapeExceptionReraise(e: lpException; DocPos: TDocPos); overload;
 procedure LapeExceptionReraise(e: lpException; DocPos: array of TLapeBaseDeclClass); overload;
 
-function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString;
-
 implementation
 
 constructor lpException.Create(AMessage: lpString; ADocPos: TDocPos; AStackTrace: lpString; AHint: lpString);
 begin
-  if (ADocPos.Col <> NullDocPos.Col) and (ADocPos.Line <> NullDocPos.Line) then
-    inherited Create(string(FormatLocation(AMessage, ADocPos)))
+  if (not ADocPos.isEmpty) then
+    inherited Create(string(ADocPos.Format(AMessage)))
   else
     inherited Create(string(AMessage));
 
@@ -222,24 +218,13 @@ var
 begin
   NewDocPos := NullDocPos;
   for i := 0 to High(DocPos) do
-    if (DocPos[i] <> nil) and
-       (DocPos[i].DocPos.Col <> NullDocPos.Col) and
-       (DocPos[i].DocPos.Line <> NullDocPos.Line) then
+    if (DocPos[i] <> nil) and (not DocPos[i].DocPos.isEmpty) then
     begin
       NewDocPos := DocPos[i].DocPos;
       Break;
     end;
 
   raise lpException.Create(e.Error, NewDocPos, e.StackTrace, e.Hint);
-end;
-
-function FormatLocation(Msg: lpString; DocPos: TDocPos): lpString;
-begin
-  Result := Msg;
-  if (DocPos.Line > 0) and (DocPos.Col > 0) then
-    Result := Format(lpString(lpeExceptionAt), [Result, DocPos.Line, DocPos.Col]);
-  if (DocPos.FileName <> '') then
-    Result := Format(lpString(lpeExceptionInFile), [Result, DocPos.FileName]);
 end;
 
 {$IF DEFINED(Delphi) AND (CompilerVersion <= 21.00)}
@@ -269,9 +254,7 @@ var
   i: Integer;
 begin
   for i := 0 to High(DocPos) do
-    if (DocPos[i] <> nil) and
-       (DocPos[i].DocPos.Col <> NullDocPos.Col) and
-       (DocPos[i].DocPos.Line <> NullDocPos.Line)
+    if (DocPos[i] <> nil) and (not DocPos[i].DocPos.isEmpty)
     then
     begin
       _LapeException(Msg, DocPos[i].DocPos, Hint);
@@ -296,9 +279,7 @@ var
 begin
   Msg := Format(Msg, Args);
   for i := 0 to High(DocPos) do
-    if (DocPos[i] <> nil) and
-       (DocPos[i].DocPos.Col <> NullDocPos.Col) and
-       (DocPos[i].DocPos.Line <> NullDocPos.Line)
+    if (DocPos[i] <> nil) and (not DocPos[i].DocPos.isEmpty)
     then
     begin
       _LapeException(Msg, DocPos[i].DocPos, Hint);

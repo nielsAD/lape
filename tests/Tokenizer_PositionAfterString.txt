@@ -4,3 +4,5 @@ three True
 a
 b
 Runtime error: "Index out of range (index:5, low:0, high:-1)" at line 11, column 6 in file "Tokenizer_PositionAfterString.lap"
+Stack Trace:
+  0) Line 11 in "main" in file "Tokenizer_PositionAfterString.lap"
