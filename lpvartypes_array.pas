@@ -1155,7 +1155,7 @@ begin
         else
           FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, _ResVar.New(IndexHigh), NullResVar);
-        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3);
+        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['_Move']), SizeOf(Pointer) * 3);
         Result := Left;
 
         if wasConstant then

@@ -114,7 +114,6 @@ type
     FTree: TLapeTree_Base; // the script
     FPostTree: TLapeTree_StatementList;
     FMethods: TLapeTree_StatementList; // last: one jump over them all (so methods aren't called once execution ends) and what compiling adds joins the end
-    FImporting: Pointer;
 
     FIncludes: TStringList;
     FBaseDefines: TLapeBaseDefines;
@@ -137,8 +136,6 @@ type
     procedure setInternalMethod(AName: lpString; AClass: TLapeTree_InternalMethodClass); virtual;
     procedure addInternalMethods; virtual;
 
-    function getImporting: Boolean; virtual;
-    procedure setImporting(Import: Boolean); virtual;
     function getDefines: TLapeDefines; virtual;
     procedure setBaseDefines(Defines: TLapeDefines); virtual;
     function getTokenizer: TLapeTokenizerBase; virtual;
@@ -248,17 +245,12 @@ type
     procedure setState(const State: Pointer; DoFreeState: Boolean = True); virtual;
     procedure freeState(const State: Pointer); virtual;
 
-    function getTempTokenizerState(const ATokenizer: TLapeTokenizerBase; ResetState: Boolean = True): Pointer; overload; virtual;
-    function getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''; ResetState: Boolean = True): Pointer; overload; virtual;
-    procedure resetTokenizerState(const State: Pointer; DoFreeState: Boolean = True); virtual;
-    procedure freeTempTokenizerState(const State: Pointer); virtual;
+    function getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''): Pointer; virtual;
+    procedure resetTokenizerState(const State: Pointer); virtual;
 
     function getVarStates: TLapeVarStates; virtual;
     procedure setVarStates(VarStates: TLapeVarStates); virtual;
     procedure freeVarStates(VarStates: TLapeVarStates); virtual;
-
-    procedure StartImporting; virtual;
-    procedure EndImporting; virtual;
 
     function ParseFile: TLapeTree_Base; virtual;
 
@@ -302,19 +294,14 @@ type
 
     function addGlobalFunc(AHeader: lpString; Value: Pointer): TLapeGlobalVar; overload; virtual;
     function addGlobalFunc(AHeader: TLapeType_Method; AName, Body: lpString): TLapeTree_Method; overload; virtual;
-    function addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
-    function addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: Pointer; AName: lpString): TLapeGlobalVar; overload; virtual;
 
-    function addGlobalMethod(AFunc: TLapeGlobalVar; Value: TMethod; FreeFunc: Boolean = True): TLapeGlobalVar; overload; virtual;
-    function addGlobalMethod(AHeader: lpString; Value: TMethod): TLapeGlobalVar; overload; virtual;
-    function addGlobalMethod(AHeader: lpString; AMethod, ASelf: Pointer): TLapeGlobalVar; overload; virtual;
+    function addGlobalMethod(AHeader: lpString; AMethod, ASelf: Pointer): TLapeGlobalVar; virtual;
 
     procedure addCode(ACode: lpString; AFileName: lpString = ''; AfterScript: Boolean = True); virtual;
 
     // (nil removes one)
     property InternalMethodMap[AName: lpString]: TLapeTree_InternalMethodClass read getInternalMethod write setInternalMethod;
     property Tree: TLapeTree_Base read FTree;
-    property Importing: Boolean read getImporting write setImporting;
     property Tokenizer: TLapeTokenizerBase read getTokenizer write setTokenizer;
     // what is defined now: the base defines +  what the script defined
     property Defines: TLapeDefines read getDefines write setBaseDefines;
@@ -468,7 +455,6 @@ var
   i: Integer;
 begin
   inherited;
-  EndImporting();
 
   FOptions := FBaseOptions;
   FOptions_PackRecords := FBaseOptions_PackRecords;
@@ -495,19 +481,6 @@ begin
     FConditionalStack.Clear();
   if (FDefines <> nil) then
     FDefines.Clear();
-end;
-
-function TLapeCompiler.getImporting: Boolean;
-begin
-  Result := FImporting <> nil;
-end;
-
-procedure TLapeCompiler.setImporting(Import: Boolean);
-begin
-  if Import then
-    StartImporting()
-  else
-    EndImporting();
 end;
 
 function TLapeCompiler.getDefines: TLapeDefines;
@@ -1499,24 +1472,6 @@ end;
 
 procedure TLapeCompiler.InitBaseDefinitions;
 
-  procedure addCompilerFuncs;
-  const
-    pn = lptNormal;
-    pv = lptVar;
-  var
-    i, b, n: TLapeType;
-    gn: TLapeGlobalVar;
-  begin
-    i := getBaseType(ltSizeInt);
-    b := getBaseType(ltEvalBool);
-
-    n := nil;
-    gn := nil;
-
-    addGlobalFunc([n, n, i], [pv, pv, pn], [gn, gn, gn], b, @_LapeCompareMem, '!cmp');
-    addGlobalFunc([n, n, i], [pv, pv, pn], [gn, gn, gn], @_LapeMove, '!move');
-  end;
-
   function NewMagicMethod(GetMethod: TLapeGetOverloadedMethod; NeedFullMatch: Boolean = True): TLapeType_OverloadedMethod;
   begin
     Result := TLapeType_OverloadedMethod.Create(Self);
@@ -1550,8 +1505,6 @@ procedure TLapeCompiler.InitBaseDefinitions;
     addGlobalVar(OLMethod.NewGlobalVar('ToString'));
   end;
 begin
-  StartImporting();
-
   addBaseDefine('Lape');
   addBaseDefine('Sesquipedalian');
 
@@ -1570,7 +1523,6 @@ begin
   addBaseDefine('Lape_NoExtended');
   {$ENDIF}
 
-  addCompilerFuncs();
   addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), LapeSystemName).isConstant := True;
   addGlobalVar(addManagedType(TLapeType_NilPointer.Create(Self, nil, False)).NewGlobalVarP(), 'nil').isConstant := True;
 
@@ -1587,6 +1539,9 @@ begin
   addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrInt), True)).CreateAlias(), 'PtrInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrUInt), False)).CreateAlias(), 'PtrUInt');
 
+  addGlobalFunc('procedure _Move(var Src, Dst; s: SizeInt);', @_LapeMove);
+  addGlobalFunc('function _CompareMem(var p1, p2; s: SizeInt): EvalBool;', @_LapeCompareMem);
+
   addGlobalType('array of String', 'TStringArray');
   addGlobalType('array of Boolean', 'TBooleanArray');
   addGlobalType('array of Int32', 'TIntegerArray');
@@ -1596,13 +1551,8 @@ begin
   addGlobalType('array of Extended', 'TExtendedArray');
   {$ENDIF}
 
-  addCode(
-    'const                 ' + LineEnding +
-    '  True  = EvalBool(1);' + LineEnding +
-    '  False = EvalBool(0);' + LineEnding +
-    '',
-    '!InitBaseDefinitions'
-  );
+  addGlobalVar(getBaseType(ltEvalBool).NewGlobalVarStr('1'), 'True').isConstant := True;
+  addGlobalVar(getBaseType(ltEvalBool).NewGlobalVarStr('0'), 'False').isConstant := True;
 
   addGlobalFunc('function _LocationToStr(DocPos: Pointer): string;', @_LapeLocationToStr);
 
@@ -1705,8 +1655,6 @@ begin
     _LapeArraySlice,
     '!addDelayedCore'
   );
-
-  EndImporting();
 end;
 
 procedure TLapeCompiler.InitBaseMath;
@@ -5104,7 +5052,6 @@ begin
   inherited Create(AEmitter, ManageEmitter);
 
   FTokenizer := -1;
-  FImporting := nil;
   FPreTree := TLapeTree_StatementList.Create(Self);
   FPostTree := TLapeTree_StatementList.Create(Self);
   FMethods := TLapeTree_StatementList.Create(Self);
@@ -5266,7 +5213,6 @@ end;
 
 destructor TLapeCompiler.Destroy;
 begin
-  EndImporting();
   setTokenizer(nil);
   if FreeTree then
   begin
@@ -5361,74 +5307,44 @@ begin
   Dispose(PCompilerState(State));
 end;
 
-function TLapeCompiler.getTempTokenizerState(const ATokenizer: TLapeTokenizerBase; ResetState: Boolean = True): Pointer;
+function TLapeCompiler.getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''): Pointer;
 begin
   if (not HasTokenizer()) then
     SetLength(FTokenizers, 1);
 
-  if Importing and (FTokenizers[0] = nil) then
-    Result := nil
-  else
+  New(PTempTokenizerState(Result));
+  with PTempTokenizerState(Result)^ do
   begin
-    New(PTempTokenizerState(Result));
-    with PTempTokenizerState(Result)^ do
-    begin
-      OldStackInfo := FStackInfo;
-      OldTokenizerIndex := FTokenizer;
-      OldTokenizer := FTokenizers[0];
-      OldState := getState();
-      // (what it parses is at its own place, not where the compiling node is)
-      FEmitter.DocPos := NullDocPos;
-    end;
+    OldStackInfo := FStackInfo;
+    OldTokenizerIndex := FTokenizer;
+    OldTokenizer := FTokenizers[0];
+    OldState := getState();
+    // (what it parses is at its own place, not where the compiling node is)
+    FEmitter.DocPos := NullDocPos;
   end;
 
   FTokenizer := 0;
   FTokenizers[0] := nil;
-  Tokenizer := ATokenizer;
+  Tokenizer := TLapeTokenizerString.Create(AStr, AFileName);
 
-  if ResetState then
-  begin
-    FConditionalStack.Clear();
-    FStackInfo := FStackInfo.Root;
-    FOptions := FBaseOptions;
-    FOptions_PackRecords := FBaseOptions_PackRecords;
-    FDefines.Hide();
-  end;
+  FConditionalStack.Clear();
+  FStackInfo := FStackInfo.Root;
+  FOptions := FBaseOptions;
+  FOptions_PackRecords := FBaseOptions_PackRecords;
+  FDefines.Hide();
 end;
 
-function TLapeCompiler.getTempTokenizerState(const AStr: lpString; const AFileName: lpString = ''; ResetState: Boolean = True): Pointer;
+procedure TLapeCompiler.resetTokenizerState(const State: Pointer);
 begin
-  Result := getTempTokenizerState(TLapeTokenizerString.Create(AStr, AFileName), ResetState);
-end;
-
-procedure TLapeCompiler.resetTokenizerState(const State: Pointer; DoFreeState: Boolean = True);
-begin
-  if (State <> nil) then
-    with PTempTokenizerState(State)^ do
-    begin
-      Swap(Pointer(FTokenizers[0]), Pointer(OldTokenizer));
-      FTokenizer := OldTokenizerIndex;
-      FStackInfo := OldStackInfo;
-      setState(OldState, False);
-    end;
-  if DoFreeState then
-    freeTempTokenizerState(State);
-end;
-
-procedure TLapeCompiler.freeTempTokenizerState(const State: Pointer);
-begin
-  if (State = nil) then
-  begin
-    if Importing and (FTokenizers[0] <> nil) then
-      decTokenizerLock(FTokenizers[0]);
-    Exit;
-  end;
-
   with PTempTokenizerState(State)^ do
   begin
+    Swap(Pointer(FTokenizers[0]), Pointer(OldTokenizer));
+    FTokenizer := OldTokenizerIndex;
+    FStackInfo := OldStackInfo;
+    setState(OldState);
+
     if (OldTokenizer <> nil) then
       decTokenizerLock(OldTokenizer);
-    freeState(OldState);
   end;
   Dispose(PTempTokenizerState(State));
 end;
@@ -5494,21 +5410,6 @@ begin
   for i := 0 to High(VarStates) do
     if (VarStates[i] <> nil) then
       FreeAndNil(VarStates[i]);
-end;
-
-procedure TLapeCompiler.StartImporting;
-begin
-  if (not Importing) then
-    FImporting := getTempTokenizerState(nil);
-end;
-
-procedure TLapeCompiler.EndImporting;
-begin
-  if Importing then
-  begin
-    resetTokenizerState(FImporting);
-    FImporting := nil;
-  end;
 end;
 
 function TLapeCompiler.ParseFile: TLapeTree_Base;
@@ -5927,48 +5828,28 @@ begin
   end;
 end;
 
-function TLapeCompiler.addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType; Value: Pointer; AName: lpString): TLapeGlobalVar;
+function TLapeCompiler.addGlobalMethod(AHeader: lpString; AMethod, ASelf: Pointer): TLapeGlobalVar;
+var
+  Func: TLapeGlobalVar;
+  Value: TMethod;
 begin
-  Result := addGlobalVar(TLapeType_Method(addManagedType(TLapeType_Method.Create(Self, AParams, AParTypes, AParDefaults, ARes))).NewGlobalVar(Value), AName);
+  Func := addGlobalFunc(AHeader, AMethod);
+  Assert(Func <> nil);
+
+  Value.Code := AMethod;
+  Value.Data := ASelf;
+
+  Result := TLapeType_MethodOfObject(addManagedType(TLapeType_MethodOfObject.Create(Func.VarType as TLapeType_Method))).NewGlobalVar(Value, Func.Name);
   Result.isConstant := True;
   Result.Known := False;
-end;
+  TLapeType_MethodOfObject(Result.VarType).HiddenSelf := not (Func.VarType is TLapeType_MethodOfObject);
 
-function TLapeCompiler.addGlobalFunc(AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; Value: Pointer; AName: lpString): TLapeGlobalVar;
-begin
-  Result := addGlobalFunc(AParams, AParTypes, AParDefaults, nil, Value, AName);
-end;
-
-function TLapeCompiler.addGlobalMethod(AFunc: TLapeGlobalVar; Value: TMethod; FreeFunc: Boolean = True): TLapeGlobalVar;
-begin
-  Assert(AFunc <> nil);
-
-  Result := TLapeType_MethodOfObject(addManagedType(TLapeType_MethodOfObject.Create(AFunc.VarType as TLapeType_Method))).NewGlobalVar(Value, AFunc.Name);
-  Result.isConstant := True;
-  Result.Known := False;
-  TLapeType_MethodOfObject(Result.VarType).HiddenSelf := not (AFunc.VarType is TLapeType_MethodOfObject);
-
-  if (AFunc.DeclarationList <> nil) then
-    AFunc.DeclarationList.addDeclaration(Result)
+  if (Func.DeclarationList <> nil) then
+    Func.DeclarationList.addDeclaration(Result)
   else
     Result := addGlobalVar(Result);
 
-  if FreeFunc then
-    AFunc.Free();
-end;
-
-function TLapeCompiler.addGlobalMethod(AHeader: lpString; Value: TMethod): TLapeGlobalVar;
-begin
-  Result := addGlobalMethod(addGlobalFunc(AHeader, @Value.Code), Value);
-end;
-
-function TLapeCompiler.addGlobalMethod(AHeader: lpString; AMethod, ASelf: Pointer): TLapeGlobalVar;
-var
-  Val: TMethod;
-begin
-  Val.Code := AMethod;
-  Val.Data := ASelf;
-  Result := addGlobalMethod(AHeader, Val);
+  Func.Free();
 end;
 
 procedure TLapeCompiler.addCode(ACode: lpString; AFileName: lpString = ''; AfterScript: Boolean = True);
@@ -5980,7 +5861,7 @@ begin
   if (AFileName = '') then
   begin
     AFileName := '!addCode';
-    if HasTokenizer() and (not Importing) then
+    if (Tokenizer <> nil) then
       AFileName := AFileName + '::' + Tokenizer.FileName;
   end;
 
