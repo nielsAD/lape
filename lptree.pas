@@ -340,22 +340,6 @@ type
     property Statements: TLapeStatementList read FStatements;
   end;
 
-  TLapeDelayedFilter = (ldfAll, ldfMethods, ldfStatements);
-  TLapeTree_DelayedStatementList = class(TLapeTree_StatementList)
-  protected
-    FDelay: array of Boolean;
-    FGlobal: array of Boolean;
-    procedure DeleteChild(Node: TLapeTree_Base); override;
-  public
-    procedure Clean; virtual;
-    function GlobalCount(Global: Boolean = True): Integer; virtual;
-    procedure OverrideDelayGlobal(AfterCompilation, IsGlobal: Boolean; StartIndex: Integer; Count: Integer = 1); virtual;
-
-    function addStatement(Statement: TLapeTree_Base; Prepend: Boolean = False): Integer; overload; override;
-    function addStatement(Statement: TLapeTree_Base; AfterCompilation, IsGlobal: Boolean): Integer; reintroduce; overload; virtual;
-    function CompileDelayed(AfterCompilation: Boolean; Filter: TLapeDelayedFilter = ldfAll): TResVar; virtual;
-  end;
-
   TLapeTree_Method = class(TLapeTree_Base, ILapeTree_CanExit)
   protected
     FStackInfo: TLapeStackInfo;
@@ -365,6 +349,8 @@ type
     procedure setStatements(Node: TLapeTree_StatementList); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
+    // Added by the host: stays when compiling again
+    Imported: Boolean;
     Method: TLapeGlobalVar;
     SelfWith: TLapeWithDeclaration;
     FreeStackInfo: Boolean;
@@ -2812,9 +2798,14 @@ var
   i: Integer;
 begin
   Result := NullResVar;
-  for i := 0 to FStatements.Count - 1 do
+
+  i := 0;
+  while (i < FStatements.Count) do
+  begin
     if (FStatements[i] <> nil) then
       Result := CompileStatement(FStatements[i]);
+    Inc(i);
+  end;
 end;
 
 function TLapeTree_StatementList.Walk(Visit: TLapeTree_Visit): Boolean;
@@ -2825,91 +2816,6 @@ begin
     if (FStatements[i] <> nil) and Visit(FStatements[i]) then
       Exit(True);
   Result := False;
-end;
-
-procedure TLapeTree_DelayedStatementList.DeleteChild(Node: TLapeTree_Base);
-var
-  i, Len: Integer;
-begin
-  i := FStatements.IndexOf(Node);
-  if (i > -1) then
-  begin
-    FStatements.Delete(i);
-    Len := FStatements.Count;
-    for i := i to Len - 1 do
-    begin
-      Swap(FDelay[i], FDelay[i + 1]);
-      Swap(FGlobal[i], FGlobal[i + 1]);
-    end;
-    SetLength(FDelay, Len);
-    SetLength(FGlobal, Len);
-  end;
-end;
-
-procedure TLapeTree_DelayedStatementList.Clean;
-var
-  i: Integer;
-begin
-  for i := FStatements.Count - 1 downto 0 do
-    if (not FGlobal[i]) and (FStatements[i] <> nil) and (FStatements[i].Parent = Self) then
-      FStatements[i].Free();
-end;
-
-function TLapeTree_DelayedStatementList.GlobalCount(Global: Boolean = True): Integer;
-var
-  i: Integer;
-begin
-  Result := 0;
-  for i := FStatements.Count - 1 downto 0 do
-    if (FGlobal[i] = Global) and (FStatements[i] <> nil) then
-      Inc(Result);
-end;
-
-procedure TLapeTree_DelayedStatementList.OverrideDelayGlobal(AfterCompilation, IsGlobal: Boolean; StartIndex: Integer; Count: Integer = 1);
-var
-  i: Integer;
-begin
-  if (StartIndex + Count >= FStatements.Count) or (Count <= 0) then
-    Count := FStatements.Count - StartIndex - 1;
-  for i := StartIndex to StartIndex + Count do
-  begin
-    FDelay[i] := AfterCompilation;
-    FGlobal[i] := IsGlobal;
-  end;
-end;
-
-function TLapeTree_DelayedStatementList.addStatement(Statement: TLapeTree_Base; Prepend: Boolean = False): Integer;
-begin
-  Result := inherited;
-  SetLength(FDelay, FStatements.Count);
-  SetLength(FGlobal, FStatements.Count);
-end;
-
-function TLapeTree_DelayedStatementList.addStatement(Statement: TLapeTree_Base; AfterCompilation, IsGlobal: Boolean): Integer;
-begin
-  Result := addStatement(Statement);
-  if (Result > -1) then
-  begin
-    FDelay[Result] := AfterCompilation;
-    FGlobal[Result] := IsGlobal;
-  end;
-end;
-
-function TLapeTree_DelayedStatementList.CompileDelayed(AfterCompilation: Boolean; Filter: TLapeDelayedFilter = ldfAll): TResVar;
-var
-  i: Integer;
-begin
-  Result := NullResVar;
-  i := 0;
-
-  while (i < FStatements.Count) do
-  begin
-    if (AfterCompilation = FDelay[i]) and (FStatements[i] <> nil) then
-      if (Filter = ldfAll) or ((Filter <> ldfMethods) xor (FStatements[i] is TLapeTree_Method)) then
-        Result := CompileStatement(FStatements[i]);
-
-    Inc(i);
-  end;
 end;
 
 procedure TLapeTree_Method.setStatements(Node: TLapeTree_StatementList);

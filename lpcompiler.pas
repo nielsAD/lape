@@ -109,8 +109,11 @@ type
     FNoInvokeNext: Boolean;
     FLastTok: EParserToken;
 
-    FTree: TLapeTree_Base;
-    FDelayedTree: TLapeTree_DelayedStatementList;
+    // What is compiled, in this field order
+    FPreTree: TLapeTree_StatementList;
+    FTree: TLapeTree_Base; // the script
+    FPostTree: TLapeTree_StatementList;
+    FMethods: TLapeTree_StatementList; // last: one jump over them all (so methods aren't called once execution ends) and what compiling adds joins the end
     FImporting: Pointer;
 
     FIncludes: TStringList;
@@ -257,7 +260,6 @@ type
     procedure StartImporting; virtual;
     procedure EndImporting; virtual;
 
-    function addDelayedExpression(Node: TLapeTree_Base; AfterCompilation: Boolean = True; IsGlobal: Boolean = False): TLapeTree_Base; virtual;
     function ParseFile: TLapeTree_Base; virtual;
 
     function Compile: Boolean; virtual;
@@ -307,12 +309,11 @@ type
     function addGlobalMethod(AHeader: lpString; Value: TMethod): TLapeGlobalVar; overload; virtual;
     function addGlobalMethod(AHeader: lpString; AMethod, ASelf: Pointer): TLapeGlobalVar; overload; virtual;
 
-    function addDelayedCode(ACode: lpString; AFileName: lpString = ''; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base; virtual;
+    procedure addCode(ACode: lpString; AFileName: lpString = ''; AfterScript: Boolean = True); virtual;
 
     // (nil removes one)
     property InternalMethodMap[AName: lpString]: TLapeTree_InternalMethodClass read getInternalMethod write setInternalMethod;
     property Tree: TLapeTree_Base read FTree;
-    property DelayedTree: TLapeTree_DelayedStatementList read FDelayedTree;
     property Importing: Boolean read getImporting write setImporting;
     property Tokenizer: TLapeTokenizerBase read getTokenizer write setTokenizer;
     // what is defined now: the base defines +  what the script defined
@@ -463,6 +464,8 @@ begin
 end;
 
 procedure TLapeCompiler.Reset;
+var
+  i: Integer;
 begin
   inherited;
   EndImporting();
@@ -481,8 +484,10 @@ begin
     FTree.Free();
   FTree := nil;
 
-  if (FDelayedTree <> nil) then
-    FDelayedTree.Clean();
+  if (FMethods <> nil) then
+    for i := FMethods.Statements.Count - 1 downto 0 do
+      if (not TLapeTree_Method(FMethods.Statements[i]).Imported) then
+        FMethods.Statements[i].Free();
 
   if (FIncludes <> nil) then
     FIncludes.Clear();
@@ -709,7 +714,7 @@ begin
     end else
       Method.Statements.addStatement(Invoke);
 
-    addDelayedExpression(Method);
+    FMethods.addStatement(Method);
   finally
     DecStackInfo([lsfFunction], Method = nil);
   end;
@@ -767,7 +772,7 @@ begin
         Method.Statements.addStatement(Dispose);
       end;
 
-    addDelayedExpression(Method);
+    FMethods.addStatement(Method);
   finally
     DecStackInfo([lsfFunction], Method = nil);
   end;
@@ -802,7 +807,7 @@ begin
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Self);
     Method.Statements.addStatement(Assignment);
-    addDelayedExpression(Method);
+    FMethods.addStatement(Method);
   finally
     DecStackInfo([lsfFunction], Method = nil);
   end;
@@ -1591,7 +1596,7 @@ begin
   addGlobalType('array of Extended', 'TExtendedArray');
   {$ENDIF}
 
-  addDelayedCode(
+  addCode(
     'const                 ' + LineEnding +
     '  True  = EvalBool(1);' + LineEnding +
     '  False = EvalBool(0);' + LineEnding +
@@ -1686,7 +1691,7 @@ begin
   InitBaseVariant();
   InitBaseFile();
 
-  addDelayedCode(
+  addCode(
     LapeDelayedFlags +
     Format(_LapeToString_Set, ['Small', High(TLapeSmallSetItem)]) +
     Format(_LapeToString_Set, ['Large', High(TLapeLargeSetItem)]) +
@@ -2533,6 +2538,7 @@ function TLapeCompiler.ParseBlockList(StopAfterBeginEnd: Boolean = True): TLapeT
 var
   FuncForwards: TLapeFuncForwards;
   Statement: TLapeTree_Base;
+  Method: TLapeTree_Method;
   DoBreak: Boolean;
 begin
 
@@ -2556,7 +2562,12 @@ begin
             end;
           tk_kw_Const, tk_kw_Var: Statement := ParseVarBlock();
           tk_kw_Function, tk_kw_Procedure, tk_kw_Operator, tk_kw_Property:
-            addDelayedExpression(ParseMethod(FuncForwards));
+            begin
+              // (nil: external)
+              Method := ParseMethod(FuncForwards);
+              if (Method <> nil) then
+                FMethods.addStatement(Method);
+            end;
           tk_kw_Type: ParseTypeBlock();
 
           {$IFDEF Lape_PascalLabels}
@@ -2846,10 +2857,10 @@ var
   var
     i: Integer;
   begin
-    for i := 0 to FDelayedTree.Statements.Count - 1 do
-      if (FDelayedTree.Statements[i] is TLapeTree_Method) and (TLapeTree_Method(FDelayedTree.Statements[i]).Method = varFrom) then
+    for i := 0 to FMethods.Statements.Count - 1 do
+      if (TLapeTree_Method(FMethods.Statements[i]).Method = varFrom) then
       begin
-        TLapeTree_Method(FDelayedTree.Statements[i]).Method := varTo;
+        TLapeTree_Method(FMethods.Statements[i]).Method := varTo;
 
         Exit;
       end;
@@ -5094,7 +5105,9 @@ begin
 
   FTokenizer := -1;
   FImporting := nil;
-  FDelayedTree := TLapeTree_DelayedStatementList.Create(Self);
+  FPreTree := TLapeTree_StatementList.Create(Self);
+  FPostTree := TLapeTree_StatementList.Create(Self);
+  FMethods := TLapeTree_StatementList.Create(Self);
   FreeTokenizer := ManageTokenizer;
   FreeTree := True;
 
@@ -5255,8 +5268,12 @@ destructor TLapeCompiler.Destroy;
 begin
   EndImporting();
   setTokenizer(nil);
-  if FreeTree and (FDelayedTree <> nil) then
-    FreeAndNil(FDelayedTree);
+  if FreeTree then
+  begin
+    FreeAndNil(FPreTree);
+    FreeAndNil(FPostTree);
+    FreeAndNil(FMethods);
+  end;
   FreeAndNil(FPreprocessorFuncs);
   FreeAndNil(FPreprocessorMacros);
   FreeAndNil(FIncludes);
@@ -5494,14 +5511,6 @@ begin
   end;
 end;
 
-function TLapeCompiler.addDelayedExpression(Node: TLapeTree_Base; AfterCompilation: Boolean = True; IsGlobal: Boolean = False): TLapeTree_Base;
-begin
-  Result := Node;
-  if (Node = nil) or (FDelayedTree = nil) then
-    Exit;
-  FDelayedTree.addStatement(Node, AfterCompilation, IsGlobal);
-end;
-
 function TLapeCompiler.ParseFile: TLapeTree_Base;
 begin
   Result := nil;
@@ -5530,7 +5539,7 @@ end;
 function TLapeCompiler.Compile: Boolean;
 
 var
-  ToEnd: Integer;
+  ToEnd, Imported: Integer;
 begin
   Result := False;
   try
@@ -5538,25 +5547,24 @@ begin
 
     GlobalScope.ForceInitialization := (lcoAlwaysInitialize in FOptions);
     IncStackInfo(GlobalScope, [lsfEmit]);
+    Imported := FMethods.Statements.Count;
     FTree := ParseFile();
-    if (FTree = nil) and (FDelayedTree.GlobalCount(False) <= 0) then
+    if (FTree = nil) and (FMethods.Statements.Count = Imported) then
       LapeException(lpeExpressionExpected);
     checkDeclHints(GlobalScope);
 
     FAfterParsing.Notify(Self);
 
-    FDelayedTree.CompileDelayed(False, ldfStatements);
+    FPreTree.Compile();
     if (FTree <> nil) then
       FTree.Compile();
-
-    FDelayedTree.CompileDelayed(True, ldfStatements);
+    FPostTree.Compile();
     DecStackInfo([lsfGlobal, lsfEmit]);
     Assert(GlobalScope.CodePos = 0);
 
     // (every method after the program's end, which jumps past them)
     ToEnd := FEmitter._JmpR(0);
-    FDelayedTree.CompileDelayed(False, ldfMethods);
-    FDelayedTree.CompileDelayed(True, ldfMethods);
+    FMethods.Compile();
     FEmitter.PatchJump(ToEnd, FEmitter.CodeLen);
 
     FEmitter._op(ocNone);
@@ -5912,7 +5920,8 @@ begin
   try
     Result := ParseMethod(nil, AHeader, AName);
     CheckAfterCompile();
-    addDelayedExpression(Result, True, True);
+    Result.Imported := True;
+    FMethods.addStatement(Result);
   finally
     resetTokenizerState(OldState);
   end;
@@ -5962,27 +5971,33 @@ begin
   Result := addGlobalMethod(AHeader, Val);
 end;
 
-function TLapeCompiler.addDelayedCode(ACode: lpString; AFileName: lpString = ''; AfterCompilation: Boolean = True; IsGlobal: Boolean = True): TLapeTree_Base;
+procedure TLapeCompiler.addCode(ACode: lpString; AFileName: lpString = ''; AfterScript: Boolean = True);
 var
-  Index: Integer;
+  Index, i: Integer;
   OldState: Pointer;
+  Statements: TLapeTree_Base;
 begin
   if (AFileName = '') then
   begin
-    AFileName := '!addDelayedCode';
+    AFileName := '!addCode';
     if HasTokenizer() and (not Importing) then
       AFileName := AFileName + '::' + Tokenizer.FileName;
   end;
 
-  Index := FDelayedTree.Statements.Count;
+  Index := FMethods.Statements.Count;
   OldState := getTempTokenizerState(ACode, AFileName);
 
   try
-    Result := ParseFile();
+    Statements := ParseFile();
     CheckAfterCompile();
 
-    addDelayedExpression(Result);
-    FDelayedTree.OverrideDelayGlobal(AfterCompilation, IsGlobal, Index, -1);
+    if AfterScript then
+      FPostTree.addStatement(Statements)
+    else
+      FPreTree.addStatement(Statements);
+
+    for i := Index to FMethods.Statements.Count - 1 do
+      TLapeTree_Method(FMethods.Statements[i]).Imported := True;
   finally
     resetTokenizerState(OldState);
   end;

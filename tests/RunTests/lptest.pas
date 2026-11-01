@@ -98,7 +98,7 @@ begin
     addGlobalFunc('function TestHeapUsed: PtrUInt;', @_TestHeapUsed);
     // (a host's code with a method, delayed to before the program)
     if (Copy(ExtractFileName(FileName), 1, 11) = 'HostDelayed') then
-      addDelayedCode('procedure HostFail(x: Int32);' + LineEnding + 'begin' + LineEnding + '  if (x > 2) then' + LineEnding + '    raise ''host '' + ToString(x);' + LineEnding + 'end;', '', False);
+      addCode('procedure HostFail(x: Int32);' + LineEnding + 'begin' + LineEnding + '  if (x > 2) then' + LineEnding + '    raise ''host '' + ToString(x);' + LineEnding + 'end;', '', False);
 
     try
       if (not Compile()) then
