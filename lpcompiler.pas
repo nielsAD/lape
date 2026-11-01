@@ -2909,7 +2909,7 @@ var
       end;
     end;
 
-    Inh := TLapeInheritedMethod.Create(Header, Source.Ptr, False, 'inherited');
+    Inh := TLapeInheritedMethod.Create(Header, Source.Ptr, 'inherited');
     Inh.DocPos := FuncHeader.DocPos;
     Inh.isConstant := Source.isConstant;
     Inh.Known := Source.Known;
@@ -2926,7 +2926,7 @@ var
     j: Integer;
   begin
     Result := False;
-    if (OfType = nil) or Old.DoManage then
+    if (OfType = nil) or Old.OwnsPtr then
       Exit;
 
     Typ := OfType;

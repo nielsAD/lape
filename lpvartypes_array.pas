@@ -380,10 +380,7 @@ procedure TLapeType_DynArray.VarSetLength(AVar: TLapeGlobalVar; ALen: SizeInt);
 var
   Arr: Pointer;
 begin
-  if AVar.isNull() then
-    Arr := nil
-  else
-    Arr := PPointer(AVar.Ptr)^;
+  Arr := PPointer(AVar.Ptr)^;
 
   VarSetLength(Arr, ALen);
   PPointer(AVar.Ptr)^ := Arr;

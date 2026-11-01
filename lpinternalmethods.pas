@@ -2410,7 +2410,7 @@ begin
 
   if (ResVar.VarType is TLapeType_Label) then
   begin
-    if (ResVar.VarPos.MemPos <> mpMem) or ResVar.VarPos.GlobalVar.Known or (not ResVar.VarPos.GlobalVar.isNull()) then
+    if (ResVar.VarPos.MemPos <> mpMem) or ResVar.VarPos.GlobalVar.Known or (PPointer(ResVar.VarPos.GlobalVar.Ptr)^ <> nil) then
       LapeException(lpeInvalidLabel, [FParams[0]]);
 
     PCodeOffset(ResVar.VarPos.GlobalVar.Ptr)^ := FCompiler.Emitter.CodeLen;
@@ -2831,7 +2831,7 @@ function TLapeTree_InternalMethod_DeepCopy.Evaluate: TLapeGlobalVar;
       SrcIndex, DstIndex: TLapeGlobalVar;
       Len: Integer;
     begin
-      if ASrc.isNull() then
+      if (PPointer(ASrc.Ptr)^ = nil) then
       begin
         TLapeType_DynArray(ASrc.VarType).VarSetLength(ADst, 0);
         Exit;
@@ -2865,12 +2865,6 @@ function TLapeTree_InternalMethod_DeepCopy.Evaluate: TLapeGlobalVar;
 
     procedure DoString(ASrc, ADst: TLapeGlobalVar);
     begin
-      if ASrc.isNull() then
-      begin
-        TLapeType_DynArray(ASrc.VarType).VarSetLength(ADst, 0);
-        Exit;
-      end;
-
       case ASrc.BaseType of
         ltShortString:   PShortString(ADst.Ptr)^   := Copy(PShortString(ASrc.Ptr)^, 1);
         ltAnsiString:    PAnsiString(ADst.Ptr)^    := Copy(PAnsiString(ASrc.Ptr)^, 1);
