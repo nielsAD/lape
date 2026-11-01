@@ -685,7 +685,7 @@ type
 
     function getConst(Value: Pointer; BaseType: ELapeBaseType): TLapeGlobalVar; virtual;
     function getIntConst(Value: Int64; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar; virtual; // ltUnknown: the smallest whole number type that holds it
-    function getBoolConst(Value: Boolean; BaseType: ELapeBaseType = ltEvalBool): TLapeGlobalVar; virtual;
+    function getBoolConst(Value: Boolean; BaseType: ELapeBaseType = ltBoolean): TLapeGlobalVar; virtual;
     function getCharConst(Value: Integer; BaseType: ELapeBaseType = ltAnsiChar): TLapeGlobalVar; virtual;
     function getFloatConst(Value: lpFloat; BaseType: ELapeBaseType = ltFloat): TLapeGlobalVar; virtual;
     function getStringConst(Value: lpString; BaseType: ELapeBaseType = ltString): TLapeGlobalVar; virtual;
@@ -4241,7 +4241,7 @@ begin
   Result := FConstants.Get(Self, BaseType, @Value);
 end;
 
-function TLapeCompilerBase.getBoolConst(Value: Boolean; BaseType: ELapeBaseType = ltEvalBool): TLapeGlobalVar;
+function TLapeCompilerBase.getBoolConst(Value: Boolean; BaseType: ELapeBaseType = ltBoolean): TLapeGlobalVar;
 var
   Kept: Int64;
 begin

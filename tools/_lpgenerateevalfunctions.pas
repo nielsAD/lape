@@ -28,7 +28,7 @@ procedure LapePrintEvalRes;
     Form1.e.Lines.add(s);
   end;
   function getBoolean(a: Boolean): Boolean; begin Result := Boolean(a); end;
-  function Test(a: Boolean): string; overload; begin Result := 'ltEvalBool'; end;
+  function Test(a: Boolean): string; overload; begin Result := 'ltBoolean'; end;
   function getUInt8(a: Integer): UInt8; begin Result := UInt8(a); end;
   function Test(a: UInt8): string; overload; begin Result := 'ltUInt8'; end;
   function getInt8(a: Integer): Int8; begin Result := Int8(a); end;
@@ -2520,8 +2520,8 @@ begin
         DoDebug('Arr[op_'+LapeOperatorToString(op)+'][lt'+LapeTypeToString(t1)+'][lt'+LapeTypeToString(t2)+'] := @'+s+';');
         s := 'procedure ' + s;
         s := s + '(const Dest, Left, Right: Pointer); begin ';
-        if (t3 = ltEvalBool) then
-          s := s + 'PEvalBool(Dest)^ := '
+        if (t3 = ltBoolean) then
+          s := s + 'PBoolean(Dest)^ := '
         else
           s := s + 'P'+LapeTypeToString(t3)+'(Dest)^ := ';
         if op in UnaryOperators + [op_Assign] then

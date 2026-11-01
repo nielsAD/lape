@@ -186,8 +186,6 @@ type
   TLapeType_LongBool = class(TLapeType_Bool)
     public constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''); reintroduce; virtual; end;
 
-  TLapeType_EvalBool = TLapeType_LongBool;
-
   TLapeType_Set = class(TLapeType)
   protected
     FRange: TLapeType_SubRange;

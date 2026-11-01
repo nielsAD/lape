@@ -468,8 +468,8 @@ var
     Check: PtrUInt;
   begin
     Check := PtrUInt(CodeBase) + PtrUInt(PCodePos(@FStack[FStackPos - SizeOf(Pointer)])^);
-    PEvalBool(@FStack[FStackPos - SizeOf(Pointer)])^ := (Check >= PtrUInt(CodeBase)) and (Check < PtrUInt(CodeUpper)) and (opCodeP(Check)^ = ocIncTry);
-    Dec(FStackPos, SizeOf(Pointer) - SizeOf(EvalBool));
+    PBoolean(@FStack[FStackPos - SizeOf(Pointer)])^ := (Check >= PtrUInt(CodeBase)) and (Check < PtrUInt(CodeUpper)) and (opCodeP(Check)^ = ocIncTry);
+    Dec(FStackPos, SizeOf(Pointer) - SizeOf(Boolean));
     Inc(Code, ocSize);
   end;
 

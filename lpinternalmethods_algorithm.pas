@@ -187,7 +187,7 @@ var
     Weights := TLapeTree_InternalMethod_Copy.Create(Self);
     Weights.addParam(Params[1]);
 
-    // _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: EvalBool)
+    // _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: Boolean)
     with TLapeTree_Invoke.Create('_ArraySortWeighted', Self) do
     try
       addParam(TLapeTree_Var.Create(ArrayPtr, Self));

@@ -550,7 +550,7 @@ end;
 function TLapeCodeEmitterBase._IsScriptMethod: Integer;
 begin
   Result := _op(ocIsScriptMethod);
-  DecStack(SizeOf(Pointer) - SizeOf(EvalBool));
+  DecStack(SizeOf(Pointer) - SizeOf(Boolean));
 end;
 
 function TLapeCodeEmitterBase._GetExceptionMessage: Integer;

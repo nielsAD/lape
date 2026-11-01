@@ -1530,7 +1530,6 @@ begin
   addGlobalType(TLapeType_Pointer.Create(Self, nil, True), 'ConstPointer');
   addGlobalType(getBaseType(ltString).CreateAlias(), 'string');
   addGlobalType(getBaseType(ltChar).CreateAlias(), 'Char');
-  addGlobalType(getBaseType(ltEvalBool).CreateAlias(), 'EvalBool');
   addGlobalType('packed record Method, Self: Pointer; end;', 'TMethod');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeInt), True)).CreateAlias(), 'SizeInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeUInt), False)).CreateAlias(), 'SizeUInt');
@@ -1540,7 +1539,7 @@ begin
   addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrUInt), False)).CreateAlias(), 'PtrUInt');
 
   addGlobalFunc('procedure _Move(var Src, Dst; s: SizeInt);', @_LapeMove);
-  addGlobalFunc('function _CompareMem(var p1, p2; s: SizeInt): EvalBool;', @_LapeCompareMem);
+  addGlobalFunc('function _CompareMem(var p1, p2; s: SizeInt): Boolean;', @_LapeCompareMem);
 
   addGlobalType('array of String', 'TStringArray');
   addGlobalType('array of Boolean', 'TBooleanArray');
@@ -1551,16 +1550,16 @@ begin
   addGlobalType('array of Extended', 'TExtendedArray');
   {$ENDIF}
 
-  addGlobalVar(getBaseType(ltEvalBool).NewGlobalVarStr('1'), 'True').isConstant := True;
-  addGlobalVar(getBaseType(ltEvalBool).NewGlobalVarStr('0'), 'False').isConstant := True;
+  addGlobalVar(getBaseType(ltBoolean).NewGlobalVarStr('1'), 'True').isConstant := True;
+  addGlobalVar(getBaseType(ltBoolean).NewGlobalVarStr('0'), 'False').isConstant := True;
 
   addGlobalFunc('function _LocationToStr(DocPos: Pointer): string;', @_LapeLocationToStr);
 
   addGlobalFunc('procedure _Write(s: string);', @_LapeWrite);
   addGlobalFunc('procedure _WriteLn();', @_LapeWriteLn);
 
-  addGlobalFunc('procedure _Assert(Expr: EvalBool); overload;', @_LapeAssert);
-  addGlobalFunc('procedure _Assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
+  addGlobalFunc('procedure _Assert(Expr: Boolean); overload;', @_LapeAssert);
+  addGlobalFunc('procedure _Assert(Expr: Boolean; Msg: string); overload;', @_LapeAssertMsg);
   addGlobalFunc('procedure _RangeCheck(Idx, Lo, Hi: SizeInt);', @_LapeRangeCheck);
 
   addGlobalFunc('procedure _SStr_SetLen(var s; l, m: UInt8);', @_LapeSStr_SetLen);
@@ -1582,14 +1581,14 @@ begin
   addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: WideString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeWStr_Insert);
   addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: UnicodeString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeUStr_Insert);
 
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Int32);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt32; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_UInt32);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int64; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Int64);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt64; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_UInt64);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Single; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Single);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Double; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Double);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Int32);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt32; SortUp: Boolean); overload;', @_LapeArraySortWeighted_UInt32);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int64; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Int64);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt64; SortUp: Boolean); overload;', @_LapeArraySortWeighted_UInt64);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Single; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Single);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Double; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Double);
   {$IFNDEF Lape_NoExtended}
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Extended; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Extended);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Extended; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Extended);
   {$ENDIF}
 
   addGlobalFunc('procedure _ArrayReverse(A: Pointer; ElSize, Len: SizeInt); overload;', @_LapeArrayReverse);
@@ -1601,9 +1600,9 @@ begin
 
   addGlobalFunc('procedure FillMem(var p; s: SizeInt; b: UInt8 = 0);', @_LapeFillMem);
   addGlobalFunc('procedure Move(constref Src; var Dst; s: SizeInt);', @_LapeMove);
-  addGlobalFunc('function CompareMem(constref p1, p2; Length: SizeInt): EvalBool;', @_LapeCompareMem);
+  addGlobalFunc('function CompareMem(constref p1, p2; Length: SizeInt): Boolean;', @_LapeCompareMem);
 
-  addGlobalFunc('function Assigned(constref p): EvalBool;', @_LapeAssigned);
+  addGlobalFunc('function Assigned(constref p): Boolean;', @_LapeAssigned);
 
   addGlobalFunc('function BitCount(constref Value; Size: UInt8): UInt32;', @_LapeBitCount);
 

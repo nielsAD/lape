@@ -133,14 +133,12 @@ type
   TVarStackOffset = NativeUInt;
   TPointerOffset = NativeInt;
   TParamSize = NativeUInt;
-  EvalBool = LongBool;
 
   PStackInc = ^TStackInc;
   PStackOffset = ^TStackOffset;
   PVarStackOffset = ^TVarStackOffset;
   PPointerOffset = ^TPointerOffset;
   PParamSize = ^TParamSize;
-  PEvalBool = ^EvalBool;
 
   EMemoryPos = (mpNone, mpStack, mpMem, mpVar);
   TLapeEvalProc = procedure(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -531,7 +529,6 @@ const
   ltSizeInt = ltNativeInt;
   ltSizeUInt = ltNativeUInt;
 
-  ltEvalBool = ltLongBool;
 
   {$IFDEF Lape_NoExtended}
   ltFloat = ltDouble;

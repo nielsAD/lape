@@ -2090,7 +2090,7 @@ begin
   try
     if (FLeft <> nil) then
       if (FLeft is TLapeTree_If) then
-        Exit(FCompiler.getBaseType(ltEvalBool))
+        Exit(FCompiler.getBaseType(ltBoolean))
       else
         LeftType := TLapeTree_ExprBase(FLeft).resType()
     else
@@ -2113,7 +2113,7 @@ begin
       if HasOperatorOverload(FCompiler, op_In, LeftType, RightType, Result) then
         FOverloadOp := True
       else
-        Result := FCompiler.getBaseType(ltEvalBool)
+        Result := FCompiler.getBaseType(ltBoolean)
     end
     else if (FDerefType <> nil) then
       Result := FDerefType
@@ -2129,7 +2129,7 @@ begin
     begin
       FRestructure := bTrue;
       if (Result = nil) then
-        Result := FCompiler.getBaseType(ltEvalBool);
+        Result := FCompiler.getBaseType(ltBoolean);
     end
     else
       FRestructure := bFalse;

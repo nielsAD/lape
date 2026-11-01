@@ -509,7 +509,7 @@ begin
     else if (Typ is TLapeType_ArrayHelper_Low) or (Typ is TLapeType_ArrayHelper_High) or (Typ is TLapeType_ArrayHelper_Length) then
       Result := FCompiler.getBaseType(ltSizeInt)
     else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
-      Result := FCompiler.getBaseType(ltEvalBool)
+      Result := FCompiler.getBaseType(ltBoolean)
     else
       Result := nil
   else
@@ -892,7 +892,7 @@ begin
     end
     else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
     begin
-      Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
+      Result := _ResVar.New(FCompiler.getTempVar(ltBoolean));
       Result.isConstant := True;
       inherited Eval(op_cmp_Equal, Result, ALeft, _ResVar.New(FCompiler.getBaseType(ltPointer).EmptyValue), []);
     end

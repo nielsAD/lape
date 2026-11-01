@@ -406,7 +406,7 @@ begin
     'Result := System.Contains(Param0, Self);',
     VarType,
     [TLapeType_DynArray(VarType).PType],
-    FCompiler.getBaseType(ltEvalBool)
+    FCompiler.getBaseType(ltBoolean)
   );
 end;
 
@@ -606,7 +606,7 @@ begin
        Result := CreateFunction(
          'System.Sort(Self, Param0, Param1);',
          VarType,
-         [WeightType.ArrayOf, FCompiler.getBaseType(ltEvalBool)]
+         [WeightType.ArrayOf, FCompiler.getBaseType(ltBoolean)]
        );
      end;
   end;
@@ -652,7 +652,7 @@ begin
         Result := CreateFunction(
             'Result := System.Sorted(Self, Param0, Param1);',
             VarType,
-            [WeightType.ArrayOf, FCompiler.getBaseType(ltEvalBool)],
+            [WeightType.ArrayOf, FCompiler.getBaseType(ltBoolean)],
             ResType
           );
       end;

@@ -430,7 +430,7 @@ end;
 function TLapeTree_InternalMethod_Contains.resType: TLapeType;
 begin
   if (FResType = nil) then
-    FResType := FCompiler.getBaseType(ltEvalBool);
+    FResType := FCompiler.getBaseType(ltBoolean);
 
   Result := inherited;
 end;
@@ -740,7 +740,7 @@ end;
 constructor TLapeTree_InternalMethod_IsScriptMethod.Create(ACompiler: TLapeCompilerBase);
 begin
   inherited;
-  FResType := ACompiler.getBaseType(ltEvalBool);
+  FResType := ACompiler.getBaseType(ltBoolean);
 end;
 
 function TLapeTree_InternalMethod_IsScriptMethod.Compile: TResVar;
