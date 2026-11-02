@@ -40,10 +40,9 @@ type
     procedure addField(FieldType: TLapeType; AName: lpString); virtual;
     procedure addConstField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: lpString); virtual;
 
-    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
-    function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; override;
-    function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
+    function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar; override;
+    function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
     procedure addArrayHelpers; override;
 
@@ -194,57 +193,43 @@ begin
   addDeclaration(Field);
 end;
 
-function TLapeType_Object.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeType;
+function TLapeType_Object.EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType;
 begin
-  if (Op = op_Dot) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.Ptr)^) then
-    Result := FFieldMap[PlpString(Right.Ptr)^].FieldType
+  if FFieldMap.ExistsKey(AName) then
+    Result := FFieldMap[AName].FieldType
   else
     Result := inherited;
 end;
 
-function TLapeType_Object.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos): TResVar;
+function TLapeType_Object.EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar;
+begin
+  if FFieldMap.ExistsKey(AName) then
+    Result := nil
+  else
+    Result := inherited;
+end;
+
+function TLapeType_Object.EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   Field: TObjectField;
 begin
-  if (Op = op_Dot) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.VarPos.GlobalVar.Ptr)^) then
+  if FFieldMap.ExistsKey(AName) then
   begin
     Assert(FCompiler <> nil);
     Assert(Left.VarType = Self);
 
     Result := NullResVar;
     Dest := NullResVar;
-    Field := FFieldMap[PlpString(Right.VarPos.GlobalVar.Ptr)^];
+    Field := FFieldMap[AName];
 
     Left.VarType := FCompiler.getBaseType(ltPointer);
 
-    Result := Left.VarType.Eval(op_Plus, Dest, Left, _ResVar.New(FCompiler.getConstant(Field.Offset)), Flags, Offset, Pos);
+    Result := Left.VarType.Eval(op_Plus, Dest, Left, _ResVar.New(FCompiler.getIntConst(Field.Offset)), Flags, Offset, Pos);
     Result := Result.VarType.Eval(op_Deref, Dest, Result, NullResVar, [], Offset, Pos);
     Result.isConstant := Left.isConstant;
     Result.VarType := Field.FieldType;
 
     Left.VarType := Self;
-  end else
-    Result := inherited;
-end;
-
-function TLapeType_Object.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
-begin
-  if (Op = op_Dot) and ValidFieldName(Right) and FFieldMap.ExistsKey(PlpString(Right.Ptr)^) then
-    Result := False
-  else
-    Result := inherited;
-end;
-
-function TLapeType_Object.EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
-begin
-  if (Op = op_Dot) and (ALeft <> nil) and ValidFieldName(ARight) and FFieldMap.ExistsKey(PlpString(ARight.Ptr)^) then
-  begin
-    with FFieldMap[PlpString(ARight.Ptr)^] do
-    begin
-      Result := FieldType.NewGlobalVarP(Pointer(PtrUInt(ALeft.Ptr) + Offset));
-      Result.isConstant := ALeft.isConstant;
-      Result.Known := ALeft.Known;
-    end
   end else
     Result := inherited;
 end;

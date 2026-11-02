@@ -421,7 +421,7 @@ begin
   Result := nil;
 
   if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
-    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+    ResType := TLapeType_DynArray(VarType).PType.ArrayOf
   else
     ResType := VarType;
 
@@ -438,7 +438,7 @@ var
   ResType: TLapeType;
 begin
   if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
-    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+    ResType := TLapeType_DynArray(VarType).PType.ArrayOf
   else
     ResType := VarType;
 
@@ -528,7 +528,7 @@ var
   ResType: TLapeType;
 begin
   if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
-    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+    ResType := TLapeType_DynArray(VarType).PType.ArrayOf
   else
     ResType := VarType;
 
@@ -545,7 +545,7 @@ var
   ResType: TLapeType;
 begin
   if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
-    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+    ResType := TLapeType_DynArray(VarType).PType.ArrayOf
   else
     ResType := VarType;
 
@@ -610,7 +610,7 @@ begin
        Result := CreateFunction(
          'System.Sort(Self, Param0, Param1);',
          VarType,
-         [FCompiler.addManagedType(TLapeType_DynArray.Create(WeightType, FCompiler)), FCompiler.getBaseType(ltEvalBool)]
+         [WeightType.ArrayOf, FCompiler.getBaseType(ltEvalBool)]
        );
      end;
   end;
@@ -623,7 +623,7 @@ begin
   Result := nil;
 
   if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
-    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+    ResType := TLapeType_DynArray(VarType).PType.ArrayOf
   else
     ResType := VarType;
 
@@ -656,7 +656,7 @@ begin
         Result := CreateFunction(
             'Result := System.Sorted(Self, Param0, Param1);',
             VarType,
-            [FCompiler.addManagedType(TLapeType_DynArray.Create(WeightType, FCompiler)), FCompiler.getBaseType(ltEvalBool)],
+            [WeightType.ArrayOf, FCompiler.getBaseType(ltEvalBool)],
             ResType
           );
       end;
@@ -787,7 +787,7 @@ var
   ResType: TLapeType;
 begin
   if (TLapeType_DynArray(VarType).BaseType = ltStaticArray) then
-    ResType := FCompiler.addManagedType(TLapeType_DynArray.Create(TLapeType_DynArray(VarType).PType, FCompiler))
+    ResType := TLapeType_DynArray(VarType).PType.ArrayOf
   else
     ResType := VarType;
 

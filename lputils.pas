@@ -55,7 +55,7 @@ begin
       addGlobalType(getBaseType(DetermineIntType(SizeOf(LongInt), True)).CreateAlias(), 'LongInt');
       addGlobalType(getBaseType(DetermineIntType(SizeOf(Cardinal), False)).CreateAlias(), 'Cardinal');
       addGlobalType(getBaseType(DetermineIntType(SizeOf(Integer), True)).CreateAlias(), 'Integer');
-      addGlobalType(getPointerType(ltChar, False).CreateAlias(), 'PChar');
+      addGlobalType(addManagedType(TLapeType_Pointer.Create(Compiler, getBaseType(ltChar), False)).CreateAlias(), 'PChar');
     end;
 
     if (psiUselessTypes in Initialize) then
