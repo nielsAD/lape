@@ -1,0 +1,39 @@
+// A method called on a constant works on a copy of it
+type
+  TR = record x: Int32; end;
+
+procedure TR.Add(n: Int32); overload;
+begin
+  Self.x := Self.x + n;
+end;
+
+procedure TR.Add(s: String); overload;
+begin
+  Self.x := Self.x + Length(s);
+end;
+
+procedure TR.One(n: Int32);
+begin
+  Self.x := Self.x + n;
+end;
+
+const
+  C: TR = [10];
+
+procedure ConstParam(const p: TR);
+begin
+  p.Add(100);
+  p.One(100);
+  WriteLn(p.x);
+end;
+
+var
+  r: TR;
+begin
+  C.Add(5);
+  C.One(5);
+  WriteLn(C.x);
+  r.x := 1;
+  ConstParam(r);
+  WriteLn(r.x);
+end.

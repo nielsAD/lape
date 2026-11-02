@@ -566,7 +566,8 @@ begin
           nil,
           []
         );
-      Result.CopyFlags(ALeft);
+      Result.isConstant := ALeft.isConstant;
+      Result.Known := ALeft.Known;
     finally
       if (IndexVar <> nil) then
         IndexVar.Free();
@@ -667,7 +668,7 @@ begin
     finally
       FBaseType := tmpType;
       Assert((tmpType <> ltDynArray) or NeedInitialization);
-      Result.CopyFlags(ALeft);
+      Result.isConstant := ALeft.isConstant;
     end;
   end
   else if (op = op_Assign) and (BaseType = ltDynArray) and CompatibleWith(ARight.VarType) then
@@ -796,10 +797,8 @@ begin
       Result := _ResVar.New(tmpVar);
     end;
 
-    wasConstant := not Result.Writeable;
-    if wasConstant then
-      Result.Writeable := True;
-
+    wasConstant := Result.isConstant;
+    Result.isConstant := False;
     Result := Eval(op_Assign, tmpResVar, Result, ALeft, [], Offset, Pos);
 
     {FCompiler.EmitCode(
@@ -842,7 +841,7 @@ begin
     end;
 
     if wasConstant then
-      Result.Writeable := False;
+      Result.isConstant := True;
   end
   else if (op = op_Plus) and (BaseType = ltDynArray) and CompatibleWith(ARight.VarType) then
   begin
@@ -859,8 +858,6 @@ begin
     Result :=  _ResVar.New(FCompiler.getTempVar(Self));
     Dest := NullResVar;
 
-    wasConstant := not Result.Writeable;
-    if wasConstant then Result.Writeable := True;
 
     Result := Eval(op_Assign, tmpResVar, Result, ALeft, [], Offset, Pos);
     with TLapeTree_InternalMethod_Insert.Create(FCompiler, Pos) do
@@ -877,7 +874,6 @@ begin
     finally
       Free();
     end;
-    if wasConstant then Result.Writeable := False;
   end else if (Op = op_Dot) and ValidFieldName(ARight) and CanInlineHelper(ARight.VarPos.GlobalVar, Typ) then
   begin
     Dest := NullResVar;
@@ -1097,7 +1093,8 @@ begin
     RangeCheck(Left, Right, Flags);
 
     Result := FPType.NewGlobalVarP(Pointer(PtrInt(Left.Ptr) + (FPType.Size * (Right.AsInteger - FRange.Lo))));
-    Result.CopyFlags(Left);
+    Result.isConstant := Left.isConstant;
+    Result.Known := Left.Known;
   end
   else if (op = op_Assign) and (BaseType = ltStaticArray) and (Left <> nil) and (Right <> nil) and CompatibleWith(Right.VarType) then
   begin
@@ -1137,12 +1134,13 @@ begin
   try
     RangeCheck(Left, Right, Flags, Offset, Pos);
 
-    wasConstant := not Left.Writeable;
-    if wasConstant then
-      Left.Writeable := True;
-
     if (not Left.VarPos.isPointer) or (Left.VarPos.Offset > 0) then
-      LeftVar := Eval(op_Addr, tmpVar, Left, NullResVar, [], Offset, Pos)
+    begin
+      // its address to read it through
+      LeftVar := Left;
+      LeftVar.isConstant := False;
+      LeftVar := Eval(op_Addr, tmpVar, LeftVar, NullResVar, [], Offset, Pos);
+    end
     else
     begin
       LeftVar := Left;
@@ -1177,8 +1175,7 @@ begin
         );
     end;
   finally
-    Left.Writeable := not wasConstant;
-    Result.CopyFlags(Left);
+    Result.isConstant := Left.isConstant;
   end
   else if (op = op_Assign) and (BaseType = ltStaticArray) and CompatibleWith(Right.VarType) then
     if (not NeedInitialization) and Equals(Right.VarType) and (Size > 0) then
@@ -1274,7 +1271,6 @@ procedure TLapeType_StaticArray.Finalize(AVar: TResVar; var Offset: Integer; Use
 var
   i: Integer;
   tmpVar, IndexVar: TResVar;
-  wasConstant: Boolean;
   IndexOp: TLapeTree_Operator;
 begin
   Assert(AVar.VarType = Self);
@@ -1285,9 +1281,7 @@ begin
   tmpVar := NullResVar;
   if UseCompiler and (FCompiler <> nil) then
   begin
-    wasConstant := not AVar.Writeable;
-    if wasConstant then
-      AVar.Writeable := True;
+    AVar.isConstant := False;
 
     IndexVar := _ResVar.New(FCompiler.getTempVar(ltSizeInt));
     IndexVar := IndexVar.VarType.Eval(op_Assign, tmpVar, IndexVar, _ResVar.New(FCompiler.getConstant(FRange.Lo)), [], Offset);
@@ -1308,12 +1302,8 @@ begin
 
       Compile(Offset);
     finally
-
       Free();
     end;
-
-    if wasConstant then
-      AVar.Writeable := False;
   end
   else if (AVar.VarPos.MemPos <> mpMem) then
     LapeException(lpeImpossible)
@@ -1453,7 +1443,7 @@ begin
   begin
     if (not Result.VarPos.isPointer) then
       LapeException(lpeImpossible);
-    Result.DecOffset(FPType.Size);
+    Result.IncOffset(-(FPType.Size));
   end;
 end;
 
