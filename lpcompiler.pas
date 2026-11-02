@@ -285,7 +285,7 @@ type
     procedure addPreprocessorFunc(Name: lpString; Func: TLapePreprocessorFunc); virtual;
     procedure addPreprocessorMacro(Name: lpString; Func: TLapePreprocessorFunc); virtual;
 
-    function addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration; override;
+    function addLocalDecl(Decl: TLapeDeclaration; AStackInfo: TLapeStackInfo): TLapeDeclaration; virtual;
     function addLocalVar(AVar: TLapeType; Name: lpString = ''): TLapeVar; virtual;
 
     function addGlobalVar(AVar: TLapeGlobalVar; AName: lpString = ''): TLapeGlobalVar; overload; virtual;
@@ -333,16 +333,16 @@ type
   end;
 
   TLapeType_SystemUnit = class(TLapeType)
+  protected
+    function getDeclarations: TLapeDeclarationList; override;
   public
     constructor Create(ACompiler: TLapeCompilerBase); reintroduce; virtual;
-    procedure ClearSubDeclarations; override;
 
-    function CanHaveChild: Boolean; override;
-    function HasChild(AName: lpString): Boolean; override;
-    function HasChild(ADecl: TLapeDeclaration): Boolean; override;
-    function HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean; override;
+    function HasMember(AName: lpString): Boolean; override;
+    function Declares(ADecl: TLapeDeclaration): Boolean; override;
 
     function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
   end;
 
@@ -644,6 +644,7 @@ var
   Body: lpString;
   Index: Integer;
   Header: TLapeType_Method;
+  Overloads: TLapeDeclarationList;
 begin
   Result := nil;
   if (Sender = nil) or (Length(AParams) <> 1) or (AParams[0] = nil) or ((AResult <> nil) and (AResult.BaseType <> ltString)) then
@@ -661,8 +662,9 @@ begin
   try
     Sender.NeedFullMatch := False;
 
-    Assert(Result.DeclarationList = Sender.ManagedDeclarations);
-    Result.DeclarationList := nil;
+    Assert(Sender.Declares(Result));
+    Overloads := Result.DeclarationList;
+    Overloads.Delete(Result);
 
     Index := Sender.getMethodIndex(AParams, AResult);
     if (Index < 0) then
@@ -671,7 +673,7 @@ begin
     if (Index >= 0) then
     begin
       Body := 'begin Result := System.ToString[' + lpString(IntToStr(Index)) + '](Param0); end;';
-      Result.DeclarationList := Sender.ManagedDeclarations;
+      Overloads.addDeclaration(Result);
     end;
   finally
     Sender.NeedFullMatch := True;
@@ -788,7 +790,7 @@ begin
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Self);
 
-    if ParamVar.VarType.HasSubDeclaration('Destroy', bTrue) then
+    if (ParamVar.VarType.FindMember('Destroy') <> nil) then
     begin
       Op := TLapeTree_Operator.Create(op_Dot, Self);
       Op.Left := TLapeTree_ResVar.Create(ParamVar, Self);
@@ -1629,21 +1631,21 @@ begin
   {$ENDIF}
 
   addCompilerFuncs();
-  addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), 'System').isConstant := True;
+  addGlobalVar(addManagedType(TLapeType_SystemUnit.Create(Self)).NewGlobalVarP(nil), LapeSystemName).isConstant := True;
   addGlobalVar(addManagedType(TLapeType_NilPointer.Create(Self, nil, False)).NewGlobalVarP(), 'nil').isConstant := True;
 
   addGlobalType(TLapeType_Label.Create(Self), '!label');
   addGlobalType(TLapeType_Pointer.Create(Self, nil, True), 'ConstPointer');
-  addGlobalType(getBaseType(ltString).createCopy(), 'string');
-  addGlobalType(getBaseType(ltChar).createCopy(), 'Char');
-  addGlobalType(getBaseType(ltEvalBool).createCopy(), 'EvalBool');
+  addGlobalType(getBaseType(ltString).CreateAlias(), 'string');
+  addGlobalType(getBaseType(ltChar).CreateAlias(), 'Char');
+  addGlobalType(getBaseType(ltEvalBool).CreateAlias(), 'EvalBool');
   addGlobalType('packed record Method, Self: Pointer; end;', 'TMethod');
-  addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeInt), True)).createCopy(), 'SizeInt');
-  addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeUInt), False)).createCopy(), 'SizeUInt');
-  addGlobalType(getBaseType(DetermineIntType(SizeOf(NativeInt), True)).createCopy(), 'NativeInt');
-  addGlobalType(getBaseType(DetermineIntType(SizeOf(NativeUInt), False)).createCopy(), 'NativeUInt');
-  addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrInt), True)).createCopy(), 'PtrInt');
-  addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrUInt), False)).createCopy(), 'PtrUInt');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeInt), True)).CreateAlias(), 'SizeInt');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeUInt), False)).CreateAlias(), 'SizeUInt');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(NativeInt), True)).CreateAlias(), 'NativeInt');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(NativeUInt), False)).CreateAlias(), 'NativeUInt');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrInt), True)).CreateAlias(), 'PtrInt');
+  addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrUInt), False)).CreateAlias(), 'PtrUInt');
 
   addGlobalType('array of String', 'TStringArray');
   addGlobalType('array of Boolean', 'TBooleanArray');
@@ -1870,8 +1872,8 @@ begin
 
     Lo := Range.Lo.Evaluate();
     Hi := Range.Hi.Evaluate();
-    if (Lo = nil) or (not Lo.HasType()) or (not Lo.VarType.IsOrdinal()) or
-       (Hi = nil) or (not Hi.HasType()) or (not Hi.VarType.IsOrdinal())
+    if (Lo = nil) or (not Lo.HasType()) or (not (Lo.VarType.BaseType in LapeOrdinalTypes)) or
+       (Hi = nil) or (not Hi.HasType()) or (not (Hi.VarType.BaseType in LapeOrdinalTypes))
     then
       LapeException(lpeInvalidRange, Node.DocPos)
     else if (not Lo.Readable) or (not Hi.Readable) then
@@ -2792,7 +2794,8 @@ var
   Pos: TDocPos;
   SelfWith: TLapeWithDeclRec;
   OldDeclaration: TLapeDeclaration;
-  LocalDecl, ResetStack: Boolean;
+  TypeStack: TLapeStackInfo;
+  LocalDecl: Boolean;
 
   procedure RemoveSelfVar;
   begin
@@ -2802,7 +2805,7 @@ var
       FStackInfo.Delete(FStackInfo.Vars[0], True);
 
       // Add reference to the to reference static methods or class variables
-      if (FuncHeader is TLapeType_MethodOfType) and TLapeType_MethodOfType(FuncHeader).ObjectType.CanHaveChild() then
+      if (FuncHeader is TLapeType_MethodOfType) then
         FStackInfo.addDeclaration(
           addManagedDecl(TLapeType_Type.Create(TLapeType_MethodOfType(FuncHeader).ObjectType, Self, 'Self'))
         );
@@ -2900,19 +2903,6 @@ var
     AVar.VarType := addManagedType(NewMethod);
   end;
 
-  function SetStackOwner(AStackInfo: TLapeStackInfo): TLapeStackInfo;
-  begin
-    Result := FStackInfo.Owner;
-    if (AStackInfo = nil) then
-      FStackInfo.Owner := Result.Owner
-    else
-    begin
-      AStackInfo.Owner := FStackInfo.Owner;
-      FStackInfo.Owner := AStackInfo;
-    end;
-  end;
-
-
 begin
   Result := nil;
   Pos := Tokenizer.DocPos;
@@ -2922,13 +2912,13 @@ begin
   else if (FuncHeader is TLapeType_MethodOfType) and (not hasDeclaration(TLapeType_MethodOfType(FuncHeader).ObjectType, FStackInfo.Owner, True, False)) then
     LapeException(lpeParentOutOfScope, Tokenizer.DocPos);
 
+  TypeStack := nil;
   if (FuncHeader is TLapeType_MethodOfType) then
   begin
-    SetStackOwner(TLapeDeclStack.Create(TLapeType_MethodOfType(FuncHeader).ObjectType));
-    ResetStack := True;
-  end
-  else
-    ResetStack := False;
+    TypeStack := TLapeStackInfo.Create(False, FStackInfo.Owner, False);
+    TypeStack.ParentType := TLapeType_MethodOfType(FuncHeader).ObjectType;
+    FStackInfo.Owner := TypeStack;
+  end;
 
   StackInfo.FuncName := GetMethodName(FuncHeader);
 
@@ -2937,7 +2927,7 @@ begin
     OldDeclaration := getDeclarationNoWith(FuncName, FStackInfo.Owner);
     LocalDecl := (OldDeclaration <> nil) and hasDeclaration(OldDeclaration, FStackInfo.Owner, True, False);
 
-    if (OldDeclaration <> nil) and (FuncHeader is TLapeType_MethodOfType) and (not LocalDecl) and (not TLapeType_MethodOfType(FuncHeader).ObjectType.HasSubDeclaration(OldDeclaration, bTrue)) then
+    if (OldDeclaration <> nil) and (FuncHeader is TLapeType_MethodOfType) and (not LocalDecl) and (not TLapeType_MethodOfType(FuncHeader).ObjectType.Declares(OldDeclaration)) then
       OldDeclaration := nil;
 
     if (Tokenizer.Tok = tk_kw_Static) then
@@ -2968,7 +2958,7 @@ begin
           SelfWith.WithType := TLapeType_MethodOfType(FuncHeader).ObjectType;
           SelfWith.WithVar := @Result.SelfVar;
 
-          FStackInfo.Owner.addWith(SelfWith);
+          FStackInfo.Owner.WithStack.Add(SelfWith);
         end;
       end;
     end;
@@ -3058,7 +3048,8 @@ begin
           Move(TLapeGlobalVar(OldDeclaration).Ptr^, Result.Method.Ptr^, FuncHeader.Size);
 
           Result.Method.Name := 'inherited';
-          Result.Method.DeclarationList := nil;
+          if (Result.Method.DeclarationList <> nil) then
+            Result.Method.DeclarationList.Delete(Result.Method);
           InheritMethodDefaults(Result.Method, Result.Method.VarType as TLapeType_Method);
           addLocalDecl(Result.Method, FStackInfo);
 
@@ -3074,7 +3065,7 @@ begin
 
           OldDeclaration.Name := 'inherited';
           InheritMethodDefaults(OldDeclaration as TLapeGlobalVar, TLapeGlobalVar(OldDeclaration).VarType as TLapeType_Method);
-          OldDeclaration := addLocalDecl(OldDeclaration);
+          OldDeclaration := addLocalDecl(OldDeclaration, FStackInfo);
         end;
 
         TLapeType_Method(Result.Method.VarType).setImported(Result.Method, isExternal);
@@ -3146,11 +3137,10 @@ begin
       if (FuncForwards <> nil) and (OldDeclaration is TLapeGlobalVar) then
         FuncForwards.DeleteItem(TLapeGlobalVar(OldDeclaration));
 
-      if (lcoExplicitSelf in FOptions) and ResetStack then
+      if (lcoExplicitSelf in FOptions) and (TypeStack <> nil) then
       begin
-        SetStackOwner(nil).Free();
-
-        ResetStack := False;
+        FStackInfo.Owner := TypeStack.Owner;
+        FreeAndNil(TypeStack);
       end;
 
       Next();
@@ -3165,8 +3155,11 @@ begin
     end;
 
   finally
-    if ResetStack then
-      SetStackOwner(nil).Free();
+    if (TypeStack <> nil) then
+    begin
+      FStackInfo.Owner := TypeStack.Owner;
+      TypeStack.Free();
+    end;
   end;
 end;
 
@@ -3257,7 +3250,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
         FieldType := nil;
 
         Identifiers := ParseIdentifierList(True);
-        if Result.HasChild(Identifiers[0]) then
+        if Result.HasMember(Identifiers[0]) then
           LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[0]], DocPos);
 
         if Expect([tk_sym_Colon, tk_sym_Equals], False, False) = tk_sym_Colon then
@@ -3288,7 +3281,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
 
         for i := 0 to High(Identifiers) do
         begin
-          if Result.HasChild(Identifiers[i]) then
+          if Result.HasMember(Identifiers[i]) then
             LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], DocPos);
 
           if (Result is TLapeType_Record) then
@@ -3320,7 +3313,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       if (not (FieldType is TLapeType_Record)) or (IsRecord <> (FieldType.BaseType = ltRecord)) then
         LapeException(lpeUnknownParent, Tokenizer.DocPos);
       Expect(tk_sym_ParenthesisClose, False, True);
-      Result := FieldType.CreateCopy(True) as TLapeType_Record;
+      Result := FieldType.CreateCopy() as TLapeType_Record;
       // record(TParent); is the parent's fields only
       if (Tokenizer.Tok = tk_sym_SemiColon) then
       begin
@@ -3383,7 +3376,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       if (PointerType.ClassType = TLapeType_Pointer) then
         Result := addManagedType(TLapeType_StrictPointer.Create(Self, nil, False, '', @DocPos))
       else
-        Result := addManagedType(PointerType.CreateCopy(True));
+        Result := addManagedType(PointerType.CreateCopy());
 
       Next();
       Exit;
@@ -3417,7 +3410,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
   var
     Enum: TLapeType_Enum absolute Result;
     Name: lpString;
-    Member: TLapeTree_ExprBase;
+    Element: TLapeTree_ExprBase;
     Default: TLapeGlobalVar;
     StackOwner: TLapeStackInfo;
     Val: Int64;
@@ -3441,9 +3434,9 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     repeat
       Expect(tk_Identifier, True, False);
       Name := Tokenizer.TokString;
-      if (Scoped and Enum.hasMember(Name)) or ((not Scoped) and hasDeclaration(Name, StackOwner, True)) then
+      if (Scoped and Enum.hasElement(Name)) or ((not Scoped) and hasDeclaration(Name, StackOwner, True)) then
       begin
-        Result := nil; // Do not free type, because enum members rely on it
+        Result := nil; // Do not free type, because enum elements rely on it
 
         LapeExceptionFmt(lpeDuplicateDeclaration, [Name], Tokenizer.DocPos);
       end;
@@ -3451,29 +3444,29 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       Expect([tk_sym_Comma, tk_sym_ParenthesisClose, tk_sym_Equals], True, False);
       if (Tokenizer.Tok = tk_cmp_Equal) then
       try
-        Member := ParseExpression([tk_sym_Comma, tk_sym_ParenthesisClose], True, False);
+        Element := ParseExpression([tk_sym_Comma, tk_sym_ParenthesisClose], True, False);
         try
-          if (Member <> nil) then
-            Default := Member.Evaluate()
+          if (Element <> nil) then
+            Default := Element.Evaluate()
           else
             Default := nil;
 
-          if (Default = nil) or (not Default.HasType()) or (not Default.VarType.IsOrdinal()) or (not Default.Readable) then
+          if (Default = nil) or (not Default.HasType()) or (not (Default.VarType.BaseType in LapeOrdinalTypes)) or (not Default.Readable) then
             LapeException(lpeExpressionExpected, Tokenizer.DocPos);
-          Val := Enum.addMember(Default.AsInteger, Name);
+          Val := Enum.addElement(Default.AsInteger, Name);
         finally
-          Member.Free();
+          Element.Free();
         end;
       except
         on E: lpException do
         begin
-          Result := nil; // Do not free type, because enum members rely on it
+          Result := nil; // Do not free type, because enum elements rely on it
 
           LapeException(lpString(E.Message), Tokenizer.DocPos);
         end
       end
       else
-        Val := Enum.addMember(Name);
+        Val := Enum.addElement(Name);
 
       if (not Scoped) then
         TLapeGlobalVar(addLocalDecl(Enum.NewGlobalVar(Val, Name), StackOwner)).isConstant := True;
@@ -3524,7 +3517,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     try
       if (TypeExpr <> nil) and (TypeExpr is TLapeTree_VarType) and (TLapeTree_VarType(TypeExpr).VarType <> nil) then
       begin
-        Result := TLapeTree_VarType(TypeExpr).VarType.CreateCopy(True);
+        Result := TLapeTree_VarType(TypeExpr).VarType.CreateCopy();
         SetUniqueTypeID(Result);
         addManagedType(Result);
       end
@@ -3657,9 +3650,9 @@ begin
 
       Typ := ParseType(TypeForwards, False);
       if ((Typ.DeclarationList <> nil) or (Typ.Name <> '')) and (not isForward(Typ)) then
-        Typ := Typ.CreateCopy();
+        Typ := Typ.CreateAlias();
       Typ.Name := Name;
-      addLocalDecl(Typ);
+      addLocalDecl(Typ, FStackInfo);
 
       ParseExpressionEnd(tk_sym_SemiColon, False, False);
     until (Next() <> tk_Identifier);
@@ -3696,7 +3689,7 @@ begin
     if hasDeclaration(Identifiers[i], True) then
       LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], Tokenizer.DocPos)
     else
-      addLocalDecl(VarType.NewGlobalVarP(nil, Identifiers[i]));
+      addLocalDecl(VarType.NewGlobalVarP(nil, Identifiers[i]), FStackInfo);
 end;
 
 function TLapeCompiler.ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList;
@@ -3775,7 +3768,7 @@ begin
           LapeExceptionFmt(lpeDuplicateDeclaration, [Identifiers[i]], Tokenizer.DocPos);
 
         if isConst then
-          VarDecl.VarDecl := TLapeVar(addLocalDecl(VarType.NewGlobalVarP(nil, Identifiers[i])))
+          VarDecl.VarDecl := TLapeVar(addLocalDecl(VarType.NewGlobalVarP(nil, Identifiers[i]), FStackInfo))
         else
           VarDecl.VarDecl := addLocalVar(VarType, Identifiers[i]);
 
@@ -4814,6 +4807,7 @@ end;
 function TLapeCompiler.ParseWith(ExprEnd: EParserTokenSet = ParserToken_ExpressionEnd): TLapeTree_With;
 var
   Count: Integer;
+  Expr: TLapeTree_ExprBase;
 begin
   Result := TLapeTree_With.Create(Self, getPDocPos());
   Count := 0;
@@ -4823,7 +4817,9 @@ begin
     repeat
       if (Tokenizer.Tok in [tk_kw_With, tk_sym_Comma]) then
       begin
-        FStackInfo.addWith(Result.addWith(ParseExpression([tk_sym_Comma])));
+        Expr := ParseExpression([tk_sym_Comma]);
+        if (FStackInfo.addWith(Result.addWith(Expr)) < 0) then
+          LapeException(lpeInvalidWithReference, [Expr, Result]);
         Inc(Count);
       end
       else
@@ -5147,7 +5143,7 @@ var
   Decls: TLapeDeclArray;
   i: Integer;
 begin
-  Decls := FGlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue);
+  Decls := FGlobalDeclarations.GetByClass(TLapeGlobalVar);
   SetLength(Result, Length(Decls));
   for i := 0 to High(Decls) do
     if TLapeGlobalVar(Decls[i]).VarType.CompatibleWith(TLapeGlobalVar(Decls[i]).VarType) then
@@ -5169,7 +5165,7 @@ var
   VarCopy: TLapeGlobalVar;
   wasConstant: Boolean;
 begin
-  Decls := FGlobalDeclarations.GetByClass(TLapeGlobalVar, bTrue);
+  Decls := FGlobalDeclarations.GetByClass(TLapeGlobalVar);
   if (Length(Decls) <> Length(VarStates)) then
     LapeException(lpeImpossible);
 
@@ -5261,7 +5257,7 @@ function TLapeCompiler.Compile: Boolean;
     Decl: TLapeGlobalVar;
     i: Integer;
   begin
-    Decls := GlobalDeclarations.GetByClass(TLapeGlobalVar, bFalse);
+    Decls := GlobalDeclarations.GetByClass(TLapeGlobalVar);
     for i := 0 to High(Decls) do
     begin
       Decl := TLapeGlobalVar(Decls[i]);
@@ -5535,7 +5531,7 @@ begin
   begin
     if (AName <> '') then
       AVar.Name := AName;
-    if FGlobalDeclarations.Get(AVar.Name, Decl, bTrue) then
+    if FGlobalDeclarations.Get(AVar.Name, Decl) then
       LapeExceptionFmt(lpeDuplicateDeclaration, [AVar.Name]);
     AVar.isConstant := False;
     FGlobalDeclarations.addDeclaration(AVar);
@@ -5646,7 +5642,7 @@ begin
       SetUniqueTypeID(Typ);
     if (AName <> '') then
       Typ.Name := AName;
-    if FGlobalDeclarations.Get(Typ.Name, Decl, bTrue) then
+    if FGlobalDeclarations.Get(Typ.Name, Decl) then
       LapeExceptionFmt(lpeDuplicateDeclaration, [Typ.Name]);
     FGlobalDeclarations.addDeclaration(Typ);
   end;
@@ -5752,7 +5748,7 @@ begin
   TLapeType_MethodOfObject(Result.VarType).HiddenSelf := not (AFunc.VarType is TLapeType_MethodOfObject);
 
   if (AFunc.DeclarationList <> nil) then
-    Result.DeclarationList := AFunc.DeclarationList
+    AFunc.DeclarationList.addDeclaration(Result)
   else
   begin
     AFunc.Name := '';
@@ -5806,34 +5802,32 @@ end;
 constructor TLapeType_SystemUnit.Create(ACompiler: TLapeCompilerBase);
 begin
   inherited Create(ltUnknown, ACompiler);
-
-  if (ACompiler <> nil) then
-    ManagedDeclarations := ACompiler.GlobalDeclarations;
 end;
 
-procedure TLapeType_SystemUnit.ClearSubDeclarations;
+function TLapeType_SystemUnit.getDeclarations: TLapeDeclarationList;
 begin
-  //Nothing
+  if (FCompiler <> nil) then
+    Result := FCompiler.GlobalDeclarations
+  else
+    Result := FDeclarations;
 end;
 
-function TLapeType_SystemUnit.CanHaveChild: Boolean;
+function TLapeType_SystemUnit.HasMember(AName: lpString): Boolean;
 begin
-  Result := (FCompiler <> nil);
+  Result := FCompiler.hasDeclaration(AName, nil);
 end;
 
-function TLapeType_SystemUnit.HasChild(AName: lpString): Boolean;
+function TLapeType_SystemUnit.Declares(ADecl: TLapeDeclaration): Boolean;
 begin
-  Result := CanHaveChild() and FCompiler.hasDeclaration(AName, nil);
+  Result := FCompiler.hasDeclaration(ADecl, nil);
 end;
 
-function TLapeType_SystemUnit.HasChild(ADecl: TLapeDeclaration): Boolean;
+function TLapeType_SystemUnit.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
 begin
-  Result := CanHaveChild() and FCompiler.hasDeclaration(ADecl, nil);
-end;
-
-function TLapeType_SystemUnit.HasConstantChild(Left: TLapeGlobalVar; AName: lpString): Boolean;
-begin
-  Result := HasChild(AName);
+  if (Op = op_Dot) and ValidFieldName(Right) then
+    Result := Right.Readable and HasMember(PlpString(Right.Ptr)^)
+  else
+    Result := inherited;
 end;
 
 function TLapeType_SystemUnit.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
@@ -5848,7 +5842,7 @@ function TLapeType_SystemUnit.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flag
   end;
 
 begin
-  if (Op = op_Dot) and CanHaveChild() and (Right <> nil) and (Right.BaseType = ltString) then
+  if (Op = op_Dot) and (Right <> nil) and (Right.BaseType = ltString) then
     Result := getType(FCompiler.getDeclaration(PlpString(Right.Ptr)^, nil))
   else
     Result := nil;

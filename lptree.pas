@@ -738,8 +738,8 @@ begin
   if (Method <> nil) and (Method.VarType is TLapeType_OverloadedMethod) then
     with TLapeType_OverloadedMethod(Method.VarType) do
     begin
-      for i := 0 to ManagedDeclarations.Count - 1 do
-        if EqualParams(TLapeType_Method(TLapeGlobalVar(ManagedDeclarations[i]).VarType)) then
+      for i := 0 to MethodCount - 1 do
+        if EqualParams(TLapeType_Method(Methods[i].VarType)) then
           Exit(True);
     end;
 end;
@@ -1802,7 +1802,7 @@ begin
         Dest := NullResVar;
       Result.VarType := VarType;
     end
-    else if VarType.CompatibleWith(Result.VarType) or (VarType.IsOrdinal() and Result.VarType.IsOrdinal()) then
+    else if VarType.CompatibleWith(Result.VarType) or ((VarType.BaseType in LapeOrdinalTypes) and (Result.VarType.BaseType in LapeOrdinalTypes)) then
     begin
       if (FDest.VarPos.MemPos <> NullResVar.VarPos.MemPos) and FDest.HasType() and VarType.Equals(FDest.VarType) then
         DestVar := FDest
@@ -1814,8 +1814,8 @@ begin
 
       if (not VarType.CompatibleWith(Result.VarType)) then
       begin
-        Result.VarType := FCompiler.getBaseType(Result.VarType.BaseIntType);
-        DestVar.VarType := FCompiler.getBaseType(DestVar.VarType.BaseIntType);
+        Result.VarType := FCompiler.getBaseType(DetermineIntType(Result.VarType.Size, Result.VarType.BaseType in LapeSignedIntegerTypes));
+        DestVar.VarType := FCompiler.getBaseType(DetermineIntType(DestVar.VarType.Size, DestVar.VarType.BaseType in LapeSignedIntegerTypes));
       end;
 
       Result := DestVar.VarType.Eval(op_Assign, tmpVar, DestVar, Result, [], Offset, @Self._DocPos);
@@ -1854,14 +1854,14 @@ begin
       Result := TLapeGlobalVar(FCompiler.addManagedDecl(VarType.NewGlobalVarP(Result.Ptr)))
     else if VarType.CompatibleWith(Result.VarType) then
       Result := TLapeGlobalVar(FCompiler.addManagedDecl(VarType.EvalConst(op_Assign, VarType.NewGlobalVarP(), Result, [])))
-    else if VarType.IsOrdinal() and Result.VarType.IsOrdinal() then
+    else if (VarType.BaseType in LapeOrdinalTypes) and (Result.VarType.BaseType in LapeOrdinalTypes) then
     try
       tmpRes := Result;
       tmpTyp := tmpRes.VarType;
       Result := VarType.NewGlobalVarP();
 
-      tmpRes.VarType := FCompiler.getBaseType(tmpTyp.BaseIntType);
-      Result.VarType := FCompiler.getBaseType(VarType.BaseIntType);
+      tmpRes.VarType := FCompiler.getBaseType(DetermineIntType(tmpTyp.Size, tmpTyp.BaseType in LapeSignedIntegerTypes));
+      Result.VarType := FCompiler.getBaseType(DetermineIntType(VarType.Size, VarType.BaseType in LapeSignedIntegerTypes));
 
       Result := Result.VarType.EvalConst(op_Assign, Result, tmpRes, []);
       Result.VarType := VarType;
@@ -1938,14 +1938,14 @@ begin
   begin
     Overloaded := TLapeType_OverloadedMethod(VarType);
 
-    if (Overloaded.ManagedDeclarations.Count > 0) then
+    if (Overloaded.MethodCount > 0) then
     begin
       Available := Format(lphAvailableMethods, [GetMethodName(VarType)]);
-      for i := 0 to Overloaded.ManagedDeclarations.Count - 1 do
+      for i := 0 to Overloaded.MethodCount - 1 do
       begin
         if (i > 0) then
           Available := Available + LineEnding;
-        Available := Available + '> ' + MethodToString(TLapeGlobalVar(Overloaded.ManagedDeclarations[i]).VarType);
+        Available := Available + '> ' + MethodToString(Overloaded.Methods[i].VarType);
       end;
     end else
       Available := '';
@@ -1977,9 +1977,9 @@ function TLapeTree_Invoke.ResolveOverload(Overloaded: TLapeType_OverloadedMethod
 
     ParamTypes := getParamTypes();
 
-    for MethodIndex := 0 to Overloaded.ManagedDeclarations.Count - 1 do
+    for MethodIndex := 0 to Overloaded.MethodCount - 1 do
     begin
-      Method := TLapeGlobalVar(Overloaded.ManagedDeclarations[MethodIndex]).VarType as TLapeType_Method;
+      Method := Overloaded.Methods[MethodIndex].VarType as TLapeType_Method;
       if (Length(ParamTypes) <> Method.Params.Count - Method.ImplicitParams) and
          (Method.Params[Method.Params.Count - 1].Default = nil) then
         Continue;
@@ -3824,7 +3824,7 @@ begin
     Result.WithType := AWith.resType();
   end;
 
-  if (Result.WithType = nil) or (not Result.WithType.CanHaveChild()) then
+  if (Result.WithType = nil) then
     LapeException(lpeInvalidWithReference, [AWith, Self])
 end;
 
@@ -4607,7 +4607,7 @@ begin
   CounterVar := nil;
   Count := FCounter.Compile(Offset);
   try
-    if (not FLimit.CompileToTempVar(Offset, Lim)) or (not Lim.HasType()) or (not Lim.VarType.IsOrdinal(True)) then
+    if (not FLimit.CompileToTempVar(Offset, Lim)) or (not Lim.HasType()) or (not (Lim.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
       LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
     if Count.HasType() and (not Count.Writeable) then
@@ -4615,7 +4615,7 @@ begin
       CounterVar := FCompiler.getTempVar(Count.VarType);
       Count := CounterVar.VarType.Eval(op_Assign, Result, _ResVar.New(CounterVar), Count, [], Offset, @FCounter._DocPos);
     end;
-    if (not Count.HasType()) or (not Count.Writeable) or (not Count.VarType.IsOrdinal(True)) then
+    if (not Count.HasType()) or (not Count.Writeable) or (not (Count.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
       LapeException(lpeInvalidIterator, FCounter.DocPos);
 
     if LoopType = loopDown then

@@ -52,7 +52,6 @@ begin
     Compiler.addGlobalMethod('procedure _WriteLn; override;', @_WriteLn, Self);
 
     InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
-    ExposeGlobals(Compiler);
 
     try
       T := GetTickCount64();

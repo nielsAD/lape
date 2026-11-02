@@ -28,7 +28,7 @@ type
   public
     constructor Create(AHeader: TLapeType_Method; ABI: TFFIABI = FFI_DEFAULT_ABI; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompiler; AHeader: lpString; ABI: TFFIABI = FFI_DEFAULT_ABI; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    function CreateCopy: TLapeType; override;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
@@ -413,7 +413,7 @@ begin
 
   if (fsiDynLibs in Initialize) then
   begin
-    Compiler.addGlobalType(Compiler.getBaseType(ltSizeInt).CreateCopy(True), 'TLibHandle');
+    Compiler.addGlobalType(Compiler.getBaseType(ltSizeInt).CreateCopy(), 'TLibHandle');
     Compiler.addGlobalVar(SharedSuffix, 'SharedSuffix').isConstant := True;
 
     Compiler.addGlobalFunc('function LoadLibrary(const Name: string): TLibHandle', @_LapeLoadLibrary);
@@ -450,7 +450,7 @@ begin
   Create(_ParseMethodHeader(ACompiler, AHeader), ABI, AName, ADocPos);
 end;
 
-function TLapeType_NativeMethod.CreateCopy(DeepCopy: Boolean = False): TLapeType;
+function TLapeType_NativeMethod.CreateCopy: TLapeType;
 begin
   Result := inherited;
   TLapeType_NativeMethod(Result).FHeader := FHeader;

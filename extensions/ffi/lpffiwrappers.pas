@@ -760,8 +760,8 @@ begin
     Exit;
 
   try
-    if (VarType.BaseIntType <> ltUnknown) then
-      Result.Typ := ConvertBaseIntType(VarType.BaseIntType)
+    if (VarType.BaseType in LapeOrdinalTypes) then
+      Result.Typ := ConvertBaseIntType(DetermineIntType(VarType.Size, VarType.BaseType in LapeSignedIntegerTypes))
     else if (VarType.BaseType in LapePointerTypes) or (VarType is TLapeType_NativeMethod) then
       Result.Typ := ffi_type_pointer
     else

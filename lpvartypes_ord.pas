@@ -90,7 +90,7 @@ type
     function getAsArray: TLapeGlobalVar; virtual;
   public
     constructor Create(ARange: TLapeRange; ACompiler: TLapeCompilerBase; AVarType: TLapeType; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    function CreateCopy: TLapeType; override;
 
     procedure ClearCache; override;
 
@@ -111,7 +111,7 @@ type
   TEnumMap = TStringList;
   TLapeType_Enum = class(TLapeType_SubRange)
   protected
-    FMemberMap: TEnumMap;
+    FElementMap: TEnumMap;
     FScoped: Boolean;
     FSmall: Boolean;
     FGapCount: Int32;
@@ -119,15 +119,15 @@ type
     function getAsString: lpString; override;
     function getAsArray: TLapeGlobalVar; override;
   public
-    FreeMemberMap: Boolean;
-    constructor Create(ACompiler: TLapeCompilerBase; AMemberMap: TEnumMap; AScoped: Boolean; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    FreeElementMap: Boolean;
+    constructor Create(ACompiler: TLapeCompilerBase; AElementMap: TEnumMap; AScoped: Boolean; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
+    function CreateCopy: TLapeType; override;
     destructor Destroy; override;
 
     function canSet: Boolean;
-    function hasMember(AName: lpString): Boolean; virtual;
-    function addMember(Value: Int64; AName: lpString): Int64; overload; virtual;
-    function addMember(AName: lpString): Int64; overload; virtual;
+    function hasElement(AName: lpString): Boolean; virtual;
+    function addElement(Value: Int64; AName: lpString): Int64; overload; virtual;
+    function addElement(AName: lpString): Int64; overload; virtual;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; reintroduce; override;
 
@@ -141,7 +141,7 @@ type
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
     function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar; override;
 
-    property MemberMap: TEnumMap read FMemberMap;
+    property ElementMap: TEnumMap read FElementMap;
     property Scoped: Boolean read FScoped;
     property Small: Boolean read FSmall;
     property GapCount: Int32 read FGapCount;
@@ -157,7 +157,7 @@ type
   TLapeType_Bool = class(TLapeType_SubRange)
   public
     constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    function CreateCopy: TLapeType; override;
     destructor Destroy; override;
 
     function NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar; override;
@@ -190,7 +190,7 @@ type
     procedure setName(const AName: lpString); override;
   public
     constructor Create(ARange: TLapeType_SubRange; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    function CreateCopy: TLapeType; override;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -475,30 +475,30 @@ end;
 
 function TLapeType_SubRange.VarLo(AVar: Pointer = nil): TLapeGlobalVar;
 begin
-  if (FLo = nil) and (FCompiler <> nil) and IsOrdinal() then
+  if (FLo = nil) and (FCompiler <> nil) and (BaseType in LapeOrdinalTypes) then
     FLo := FCompiler.addManagedDecl(NewGlobalVar(FRange.Lo)) as TLapeGlobalVar;
   Result := FLo;
 end;
 
 function TLapeType_SubRange.VarHi(AVar: Pointer = nil): TLapeGlobalVar;
 begin
-  if (FHi = nil) and (FCompiler <> nil) and IsOrdinal() then
+  if (FHi = nil) and (FCompiler <> nil) and (BaseType in LapeOrdinalTypes) then
     FHi := FCompiler.addManagedDecl(NewGlobalVar(FRange.Hi)) as TLapeGlobalVar;
   Result := FHi;
 end;
 
-function TLapeType_SubRange.CreateCopy(DeepCopy: Boolean = False): TLapeType;
+function TLapeType_SubRange.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_SubRange;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, FVarType, Name, @_DocPos);
   with TLapeType_SubRange(Result) do
   begin
-    inheritManagedDecls(Self, not DeepCopy);
-    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
     CopyHints(Self);
   end;
+  Result.ParentType := Self;
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_SubRange.NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -507,7 +507,7 @@ begin
     LapeExceptionFmt(lpeOutOfTypeRange1, [Value, FRange.Lo, FRange.Hi]);
 
   Result := NewGlobalVarP(nil, AName);
-  case BaseIntType of
+  case DetermineIntType(Size, BaseType in LapeSignedIntegerTypes) of
     ltInt8:   PInt8(Result.Ptr)^   := Value;
     ltUInt8:  PUInt8(Result.Ptr)^  := Value;
     ltInt16:  PInt16(Result.Ptr)^  := Value;
@@ -536,13 +536,13 @@ begin
   if (FAsString = '') then
   begin
     FAsString := '(';
-    for i := 0 to FMemberMap.Count - 1 do
+    for i := 0 to FElementMap.Count - 1 do
     begin
-      if (FMemberMap[i] = '') then
+      if (FElementMap[i] = '') then
         Continue;
       if (FAsString <> '(') then
         FAsString := FAsString + ', ';
-      FAsString := FAsString + lpString(FMemberMap[i]) + '=' + lpString(IntToStr(i+FRange.Lo));
+      FAsString := FAsString + lpString(FElementMap[i]) + '=' + lpString(IntToStr(i+FRange.Lo));
     end;
     FAsString := FAsString + ')';
   end;
@@ -558,14 +558,14 @@ var
 begin
   if (FAsArray = nil) then
   begin
-    if (BaseIntType = ltUnknown) then
+    if (not (BaseType in LapeOrdinalTypes)) then
       LapeException(lpeImpossible, DocPos);
 
     with TLapeType_DynArray(FCompiler.addManagedType(TLapeType_DynArray.Create(Self, FCompiler))) do
     begin
       FAsArray := TLapeGlobalVar(FCompiler.addManagedDecl(NewGlobalVarP()));
 
-      VarSetLength(FAsArray, FMemberMap.Count - FGapCount);
+      VarSetLength(FAsArray, FElementMap.Count - FGapCount);
     end;
 
     CounterVar := 0;
@@ -573,10 +573,10 @@ begin
     Value := NewGlobalVarP(nil);
 
     try
-      for i := 0 to FMemberMap.Count - 1 do
-        if (FMemberMap[i] <> '') then
+      for i := 0 to FElementMap.Count - 1 do
+        if (FElementMap[i] <> '') then
         try
-          case BaseIntType of
+          case DetermineIntType(Size, BaseType in LapeSignedIntegerTypes) of
             ltInt8:   PInt8(Value.Ptr)^   := FRange.Lo + i;
             ltUInt8:  PUInt8(Value.Ptr)^  := FRange.Lo + i;
             ltInt16:  PInt16(Value.Ptr)^  := FRange.Lo + i;
@@ -604,22 +604,22 @@ begin
   Result := FAsArray;
 end;
 
-constructor TLapeType_Enum.Create(ACompiler: TLapeCompilerBase; AMemberMap: TEnumMap; AScoped: Boolean; AName: lpString; ADocPos: PDocPos);
+constructor TLapeType_Enum.Create(ACompiler: TLapeCompilerBase; AElementMap: TEnumMap; AScoped: Boolean; AName: lpString; ADocPos: PDocPos);
 begin
   inherited Create(NullRange, ACompiler, nil, AName, ADocPos);
   FBaseType := ltLargeEnum;
   FVarType := nil;
 
-  FreeMemberMap := (AMemberMap = nil);
-  if (AMemberMap = nil) then
+  FreeElementMap := (AElementMap = nil);
+  if (AElementMap = nil) then
   begin
-    AMemberMap := TEnumMap.Create();
-    AMemberMap.CaseSensitive := False;
+    AElementMap := TEnumMap.Create();
+    AElementMap.CaseSensitive := False;
   end;
-  FMemberMap := AMemberMap;
+  FElementMap := AElementMap;
   FScoped := AScoped;
 
-  FRange.Hi := Int64(FMemberMap.Count) - 1;
+  FRange.Hi := Int64(FElementMap.Count) - 1;
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
 
   if FSmall then
@@ -628,40 +628,40 @@ end;
 
 destructor TLapeType_Enum.Destroy;
 begin
-  if FreeMemberMap then
-    FMemberMap.Free();
+  if FreeElementMap then
+    FElementMap.Free();
   inherited;
 end;
 
 function TLapeType_Enum.canSet: Boolean;
 begin
-  Result := FMemberMap.Count < 256; // pascal sets can have a maximum of 256 elements, this includes gaps!
+  Result := FElementMap.Count < 256; // pascal sets can have a maximum of 256 elements, this includes gaps!
 end;
 
-function TLapeType_Enum.hasMember(AName: lpString): Boolean;
+function TLapeType_Enum.hasElement(AName: lpString): Boolean;
 begin
-  Result := FMemberMap.IndexOf(string(AName)) > -1;
+  Result := FElementMap.IndexOf(string(AName)) > -1;
 end;
 
-function TLapeType_Enum.addMember(Value: Int64; AName: lpString): Int64;
+function TLapeType_Enum.addElement(Value: Int64; AName: lpString): Int64;
 var
   i: Integer;
 begin
-  if (Value < FMemberMap.Count) then
+  if (Value < FElementMap.Count) then
     LapeException(lpeInvalidRange)
-  else if (AName = '') or hasMember(AName) then
+  else if (AName = '') or hasElement(AName) then
     LapeException(lpeDuplicateDeclaration);
 
   Result := Value;
   FRange.Hi := Value;
-  if (FMemberMap.Count = 0) then
+  if (FElementMap.Count = 0) then
     FRange.Lo := Value
-  else for i := FMemberMap.Count to Value - FRange.Lo - 1 do
+  else for i := FElementMap.Count to Value - FRange.Lo - 1 do
   begin
     FGapCount := FGapCount + 1;
-    FMemberMap.Add('');
+    FElementMap.Add('');
   end;
-  FMemberMap.Add(string(AName));
+  FElementMap.Add(string(AName));
 
   FSmall := (FRange.Hi <= Ord(High(ELapeSmallEnum)));
   if (not FSmall) then
@@ -670,9 +670,9 @@ begin
   ClearCache();
 end;
 
-function TLapeType_Enum.addMember(AName: lpString): Int64;
+function TLapeType_Enum.addElement(AName: lpString): Int64;
 begin
-  Result := addMember(FRange.Hi + 1, AName);
+  Result := addElement(FRange.Hi + 1, AName);
 end;
 
 function TLapeType_Enum.Equals(Other: TLapeType; ContextOnly: Boolean): Boolean;
@@ -682,7 +682,7 @@ begin
   Result := (Other is TLapeType_Enum) and
             (FSmall = OtherEnum.FSmall) and
             (FScoped = OtherEnum.FScoped) and
-            (FMemberMap.Equals(OtherEnum.FMemberMap)) and inherited;
+            (FElementMap.Equals(OtherEnum.FElementMap)) and inherited;
 end;
 
 function TLapeType_Enum.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
@@ -691,14 +691,14 @@ var
 begin
   Result := '';
 
-  for i := 0 to FMemberMap.Count - 1 do
+  for i := 0 to FElementMap.Count - 1 do
   begin
     if (Result <> '') then
       Result := Result + ', ';
     if FScoped then
-      Result := Result + 'string(' + #39 + lpString(FName + '.' + FMemberMap[i]) + #39 + ')'
+      Result := Result + 'string(' + #39 + lpString(FName + '.' + FElementMap[i]) + #39 + ')'
     else
-      Result := Result + 'string(' + #39 + lpString(FMemberMap[i]) + #39 + ')';
+      Result := Result + 'string(' + #39 + lpString(FElementMap[i]) + #39 + ')';
   end;
   Result := Format(lpString(
     'type TEnumToString = private function(constref Arr; Index, Lo, Hi: System.SizeInt): System.string;' + LineEnding +
@@ -724,8 +724,8 @@ begin
         Result := 'True'
     else
     begin
-      if (i > -1) and (i < FMemberMap.Count) then
-        Result := lpString(FMemberMap[i]);
+      if (i > -1) and (i < FElementMap.Count) then
+        Result := lpString(FElementMap[i]);
 
       if (Result = '') then
         if (Name <> '') then
@@ -738,28 +738,23 @@ begin
   end;
 end;
 
-function TLapeType_Enum.CreateCopy(DeepCopy: Boolean = False): TLapeType;
+function TLapeType_Enum.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_Enum;
 begin
-  if DeepCopy then
-  begin
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Scoped, Name, @_DocPos);
-    TLapeType_Enum(Result).MemberMap.Assign(FMemberMap);
-  end
-  else
-    Result := TLapeClassType(Self.ClassType).Create(FCompiler, FMemberMap, Scoped, Name, @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Scoped, Name, @_DocPos);
+  TLapeType_Enum(Result).ElementMap.Assign(FElementMap);
 
   with TLapeType_Enum(Result) do
   begin
-    inheritManagedDecls(Self, not DeepCopy);
-    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
     FRange := Self.Range;
     FSmall := Self.Small;
     FGapCount := Self.GapCount;
     CopyHints(Self);
   end;
+  Result.ParentType := Self;
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_Enum.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -767,7 +762,7 @@ begin
   if (Str <> '') and (AnsiChar(Str[1]) in ['-', '0'..'9']) then
     Result := NewGlobalVar(StrToInt64(string(Str)), AName, ADocPos)
   else
-    Result := NewGlobalVar(FRange.Lo + FMemberMap.IndexOf(string(Str)), AName, ADocPos);
+    Result := NewGlobalVar(FRange.Lo + FElementMap.IndexOf(string(Str)), AName, ADocPos);
 end;
 
 function TLapeType_Enum.EvalAsSubType(Op: EOperator; Right: TLapeType): Boolean;
@@ -788,7 +783,7 @@ begin
 
   if EvalAsSubType(Op, Right) then
   begin
-    Result := FCompiler.getBaseType(BaseIntType).EvalRes(Op, FCompiler.getBaseType(Right.BaseIntType), Flags);
+    Result := FCompiler.getBaseType(DetermineIntType(Size, BaseType in LapeSignedIntegerTypes)).EvalRes(Op, FCompiler.getBaseType(DetermineIntType(Right.Size, Right.BaseType in LapeSignedIntegerTypes)), Flags);
     if (Result <> nil) and (not (op in CompareOperators)) then
       Result := Self;
   end
@@ -807,16 +802,16 @@ begin
   if (Right <> nil) and Right.HasType() and EvalAsSubType(Op, Right.VarType) then
   try
     tmpType := Right.VarType;
-    if (not IsOrdinal()) or (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
+    if (not (BaseType in LapeOrdinalTypes)) or (not Right.HasType()) or (not (Right.VarType.BaseType in LapeOrdinalTypes)) then
       LapeException(lpeInvalidEvaluation);
 
-    Left.VarType := FCompiler.getBaseType(BaseIntType);
-    Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
+    Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, BaseType in LapeSignedIntegerTypes));
+    Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedIntegerTypes));
 
     Result := Left.VarType.EvalConst(Op, Left, Right, Flags);
     if Result.HasType() and (not (op in CompareOperators)) then
     begin
-      if (Result.VarType.BaseIntType <> BaseIntType) then
+      if (DetermineIntType(Result.VarType.Size, Result.VarType.BaseType in LapeSignedIntegerTypes) <> DetermineIntType(Size, BaseType in LapeSignedIntegerTypes)) then
       try
         tmpRes := Result;
         Result := Left.VarType.EvalConst(op_Assign, Left.VarType.NewGlobalVarP(), tmpRes, []);
@@ -842,18 +837,18 @@ begin
 
   if Right.HasType() and EvalAsSubType(Op, Right.VarType) then
   begin
-    if (not IsOrdinal()) or (not Right.HasType()) or (not Right.VarType.IsOrdinal()) then
+    if (not (BaseType in LapeOrdinalTypes)) or (not Right.HasType()) or (not (Right.VarType.BaseType in LapeOrdinalTypes)) then
       LapeException(lpeInvalidEvaluation);
 
-    Left.VarType := FCompiler.getBaseType(BaseIntType);
-    Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
+    Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, BaseType in LapeSignedIntegerTypes));
+    Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedIntegerTypes));
 
     if Dest.HasType() and Equals(Dest.VarType) then
       Dest.VarType := Left.VarType;
     Result := Left.VarType.Eval(Op, Dest, Left, Right, Flags, Offset, Pos);
     if Result.HasType() and (not (op in CompareOperators)) then
     begin
-      if (Result.VarType.BaseIntType <> BaseIntType) then
+      if (DetermineIntType(Result.VarType.Size, Result.VarType.BaseType in LapeSignedIntegerTypes) <> DetermineIntType(Size, BaseType in LapeSignedIntegerTypes)) then
       begin
         tmpRes := Result;
 
@@ -873,8 +868,8 @@ end;
 constructor TLapeType_Boolean.Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
 begin
   inherited Create(ACompiler, nil, False, AName, ADocPos);
-  addMember('False');
-  addMember('True');
+  addElement('False');
+  addElement('True');
   FBaseType := ltBoolean;
 end;
 
@@ -904,7 +899,7 @@ begin
   inherited;
 end;
 
-function TLapeType_Bool.CreateCopy(DeepCopy: Boolean = False): TLapeType;
+function TLapeType_Bool.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_Bool;
 begin
@@ -912,14 +907,14 @@ begin
 
   with TLapeType_Bool(Result) do
   begin
-    inheritManagedDecls(Self, not DeepCopy);
-    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
 
     FRange := Self.Range;
     TLapeType_Boolean(FVarType).FSize := Self.VarType.Size;
     CopyHints(Self);
   end;
+  Result.ParentType := Self;
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_Bool.NewGlobalVar(Value: Int64 = 0; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -1066,7 +1061,7 @@ var
   Index: Integer;
 begin
   Result := '';
-  if (ToStr = nil) or (FCompiler = nil) or (FRange = nil) or (FRange.BaseIntType = ltUnknown) then
+  if (ToStr = nil) or (FCompiler = nil) or (FRange = nil) or (not (FRange.BaseType in LapeOrdinalTypes)) then
     Exit;
 
   Index := ToStr.getMethodIndex(getTypeArray([FRange]), FCompiler.getBaseType(ltString));
@@ -1091,7 +1086,7 @@ begin
     'begin'                                                                                 + LineEnding +
     '  Result := TSetToString(System.%s)(Param0, _ElementToString, %d, %d);'                + LineEnding +
     'end;'
-  ), [FRange.Range.Hi, LapeTypeToString(FRange.BaseIntType), Index, Result, FRange.Range.Lo, FRange.Range.Hi]);
+  ), [FRange.Range.Hi, LapeTypeToString(DetermineIntType(FRange.Size, FRange.BaseType in LapeSignedIntegerTypes)), Index, Result, FRange.Range.Lo, FRange.Range.Hi]);
 end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;
@@ -1109,14 +1104,14 @@ begin
   Result := Result + ']';
 end;
 
-function TLapeType_Set.CreateCopy(DeepCopy: Boolean = False): TLapeType;
+function TLapeType_Set.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_Set;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, Name, @_DocPos);
-  Result.inheritManagedDecls(Self, not DeepCopy);
-  Result.TypeID := TypeID;
   Result.CopyHints(Self);
+  Result.ParentType := Self;
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_Set.NewGlobalVar(Values: array of UInt8; AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;

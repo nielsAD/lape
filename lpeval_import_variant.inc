@@ -10,8 +10,8 @@
 addGlobalVar(Null, 'Null').isConstant := True;
 addGlobalVar(Unassigned, 'Unassigned').isConstant := True;
 
-addGlobalType(getBaseType(DetermineIntType(SizeOf(HRESULT), True)).createCopy(), 'HRESULT');
-addGlobalType(getBaseType(DetermineIntType(SizeOf(TVarType), False)).createCopy(), 'TVarType');
+addGlobalType(getBaseType(DetermineIntType(SizeOf(HRESULT), True)).CreateAlias(), 'HRESULT');
+addGlobalType(getBaseType(DetermineIntType(SizeOf(TVarType), False)).CreateAlias(), 'TVarType');
 addGlobalType('(vrEqual, vrLessThan, vrGreaterThan, vrNotEqual)', 'TVariantRelationship');
 
 addGlobalVar(VarEmpty, 'VarEmpty').isConstant := True;

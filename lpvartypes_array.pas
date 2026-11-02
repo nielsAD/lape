@@ -23,7 +23,7 @@ type
     function canInlineHelper(Field: TLapeGlobalVar; out Typ: TLapeType): Boolean;
   public
     constructor Create(ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    function CreateCopy: TLapeType; override;
 
     function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
@@ -54,7 +54,7 @@ type
     function getAsString: lpString; override;
   public
     constructor Create(ARange: TLapeRange; ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual;
-    function CreateCopy(DeepCopy: Boolean = False): TLapeType; override;
+    function CreateCopy: TLapeType; override;
 
     function VarToString(AVar: Pointer): lpString; override;
     function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
@@ -133,7 +133,11 @@ function TLapeType_DynArray.canInlineHelper(Field: TLapeGlobalVar; out Typ: TLap
 var
   Decl: TLapeDeclaration;
 begin
-  if ValidFieldName(Field) and FManagedDecls.Get(PlpString(Field.Ptr)^, TLapeGlobalVar, Decl, bTrue) then
+  if ValidFieldName(Field) then
+    Decl := FindMember(PlpString(Field.Ptr)^)
+  else
+    Decl := nil;
+  if (Decl is TLapeGlobalVar) then
   begin
     Typ := TLapeGlobalVar(Decl).VarType;
 
@@ -157,18 +161,18 @@ begin
   addArrayHelpers();
 end;
 
-function TLapeType_DynArray.CreateCopy(DeepCopy: Boolean = False): TLapeType;
+function TLapeType_DynArray.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_DynArray;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FPType, FCompiler, Name, @_DocPos);
   with TLapeType_DynArray(Result) do
   begin
-    inheritManagedDecls(Self, not DeepCopy);
-    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
     CopyHints(Self);
   end;
+  Result.ParentType := Self;
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_DynArray.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
@@ -395,7 +399,7 @@ var
 begin
   if (AVar = nil) or (not AIndex.HasType()) then
     LapeException(lpeInvalidEvaluation)
-  else if (not AIndex.VarType.IsOrdinal()) then
+  else if (not (AIndex.VarType.BaseType in LapeOrdinalTypes)) then
     LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString])
   else if (not (lefConstRangeCheck in Flags)) then
     Exit;
@@ -423,7 +427,7 @@ var
 begin
   if (not AIndex.HasType()) then
     LapeException(lpeInvalidEvaluation)
-  else if (not AIndex.VarType.IsOrdinal()) then
+  else if (not (AIndex.VarType.BaseType in LapeOrdinalTypes)) then
     LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString])
   else if (([lefRangeCheck, lefConstRangeCheck]) * Flags = []) then
     Exit;
@@ -464,17 +468,17 @@ begin
 
   if (BaseType = ltDynArray) then
   begin
-    AIndex.VarType := FCompiler.getBaseType(AIndex.VarType.BaseIntType);
+    AIndex.VarType := FCompiler.getBaseType(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedIntegerTypes));
     if (AIndex.VarPos.MemPos = mpStack) then
     begin
       AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
       FCompiler.Emitter._PopStackToVar(AIndex.VarType.Size, AIndex.VarPos.StackVar.Offset, Offset, @_DocPos);
     end;
 
-    FCompiler.Emitter._Eval(getEvalProc_DynArrayRangeCheck(AIndex.VarType.BaseIntType), AVar, AVar, AIndex, Offset, Pos);
+    FCompiler.Emitter._Eval(getEvalProc_DynArrayRangeCheck(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedIntegerTypes)), AVar, AVar, AIndex, Offset, Pos);
   end else
   begin
-    AIndex.VarType := FCompiler.getBaseType(AIndex.VarType.BaseIntType);
+    AIndex.VarType := FCompiler.getBaseType(DetermineIntType(AIndex.VarType.Size, AIndex.VarType.BaseType in LapeSignedIntegerTypes));
     if (AIndex.VarPos.MemPos = mpStack) then
     begin
       AIndex := _ResVar.New(FCompiler.getTempVar(AIndex.VarType));
@@ -965,7 +969,7 @@ begin
       Typ := FCompiler.getGlobalType('!arrayhelpers_dynsingledim');
 
     if (Typ <> nil) then
-      FManagedDecls.Parent := TLapeType(Typ).ManagedDeclarations;
+      FParentType := TLapeType(Typ);
   end;
 end;
 
@@ -1045,18 +1049,18 @@ begin
     Result := FCompiler.getConstant(FRange.Hi, ltSizeInt);
 end;
 
-function TLapeType_StaticArray.CreateCopy(DeepCopy: Boolean = False): TLapeType;
+function TLapeType_StaticArray.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_StaticArray;
 begin
   Result := TLapeClassType(Self.ClassType).Create(FRange, FPType, FCompiler, Name, @_DocPos);
   with TLapeType_StaticArray(Result) do
   begin
-    inheritManagedDecls(Self, not DeepCopy);
-    TypeID := Self.TypeID;
     FBaseType := Self.BaseType;
     CopyHints(Self);
   end;
+  Result.ParentType := Self;
+  Result.TypeID := TypeID;
 end;
 
 function TLapeType_StaticArray.NewGlobalVar(AName: lpString = ''; ADocPos: PDocPos = nil): TLapeGlobalVar;
@@ -1150,8 +1154,8 @@ begin
         tmpVar := _ResVar.New(FCompiler.getConstant(Right.VarPos.GlobalVar.AsInteger - FRange.Lo))
       else
       begin
-        if Right.HasType() and Right.VarType.IsOrdinal() then
-          Right.VarType := FCompiler.getBaseType(Right.VarType.BaseIntType);
+        if Right.HasType() and (Right.VarType.BaseType in LapeOrdinalTypes) then
+          Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedIntegerTypes));
 
         IndexLow := FCompiler.getConstant(FRange.Lo, ltSizeInt);
         tmpVar := Right.VarType.Eval(op_Minus, tmpVar, Right, _ResVar.New(IndexLow), [], Offset, Pos);
@@ -1329,7 +1333,7 @@ begin
   begin
     Typ := FCompiler.getGlobalType('!arrayhelpers_static');
     if (Typ <> nil) then
-      FManagedDecls.Parent := TLapeType(Typ).ManagedDeclarations;
+      FParentType := TLapeType(Typ);
   end;
 end;
 
@@ -1418,7 +1422,7 @@ begin
     if (lefAssigning in Flags) then
       VarUnique(PPointer(Left.Ptr)^);
 
-    if (Right <> nil) and Right.HasType() and Right.VarType.IsOrdinal() then
+    if (Right <> nil) and Right.HasType() and (Right.VarType.BaseType in LapeOrdinalTypes) then
       Right := FCompiler.getConstant(Right.AsInteger - 1);
 
     Result := //Result := Pointer[Index - 1]^

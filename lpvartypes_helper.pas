@@ -283,13 +283,13 @@ function TLapeType_Helper.getMethodIndex(AParams: TLapeTypeArray; AResult: TLape
 var
   i: Integer;
 begin
-  for i := 0 to FManagedDecls.Count - 1 do
+  for i := 0 to MethodCount - 1 do
   begin
-    Assert(TLapeGlobalVar(FManagedDecls[i]).VarType is TLapeType_MethodOfType);
-    if EqualMethod(TLapeType_MethodOfType(TLapeGlobalVar(FManagedDecls[i]).VarType)) then
+    Assert(Methods[i].VarType is TLapeType_MethodOfType);
+    if EqualMethod(TLapeType_MethodOfType(Methods[i].VarType)) then
       Exit(i);
   end;
-  Result := FManagedDecls.IndexOf(getFunc(AObjectType, AParams, AResult, Pos));
+  Result := FDeclarations.IndexOf(getFunc(AObjectType, AParams, AResult, Pos));
 end;
 
 function TLapeType_Helper.CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType; Pos: PDocPos): TLapeGlobalVar;
@@ -304,7 +304,7 @@ begin
   with FCompiler as TLapeCompiler do
   begin
     if (not hasDeclaration(VarType)) and (VarType.Name = '') then // for `var a: array of x` otherwise "parent declaration out of scope"
-      addGlobalDecl(VarType);
+      GlobalDeclarations.addDeclaration(VarType);
 
     Header := addManagedType(TLapeType_MethodOfType.Create(FCompiler, VarType, nil, ResultType)) as TLapeType_Method;
     for i := 0 to High(ParamTypes) do
@@ -330,7 +330,7 @@ begin
     Result := Method.Method;
     Result.VarType.Name := FName;
 
-    FManagedDecls.addDeclaration(Result);
+    FDeclarations.addDeclaration(Result);
   end;
 end;
 
@@ -843,7 +843,7 @@ procedure LapeCreateArrayHelpers(Compiler: TLapeCompilerBase);
     Typ: TLapeType;
   begin
     for Typ in Types do
-      Typ.ManagedDeclarations.addDeclaration(
+      Typ.addDeclaration(
         TLapeType_Helper(Compiler.addManagedType(Helper.Create(Compiler, Name))).NewGlobalVar(Name)
       );
   end;
@@ -854,10 +854,14 @@ var
   dynOrdinal: TLapeType;
   staticArr: TLapeType;
 begin
-  dynSingle  := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynsingledim')) as TLapeType;
-  dynMulti   := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynmultidim')) as TLapeType;
-  dynOrdinal := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynordinal')) as TLapeType;
-  staticArr := Compiler.addGlobalDecl(TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_static')) as TLapeType;
+  dynSingle  := TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynsingledim');
+  dynMulti   := TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynmultidim');
+  dynOrdinal := TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_dynordinal');
+  staticArr  := TLapeType.Create(ltUnknown, Compiler, '!arrayhelpers_static');
+  Compiler.GlobalDeclarations.addDeclaration(dynSingle);
+  Compiler.GlobalDeclarations.addDeclaration(dynMulti);
+  Compiler.GlobalDeclarations.addDeclaration(dynOrdinal);
+  Compiler.GlobalDeclarations.addDeclaration(staticArr);
 
   Build(TLapeType_ArrayHelper_SetLength, 'SetLength', [dynSingle, dynMulti, dynOrdinal]);
   Build(TLapeType_ArrayHelper_Low, 'Low', [dynSingle, dynMulti, dynOrdinal, staticArr]);
@@ -877,8 +881,6 @@ begin
   Build(TLapeType_ArrayHelper_DeleteRange, 'DeleteRange', [dynSingle, dynMulti, dynOrdinal]);
   Build(TLapeType_ArrayHelper_Remove, 'Remove', [dynSingle, dynOrdinal]);
   Build(TLapeType_ArrayHelper_Insert, 'Insert', [dynSingle, dynMulti, dynOrdinal]);
-  Build(TLapeType_ArrayHelper_Reverse, 'Reverse', [dynSingle, dynMulti, dynOrdinal]);
-  Build(TLapeType_ArrayHelper_Reversed, 'Reversed', [dynSingle, dynMulti, dynOrdinal]);
   Build(TLapeType_ArrayHelper_Equals, 'Equals', [dynSingle, dynOrdinal, staticArr]);
   Build(TLapeType_ArrayHelper_Unique, 'Unique', [dynSingle, dynOrdinal]);
   Build(TLapeType_ArrayHelper_Contains, 'Contains', [dynSingle, dynOrdinal, staticArr]);
