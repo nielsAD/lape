@@ -1,0 +1,10 @@
+// A loop over an enum cannot go over its gaps (as FPC)
+type
+  TLevel = (Bottom, Top = 5);
+
+var
+  l: TLevel;
+begin
+  for l in TLevel do
+    WriteLn(l);
+end.

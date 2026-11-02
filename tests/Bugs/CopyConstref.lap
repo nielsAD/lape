@@ -10,6 +10,6 @@ begin
 end;
 
 begin
-  BuggyBuggy([1..2]);
+  BuggyBuggy([1, 2]);
 end;
 

@@ -139,9 +139,6 @@ type
     function Evaluate: TLapeGlobalVar; override;
     function Compile(var Offset: Integer): TResVar; override;
 
-    function toByteSet: Boolean;
-    function toCharSet: Boolean;
-    function toSet: Boolean;
 
     property ToType: TLapeType read FType write setType;
     property Values: TLapeStatementList read FValues;
@@ -376,15 +373,16 @@ type
 
     procedure setLo(Node: TLapeTree_ExprBase); virtual;
     procedure setHi(Node: TLapeTree_ExprBase); virtual;
-    function getDiff: Int64; virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
 
+    // Both ends are there and constant
+    function isConstant: Boolean; virtual;
+
     property Lo: TLapeTree_ExprBase read FLo write setLo;
     property Hi: TLapeTree_ExprBase read FHi write setHi;
-    property Diff: Int64 read getDiff;
   end;
 
   TLapeTree_StatementList = class(TLapeTree_Base)
@@ -1031,7 +1029,7 @@ begin
     CastTo := TLapeType_DynArray(AType).PType
   else
   if (AType is TLapeType_Set) then
-    CastTo := TLapeType_Set(AType).Range
+    CastTo := TLapeType_Set(AType).Element
   else
     CastTo := nil;
 
@@ -1066,7 +1064,6 @@ end;
 function TLapeTree_OpenArray.canCast: Boolean;
 var
   i: Integer;
-  HasRange: Boolean;
   CastTo: TLapeType;
 begin
   if (FCanCast = bUnknown) then
@@ -1079,12 +1076,11 @@ begin
     if (FType = nil) then
       FCanCast := bFalse;
 
-    HasRange := False;
     CastTo := nil;
 
     if (FCanCast <> bFalse) then
       if (FType is TLapeType_Set) then
-        CastTo := TLapeType_Set(FType).Range
+        CastTo := TLapeType_Set(FType).Element
       else if (FType is TLapeType_DynArray) then
         CastTo := TLapeType_DynArray(FType).PType;
       if (CastTo = nil) xor (FType is TLapeType_Record) then
@@ -1110,11 +1106,12 @@ begin
 
         if (FValues[i] is TLapeTree_ExprBase) and CastTo.CompatibleWith(TLapeTree_ExprBase(FValues[i]).resType()) then
           {nothing}
-        else if (FValues[i] is TLapeTree_Range) and
+        // (a range only in a set)
+        else if (FValues[i] is TLapeTree_Range) and (FType is TLapeType_Set) and
           CastTo.CompatibleWith(TLapeTree_Range(FValues[i]).Lo.resType()) and
           CastTo.CompatibleWith(TLapeTree_Range(FValues[i]).Hi.resType())
         then
-          HasRange := True
+          {nothing}
         else
         begin
           FInvalidCastIndex := i;
@@ -1123,14 +1120,9 @@ begin
         end;
       end;
 
-    if (FCanCast <> bFalse) and (FType is TLapeType_StaticArray) then
-      if isConstant() and (FRange.Lo = 0) then
-        if (FRange.Hi = TLapeType_StaticArray(FType).Range.Hi - TLapeType_StaticArray(FType).Range.Lo) then
-          {nothing}
-        else
-          FCanCast := bFalse
-      else if HasRange then
-          FCanCast := bFalse;
+    if (FCanCast <> bFalse) and (FType is TLapeType_StaticArray) and isConstant() and (FRange.Lo = 0) then
+      if (FRange.Hi <> TLapeType_StaticArray(FType).Range.Hi - TLapeType_StaticArray(FType).Range.Lo) then
+        FCanCast := bFalse;
   end;
 
   Result := (FCanCast = bTrue);
@@ -1153,8 +1145,9 @@ begin
           {nothing}
         else if (FValues[i] is TLapeTree_ExprBase) and TLapeTree_ExprBase(FValues[i]).isConstant() then
           Inc(FRange.Hi)
-        else if (FValues[i] is TLapeTree_Range) and (TLapeTree_Range(FValues[i]).Diff >= 0) then
-          Inc(FRange.Hi, TLapeTree_Range(FValues[i]).Diff)
+        // (a range is only in a set, which has no length)
+        else if (FValues[i] is TLapeTree_Range) and TLapeTree_Range(FValues[i]).isConstant() then
+          {nothing}
         else
         begin
           FConstant := bFalse;
@@ -1193,13 +1186,12 @@ function TLapeTree_OpenArray.resType: TLapeType;
           Continue
         else if (FValues[i] is TLapeTree_Range) and (TLapeTree_Range(FValues[i]).Hi <> nil) then
         begin
+          // (a range makes it a set: of an enum, else it is no list)
           Res := TLapeTree_Range(FValues[i]).Hi.resType();
-          if (Res <> nil) and (Res is TLapeType_SubRange) and ((Result = nil) or Res.CompatibleWith(Result)) then
-            Exit(FCompiler.addManagedType(TLapeType_Set.Create(Res as TLapeType_SubRange, FCompiler, '', @_DocPos)))
-          else if (TLapeTree_Range(FValues[i]).Diff >= 0) then
-            Inc(FRange.Hi, TLapeTree_Range(FValues[i]).Diff)
-          else
-            FRange.Lo := -1;
+          if (Res <> nil) and (Res.BaseType in [ltSmallEnum, ltLargeEnum]) and ((Result = nil) or Res.CompatibleWith(Result)) then
+            Exit(FCompiler.addManagedType(TLapeType_Set.Create(Res, FCompiler, '', @_DocPos)));
+          FInvalidCastIndex := i;
+          Exit(nil);
         end
         else if (not (FValues[i] is TLapeTree_ExprBase)) then
           Exit(nil)
@@ -1227,8 +1219,8 @@ function TLapeTree_OpenArray.resType: TLapeType;
       end;
 
       if (Result <> nil) then
-        if (Result is TLapeType_Enum) and TLapeType_Enum(Result).canSet() then
-          Result := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_Enum(Result), FCompiler, '', @_DocPos))
+        if (Result is TLapeType_Enum) and (Result.BaseType in [ltSmallEnum, ltLargeEnum]) and TLapeType_Enum(Result).canSet() then
+          Result := FCompiler.addManagedType(TLapeType_Set.Create(Result, FCompiler, '', @_DocPos))
         else if (FRange.Lo < 0) then
           Result := FCompiler.addManagedType(TLapeType_DynArray.Create(Result, FCompiler, '', @_DocPos))
         else
@@ -1284,11 +1276,10 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
 
   procedure doStaticArray;
   var
-    i, ii, CounterInt: Integer;
-    FieldVar, tmpVar, Counter: TLapeGlobalVar;
+    i, CounterInt: Integer;
+    FieldVar, Counter: TLapeGlobalVar;
   begin
     FieldVar := nil;
-    tmpVar := nil;
     try
       CounterInt := TLapeType_StaticArray(FType).Range.Lo;
       Counter := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@CounterInt);
@@ -1308,26 +1299,6 @@ function TLapeTree_OpenArray.Evaluate: TLapeGlobalVar;
         finally
           if (FieldVar <> nil) then
             FreeAndNil(FieldVar);
-        end
-        else if (FValues[i] is TLapeTree_Range) then
-        try
-          tmpVar := FCompiler.getBaseType(ltInt32).NewGlobalVarP(@ii);
-          for ii := TLapeTree_Range(FValues[i]).Lo.Evaluate().AsInteger to TLapeTree_Range(FValues[i]).Hi.Evaluate().AsInteger do
-          try
-            try
-              FieldVar := FType.EvalConst(op_Index, Result, Counter, [lefAssigning]);
-              FieldVar.VarType.EvalConst(op_Assign, FieldVar, tmpVar, []);
-            except on E: lpException do
-              LapeException(lpString(E.Message), FValues[i].DocPos);
-            end;
-          finally
-            Inc(CounterInt);
-            if (FieldVar <> nil) then
-              FreeAndNil(FieldVar);
-          end;
-        finally
-          Dec(CounterInt);
-          tmpVar.Free();
         end
         else
           LapeException(lpeInvalidCast, FValues[i].DocPos);
@@ -1403,7 +1374,7 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
   procedure doSetOrDynArray;
   var
     i: Integer;
-    tmpVar: TResVar;
+    tmpVar, HiVar: TResVar;
     Counter: TLapeVar;
   begin
     tmpVar := NullResVar;
@@ -1425,16 +1396,17 @@ function TLapeTree_OpenArray.Compile(var Offset: Integer): TResVar;
         end
       else if (FValues[i] is TLapeTree_Range) then
       begin
-        if (FType is TLapeType_Set) then
-          Counter := FCompiler.getTempVar(TLapeType_Set(FType).Range)
-        else
-          Counter := FCompiler.getTempVar(ltSizeInt);
+        Assert(FType is TLapeType_Set);
+        Counter := FCompiler.getTempVar(TLapeType_Set(FType).Element);
         tmpVar := Counter.VarType.Eval(op_Assign, tmpVar, _ResVar.New(Counter), TLapeTree_Range(FValues[i]).Lo.Compile(Offset), [], Offset, @FValues[i]._DocPos);
+        // (the last is kept in a variable: the loop reads it each round)
+        if (not TLapeTree_Range(FValues[i]).Hi.CompileToTempVar(Offset, HiVar)) then
+          LapeException(lpeInvalidEvaluation, FValues[i].DocPos);
 
         with TLapeTree_For.Create(FValues[i]) do
         try
           Counter := TLapeTree_ResVar.Create(tmpVar, FValues[i]);
-          Limit := TLapeTree_ResVar.Create(TLapeTree_Range(FValues[i]).Hi.Compile(Offset), FValues[i]);
+          Limit := TLapeTree_ResVar.Create(HiVar, FValues[i]);
           Body := TLapeTree_Operator.Create(op_Plus, FValues[i]);
           with TLapeTree_Operator(Body) do
           begin
@@ -1523,7 +1495,9 @@ begin
 
   if (not canCast()) then
   begin
-    if (FInvalidCastIndex > -1) and (FValues[FInvalidCastIndex] is TLapeTree_ExprBase) then
+    if (FInvalidCastIndex > -1) and (FValues[FInvalidCastIndex] is TLapeTree_Range) and (not (FType is TLapeType_Set)) then
+      LapeException(lpeRangeOnlyInSet, FValues[FInvalidCastIndex].DocPos)
+    else if (FInvalidCastIndex > -1) and (FValues[FInvalidCastIndex] is TLapeTree_ExprBase) then
     begin
       with FValues[FInvalidCastIndex] as TLapeTree_ExprBase do
       begin
@@ -1553,181 +1527,6 @@ begin
     LapeException(lpeInvalidCast, DocPos);
 
   Result.isConstant := True;
-end;
-
-function TLapeTree_OpenArray.toByteSet: Boolean;
-var
-  NeedRebuild: Boolean;
-
-  function isIntegerConst(Expr: TLapeTree_ExprBase): Boolean;
-  begin
-    if (Expr is TLapeTree_ExprBase) and Expr.isConstant and (Expr.resType.BaseType in LapeIntegerTypes) and
-       (Expr.Evaluate.AsInteger >= 0) and (Expr.Evaluate.AsInteger <= 255) then
-    begin
-      Result := True;
-      if not NeedRebuild then
-        NeedRebuild := (Expr.resType.BaseType <> ltUInt8);
-    end else
-      Result := False;
-  end;
-
-  procedure Add(Expr: TLapeTree_ExprBase);
-  begin
-    addValue(TLapeTree_GlobalVar.Create(FCompiler.getConstant(Expr.Evaluate.AsInteger, ltUInt8), Self));
-  end;
-
-  procedure AddRange(Expr: TLapeTree_Range);
-  var
-    i: Integer;
-  begin
-    for i := Expr.Lo.Evaluate.AsInteger to Expr.Hi.Evaluate.AsInteger do
-      addValue(TLapeTree_GlobalVar.Create(FCompiler.getConstant(i, ltUInt8), Self));
-  end;
-
-const
-  UInt8Range: TLapeRange = (Lo: Low(UInt8); Hi: High(UInt8));
-var
-  OldCount, i: Integer;
-begin
-  Result := True;
-  if (FValues.Count = 0) or (FValues.Count > 256) then
-    Exit(False);
-
-  NeedRebuild := False;
-  for i := 0 to FValues.Count - 1 do
-  begin
-    if ((FValues[i] is TLapeTree_ExprBase) and isIntegerConst(TLapeTree_ExprBase(FValues[i]))) or
-       ((FValues[i] is TLapeTree_Range)    and isIntegerConst(TLapeTree_Range(FValues[i]).Lo)) or
-       ((FValues[i] is TLapeTree_Range)    and isIntegerConst(TLapeTree_Range(FValues[i]).Hi)) then
-      Continue;
-
-    Exit(False);
-  end;
-
-  ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_SubRange.Create(UInt8Range, FCompiler, FCompiler.getBaseType(ltUInt8)), FCompiler));
-
-  if NeedRebuild then
-  begin
-    // create new uint8 consts
-    OldCount := FValues.Count;
-    for i := 0 to FValues.Count - 1 do
-      if (FValues[i] is TLapeTree_ExprBase) then
-        Add(TLapeTree_ExprBase(FValues[i]))
-      else if (FValues[i] is TLapeTree_Range) then
-        AddRange(TLapeTree_Range(FValues[i]));
-
-    // delete old values
-    for i := 0 to OldCount - 1 do
-      FValues[0].Free();
-  end;
-
-  Assert(canCast);
-  Assert(isConstant);
-  Assert((FValues.Count > 0) and (FValues.Count <= 256));
-end;
-
-function TLapeTree_OpenArray.toCharSet: Boolean;
-var
-  NeedRebuild: Boolean;
-
-  function isCharConst(Expr: TLapeTree_ExprBase): Boolean;
-  begin
-    if (Expr is TLapeTree_ExprBase) and Expr.isConstant and (Expr.resType.BaseType in LapeCharTypes) and
-       (Expr.Evaluate.AsInteger >= 0) and (Expr.Evaluate.AsInteger <= 255) then
-    begin
-      Result := True;
-      if not NeedRebuild then
-        NeedRebuild := (Expr.resType.BaseType <> ltAnsiChar);
-    end else
-      Result := False;
-  end;
-
-  procedure Add(Expr: TLapeTree_ExprBase);
-  begin
-    addValue(TLapeTree_GlobalVar.Create(FCompiler.getConstant(Expr.Evaluate.AsInteger, ltAnsiChar), Self));
-  end;
-
-  procedure AddRange(Expr: TLapeTree_Range);
-  var
-    i: Integer;
-  begin
-    for i := Expr.Lo.Evaluate.AsInteger to Expr.Hi.Evaluate.AsInteger do
-      addValue(TLapeTree_GlobalVar.Create(FCompiler.getConstant(i, ltAnsiChar), Self));
-  end;
-
-const
-  CharRange: TLapeRange = (Lo: Ord(Low(AnsiChar)); Hi: Ord(High(AnsiChar)));
-var
-  i, OldCount: Integer;
-begin
-  Result := True;
-  if (FValues.Count = 0) or (FValues.Count > 256) then
-    Exit(False);
-
-  NeedRebuild := False;
-  for i := 0 to FValues.Count - 1 do
-  begin
-    if ((FValues[i] is TLapeTree_ExprBase) and isCharConst(TLapeTree_ExprBase(FValues[i]))) or
-       ((FValues[i] is TLapeTree_Range)    and isCharConst(TLapeTree_Range(FValues[i]).Lo)) or
-       ((FValues[i] is TLapeTree_Range)    and isCharConst(TLapeTree_Range(FValues[i]).Hi)) then
-      Continue;
-
-    Exit(False);
-  end;
-
-  ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeType_SubRange.Create(CharRange, FCompiler, FCompiler.getBaseType(ltAnsiChar)), FCompiler));
-
-  if NeedRebuild then
-  begin
-    // create new ansichar consts
-    OldCount := FValues.Count;
-    for i := 0 to FValues.Count - 1 do
-      if (FValues[i] is TLapeTree_ExprBase) then
-        Add(TLapeTree_ExprBase(FValues[i]))
-      else if (FValues[i] is TLapeTree_Range) then
-        AddRange(TLapeTree_Range(FValues[i]));
-
-    // delete old values
-    for i := 0 to OldCount - 1 do
-      FValues[0].Free();
-  end;
-
-  Assert(canCast);
-  Assert(isConstant);
-  Assert((FValues.Count > 0) and (FValues.Count <= 256));
-end;
-
-function TLapeTree_OpenArray.toSet: Boolean;
-
-  function isEnumConst(Expr: TLapeTree_ExprBase): Boolean;
-  begin
-    Result := (Expr is TLapeTree_ExprBase) and Expr.isConstant and (Expr.resType.BaseType in LapeEnumTypes);
-  end;
-
-var
-  i: Integer;
-begin
-  Result := True;
-  if (FValues.Count = 0) or (FValues.Count > 256) then
-    Exit(False);
-
-  for i := 0 to FValues.Count - 1 do
-  begin
-    if ((FValues[i] is TLapeTree_ExprBase) and isEnumConst(TLapeTree_ExprBase(FValues[i]))) or
-       ((FValues[i] is TLapeTree_Range)    and isEnumConst(TLapeTree_Range(FValues[i]).Lo)) or
-       ((FValues[i] is TLapeTree_Range)    and isEnumConst(TLapeTree_Range(FValues[i]).Hi)) then
-      Continue;
-
-    Exit(False);
-  end;
-
-  if (FValues[0] is TLapeTree_ExprBase) then
-    ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeTree_ExprBase(FValues[0]).resType() as TLapeType_SubRange, FCompiler))
-  else
-    ToType := FCompiler.addManagedType(TLapeType_Set.Create(TLapeTree_Range(FValues[0]).Lo.resType() as TLapeType_SubRange, FCompiler));
-
-  Assert(canCast);
-  Assert(isConstant);
 end;
 
 procedure TLapeTree_Cast.DeleteChild(Node: TLapeTree_Base);
@@ -1819,8 +1618,8 @@ begin
 
       if (not VarType.CompatibleWith(Result.VarType)) then
       begin
-        Result.VarType := FCompiler.getBaseType(DetermineIntType(Result.VarType.Size, Result.VarType.BaseType in LapeSignedIntegerTypes));
-        DestVar.VarType := FCompiler.getBaseType(DetermineIntType(DestVar.VarType.Size, DestVar.VarType.BaseType in LapeSignedIntegerTypes));
+        Result.VarType := FCompiler.getBaseType(DetermineIntType(Result.VarType.Size, Result.VarType.BaseType in LapeSignedOrdinalTypes));
+        DestVar.VarType := FCompiler.getBaseType(DetermineIntType(DestVar.VarType.Size, DestVar.VarType.BaseType in LapeSignedOrdinalTypes));
       end;
 
       Result := DestVar.VarType.Eval(op_Assign, tmpVar, DestVar, Result, [], Offset, @Self._DocPos);
@@ -1865,8 +1664,8 @@ begin
       tmpTyp := tmpRes.VarType;
       Result := VarType.NewGlobalVarP();
 
-      tmpRes.VarType := FCompiler.getBaseType(DetermineIntType(tmpTyp.Size, tmpTyp.BaseType in LapeSignedIntegerTypes));
-      Result.VarType := FCompiler.getBaseType(DetermineIntType(VarType.Size, VarType.BaseType in LapeSignedIntegerTypes));
+      tmpRes.VarType := FCompiler.getBaseType(DetermineIntType(tmpTyp.Size, tmpTyp.BaseType in LapeSignedOrdinalTypes));
+      Result.VarType := FCompiler.getBaseType(DetermineIntType(VarType.Size, VarType.BaseType in LapeSignedOrdinalTypes));
 
       Result := Result.VarType.EvalConst(op_Assign, Result, tmpRes, []);
       Result.VarType := VarType;
@@ -3087,6 +2886,107 @@ function TLapeTree_Operator.Compile(var Offset: Integer): TResVar;
     end;
   end;
 
+  // The list made a set of Element, when Element can be in one and the values fit it
+  function inSet(List: TLapeTree_OpenArray; Element: TLapeType): Boolean;
+  begin
+    Result := (Element <> nil) and
+      ((Element.BaseType in [ltAnsiChar, ltUInt8]) or
+       ((Element.BaseType in [ltSmallEnum, ltLargeEnum]) and (Element is TLapeType_SubRange) and
+        (TLapeType_SubRange(Element).Range.Lo >= Low(TLapeLargeSetItem)) and (TLapeType_SubRange(Element).Range.Hi <= High(TLapeLargeSetItem))));
+    if Result then
+    begin
+      List.ToType := FCompiler.addManagedType(TLapeType_Set.Create(Element, FCompiler));
+      Result := List.canCast();
+    end;
+  end;
+
+  // x in [a, b..c] as a loop over the values:
+  //   Found := False; if (x = a) then Found := True; for i := b to c do if (x = i) then Found := True;
+  function doInList(LeftVar: TResVar): TResVar;
+  var
+    FoundVar: TResVar;
+
+    // (the same variable, read as an integer of its size: a range is counted in numbers. No range of
+    // Booleans: True of a LongBool is no 1)
+    function AsInteger(AVar: TResVar): TResVar;
+    begin
+      if (not AVar.HasType()) or (not (AVar.VarType.BaseType in LapeOrdinalTypes)) or (AVar.VarType.BaseType in LapeBoolTypes) then
+        LapeException(lpeInvalidRange, DocPos);
+      Result := AVar;
+      Result.VarType := FCompiler.getBaseType(DetermineIntType(AVar.VarType.Size, AVar.VarType.BaseType in LapeSignedOrdinalTypes));
+    end;
+
+    function CompileValue(Value: TLapeTree_Base): TResVar;
+    begin
+      if (not Value.CompileToTempVar(Offset, Result)) then
+        LapeException(lpeInvalidEvaluation, Value.DocPos);
+    end;
+
+    // if (Left = Right) then Found := True
+    function IfFound(Left, Right: TResVar): TLapeTree_If;
+    var
+      Condition, SetFound: TLapeTree_Operator;
+    begin
+      Result := TLapeTree_If.Create(Self);
+      Condition := TLapeTree_Operator.Create(op_cmp_Equal, Self);
+      Result.Condition := Condition;
+      Condition.Left := TLapeTree_ResVar.Create(Left, Self);
+      Condition.Right := TLapeTree_ResVar.Create(Right, Self);
+
+      SetFound := TLapeTree_Operator.Create(op_Assign, Self);
+      Result.Body := SetFound;
+      SetFound.Left := TLapeTree_ResVar.Create(FoundVar, Self);
+      SetFound.Right := TLapeTree_GlobalVar.Create(FCompiler.getConstant(1, ltEvalBool), Self);
+    end;
+
+  var
+    i: Integer;
+    Value: TLapeTree_Base;
+    HiVar, CounterVar, tmpVar: TResVar;
+    Statement: TLapeTree_Base;
+  begin
+    Dest := NullResVar;
+
+    FoundVar := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
+    tmpVar := NullResVar;
+    FoundVar.VarType.Eval(op_Assign, tmpVar, FoundVar, _ResVar.New(FCompiler.getConstant(0, ltEvalBool)), [], Offset, @_DocPos);
+
+    for i := 0 to TLapeTree_OpenArray(FRight).Values.Count - 1 do
+    begin
+      Value := TLapeTree_OpenArray(FRight).Values[i];
+      if (Value is TLapeTree_Range) then
+      begin
+        CounterVar := _ResVar.New(FCompiler.getTempVar(ltInt64));
+        tmpVar := NullResVar;
+        CounterVar.VarType.Eval(op_Assign, tmpVar, CounterVar, AsInteger(CompileValue(TLapeTree_Range(Value).Lo)), [], Offset, @Value._DocPos);
+        HiVar := AsInteger(CompileValue(TLapeTree_Range(Value).Hi));
+
+        Statement := TLapeTree_For.Create(Self);
+        try
+          TLapeTree_For(Statement).Counter := TLapeTree_ResVar.Create(CounterVar, Self);
+          TLapeTree_For(Statement).Limit := TLapeTree_ResVar.Create(HiVar, Self);
+          TLapeTree_For(Statement).Body := IfFound(AsInteger(LeftVar), CounterVar);
+          Statement.Compile(Offset);
+        finally
+          Statement.Free();
+        end;
+      end
+      else if (Value is TLapeTree_ExprBase) then
+      begin
+        Statement := IfFound(LeftVar, CompileValue(Value));
+        try
+          Statement.Compile(Offset);
+        finally
+          Statement.Free();
+        end;
+      end
+      else
+        LapeException(lpeInvalidSet, Value.DocPos);
+    end;
+
+    Result := FoundVar;
+  end;
+
 var
   LeftVar, RightVar: TResVar;
 begin
@@ -3108,26 +3008,13 @@ begin
   if (FRight <> nil) then
   begin
     case FOperatorType of
-      // right must be a set
+      // a list is a set of x's type when that can be one (enum, AnsiChar, Byte), else it is looked through
       op_IN:
         if (Right is TLapeTree_OpenArray) then
-        begin
-          case LeftVar.VarType.BaseType of
-            ltSmallEnum..ltLargeEnum:
-              if not TLapeTree_OpenArray(Right).toSet() then
-                LapeException(lpeInvalidConstSet, DocPos);
-            ltUInt8..ltInt64:
-              if not TLapeTree_OpenArray(Right).toByteSet() then
-                LapeException(lpeInvalidConstByteSet, DocPos);
-            ltAnsiChar:
-              if not TLapeTree_OpenArray(Right).toCharSet() then
-                LapeException(lpeInvalidConstCharSet, DocPos);
-            else
-              LapeException(lpeInvalidSet, DocPos);
-          end;
-
-          FRight := FRight.FoldConstants(True) as TLapeTree_ExprBase;
-        end;
+          if inSet(TLapeTree_OpenArray(FRight), LeftVar.VarType) then
+            FRight := FRight.FoldConstants(True) as TLapeTree_ExprBase
+          else
+            Exit(doInList(LeftVar));
 
       // if array appending right must be dyn array element type
       op_Plus, op_AssignPlus:
@@ -3426,18 +3313,6 @@ begin
     Node.Parent := Self;
 end;
 
-function TLapeTree_Range.getDiff: Int64;
-begin
-  if isEmpty(FLo) or isEmpty(FHi) or
-     (not (FLo is TLapeTree_GlobalVar)) or
-     (not (FHi is TLapeTree_GlobalVar)) or
-     (not FLo.isConstant()) or (not FHi.isConstant())
-  then
-    Result := -1
-  else
-    Result := Max(TLapeTree_GlobalVar(FHi).getVarAsInt() - TLapeTree_GlobalVar(FLo).getVarAsInt() + 1, 0);
-end;
-
 procedure TLapeTree_Range.DeleteChild(Node: TLapeTree_Base);
 begin
   if (FLo = Node) then
@@ -3458,6 +3333,11 @@ begin
   setLo(nil);
   setHi(nil);
   inherited;
+end;
+
+function TLapeTree_Range.isConstant: Boolean;
+begin
+  Result := (not isEmpty(FLo)) and (not isEmpty(FHi)) and FLo.isConstant() and FHi.isConstant();
 end;
 
 procedure TLapeTree_StatementList.DeleteChild(Node: TLapeTree_Base);
@@ -4538,25 +4418,34 @@ end;
 
 procedure TLapeTree_For.CompileBodyForIn(var Offset: Integer);
 var
-  counterVar: TResVar;
+  counterVar, valueVar, tmpVar: TResVar;
 begin
   Assert(LoopType = loopOver);
 
   FCounter.CompileToTempVar(Offset, counterVar);
 
-  with TLapeTree_Operator.Create(op_Assign, FCounter) do
-  try
-    Left := TLapeTree_ResVar.Create(counterVar, FCounter);
-    Right := TLapeTree_Operator.Create(op_Index, FCounter);
-    with TLapeTree_Operator(Right) do
-    begin
-      CompilerOptions := CompilerOptions - [lcoRangeCheck];
-      Left := TLapeTree_ResVar.Create(Container, FLimit);
-      Right := TLapeTree_ResVar.Create(TLapeTree_Operator(FCondition).Left.Compile(Offset), FCondition);
-    end;
-    Compile(Offset);
-  finally
-    Free();
+  if (LoopOverWhat = loopOverArray) then
+    with TLapeTree_Operator.Create(op_Assign, FCounter) do
+    try
+      Left := TLapeTree_ResVar.Create(counterVar, FCounter);
+      Right := TLapeTree_Operator.Create(op_Index, FCounter);
+      with TLapeTree_Operator(Right) do
+      begin
+        CompilerOptions := CompilerOptions - [lcoRangeCheck];
+        Left := TLapeTree_ResVar.Create(Container, FLimit);
+        Right := TLapeTree_ResVar.Create(TLapeTree_Operator(FCondition).Left.Compile(Offset), FCondition);
+      end;
+      Compile(Offset);
+    finally
+      Free();
+    end
+  else
+  begin
+    // (the number goes in the counter as it is: as an integer of the counter's size)
+    valueVar := counterVar;
+    valueVar.VarType := FCompiler.getBaseType(DetermineIntType(counterVar.VarType.Size, counterVar.VarType.BaseType in LapeSignedOrdinalTypes));
+    tmpVar := NullResVar;
+    valueVar.VarType.Eval(op_Assign, tmpVar, valueVar, TLapeTree_Operator(FCondition).Left.Compile(Offset), [], Offset, @FCounter._DocPos);
   end;
 
   if (CheckInVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
@@ -4636,6 +4525,24 @@ function TLapeTree_For.CompileForIn(var Offset: Integer): TResVar;
 var
   upper, lower: TResVar;
   method: TLapeTree_ExprBase;
+  Element: TLapeType;
+  Enum: TLapeType_Enum;
+  Range: TLapeRange;
+
+  procedure AssignTo(Target: TResVar; Expr: TLapeTree_ExprBase);
+  var
+    Assignment: TLapeTree_Operator;
+  begin
+    Assignment := TLapeTree_Operator.Create(op_Assign, Self);
+    try
+      Assignment.Left := TLapeTree_ResVar.Create(Target, FCounter);
+      Assignment.Right := Expr;
+      Assignment.Compile(Offset);
+    finally
+      Assignment.Free();
+    end;
+  end;
+
 begin
   Result := NullResVar;
   Container := NullResVar;
@@ -4647,50 +4554,57 @@ begin
   if (not FLimit.CompileToTempVar(Offset, Container)) or (not Container.HasType()) then
     LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
-  case loopOverWhat of
-    loopOverSet:
-      begin
-        if (not (Container.VarType is TLapeType_Set)) then
-          LapeException(lpeInvalidEvaluation, FLimit.DocPos);
-
-        CheckInVar := Container;
-        Container := _ResVar.New(TLapeType_Set(Container.VarType).Range.AsArray);
-      end;
-
-    loopOverEnum:
-      begin
-        if (Container.VarType is TLapeType_TypeEnum) then
-          Container.VarType := TLapeType_TypeEnum(Container.VarType).TType;
-        if (not (Container.VarType is TLapeType_SubRange)) then
-          LapeException(lpeInvalidEvaluation, FLimit.DocPos);
-
-        Container := _ResVar.New(TLapeType_SubRange(Container.VarType).AsArray);
-      end;
-  end;
-
   lower := _ResVar.New(FCompiler.getTempVar(ltSizeInt));
-  upper := _ResVar.New(FCompiler.getTempVar(ltSizeInt));
 
-  method := TLapeTree_InternalMethod_Low.Create(FCounter);
-  TLapeTree_InternalMethod_Low(method).addParam(TLapeTree_ResVar.Create(Container, FCounter));
-  with TLapeTree_Operator.Create(op_Assign, Self) do
-  try
-    Left := TLapeTree_ResVar.Create(lower, FCounter);
-    Right := method.FoldConstants() as TLapeTree_ExprBase;
-    Compile(Offset);
-  finally
-    Free();
-  end;
+  // (of a set or an enum: a number from the first to the last, given to the counter as one of the element)
+  if (LoopOverWhat in [loopOverSet, loopOverEnum]) then
+  begin
+    if (LoopOverWhat = loopOverSet) then
+    begin
+      if (not (Container.VarType is TLapeType_Set)) then
+        LapeException(lpeInvalidEvaluation, FLimit.DocPos);
 
-  method := TLapeTree_InternalMethod_High.Create(FLimit);
-  TLapeTree_InternalMethod_High(method).addParam(TLapeTree_ResVar.Create(Container, FLimit));
-  with TLapeTree_Operator.Create(op_Assign, Self) do
-  try
-    Left := TLapeTree_ResVar.Create(upper, FLimit);
-    Right := method.FoldConstants() as TLapeTree_ExprBase;
-    Compile(Offset);
-  finally
-    Free();
+      // (only those that are in it)
+      CheckInVar := Container;
+      Element := TLapeType_Set(Container.VarType).Element;
+      Range := TLapeType_Set(Container.VarType).Range;
+    end
+    else
+    begin
+      Element := Container.VarType;
+      if (Element is TLapeType_Type) then
+        Element := TLapeType_Type(Element).TType;
+
+      // (an enum, or a range of one: its numbers have to be its elements, as FPC)
+      if (Element is TLapeType_Enum) then
+        Enum := TLapeType_Enum(Element)
+      else if (Element is TLapeType_SubRange) and TLapeType_SubRange(Element).isEnumRange() then
+        Enum := TLapeType_SubRange(Element).VarType as TLapeType_Enum
+      else
+        LapeException(lpeInvalidEvaluation, FLimit.DocPos);
+
+      Range := TLapeType_SubRange(Element).Range;
+      if Enum.HasGap(Range) then
+        LapeExceptionFmt(lpeCannotLoopEnumWithGaps, [Element.AsString], FLimit.DocPos);
+    end;
+
+    if (FCounter.resType() <> nil) and (FCounter.resType().EvalRes(op_Assign, Element) = nil) then
+      LapeExceptionFmt(lpeIncompatibleAssignment, [Element.AsString, FCounter.resType().AsString], FCounter.DocPos);
+
+    AssignTo(lower, TLapeTree_GlobalVar.Create(FCompiler.getConstant(Range.Lo, ltSizeInt), Self));
+    upper := _ResVar.New(FCompiler.getConstant(Range.Hi, ltSizeInt));
+  end
+  else
+  begin
+    upper := _ResVar.New(FCompiler.getTempVar(ltSizeInt));
+
+    method := TLapeTree_InternalMethod_Low.Create(FCounter);
+    TLapeTree_InternalMethod_Low(method).addParam(TLapeTree_ResVar.Create(Container, FCounter));
+    AssignTo(lower, method.FoldConstants() as TLapeTree_ExprBase);
+
+    method := TLapeTree_InternalMethod_High.Create(FLimit);
+    TLapeTree_InternalMethod_High(method).addParam(TLapeTree_ResVar.Create(Container, FLimit));
+    AssignTo(upper, method.FoldConstants() as TLapeTree_ExprBase);
   end;
 
   try

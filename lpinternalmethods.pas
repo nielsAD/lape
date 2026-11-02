@@ -1380,7 +1380,7 @@ begin
       if (ParamType <> nil) and (ParamType is TLapeType_Type) then
         ParamType := TLapeType_Type(ParamType).TType;
       if (ParamType <> nil) and (ParamType.BaseType in LapeOrdinalTypes) then
-        FResType := FCompiler.getBaseType(DetermineIntType(ParamType.Size, ParamType.BaseType in LapeSignedIntegerTypes));
+        FResType := FCompiler.getBaseType(DetermineIntType(ParamType.Size, ParamType.BaseType in LapeSignedOrdinalTypes));
     end;
   Result := inherited;
 end;
@@ -1648,8 +1648,7 @@ begin
           FRes := FCompiler.getConstant(Range.Hi - Range.Lo + 1, ltSizeInt);
 
       ltSmallEnum, ltLargeEnum:
-        with TLapeType_Enum(ParamType) do
-          FRes := FCompiler.getConstant(ElementMap.Count - GapCount, ltSizeInt);
+        FRes := FCompiler.getConstant(TLapeType_Enum(ParamType).ElementCount, ltSizeInt);
     end;
   end;
 
@@ -1877,7 +1876,7 @@ begin
     LapeException(lpeInvalidEvaluation, DocPos)
   else
   begin
-    StartRes.VarType := FCompiler.getBaseType(DetermineIntType(StartRes.VarType.Size, StartRes.VarType.BaseType in LapeSignedIntegerTypes));
+    StartRes.VarType := FCompiler.getBaseType(DetermineIntType(StartRes.VarType.Size, StartRes.VarType.BaseType in LapeSignedOrdinalTypes));
     Start := TLapeTree_ResVar.Create(StartRes, Self.FParams[1]);
   end;
 
@@ -2194,7 +2193,7 @@ begin
     else
     begin
       ResultType := VarParam.VarType;
-      VarParam := FCompiler.getBaseType(DetermineIntType(VarParam.VarType.Size, VarParam.VarType.BaseType in LapeSignedIntegerTypes)).NewGlobalVarP(VarParam.Ptr);
+      VarParam := FCompiler.getBaseType(DetermineIntType(VarParam.VarType.Size, VarParam.VarType.BaseType in LapeSignedOrdinalTypes)).NewGlobalVarP(VarParam.Ptr);
 
       with TLapeTree_Cast.Create(FCompiler) do
       try
@@ -2255,7 +2254,7 @@ begin
     else
     begin
       ResultType := VarParam.VarType;
-      VarParam.VarType := FCompiler.getBaseType(DetermineIntType(VarParam.VarType.Size, VarParam.VarType.BaseType in LapeSignedIntegerTypes));
+      VarParam.VarType := FCompiler.getBaseType(DetermineIntType(VarParam.VarType.Size, VarParam.VarType.BaseType in LapeSignedOrdinalTypes));
 
       with TLapeTree_Cast.Create(FCompiler) do
       try

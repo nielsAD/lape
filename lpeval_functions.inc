@@ -3425,25 +3425,23 @@ procedure lpeSSet_GTE_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL
 procedure lpeSSet_LTE_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeSmallSet(Left)^ <= PLapeSmallSet(Right)^; end;
 procedure lpeSSet_NE_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeSmallSet(Left)^ <> PLapeSmallSet(Right)^; end;
 
-procedure lpeInt8_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeSmallEnum(PInt8(Left)^) in PLapeSmallSet(Right)^; end;
-procedure lpeUInt8_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeSmallEnum(PUInt8(Left)^) in PLapeSmallSet(Right)^; end;
-procedure lpeInt16_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeSmallEnum(PInt16(Left)^) in PLapeSmallSet(Right)^; end;
-procedure lpeUInt16_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeSmallEnum(PUInt16(Left)^) in PLapeSmallSet(Right)^; end;
-procedure lpeInt32_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeSmallEnum(PInt32(Left)^) in PLapeSmallSet(Right)^; end;
-procedure lpeUInt32_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeSmallEnum(PUInt32(Left)^) in PLapeSmallSet(Right)^; end;
-procedure lpeInt64_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeSmallEnum(PInt64(Left)^) in PLapeSmallSet(Right)^; end;
-procedure lpeUInt64_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeSmallEnum(PUInt64(Left)^) in PLapeSmallSet(Right)^; end;
-procedure lpeSEnum_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeSmallEnum(Left)^ in PLapeSmallSet(Right)^; end;
+procedure lpeInt8_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PInt8(Left)^)) <= High(TLapeSmallSetItem)) and (TLapeSmallSetItem(PInt8(Left)^) in PLapeSmallSet(Right)^); end;
+procedure lpeUInt8_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PUInt8(Left)^)) <= High(TLapeSmallSetItem)) and (TLapeSmallSetItem(PUInt8(Left)^) in PLapeSmallSet(Right)^); end;
+procedure lpeInt16_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PInt16(Left)^)) <= High(TLapeSmallSetItem)) and (TLapeSmallSetItem(PInt16(Left)^) in PLapeSmallSet(Right)^); end;
+procedure lpeUInt16_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PUInt16(Left)^)) <= High(TLapeSmallSetItem)) and (TLapeSmallSetItem(PUInt16(Left)^) in PLapeSmallSet(Right)^); end;
+procedure lpeInt32_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PInt32(Left)^)) <= High(TLapeSmallSetItem)) and (TLapeSmallSetItem(PInt32(Left)^) in PLapeSmallSet(Right)^); end;
+procedure lpeUInt32_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PUInt32(Left)^)) <= High(TLapeSmallSetItem)) and (TLapeSmallSetItem(PUInt32(Left)^) in PLapeSmallSet(Right)^); end;
+procedure lpeInt64_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PInt64(Left)^)) <= High(TLapeSmallSetItem)) and (TLapeSmallSetItem(PInt64(Left)^) in PLapeSmallSet(Right)^); end;
+procedure lpeUInt64_IN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PUInt64(Left)^)) <= High(TLapeSmallSetItem)) and (TLapeSmallSetItem(PUInt64(Left)^) in PLapeSmallSet(Right)^); end;
 
-procedure lpeSSet_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [ELapeSmallEnum(PInt8(Right)^)]; end;
-procedure lpeSSet_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [ELapeSmallEnum(PUInt8(Right)^)]; end;
-procedure lpeSSet_ADD_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [ELapeSmallEnum(PInt16(Right)^)]; end;
-procedure lpeSSet_ADD_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [ELapeSmallEnum(PUInt16(Right)^)]; end;
-procedure lpeSSet_ADD_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [ELapeSmallEnum(PInt32(Right)^)]; end;
-procedure lpeSSet_ADD_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [ELapeSmallEnum(PUInt32(Right)^)]; end;
-procedure lpeSSet_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [ELapeSmallEnum(PInt64(Right)^)]; end;
-procedure lpeSSet_ADD_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [ELapeSmallEnum(PUInt64(Right)^)]; end;
-procedure lpeSSet_ADD_SEnum(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [PLapeSmallEnum(Right)^]; end;
+procedure lpeSSet_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [TLapeSmallSetItem(PInt8(Right)^)]; end;
+procedure lpeSSet_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [TLapeSmallSetItem(PUInt8(Right)^)]; end;
+procedure lpeSSet_ADD_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [TLapeSmallSetItem(PInt16(Right)^)]; end;
+procedure lpeSSet_ADD_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [TLapeSmallSetItem(PUInt16(Right)^)]; end;
+procedure lpeSSet_ADD_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [TLapeSmallSetItem(PInt32(Right)^)]; end;
+procedure lpeSSet_ADD_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [TLapeSmallSetItem(PUInt32(Right)^)]; end;
+procedure lpeSSet_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [TLapeSmallSetItem(PInt64(Right)^)]; end;
+procedure lpeSSet_ADD_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + [TLapeSmallSetItem(PUInt64(Right)^)]; end;
 
 procedure lpeSSet_ASGN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^; end;
 procedure lpeSSet_ADD_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeSmallSet(Left)^ + PLapeSmallSet(Right)^; end;
@@ -3456,28 +3454,44 @@ procedure lpeLSet_GTE_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL
 procedure lpeLSet_LTE_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeLargeSet(Left)^ <= PLapeLargeSet(Right)^; end;
 procedure lpeLSet_NE_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeLargeSet(Left)^ <> PLapeLargeSet(Right)^; end;
 
-procedure lpeInt8_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeLargeEnum(PInt8(Left)^) in PLapeLargeSet(Right)^; end;
-procedure lpeUInt8_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeLargeEnum(PUInt8(Left)^) in PLapeLargeSet(Right)^; end;
-procedure lpeInt16_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeLargeEnum(PInt16(Left)^) in PLapeLargeSet(Right)^; end;
-procedure lpeUInt16_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeLargeEnum(PUInt16(Left)^) in PLapeLargeSet(Right)^; end;
-procedure lpeInt32_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeLargeEnum(PInt32(Left)^) in PLapeLargeSet(Right)^; end;
-procedure lpeUInt32_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeLargeEnum(PUInt32(Left)^) in PLapeLargeSet(Right)^; end;
-procedure lpeInt64_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeLargeEnum(PInt64(Left)^) in PLapeLargeSet(Right)^; end;
-procedure lpeUInt64_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := ELapeLargeEnum(PUInt64(Left)^) in PLapeLargeSet(Right)^; end;
-procedure lpeLEnum_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeLargeEnum(Left)^ in PLapeLargeSet(Right)^; end;
+procedure lpeInt8_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PInt8(Left)^)) <= High(TLapeLargeSetItem)) and (TLapeLargeSetItem(PInt8(Left)^) in PLapeLargeSet(Right)^); end;
+procedure lpeUInt8_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PUInt8(Left)^)) <= High(TLapeLargeSetItem)) and (TLapeLargeSetItem(PUInt8(Left)^) in PLapeLargeSet(Right)^); end;
+procedure lpeInt16_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PInt16(Left)^)) <= High(TLapeLargeSetItem)) and (TLapeLargeSetItem(PInt16(Left)^) in PLapeLargeSet(Right)^); end;
+procedure lpeUInt16_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PUInt16(Left)^)) <= High(TLapeLargeSetItem)) and (TLapeLargeSetItem(PUInt16(Left)^) in PLapeLargeSet(Right)^); end;
+procedure lpeInt32_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PInt32(Left)^)) <= High(TLapeLargeSetItem)) and (TLapeLargeSetItem(PInt32(Left)^) in PLapeLargeSet(Right)^); end;
+procedure lpeUInt32_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PUInt32(Left)^)) <= High(TLapeLargeSetItem)) and (TLapeLargeSetItem(PUInt32(Left)^) in PLapeLargeSet(Right)^); end;
+procedure lpeInt64_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PInt64(Left)^)) <= High(TLapeLargeSetItem)) and (TLapeLargeSetItem(PInt64(Left)^) in PLapeLargeSet(Right)^); end;
+procedure lpeUInt64_IN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := (UInt64(Int64(PUInt64(Left)^)) <= High(TLapeLargeSetItem)) and (TLapeLargeSetItem(PUInt64(Left)^) in PLapeLargeSet(Right)^); end;
 
-procedure lpeLSet_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [ELapeLargeEnum(PInt8(Right)^)]; end;
-procedure lpeLSet_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [ELapeLargeEnum(PUInt8(Right)^)]; end;
-procedure lpeLSet_ADD_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [ELapeLargeEnum(PInt16(Right)^)]; end;
-procedure lpeLSet_ADD_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [ELapeLargeEnum(PUInt16(Right)^)]; end;
-procedure lpeLSet_ADD_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [ELapeLargeEnum(PInt32(Right)^)]; end;
-procedure lpeLSet_ADD_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [ELapeLargeEnum(PUInt32(Right)^)]; end;
-procedure lpeLSet_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [ELapeLargeEnum(PInt64(Right)^)]; end;
-procedure lpeLSet_ADD_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [ELapeLargeEnum(PUInt64(Right)^)]; end;
-procedure lpeLSet_ADD_LEnum(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [PLapeLargeEnum(Right)^]; end;
+procedure lpeLSet_ADD_Int8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [TLapeLargeSetItem(PInt8(Right)^)]; end;
+procedure lpeLSet_ADD_UInt8(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [TLapeLargeSetItem(PUInt8(Right)^)]; end;
+procedure lpeLSet_ADD_Int16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [TLapeLargeSetItem(PInt16(Right)^)]; end;
+procedure lpeLSet_ADD_UInt16(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [TLapeLargeSetItem(PUInt16(Right)^)]; end;
+procedure lpeLSet_ADD_Int32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [TLapeLargeSetItem(PInt32(Right)^)]; end;
+procedure lpeLSet_ADD_UInt32(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [TLapeLargeSetItem(PUInt32(Right)^)]; end;
+procedure lpeLSet_ADD_Int64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [TLapeLargeSetItem(PInt64(Right)^)]; end;
+procedure lpeLSet_ADD_UInt64(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + [TLapeLargeSetItem(PUInt64(Right)^)]; end;
 
 procedure lpeLSet_ASGN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^; end;
 procedure lpeLSet_ADD_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + PLapeLargeSet(Right)^; end;
 procedure lpeLSet_SUB_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ - PLapeLargeSet(Right)^; end;
 procedure lpeLSet_MUL_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ * PLapeLargeSet(Right)^; end;
+
+// (a small and a large set: as FPC)
+procedure lpeSSet_ASGN_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeSmallSet(Dest)^ := PLapeLargeSet(Left)^; end;
+procedure lpeSSet_ADD_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeSmallSet(Left)^ + PLapeLargeSet(Right)^; end;
+procedure lpeSSet_SUB_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeSmallSet(Left)^ - PLapeLargeSet(Right)^; end;
+procedure lpeSSet_MUL_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeSmallSet(Left)^ * PLapeLargeSet(Right)^; end;
+procedure lpeSSet_EQ_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeSmallSet(Left)^ = PLapeLargeSet(Right)^; end;
+procedure lpeSSet_NE_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeSmallSet(Left)^ <> PLapeLargeSet(Right)^; end;
+procedure lpeSSet_LTE_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeSmallSet(Left)^ <= PLapeLargeSet(Right)^; end;
+procedure lpeSSet_GTE_LSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeSmallSet(Left)^ >= PLapeLargeSet(Right)^; end;
+procedure lpeLSet_ASGN_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeSmallSet(Left)^; end;
+procedure lpeLSet_ADD_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ + PLapeSmallSet(Right)^; end;
+procedure lpeLSet_SUB_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ - PLapeSmallSet(Right)^; end;
+procedure lpeLSet_MUL_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PLapeLargeSet(Dest)^ := PLapeLargeSet(Left)^ * PLapeSmallSet(Right)^; end;
+procedure lpeLSet_EQ_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeLargeSet(Left)^ = PLapeSmallSet(Right)^; end;
+procedure lpeLSet_NE_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeLargeSet(Left)^ <> PLapeSmallSet(Right)^; end;
+procedure lpeLSet_LTE_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeLargeSet(Left)^ <= PLapeSmallSet(Right)^; end;
+procedure lpeLSet_GTE_SSet(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF} begin PEvalBool(Dest)^ := PLapeLargeSet(Left)^ >= PLapeSmallSet(Right)^; end;
 

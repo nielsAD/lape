@@ -1,0 +1,13 @@
+// Values of any sign and size, with gaps: a number in a gap is no element
+type
+  TLevel = (Below = -2, Ground = 0, Above = 5);
+  TFar = (Near, Far = 2000000000);
+
+var
+  l: TLevel;
+begin
+  WriteLn(Ord(Below), ' ', Low(TLevel), ' ', High(TLevel), ' ', Below < Ground, ' ', Ord(Far));
+  l := Below;
+  Inc(l);
+  WriteLn(l, ' ', TFar(1));
+end.

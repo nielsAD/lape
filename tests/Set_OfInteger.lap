@@ -1,0 +1,4 @@
+type
+  TInts = set of Int32;
+begin
+end.

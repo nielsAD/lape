@@ -23,7 +23,7 @@ var
 begin
   success := False;
   i := 100;
-  b := i in [0, 1..50]; // should call an op overload
+  b := i in [0, 1, 50]; // should call an op overload
   assert(success);
 
   success := False;

@@ -1,0 +1,5 @@
+var
+  A: array of Int32;
+begin
+  A := [0, 1..3];
+end.

@@ -46,6 +46,7 @@ const
   lpeCannotFallthrough = 'Cannot use fallthrough in this context';
   lpeCannotInvoke = 'Cannot invoke identifier';
   lpeCannotInvokeProperty = 'Cannot invoke property like this';
+  lpeCannotLoopEnumWithGaps = 'Cannot loop over enum "%s" with gaps';
   lpeCannonInvokeConstruct = 'Cannot invoke construct like this. The `new` operator is requried';
   lpeCannotMixStaticOverload = 'Cannot mix static with non-static method overload';
   lpeCannotOverload = 'Cannot overload function';
@@ -78,6 +79,7 @@ const
   lpeExpectedOther = 'Found unexpected token "%s", expected "%s"';
   lpeExpressionExpected = 'Expression expected';
   lpeExpectedEnum = 'Enum expected';
+  lpeEnumRangeExpected = 'Range of an enum expected';
   lpeFileNotFound = 'File "%s" not found';
   lpeImpossible = 'It''s impossible!';
   lpeIncompatibleAssignment = 'Can''t assign "%s" to "%s"';
@@ -88,9 +90,6 @@ const
   lpeInvalidCast = 'Invalid cast';
   lpeInvalidCaseStatement = 'Invalid case statement';
   lpeInvalidCondition = 'Invalid condition';
-  lpeInvalidConstSet = 'Invalid constant set';
-  lpeInvalidConstByteSet = 'Invalid constant (Byte) set';
-  lpeInvalidConstCharSet = 'Invalid constant (Char) set';
   lpeInvalidConstructMethod = 'Invalid construct method';
   lpeInvalidConstructMethod1 = 'Invalid construct method: "%s"';
   lpeInvalidCompareMethod = 'Invalid compare method';
@@ -113,6 +112,7 @@ const
   lpeInvalidValueForType = 'Invalid value for type "%s"';
   lpeInvalidWithReference = 'Invalid with-reference';
   lpeInvalidSet = 'Invalid set';
+  lpeInvalidSetType = 'Invalid set type "%s": a set is of an enum, AnsiChar or Byte';
   lpeLostClosingParenthesis = 'Found closing parenthesis without matching opening parenthesis';
   lpeLostConditional = 'Found conditional without matching opening statement';
   lpeMethodOfObjectExpected = 'Expected method of object';
@@ -135,6 +135,7 @@ const
   lpeIndexOutOfRangeHigh = 'Index out of range (index:%d, high:%d)';
   lpeParentOutOfScope = 'Parent declaration is out of scope';
   lpeExpectedProperty = 'Property has to be of a type';
+  lpeRangeOnlyInSet = 'A range is only allowed in a set';
   lpeRuntime = 'Runtime error: "%s"';
   lpeStatementNotAllowed = 'Statement not allowed here';
   lpeStaticMethodExpected = 'Variable expected. "%s" is not a static method';

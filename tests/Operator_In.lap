@@ -19,6 +19,12 @@ begin
   Assert(not (i in [1..99]));
   Assert(i in [1..200]);
 
+  // (a list that is no set is compared value by value: any number, variable ends, no values)
+  i := 356;
+  Assert(i in [1, 356]);
+  Assert(i in [i - 1..i + 1]);
+  Assert(not (i in []));
+
   c := 'z';
   Assert(not (c in ['a', 'd'..'y', '0']));
   Assert(c in ['a', 'd'..'y', 'z']);

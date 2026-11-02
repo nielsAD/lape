@@ -16,7 +16,7 @@ end;
 
 
 //=================================================\\
-var dynArr:Array of Int32 = [0..4];
+var dynArr:Array of Int32 = [0, 1, 2, 3, 4];
 begin
   resStr := '';
   for item in dynArr do
@@ -89,15 +89,16 @@ end;
 type
   ETestEnum = (TestA = 50, TestB = 60, TestC, TestD);
   ETestSet = set of ETestEnum;
+  ETestRange = TestB..TestD; // (a loop over an enum cannot go over its gaps)
 
 var
   Test: ETestEnum;
   TestSet: ETestSet = [TestA, TestD];
 begin
   resStr := '';
-  for Test in ETestEnum do
+  for Test in ETestRange do
     resStr += ToString(Test) + ' ';
-  Assert(resStr = 'TestA TestB TestC TestD ');
+  Assert(resStr = 'TestB TestC TestD ');
 
   resStr := '';
   for Test in TestSet do

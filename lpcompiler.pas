@@ -177,11 +177,8 @@ type
 
     function EnsureExpression(Node: TLapeTree_ExprBase): TLapeTree_ExprBase; virtual;
     function EnsureTypeExpression(Node: TLapeTree_Base): TLapeTree_Base; virtual;
-    function EnsureRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeTree_Range; overload; virtual;
-    function EnsureRange(Node: TLapeTree_Base): TLapeTree_Range; overload; virtual;
-    function EnsureRange(VarType: TLapeType): TLapeType; overload; virtual;
-    function EnsureConstantRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeRange; overload; virtual;
-    function EnsureConstantRange(Node: TLapeTree_Base): TLapeRange; overload; virtual;
+    // Lo..Hi of a range of constants, or of an ordinal type (VarType: that of Hi, or the type)
+    function EnsureConstantRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeRange; virtual;
 
     function FindFile(AFileName: lpString): lpString; virtual;
     function HandlePreprocessorFunc(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean; virtual;
@@ -1720,9 +1717,8 @@ begin
 
   addDelayedCode(
     LapeDelayedFlags +
-    _LapeToString_Enum +
-    Format(_LapeToString_Set, ['Small', Ord(High(ELapeSmallEnum))]) +
-    Format(_LapeToString_Set, ['Large', Ord(High(ELapeLargeEnum))]) +
+    Format(_LapeToString_Set, ['Small', High(TLapeSmallSetItem)]) +
+    Format(_LapeToString_Set, ['Large', High(TLapeLargeSetItem)]) +
     _LapeToString_Array +
     _LapeSwap +
     _LapeSetLength +
@@ -1778,87 +1774,40 @@ begin
    Result := TLapeTree_Base.Create(Self, getPDocPos());
 end;
 
-function TLapeCompiler.EnsureRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeTree_Range;
+function TLapeCompiler.EnsureConstantRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeRange;
+var
+  Lo, Hi: TLapeGlobalVar;
 begin
   VarType := nil;
-  if (Node <> nil) and (Node is TLapeTree_Range) then
-    Result := TLapeTree_Range(Node)
-  else if (Node <> nil) and (Node is TLapeTree_VarType) and (TLapeTree_VarType(Node).VarType <> nil) then
+  if (Node is TLapeTree_Range) and (TLapeTree_Range(Node).Lo <> nil) and (TLapeTree_Range(Node).Hi <> nil) then
   begin
-    Result := TLapeTree_Range.Create(Self, @Node._DocPos);
-    with TLapeTree_VarType(Node).VarType do
-    begin
-      Result.Lo := TLapeTree_GlobalVar.Create(VarLo(), Self, @Node._DocPos);
-      Result.Hi := TLapeTree_GlobalVar.Create(VarHi(), Self, @Node._DocPos);
-    end;
+    VarType := TLapeTree_Range(Node).Hi.resType();
+    if (VarType = nil) or (not VarType.CompatibleWith(TLapeTree_Range(Node).Lo.resType())) then
+      LapeException(lpeInvalidRange, Node.DocPos);
+    Lo := TLapeTree_Range(Node).Lo.Evaluate();
+    Hi := TLapeTree_Range(Node).Hi.Evaluate();
+  end
+  // (array[TEnum]: the first to the last of a type)
+  else if (Node is TLapeTree_VarType) and (TLapeTree_VarType(Node).VarType <> nil) then
+  begin
+    VarType := TLapeTree_VarType(Node).VarType;
+    Lo := VarType.VarLo();
+    Hi := VarType.VarHi();
   end
   else
     LapeException(lpeInvalidRange, [Node, Self]);
 
-  if (Result.Lo <> nil) and (Result.Hi <> nil) then
-    VarType := Result.Hi.resType();
-  if (VarType = nil) or (not VarType.CompatibleWith(Result.Lo.resType())) then
+  if (Lo = nil) or (not Lo.HasType()) or (not (Lo.VarType.BaseType in LapeOrdinalTypes)) or
+     (Hi = nil) or (not Hi.HasType()) or (not (Hi.VarType.BaseType in LapeOrdinalTypes))
+  then
+    LapeException(lpeInvalidRange, Node.DocPos)
+  else if (not Lo.Readable) or (not Hi.Readable) then
+    LapeException(lpeConstantExpected, Node.DocPos);
+
+  Result.Lo := Lo.AsInteger;
+  Result.Hi := Hi.AsInteger;
+  if (Result.Hi < Result.Lo) then
     LapeException(lpeInvalidRange, Node.DocPos);
-end;
-
-function TLapeCompiler.EnsureRange(Node: TLapeTree_Base): TLapeTree_Range;
-var
-  VarType: TLapeType;
-begin
-  Result := EnsureRange(Node, VarType);
-end;
-
-function TLapeCompiler.EnsureRange(VarType: TLapeType): TLapeType;
-var
-  Node: TLapeTree_VarType;
-  Range: TLapeRange;
-begin
-  if (VarType = nil) or (VarType is TLapeType_SubRange) then
-    Exit(VarType);
-
-  Node := TLapeTree_VarType.Create(VarType, Self);
-  try
-    Range := EnsureConstantRange(Node, VarType);
-    Result := addManagedType(TLapeType_SubRange.Create(Range, Self, VarType));
-  finally
-    Node.Free();
-  end;
-end;
-
-function TLapeCompiler.EnsureConstantRange(Node: TLapeTree_Base; out VarType: TLapeType): TLapeRange;
-var
-  Range: TLapeTree_Range;
-  Lo, Hi: TLapeGlobalVar;
-begin
-  Range := EnsureRange(Node, VarType);
-  try
-    if (Node = nil) then
-      LapeException(lpeInvalidRange, Tokenizer.DocPos);
-
-    Lo := Range.Lo.Evaluate();
-    Hi := Range.Hi.Evaluate();
-    if (Lo = nil) or (not Lo.HasType()) or (not (Lo.VarType.BaseType in LapeOrdinalTypes)) or
-       (Hi = nil) or (not Hi.HasType()) or (not (Hi.VarType.BaseType in LapeOrdinalTypes))
-    then
-      LapeException(lpeInvalidRange, Node.DocPos)
-    else if (not Lo.Readable) or (not Hi.Readable) then
-      LapeException(lpeConstantExpected, Node.DocPos);
-
-    Result.Lo := Lo.AsInteger;
-    Result.Hi := Hi.AsInteger;
-    if (Result.Hi < Result.Lo) then
-      LapeException(lpeInvalidRange, Node.DocPos);
-  finally
-    if (Range <> Node) then
-      Range.Free();
-  end;
-end;
-
-function TLapeCompiler.EnsureConstantRange(Node: TLapeTree_Base): TLapeRange;
-var
-  VarType: TLapeType;
-begin
-  Result := EnsureConstantRange(Node, VarType);
 end;
 
 function TLapeCompiler.FindFile(AFileName: lpString): lpString;
@@ -2624,6 +2573,7 @@ var
   Default: TLapeTree_ExprBase;
   op: EOperator;
   LeftType, RightType: TLapeType;
+  InRange: TLapeGlobalVar;
 begin
   Pos := Tokenizer.DocPos;
   NamePos := Pos;
@@ -2732,6 +2682,21 @@ begin
               Param.Default := Default.Evaluate();
               if (not (Param.ParType in Lape_ValParams)) and ((Param.Default = nil) or (not Param.Default.Writeable)) then
                 LapeException(lpeVariableExpected, Default.DocPos);
+              // (one outside of a range of an enum is known here)
+              if (Param.Default is TLapeGlobalVar) and (Param.VarType is TLapeType_SubRange) and TLapeType_SubRange(Param.VarType).isEnumRange() then
+              begin
+                InRange := Param.VarType.NewGlobalVarP();
+                try
+                  try
+                    Param.VarType.EvalConst(op_Assign, InRange, TLapeGlobalVar(Param.Default), []);
+                  except
+                    on E: lpException do
+                      LapeExceptionReraise(E, Default.DocPos);
+                  end;
+                finally
+                  InRange.Free();
+                end;
+              end;
             finally
               Default.Free();
             end;
@@ -3221,6 +3186,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
   var
     TypeExpr: TLapeTree_Base;
     Range: TLapeRange;
+    RangeType: TLapeType;
     DocPos: TDocPos;
   begin
     DocPos := Tokenizer.DocPos;
@@ -3230,7 +3196,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     begin
       TypeExpr := ParseTypeExpression();
       try
-        Range := EnsureConstantRange(TypeExpr);
+        Range := EnsureConstantRange(TypeExpr, RangeType);
         Expect(tk_sym_BracketClose, False, False);
         Expect(tk_kw_Of, True, False);
         Result := addManagedType(TLapeType_StaticArray.Create(Range, ParseType(nil, addToStackOwner), Self, '', @DocPos));
@@ -3354,15 +3320,17 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
 
   procedure ParseSet;
   var
-    SetType: TLapeType;
+    Given: TLapeType;
+    TypePos: TDocPos;
   begin
+    TypePos := Tokenizer.DocPos;
     Expect(tk_kw_Of, True, False);
-    SetType := EnsureRange(ParseType(nil, addToStackOwner));
-    if (not (SetType is TLapeType_SubRange)) then
-      LapeException(lpeInvalidRange, Tokenizer.DocPos);
+    Given := ParseType(nil, addToStackOwner);
+    if (not (Given.BaseType in [ltSmallEnum, ltLargeEnum, ltAnsiChar, ltUInt8])) then
+      LapeExceptionFmt(lpeInvalidSetType, [Given.AsString], TypePos);
 
     try
-      Result := addManagedType(TLapeType_Set.Create(TLapeType_SubRange(SetType), Self, '', getPDocPos));
+      Result := addManagedType(TLapeType_Set.Create(Given, Self, '', getPDocPos));
     except on E: lpException do
       LapeException(lpString(E.Message), Tokenizer.DocPos);
     end;
@@ -3431,7 +3399,7 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
     if Scoped and (Tokenizer.Tok = tk_kw_Enum) then
       Expect(tk_sym_ParenthesisOpen, True, False);
 
-    Enum := TLapeType_Enum.Create(Self, nil, Scoped, '', getPDocPos());
+    Enum := TLapeType_Enum.Create(Self, Scoped, '', getPDocPos());
     if (not addToStackOwner) then
       StackOwner := FStackInfo
     else
@@ -3558,6 +3526,8 @@ function TLapeCompiler.ParseType(TypeForwards: TLapeTypeForwards; addToStackOwne
       if (TypeExpr <> nil) and (TypeExpr is TLapeTree_Range) then
       begin
         Range := EnsureConstantRange(TypeExpr, RangeType);
+        if (RangeType.ClassType <> TLapeType_Enum) then
+          LapeException(lpeEnumRangeExpected, TypeExpr.DocPos);
         Result := addManagedType(TLapeType_SubRange.Create(Range, Self, RangeType, '', getPDocPos()))
       end
       else if (TypeExpr <> nil) and (TypeExpr is TLapeTree_Operator) and (TLapeTree_Operator(TypeExpr).OperatorType = op_Index) then
@@ -3727,6 +3697,7 @@ var
   VarType: TLapeType;
   DefExpr: TLapeTree_ExprBase;
   DefConst: TLapeGlobalVar;
+  DefPos: TDocPos;
   VarDecl: TLapeVarDecl;
 begin
   ValidEnd := ValidEnd + [tk_kw_Deprecated, tk_kw_UnImplemented, tk_kw_Experimental];
@@ -3762,6 +3733,7 @@ begin
         if (DefExpr <> nil) and (not DefExpr.isConstant()) then
           LapeException(lpeConstantExpected, DefExpr.DocPos);
 
+        DefPos := DefExpr.DocPos;
         try
           Expect(ValidEnd, False, False);
           DefConst := DefExpr.Evaluate();
@@ -3811,7 +3783,12 @@ begin
           if (not (VarDecl.VarDecl is TLapeGlobalVar)) or (VarType is TLapeType_Method) then
             VarDecl.Default := TLapeTree_GlobalVar.Create(DefConst, Self, GetPDocPos())
           else
-            VarDecl.VarDecl.VarType.EvalConst(op_Assign, TLapeGlobalVar(VarDecl.VarDecl), DefConst, [])
+          try
+            VarDecl.VarDecl.VarType.EvalConst(op_Assign, TLapeGlobalVar(VarDecl.VarDecl), DefConst, []);
+          except
+            on E: lpException do
+              LapeExceptionReraise(E, DefPos);
+          end
         else if (DefExpr <> nil) then
         begin
           VarDecl.Default := DefExpr;
@@ -4679,11 +4656,13 @@ function TLapeCompiler.ParseFor(ExprEnd: EParserTokenSet = ParserToken_Expressio
     Result.LoopType := loopOver;
     Result.LoopOverWhat := loopOverArray;
 
-    if (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_Set) then
+    LimitType := TLapeTree_Operator(counterExpr).Right.resType();
+    if (LimitType is TLapeType_Set) then
       Result.LoopOverWhat := loopOverSet
     else
-    if (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_SubRange) or
-       (TLapeTree_Operator(counterExpr).Right.resType() is TLapeType_TypeEnum) then
+    // (a range, or the name of an enum or of a range)
+    if (LimitType is TLapeType_SubRange) or (LimitType is TLapeType_TypeEnum) or
+       ((LimitType is TLapeType_Type) and (TLapeType_Type(LimitType).TType is TLapeType_SubRange)) then
       Result.LoopOverWhat := loopOverEnum;
 
     if Result.LoopOverWhat in [loopOverEnum, loopOverSet] then

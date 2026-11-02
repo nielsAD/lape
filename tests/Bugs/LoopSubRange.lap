@@ -1,25 +1,25 @@
-type ERange = 0..64;
-type TSet = set of ERange;
 type EFoo = (aaa,bbb,ccc,zzz);
+type ERange = bbb..zzz;
+type TRangeSet = set of ERange;
+type TCharSet = set of AnsiChar;
 
 var
-  s: TSet;
+  s: TCharSet;
+  rs: TRangeSet;
   e: ERange;
-  b: Byte;
-  str: String;
+  c: AnsiChar;
   foo: EFoo;
 begin
   for foo in [aaa, ccc..zzz] do
     WriteLn(foo);
 
-  s := [1..12, 55..56];
-  str := '';
-  for b in s do
-    Write(b, ' ');
+  s := ['a'..'l', 'x'..'y'];
+  for c in s do
+    Write(c, ' ');
   WriteLn();
 
-  str := '';
-  for e in s do
+  rs := [bbb, ccc..zzz];
+  for e in rs do
     Write(e, ' ');
   WriteLn();
 end;

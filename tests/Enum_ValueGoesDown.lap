@@ -1,0 +1,4 @@
+type
+  TLevel = (Bottom = 5, Mid = 3, Top);
+begin
+end;

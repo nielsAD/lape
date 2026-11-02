@@ -1,0 +1,16 @@
+// A set of a range is smaller than a set of its enum; the two mix
+type
+  TKey = (k0, k1, k2, k3, k100 = 100, k255 = 255);
+  TLowKey = k0..k3;
+
+var
+  a: set of TKey;
+  sm: set of TLowKey;
+begin
+  a := [k1, k3, k100, k255];
+  sm := a;
+  WriteLn(sm, ' ', SizeOf(sm), ' ', SizeOf(a));
+  sm := [k0, k2];
+  a := [k1, k100];
+  WriteLn(a + sm, ' ', a - sm, ' ', sm * a, ' ', sm <= a + sm, ' ', k100 in sm);
+end;

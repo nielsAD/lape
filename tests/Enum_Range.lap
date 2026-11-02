@@ -1,0 +1,20 @@
+// A range of an enum: given to and from the enum, compared, counted, an array index, its own overload
+type
+  TDay = (Mon, Tue, Wed, Thu, Fri, Sat, Sun);
+  TWorkDay = Mon..Fri;
+
+function Which(d: TWorkDay): String; begin Result := 'range'; end;
+function Which(d: TDay): String; overload; begin Result := 'enum'; end;
+
+var
+  w: TWorkDay;
+  d: TDay;
+  a: array[TWorkDay] of Int32;
+begin
+  w := Wed;
+  d := w;
+  w := Thu;
+  a[w] := 1;
+  WriteLn(w, ' ', d, ' ', w > d, ' ', Low(TWorkDay), ' ', High(TWorkDay), ' ', Succ(w), ' ', Length(a), ' ', a[Thu]);
+  WriteLn(Which(w), ' ', Which(d), ' ', Which(Mon));
+end;

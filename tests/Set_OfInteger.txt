@@ -1,0 +1,1 @@
+Invalid set type "Int32": a set is of an enum, AnsiChar or Byte at line 2, column 11 in file "Set_OfInteger.lap"

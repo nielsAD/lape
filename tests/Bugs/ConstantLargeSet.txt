@@ -1,5 +1,4 @@
 [False, True]
 [False, True]
-[False, True]
-[42]
+[*]
 [Middle]

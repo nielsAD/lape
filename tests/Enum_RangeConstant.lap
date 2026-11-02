@@ -1,0 +1,9 @@
+type
+  TDay = (Mon, Tue, Wed, Thu, Fri, Sat, Sun);
+  TWorkDay = Mon..Fri;
+var
+  w: TWorkDay;
+begin
+  w := Fri;
+  w := Sun;
+end;

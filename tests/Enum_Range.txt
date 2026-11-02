@@ -1,0 +1,2 @@
+Thu Wed True Mon Fri Fri 5 1
+range enum enum

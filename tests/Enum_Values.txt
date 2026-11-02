@@ -1,0 +1,2 @@
+-2 Below Above True 2000000000
+InvalidEnum(-1) InvalidEnum(1)

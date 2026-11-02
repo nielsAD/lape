@@ -1,0 +1,4 @@
+type
+  TPercent = 0..100;
+begin
+end.

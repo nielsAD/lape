@@ -4,11 +4,10 @@ type
   TBigArray = array[1..3000] of Byte;
   TBigArrayArray = array of TBigArray;
 
-const
-  fill: TBigArray = [Low(TBigArray)..High(TBigArray)];
-
 var
   bigAA: TBigArrayArray;
+  fill: TBigArray;
+  i: Int32;
 
 procedure AddA(ar: TBigArray);
 begin
@@ -18,6 +17,8 @@ end;
 
 begin
   Assert(Length(bigAA) = 0);
+  for i := Low(fill) to High(fill) do
+    fill[i] := i;
 
   for 1 to 3 do
     AddA(fill);
