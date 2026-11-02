@@ -13,46 +13,57 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - os: windows-latest
+          - os: windows-2025
             name: Windows 64
             ffi: default default-static
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2064%20bits/Lazarus%203.8/lazarus-3.8-fpc-3.2.2-win64.exe
-            
-          - os: windows-latest
+            fpclazup-url: https://github.com/LongDirtyAnimAlf/Reiniero-fpcup/releases/download/v.2.4.0k/fpclazup-x86_64-win64.exe
+            fpclazup-lazcommit: 62c14a4d18c81f222127d42ce9b89b922c63fcbf # 4.8
+            fpclazup-fpccommit: 2a105860ee8a8687f3c66918b3441469c0370db4 # 3.2.4 RC2
+
+          - os: windows-2025
             name: Windows 32
             ffi: stdcall cdecl pascal register stdcall-static cdecl-static pascal-static register-static
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2032%20bits/Lazarus%203.8/lazarus-3.8-fpc-3.2.2-win32.exe
+            fpclazup-url: https://github.com/LongDirtyAnimAlf/Reiniero-fpcup/releases/download/v.2.4.0k/fpclazup-i386-win32.exe
+            fpclazup-lazcommit: 62c14a4d18c81f222127d42ce9b89b922c63fcbf # 4.8
+            fpclazup-fpccommit: 2a105860ee8a8687f3c66918b3441469c0370db4 # 3.2.4 RC2
 
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             name: Linux 64
             ffi: default
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.8/lazarus-project_3.8.0-0_amd64.deb
-            fpc-url: |
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.6/fpc-laz_3.2.2-210709_amd64.deb
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20Linux%20amd64%20DEB/Lazarus%203.6/fpc-src_3.2.2-210709_amd64.deb
-          
-          - os: macos-15-intel
+            fpclazup-url: https://github.com/LongDirtyAnimAlf/Reiniero-fpcup/releases/download/v.2.4.0k/fpclazup-x86_64-linux
+            fpclazup-lazcommit: 62c14a4d18c81f222127d42ce9b89b922c63fcbf # 4.8
+            fpclazup-fpccommit: 2a105860ee8a8687f3c66918b3441469c0370db4 # 3.2.4 RC2
+
+          - os: macos-26-intel
             name: Mac
             ffi: default
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.8/lazarus-darwin-x86_64-3.8.zip
-            fpc-url: |
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20x86-64/Lazarus%203.8/fpc-3.2.2.intelarm64-macosx.dmg
+            fpclazup-url: https://github.com/LongDirtyAnimAlf/Reiniero-fpcup/releases/download/v.2.4.0k/fpclazup-x86_64-darwin
+            fpclazup-lazcommit: 62c14a4d18c81f222127d42ce9b89b922c63fcbf # 4.8
+            fpclazup-fpccommit: aa8050f30ce7a23f8881de844c07c0f17033409e # trunk (~3.3)
 
-          - os: macos-15
+          - os: macos-26
             name: Mac Arm
-            ffi: '' # currently has some fails
-            laz-url: https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20aarch64/Lazarus%203.8/lazarus-darwin-aarch64-3.8.zip
-            fpc-url: |
-              https://sourceforge.net/projects/lazarus/files/Lazarus%20macOS%20aarch64/Lazarus%203.8/fpc-3.2.2.intelarm64-macosx.dmg
-        
+            ffi: ''
+            fpclazup-url: https://github.com/LongDirtyAnimAlf/Reiniero-fpcup/releases/download/v.2.4.0k/fpclazup-aarch64-darwin
+            fpclazup-lazcommit: 62c14a4d18c81f222127d42ce9b89b922c63fcbf # 4.8
+            fpclazup-fpccommit: aa8050f30ce7a23f8881de844c07c0f17033409e # trunk (~3.3)
+
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7.0.1
       
+      - name: Use Xcode's SDK
+        if: runner.os == 'macOS'
+        run: |
+          ls -la /Library/Developer/CommandLineTools/SDKs/
+          sudo ln -sfn "$(xcrun --sdk macosx --show-sdk-path)" /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+          ls -la /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+
       - name: Install Lazarus
-        uses: ollydev/setup-lazarus@v3.5
+        uses: ollydev/setup-lazarus@v4.2
         with:
-          laz-url: ${{ matrix.config.laz-url }}
-          fpc-url: ${{ matrix.config.fpc-url }}
+          fpclazup-url: ${{ matrix.config.fpclazup-url }}
+          fpclazup-lazcommit: ${{ matrix.config.fpclazup-lazcommit }}
+          fpclazup-fpccommit: ${{ matrix.config.fpclazup-fpccommit }}
       
       - name: Test Lape
         run: |
@@ -60,16 +71,17 @@ jobs:
           lazbuild tests/RunTests/LapeTest.lpi
           
           cd tests/RunTests/ && ./LapeTest
-          
+
       - name: Test Lape FFI
-        if: ${{ matrix.config.ffi }} != ''
+        if: ${{ matrix.config.ffi != '' }}
         run: |
           cd extensions/ffi/test/
-          
+
+          error=0
           for BUILD_MODE in ${{ matrix.config.ffi }}
           do
-            lazbuild LapeTestFFI.lpi --build-mode=$BUILD_MODE
-            ./LapeTestFFI
-          done || error=1
-          
+            lazbuild LapeTestFFI.lpi --build-mode=$BUILD_MODE || error=1
+            ./LapeTestFFI || error=1
+          done
+
           exit $error
