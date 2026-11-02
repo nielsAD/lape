@@ -1,0 +1,13 @@
+procedure A;
+var
+  Foo: Int32;
+
+  procedure Foo;
+  begin
+  end;
+
+begin
+end;
+
+begin
+end;

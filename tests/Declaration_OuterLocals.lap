@@ -1,0 +1,19 @@
+// A local of the method around it is declared
+procedure Outer;
+var
+  OuterLocal: Int32;
+
+  procedure Inner;
+  begin
+    {$IFDECL OuterLocal} WriteLn('ifdecl'); {$ENDIF}
+    {$IF DECLARED(OuterLocal)} WriteLn('declared'); {$ENDIF}
+    {$IFDECL Nothing} WriteLn('nothing'); {$ENDIF}
+  end;
+
+begin
+  Inner();
+end;
+
+begin
+  Outer();
+end;

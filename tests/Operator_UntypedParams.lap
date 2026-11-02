@@ -1,0 +1,6 @@
+operator + (var a, b): Int32;
+begin
+end;
+
+begin
+end;

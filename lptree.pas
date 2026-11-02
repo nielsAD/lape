@@ -312,6 +312,11 @@ type
     property VarAsInteger: Int64 read getVarAsInt;
   end;
 
+  TLapeTree_Inherited = class(TLapeTree_GlobalVar)
+  public
+    function SelfVar: TResVar; virtual;
+  end;
+
   TLapeTree_WithVar = class(TLapeTree_ExprBase)
   protected
     FWithDeclRec: TLapeWithDeclRec;
@@ -708,7 +713,7 @@ begin
   Result.VarType := Compiler.getBaseType(ltPointer);
 end;
 
-function hasMagicMethod(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; ARes: TLapeType): Boolean;
+function HasMagicMethod(Compiler: TLapeCompilerBase; AName: lpString; AParams: array of TLapeType; ARes: TLapeType): Boolean;
 
   function EqualTypes(const Left, Right: TLapeType): Boolean;
   begin
@@ -2484,7 +2489,7 @@ var
 
 var
   Pos: TDocPos;
-  TempNullVar, TempSelfVar: TResVar;
+  TempNullVar, TempSelfVar, InhSelf: TResVar;
 begin
   Result := NullResVar;
 
@@ -2496,6 +2501,9 @@ begin
   TempSelfVar := NullResVar;
 
   IdentVar := IdentExpr.Compile(Offset);
+  InhSelf := NullResVar;
+  if (IdentExpr is TLapeTree_Inherited) then
+    InhSelf := TLapeTree_Inherited(IdentExpr).SelfVar();
   CheckIdent(IdentVar.VarType, @IdentExpr._DocPos);
   CheckHints(IdentVar.VarType, @IdentExpr._DocPos);
 
@@ -2513,7 +2521,10 @@ begin
       else
         LapeException(lpeTooMuchParameters, Self.DocPos);
 
-    if (IdentVar.VarType is TLapeType_MethodOfObject) and (IdentVar.VarPos.MemPos <> mpStack) then
+    // (of `inherited`, the Self of the method that it is in, as it was given)
+    if (IdentVar.VarType is TLapeType_MethodOfObject) and (InhSelf.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+      AssignToStack(InhSelf, IdentExpr.DocPos)
+    else if (IdentVar.VarType is TLapeType_MethodOfObject) and (IdentVar.VarPos.MemPos <> mpStack) then
     begin
       if (IdentVar.VarType is TLapeType_MethodOfType) and (FExpr is TLapeTree_GlobalVar) then
         LapeExceptionFmt(lpeStaticMethodExpected, [GetMethodName(TLapeTree_GlobalVar(FExpr).GlobalVar.VarType)], Expr.DocPos);
@@ -2550,7 +2561,6 @@ begin
       if (i >= FParams.Count) or isEmpty(FParams[i]) then
         if (Params[i].Default <> nil) then
         begin
-          Params[i].Default.Used := duTrue;
           ParamVars[i] := _ResVar.New(Params[i].Default).InScope(FCompiler.StackInfo, @Self._DocPos);
           if (not (Params[i].ParType in Lape_ValParams)) and (not ParamVars[i].Writeable) then
             LapeException(lpeVariableExpected, [FParams[i], Self]);
@@ -3262,6 +3272,16 @@ begin
   Result := _ResVar.New(FGlobalVar);
 end;
 
+function TLapeTree_Inherited.SelfVar: TResVar;
+var
+  Inh: TLapeInheritedMethod;
+begin
+  Result := NullResVar;
+  Inh := FGlobalVar as TLapeInheritedMethod;
+  if (Inh.SelfVar <> nil) then
+    Result := _ResVar.New(Inh.SelfVar).InScope(FCompiler.StackInfo, @_DocPos);
+end;
+
 constructor TLapeTree_WithVar.Create(AWithDeclRec: TLapeWithDeclRec; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
 begin
   inherited Create(ACompiler, ADocPos);
@@ -3659,25 +3679,6 @@ begin
     FCompiler.DecStackInfo(Offset, [lsfFunction, lsfEmit], False, @_DocPos);
     FCompiler.Emitter._JmpR(Offset - fo, fo, @_DocPos);
   end;
-
-  with FStackInfo do
-    for i := 0 to VarCount - 1 do
-    begin
-      if (Vars[i].Used <> duFalse) or (Vars[i].Name = '') or (Vars[i].Name[1] = '!') then
-        Continue;
-
-      if (Vars[i] is TLapeParameterVar) then
-      begin
-        if (TLapeParameterVar(Vars[i]).ParType = lptOut) then
-          FCompiler.Hint(lphParamterNotSet, [Vars[i].Name], Vars[i]._DocPos)
-        else
-        if (Vars[i].Name = 'Result') then
-          FCompiler.Hint(lphResultNotSet, [], Vars[i]._DocPos)
-        else
-          FCompiler.Hint(lphParameterNotUsed, [Vars[i].Name], Vars[i]._DocPos);
-      end else
-        FCompiler.Hint(lphVariableNotUsed, [Vars[i].Name], Vars[i]._DocPos);
-    end;
 end;
 
 function TLapeTree_method.canExit: Boolean;

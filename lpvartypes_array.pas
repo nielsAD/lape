@@ -134,7 +134,7 @@ var
   Decl: TLapeDeclaration;
 begin
   if ValidFieldName(Field) then
-    Decl := FindMember(PlpString(Field.Ptr)^)
+    Decl := getDeclaration(PlpString(Field.Ptr)^)
   else
     Decl := nil;
   if (Decl is TLapeGlobalVar) then
@@ -165,7 +165,7 @@ function TLapeType_DynArray.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_DynArray;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FPType, FCompiler, Name, @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FPType, FCompiler, '', @_DocPos);
   with TLapeType_DynArray(Result) do
   begin
     FBaseType := Self.BaseType;
@@ -1053,7 +1053,7 @@ function TLapeType_StaticArray.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_StaticArray;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FRange, FPType, FCompiler, Name, @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FRange, FPType, FCompiler, '', @_DocPos);
   with TLapeType_StaticArray(Result) do
   begin
     FBaseType := Self.BaseType;

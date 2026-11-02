@@ -1,0 +1,20 @@
+procedure System.Foo;
+begin
+  WriteLn(1);
+end;
+
+procedure A;
+
+  procedure System.Bar;
+  begin
+    WriteLn(2);
+  end;
+
+begin
+  Bar();
+end;
+
+begin
+  System.Foo();
+  A();
+end;

@@ -1,0 +1,34 @@
+{$HINTS ON}
+{$DUPLICATELOCALNAMEHINTS ON}
+type
+  TColour = (Red, Green);
+
+procedure Foo;
+begin
+end;
+
+procedure Outer;
+type
+  TLocal = (Green, Blue);
+var
+  Red: Int32;
+
+  procedure Foo;
+  begin
+  end;
+
+begin
+  Red := 1;
+  Foo();
+end;
+
+function Forgets: Int32;
+var
+  NeverUsed: Int32;
+begin
+end;
+
+begin
+  Outer();
+  WriteLn(Forgets());
+end;

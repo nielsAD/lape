@@ -61,6 +61,7 @@ type
 
   TLapeTree_InternalMethod_Exit = class(TLapeTree_InternalMethod)
   public
+    function addParam(p: TLapeTree_ExprBase): Integer; override;
     function Compile(var Offset: Integer): TResVar; override;
   end;
 
@@ -933,6 +934,18 @@ begin
       FoundNode.addContinueStatement(JumpSafe, Offset, @_DocPos);
 end;
 
+function TLapeTree_InternalMethod_Exit.addParam(p: TLapeTree_ExprBase): Integer;
+var
+  ResultDecl: TLapeDeclaration;
+begin
+  Result := inherited;
+
+  // (Exit(x) sets Result: noted while the body is read, see TLapeCompiler.checkDeclHints)
+  ResultDecl := FCompiler.getDeclaration('Result', nil, True);
+  if (ResultDecl is TLapeResultVar) then
+    ResultDecl.IsUsed := True;
+end;
+
 function TLapeTree_InternalMethod_Exit.Compile(var Offset: Integer): TResVar;
 var
   Node: TLapeTree_Base;
@@ -952,9 +965,8 @@ begin
     with TLapeTree_Operator.Create(op_Assign, FParams[0]) do
     try
       ResultDecl := FCompiler.getDeclaration('Result');
-      if (ResultDecl = nil) or (not (ResultDecl is TLapeParameterVar)) then
+      if (not (ResultDecl is TLapeResultVar)) then
         LapeExceptionFmt(lpeWrongNumberParams, [0], DocPos);
-      ResultDecl.Used := duTrue;
       Left := TLapeTree_ResVar.Create(_ResVar.New(TLapeVar(ResultDecl)), FParams[0]);
       Right := FParams[0].setExpectedType(Left.resType()) as TLapeTree_ExprBase;
 

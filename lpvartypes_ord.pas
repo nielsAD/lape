@@ -125,7 +125,7 @@ type
     destructor Destroy; override;
 
     function canSet: Boolean;
-    function hasElement(AName: lpString): Boolean; virtual;
+    function HasElement(AName: lpString): Boolean; virtual;
     function addElement(Value: Int64; AName: lpString): Int64; overload; virtual;
     function addElement(AName: lpString): Int64; overload; virtual;
 
@@ -491,7 +491,7 @@ function TLapeType_SubRange.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_SubRange;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, FVarType, Name, @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, FVarType, '', @_DocPos);
   with TLapeType_SubRange(Result) do
   begin
     FBaseType := Self.BaseType;
@@ -506,7 +506,7 @@ begin
   if (Value < FRange.Lo) or (Value > FRange.Hi) then
     LapeExceptionFmt(lpeOutOfTypeRange1, [Value, FRange.Lo, FRange.Hi]);
 
-  Result := NewGlobalVarP(nil, AName);
+  Result := NewGlobalVarP(nil, AName, ADocPos);
   case DetermineIntType(Size, BaseType in LapeSignedIntegerTypes) of
     ltInt8:   PInt8(Result.Ptr)^   := Value;
     ltUInt8:  PUInt8(Result.Ptr)^  := Value;
@@ -638,7 +638,7 @@ begin
   Result := FElementMap.Count < 256; // pascal sets can have a maximum of 256 elements, this includes gaps!
 end;
 
-function TLapeType_Enum.hasElement(AName: lpString): Boolean;
+function TLapeType_Enum.HasElement(AName: lpString): Boolean;
 begin
   Result := FElementMap.IndexOf(string(AName)) > -1;
 end;
@@ -649,7 +649,7 @@ var
 begin
   if (Value < FElementMap.Count) then
     LapeException(lpeInvalidRange)
-  else if (AName = '') or hasElement(AName) then
+  else if (AName = '') or HasElement(AName) then
     LapeException(lpeDuplicateDeclaration);
 
   Result := Value;
@@ -742,7 +742,7 @@ function TLapeType_Enum.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_Enum;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Scoped, Name, @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Scoped, '', @_DocPos);
   TLapeType_Enum(Result).ElementMap.Assign(FElementMap);
 
   with TLapeType_Enum(Result) do
@@ -903,7 +903,7 @@ function TLapeType_Bool.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_Bool;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, Name, @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, '', @_DocPos);
 
   with TLapeType_Bool(Result) do
   begin
@@ -1032,11 +1032,19 @@ begin
 end;
 
 procedure TLapeType_Set.setName(const AName: lpString);
+var
+  Enum: TLapeType;
 begin
   inherited setName(AName);
 
-  if (FRange is TLapeType_Enum) and TLapeType_Enum(FRange).Scoped and (FRange.Name = '') then
-    TLapeType_Enum(FRange).Name := AName;
+  if (AName <> '') and (FRange is TLapeType_Enum) and TLapeType_Enum(FRange).Scoped and (FRange.Name = '') then
+  begin
+    Enum := FRange.CreateCopy();
+    Enum.Name := AName;
+    if (FCompiler <> nil) then
+      Enum := FCompiler.addManagedType(Enum);
+    FRange := Enum as TLapeType_SubRange;
+  end;
 end;
 
 constructor TLapeType_Set.Create(ARange: TLapeType_SubRange; ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil);
@@ -1108,7 +1116,7 @@ function TLapeType_Set.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_Set;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, Name, @_DocPos);
+  Result := TLapeClassType(Self.ClassType).Create(FRange, FCompiler, '', @_DocPos);
   Result.CopyHints(Self);
   Result.ParentType := Self;
   Result.TypeID := TypeID;
@@ -1118,7 +1126,7 @@ function TLapeType_Set.NewGlobalVar(Values: array of UInt8; AName: lpString = ''
 var
   i: Integer;
 begin
-  Result := NewGlobalVarP(nil, AName);
+  Result := NewGlobalVarP(nil, AName, ADocPos);
   for i := 0 to High(Values) do
     if FSmall then
       PLapeSmallSet(Result.Ptr)^ := PLapeSmallSet(Result.Ptr)^ + [ELapeSmallEnum(Values[i])]

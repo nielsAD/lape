@@ -1,0 +1,33 @@
+// Locals of outer methods, one of them hidden, three levels in
+procedure A;
+var
+  z: Int32 = 1;
+
+  procedure B;
+  var
+    z: Int32 = 20;
+
+    procedure C;
+
+      procedure D;
+      begin
+        z := z + 1;
+      end;
+
+    begin
+      D();
+    end;
+
+  begin
+    C();
+    WriteLn(z);
+  end;
+
+begin
+  B();
+  WriteLn(z);
+end;
+
+begin
+  A();
+end;
