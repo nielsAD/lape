@@ -24,8 +24,10 @@ type
     CalledFrom: PByte;
   end;
 
+  // What was raised and is on its way: what it says and where
   TJumpException = class
-    Obj: Exception;
+    Msg: lpString;
+    Loc: TDocPos;
     Pos: PDocPos;
     StackTraceInfo: TStackTraceInfo;
   end;
@@ -177,6 +179,9 @@ begin
     end;
   end;
 end;
+
+type
+  ELapeUncaught = class(Exception);
 
 procedure MergeJumps(var AJump: TInJump; const Merge: TInJump); {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
@@ -367,7 +372,7 @@ var
       Dec(FTryStackPos);
       Code := FTryStack[FTryStackPos].Jmp;
     end else
-      raise FInJump.JumpException.Obj;
+      raise ELapeUncaught.Create('');
   end;
 
   procedure HandleSafeJump; {$IFDEF Lape_Inline}inline;{$ENDIF}
@@ -531,19 +536,8 @@ var
     if (FInJump.JumpException <> nil) then
     begin
       PreviousException.Exists := True;
-
-      if IsLapeException(FInJump.JumpException.Obj) then
-      begin
-        PreviousException.Msg := lpException(FInJump.JumpException.Obj).Error;
-        PreviousException.Loc := lpException(FInJump.JumpException.Obj).DocPos;
-      end else
-      begin
-        PreviousException.Msg := FInJump.JumpException.Obj.Message;
-        if (FInJump.JumpException.Pos <> nil) then
-          PreviousException.Loc := FInJump.JumpException.Pos^;
-      end;
-
-      FInJump.JumpException.Obj.Free();
+      PreviousException.Msg := FInJump.JumpException.Msg;
+      PreviousException.Loc := FInJump.JumpException.Loc;
 
       FreeAndNil(FInJump.JumpException);
     end;
@@ -821,7 +815,8 @@ var
   {$I lpinterpreter_doeval.inc}
 
 var
-  StackTrace: lpString;
+  StackTrace, UncaughtMsg: lpString;
+  UncaughtLoc: TDocPos;
   GoBack: Boolean;
   i: Integer;
 label
@@ -879,23 +874,37 @@ begin
         {$I lpinterpreter_opcodecase.inc}
       end;
     except
-      if (FInJump.JumpException = nil) or (ExceptObject <> FInJump.JumpException.Obj) then
+      // nothing handles it
+      if (ExceptObject is ELapeUncaught) then
+        raise;
+
+      if (FInJump.JumpException = nil) then
+        FInJump.JumpException := TJumpException.Create();
+
+      SetLength(FInJump.JumpException.StackTraceInfo, FCallStackPos);
+      for i := 0 to FCallStackPos - 1 do
       begin
-        if (FInJump.JumpException = nil) then
-          FInJump.JumpException := TJumpException.Create();
-
-        SetLength(FInJump.JumpException.StackTraceInfo, FCallStackPos);
-        for i := 0 to FCallStackPos - 1 do
-        begin
-          FInJump.JumpException.StackTraceInfo[i].Address    := FCallStack[i].Address;
-          FInJump.JumpException.StackTraceInfo[i].CalledFrom := FCallStack[i].CalledFrom;
-        end;
-
-        {$IFDEF Lape_EmitPos}
-        FInJump.JumpException.Pos := PPointer(PtrUInt(Code) + SizeOf(opCode))^;
-        {$ENDIF}
+        FInJump.JumpException.StackTraceInfo[i].Address    := FCallStack[i].Address;
+        FInJump.JumpException.StackTraceInfo[i].CalledFrom := FCallStack[i].CalledFrom;
       end;
-      FInJump.JumpException.Obj := Exception(AcquireExceptionObject());
+
+      FInJump.JumpException.Pos := nil;
+      {$IFDEF Lape_EmitPos}
+      FInJump.JumpException.Pos := PPointer(PtrUInt(Code) + SizeOf(opCode))^;
+      {$ENDIF}
+
+      if IsLapeException(Exception(ExceptObject)) then
+      begin
+        FInJump.JumpException.Msg := lpException(ExceptObject).Error;
+        FInJump.JumpException.Loc := lpException(ExceptObject).DocPos;
+      end else
+      begin
+        FInJump.JumpException.Msg := Exception(ExceptObject).Message;
+        if (FInJump.JumpException.Pos <> nil) then
+          FInJump.JumpException.Loc := FInJump.JumpException.Pos^
+        else
+          FInJump.JumpException.Loc := NullDocPos;
+      end;
 
       HandleException();
       GoBack := True;
@@ -920,15 +929,20 @@ begin
     on E: Exception do
     begin
       FRunning := bFalse;
+      if (not (E is ELapeUncaught)) or (FInJump.JumpException = nil) then
+        LapeExceptionRuntime(E, '', NullDocPos);
 
-      StackTrace := GetStackTrace(FEmitter, FInJump.JumpException.StackTraceInfo, FInJump.JumpException.Pos);
-      if IsLapeException(E) then
-        LapeExceptionRuntime(E as lpException, StackTrace)
-      else
-      if (FInJump.JumpException <> nil) and (E = FInJump.JumpException.Obj) and (FInJump.JumpException.Pos <> nil) then
-        LapeExceptionRuntime(E, StackTrace, FInJump.JumpException.Pos^)
-      else
-        LapeExceptionRuntime(E, StackTrace, NullDocPos);
+      try
+        StackTrace := GetStackTrace(FEmitter, FInJump.JumpException.StackTraceInfo, FInJump.JumpException.Pos);
+        UncaughtMsg := FInJump.JumpException.Msg;
+        UncaughtLoc := FInJump.JumpException.Loc;
+      finally
+        for i := FCallStackPos - 1 downto 0 do
+          if (FCallStack[i].Jump.JumpException <> FInJump.JumpException) then
+            FreeAndNil(FCallStack[i].Jump.JumpException);
+        FreeAndNil(FInJump.JumpException);
+      end;
+      raise lpException.Create(Format(lpeRuntime, [UncaughtMsg]), UncaughtLoc, StackTrace);
     end;
   end;
 
