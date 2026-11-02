@@ -19,7 +19,7 @@ uses
   lptypes, lpvartypes;
 
 type
-  TLapeDisassemblerPointerMap = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<string>;
+  TLapeDisassemblerPointerMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<string>;
 
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeDisassemblerPointerMap); overload;
 procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase); overload;
@@ -333,7 +333,7 @@ procedure DisassembleCode(Code: PByte; PointerNames: TLapeCompilerBase);
 var
   pMap: TLapeDisassemblerPointerMap;
 begin
-  pMap := TLapeDisassemblerPointerMap.Create('', dupIgnore, True);
+  pMap := TLapeDisassemblerPointerMap.Create('');
   try
     Disassemble__EvalProcs(pMap);
     TraverseGlobals(PointerNames, @Disassemble__PointerMap, pMap);
@@ -348,7 +348,7 @@ var
   pMap: TLapeDisassemblerPointerMap;
   i,j: Integer;
 begin
-  pMap := TLapeDisassemblerPointerMap.Create('', dupIgnore, True);
+  pMap := TLapeDisassemblerPointerMap.Create('');
   try
     Disassemble__EvalProcs(pMap);
 

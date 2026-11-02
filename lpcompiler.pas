@@ -20,8 +20,8 @@ const
   ParserToken_BlockEnd = [tk_kw_End, tk_kw_Finally, tk_kw_Except, tk_kw_Until];
 
 type
-  TLapeInternalMethodMap = {$IFDEF FPC}specialize{$ENDIF} TLapeUniqueStringDictionary<TLapeTree_InternalMethodClass>;
-  TLapeTypeForwards = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapeType>;
+  TLapeInternalMethodMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TLapeTree_InternalMethodClass>;
+  TLapeTypeForwards = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TLapeType>;
   TLapeFuncForwards = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeGlobalVar>;
   TLapeTree_NodeStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeTree_ExprBase>;
   TLapeTree_OpStack = {$IFDEF FPC}specialize{$ENDIF} TLapeStack<TLapeTree_Operator>;
@@ -34,10 +34,39 @@ type
   TLapeTokenizerArray = array of TLapeTokenizerBase;
 
   TLapePreprocessorFunc = function(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean of object;
-  TLapePreprocessorFuncs = {$IFDEF FPC}specialize{$ENDIF} TLapeStringMap<TLapePreprocessorFunc>;
+  TLapePreprocessorFuncs = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TLapePreprocessorFunc>;
 
   TLapeDefine = record Name, Value: lpString; end;
-  TLapeDefines = {$IFDEF FPC}specialize{$ENDIF} TLapeArrayBuffer<TLapeDefine>;
+  TLapeDefines = array of TLapeDefine;
+
+  TLapeDefineStack = class(TLapeBaseClass)
+  protected type
+    TEntry = record
+      Name, Value: lpString;
+      Hash: UInt32;  // of its name
+      Defined: Boolean;
+      Prev: Integer; // the entry of its name that was before it
+    end;
+    TTop = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<Integer>;
+  protected
+    FEntries: array of TEntry;
+    FCount: Integer;
+    FFloor: Integer;
+    FTop: TTop; // by name: its entry that is on top
+  public
+    constructor Create; override;
+    destructor Destroy; override;
+    procedure Clear; virtual;
+
+    procedure Push(const AName, AValue: lpString; ADefined: Boolean); virtual;
+    function Find(const AName: lpString; out AValue: lpString): TInitBool; virtual;
+    procedure Restore(ACount, AFloor: Integer); virtual;
+    procedure Hide; virtual;
+
+    property Count: Integer read FCount;
+    property Floor: Integer read FFloor;
+  end;
+  TLapeBaseDefines = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<lpString>;
 
   TLapeConditional = record
     Eval: Boolean;
@@ -56,7 +85,7 @@ type
     LastTok: EParserToken;
     Options: ECompilerOptionsSet;
     Options_PackRecords: UInt8;
-    Defines: TLapeDefines;
+    DefineCount, DefineFloor: Integer;
     Conditionals: TLapeConditionalStack.TTArray;
   end;
 
@@ -89,8 +118,8 @@ type
     FImporting: Pointer;
 
     FIncludes: TStringList;
-    FBaseDefines: TLapeDefines;
-    FDefines: TLapeDefines;
+    FBaseDefines: TLapeBaseDefines;
+    FDefines: TLapeDefineStack;
     FConditionalStack: TLapeConditionalStack;
 
     FOnHandleDirective: TLapeHandleDirective;
@@ -107,6 +136,7 @@ type
 
     function getImporting: Boolean; virtual;
     procedure setImporting(Import: Boolean); virtual;
+    function getDefines: TLapeDefines; virtual;
     procedure setBaseDefines(Defines: TLapeDefines); virtual;
     function getTokenizer: TLapeTokenizerBase; virtual;
     procedure setTokenizer(ATokenizer: TLapeTokenizerBase); virtual;
@@ -249,6 +279,7 @@ type
     function hasInclude(FileName: lpString): Boolean; virtual;
     function hasBaseDefine(AName: lpString): Boolean; virtual;
     function hasDefine(AName: lpString): Boolean; virtual;
+    function getDefine(AName: lpString; out AValue: lpString): Boolean; virtual;
     procedure addBaseDefine(AName: lpString; AValue: lpString = ''); virtual;
     procedure addDefine(AName: lpString; AValue: lpString = ''); virtual;
     procedure addPreprocessorFunc(Name: lpString; Func: TLapePreprocessorFunc); virtual;
@@ -293,7 +324,8 @@ type
     property DelayedTree: TLapeTree_DelayedStatementList read FDelayedTree;
     property Importing: Boolean read getImporting write setImporting;
     property Tokenizer: TLapeTokenizerBase read getTokenizer write setTokenizer;
-    property Defines: TLapeDefines read FDefines write setBaseDefines;
+    // what is defined now: the base defines +  what the script defined
+    property Defines: TLapeDefines read getDefines write setBaseDefines;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
     property OnHandleExternal: TLapeHandleExternal read FOnHandleExternal write FOnHandleExternal;
     property OnFindFile: TLapeFindFile read FOnFindFile write FOnFindFile;
@@ -321,6 +353,86 @@ uses
   lpvartypes_ord, lpvartypes_record, lpvartypes_array, lpvartypes_object,
   lpinternalmethods, lpinternalmethods_algorithm,
   lpmessages, lpeval, lpinterpreter_types, lpvartypes_helper;
+
+constructor TLapeDefineStack.Create;
+begin
+  inherited Create();
+
+  FTop := TTop.Create(-1);
+end;
+
+destructor TLapeDefineStack.Destroy;
+begin
+  FTop.Free();
+
+  inherited;
+end;
+
+procedure TLapeDefineStack.Clear;
+begin
+  FEntries := nil;
+  FCount := 0;
+  FFloor := 0;
+  FTop.Clear();
+end;
+
+procedure TLapeDefineStack.Push(const AName, AValue: lpString; ADefined: Boolean);
+var
+  Hash: UInt32;
+  Prev: Integer;
+begin
+  Hash := LapeHashAlpha(AName);
+  if FTop.Find(AName, Hash, Prev) then
+    FTop.Remove(AName, Hash, Prev)
+  else
+    Prev := -1;
+  FTop.Add(AName, Hash, FCount);
+
+  if (FCount = Length(FEntries)) then
+    SetLength(FEntries, 4 + FCount * 2);
+  FEntries[FCount].Name := AName;
+  FEntries[FCount].Value := AValue;
+  FEntries[FCount].Hash := Hash;
+  FEntries[FCount].Defined := ADefined;
+  FEntries[FCount].Prev := Prev;
+  Inc(FCount);
+end;
+
+function TLapeDefineStack.Find(const AName: lpString; out AValue: lpString): TInitBool;
+var
+  i: Integer;
+begin
+  Result := bUnknown;
+  AValue := '';
+  if (FCount = 0) or (not FTop.Find(AName, LapeHashAlpha(AName), i)) or (i < FFloor) then
+    Exit;
+
+  if FEntries[i].Defined then
+  begin
+    AValue := FEntries[i].Value;
+    Result := bTrue;
+  end
+  else
+    Result := bFalse;
+end;
+
+procedure TLapeDefineStack.Restore(ACount, AFloor: Integer);
+begin
+  Assert(ACount <= FCount);
+  while (FCount > ACount) do
+  begin
+    Dec(FCount);
+    FTop.Remove(FEntries[FCount].Name, FEntries[FCount].Hash, FCount);
+    if (FEntries[FCount].Prev > -1) then
+      FTop.Add(FEntries[FCount].Name, FEntries[FCount].Hash, FEntries[FCount].Prev);
+  end;
+  FFloor := AFloor;
+end;
+
+procedure TLapeDefineStack.Hide;
+begin
+  FFloor := FCount;
+end;
 
 function TLapeCompiler.getPDocPos: PDocPos;
 begin
@@ -388,9 +500,9 @@ begin
   if (FIncludes <> nil) then
     FIncludes.Clear();
   if (FConditionalStack <> nil) then
-    FConditionalStack.Reset();
-
-  FDefines := FBaseDefines;
+    FConditionalStack.Clear();
+  if (FDefines <> nil) then
+    FDefines.Clear();
 end;
 
 function TLapeCompiler.getImporting: Boolean;
@@ -406,9 +518,52 @@ begin
     EndImporting();
 end;
 
-procedure TLapeCompiler.setBaseDefines(Defines: TLapeDefines);
+function TLapeCompiler.getDefines: TLapeDefines;
+var
+  i, Count, Top: Integer;
+  Defined: TInitBool;
+  Value: lpString;
 begin
-  FBaseDefines := Defines;
+  Result := nil;
+  SetLength(Result, FBaseDefines.Count + FDefines.Count);
+  Count := 0;
+
+  // the base defines, as the script left them
+  for i := 0 to FBaseDefines.Count - 1 do
+  begin
+    Defined := FDefines.Find(FBaseDefines.Key[i], Value);
+    if (Defined = bUnknown) then
+      Value := FBaseDefines.ItemsI[i];
+    if (Defined <> bFalse) then
+    begin
+      Result[Count].Name := LapeUpperCase(FBaseDefines.Key[i]);
+      Result[Count].Value := Value;
+      Inc(Count);
+    end;
+  end;
+
+  // then what the script defined: each name once, by its entry that is on top
+  for i := FDefines.Floor to FDefines.Count - 1 do
+    if FDefines.FEntries[i].Defined and
+       FDefines.FTop.Find(FDefines.FEntries[i].Name, FDefines.FEntries[i].Hash, Top) and (Top = i) and
+       (not FBaseDefines.ExistsKey(FDefines.FEntries[i].Name)) then
+    begin
+      Result[Count].Name := LapeUpperCase(FDefines.FEntries[i].Name);
+      Result[Count].Value := FDefines.FEntries[i].Value;
+      Inc(Count);
+    end;
+
+  SetLength(Result, Count);
+end;
+
+procedure TLapeCompiler.setBaseDefines(Defines: TLapeDefines);
+var
+  i: Integer;
+begin
+  FBaseDefines.Clear();
+  for i := 0 to High(Defines) do
+    if (not FBaseDefines.ExistsKey(Defines[i].Name)) then
+      FBaseDefines.Add(Defines[i].Name, Defines[i].Value);
   Reset();
 end;
 
@@ -1458,11 +1613,7 @@ begin
   addBaseDefine('Lape');
   addBaseDefine('Sesquipedalian');
 
-  {$IFDEF Lape_CaseSensitive}
-  addBaseDefine('Lape_CaseSensitive');
-  {$ELSE}
   addBaseDefine('Lape_CaseInsensitive');
-  {$ENDIF}
   {$IFDEF Lape_PascalLabels}
   addBaseDefine('Lape_PascalLabels');
   {$ELSE}
@@ -1774,12 +1925,16 @@ end;
 
 procedure TLapeCompiler.addPreprocessorFunc(Name: lpString; Func: TLapePreprocessorFunc);
 begin
-  FPreprocessorFuncs.Add(UpperCase(Name), Func);
+  if FPreprocessorFuncs.ExistsKey(Name) then
+    LapeExceptionFmt(lpeDuplicateDeclaration, [Name]);
+  FPreprocessorFuncs.Add(LapeUpperCase(Name), Func);
 end;
 
 procedure TLapeCompiler.addPreprocessorMacro(Name: lpString; Func: TLapePreprocessorFunc);
 begin
-  FPreprocessorMacros.Add(UpperCase(Name), Func);
+  if FPreprocessorMacros.ExistsKey(Name) then
+    LapeExceptionFmt(lpeDuplicateDeclaration, [Name]);
+  FPreprocessorMacros.Add(LapeUpperCase(Name), Func);
 end;
 
 function TLapeCompiler.HandlePreprocessorFunc(Sender: TLapeCompiler; Name, Argument: lpString; out Value: lpString): Boolean;
@@ -1859,7 +2014,7 @@ function TLapeCompiler.EvalPreprocessorExpr(Expr: String; ADocPos: TDocPos): Boo
   var
     Upper: lpString;
   begin
-    Upper := UpperCase(Expr);
+    Upper := LapeUpperCase(Expr);
 
     StartPos := Pos(Name + '(', Upper);
     if (StartPos > 0) then
@@ -1912,7 +2067,7 @@ function TLapeCompiler.EvalPreprocessorMacro(Argument: String; ADocPos: TDocPos)
 var
   Param, Value: lpString;
   StartPos, EndPos: Integer;
-  i: Integer;
+  Macro: TLapePreprocessorFunc;
 begin
   Result := False;
 
@@ -1922,31 +2077,29 @@ begin
   if (StartPos > 0) and (EndPos > 0) then
   begin
     Param := Copy(Argument, StartPos + 1, (EndPos - StartPos) - 1);
-    Argument := UpperCase(Trim(Copy(Argument, 1, StartPos - 1)));
+    Argument := LapeUpperCase(Trim(Copy(Argument, 1, StartPos - 1)));
   end else
   begin
     Param := '';
-    Argument := Trim(UpperCase(Argument));
+    Argument := LapeUpperCase(Trim(Argument));
   end;
 
-  for i := 0 to FPreprocessorMacros.Count - 1 do
-    if (Argument = FPreprocessorMacros.Key[i]) then
-    begin
-      if FPreprocessorMacros.ItemsI[i](Self, FPreprocessorMacros.Key[i], Param, Value) and (Value <> '') then
-        pushTokenizer(TLapeTokenizerString.Create(Value));
+  if FPreprocessorMacros.Find(Argument, Macro) then
+  begin
+    if Macro(Self, Argument, Param, Value) and (Value <> '') then
+      pushTokenizer(TLapeTokenizerString.Create(Value));
 
-      Result := True;
-      Exit;
-    end;
+    Result := True;
+    Exit;
+  end;
 
-    for i := 0 to FDefines.Count - 1 do
-      if (FDefines[i].Name = Argument) then
-      begin
-        pushTokenizer(TLapeTokenizerString.Create(FDefines[i].Value));
+  if getDefine(Argument, Value) then
+  begin
+    pushTokenizer(TLapeTokenizerString.Create(Value));
 
-        Result := True;
-        Exit;
-      end;
+    Result := True;
+    Exit;
+  end;
 
   LapeExceptionFmt(lpeUnknownDeclaration, [string(Argument)], ADocPos);
 end;
@@ -1959,7 +2112,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if Result then
       Exit;
 
-    Name := LowerCase(Name);
+    Name := LapeLowerCase(Name);
     if (Name = 'assertions') then
       Result := (lcoAssertions in FOptions)
     else
@@ -2028,7 +2181,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
 
   procedure setOption(Option: ECompilerOption);
   begin
-    Argument := LowerCase(Argument);
+    Argument := LapeLowerCase(Argument);
 
     if (Argument = 'on') or (Argument = '+') then
       Include(FOptions, Option)
@@ -2040,7 +2193,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
 
   procedure setAlignment(Argument: lpString);
   begin
-    Argument := LowerCase(Argument);
+    Argument := LapeLowerCase(Argument);
 
     if (Argument = 'on') then
       FOptions_PackRecords := Lape_PackRecordsDef
@@ -2056,7 +2209,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
 
   procedure handleDefine(Directive, Argument: lpString);
   var
-    p, i: Integer;
+    p: Integer;
     Name, Value: lpString;
   begin
     if (Directive = 'define') then
@@ -2077,13 +2230,8 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
 
       addDefine(Name, Value);
     end else
-    if (Directive = 'undef') then
-    begin
-      Name := UpperCase(Argument);
-      for i := FDefines.Count - 1 downto 0 do
-        if (FDefines[i].Name = Name) then
-          FDefines.Delete(i);
-    end;
+    if (Directive = 'undef') and hasDefine(Argument) then
+      FDefines.Push(Argument, '', False);
   end;
 
   procedure pushInclude(Directive, Argument: lpString);
@@ -2121,7 +2269,7 @@ begin
     if FOnHandleDirective(Self, Directive, Argument, FInPeek, InIgnore()) then
       Exit;
 
-  Directive := LowerCase(Directive);
+  Directive := LapeLowerCase(Directive);
   Argument := Trim(Argument);
 
   if InIgnore() then
@@ -2239,7 +2387,7 @@ end;
 
 function TLapeCompiler.InIgnore: Boolean;
 begin
-  Result := (FConditionalStack.Cur >= 0) and (not FConditionalStack.Top.Eval);
+  Result := (FConditionalStack.Count > 0) and (not FConditionalStack.Top.Eval);
 end;
 
 procedure TLapeCompiler.UnknownCharacter;
@@ -2476,7 +2624,7 @@ function TLapeCompiler.ParseMethodHeader(out Name: lpString; addToScope: Boolean
     if addToScope then
       if (FStackInfo = nil) then
         LapeException(lpeImpossible, Tokenizer.DocPos)
-      else if (LapeCase(Name) = LapeCase(AVar)) or hasDeclaration(AVar, True) then
+      else if LapeSameString(Name, AVar) or hasDeclaration(AVar, True) then
         LapeExceptionFmt(lpeDuplicateDeclaration, [AVar], Tokenizer.DocPos)
       else
       begin
@@ -3483,8 +3631,20 @@ var
   TypeForwards: TLapeTypeForwards;
   Typ: TLapeType;
   Name: lpString;
+
+  // a pointer that still waits for its type
+  function isForward(AType: TLapeType): Boolean;
+  var
+    i: Integer;
+  begin
+    for i := 0 to TypeForwards.Count - 1 do
+      if (TypeForwards.ItemsI[i] = AType) then
+        Exit(True);
+    Result := False;
+  end;
+
 begin
-  TypeForwards := TLapeTypeForwards.Create(nil, dupAccept, False);
+  TypeForwards := TLapeTypeForwards.Create(nil);
   try
 
     Next();
@@ -3496,7 +3656,7 @@ begin
       Expect(tk_sym_Equals, True, False);
 
       Typ := ParseType(TypeForwards, False);
-      if ((Typ.DeclarationList <> nil) or (Typ.Name <> '')) and (not TypeForwards.ExistsItem(Typ)) then
+      if ((Typ.DeclarationList <> nil) or (Typ.Name <> '')) and (not isForward(Typ)) then
         Typ := Typ.CreateCopy();
       Typ.Name := Name;
       addLocalDecl(Typ);
@@ -3514,7 +3674,10 @@ begin
       end;
   finally
     while (TypeForwards.Count > 0) do
-      TypeForwards.Delete(0).Free();
+    begin
+      TypeForwards.ItemsI[0].Free();
+      TypeForwards.Delete(0);
+    end;
     TypeForwards.Free();
   end;
 end;
@@ -3687,7 +3850,7 @@ var
   var
     Associative: ShortInt;
   begin
-    if (OpStack.Cur >= 0) and (op <> op_Unknown) then
+    if (OpStack.Count > 0) and (op <> op_Unknown) then
     begin
       case OperatorAssociative[op] of
         assocLeft: Associative := 0;
@@ -3696,7 +3859,7 @@ var
       end;
       Precedence := OperatorPrecedence[op];
 
-      while (OpStack.Cur >= 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) do
+      while (OpStack.Count > 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) do
         if (Precedence >= OperatorPrecedence[OpStack.Top.OperatorType] + Associative) then
           PopOpNode()
         else
@@ -4078,8 +4241,8 @@ var
 begin
   Result := nil;
   Method := nil;
-  VarStack := TLapeTree_NodeStack.Create(8);
-  OpStack := TLapeTree_OpStack.Create(16);
+  VarStack := TLapeTree_NodeStack.Create();
+  OpStack := TLapeTree_OpStack.Create();
   _LastNode := _None;
   InExpr := 0;
   DoNext := FirstNext;
@@ -4095,7 +4258,7 @@ begin
         tk_typ_Float, tk_typ_Integer, tk_typ_Integer_Hex, tk_typ_Integer_Bin:
           begin
             // FCachedDeclarations are used - Need to know if signed or not. Remove op_UnaryMinus node too.
-            Signed := (OpStack.Cur >= 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) and (opStack.Top.OperatorType = op_UnaryMinus);
+            Signed := (OpStack.Count > 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) and (opStack.Top.OperatorType = op_UnaryMinus);
 
             if (Tokenizer.Tok = tk_typ_Float) then
             begin
@@ -4121,7 +4284,7 @@ begin
             end;
 
             if Signed then
-              OpStack.Pop.Free();
+              OpStack.Pop().Free();
           end;
 
         tk_typ_String, tk_typ_HereString, tk_typ_Char:
@@ -4211,9 +4374,9 @@ begin
 
         tk_sym_ParenthesisClose:
           begin
-            while (OpStack.Cur >= 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) do
+            while (OpStack.Count > 0) and (OpStack.Top <> TLapeTree_Operator(ParenthesisOpen)) do
               PopOpNode();
-            if (OpStack.Cur < 0) or (OpStack.Pop() <> TLapeTree_Operator(ParenthesisOpen)) then
+            if (OpStack.Count = 0) or (OpStack.Pop() <> TLapeTree_Operator(ParenthesisOpen)) then
               LapeException(lpeLostClosingParenthesis, Tokenizer.DocPos);
             Dec(InExpr);
           end;
@@ -4250,7 +4413,7 @@ begin
       end;
     end;
 
-    while (OpStack.Cur >= 0) do
+    while (OpStack.Count > 0) do
     begin
       if (OpStack.Top = TLapeTree_Operator(ParenthesisOpen)) then
         LapeException(lpeClosingParenthesisExpected, Tokenizer.DocPos);
@@ -4258,8 +4421,8 @@ begin
       PopOpNode();
     end;
 
-    if (VarStack.Cur <> 0) then
-      if (VarStack.Cur < 0) and (Tokenizer.Tok in ReturnOn) then
+    if (VarStack.Count <> 1) then
+      if (VarStack.Count = 0) and (Tokenizer.Tok in ReturnOn) then
         Exit(nil)
       else
         LapeException(lpeInvalidEvaluation, Tokenizer.DocPos);
@@ -4270,9 +4433,9 @@ begin
   finally
     if (Method <> nil) then
       Method.Free();
-    while (VarStack.Cur >= 0) do
+    while (VarStack.Count > 0) do
       VarStack.Pop().Free();
-    while (OpStack.Cur >= 0) do
+    while (OpStack.Count > 0) do
       if (OpStack.Top = TLapeTree_Operator(ParenthesisOpen)) then
         OpStack.Pop()
       else
@@ -4694,20 +4857,22 @@ begin
   FIncludes := TStringList.Create();
   FIncludes.Duplicates := dupIgnore;
   FIncludes.CaseSensitive := {$IFDEF DARWIN}False{$ELSE}LapeSystemCaseSensitive{$ENDIF};
-  FConditionalStack := TLapeConditionalStack.Create(0);
+  FConditionalStack := TLapeConditionalStack.Create();
+  FBaseDefines := TLapeBaseDefines.Create('');
+  FDefines := TLapeDefineStack.Create();
 
   FOnHandleDirective := nil;
   FOnHandleExternal := nil;
   FOnFindFile := nil;
   FAfterParsing := TLapeCompilerNotification.Create();
 
-  FPreprocessorFuncs := TLapePreprocessorFuncs.Create(nil, dupError, False);
+  FPreprocessorFuncs := TLapePreprocessorFuncs.Create(nil);
   FPreprocessorFuncs.Add('DEFINED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
   FPreprocessorFuncs.Add('DECLARED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
   FPreprocessorFuncs.Add('FILEEXISTS', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
   FPreprocessorFuncs.Add('INCLUDED', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorFunc);
 
-  FPreprocessorMacros := TLapePreprocessorFuncs.Create(nil, dupError, False);
+  FPreprocessorMacros := TLapePreprocessorFuncs.Create(nil);
   FPreprocessorMacros.Add('FILE', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
   FPreprocessorMacros.Add('DIR', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
   FPreprocessorMacros.Add('ENV', {$IFDEF FPC}@{$ENDIF}HandlePreprocessorMacro);
@@ -4814,6 +4979,8 @@ begin
   FreeAndNil(FPreprocessorMacros);
   FreeAndNil(FIncludes);
   FreeAndNil(FConditionalStack);
+  FreeAndNil(FBaseDefines);
+  FreeAndNil(FDefines);
   FreeAndNil(FAfterParsing);
   FreeAndNil(FInternalMethodMap);
   inherited;
@@ -4849,7 +5016,8 @@ begin
 
     Options := FOptions;
     Options_PackRecords := FOptions_PackRecords;
-    Defines := FDefines;
+    DefineCount := FDefines.Count;
+    DefineFloor := FDefines.Floor;
     Conditionals := FConditionalStack.ExportToArray();
   end;
 end;
@@ -4879,7 +5047,7 @@ begin
 
     FOptions := Options;
     FOptions_PackRecords := Options_PackRecords;
-    FDefines := Defines;
+    FDefines.Restore(DefineCount, DefineFloor);
     FConditionalStack.ImportFromArray(Conditionals);
   end;
   if DoFreeState then
@@ -4926,11 +5094,11 @@ begin
 
   if ResetState then
   begin
-    FConditionalStack.Reset();
+    FConditionalStack.Clear();
     FStackInfo := nil;
     FOptions := FBaseOptions;
     FOptions_PackRecords := FBaseOptions_PackRecords;
-    FDefines := FBaseDefines;
+    FDefines.Hide();
   end;
 
   if (FStackInfo = nil) then
@@ -5066,7 +5234,7 @@ begin
   Assert(Tokenizer <> nil);
 
   try
-    FDefines := FBaseDefines;
+    FDefines.Hide();
 
     if (Next() = tk_kw_Program) then
     begin
@@ -5138,7 +5306,7 @@ procedure TLapeCompiler.CheckAfterCompile;
 begin
   Assert(Tokenizer <> nil);
 
-  if (FConditionalStack.Cur >= 0) then
+  if (FConditionalStack.Count > 0) then
     LapeException(lpeConditionalNotClosed, popConditional());
 end;
 
@@ -5274,72 +5442,38 @@ begin
 end;
 
 function TLapeCompiler.hasBaseDefine(AName: lpString): Boolean;
-var
-  S: lpString;
-  i: Integer;
 begin
-  S := UpperCase(AName);
-  for i := 0 to FBaseDefines.Count - 1 do
-    if (FBaseDefines[i].Name = S) then
-      Exit(True);
-
-  Result := False;
+  Result := FBaseDefines.ExistsKey(AName);
 end;
 
 function TLapeCompiler.hasDefine(AName: lpString): Boolean;
 var
-  S: lpString;
-  i: Integer;
+  Value: lpString;
 begin
-  S := UpperCase(AName);
-  for i := 0 to FDefines.Count - 1 do
-    if (FDefines[I].Name = S) then
-      Exit(True);
+  Result := getDefine(AName, Value);
+end;
 
-  Result := False;
+function TLapeCompiler.getDefine(AName: lpString; out AValue: lpString): Boolean;
+begin
+  case FDefines.Find(AName, AValue) of
+    bTrue:  Result := True;
+    bFalse: Result := False;
+    else    Result := FBaseDefines.Find(AName, AValue);
+  end;
 end;
 
 procedure TLapeCompiler.addDefine(AName: lpString; AValue: lpString);
-var
-  S: lpString;
-  i: Integer;
-  Def: TLapeDefine;
 begin
-  S := UpperCase(AName);
-  if (AValue = '') and hasDefine(S) then
+  // (defined again without a value: it keeps the one it has)
+  if (AValue = '') and hasDefine(AName) then
     Exit;
-
-  // modify value if already exists
-  if (AValue <> '') then
-  begin
-    for i := 0 to FDefines.Count - 1 do
-      if (FDefines[i].Name = S) then
-      begin
-        Def.Name  := S;
-        Def.Value := AValue;
-        FDefines[I] := Def;
-
-        Exit;
-      end;
-  end;
-
-  Def.Name  := S;
-  Def.Value := AValue;
-
-  FDefines.Add(Def);
+  FDefines.Push(AName, AValue, True);
 end;
 
 procedure TLapeCompiler.addBaseDefine(AName: lpString; AValue: lpString);
-var
-  Def: TLapeDefine;
 begin
-  if not hasBaseDefine(AName) then
-  begin
-    Def.Name  := UpperCase(AName);
-    Def.Value := AValue;
-
-    FBaseDefines.Add(Def);
-  end;
+  if (not hasBaseDefine(AName)) then
+    FBaseDefines.Add(AName, AValue);
 end;
 
 function TLapeCompiler.hasInclude(FileName: lpString): Boolean;

@@ -614,7 +614,7 @@ begin
   if (AMemberMap = nil) then
   begin
     AMemberMap := TEnumMap.Create();
-    AMemberMap.CaseSensitive := LapeCaseSensitive;
+    AMemberMap.CaseSensitive := False;
   end;
   FMemberMap := AMemberMap;
   FScoped := AScoped;

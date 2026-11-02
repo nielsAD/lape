@@ -1,0 +1,22 @@
+// {$DEFINE} and {$UNDEF}: names in any case, with or without a value
+{$DEFINE abc}
+{$DEFINE Gone}
+{$UNDEF gone}
+{$DEFINE Val := 1}
+{$UNDEF Val}
+{$DEFINE Val := 2}
+
+// after a method header, which the compiler looks ahead past
+procedure P; {$DEFINE AfterHeader}
+begin
+end;
+
+const
+  Val = {$MACRO Val};
+
+begin
+  {$IFDEF ABC} WriteLn('abc'); {$ENDIF}
+  {$IFDEF Gone} WriteLn('Gone'); {$ENDIF}
+  {$IFDEF AfterHeader} WriteLn('AfterHeader'); {$ENDIF}
+  WriteLn(Val);
+end.
