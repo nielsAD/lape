@@ -15,7 +15,7 @@ uses
 
 type
   TObjectField = record
-    Offset: Word;
+    Offset: SizeInt;
     FieldType: TLapeType;
   end;
   TObjectFieldMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TObjectField>;
@@ -103,7 +103,7 @@ end;
 
 constructor TLapeType_Object.Create(ACompiler: TLapeCompilerBase; AFieldMap: TObjectFieldMap; AName: lpString; ADocPos: PDocPos);
 const
-  InvalidRec: TObjectField = (Offset: Word(-1); FieldType: nil);
+  InvalidRec: TObjectField = (Offset: -1; FieldType: nil);
 begin
   inherited Create(ACompiler.getBaseType(ltUInt8), ACompiler, AName, ADocPos);
 

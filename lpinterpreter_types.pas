@@ -15,9 +15,7 @@ uses
   Classes, SysUtils,
   lptypes;
 
-{$IFNDEF Lape_SmallCode}
-  {$MINENUMSIZE 4} //Better alignment
-{$ENDIF}
+{$MINENUMSIZE 4} //Better alignment
 
 type
   opCodeP = ^opCode;

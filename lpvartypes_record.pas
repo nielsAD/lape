@@ -17,7 +17,7 @@ uses
 
 type
   TRecordField = record
-    Offset: Word;
+    Offset: SizeInt;
     FieldType: TLapeType;
   end;
   TRecordFieldMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<TRecordField>;
@@ -86,7 +86,7 @@ end;
 function TLapeType_Record.getSize: SizeInt;
 begin
   if (FSize > 0) then
-    Result := (inherited + (FAlignment - 1)) and not (FAlignment - 1)
+    Result := (inherited + (FAlignment - 1)) and not SizeInt(FAlignment - 1)
   else
     Result := 0;
 end;
@@ -109,7 +109,7 @@ end;
 
 constructor TLapeType_Record.Create(ACompiler: TLapeCompilerBase; AFieldMap: TRecordFieldMap; AName: lpString = ''; ADocPos: PDocPos = nil);
 const
-  InvalidRec: TRecordField = (Offset: Word(-1); FieldType: nil);
+  InvalidRec: TRecordField = (Offset: -1; FieldType: nil);
 begin
   inherited Create(ltRecord, ACompiler, AName, ADocPos);
 
@@ -181,7 +181,7 @@ begin
     FAlignment := Max(FAlignment, AAlignment);
 
     Dec(AAlignment);
-    FSize := (FSize + AAlignment) and not AAlignment;
+    FSize := (FSize + AAlignment) and not SizeInt(AAlignment);
   end;
 
   Field.Offset := FSize;

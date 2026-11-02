@@ -69,7 +69,7 @@ type
   PlpFloat = ^lpFloat;
 
   TVarRecArray = array of TVarRec;
-  TVarRecContainer = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TVarRecContainer = record
     CVar: Variant;
     case SizeInt of
       vtExtended: (CExtended: Extended);
@@ -82,7 +82,7 @@ type
   end;
   TVarRecContainerArray = array of TVarRecContainer;
 
-  TVarRecList = {$IFDEF Lape_SmallCode}packed{$ENDIF} record
+  TVarRecList = record
     Containers: TVarRecContainerArray;
     VarRecs: TVarRecArray;
   end;
@@ -105,7 +105,7 @@ type
 
   PDocPos = ^TDocPos;
   TDocPos = record
-    Line, Col: {$IFDEF Lape_SmallCode}UInt16{$ELSE}UInt32{$ENDIF};
+    Line, Col: UInt32;
     FileName: lpString;
   end;
   TDocPosArray = array of TDocPos;
@@ -120,22 +120,12 @@ type
   TCodeOffset = SizeInt;
   PCodeOffset = ^TCodeOffset;
 
-  {$IFDEF Lape_SmallCode}
-  //Means Lape can only locate up to 65kb of local variables (per stackframe)
-  TStackInc = Int16;
-  TStackOffset = UInt16;
-  TVarStackOffset = UInt16;
-  TPointerOffset = Int16;
-  TParamSize = UInt16;
-  EvalBool = Boolean;
-  {$ELSE}
   TStackInc = NativeInt;
   TStackOffset = NativeUInt;
   TVarStackOffset = NativeUInt;
   TPointerOffset = NativeInt;
   TParamSize = NativeUInt;
   EvalBool = LongBool;
-  {$ENDIF}
 
   PStackInc = ^TStackInc;
   PStackOffset = ^TStackOffset;
@@ -514,11 +504,7 @@ const
   ltSizeInt = ltNativeInt;
   ltSizeUInt = ltNativeUInt;
 
-  {$IFDEF Lape_SmallCode}
-  ltEvalBool = ltBoolean;
-  {$ELSE}
   ltEvalBool = ltLongBool;
-  {$ENDIF}
 
   {$IFDEF Lape_NoExtended}
   ltFloat = ltDouble;

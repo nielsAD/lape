@@ -186,11 +186,7 @@ type
   TLapeType_LongBool = class(TLapeType_Bool)
     public constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''; ADocPos: PDocPos = nil); reintroduce; virtual; end;
 
-  {$IFDEF Lape_SmallCode}
-  TLapeType_EvalBool = TLapeType_Boolean;
-  {$ELSE}
   TLapeType_EvalBool = TLapeType_LongBool;
-  {$ENDIF}
 
   // A set of an enum, a range of one, AnsiChar or Byte: holds the values of Range
   TLapeType_Set = class(TLapeType)
