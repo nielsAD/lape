@@ -1,0 +1,21 @@
+// Each kind of type ends where the next token starts
+type
+  TEnum = (eA, eB);
+  PNode = ^TNode;
+  TNode = record const Zero: Int32 = 0; Value: Int32; Next: PNode; end;
+  TChild = record(TNode) Extra: Int32; end;
+  TSame = record(TNode);
+  TUnion = union i: Int32; b: UInt8; end;
+  TObj = object Name: String; end;
+  TNotify = procedure(x: Int32 = 1) of object;
+  TFunc = function: TEnum;
+  TOld = Int32 deprecated;
+
+var
+  e: TEnum = eB;
+  a: array of TEnum = [eA];
+  r: 0..2 = 1;
+
+begin
+  WriteLn(e, ' ', a, ' ', r);
+end.

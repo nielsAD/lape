@@ -191,10 +191,10 @@ type
     function getChar(Offset: Integer = 0): lpChar; {$IFDEF Lape_Inline}inline;{$ENDIF}
     // Written in digits, in hexadecimal ($FF) or in bits (%1010), with _ anywhere between those.
     function TokInteger(out Value: UInt64): Boolean; virtual;
+    // Written with a fraction (1.5), an exponent (1e3) or both (1.5E-3), with _ anywhere between the digits.
     function TokFloat(out Value: lpFloat): Boolean; virtual;
+    // Written as # and digits (#65) or # and hexadecimal (#$41).
     function TokCharCode(out Code: UInt32): Boolean; virtual;
-
-    function tempRollBack(PrevTok: EParserToken): EParserToken; virtual;
 
     function Next: EParserToken; virtual;
     function NextNoWhiteSpace: EParserToken; virtual;
@@ -1142,15 +1142,6 @@ begin
     end;
 
   Result := True;
-end;
-
-function TLapeTokenizerBase.tempRollBack(PrevTok: EParserToken): EParserToken;
-begin
-  Result := FTok;
-  FTok := PrevTok;
-  FPos := FTokStart - 1;
-  FTokStart := FPos;
-  FTokLines := 0;
 end;
 
 function TLapeTokenizerBase.Next: EParserToken;
