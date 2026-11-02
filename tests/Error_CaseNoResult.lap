@@ -1,0 +1,10 @@
+// A case of a procedure has no value
+procedure P;
+begin
+end;
+
+begin
+  case P() of
+    1: WriteLn('no');
+  end;
+end.

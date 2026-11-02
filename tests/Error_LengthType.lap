@@ -1,0 +1,7 @@
+// Length of what has none
+var
+  i: Int32;
+
+begin
+  i := Length(1.5);
+end.

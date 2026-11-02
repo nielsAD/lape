@@ -126,6 +126,7 @@ type
   PCodePos = ^TCodePos;
 
   TCodeOffset = SizeInt;
+  TCodeLabel = Integer; // a place in the code, see TLapeCodeEmitterBase.NewLabel
   PCodeOffset = ^TCodeOffset;
 
   TStackInc = NativeInt;
@@ -575,7 +576,6 @@ const
   LapeRefTypes = LapeArrayTypes - [ltShortString, ltStaticArray];
   LapePointerTypes = [ltPointer] + LapeProcTypes + LapeRefTypes;
   LapeStackTypes = LapeOrdinalTypes + LapeRealTypes + LapeSetTypes;
-  LapeIfTypes = LapeOrdinalTypes + LapeStringTypes + LapePointerTypes + LapeRealTypes + [ltVariant, ltRecord];
   LapeNoInitTypes = LapeOrdinalTypes + LapeRealTypes + [ltUnknown, ltPointer, ltScriptMethod, ltImportedMethod, ltShortString];
 
   NullDocPos: TDocPos = (Line: 0; Col: 0; FileName: '');

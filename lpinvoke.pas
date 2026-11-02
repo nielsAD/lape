@@ -656,7 +656,7 @@ var
 begin
   Result := NullResVar;
   if (FCallee = nil) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeImpossible, DocPos);
 
   Picked := PickedMethod();
   if (Picked = nil) then

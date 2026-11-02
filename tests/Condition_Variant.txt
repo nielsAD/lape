@@ -1,0 +1,15 @@
+unassigned: False
+0: False
+1: True
+-1: True
+0.0: False
+0.5: True
+False: False
+True: True
+empty: raises
+x: raises
+'0': False
+'True': True
+'False': False
+3
+1

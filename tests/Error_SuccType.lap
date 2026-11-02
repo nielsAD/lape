@@ -1,0 +1,7 @@
+// Succ of what has no next
+var
+  d: Double;
+
+begin
+  d := Succ(d);
+end.

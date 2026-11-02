@@ -1,0 +1,4 @@
+// SetLength of what is no array
+begin
+  SetLength(1, 2);
+end.

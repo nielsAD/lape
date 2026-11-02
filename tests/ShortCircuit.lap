@@ -1,0 +1,681 @@
+// `and` and `or` of booleans leave their right operand alone when the left one says enough.
+// Every operand that is a call says so, which shows what was evaluated and in what order.
+
+type
+  PInt32 = ^Int32;
+  TFlags = record Ready, Done: Boolean; end;
+  PBool = ^Boolean;
+  TDeep = record Flag: Boolean; Other: LongBool; Inner: record Last: Boolean; end; end;
+
+const
+  CYes = True;
+  CNo = False;
+  CBoth = CYes and CNo;
+  CEither = (1 > 2) or (3 > 2);
+  CNeither = not (CYes or CNo) or CBoth;
+
+var
+  Log: String;
+  Calls: Int32;
+
+procedure Flush(Title: String);
+begin
+  WriteLn(Title, ': ', Log);
+  Log := '';
+end;
+
+procedure Say(Value: Boolean);
+begin
+  if Value then
+    Log := Log + 'yes '
+  else
+    Log := Log + 'no ';
+end;
+
+procedure Say(Value: Int64); overload;
+begin
+  Log := Log + ToString(Value) + ' ';
+end;
+
+function T(Name: String): Boolean;
+begin
+  Log := Log + Name;
+  Inc(Calls);
+  Result := True;
+end;
+
+function F(Name: String): Boolean;
+begin
+  Log := Log + Name;
+  Inc(Calls);
+  Result := False;
+end;
+
+function TL(Name: String): LongBool;
+begin
+  Log := Log + Name;
+  Result := True;
+end;
+
+function FB(Name: String): Boolean;
+begin
+  Log := Log + Name;
+  Result := False;
+end;
+
+function Num(n: Int32): Int32;
+begin
+  Log := Log + ToString(n);
+  Result := n;
+end;
+
+function Boom(Name: String): Boolean;
+begin
+  Log := Log + Name;
+  raise 'boom';
+end;
+
+function Same(Value: Boolean): Boolean;
+begin
+  Result := Value;
+end;
+
+function Three(a: Int32; x: Boolean; b: Int32; y: Boolean; c: Int32): String;
+begin
+  Result := ToString(a) + ToString(x) + ToString(b) + ToString(y) + ToString(c);
+end;
+
+function AllOf(a, b, c: Boolean): Boolean;
+begin
+  Result := a and b and c;
+end;
+
+function AnyOf(a, b, c: Boolean): Boolean;
+begin
+  Exit(a or b or c);
+end;
+
+// (which is itself again and again, until the left operand says enough)
+function Down(n: Int32): Boolean;
+begin
+  Result := (n <= 0) or Down(n - 1);
+end;
+
+function Deep(n: Int32): Int32;
+begin
+  if (n > 0) and (Deep(n - 1) >= 0) then
+    Result := n
+  else
+    Result := 0;
+end;
+
+function TFlags.Both: Boolean;
+begin
+  Result := Self.Ready and Self.Done;
+end;
+
+property TFlags.Either: Boolean;
+begin
+  Log := Log + 'e';
+  Result := Self.Ready or Self.Done;
+end;
+
+var
+  Kept: Boolean;
+  Row: array of Boolean;
+  Rec: TDeep;
+
+function GetKept: PBool;
+begin
+  Result := @Kept;
+end;
+
+function GetRow: array of Boolean;
+begin
+  Result := Row;
+end;
+
+function GetRec: TDeep;
+begin
+  Result := Rec;
+end;
+
+// Every combination of what three operands can be. Operands that are calls say so (u, v, w), and after them comes
+// what the expression came to (+ or -): `uv-` is an expression that called for u and v, and was not true.
+//
+// Every expression is written five times: as the condition of an if, as an argument, as a value that is assigned, and
+// as the condition of a while and of a repeat. What the first one does is printed. The other four have to do exactly
+// the same: if not, what they did is printed as well, after a !.
+var
+  Given: array of Boolean;
+  Cell, Wanted, Line: String;
+
+function U: Boolean;
+begin
+  Cell := Cell + 'u';
+  Result := Given[0];
+end;
+
+function V: Boolean;
+begin
+  Cell := Cell + 'v';
+  Result := Given[1];
+end;
+
+function W: Boolean;
+begin
+  Cell := Cell + 'w';
+  Result := Given[2];
+end;
+
+function UL: LongBool;
+begin
+  Cell := Cell + 'u';
+  Result := Given[0];
+end;
+
+function WB: Boolean;
+begin
+  Cell := Cell + 'w';
+  Result := Given[2];
+end;
+
+function Mark(Value: Boolean): String;
+begin
+  if Value then
+    Result := '+'
+  else
+    Result := '-';
+end;
+
+procedure Another;
+begin
+  Wanted := '';
+  Cell := '';
+end;
+
+procedure Ended(Value: Boolean);
+begin
+  Cell := Cell + Mark(Value);
+  if (Wanted = '') then
+  begin
+    Wanted := Cell;
+    Line := Line + ' ' + Cell;
+  end
+  else if (Cell <> Wanted) then
+    Line := Line + '!' + Cell;
+  Cell := '';
+end;
+
+procedure Combinations;
+var
+  Mask, k: Int32;
+  b: Boolean;
+  l: LongBool;
+begin
+  SetLength(Given, 3);
+  for Mask := 0 to 7 do
+  begin
+    Given[0] := (Mask and 4) <> 0;
+    Given[1] := (Mask and 2) <> 0;
+    Given[2] := (Mask and 1) <> 0;
+    Line := Mark(Given[0]) + Mark(Given[1]) + Mark(Given[2]) + ':';
+
+    Another();
+    if U() and V() then Ended(True) else Ended(False);
+    Ended(U() and V());
+    l := U() and V(); Ended(l);
+    b := False; while U() and V() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() and V(); Ended(k = 1);
+
+    Another();
+    if U() or V() then Ended(True) else Ended(False);
+    Ended(U() or V());
+    l := U() or V(); Ended(l);
+    b := False; while U() or V() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() or V(); Ended(k = 1);
+
+    Another();
+    if U() and V() and W() then Ended(True) else Ended(False);
+    Ended(U() and V() and W());
+    l := U() and V() and W(); Ended(l);
+    b := False; while U() and V() and W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() and V() and W(); Ended(k = 1);
+
+    Another();
+    if U() or V() or W() then Ended(True) else Ended(False);
+    Ended(U() or V() or W());
+    l := U() or V() or W(); Ended(l);
+    b := False; while U() or V() or W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() or V() or W(); Ended(k = 1);
+
+    Another();
+    if U() and V() or W() then Ended(True) else Ended(False);
+    Ended(U() and V() or W());
+    l := U() and V() or W(); Ended(l);
+    b := False; while U() and V() or W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() and V() or W(); Ended(k = 1);
+
+    Another();
+    if U() or V() and W() then Ended(True) else Ended(False);
+    Ended(U() or V() and W());
+    l := U() or V() and W(); Ended(l);
+    b := False; while U() or V() and W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() or V() and W(); Ended(k = 1);
+
+    Another();
+    if (U() or V()) and W() then Ended(True) else Ended(False);
+    Ended((U() or V()) and W());
+    l := (U() or V()) and W(); Ended(l);
+    b := False; while (U() or V()) and W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until (U() or V()) and W(); Ended(k = 1);
+
+    Another();
+    if U() and (V() or W()) then Ended(True) else Ended(False);
+    Ended(U() and (V() or W()));
+    l := U() and (V() or W()); Ended(l);
+    b := False; while U() and (V() or W()) do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() and (V() or W()); Ended(k = 1);
+
+    Another();
+    if not U() and V() then Ended(True) else Ended(False);
+    Ended(not U() and V());
+    l := not U() and V(); Ended(l);
+    b := False; while not U() and V() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until not U() and V(); Ended(k = 1);
+
+    Another();
+    if not (U() and V()) then Ended(True) else Ended(False);
+    Ended(not (U() and V()));
+    l := not (U() and V()); Ended(l);
+    b := False; while not (U() and V()) do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until not (U() and V()); Ended(k = 1);
+
+    Another();
+    if not (U() or V()) or W() then Ended(True) else Ended(False);
+    Ended(not (U() or V()) or W());
+    l := not (U() or V()) or W(); Ended(l);
+    b := False; while not (U() or V()) or W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until not (U() or V()) or W(); Ended(k = 1);
+
+    Another();
+    if not U() or not V() and not W() then Ended(True) else Ended(False);
+    Ended(not U() or not V() and not W());
+    l := not U() or not V() and not W(); Ended(l);
+    b := False; while not U() or not V() and not W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until not U() or not V() and not W(); Ended(k = 1);
+
+    Another();
+    if U() and not (V() or not W()) then Ended(True) else Ended(False);
+    Ended(U() and not (V() or not W()));
+    l := U() and not (V() or not W()); Ended(l);
+    b := False; while U() and not (V() or not W()) do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() and not (V() or not W()); Ended(k = 1);
+
+    Another();
+    if U() and V() or not U() and W() then Ended(True) else Ended(False);
+    Ended(U() and V() or not U() and W());
+    l := U() and V() or not U() and W(); Ended(l);
+    b := False; while U() and V() or not U() and W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() and V() or not U() and W(); Ended(k = 1);
+
+    Another();
+    if (U() or V()) and (V() or W()) and (U() or W()) then Ended(True) else Ended(False);
+    Ended((U() or V()) and (V() or W()) and (U() or W()));
+    l := (U() or V()) and (V() or W()) and (U() or W()); Ended(l);
+    b := False; while (U() or V()) and (V() or W()) and (U() or W()) do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until (U() or V()) and (V() or W()) and (U() or W()); Ended(k = 1);
+
+    Another();
+    if U() and V() or V() and W() or U() and W() then Ended(True) else Ended(False);
+    Ended(U() and V() or V() and W() or U() and W());
+    l := U() and V() or V() and W() or U() and W(); Ended(l);
+    b := False; while U() and V() or V() and W() or U() and W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() and V() or V() and W() or U() and W(); Ended(k = 1);
+
+    Another();
+    if Given[0] and V() or Given[2] then Ended(True) else Ended(False);
+    Ended(Given[0] and V() or Given[2]);
+    l := Given[0] and V() or Given[2]; Ended(l);
+    b := False; while Given[0] and V() or Given[2] do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until Given[0] and V() or Given[2]; Ended(k = 1);
+
+    Another();
+    if V() and Given[0] or W() and not Given[1] then Ended(True) else Ended(False);
+    Ended(V() and Given[0] or W() and not Given[1]);
+    l := V() and Given[0] or W() and not Given[1]; Ended(l);
+    b := False; while V() and Given[0] or W() and not Given[1] do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until V() and Given[0] or W() and not Given[1]; Ended(k = 1);
+
+    Another();
+    if UL() and V() or WB() then Ended(True) else Ended(False);
+    Ended(UL() and V() or WB());
+    l := UL() and V() or WB(); Ended(l);
+    b := False; while UL() and V() or WB() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until UL() and V() or WB(); Ended(k = 1);
+
+    Another();
+    if WB() or UL() and not WB() then Ended(True) else Ended(False);
+    Ended(WB() or UL() and not WB());
+    l := WB() or UL() and not WB(); Ended(l);
+    b := False; while WB() or UL() and not WB() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until WB() or UL() and not WB(); Ended(k = 1);
+
+    Another();
+    if U() xor V() and W() then Ended(True) else Ended(False);
+    Ended(U() xor V() and W());
+    l := U() xor V() and W(); Ended(l);
+    b := False; while U() xor V() and W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() xor V() and W(); Ended(k = 1);
+
+    Another();
+    if (U() = V()) or W() then Ended(True) else Ended(False);
+    Ended((U() = V()) or W());
+    l := (U() = V()) or W(); Ended(l);
+    b := False; while (U() = V()) or W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until (U() = V()) or W(); Ended(k = 1);
+
+    Another();
+    if (U() or False) and (True and V()) or False and W() then Ended(True) else Ended(False);
+    Ended((U() or False) and (True and V()) or False and W());
+    l := (U() or False) and (True and V()) or False and W(); Ended(l);
+    b := False; while (U() or False) and (True and V()) or False and W() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until (U() or False) and (True and V()) or False and W(); Ended(k = 1);
+
+    Another();
+    if not (U() and (V() or not (W() and U()))) then Ended(True) else Ended(False);
+    Ended(not (U() and (V() or not (W() and U()))));
+    l := not (U() and (V() or not (W() and U()))); Ended(l);
+    b := False; while not (U() and (V() or not (W() and U()))) do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until not (U() and (V() or not (W() and U()))); Ended(k = 1);
+
+    Another();
+    if U() or V() or W() or not U() or not V() then Ended(True) else Ended(False);
+    Ended(U() or V() or W() or not U() or not V());
+    l := U() or V() or W() or not U() or not V(); Ended(l);
+    b := False; while U() or V() or W() or not U() or not V() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() or V() or W() or not U() or not V(); Ended(k = 1);
+
+    Another();
+    if U() and V() and W() and U() and V() and W() and U() and V() then Ended(True) else Ended(False);
+    Ended(U() and V() and W() and U() and V() and W() and U() and V());
+    l := U() and V() and W() and U() and V() and W() and U() and V(); Ended(l);
+    b := False; while U() and V() and W() and U() and V() and W() and U() and V() do begin b := True; Break; end; Ended(b);
+    k := 0; repeat Inc(k); if (k > 1) then Break; until U() and V() and W() and U() and V() and W() and U() and V(); Ended(k = 1);
+
+    WriteLn(Line);
+  end;
+end;
+
+var
+  a, b, c: Boolean;
+  l: LongBool;
+  y: Boolean;
+  i, n, Hits: Int32;
+  p: PInt32;
+  Numbers: array of Int32;
+  Flags: TFlags;
+  Fixed: array of LongBool;
+  Grid: array of array of Boolean;
+  PKept: PBool;
+  PRec: ^TDeep;
+  Raw: Pointer;
+begin
+  // what is skipped
+  Say(F('a') and T('b'));
+  Say(T('a') and F('b'));
+  Say(T('a') or F('b'));
+  Say(F('a') or T('b'));
+  Flush('two operands');
+
+  Say(T('a') and T('b') and F('c') and T('d'));
+  Say(F('a') or F('b') or T('c') or F('d'));
+  Say(F('a') and T('b') or T('c'));
+  Say(T('a') or T('b') and F('c'));
+  Say((T('a') or T('b')) and F('c'));
+  Say(F('a') or (F('b') and T('c')) or (T('d') and T('e')) or T('f'));
+  Flush('more operands');
+
+  Say(not F('a') and T('b'));
+  Say(not (T('a') and T('b')) or F('c'));
+  Say(not (F('a') or F('b')) and not F('c'));
+  Say(not not T('a') or T('b'));
+  Say(not (not (T('a') and F('b')) and T('c')));
+  Flush('not');
+
+  // as a condition
+  if T('a') and F('b') then Log := Log + '!' else Log := Log + ' else ';
+  if F('a') or T('b') then Log := Log + ' then ' else Log := Log + '!';
+  if F('a') and T('b') then Log := Log + '!';
+  if T('a') or F('b') then else Log := Log + '!';
+  if F('a') and T('b') then else Log := Log + ' only else ';
+  if F('a') and T('x') then Log := Log + '!'
+  else if F('b') or F('c') then Log := Log + '!'
+  else if T('d') and T('e') then Log := Log + ' third'
+  else Log := Log + '!';
+  Flush('if');
+
+  i := 0;
+  while (i < 3) and T('w') do
+    Inc(i);
+  Say(i);
+  i := 0;
+  while T('a') and (i < 5) or F('b') do
+  begin
+    Inc(i);
+    if (i = 2) or (i = 3) and T('c') then
+      Continue;
+    if (i >= 4) and not F('d') then
+      Break;
+  end;
+  Say(i);
+  while F('a') and T('b') or F('c') do
+    Log := Log + '!';
+  Flush('while');
+
+  i := 0;
+  repeat
+    Inc(i);
+  until F('a') or (i >= 3) and T('b');
+  Say(i);
+  i := 0;
+  repeat
+    Inc(i);
+    if (i < 3) and T('c') then
+      Continue;
+  until T('a') and not F('b');
+  Say(i);
+  Flush('repeat');
+
+  Hits := 0;
+  for i := 1 to 20 do
+    if (i mod 2 = 0) and (i mod 3 = 0) or (i = 7) then
+      Inc(Hits);
+  Say(Hits);
+  Flush('for');
+
+  // as a value
+  a := T('a') and F('b');
+  b := F('a') or T('b');
+  c := a or b and not a;
+  Say(a); Say(b); Say(c);
+  Flush('assigned');
+
+  // (what is assigned to is an operand as well: it is read before it is written)
+  a := True;
+  a := F('x') or (a and T('y'));
+  Say(a);
+  a := not a and (a or T('z'));
+  Say(a);
+  b := False;
+  b := (b or T('p')) and (not b or F('q'));
+  Say(b);
+  Flush('itself');
+
+  Say(Same(T('a') and T('b')));
+  Say(Same(F('a') and T('b')) or Same(T('c') or F('d')));
+  Log := Log + Three(1, T('a') and F('b'), 2, F('c') or T('d'), 3) + ' ';
+  Log := Log + ToString(T('a') or F('b')) + ' ' + ToString(F('c') and T('d')) + ' ';
+  Say(AllOf(True, T('a') or F('b'), not F('c')));
+  Say(AnyOf(F('a') and T('b'), False, F('c') or F('d')));
+  Flush('arguments');
+
+  Say((T('a') and F('b')) = (F('c') or F('d')));
+  Say((T('a') or F('b')) <> (F('c') and T('d')));
+  Say((T('a') and T('b')) xor (F('c') or T('d')));
+  Say(Ord(Same(T('a') and T('b'))) + Ord(Same(F('c') or T('d'))) * 10);
+  Flush('in an expression');
+
+  // every kind of boolean, and one with another
+  l := TL('a') and TL('b');
+  y := FB('c') or FB('d');
+  Say(l); Say(y);
+  Say(TL('a') and FB('b'));
+  Say(FB('a') or TL('b'));
+  Say(FB('a') and TL('b'));
+  a := TL('a') or T('b');
+  l := T('a') and FB('b') or TL('c');
+  Say(a); Say(l);
+  if l and not y then Log := Log + 'mixed ';
+  Flush('kinds');
+
+  // numbers have both operands evaluated: there it is no matter of yes or no
+  Say(Num(6) and Num(3));
+  Say(Num(4) or Num(1));
+  Say(Num(0) and Num(5));
+  Say((Num(1) > 0) or (Num(2) > 0));
+  Say((Num(1) < 0) and (Num(2) > 0));
+  Say(T('a') xor T('b'));
+  Flush('numbers');
+
+  // what is known beforehand
+  Say(CBoth); Say(CEither); Say(CNeither);
+  if CYes or F('a') then Log := Log + 'one ';
+  if CNo and T('a') then Log := Log + '!' else Log := Log + 'two ';
+  if CNo or T('a') then Log := Log + ' three ';
+  if CYes and F('a') then Log := Log + '!' else Log := Log + ' four ';
+  if True then Log := Log + 'five ';
+  if False then Log := Log + '!' else Log := Log + 'six ';
+  if not CNo and (CYes or CNo) then Log := Log + 'seven ';
+  i := 0;
+  while True do
+  begin
+    Inc(i);
+    if (i >= 3) then
+      Break;
+  end;
+  repeat
+    Inc(i);
+  until True;
+  while CNo or False do
+    Log := Log + '!';
+  Say(i);
+  a := CYes and T('b');
+  b := CNo or CYes and F('c');
+  Say(a); Say(b);
+  Flush('constants');
+
+  // what it is for
+  p := nil;
+  if (p <> nil) and (p^ = 5) then Log := Log + '!' else Log := Log + 'nil ';
+  n := 5;
+  p := @n;
+  if (p <> nil) and (p^ = 5) then Log := Log + 'five ';
+  if (p = nil) or (p^ <> 5) then Log := Log + '!';
+
+  Numbers := [3, 1, 4, 1, 5];
+  i := 0;
+  while (i < Length(Numbers)) and (Numbers[i] <> 9) do
+    Inc(i);
+  Say(i);
+  i := High(Numbers);
+  while (i >= 0) and (Numbers[i] <> 4) do
+    Dec(i);
+  Say(i);
+  n := 0;
+  if (n <> 0) and (10 div n > 1) then Log := Log + '!' else Log := Log + 'no division ';
+  if (n = 0) or (10 div n > 1) then Log := Log + 'none here ';
+  Flush('guards');
+
+  // fields, methods and properties
+  Flags.Ready := True;
+  Say(Flags.Ready and Flags.Done);
+  Say(Flags.Ready or Flags.Either);
+  Say(Flags.Done or Flags.Either);
+  Say(Flags.Both() or not Flags.Both() and Flags.Ready);
+  with Flags do
+    if Ready and not Done then
+      Done := Ready or F('!');
+  Say(Flags.Both());
+  Flush('fields');
+
+  // wherever a boolean is kept
+  Kept := True; PKept := @Kept; Raw := @Kept;
+  Row := [True, False, True];
+  SetLength(Fixed, 4); Fixed[1] := True; Fixed[3] := True;
+  Grid := [[True, False], [False, True]];
+  Rec.Flag := True; Rec.Other := True; PRec := @Rec;
+  Say(PKept^ and GetKept()^ and PBool(Raw)^);
+  Say(not PKept^ or not GetKept()^);
+  Say(Row[0] and not Row[1] and Row[2]);
+  Say(Fixed[1] and Fixed[3] and not (Fixed[0] or Fixed[2]));
+  Say(Grid[0][0] and Grid[1, 1] and not Grid[0][1]);
+  Say(Rec.Flag and Rec.Other and not Rec.Inner.Last);
+  Say(PRec^.Flag and (PRec^.Inner.Last or PRec^.Other));
+  Say(GetRec().Flag and GetRow()[2] and not GetRow()[1]);
+  PKept^ := PKept^ and not PKept^;
+  Row[1] := Row[0] and (Row[1] or Row[2]);
+  Rec.Inner.Last := Rec.Flag or Rec.Inner.Last;
+  PRec^.Other := PRec^.Inner.Last and not PRec^.Flag;
+  Say(Kept); Say(Row[1]); Say(Rec.Inner.Last); Say(Rec.Other);
+  Hits := 0;
+  for i := 0 to 999 do
+    if Row[i mod 3] and (GetKept()^ or Grid[i mod 2][i mod 2]) and not PRec^.Other then
+      Inc(Hits);
+  i := 0;
+  while (i < 50) and (Row[i mod 3] or Fixed[i mod 4]) do
+    Inc(i);
+  repeat
+    Dec(i);
+  until (i <= 7) or PKept^ and Row[0];
+  Say(Hits); Say(i);
+  Flush('kept');
+
+  // an operand that raises takes the rest with it, and leaves nothing behind
+  Hits := 0;
+  for i := 1 to 2000 do
+  try
+    if T('') and Boom('') and T('!') then
+      Log := Log + '!';
+  except
+    Inc(Hits);
+  end;
+  for i := 1 to 2000 do
+  try
+    a := F('') or Boom('') or T('!');
+    Log := Log + '!';
+  except
+    Inc(Hits);
+  end;
+  Say(Hits);
+  Say(Deep(300));
+  Flush('exceptions');
+
+  // deep down, and many times
+  Say(Down(400));
+  Calls := 0;
+  Hits := 0;
+  for i := 1 to 5000 do
+  begin
+    Log := '';
+    if (i mod 2 = 0) and T('') or (i mod 5 = 0) and not F('') then
+      Inc(Hits);
+    a := (i mod 3 = 0) or (i mod 7 = 0) and T('');
+    if a and (i mod 2 = 1) then
+      Inc(Hits);
+  end;
+  Say(Hits); Say(Calls);
+  Flush('often');
+
+  Combinations();
+end.

@@ -1,0 +1,9 @@
+filled
+p
+q
+s
+a
+i
+v
+both
+True

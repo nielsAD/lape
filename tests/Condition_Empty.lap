@@ -1,0 +1,19 @@
+// A condition on what can be empty without being nil
+var s: String; u: UnicodeString; w: WideString; a: array of Int32; i: Int32; c: WideChar; b: Byte; q: Int16; o: Int64;
+begin
+  s := 'x'; Delete(s, 1, 1); if s then WriteLn('s1');
+  s := 'abc'; SetLength(s, 0); if s then WriteLn('s2');
+  u := 'x'; u := ''; if u then WriteLn('u');
+  w := 'x'; w := ''; if w then WriteLn('w');
+  a := [1]; SetLength(a, 0); if a then WriteLn('a');
+  while i do Dec(i);
+  i := 3; while i do Dec(i); WriteLn(i);
+  c := #1; if c then WriteLn('c');
+  b := 256 div 3; if b then WriteLn('b');
+  q := 256; if q then WriteLn('q');
+  o := 1; o := o shl 40; if o then WriteLn('o');
+  repeat Inc(i); until i;
+  WriteLn(i);
+  if (i and 4) then WriteLn('and4');
+  if (i and 1) then WriteLn('and1');
+end.

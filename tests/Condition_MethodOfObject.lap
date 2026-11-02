@@ -1,0 +1,11 @@
+// A method of object is two pointers and no condition
+type
+  TMethodObj = function: Int32 of object;
+
+var
+  m: TMethodObj;
+
+begin
+  if @m then
+    WriteLn('no');
+end.

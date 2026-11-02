@@ -1,0 +1,1 @@
+Type "function():Int32 of object" cannot be a condition at line 9, column 7 in file "Condition_MethodOfObject.lap"

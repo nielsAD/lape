@@ -1,0 +1,27 @@
+two operands: ano abno ayes abyes 
+more operands: abcno abcyes acyes ayes acno abdeyes 
+not: abyes abcno abcyes ayes abcno 
+if: ab else ab then aaa only else abcde third
+while: www3 aaacad4 ac
+repeat: aaab3 cab1 
+for: 4 
+assigned: ababno yes yes 
+itself: xyyes no pyes 
+arguments: abyes acyes abcd1False2True3 aTrue False acyes acdno 
+in an expression: abcdyes acyes abcdno abcd11 
+kinds: abcdyes no abno abyes ano aabcyes yes mixed 
+numbers: 632 415 050 1yes 1no abno 
+constants: no yes no one two a three a four five six seven 4 bcyes no 
+guards: nil five 5 2 no division none here 
+fields: no yes eyes yes yes 
+kept: yes no yes yes yes yes yes yes no yes yes no 1000 7 
+exceptions: 4000 300 
+often: 4071 3476 
+---: u- uv- u- uvw- uw- uv- uv- u- uv- u+ uv+ u+ u- uuw- uv- uvu- - vw- uw- wu- uv- uv+ u- u+ uvwu+ u-
+--+: u- uv- u- uvw+ uw+ uv- uv- u- uv- u+ uv+ u+ u- uuw+ uv- uvu- + vw+ uw+ w+ uv- uv+ u- u+ uvw+ u-
+-+-: u- uv+ u- uv+ uw- uvw- uvw- u- uv+ u+ uvw- u+ u- uuw- uvvuw- uvwu- - vw- uw- wu- uvw- uvw- u- u+ uv+ u-
+-++: u- uv+ u- uv+ uw+ uvw+ uvw+ u- uv+ u+ uvw+ u+ u- uuw+ uvvuw+ uvw+ + vw- uw+ w+ uvw+ uvw+ u- u+ uv+ u-
++--: uv- u+ uv- u+ uvw- u+ uw- uvw- u- uv+ uw- uvw+ uvw- uvu- uvw- uvvuw- v- vw- uvw- wuw+ uv+ uvw- uv- uvw- u+ uv-
++-+: uv- u+ uv- u+ uvw+ u+ uw+ uvw+ u- uv+ uw+ uvw- uvw+ uvu- uvwu+ uvvuw+ v+ vw+ uvw+ w+ uv+ uvw+ uv- uvwu+ u+ uv-
+++-: uv+ u+ uvw- u+ uv+ u+ uw- uv+ u- uv- uw- uv- uv- uv+ uvu+ uv+ v+ v+ uv+ wuw+ uvw+ uv+ uv+ uv- u+ uvw-
++++: uv+ u+ uvw+ u+ uv+ u+ uw+ uv+ u- uv- uw+ uv- uv- uv+ uvu+ uv+ v+ v+ uv+ w+ uvw- uv+ uv+ uv- u+ uvwuvwuv+

@@ -1,0 +1,56 @@
+// Conditions with operands that are known when compiling
+function F: Boolean;
+begin
+  WriteLn('called');
+  Result := True;
+end;
+
+const
+  C = True;
+
+var
+  i: Int32;
+  b: Boolean;
+  l: LongBool;
+begin
+  while True do
+  begin
+    Inc(i);
+    if (i = 3) then
+      Break;
+  end;
+  WriteLn(i);
+
+  repeat
+    Inc(i);
+  until True;
+  WriteLn(i);
+
+  while False do
+    WriteLn('no');
+
+  if False and F() then
+    WriteLn('no');
+  if True or F() then
+    WriteLn('yes');
+  if C and F() then
+    WriteLn('both');
+  if not (C and not F()) then
+    WriteLn('neither');
+  if False then
+    WriteLn('no')
+  else
+    WriteLn('else');
+
+  b := False and F();
+  WriteLn(b);
+  b := C or F();
+  WriteLn(b);
+  b := True and F();
+  WriteLn(b);
+
+  // as a value it is True or False, whatever the boolean held
+  l := LongBool(5);
+  l := l or F();
+  WriteLn(l);
+end.

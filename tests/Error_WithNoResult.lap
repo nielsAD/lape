@@ -1,0 +1,9 @@
+// A with of a procedure refers to nothing
+procedure P;
+begin
+end;
+
+begin
+  with P() do
+    WriteLn('no');
+end.

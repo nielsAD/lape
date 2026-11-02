@@ -1,0 +1,7 @@
+// An open array cannot be given to what no array is
+var
+  i: Int32;
+
+begin
+  i := [1];
+end.

@@ -1,0 +1,7 @@
+// An operator without its right side
+var
+  i: Int32;
+
+begin
+  i := 1 +;
+end.

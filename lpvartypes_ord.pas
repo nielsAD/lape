@@ -917,7 +917,7 @@ begin
   try
     tmpType := Right.VarType;
     if (not (BaseType in LapeOrdinalTypes)) or (not Right.HasType()) or (not (Right.VarType.BaseType in LapeOrdinalTypes)) then
-      LapeException(lpeInvalidEvaluation);
+      LapeExceptionFmt(lpeExpected, ['Ordinal']);
 
     Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, BaseType in LapeSignedOrdinalTypes));
     Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));
@@ -952,7 +952,7 @@ begin
   if Right.HasType() and EvalAsSubType(Op, Right.VarType) then
   begin
     if (not (BaseType in LapeOrdinalTypes)) or (not Right.HasType()) or (not (Right.VarType.BaseType in LapeOrdinalTypes)) then
-      LapeException(lpeInvalidEvaluation);
+      LapeExceptionFmt(lpeExpected, ['Ordinal']);
 
     Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, BaseType in LapeSignedOrdinalTypes));
     Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));

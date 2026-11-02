@@ -1,0 +1,40 @@
+// A condition's type is asked for when it is parsed: calls to what has only its header so far
+type
+  T = record x: Double; end;
+  U = record y: Int32; end;
+function T.A: T; forward;
+function U.B: Int32;
+begin
+  Result := Self.y;
+end;
+function T.A: T;
+begin
+  Result.x := Self.x;
+end;
+function Fw: T; forward;
+procedure Run;
+var t1: T; u1: U;
+begin
+  t1.x := 0.5;
+  if t1.A() then WriteLn('A');
+  u1.y := 1;
+  if u1.B() then WriteLn('B');
+  if Fw() then WriteLn('Fw');
+  if Length([1, 2]) then WriteLn('L');
+end;
+function Fw: T;
+begin
+  Result.x := 2;
+end;
+const C = 1;
+var b: Boolean; n: Variant = 1;
+begin
+  Run();
+  if C then WriteLn('C');
+  if not b then WriteLn('nb');
+  if n then WriteLn('n');
+  if 0 then WriteLn('zero');
+  while n do n := 0;
+  repeat until 1;
+  WriteLn('end');
+end.

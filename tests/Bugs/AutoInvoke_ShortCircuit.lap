@@ -1,5 +1,4 @@
 {$autoinvoke on}
-{$booleval on}
 
 var
   f: function: Boolean;

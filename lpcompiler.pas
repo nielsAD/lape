@@ -2025,9 +2025,6 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (Name = 'rangechecks') then
       Result := (lcoRangeCheck in FOptions)
     else
-    if (Name = 'booleval') then
-      Result := (lcoShortCircuit in FOptions)
-    else
     if (Name = 'memoryinit') then
       Result := (lcoAlwaysInitialize in FOptions)
     else
@@ -2094,7 +2091,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     else if (Argument = 'off') or (Argument = '-') then
       Exclude(FOptions, Option)
     else
-      LapeException(lpeInvalidCondition, Sender.DocPos);
+      LapeExceptionFmt(lpeExpected, ['On or off'], Sender.DocPos);
   end;
 
   procedure setAlignment(Argument: lpString);
@@ -2109,7 +2106,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     begin
       FOptions_PackRecords := StrToIntDef(string(Argument), 0);
       if (not (FOptions_PackRecords in [1, 2, 4, 8, 16])) then
-        LapeException(lpeInvalidCondition, Sender.DocPos);
+        LapeExceptionFmt(lpeExpected, ['1, 2, 4, 8 or 16'], Sender.DocPos);
     end;
   end;
 
@@ -2132,7 +2129,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
       end;
 
       if (Name = '') then
-        LapeException(lpeInvalidEvaluation, Sender.DocPos);
+        LapeExceptionFmt(lpeExpected, ['Directive name'], Sender.DocPos);
 
       addDefine(Name, Value);
     end else
@@ -2235,9 +2232,6 @@ begin
     else
     if (Directive = 'r') or (Directive = 'rangechecks') then
       setOption(lcoRangeCheck)
-    else
-    if (Directive = 'b') or (Directive = 'booleval') then
-      setOption(lcoShortCircuit)
     else
     if (Directive = 'm') or (Directive = 'memoryinit') then
       setOption(lcoAlwaysInitialize)
@@ -3774,7 +3768,7 @@ end;
 function TLapeCompiler.ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList;
 var
   i: Integer;
-  isConst, wasShortCircuit: Boolean;
+  isConst: Boolean;
   Identifiers: TStringArray;
   Positions: TDocPosArray;
   VarType: TLapeType;
@@ -3788,9 +3782,6 @@ begin
   Result := TLapeTree_VarList.Create(Self);
   try
     isConst := (Tokenizer.Tok = tk_kw_Const);
-    wasShortCircuit := isConst and (lcoShortCircuit in FOptions);
-    if wasShortCircuit then
-      FOptions := FOptions - [lcoShortCircuit];
 
     Next();
     repeat
@@ -3893,8 +3884,6 @@ begin
       end;
     until (Next() <> tk_Identifier) or OneOnly;
 
-    if wasShortCircuit then
-      FOptions := FOptions + [lcoShortCircuit];
   except
     Result.Free();
     if (DefExpr <> nil) then
@@ -3930,7 +3919,7 @@ var
     except
       DocPos := OpNode.DocPos;
       OpNode.Free();
-      LapeException(lpeInvalidEvaluation, DocPos);
+      LapeException(lpeExpressionExpected, DocPos);
     end;
   end;
 
@@ -4615,7 +4604,7 @@ begin
       if (VarStack.Count = 0) and (Tokenizer.Tok in ReturnOn) then
         Exit(nil)
       else
-        LapeException(lpeInvalidEvaluation, Tokenizer.DocPos);
+        LapeException(lpeExpressionExpected, Tokenizer.DocPos);
 
     Result := TLapeTree_ExprBase(ResolveMethods(VarStack.Pop(), False, NoInvoke));
     if DoFold and (not TLapeTree_Base.isEmpty(Result)) then
@@ -4954,12 +4943,10 @@ begin
   Result := TLapeTree_Repeat.Create(Self);
 
   try
-
     Result.Body := ParseStatementList();
     Expect(tk_kw_Until, False, False);
     Result.Condition := ParseExpression();
     ParseExpressionEnd(ExprEnd);
-
   except
     Result.Free();
     raise;
@@ -4971,7 +4958,6 @@ begin
   Result := TLapeTree_Try.Create(Self);
 
   try
-
     Result.Body := ParseStatementList();
     Expect([tk_kw_Except, tk_kw_Finally], False, False);
     if (Tokenizer.Tok = tk_kw_Except) then
@@ -4996,13 +4982,11 @@ begin
   Result := TLapeTree_While.Create(Self);
 
   try
-
     Result.Condition := ParseExpression();
     Expect(tk_kw_Do, False, False);
     Result.Body := ParseStatement(True, ExprEnd + [tk_kw_Else]);
     if (FLastTok = tk_kw_Else) then
       Result.ElseBody := ParseStatement(False, ExprEnd);
-
   except
     Result.Free();
     raise;
@@ -5018,7 +5002,6 @@ begin
   Count := 0;
 
   try
-
     repeat
       if (Tokenizer.Tok in [tk_kw_With, tk_sym_Comma]) then
       begin
@@ -5036,7 +5019,6 @@ begin
 
     Result.Body := ParseStatement(True, ExprEnd);
     FStackInfo.delWith(Count);
-
   except
     FStackInfo.delWith(Count);
     Result.Free();
@@ -5779,7 +5761,7 @@ begin
         if (Method.Method = nil) or (not Method.Method.HasType()) or
            (Method.Method.VarType.BaseType <> ltImportedMethod)
         then
-          LapeException(lpeInvalidEvaluation);
+          LapeExceptionFmt(lpeExpected, ['Imported method']);
 
         Result := Method.Method;
         PPointer(Result.Ptr)^ := Value;

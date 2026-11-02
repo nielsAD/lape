@@ -1,0 +1,1 @@
+Type "ShortString[3]" cannot be a condition at line 6, column 6 in file "Condition_ShortString.lap"

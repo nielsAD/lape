@@ -1,0 +1,7 @@
+// SetLength to what is no integer
+var
+  a: array of Int32;
+
+begin
+  SetLength(a, 'x');
+end.

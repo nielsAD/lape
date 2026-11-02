@@ -1,0 +1,9 @@
+// A condition that is a procedure
+procedure P;
+begin
+end;
+
+begin
+  if P() then
+    WriteLn('no');
+end.

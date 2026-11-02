@@ -1,0 +1,9 @@
+// A condition that has no type says why, not only that it is no condition
+var
+  d: Double;
+  i: Int32;
+
+begin
+  if d or i then
+    WriteLn('no');
+end.

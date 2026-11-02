@@ -289,7 +289,7 @@ begin
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos);
   ArrayVar := FParams[0].Compile();
   if (not ArrayVar.HasType()) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpressionExpected, DocPos);
 
   ArrayVar.isConstant := False;
 
@@ -753,7 +753,7 @@ begin
   if (FParams.Count <> 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
   if (resType() = nil) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpectedArray, DocPos);
 
   // ensure we can generate such a method, best to error here
   if (not HasMagicMethod(Compiler, FMethod, getParamTypes(), resType())) then

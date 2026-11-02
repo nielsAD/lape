@@ -1,0 +1,8 @@
+// A float is no condition
+var
+  d: Double;
+
+begin
+  if d then
+    WriteLn('no');
+end.

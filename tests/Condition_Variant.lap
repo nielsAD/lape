@@ -1,0 +1,57 @@
+// A variant as a condition is the variant as a boolean, the same as FPC and `b := v`
+var
+  v: Variant;
+  n: Int32;
+
+procedure Check(Name: String);
+begin
+  try
+    if v then
+      WriteLn(Name, ': True')
+    else
+      WriteLn(Name, ': False');
+  except
+    WriteLn(Name, ': raises');
+  end;
+end;
+
+begin
+  Check('unassigned');
+  v := 0;
+  Check('0');
+  v := 1;
+  Check('1');
+  v := -1;
+  Check('-1');
+  v := 0.0;
+  Check('0.0');
+  v := 0.5;
+  Check('0.5');
+  v := False;
+  Check('False');
+  v := True;
+  Check('True');
+  v := '';
+  Check('empty');
+  v := 'x';
+  Check('x');
+  v := '0';
+  Check('''0''');
+  v := 'True';
+  Check('''True''');
+  v := 'False';
+  Check('''False''');
+
+  v := 3;
+  while v do
+  begin
+    v := v - 1;
+    Inc(n);
+  end;
+  WriteLn(n);
+
+  repeat
+    v := v + 1;
+  until v;
+  WriteLn(v);
+end.

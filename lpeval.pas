@@ -130,7 +130,7 @@ var
   LapeEvalRes: TLapeEvalRes;
   LapeEvalArr: TLapeEvalArr;
 
-  LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
+  LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$AUTOINVOKE OFF}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
 
   _LapeToString_Set: lpString =
     'function _%sSetToString(ASet: ConstPointer;'                                        + LineEnding +
@@ -981,7 +981,7 @@ end;
 
 procedure LapeEval_Error(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  LapeException(lpeInvalidEvaluation);
+  LapeException(lpeImpossible);
 end;
 
 procedure ClearEvalRes(var Arr: TLapeEvalRes);

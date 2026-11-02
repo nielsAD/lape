@@ -1,0 +1,39 @@
+// What is no boolean can be a condition: it says whether there is something in it
+var
+  p: Pointer;
+  q: ^Int32;
+  s: String;
+  a: array of Int32;
+  v: Variant;
+  i: Int32;
+
+begin
+  if p then WriteLn('p');
+  if q then WriteLn('q');
+  if s then WriteLn('s');
+  if a then WriteLn('a');
+  if i then WriteLn('i');
+
+  WriteLn('filled');
+  i := 1;
+  s := 'x';
+  SetLength(a, 1);
+  p := @i;
+  q := @i;
+  v := True;
+
+  if p then WriteLn('p');
+  if q then WriteLn('q');
+  if s then WriteLn('s');
+  if a then WriteLn('a');
+  if i then WriteLn('i');
+  if v then WriteLn('v');
+
+  if (p <> nil) and (s <> '') then WriteLn('both');
+  while p do
+    p := nil;
+  repeat
+    s := '';
+  until (s = '');
+  WriteLn(p = nil, s);
+end.

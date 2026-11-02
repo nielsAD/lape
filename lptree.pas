@@ -193,14 +193,12 @@ type
 
   TLapeTree_Operator = class(TLapeTree_LeftExprBase)
   protected
-    FRestructure: TInitBool;
     FOperatorType: EOperator;
     FRight: TLapeTree_ExprBase;
     FOverloadOp: Boolean;
     // What p^ of an untyped p is, see setExpectedType
     FDerefType: TLapeType;
 
-    procedure setLeft(Node: TLapeTree_ExprBase); override;
     procedure setRight(Node: TLapeTree_ExprBase); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
@@ -208,7 +206,6 @@ type
     constructor Create(AOperatorType: EOperator; ASource: TLapeTree_Base); overload; virtual;
     destructor Destroy; override;
 
-    procedure ClearCache; override;
     function FoldConstants(DoFree: Boolean = True): TLapeTree_Base; override;
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; override;
 
@@ -217,9 +214,11 @@ type
     function RightFirst: Boolean; virtual;
     function isConstant: Boolean; override;
 
-    function resType(Restructure: Boolean): TLapeType; reintroduce; overload;
-    function resType: TLapeType; overload; override;
+    function resType: TLapeType; override;
     function Evaluate: TLapeGlobalVar; override;
+    // `and` or `or` of booleans: the right operand is left alone when the left one says enough
+    function isBooleanLogic: Boolean; virtual;
+    function isNegation: Boolean; virtual;
     function Compile: TResVar; override;
 
     property OperatorType: EOperator read FOperatorType write FOperatorType;
@@ -408,7 +407,7 @@ type
 
   TLapeTree_If = class(TLapeTree_Base)
   protected
-    FStartBodyOffset: Integer;
+    FStartBody: TCodeLabel;
     FCondition: TLapeTree_ExprBase;
     FBody: TLapeTree_Base;
     FElse: TLapeTree_Base;
@@ -417,8 +416,8 @@ type
     procedure setBody(Node: TLapeTree_Base); virtual;
     procedure setElse(Node: TLapeTree_Base); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
-    function CompileCondition: TResVar; virtual;
     function CompileBody: TResVar; virtual;
+    procedure CompileCondition(JumpWhen: Boolean; Target: TCodeLabel); virtual;
   public
     constructor Create(ACompiler: TLapeCompilerBase); override;
     destructor Destroy; override;
@@ -788,6 +787,64 @@ begin
   Result := FRes;
   if (Result = nil) then
     LapeException(lpeCannotEvalConst, DocPos);
+end;
+
+// Cond as a condition: jumps to Target when it is JumpWhen and goes on when it is not
+procedure CompileJump(Cond: TLapeTree_ExprBase; JumpWhen: Boolean; Target: TCodeLabel);
+var
+  Emitter: TLapeCodeEmitter;
+  Op: TLapeTree_Operator;
+  Res: TResVar;
+  Decides: Boolean;
+  JumpOver: TCodeLabel;
+begin
+  Emitter := Cond.Compiler.Emitter;
+
+  if (Cond is TLapeTree_Operator) then
+  begin
+    Op := TLapeTree_Operator(Cond);
+
+    // `not a`: a, jumping the other way
+    if Op.isNegation() then
+    begin
+      CompileJump(Op.Left, not JumpWhen, Target);
+      Exit;
+    end;
+
+    // `a and b`, `a or b`: a jump for each side
+    if Op.isBooleanLogic() then
+    begin
+      // (what the left operand says enough with)
+      Decides := (Op.OperatorType = op_OR);
+
+      // Either side alone can take the jump
+      if (JumpWhen = Decides) then
+      begin
+        CompileJump(Op.Left, JumpWhen, Target);
+        CompileJump(Op.Right, JumpWhen, Target);
+      end
+      // Only the right side takes it, the left can only jump over the right
+      else
+      begin
+        JumpOver := Emitter.NewLabel();
+        CompileJump(Op.Left, Decides, JumpOver);
+        CompileJump(Op.Right, JumpWhen, Target);
+        Emitter.PlaceLabel(JumpOver);
+      end;
+      Exit;
+    end;
+  end;
+
+  // Any other value: a variable, a comparison, a call
+  Res := Cond.Compile();
+  if (not Res.HasType()) then
+    LapeException(lpeExpressionExpected, Cond.DocPos);
+
+  Emitter.DocPos := Cond.DocPos;
+  if JumpWhen then
+    Emitter.JumpTo(Target, Emitter._JmpRIf(0, Res))
+  else
+    Emitter.JumpTo(Target, Emitter._JmpRIfNot(0, Res));
 end;
 
 function TLapeTree_ExprBase.FoldConstants(DoFree: Boolean = True): TLapeTree_Base;
@@ -1276,7 +1333,10 @@ begin
   if (FRes = nil) then
   begin
     if (not canCast()) then
-      LapeException(lpeInvalidEvaluation, DocPos);
+      if (FType <> nil) then
+        LapeExceptionFmt(lpeIncompatibleAssignment, ['open array', FType.AsString], DocPos)
+      else
+        LapeException(lpeInvalidCast, DocPos);
 
     Result := FType.NewGlobalVarP();
     try
@@ -1418,8 +1478,11 @@ begin
         else
           LapeExceptionFmt(lpeUnknownDeclarationOpenArray, [FInvalidCastIndex], DocPos);
       end;
-    end else
-      LapeException(lpeInvalidEvaluation, DocPos);
+    end
+    else if (FType <> nil) then
+      LapeExceptionFmt(lpeIncompatibleAssignment, ['open array', FType.AsString], DocPos)
+    else
+      LapeException(lpeInvalidCast, DocPos);
   end;
 
   Dest := NullResVar;
@@ -1920,13 +1983,6 @@ begin
     Include(Result, lefInvoking);
 end;
 
-procedure TLapeTree_Operator.setLeft(Node: TLapeTree_ExprBase);
-begin
-  inherited;
-  if (Node <> nil) and (FRestructure = bUnknown) and (not (Node is TLapeTree_ExprBase)) then
-    FRestructure := bFalse;
-end;
-
 procedure TLapeTree_Operator.setRight(Node: TLapeTree_ExprBase);
 begin
   if (FRight <> nil) and (FRight <> Node) then
@@ -1970,12 +2026,6 @@ end;
 destructor TLapeTree_Operator.Destroy;
 begin
   setRight(nil);
-  inherited;
-end;
-
-procedure TLapeTree_Operator.ClearCache;
-begin
-  FRestructure := bUnknown;
   inherited;
 end;
 
@@ -2071,28 +2121,14 @@ begin
   Result := inherited;
 end;
 
-// Restucture is for short-circuit where it's turned into if statements.
-// from:
-//   if (a=1) or (b=2) or (c=3) then
-// becomes:
-//   if (a=1) then
-//     if (b=2) then
-//       if (c=3) then
-//
-// Which could be improved to not have so many jumps
-function TLapeTree_Operator.resType(Restructure: Boolean): TLapeType;
+function TLapeTree_Operator.resType: TLapeType;
 var
   LeftType, RightType: TLapeType;
-  tmpLeft: TLapeTree_ExprBase;
-  ResVar: TResVar;
 begin
   if (FResType = nil) then
   try
     if (FLeft <> nil) then
-      if (FLeft is TLapeTree_If) then
-        Exit(FCompiler.getBaseType(ltBoolean))
-      else
-        LeftType := TLapeTree_ExprBase(FLeft).resType()
+      LeftType := TLapeTree_ExprBase(FLeft).resType()
     else
       LeftType := nil;
 
@@ -2122,17 +2158,6 @@ begin
     else if (LeftType <> nil) then
       Result := LeftType.EvalRes(FOperatorType, RightType, EvalFlags());
 
-    if (LeftType <> nil) and (FRight <> nil) and
-       (lcoShortCircuit in FCompilerOptions) and (Result <> nil) and (Result.BaseType in LapeBoolTypes) and (FOperatorType in [op_AND, op_OR]) and
-       (LeftType.BaseType in LapeBoolTypes) and (RightType <> nil) and (RightType.BaseType in LapeBoolTypes)
-    then
-    begin
-      FRestructure := bTrue;
-      if (Result = nil) then
-        Result := FCompiler.getBaseType(ltBoolean);
-    end
-    else
-      FRestructure := bFalse;
   finally
     FResType := Result;
   end;
@@ -2145,60 +2170,24 @@ begin
     FResType := Result;
     FOverloadOp := True;
   end;
-
-  if Restructure and (FRestructure = bTrue) then
-  begin
-    FRestructure := bFalse;
-
-    tmpLeft := FLeft.FoldConstants() as TLapeTree_ExprBase;
-    FLeft := TLapeTree_If.Create(Self);
-
-    with TLapeTree_If(FLeft) do
-    begin
-      Condition := tmpLeft;
-
-      ResVar := FCompiler.getTempStackVar(Result);
-      ResVar.VarPos.ForceVariable := True;
-
-      Body := TLapeTree_Operator.Create(op_Assign, Self);
-      with TLapeTree_Operator(Body) do
-      begin
-        Left := TLapeTree_Var.Create(ResVar, Self);
-        if (Self.FOperatorType = op_AND) then
-          Right := Self.FRight.FoldConstants(False) as TLapeTree_ExprBase
-        else
-          Right := TLapeTree_Var.Create(FCompiler.getBoolConst(True, ResVar.VarType.BaseType), Self);
-      end;
-
-      ElseBody := TLapeTree_Operator.Create(op_Assign, Self);
-      with TLapeTree_Operator(ElseBody) do
-      begin
-        Left := TLapeTree_Var.Create(ResVar, Self);
-        if (Self.FOperatorType = op_OR) then
-          Right := Self.FRight.FoldConstants(False) as TLapeTree_ExprBase
-        else
-          Right := TLapeTree_Var.Create(FCompiler.getBoolConst(False, ResVar.VarType.BaseType), Self);
-      end;
-    end;
-    setRight(nil);
-  end;
 end;
 
-function TLapeTree_Operator.resType: TLapeType;
+function TLapeTree_Operator.isBooleanLogic: Boolean;
 begin
-  Result := resType(False);
+  Result := (FOperatorType in [op_AND, op_OR]) and (FLeft <> nil) and (FRight <> nil) and
+    (Left.resType() <> nil) and (Left.resType().BaseType in LapeBoolTypes) and
+    (FRight.resType() <> nil) and (FRight.resType().BaseType in LapeBoolTypes);
+end;
+
+function TLapeTree_Operator.isNegation: Boolean;
+begin
+  Result := (FOperatorType = op_NOT) and (FLeft <> nil) and (FRight = nil) and
+    (Left.resType() <> nil) and (Left.resType().BaseType in LapeBoolTypes);
 end;
 
 function TLapeTree_Operator.Evaluate: TLapeGlobalVar;
 var
   LeftVar, RightVar, Shared: TLapeGlobalVar;
-  Short: Boolean;
-
-  function canShort(Typ: TLapeType): Boolean;
-  begin
-    Result := (lcoShortCircuit in FCompilerOptions) and (Typ <> nil) and (Typ.BaseType in LapeBoolTypes);
-  end;
-
 begin
   if (FRes = nil) then
   begin
@@ -2206,7 +2195,7 @@ begin
       if (FLeft is TLapeTree_ExprBase) then
         LeftVar := TLapeTree_ExprBase(FLeft).Evaluate()
       else
-        LapeException(lpeInvalidEvaluation, DocPos)
+        LapeException(lpeImpossible, DocPos)
     else
       LeftVar := nil;
 
@@ -2220,17 +2209,14 @@ begin
         FRight := FRight.setExpectedType(FCompiler.getBaseType(ltSizeInt)) as TLapeTree_ExprBase;
     end;
 
-    Short := (FOperatorType in [op_AND, op_OR]) and (LeftVar <> nil) and (FRight <> nil) and canShort(LeftVar.VarType) and canShort(FRight.resType());
-    if Short and ((FOperatorType = op_AND) xor (LeftVar.AsInteger <> 0)) then
-      Exit(LeftVar);
+    // The left side says it: the right side is not worked out, it could fail
+    if isBooleanLogic() and ((FOperatorType = op_AND) xor (LeftVar.AsInteger <> 0)) then
+      Exit(FCompiler.getBoolConst(FOperatorType = op_OR, resType().BaseType));
 
     if (FRight <> nil) then
       RightVar := FRight.Evaluate()
     else
       RightVar := nil;
-
-    if Short and (RightVar <> nil) then
-      Exit(RightVar);
 
     try
       if (LeftVar <> nil) and LeftVar.HasType() then
@@ -2263,31 +2249,6 @@ end;
 
 function TLapeTree_Operator.Compile: TResVar;
 
-  function doIf: TResVar;
-  var
-    wasConstant: Boolean;
-  begin
-    with TLapeTree_If(FLeft) do
-    begin
-      Result := NullResVar;
-      Result.VarType := TLapeTree_Operator(Body).resType();
-      FCompiler.getDestVar(FDest, Result, op_Unknown);
-
-      wasConstant := Result.isConstant;
-      Result.isConstant := False;
-
-      if (Result.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
-      begin
-        TLapeTree_Operator(Body).Left := TLapeTree_Var.Create(Result, Self);
-        TLapeTree_Operator(ElseBody).Left := TLapeTree_Var.Create(Result, Self);
-      end;
-
-      Result := Compile();
-      if wasConstant then
-        Result.isConstant := True;
-    end;
-  end;
-
   function doOperatorOverload: TResVar;
   begin
     Dest := NullResVar;
@@ -2304,7 +2265,8 @@ function TLapeTree_Operator.Compile: TResVar;
   end;
 
 var
-  LeftVar, RightVar: TResVar;
+  LeftVar, RightVar, tmpVar: TResVar;
+  IsFalse, Done: TCodeLabel;
 
   procedure CompileLeft;
   begin
@@ -2368,11 +2330,36 @@ begin
   RightVar := NullResVar;
   LeftVar := NullResVar;
 
+  // Jumps to IsFalse when it is, and the value is what comes of that
+  if isBooleanLogic() then
+  begin
+    Dest := NullResVar;
+    Result := _ResVar.New(FCompiler.getTempVar(resType()));
+    Result.isConstant := False;
+    IsFalse := FCompiler.Emitter.NewLabel();
+    Done := FCompiler.Emitter.NewLabel();
+
+    CompileJump(Self, False, IsFalse);
+
+    FCompiler.Emitter.DocPos := DocPos;
+    tmpVar := NullResVar;
+    Result.VarType.Eval(op_Assign, tmpVar, Result, _ResVar.New(FCompiler.getBoolConst(True, Result.VarType.BaseType)), [lefConstRangeCheck]);
+    FCompiler.Emitter.JumpTo(Done, FCompiler.Emitter._JmpR(0));
+    FCompiler.Emitter.PlaceLabel(IsFalse);
+    tmpVar := NullResVar;
+    Result.VarType.Eval(op_Assign, tmpVar, Result, _ResVar.New(FCompiler.getBoolConst(False, Result.VarType.BaseType)), [lefConstRangeCheck]);
+    FCompiler.Emitter.PlaceLabel(Done);
+
+    Result.isConstant := True;
+    Exit;
+  end;
+
   if (FLeft <> nil) then
-    if (resType(True) <> nil) and (FLeft is TLapeTree_If) then
-      Exit(doIf())
-    else if FOverloadOp then
+  begin
+    resType();
+    if FOverloadOp then
       Exit(doOperatorOverload());
+  end;
 
   // (not for a variable by itself: where it is cannot move, and the right side is worked out in it, see below)
   if RightFirst() and (not (FLeft is TLapeTree_Var)) then
@@ -2525,7 +2512,7 @@ begin
   Result := NullResVar;
 
   if (FLeft = nil) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpressionExpected, DocPos);
   LeftVar := Left.Compile();
   if (not LeftVar.HasType()) then
     LeftVar.VarType := FCompiler.addManagedType(TLapeType.Create(ltUnknown, FCompiler));
@@ -2599,7 +2586,7 @@ end;
 function TLapeTree_Var.Evaluate: TLapeGlobalVar;
 begin
   if (FResVar.VarPos.MemPos <> mpMem) then
-    LapeException(lpeInvalidEvaluation, DocPos)
+    LapeException(lpeConstantExpected, DocPos)
   else
     Result := inherited;
 end;
@@ -3033,7 +3020,7 @@ begin
     begin
       FWithDecls[i].WithVar := FWithList[i].Compile();
       if (not FWithDecls[i].WithVar.HasType()) or (FWithDecls[i].WithVar.VarPos.MemPos in [mpNone, mpStack]) then
-        LapeException(lpeInvalidCondition, FWithList[i].DocPos);
+        LapeException(lpeInvalidWithReference, FWithList[i].DocPos);
     end;
   end;
 
@@ -3088,44 +3075,66 @@ begin
     FElse := nil;
 end;
 
-function TLapeTree_If.CompileCondition: TResVar;
-begin
-  Assert(FCondition <> nil);
-
-  Result := FCondition.Compile();
-  if (not Result.HasType()) or (not (Result.VarType.BaseType in LapeIfTypes)) then
-    Exit(NullResVar);
-
-  // Need bool expression:
-  // Example `if ptr then` to `if ptr <> 0 then`
-  if (not (Result.VarType.BaseType in LapeBoolTypes)) then
-  begin
-    with TLapeTree_Operator.Create(op_cmp_NotEqual, Self) do
-    try
-      Left := TLapeTree_Var.Create(Result, Self);
-      if (Result.VarType.BaseType in LapeIntegerTypes + [ltPointer]) then
-        Right := TLapeTree_Var.Create(FCompiler.getIntConst(0), Self)
-      else if (Result.VarType.BaseType = ltVariant) then
-        Right := TLapeTree_Var.Create(FCompiler.getBoolConst(False), Self)
-      else
-        Right := TLapeTree_Var.Create(Result.VarType.EmptyValue, Self);
-
-      Result := Compile();
-    finally
-      Free();
-    end;
-  end;
-end;
-
 function TLapeTree_If.CompileBody: TResVar;
 begin
-  if (FStartBodyOffset <= 0) then
-    FStartBodyOffset := FCompiler.Emitter.CodeLen;
+  if (FStartBody < 0) then
+    FStartBody := FCompiler.Emitter.PlaceNewLabel();
 
   if (FBody <> nil) then
     Result := FBody.Compile()
   else
     Result := NullResVar;
+end;
+
+// Jumps to Target when the condition is JumpWhen and goes on when it is not
+procedure TLapeTree_If.CompileCondition(JumpWhen: Boolean; Target: TCodeLabel);
+var
+  Typ: TLapeType;
+  Op: TLapeTree_Operator;
+  Cast: TLapeTree_Cast;
+begin
+  Typ := FCondition.resType();
+
+  // No type: compiling it says why
+  if (Typ <> nil) then
+    case Typ.BaseType of
+       ltUInt8, ltInt8, ltUInt16, ltInt16, ltUInt32, ltInt32, ltUInt64, ltInt64,
+       ltBoolean, ltByteBool, ltWordBool, ltLongBool,
+       ltAnsiChar, ltWideChar,
+       ltAnsiString, ltWideString, ltUnicodeString,
+       ltSmallEnum, ltLargeEnum,
+       ltPointer,
+       ltDynArray,
+       ltScriptMethod, ltImportedMethod:
+         begin
+           // (a method of object is two pointers)
+           if (Typ.Size <> SizeOf(Pointer)) and (Typ.BaseType in [ltPointer, ltScriptMethod, ltImportedMethod]) then
+             LapeExceptionFmt(lpeInvalidCondition, [Typ.AsString], FCondition.DocPos);
+         end;
+
+      ltVariant:
+        begin
+          Cast := TLapeTree_Cast.Create(FCondition);
+          Cast.CastTo := TLapeTree_VarType.Create(FCompiler.getBaseType(ltBoolean), FCondition);
+          Cast.Param := FCondition;
+
+          Condition := Cast;
+        end;
+
+      ltRecord:
+        begin
+          Op := TLapeTree_Operator.Create(op_cmp_NotEqual, FCondition);
+          Op.Left := FCondition;
+          Op.Right := TLapeTree_Var.Create(Typ.EmptyValue, Op);
+
+          Condition := Op;
+        end;
+
+      else
+        LapeExceptionFmt(lpeInvalidCondition, [Typ.AsString], FCondition.DocPos);
+    end;
+
+  CompileJump(FCondition, JumpWhen, Target);
 end;
 
 constructor TLapeTree_If.Create(ACompiler: TLapeCompilerBase);
@@ -3146,23 +3155,16 @@ end;
 
 function TLapeTree_If.Compile: TResVar;
 var
-  ConditionVar: TResVar;
-  if_o, if_e: Integer;
+  JumpOver: TCodeLabel;
+  if_e: Integer;
 begin
   Assert(FCondition <> nil);
   Result := NullResVar;
-  FStartBodyOffset := 0;
-
-  ConditionVar := CompileCondition();
-  if (not ConditionVar.HasType) then
-    LapeException(lpeInvalidCondition, [FCondition, Self]);
+  FStartBody := -1;
+  JumpOver := FCompiler.Emitter.NewLabel();
 
   // (no body: it jumps over the else instead)
-  FCompiler.Emitter.DocPos := DocPos;
-  if (FBody = nil) and (FElse <> nil) then
-    if_o := FCompiler.Emitter._JmpRIf(0, ConditionVar)
-  else
-    if_o := FCompiler.Emitter._JmpRIfNot(0, ConditionVar);
+  CompileCondition((FBody = nil) and (FElse <> nil), JumpOver);
 
   if (FBody <> nil) or (FElse = nil) then
   begin
@@ -3171,7 +3173,7 @@ begin
     FCompiler.Emitter.DocPos := DocPos;
     if (FElse <> nil) then
       if_e := FCompiler.Emitter._JmpR(0);
-    FCompiler.Emitter.PatchJump(if_o, FCompiler.Emitter.CodeLen);
+    FCompiler.Emitter.PlaceLabel(JumpOver);
   end;
 
   if (FElse <> nil) then
@@ -3181,9 +3183,8 @@ begin
     if (FBody <> nil) then
       FCompiler.Emitter.PatchJump(if_e, FCompiler.Emitter.CodeLen)
     else
-      FCompiler.Emitter.PatchJump(if_o, FCompiler.Emitter.CodeLen);
+      FCompiler.Emitter.PlaceLabel(JumpOver);
   end;
-
 end;
 
 function TLapeTree_If.isInvoking: Boolean;
@@ -3290,7 +3291,7 @@ begin
 
   ConditionVar := FCondition.Compile();
   if (not ConditionVar.HasType()) then
-    LapeException(lpeInvalidCondition, DocPos);
+    LapeException(lpeExpressionExpected, DocPos);
 
   SetLength(JumpOffsets, FValues.Count);
 
@@ -3337,7 +3338,7 @@ begin
         Free();
       end;
     end else
-      LapeException(lpeInvalidEvaluation, DocPos);
+      LapeException(lpeInvalidCaseStatement, DocPos);
 
     FCompiler.Emitter.DocPos := DocPos;
     if (i = High(Values)) then
@@ -3429,7 +3430,7 @@ begin
   Assert(FCondition <> nil);
   ConditionVar := FCondition.Compile();
   if (not ConditionVar.HasType()) then
-    LapeException(lpeInvalidCondition, DocPos);
+    LapeException(lpeExpressionExpected, DocPos);
 
   if (FBranches.Count > 0) then
   begin
@@ -3466,7 +3467,6 @@ end;
 function TLapeTree_While.CompileBody: TResVar;
 var
   i: Integer;
-  ConditionVar: TResVar;
 begin
   Result := inherited;
 
@@ -3477,12 +3477,7 @@ begin
       FCompiler.Emitter.PatchJump(FContinueStatements[i].CodeOffset, FCompiler.Emitter.CodeLen);
   end;
 
-  ConditionVar := CompileCondition();
-  if (not ConditionVar.HasType) then
-    LapeException(lpeInvalidCondition, [FCondition, Self]);
-
-  FCompiler.Emitter.DocPos := DocPos;
-  FCompiler.Emitter._JmpRIf(FStartBodyOffset - FCompiler.Emitter.CodeLen, ConditionVar);
+  CompileCondition(True, FStartBody);
 end;
 
 constructor TLapeTree_While.Create(ACompiler: TLapeCompilerBase);
@@ -3544,18 +3539,13 @@ end;
 function TLapeTree_Repeat.CompileBody: TResVar;
 var
   i: Integer;
-  ConditionVar: TResVar;
 begin
   Result := inherited;
 
   for i := 0 to FContinueStatements.Count - 1 do
     FCompiler.Emitter.PatchJump(FContinueStatements[i].CodeOffset, FCompiler.Emitter.CodeLen);
 
-  ConditionVar := CompileCondition();
-  if (not ConditionVar.HasType) then
-    LapeException(lpeInvalidCondition, [FCondition, Self]);
-  FCompiler.Emitter.DocPos := DocPos;
-  FCompiler.Emitter._JmpRIfNot(FStartBodyOffset - FCompiler.Emitter.CodeLen, ConditionVar);
+  CompileCondition(False, FStartBody);
 end;
 
 constructor TLapeTree_Repeat.Create(ACompiler: TLapeCompilerBase);
@@ -3577,7 +3567,7 @@ function TLapeTree_Repeat.Compile: TResVar;
 var
   i: Integer;
 begin
-  FStartBodyOffset := 0;
+  FStartBody := -1;
 
   FBreakStatements.Clear();
   FContinueStatements.Clear();
@@ -3663,7 +3653,7 @@ begin
   Assert((FCondition <> nil) and (FCondition is TLapeTree_Operator));
   Assert((TLapeTree_Operator(FCondition).Right <> nil) and (TLapeTree_Operator(FCondition).Right is TLapeTree_Var));
 
-  FStartBodyOffset := FCompiler.Emitter.CodeLen;
+  FStartBody := FCompiler.Emitter.PlaceNewLabel();
 
   if (LoopType = loopOver) then
     CompileBodyForIn();
@@ -3782,7 +3772,7 @@ begin
   try
     Lim := FLimit.Compile();
     if (not Lim.HasType()) or (not (Lim.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
-      LapeException(lpeInvalidEvaluation, FLimit.DocPos);
+      LapeExceptionFmt(lpeExpected, ['Ordinal or pointer'], FLimit.DocPos);
 
     if Count.HasType() and Count.isConstant then
     begin
@@ -3820,13 +3810,13 @@ begin
 
   Container := FLimit.Compile();
   if (not Container.HasType()) then
-    LapeException(lpeInvalidEvaluation, FLimit.DocPos);
+    LapeException(lpeExpressionExpected, FLimit.DocPos);
 
   case loopOverWhat of
     loopOverSet:
       begin
         if (not (Container.VarType is TLapeType_Set)) then
-          LapeException(lpeInvalidEvaluation, FLimit.DocPos);
+          LapeExceptionFmt(lpeExpected, ['Set'], FLimit.DocPos);
 
         CheckInVar := Container;
         Container := _ResVar.New(TLapeType_Set(Container.VarType).Range.AsArray);
@@ -3837,7 +3827,7 @@ begin
         if (Container.VarType is TLapeType_Type) then
           Container.VarType := TLapeType_Type(Container.VarType).TType;
         if (not (Container.VarType is TLapeType_SubRange)) then
-          LapeException(lpeInvalidEvaluation, FLimit.DocPos);
+          LapeExceptionFmt(lpeExpected, ['Range'], FLimit.DocPos);
 
         Container := _ResVar.New(TLapeType_SubRange(Container.VarType).AsArray);
       end;

@@ -467,9 +467,8 @@ end;
 
 function TLapeTree_InternalMethod_Remove.Compile: TResVar;
 var
-  ItemVar, ArrayVar, IndexVar: TResVar;
-  DeleteStatement: TLapeTree_InternalMethod_Delete;
-  ResultStatement: TLapeTree_Operator;
+  ItemVar, ArrayVar, IndexVar, Found: TResVar;
+  JumpOver: TCodeLabel;
 begin
   Result := NullResVar;
   Dest := NullResVar;
@@ -478,10 +477,10 @@ begin
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
   ItemVar := FParams[0].Compile();
   if (not ItemVar.HasType()) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpressionExpected, DocPos);
   ArrayVar := FParams[1].Compile();
   if (not ArrayVar.HasType()) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpressionExpected, DocPos);
 
   if (ArrayVar.VarType.BaseType <> ltDynArray) then
     LapeException(lpeExpectedDynamicArray, DocPos);
@@ -500,34 +499,37 @@ begin
     Free();
   end;
 
-  DeleteStatement := TLapeTree_InternalMethod_Delete.Create(Self);
-  DeleteStatement.addParam(TLapeTree_Var.Create(ArrayVar, Self));
-  DeleteStatement.addParam(TLapeTree_Var.Create(IndexVar, Self));
-  DeleteStatement.addParam(TLapeTree_Var.Create(FCompiler.getIntConst(1, ltNativeInt), Self));
+  FCompiler.Emitter.DocPos := DocPos;
+  Found := NullResVar;
+  Found := IndexVar.VarType.Eval(op_cmp_GreaterThan, Found, IndexVar, _ResVar.New(FCompiler.getIntConst(-1, ltNativeInt)), [lefConstRangeCheck]);
 
-  ResultStatement := TLapeTree_Operator.Create(op_Assign, Self);
-  ResultStatement.Left := TLapeTree_Var.Create(Result, Self);
-  ResultStatement.Right := TLapeTree_Operator.Create(op_Index, Self);
-  with TLapeTree_Operator(ResultStatement.Right) do
-  begin
-    Left := TLapeTree_Var.Create(ArrayVar, Self);
-    Right := TLapeTree_Var.Create(IndexVar, Self);
-  end;
+  JumpOver := FCompiler.Emitter.NewLabel();
+  FCompiler.Emitter.JumpTo(JumpOver, FCompiler.Emitter._JmpRIfNot(0, Found));
 
-  with TLapeTree_If.Create(Self) do
+  with TLapeTree_Operator.Create(op_Assign, Self) do
   try
-    Condition := TLapeTree_Operator.Create(op_cmp_GreaterThan, Self);
-    TLapeTree_Operator(Condition).Left := TLapeTree_Var.Create(IndexVar, Self);
-    TLapeTree_Operator(Condition).Right := TLapeTree_Var.Create(FCompiler.getIntConst(-1, ltNativeInt), Self);
-
-    Body := TLapeTree_StatementList.Create(Self);
-    TLapeTree_StatementList(Body).addStatement(ResultStatement);
-    TLapeTree_StatementList(Body).addStatement(DeleteStatement);
+    Left := TLapeTree_Var.Create(Result, Self);
+    Right := TLapeTree_Operator.Create(op_Index, Self);
+    TLapeTree_Operator(Right).Left := TLapeTree_Var.Create(ArrayVar, Self);
+    TLapeTree_Operator(Right).Right := TLapeTree_Var.Create(IndexVar, Self);
 
     Compile();
   finally
     Free();
   end;
+
+  with TLapeTree_InternalMethod_Delete.Create(Self) do
+  try
+    addParam(TLapeTree_Var.Create(ArrayVar, Self));
+    addParam(TLapeTree_Var.Create(IndexVar, Self));
+    addParam(TLapeTree_Var.Create(FCompiler.getIntConst(1, ltNativeInt), Self));
+
+    Compile();
+  finally
+    Free();
+  end;
+
+  FCompiler.Emitter.PlaceLabel(JumpOver);
 
   Result.isConstant := True;
 end;
@@ -754,7 +756,7 @@ begin
   tmpVar := NullResVar;
   Param := FParams[0].Compile();
   if (not Param.HasType()) or (not (Param.VarType is TLapeType_Method)) then
-    LapeException(lpeInvalidCondition, DocPos);
+    LapeExceptionFmt(lpeExpected, ['Method'], DocPos);
 
   DestVar := NullResVar;
   DestVar.VarPos.MemPos := mpStack;
@@ -1317,7 +1319,7 @@ begin
     if (ParamType <> nil) and (ParamType is TLapeType_Type) then
       ParamType := TLapeType_Type(ParamType).TType;
     if (ParamType = nil) then
-      LapeException(lpeInvalidEvaluation, DocPos);
+      LapeException(lpeExpressionExpected, DocPos);
 
     FRes := FCompiler.getIntConst(ParamType.Size, ltSizeInt);
   end;
@@ -1445,7 +1447,7 @@ begin
       if (ParamType <> nil) and (ParamType is TLapeType_Type) then
         ParamType := TLapeType_Type(ParamType).TType;
       if (ParamType = nil) or (not (ParamType.BaseType in LapeOrdinalTypes + LapeArrayTypes)) then
-        LapeException(lpeInvalidEvaluation, DocPos);
+        LapeExceptionFmt(lpeExpected, ['Ordinal or array'], DocPos);
 
       FRes := ParamType.VarLo();
     end;
@@ -1518,7 +1520,7 @@ begin
       if (ParamType <> nil) and (ParamType is TLapeType_Type) then
         ParamType := TLapeType_Type(ParamType).TType;
       if (ParamType = nil) or (not (ParamType.BaseType in LapeOrdinalTypes + LapeArrayTypes)) then
-        LapeException(lpeInvalidEvaluation, DocPos);
+        LapeExceptionFmt(lpeExpected, ['Ordinal or array'], DocPos);
 
       FRes := ParamType.VarHi();
     end;
@@ -1618,7 +1620,7 @@ begin
     if (ParamType <> nil) and (ParamType is TLapeType_Type) then
       ParamType := TLapeType_Type(ParamType).TType;
     if (ParamType = nil) or (not (ParamType.BaseType in [ltStaticArray, ltSmallEnum, ltLargeEnum])) then
-      LapeException(lpeInvalidEvaluation, DocPos);
+      LapeExceptionFmt(lpeExpected, ['Array or enum'], DocPos);
 
     case ParamType.BaseType of
       ltStaticArray:
@@ -1642,7 +1644,7 @@ begin
 
   Param := FParams[0].Compile();
   if (not Param.HasType()) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpressionExpected, DocPos);
 
   case Param.VarType.BaseType of
     ltSmallSet, ltLargeSet:
@@ -1682,7 +1684,7 @@ begin
       end;
 
      else
-       LapeException(lpeInvalidEvaluation, DocPos);
+       LapeExceptionFmt(lpeExpected, ['Array or enum'], DocPos);
   end;
 end;
 
@@ -1708,7 +1710,7 @@ begin
   if (not Param.HasType()) or
      (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray]))
   then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpectedArray, DocPos);
 
   tmpType := Param.VarType;
   ArrayType := TLapeType_DynArray(Param.VarType).PType;
@@ -1717,7 +1719,7 @@ begin
   if (not Len.HasType()) or (ArrayType = nil) or
      (not Len.HasType()) or (not (Len.VarType.BaseType in LapeIntegerTypes))
 	then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeExceptionFmt(lpeExpected, ['Integer'], DocPos);
 
   if (Param.VarType is TLapeType_Object) then
   begin
@@ -1846,7 +1848,7 @@ begin
   if (not ParRes.HasType()) or
      (not (ParRes.VarType.BaseType in LapeArrayTypes))
   then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpectedArray, DocPos);
 
   // (its address is taken, to read it through: also of a constant)
   ParRes.isConstant := False;
@@ -1860,7 +1862,7 @@ begin
   begin
     StartRes := Start.Compile();
     if (not StartRes.HasType()) or (not (StartRes.VarType.BaseType in LapeOrdinalTypes)) then
-      LapeException(lpeInvalidEvaluation, DocPos);
+      LapeExceptionFmt(lpeExpected, ['Ordinal'], DocPos);
     StartRes.VarType := FCompiler.getBaseType(DetermineIntType(StartRes.VarType.Size, StartRes.VarType.BaseType in LapeSignedOrdinalTypes));
     Start := TLapeTree_Var.Create(StartRes, Self.FParams[1]);
   end;
@@ -1951,7 +1953,7 @@ begin
   if (not Param.HasType()) or
      (not (Param.VarType.BaseType in LapeArrayTypes - [ltStaticArray]))
   then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpectedArray, DocPos);
 
   ArrayType := TLapeType_DynArray(Param.VarType).PType;
   case Param.VarType.BaseType of
@@ -2008,13 +2010,13 @@ begin
   if (not DstRes.HasType()) or
      (not (DstRes.VarType.BaseType in LapeArrayTypes - [ltStaticArray, ltShortString]))
   then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpectedArray, DocPos);
 
   ArrayType := TLapeType_DynArray(DstRes.VarType).PType;
   FParams[0] := TLapeTree_ExprBase(FParams[0].setExpectedType(DstRes.VarType).setExpectedType(ArrayType));
   SrcRes := FParams[0].Compile();
   if (not SrcRes.HasType()) or (ArrayType = nil) then
-    LapeException(lpeInvalidEvaluation, DocPos);
+    LapeException(lpeExpressionExpected, DocPos);
 
   // (its address is taken, to read it through: also of a constant)
   SrcRes.isConstant := False;
@@ -2143,7 +2145,7 @@ begin
 
     VarParam := FParams[0].Evaluate();
     if (VarParam = nil) or (not VarParam.HasType()) or (not (VarParam.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
-      LapeException(lpeInvalidEvaluation, DocPos);
+      LapeExceptionFmt(lpeExpected, ['Ordinal or pointer'], DocPos);
 
     if (VarParam.VarType.BaseType = ltPointer) then
       with TLapeTree_Operator.Create(op_Index, Self) do
@@ -2202,7 +2204,7 @@ begin
   try
     VarParam := FParams[0].Compile();
     if (not VarParam.HasType()) or (not (VarParam.VarType.BaseType in LapeOrdinalTypes + [ltPointer])) then
-      LapeException(lpeInvalidEvaluation, DocPos);
+      LapeExceptionFmt(lpeExpected, ['Ordinal or pointer'], DocPos);
 
     FCompiler.Emitter.DocPos := DocPos;
     if (VarParam.VarType.BaseType = ltPointer) then
@@ -2683,7 +2685,7 @@ begin
   tmpVar := NullResVar;
   Param := FParams[0].Compile();
   if (not Param.HasType()) or (not (Param.VarType.BaseType in [ltScriptMethod, ltPointer])) then
-    LapeException(lpeInvalidCondition, DocPos);
+    LapeExceptionFmt(lpeExpected, ['Method'], DocPos);
 
   DestVar := NullResVar;
   DestVar.VarPos.MemPos := mpStack;

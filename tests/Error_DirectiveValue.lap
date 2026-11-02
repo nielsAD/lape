@@ -1,0 +1,4 @@
+// An option is on or off
+{$ASSERTIONS maybe}
+begin
+end.

@@ -1,0 +1,8 @@
+// A short string is no condition, also when it is the size of an integer: old characters stay behind its length
+var
+  s: String[3];
+
+begin
+  if s then
+    WriteLn('no');
+end.

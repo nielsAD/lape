@@ -1,0 +1,24 @@
+// A record as a condition is compared: most sizes have no jump
+type
+  TSmall = record a, b, c: UInt8; end;
+  TBig = record x, y: Int64; end;
+  TManaged = record x: Int32; s: String; d: Double; end;
+
+var
+  a: TSmall;
+  b: TBig;
+  c: TManaged;
+
+begin
+  if a then WriteLn('wrong a');
+  if b then WriteLn('wrong b');
+  if c then WriteLn('wrong c');
+
+  a.c := 1;
+  b.y := 1;
+  c.s := 'x';
+
+  if a then WriteLn('a');
+  if b then WriteLn('b');
+  if c then WriteLn('c');
+end.

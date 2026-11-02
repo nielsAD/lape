@@ -1,0 +1,11 @@
+// A procedure given as a parameter has no value
+var
+  a: array of Int32;
+
+procedure P;
+begin
+end;
+
+begin
+  Remove(P(), a);
+end.
