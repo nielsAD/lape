@@ -18,6 +18,7 @@ uses
 type
   TLapeTree_Base = class;
   TLapeTree_ExprBase = class;
+  TLapeTree_Visit = function(Node: TLapeTree_Base; const Data): Boolean; // True: stop the walk
 
   TLapeFlowStatement = record
     CodeOffset: Integer;
@@ -84,6 +85,7 @@ type
     function Compile: TResVar; overload; virtual;
     function CompileToTempVar(var Offset: Integer; out v: TResVar): Boolean; virtual;
     function isInvoking: Boolean; virtual;
+    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; virtual;
 
     property Parent: TLapeTree_Base read FParent write setParent;
     property Compiler: TLapeCompilerBase read FCompiler;
@@ -126,7 +128,6 @@ type
     procedure setType(AType: TLapeType); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
-    function isInvoking: Boolean; override;
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
 
@@ -140,6 +141,7 @@ type
     function resType: TLapeType; override;
     function Evaluate: TLapeGlobalVar; override;
     function Compile(var Offset: Integer): TResVar; override;
+    function isInvoking: Boolean; override;
 
 
     property ToType: TLapeType read FType write setType;
@@ -156,13 +158,13 @@ type
     procedure setCastTo(Node: TLapeTree_ExprBase); virtual;
     procedure setParam(Node: TLapeTree_ExprBase); virtual;
   public
-    function isInvoking: Boolean; override;
     destructor Destroy; override;
 
     function Compile(var Offset: Integer): TResVar; overload; override;
     function Evaluate: TLapeGlobalVar; override;
     function isConstant: Boolean; override;
     function resType: TLapeType; override;
+    function isInvoking: Boolean; override;
 
     property CastTo: TLapeTree_ExprBase read FCastTo write setCastTo;
     property Param: TLapeTree_ExprBase read FParam write setParam;
@@ -190,7 +192,6 @@ type
   public
     ResultVar: TResVar;
 
-    function isInvoking: Boolean; override;
     constructor Create(Ident: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(Ident: TLapeTree_ExprBase; ASource: TLapeTree_Base); reintroduce; overload; virtual;
     constructor Create(Ident: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce;overload; virtual;
@@ -204,6 +205,7 @@ type
 
     function resType: TLapeType; override;
     function Compile(var Offset: Integer): TResVar; override;
+    function isInvoking: Boolean; override;
 
     property Expr: TLapeTree_ExprBase read FExpr write setExpr;
     property RealIdent: TLapeTree_ExprBase read getRealIdent write setRealIdent;
@@ -383,12 +385,12 @@ type
     procedure setHi(Node: TLapeTree_ExprBase); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
-    function isInvoking: Boolean; override;
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
 
     // Both ends are there and constant
     function isConstant: Boolean; virtual;
+    function isInvoking: Boolean; override;
 
     property Lo: TLapeTree_ExprBase read FLo write setLo;
     property Hi: TLapeTree_ExprBase read FHi write setHi;
@@ -404,6 +406,7 @@ type
 
     function addStatement(Statement: TLapeTree_Base; Prepend: Boolean = False): Integer; virtual;
     function Compile(var Offset: Integer): TResVar; override;
+    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
 
     property Statements: TLapeStatementList read FStatements;
   end;
@@ -442,6 +445,7 @@ type
     destructor Destroy; override;
 
     function Compile(var Offset: Integer): TResVar; override;
+    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
 
     function canExit: Boolean; virtual;
     procedure addExitStatement(JumpSafe: Boolean; var Offset: Integer; Pos: PDocPos = nil); virtual;
@@ -493,6 +497,7 @@ type
 
     function addWith(AWith: TLapeTree_ExprBase): TLapeWithDeclRec; virtual;
     function Compile(var Offset: Integer): TResVar; override;
+    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
 
     property WithList: TLapeExpressionList read FWithList;
     property Body: TLapeTree_Base read FBody write setBody;
@@ -512,10 +517,11 @@ type
     function CompileCondition(var Offset: Integer): TResVar; virtual;
     function CompileBody(var Offset: Integer): TResVar; virtual;
   public
-    function isInvoking: Boolean; override;
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
     function Compile(var Offset: Integer): TResVar; override;
+    function isInvoking: Boolean; override;
+    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
 
     property Condition: TLapeTree_ExprBase read FCondition write setCondition;
     property Body: TLapeTree_Base read FBody write setBody;
@@ -573,6 +579,7 @@ type
     procedure addBranch(Branch: TLapeTree_CaseBranch); virtual;
 
     function Compile(var Offset: Integer): TResVar; override;
+    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
 
     property Condition: TLapeTree_ExprBase read FCondition write setCondition;
     property ElseBody: TLapeTree_Base read FElse write setElse;
@@ -653,6 +660,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
     function Compile(var Offset: Integer): TResVar; override;
+    function Walk(Visit: TLapeTree_Visit; const Data): Boolean; override;
 
     property Body: TLapeTree_Base read FBody write setBody;
     property ExceptBody: TLapeTree_Base read FExcept write setExcept;
@@ -829,6 +837,21 @@ begin
   inherited;
 end;
 
+class function TLapeTree_Base.isEmpty(Node: TLapeTree_Base): Boolean;
+begin
+  Result := (Node = nil) or (Node.ClassType = TLapeTree_Base) or (Node.ClassType = TLapeTree_ExprBase);
+end;
+
+function TLapeTree_Base.FoldConstants(DoFree: Boolean = True): TLapeTree_Base;
+begin
+  Result := Self;
+end;
+
+function TLapeTree_Base.setExpectedType(ExpectType: TLapeType): TLapeTree_Base;
+begin
+  Result := Self;
+end;
+
 function TLapeTree_Base.Compile(var Offset: Integer): TResVar;
 begin
   Result := NullResVar;
@@ -854,56 +877,9 @@ begin
   Result := False;
 end;
 
-function TLapeTree_OpenArray.isInvoking: Boolean;
-var
-  i: Integer;
+function TLapeTree_Base.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
 begin
   Result := False;
-  for i := 0 to FValues.Count - 1 do
-    if (FValues[i] <> nil) and FValues[i].isInvoking() then
-      Exit(True);
-end;
-
-function TLapeTree_Cast.isInvoking: Boolean;
-begin
-  Result := (FParam <> nil) and FParam.isInvoking();
-end;
-
-function TLapeTree_Invoke.isInvoking: Boolean;
-begin
-  Result := True;
-end;
-
-// (an operator that a method of the script does is a call of that method)
-function TLapeTree_Operator.isInvoking: Boolean;
-begin
-  Result := FOverloadOp or ((FLeft <> nil) and FLeft.isInvoking()) or ((FRight <> nil) and FRight.isInvoking());
-end;
-
-function TLapeTree_Range.isInvoking: Boolean;
-begin
-  Result := ((FLo <> nil) and FLo.isInvoking()) or ((FHi <> nil) and FHi.isInvoking());
-end;
-
-function TLapeTree_If.isInvoking: Boolean;
-begin
-  Result := ((FCondition <> nil) and FCondition.isInvoking()) or ((FBody <> nil) and FBody.isInvoking()) or
-            ((FElse <> nil) and FElse.isInvoking());
-end;
-
-class function TLapeTree_Base.isEmpty(Node: TLapeTree_Base): Boolean;
-begin
-  Result := (Node = nil) or (Node.ClassType = TLapeTree_Base) or (Node.ClassType = TLapeTree_ExprBase);
-end;
-
-function TLapeTree_Base.setExpectedType(ExpectType: TLapeType): TLapeTree_Base;
-begin
-  Result := Self;
-end;
-
-function TLapeTree_Base.FoldConstants(DoFree: Boolean = True): TLapeTree_Base;
-begin
-  Result := Self;
 end;
 
 constructor TLapeTree_ExprBase.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
@@ -1581,6 +1557,16 @@ begin
   Result.isConstant := True;
 end;
 
+function TLapeTree_OpenArray.isInvoking: Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := 0 to FValues.Count - 1 do
+    if (FValues[i] <> nil) and FValues[i].isInvoking() then
+      Exit(True);
+end;
+
 procedure TLapeTree_Cast.DeleteChild(Node: TLapeTree_Base);
 begin
   if (Node = FCastTo) then
@@ -1758,6 +1744,11 @@ begin
     FResType := TLapeTree_VarType(FCastTo).VarType;
 
   Result := inherited;
+end;
+
+function TLapeTree_Cast.isInvoking: Boolean;
+begin
+  Result := (FParam <> nil) and FParam.isInvoking();
 end;
 
 procedure TLapeTree_Invoke.CheckHints(VarType: TLapeType; Pos: PDocPos);
@@ -2436,6 +2427,11 @@ begin
   end;
 end;
 
+function TLapeTree_Invoke.isInvoking: Boolean;
+begin
+  Result := True;
+end;
+
 function TLapeTree_InvokeProperty.Compile(var Offset: Integer): TResVar;
 var
   OldValue: TLapeTree_ExprBase;
@@ -2674,6 +2670,17 @@ begin
   Result := (FInvoked = bTrue);
 end;
 
+// (an operator that a method of the script does is a call of that method)
+function TLapeTree_Operator.isInvoking: Boolean;
+begin
+  Result := FOverloadOp or ((FLeft <> nil) and FLeft.isInvoking()) or ((FRight <> nil) and FRight.isInvoking());
+end;
+
+function TLapeTree_Operator.RightFirst: Boolean;
+begin
+  Result := (FOperatorType in AssignOperators) and (FLeft <> nil) and (FRight <> nil) and FRight.isInvoking();
+end;
+
 function TLapeTree_Operator.isConstant: Boolean;
 begin
   if (FConstant = bUnknown) then
@@ -2893,11 +2900,6 @@ begin
     end;
   end;
   Result := inherited;
-end;
-
-function TLapeTree_Operator.RightFirst: Boolean;
-begin
-  Result := (FOperatorType in AssignOperators) and (FLeft <> nil) and (FRight <> nil) and FRight.isInvoking();
 end;
 
 function TLapeTree_Operator.Compile(var Offset: Integer): TResVar;
@@ -3436,6 +3438,11 @@ begin
   Result := (not isEmpty(FLo)) and (not isEmpty(FHi)) and FLo.isConstant() and FHi.isConstant();
 end;
 
+function TLapeTree_Range.isInvoking: Boolean;
+begin
+  Result := ((FLo <> nil) and FLo.isInvoking()) or ((FHi <> nil) and FHi.isInvoking());
+end;
+
 procedure TLapeTree_StatementList.DeleteChild(Node: TLapeTree_Base);
 begin
   FStatements.DeleteItem(Node);
@@ -3491,6 +3498,16 @@ begin
   for i := 0 to FStatements.Count - 1 do
     if (FStatements[i] <> nil) then
       Result := CompileStatement(FStatements[i], Offset);
+end;
+
+function TLapeTree_StatementList.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+var
+  i: Integer;
+begin
+  for i := 0 to FStatements.Count - 1 do
+    if (FStatements[i] <> nil) and Visit(FStatements[i], Data) then
+      Exit(True);
+  Result := False;
 end;
 
 procedure TLapeTree_DelayedStatementList.DeleteChild(Node: TLapeTree_Base);
@@ -3655,6 +3672,11 @@ begin
     FCompiler.DecStackInfo(Offset, [lsfFunction, lsfEmit], False, @_DocPos);
     FCompiler.Emitter._JmpR(Offset - fo, fo, @_DocPos);
   end;
+end;
+
+function TLapeTree_Method.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+begin
+  Result := (FStatements <> nil) and Visit(FStatements, Data);
 end;
 
 function TLapeTree_method.canExit: Boolean;
@@ -3835,6 +3857,11 @@ begin
       FVarList[i] := NullResVar;
 end;
 
+function TLapeTree_With.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+begin
+  Result := (FBody <> nil) and Visit(FBody, Data);
+end;
+
 procedure TLapeTree_If.setCondition(Node: TLapeTree_ExprBase);
 begin
   if (FCondition <> nil) and (FCondition <> Node) then
@@ -3966,6 +3993,17 @@ begin
 
 end;
 
+function TLapeTree_If.isInvoking: Boolean;
+begin
+  Result := ((FCondition <> nil) and FCondition.isInvoking()) or ((FBody <> nil) and FBody.isInvoking()) or
+            ((FElse <> nil) and FElse.isInvoking());
+end;
+
+function TLapeTree_If.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+begin
+  Result := ((FBody <> nil) and Visit(FBody, Data)) or ((FElse <> nil) and Visit(FElse, Data));
+end;
+
 procedure TLapeTree_CaseBranch.DeleteChild(Node: TLapeTree_Base);
 begin
   if (FCondition = Node) then
@@ -4041,6 +4079,18 @@ begin
   FreeAndNil(FFallThroughStatements);
 
   inherited Destroy;
+end;
+
+function TLapeTree_CaseBranch.addValue(Value: TLapeTree_Base): Integer;
+begin
+  Result := FValues.Add(Value);
+  if (Value <> nil) then
+    Value.Parent := Self;
+end;
+
+procedure TLapeTree_CaseBranch.addFallThroughStatement(JumpSafe: Boolean; Offset: Integer; Pos: PDocPos);
+begin
+  FFallThroughStatements.Add(getFlowStatement(Offset, Pos, JumpSafe));
 end;
 
 function TLapeTree_CaseBranch.Compile(var Offset: Integer): TResVar;
@@ -4130,16 +4180,15 @@ begin
       FCompiler.Emitter._JmpRIf(FBodyOffset - JumpOffsets[i], CompareVar, JumpOffsets[i], @_DocPos);
 end;
 
-function TLapeTree_CaseBranch.addValue(Value: TLapeTree_Base): Integer;
+procedure TLapeTree_Case.DeleteChild(Node: TLapeTree_Base);
 begin
-  Result := FValues.Add(Value);
-  if (Value <> nil) then
-    Value.Parent := Self;
-end;
-
-procedure TLapeTree_CaseBranch.addFallThroughStatement(JumpSafe: Boolean; Offset: Integer; Pos: PDocPos);
-begin
-  FFallThroughStatements.Add(getFlowStatement(Offset, Pos, JumpSafe));
+  if (FCondition = Node) then
+    FCondition := nil
+  else if (FElse = Node) then
+    FElse := nil
+  else
+  if (FBranches <> nil) then
+    FBranches.DeleteItem(TLapeTree_CaseBranch(Node));
 end;
 
 procedure TLapeTree_Case.setCondition(Node: TLapeTree_ExprBase);
@@ -4158,17 +4207,6 @@ begin
   FElse := Node;
   if (Node <> nil) then
     Node.Parent := Self;
-end;
-
-procedure TLapeTree_Case.DeleteChild(Node: TLapeTree_Base);
-begin
-  if (FCondition = Node) then
-    FCondition := nil
-  else if (FElse = Node) then
-    FElse := nil
-  else
-  if (FBranches <> nil) then
-    FBranches.DeleteItem(TLapeTree_CaseBranch(Node));
 end;
 
 constructor TLapeTree_Case.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
@@ -4232,6 +4270,16 @@ begin
   for i := 0 to FBranches.Count - 1 do
     FBranches[i].CaseEndOffset := Offset;
 
+end;
+
+function TLapeTree_Case.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+var
+  i: Integer;
+begin
+  for i := 0 to FBranches.Count - 1 do
+    if (FBranches[i].FStatement <> nil) and Visit(FBranches[i].FStatement, Data) then
+      Exit(True);
+  Result := (FElse <> nil) and Visit(FElse, Data);
 end;
 
 function TLapeTree_While.CompileBody(var Offset: Integer): TResVar;
@@ -4325,21 +4373,6 @@ begin
     FContinueStatements.Add(getFlowStatement(FCompiler.Emitter._JmpR(0, Offset, Pos), Pos, JumpSafe));
 end;
 
-constructor TLapeTree_Repeat.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
-begin
-  inherited;
-
-  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
-  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
-end;
-
-destructor TLapeTree_Repeat.Destroy;
-begin
-  FBreakStatements.Free();
-  FContinueStatements.Free();
-  inherited;
-end;
-
 function TLapeTree_Repeat.CompileBody(var Offset: Integer): TResVar;
 var
   i, co: Integer;
@@ -4361,6 +4394,21 @@ begin
   if (not ConditionVar.HasType) then
     LapeException(lpeInvalidCondition, [FCondition, Self]);
   FCompiler.Emitter._JmpRIfNot(FStartBodyOffset - Offset, ConditionVar, Offset, @_DocPos);
+end;
+
+constructor TLapeTree_Repeat.Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil);
+begin
+  inherited;
+
+  FBreakStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
+  FContinueStatements := TLapeFlowStatementList.Create(NullFlowStatement, dupAccept, True);
+end;
+
+destructor TLapeTree_Repeat.Destroy;
+begin
+  FBreakStatements.Free();
+  FContinueStatements.Free();
+  inherited;
 end;
 
 function TLapeTree_Repeat.Compile(var Offset: Integer): TResVar;
@@ -4806,6 +4854,12 @@ begin
     FFinally.CompileToTempVar(Offset, tmp);
   end;
   FCompiler.Emitter._EndTry(Offset, @_DocPos);
+end;
+
+function TLapeTree_Try.Walk(Visit: TLapeTree_Visit; const Data): Boolean;
+begin
+  Result := ((FBody <> nil) and Visit(FBody, Data)) or ((FExcept <> nil) and Visit(FExcept, Data)) or
+            ((FFinally <> nil) and Visit(FFinally, Data));
 end;
 
 end.
