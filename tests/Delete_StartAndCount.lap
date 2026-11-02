@@ -1,0 +1,35 @@
+// Delete from before the start or past the end does nothing; a count past the end stops there
+var
+  a: array of Int32;
+  s: array of String;
+  str: String;
+
+procedure Start;
+begin
+  a := [1, 2, 3];
+  s := [IntToStr(1), IntToStr(2), IntToStr(3)];
+  str := 'abc';
+end;
+
+procedure Show(Name: String);
+begin
+  WriteLn(Name, ': ', a, ' ', s, ' ''', str, '''');
+end;
+
+procedure Test(From, Count: SizeInt);
+begin
+  Start();
+  Delete(a, From, Count);
+  Delete(s, From, Count);
+  Delete(str, From, Count);
+  Show(IntToStr(From) + ', ' + IntToStr(Count));
+end;
+
+begin
+  Test(-1, 2);
+  Test(-1, 10);
+  Test(3, 1);
+  Test(1, 9);
+  Test(1, 1);
+  Start(); Delete(a, 1); Delete(s, 1); Delete(str, 1); Show('1');
+end.

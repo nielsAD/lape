@@ -83,6 +83,7 @@ type
     function Compile(var Offset: Integer): TResVar; overload; virtual;
     function Compile: TResVar; overload; virtual;
     function CompileToTempVar(var Offset: Integer; out v: TResVar): Boolean; virtual;
+    function isInvoking: Boolean; virtual;
 
     property Parent: TLapeTree_Base read FParent write setParent;
     property Compiler: TLapeCompilerBase read FCompiler;
@@ -125,6 +126,7 @@ type
     procedure setType(AType: TLapeType); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
+    function isInvoking: Boolean; override;
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
 
@@ -154,6 +156,7 @@ type
     procedure setCastTo(Node: TLapeTree_ExprBase); virtual;
     procedure setParam(Node: TLapeTree_ExprBase); virtual;
   public
+    function isInvoking: Boolean; override;
     destructor Destroy; override;
 
     function Compile(var Offset: Integer): TResVar; overload; override;
@@ -187,6 +190,7 @@ type
   public
     ResultVar: TResVar;
 
+    function isInvoking: Boolean; override;
     constructor Create(Ident: TLapeTree_ExprBase; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce; overload; virtual;
     constructor Create(Ident: TLapeTree_ExprBase; ASource: TLapeTree_Base); reintroduce; overload; virtual;
     constructor Create(Ident: lpString; ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); reintroduce;overload; virtual;
@@ -241,7 +245,7 @@ type
     FLeft: TLapeTree_Base;
     FRight: TLapeTree_ExprBase;
     FAssigning: TInitBool;
-    FInvoking: TInitBool;
+    FInvoked: TInitBool;
     FOverloadOp: Boolean;
 
     function getLeft: TLapeTree_ExprBase; virtual;
@@ -259,7 +263,11 @@ type
     function setExpectedType(ExpectType: TLapeType): TLapeTree_Base; override;
 
     function isAssigning: Boolean; virtual;
-    function isInvoking: Boolean; virtual;
+
+    function isInvoked: Boolean; virtual;
+    function isInvoking: Boolean; override;
+    // An assignment of what calls a method has that worked out first
+    function RightFirst: Boolean; virtual;
     function isConstant: Boolean; override;
 
     function EvalFlags: ELapeEvalFlags; virtual;
@@ -375,6 +383,7 @@ type
     procedure setHi(Node: TLapeTree_ExprBase); virtual;
     procedure DeleteChild(Node: TLapeTree_Base); override;
   public
+    function isInvoking: Boolean; override;
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
 
@@ -503,6 +512,7 @@ type
     function CompileCondition(var Offset: Integer): TResVar; virtual;
     function CompileBody(var Offset: Integer): TResVar; virtual;
   public
+    function isInvoking: Boolean; override;
     constructor Create(ACompiler: TLapeCompilerBase; ADocPos: PDocPos = nil); override;
     destructor Destroy; override;
     function Compile(var Offset: Integer): TResVar; override;
@@ -837,6 +847,48 @@ function TLapeTree_Base.CompileToTempVar(var Offset: Integer; out v: TResVar): B
 begin
   v := Compile(Offset);
   Result := (v.VarPos.MemPos <> mpStack) and v.HasType();
+end;
+
+function TLapeTree_Base.isInvoking: Boolean;
+begin
+  Result := False;
+end;
+
+function TLapeTree_OpenArray.isInvoking: Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := 0 to FValues.Count - 1 do
+    if (FValues[i] <> nil) and FValues[i].isInvoking() then
+      Exit(True);
+end;
+
+function TLapeTree_Cast.isInvoking: Boolean;
+begin
+  Result := (FParam <> nil) and FParam.isInvoking();
+end;
+
+function TLapeTree_Invoke.isInvoking: Boolean;
+begin
+  Result := True;
+end;
+
+// (an operator that a method of the script does is a call of that method)
+function TLapeTree_Operator.isInvoking: Boolean;
+begin
+  Result := FOverloadOp or ((FLeft <> nil) and FLeft.isInvoking()) or ((FRight <> nil) and FRight.isInvoking());
+end;
+
+function TLapeTree_Range.isInvoking: Boolean;
+begin
+  Result := ((FLo <> nil) and FLo.isInvoking()) or ((FHi <> nil) and FHi.isInvoking());
+end;
+
+function TLapeTree_If.isInvoking: Boolean;
+begin
+  Result := ((FCondition <> nil) and FCondition.isInvoking()) or ((FBody <> nil) and FBody.isInvoking()) or
+            ((FElse <> nil) and FElse.isInvoking());
 end;
 
 class function TLapeTree_Base.isEmpty(Node: TLapeTree_Base): Boolean;
@@ -1832,7 +1884,7 @@ begin
     IndexOp := TLapeTree_Operator.Create(op_Index, FExpr);
     IndexOp.Left := FExpr;
     IndexOp.Right := TLapeTree_Integer.Create(MethodIndex, Self);
-    IndexOp.FInvoking := bTrue;
+    IndexOp.FInvoked := bTrue;
 
     FRealIdent := TLapeTree_ExprBase(IndexOp.FoldConstants(False));
     FRealIdent.Parent := Self;
@@ -2533,7 +2585,7 @@ procedure TLapeTree_Operator.ClearCache;
 begin
   FRestructure := bUnknown;
   FAssigning := bUnknown;
-  FInvoking := bUnknown;
+  FInvoked := bUnknown;
   inherited;
 end;
 
@@ -2604,22 +2656,22 @@ begin
   Result := (FAssigning = bTrue);
 end;
 
-function TLapeTree_Operator.isInvoking: Boolean;
+function TLapeTree_Operator.isInvoked: Boolean;
 begin
-  if (FInvoking = bUnknown) and (not isEmpty(FParent)) then
+  if (FInvoked = bUnknown) and (not isEmpty(FParent)) then
   begin
     Result := (
       ((FParent is TLapeTree_Invoke) and ((TLapeTree_Invoke(FParent).FExpr = Self) or (TLapeTree_Invoke(FParent).FRealIdent = Self))) or
-      ((FParent is TLapeTree_Operator) and TLapeTree_Operator(FParent).isInvoking())
+      ((FParent is TLapeTree_Operator) and TLapeTree_Operator(FParent).isInvoked())
     );
 
     if Result then
-      FInvoking := bTrue
+      FInvoked := bTrue
     else
-      FInvoking := bFalse;
+      FInvoked := bFalse;
   end;
 
-  Result := (FInvoking = bTrue);
+  Result := (FInvoked = bTrue);
 end;
 
 function TLapeTree_Operator.isConstant: Boolean;
@@ -2662,7 +2714,7 @@ begin
     Include(Result, lefConstAddress);
   if isAssigning() then
     Include(Result, lefAssigning);
-  if isInvoking() then
+  if isInvoked() then
     Include(Result, lefInvoking);
 end;
 
@@ -2843,6 +2895,11 @@ begin
   Result := inherited;
 end;
 
+function TLapeTree_Operator.RightFirst: Boolean;
+begin
+  Result := (FOperatorType in AssignOperators) and (FLeft <> nil) and (FRight <> nil) and FRight.isInvoking();
+end;
+
 function TLapeTree_Operator.Compile(var Offset: Integer): TResVar;
 
   function doIf: TResVar;
@@ -2989,38 +3046,32 @@ function TLapeTree_Operator.Compile(var Offset: Integer): TResVar;
 
 var
   LeftVar, RightVar: TResVar;
-begin
-  Result := NullResVar;
-  RightVar := NullResVar;
-  LeftVar := NullResVar;
 
-  if (FLeft <> nil) then
-    if (resType(True) <> nil) and (FLeft is TLapeTree_If) then
-      Exit(doIf())
-    else if FOverloadOp then
-      Exit(doOperatorOverload())
-    else
+  procedure CompileLeft;
+  begin
+    if (FLeft <> nil) then
       LeftVar := TLapeTree_ExprBase(FLeft).Compile(Offset);
 
-  if (FOperatorType in AssignOperators) and (not LeftVar.Writeable) then
-    LapeException(lpeCannotAssign, [FLeft, Self]);
+    if (FLeft <> nil) and (not LeftVar.HasType()) then
+      LeftVar.VarType := FCompiler.addManagedType(TLapeType.Create(ltUnknown, FCompiler));
 
-  if (FRight <> nil) then
+    if (FOperatorType in AssignOperators) and (not LeftVar.Writeable) then
+      LapeException(lpeCannotAssign, [FLeft, Self]);
+  end;
+
+  procedure ExpectRight(LeftType: TLapeType);
   begin
     case FOperatorType of
-      // a list is a set of x's type when that can be one (enum, AnsiChar, Byte), else it is looked through
+      // a list here is a set already (see inSet below)
       op_IN:
         if (Right is TLapeTree_OpenArray) then
-          if inSet(TLapeTree_OpenArray(FRight), LeftVar.VarType) then
-            FRight := FRight.FoldConstants(True) as TLapeTree_ExprBase
-          else
-            Exit(doInList(LeftVar));
+          FRight := FRight.FoldConstants(True) as TLapeTree_ExprBase;
 
       // if array appending right must be dyn array element type
       op_Plus, op_AssignPlus:
         begin
-          if (LeftVar.VarType is TLapeType_DynArray) then
-            FRight := FRight.setExpectedType(TLapeType_DynArray(LeftVar.VarType).PType) as TLapeTree_ExprBase;
+          if (LeftType is TLapeType_DynArray) then
+            FRight := FRight.setExpectedType(TLapeType_DynArray(LeftType).PType) as TLapeTree_ExprBase;
         end;
 
       // if indexing sizeint is wanted
@@ -3031,25 +3082,70 @@ begin
 
       // otherwise use leftVar
       else
-        FRight := FRight.setExpectedType(LeftVar.VarType) as TLapeTree_ExprBase;
+        FRight := FRight.setExpectedType(LeftType) as TLapeTree_ExprBase;
     end;
+  end;
 
-    // If assigning see if we can set Right.Dest to Left. If so exit early
-    if (FOperatorType = op_Assign) and (FLeft <> nil) and LeftVar.Writeable and
-       (FRight is TLapeTree_DestExprBase) and (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
+var
+  Typ: TLapeType;
+begin
+  Result := NullResVar;
+  RightVar := NullResVar;
+  LeftVar := NullResVar;
+
+  if (FLeft <> nil) then
+    if (resType(True) <> nil) and (FLeft is TLapeTree_If) then
+      Exit(doIf())
+    else if FOverloadOp then
+      Exit(doOperatorOverload());
+
+  // x in [...]: a set of x's type when that can be one (enum, AnsiChar, Byte), else a loop over the values
+  if (FOperatorType = op_IN) and (FRight is TLapeTree_OpenArray) and
+     (not inSet(TLapeTree_OpenArray(FRight), TLapeTree_ExprBase(FLeft).resType())) then
+  begin
+    CompileLeft();
+    Exit(doInList(LeftVar));
+  end;
+
+  // (not for a variable by itself: where it is cannot move, and the right side is worked out in it, see below)
+  if RightFirst() and (not (FLeft is TLapeTree_ResVar)) and (not (FLeft is TLapeTree_GlobalVar)) then
+  begin
+    ExpectRight(TLapeTree_ExprBase(FLeft).resType());
+    RightVar := FRight.Compile(Offset);
+    // (one on the stack is put in a temporary: the left side is worked out after it)
+    if (RightVar.VarPos.MemPos = mpStack) and RightVar.HasType() then
     begin
-      TLapeTree_DestExprBase(FRight).Dest := LeftVar;
-      RightVar := FRight.Compile(Offset);
-      if (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
-      begin
-        Dest := NullResVar;
-        Result := LeftVar;
-        TLapeTree_DestExprBase(FRight).Dest := NullResVar;
+      Typ := RightVar.VarType;
+      RightVar := _ResVar.New(FCompiler.getTempVar(Typ));
+      FCompiler.Emitter._PopStackToVar(Typ.Size, RightVar.VarPos.StackVar.Offset, Offset, @FRight._DocPos);
+    end;
+    CompileLeft();
+  end
+  else
+  begin
+    CompileLeft();
 
-        Exit;
-      end;
-    end else
-      RightVar := FRight.Compile(Offset);
+    if (FRight <> nil) then
+    begin
+      ExpectRight(LeftVar.VarType);
+
+      // If assigning see if we can set Right.Dest to Left. If so exit early
+      if (FOperatorType = op_Assign) and (FLeft <> nil) and LeftVar.Writeable and
+         (FRight is TLapeTree_DestExprBase) and (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos = NullResVar.VarPos.MemPos) then
+      begin
+        TLapeTree_DestExprBase(FRight).Dest := LeftVar;
+        RightVar := FRight.Compile(Offset);
+        if (TLapeTree_DestExprBase(FRight).Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+        begin
+          Dest := NullResVar;
+          Result := LeftVar;
+          TLapeTree_DestExprBase(FRight).Dest := NullResVar;
+
+          Exit;
+        end;
+      end else
+        RightVar := FRight.Compile(Offset);
+    end;
   end;
 
   try

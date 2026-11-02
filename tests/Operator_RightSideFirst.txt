@@ -1,0 +1,9 @@
+element: 7
+element +=: 8
+character: Zbc
+p^: 7
+field of an object: 7
+a[i] := call that sets i to 2: 0 7
+a[High(a)]: 0 7
+a[One()] := Two(): 2, calls Two One 
+One() - Two(): -1, calls One Two 

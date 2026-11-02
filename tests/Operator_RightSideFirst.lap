@@ -1,0 +1,101 @@
+// In an assignment the right side is worked out first when it calls: the call can move what the left side is in
+type
+  TThing = object
+    n: Int32;
+  end;
+
+var
+  Log, s: String;
+  a: array of Int32;
+  p: ^Int32;
+  thing: TThing;
+  i, x: Int32;
+
+function GrowA: Int32;
+begin
+  SetLength(a, Length(a) + 100000);
+  Result := 7;
+end;
+
+function GrowS: Char;
+begin
+  SetLength(s, Length(s) + 100000);
+  Result := 'Z';
+end;
+
+function MoveP: Int32;
+begin
+  FreeMem(p);
+  p := AllocMem(4000000);
+  Result := 7;
+end;
+
+function Replace: Int32;
+begin
+  thing := new TThing;
+  Result := 7;
+end;
+
+function SetI: Int32;
+begin
+  i := 2;
+  Result := 7;
+end;
+
+function One: Int32;
+begin
+  Log := Log + 'One ';
+  Result := 1;
+end;
+
+function Two: Int32;
+begin
+  Log := Log + 'Two ';
+  Result := 2;
+end;
+
+begin
+  SetLength(a, 1);
+  a[0] := GrowA();
+  WriteLn('element: ', a[0]);
+
+  SetLength(a, 1);
+  a[0] := 1;
+  a[0] += GrowA();
+  WriteLn('element +=: ', a[0]);
+
+  s := 'abc';
+  s[1] := GrowS();
+  WriteLn('character: ', s[1], s[2], s[3]);
+
+  p := AllocMem(64);
+  p^ := MoveP();
+  WriteLn('p^: ', p^);
+  FreeMem(p);
+
+  thing := new TThing;
+  thing.n := Replace();
+  WriteLn('field of an object: ', thing.n);
+
+  // (which element it is, is found after the call)
+  SetLength(a, 3);
+  a[0] := 0;
+  a[2] := 0;
+  i := 0;
+  a[i] := SetI();
+  WriteLn('a[i] := call that sets i to 2: ', a[0], ' ', a[2]);
+
+  SetLength(a, 1);
+  a[High(a)] := GrowA();
+  WriteLn('a[High(a)]: ', a[0], ' ', a[High(a)]);
+
+  Log := '';
+  SetLength(a, 3);
+  a[One()] := Two();
+  WriteLn('a[One()] := Two(): ', a[1], ', calls ', Log);
+
+  // (every other operator: the left side is first)
+  Log := '';
+  x := One() - Two();
+  WriteLn('One() - Two(): ', x, ', calls ', Log);
+end.

@@ -548,8 +548,9 @@ begin
 
   if (op = op_Index) then
   begin
-    //Cache AsString before changing FBaseType
+    //Cache AsString and NeedInitialization before changing FBaseType
     GetAsString();
+    getInitialization();
     RangeCheck(ALeft, ARight, Flags);
 
     tmpType := FBaseType;
@@ -570,6 +571,7 @@ begin
       if (IndexVar <> nil) then
         IndexVar.Free();
       FBaseType := tmpType;
+      Assert((tmpType <> ltDynArray) or NeedInitialization);
     end;
   end
   else if (op = op_Assign) and (BaseType = ltDynArray) and (ALeft <> nil) and (ARight <> nil) and CompatibleWith(ARight.VarType) then
@@ -631,8 +633,9 @@ begin
 
   if (op = op_Index) then
   begin
-    //Cache AsString before changing FBaseType
+    //Cache AsString and NeedInitialization before changing FBaseType
     GetAsString();
+    getInitialization();
     RangeCheck(ALeft, ARight, Flags, Offset, Pos);
 
     tmpType := FBaseType;
@@ -663,6 +666,7 @@ begin
       end;
     finally
       FBaseType := tmpType;
+      Assert((tmpType <> ltDynArray) or NeedInitialization);
       Result.CopyFlags(ALeft);
     end;
   end

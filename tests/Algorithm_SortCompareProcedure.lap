@@ -1,0 +1,9 @@
+procedure P(a, b: Int32);
+begin
+end;
+
+var
+  a: array of Int32 = [3, 1, 2];
+begin
+  Sort(a, @P);
+end.
