@@ -108,7 +108,6 @@ type
     FTokenizers: TLapeTokenizerArray;
     FTokenizer: Integer;
     FInPeek: Boolean;
-    FNoInvokeNext: Boolean;
     FLastTok: EParserToken;
 
     FInternalMethodMap: TLapeInternalMethodMap;
@@ -2050,9 +2049,6 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (Name = 'extendedsyntax') then
       Result := (lcoLooseSyntax in FOptions)
     else
-    if (Name = 'autoinvoke') then
-      Result := (lcoAutoInvoke in FOptions)
-    else
     if (Name = 'scopedenums') then
       Result := (lcoScopedEnums in FOptions)
     else
@@ -2259,9 +2255,6 @@ begin
     else
     if (Directive = 'x') or (Directive = 'extendedsyntax') then
       setOption(lcoLooseSyntax)
-    else
-    if (Directive = 'f') or (Directive = 'autoinvoke') then
-      setOption(lcoAutoInvoke)
     else
     if (Directive = 's') or (Directive = 'scopedenums') then
       setOption(lcoScopedEnums)
@@ -3872,6 +3865,86 @@ var
   _LastNode: (_None, _Var, _Op);
   DoNext: Boolean;
 
+  // What is named, as a value: a property is read, @ of a method is the method, a method on its own has to be
+  // called with () or addressed with @. (Each node is made a value once: as an operand, or as the whole expression.
+  // On an error it is freed.)
+  function ValueOf(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
+  var
+    DocPos: TDocPos;
+  begin
+    Result := Node;
+
+    // (a call: its type is not asked for yet, an overload of what it calls can still come)
+    if (Result is TLapeTree_Invoke) then
+      Exit
+    else if IsProperty(Result.resType()) then
+    begin
+      Result := TLapeTree_InvokeProperty.Create(Result, Result);
+      TLapeTree_InvokeProperty(Result).PropertyType := ptRead;
+    end
+    else if (Result is TLapeTree_Operator) and (TLapeTree_Operator(Result).OperatorType = op_Addr) and
+            IsMethod(TLapeTree_Operator(Result).Left.resType()) then
+    begin
+      Node := Result;
+      Result := TLapeTree_Operator(Node).Left;
+      Result.Parent := nil;
+      Node.Free();
+    end
+    // (a method, a method variable, or a member, element or dereference that is one)
+    else if ((Result is TLapeTree_GlobalVar) or (Result is TLapeTree_ResVar) or
+             ((Result is TLapeTree_Operator) and (TLapeTree_Operator(Result).OperatorType in [op_Dot, op_Index, op_Deref]))) and
+            IsMethod(Result.resType()) then
+    begin
+      DocPos := Result._DocPos;
+      Result.Free();
+      LapeException(lpeMethodNotInvoked, DocPos);
+    end;
+  end;
+
+  // An operand folded, taken from Op first (it gets the result back). Not a call: what it calls can still get
+  // overloads that come later.
+  function Folded(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
+  begin
+    Result := Node;
+    if (not (Node is TLapeTree_Invoke)) then
+    begin
+      Node.Parent := nil;
+      Result := Node.FoldConstants() as TLapeTree_ExprBase;
+    end;
+  end;
+
+  // The operands of Op as it uses them; an assignment to a property (or to p[i], a read of one: see ParseIndex) is a
+  // write of it, in Op's place
+  function UseOperands(Op: TLapeTree_Operator): TLapeTree_ExprBase;
+  var
+    Prop: TLapeTree_InvokeProperty;
+  begin
+    Result := Op;
+
+    // (an index was a whole expression already, the right of a dot is a name)
+    if (Op.Right <> nil) and (not (Op.OperatorType in [op_Index, op_Dot])) then
+      Op.Right := ValueOf(Folded(Op.Right));
+
+    if (Op.OperatorType in AssignOperators) and ((Op.Left is TLapeTree_InvokeProperty) or IsProperty(Op.Left.resType())) then
+    begin
+      if (Op.Left is TLapeTree_InvokeProperty) then
+      begin
+        Prop := TLapeTree_InvokeProperty(Op.Left);
+        Prop.Parent := nil;
+      end
+      else
+        Prop := TLapeTree_InvokeProperty.Create(Op.Left, Op);
+      Prop.addParam(Op.Right);
+      Prop.PropertyType := ptWrite;
+      Prop.AssignOp := Op.OperatorType;
+      Op.Free();
+      Result := Prop;
+    end
+    // (a method that is assigned to, addressed with @, or indexed for one of its overloads, is no value)
+    else if (not ((Op.OperatorType in AssignOperators + [op_Addr, op_Index]) and IsMethod(Op.Left.resType()))) then
+      Op.Left := ValueOf(Folded(Op.Left));
+  end;
+
   procedure PopOpNode;
   var
     OpNode: TLapeTree_Operator;
@@ -3885,11 +3958,17 @@ var
           Right := VarStack.Pop();
         Left := VarStack.Pop();
       end;
-      VarStack.Push(OpNode);
     except
       DocPos := OpNode._DocPos;
       OpNode.Free();
       LapeException(lpeInvalidEvaluation, DocPos);
+    end;
+
+    try
+      VarStack.Push(UseOperands(OpNode));
+    except
+      OpNode.Free();
+      raise;
     end;
   end;
 
@@ -4092,185 +4171,45 @@ var
     end;
   end;
 
-  function ResolveMethods(Node: TLapeTree_Base; SkipTop: Boolean; NoInvoke: Boolean = False): TLapeTree_Base;
-
-    // (@Method: the method)
-    function AddrOfMethod(Node: TLapeTree_ExprBase): Boolean;
-    begin
-      Result := (Node is TLapeTree_Operator) and (TLapeTree_Operator(Node).OperatorType = op_Addr) and
-                (TLapeTree_Operator(Node).Left <> nil) and IsMethod(TLapeTree_Operator(Node).Left.resType());
-    end;
-
-    function MethodOrNil(Node: TLapeTree_ExprBase; out IsNil: Boolean): Boolean;
-    begin
-      IsNil := (Node <> nil) and (Node.resType() is TLapeType_NilPointer);
-      Result := IsNil or AddrOfMethod(Node) or
-                ((Node <> nil) and IsMethod(Node.resType()) and (not IsProperty(Node.resType())));
-    end;
-
-    // f = nil, f <> nil: what is compared with nil is the method, not what calling it gives (between two methods it is
-    // what they give, with autoinvoke: @f is the method then)
-    function ComparesMethods(Op: TLapeTree_Operator): Boolean;
-    var
-      LeftNil, RightNil: Boolean;
-    begin
-      Result := (Op.OperatorType in [op_cmp_Equal, op_cmp_NotEqual]) and MethodOrNil(Op.Left, LeftNil) and
-                MethodOrNil(Op.Right, RightNil) and (LeftNil <> RightNil);
-    end;
-
-    function StripAddr(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
-    begin
-      Result := Node;
-      if AddrOfMethod(Node) then
-      begin
-        Result := TLapeTree_Operator(Node).Left;
-        Result.Parent := nil;
-        Node.Free();
-      end;
-    end;
-
-    // (IsRoot: Node is the whole expression)
-    function Resolve(Node: TLapeTree_Base; Top, Recurse: Boolean; out HasChanged: Boolean; IsRoot: Boolean = False): TLapeTree_Base;
-
-      function ResolveProperty(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
-      var
-        Changed: Boolean;
-      begin
-        if IsProperty(Node.resType()) then
-        begin
-          Result := TLapeTree_InvokeProperty.Create(Node, Node);
-          TLapeTree_InvokeProperty(Result).PropertyType := ptRead;
-        end else
-        begin
-          Result := TLapeTree_InvokeProperty.Create(TLapeTree_Operator(Node).Left, Node);
-          TLapeTree_InvokeProperty(Result).addParam(Resolve(TLapeTree_Operator(Node).Right, not (TLapeTree_Operator(Node).Right.resType() is TLapeType_Method), True, Changed) as TLapeTree_ExprBase);
-          TLapeTree_InvokeProperty(Result).PropertyType := ptWrite;
-          TLapeTree_InvokeProperty(Result).AssignOp := TLapeTree_Operator(Node).OperatorType;
-
-          Node.Free();
-        end;
-      end;
-
-      function ResolveMethod(Node: TLapeTree_ExprBase): TLapeTree_ExprBase;
-      var
-        Op: EOperator;
-      begin
-        Node := Node.FoldConstants() as TLapeTree_ExprBase;
-
-        if (Node is TLapeTree_Operator) then
-          Op := TLapeTree_Operator(Node).OperatorType
-        else
-          Op := op_Unknown;
-
-        if IsProperty(Node.resType) or ((Op in AssignOperators) and IsProperty(TLapeTree_Operator(Node).Left.resType())) then
-          Result := ResolveProperty(Node)
-        else if (lcoAutoInvoke in Node.CompilerOptions) and (not (Op in AssignOperators)) and IsMethod(Node.resType()) and
-                (not (NoInvoke and IsRoot)) then
-          Result := TLapeTree_Invoke.Create(Node, Node)
-        else if (Op = op_Addr) and IsMethod(TLapeTree_Operator(Node).Left.resType()) then
-        begin
-          Result := TLapeTree_Operator(Node).Left;
-          Result.Parent := nil;
-          Node.Free();
-        end else
-          Result := Node;
-      end;
-
-    var
-      LeftChanged, RightChanged: Boolean;
-    begin
-      Result := Node;
-      HasChanged := False;
-
-      if TLapeTree_Base.isEmpty(Node) or (not (Node is TLapeTree_ExprBase)) or (Node is TLapeTree_Invoke) then
-        Exit;
-
-      if Top then
-        Result := ResolveMethod(TLapeTree_ExprBase(Node))
-      else
-        Result := Node;
-
-      if (Result <> Node) then
-        HasChanged := Recurse
-      else if (Node is TLapeTree_Operator) and ComparesMethods(TLapeTree_Operator(Node)) then
-        with TLapeTree_Operator(Node) do
-        begin
-          Left := StripAddr(Left);
-          Right := StripAddr(Right);
-          HasChanged := False;
-        end
-      else if (Node is TLapeTree_Operator) then
-        with TLapeTree_Operator(Node) do
-        begin
-          if (not (OperatorType in AssignOperators)) or (not IsMethod(Left.resType())) then
-            Left := TLapeTree_ExprBase(Resolve(Left, True, not (OperatorType in [op_Addr, op_Assign]), LeftChanged))
-          else
-            LeftChanged := False;
-          Right := TLapeTree_ExprBase(Resolve(Right, True, True, RightChanged));
-
-          HasChanged := LeftChanged or RightChanged;
-          if HasChanged and Recurse then
-            Result := ResolveMethod(TLapeTree_ExprBase(Node));
-        end;
-    end;
-
-  var
-    HasChanged: Boolean;
-  begin
-    Result := Resolve(Node, not SkipTop, not SkipTop, HasChanged, True);
-  end;
-
-  // return false = need parseOperator
+  // A property before [ is read; an indexable one with what is in [] (an assignment to it makes it a write, see
+  // UseOperands). False: [ indexes what is on the stack.
   function ParseIndex: Boolean;
   var
-    Expr: TLapeTree_ExprBase;
-    IndexableProp: Boolean;
+    Indexable: Boolean;
     PropInvoke: TLapeTree_InvokeProperty;
   begin
-    Result := False;
+    if (_LastNode <> _Var) then
+      Exit(False);
 
-    if (_LastNode = _Var) then
-    begin
-      PopOpStack(op_Index);
+    PopOpStack(op_Index);
+    VarStack.Top := TLapeTree_ExprBase(VarStack.Top.FoldConstants());
+    if (not IsProperty(VarStack.Top.resType(), Indexable)) then
+      Exit(False);
 
-      VarStack.Top := TLapeTree_ExprBase(VarStack.Top.FoldConstants());
-      Expr := ResolveMethods(VarStack.Top, True) as TLapeTree_ExprBase;
-      if IsProperty(Expr.resType(), IndexableProp) then
-      begin
-        PropInvoke := TLapeTree_InvokeProperty.Create(Expr, Self, getPDocPos());
+    PropInvoke := TLapeTree_InvokeProperty.Create(VarStack.Pop(), Self, getPDocPos());
+    PropInvoke.PropertyType := ptRead;
+    VarStack.Push(PropInvoke);
+    if (not Indexable) then
+      Exit(False);
 
-        if IndexableProp then
-        begin
-          if (Next() <> tk_sym_BracketClose) then
-          begin
-            PropInvoke.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma], False)));
-            while True do
-              case Tokenizer.Tok of
-                tk_sym_BracketClose: Break;
-                tk_sym_Comma:        PropInvoke.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma])));
-              else
-                LapeException(lpeClosingBracketExpected, Tokenizer.DocPos);
-              end;
+    try
+      if (Next() = tk_sym_BracketClose) then
+        LapeException(lpeExpectedIndexValue, Tokenizer.DocPos);
 
-            if (ParserTokenToOperator(Peek()) in AssignOperators) then
-            begin
-              Next();
-              PropInvoke.PropertyType := ptWrite;
-              PropInvoke.AssignOp := ParserTokenToOperator(Tokenizer.Tok);
-              PropInvoke.addParam(EnsureExpression(ParseExpression(ParserToken_ExpressionEnd, True)));
-              DoNext := False;
-            end else
-              PropInvoke.PropertyType := ptRead;
-          end else
-            LapeException(lpeExpectedIndexValue, Tokenizer.DocPos);
-
-          Result := True;
+      PropInvoke.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma], False)));
+      while True do
+        case Tokenizer.Tok of
+          tk_sym_BracketClose: Break;
+          tk_sym_Comma:        PropInvoke.addParam(EnsureExpression(ParseExpression([tk_sym_BracketClose, tk_sym_Comma])));
+        else
+          LapeException(lpeClosingBracketExpected, Tokenizer.DocPos);
         end;
-
-        VarStack.Pop();
-        VarStack.Push(PropInvoke);
-      end;
+    except
+      VarStack.Pop().Free();
+      raise;
     end;
+
+    Result := True;
   end;
 
   procedure ParseSpecialParam(Method: TLapeTree_InternalMethod);
@@ -4329,30 +4268,9 @@ var
   InExpr: Integer;
   Expr: TLapeTree_ExprBase;
   Method: TLapeTree_Invoke;
-  NoInvoke: Boolean;
-
-  // Whether parameter Index of what Call calls takes anything (no type): of one method, not of overloads
-  function UntypedParam(Call: TLapeTree_Invoke; Index: Integer): Boolean;
-  var
-    Typ: TLapeType;
-  begin
-    Result := False;
-    if TLapeTree_Base.isEmpty(Call.Callee) then
-      Exit;
-    Typ := Call.Callee.resType();
-    if (Typ is TLapeType_Method) then
-      with TLapeType_Method(Typ) do
-      begin
-        Index := Index + ImplicitParams;
-        Result := (Index < Params.Count) and (Params[Index].VarType = nil);
-      end;
-  end;
-
 begin
   Result := nil;
   Method := nil;
-  NoInvoke := FNoInvokeNext;
-  FNoInvokeNext := False;
   VarStack := TLapeTree_NodeStack.Create();
   OpStack := TLapeTree_OpStack.Create();
   _LastNode := _None;
@@ -4456,7 +4374,7 @@ begin
                 if IsProperty(VarStack.Top.resType()) then
                   LapeException(lpeCannotInvokeProperty, Tokenizer.DocPos);
 
-                Expr := ResolveMethods(VarStack.Top.FoldConstants(), True) as TLapeTree_ExprBase;
+                Expr := VarStack.Top.FoldConstants() as TLapeTree_ExprBase;
                 if (Expr <> VarStack.Pop()) and (Expr is TLapeTree_InternalMethod) then
                   Method := TLapeTree_Invoke(Expr)
                 else
@@ -4465,14 +4383,12 @@ begin
 
               if (Next() <> tk_sym_ParenthesisClose) then
               begin
-                FNoInvokeNext := UntypedParam(Method, 0);
                 Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], False, True)));
                 while True do
                   case Tokenizer.Tok of
                     tk_sym_ParenthesisClose: Break;
                     tk_sym_Comma:
                       begin
-                        FNoInvokeNext := UntypedParam(Method, Method.Params.Count);
                         Method.addParam(EnsureExpression(ParseExpression([tk_sym_ParenthesisClose, tk_sym_Comma], True, True)));
                       end;
                     else
@@ -4544,7 +4460,7 @@ begin
       else
         LapeException(lpeInvalidEvaluation, Tokenizer.DocPos);
 
-    Result := TLapeTree_ExprBase(ResolveMethods(VarStack.Pop(), False, NoInvoke));
+    Result := ValueOf(VarStack.Pop());
     if DoFold and (not TLapeTree_Base.isEmpty(Result)) then
       Result := TLapeTree_ExprBase(Result.FoldConstants());
   finally

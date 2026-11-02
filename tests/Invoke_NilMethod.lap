@@ -1,11 +1,11 @@
-// A method variable that is nil: Assigned, compared with nil, and not called where and stops first
+// A method variable that is nil: Assigned, compared with nil (with @), and not called where and stops first
 type TF = function: Int32;
 function Five: Int32; begin Result := 5; end;
 var f: TF;
 begin
   f := nil;
-  WriteLn(Assigned(f), ' ', f = nil, ' ', nil <> f);
-  if (f <> nil) and (f() > 0) then WriteLn('not here');
+  WriteLn(Assigned(@f), ' ', @f = nil, ' ', nil <> @f);
+  if (@f <> nil) and (f() > 0) then WriteLn('not here');
   f := @Five;
-  WriteLn(Assigned(f), ' ', f = nil, ' ', f() + 1);
+  WriteLn(Assigned(@f), ' ', @f = nil, ' ', f() + 1);
 end.

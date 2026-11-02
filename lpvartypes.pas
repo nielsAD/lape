@@ -23,7 +23,6 @@ type
     lcoAlwaysInitialize,               // {$M} {$MEMORYINIT}
     lcoLooseSemicolon,                 // {$L} {$LOOSESEMICOLON}
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
-    lcoAutoInvoke,                     // {$F} {$AUTOINVOKE}
     lcoScopedEnums,                    // {$S} {$SCOPEDENUMS}
     lcoConstAddress,                   // {$J} {$CONSTADDRESS}
     lcoHints,                          // {$H} {$HINTS}
@@ -49,7 +48,7 @@ type
   EStackFlagsSet = set of EStackFlags;
 
 const
-  Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoAutoInvoke, lcoConstAddress, lcoInheritableRecords];
+  Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoConstAddress, lcoInheritableRecords];
   Lape_PackRecordsDef = 8;
 
 type

@@ -1102,12 +1102,12 @@ begin
     '    TEnum = (se0, se1 = %d);'                                                          + LineEnding +
     '    TRangeToString = function(constref r: System.%s): string;'                         + LineEnding +
     '  begin'                                                                               + LineEnding +
-    '    Result := TRangeToString(System.ToString[%d])(Ord(TEnum(p^)));'                    + LineEnding +
+    '    Result := TRangeToString(@System.ToString[%d])(Ord(TEnum(p^)));'                   + LineEnding +
     '  end;'                                                                                + LineEnding +
     'type'                                                                                  + LineEnding +
     '  TSetToString = private function(constref ASet; AToString: System.ConstPointer; Lo, Hi: System.SizeInt): System.string;' + LineEnding +
     'begin'                                                                                 + LineEnding +
-    '  Result := TSetToString(System.%s)(Param0, _ElementToString, %d, %d);'                + LineEnding +
+    '  Result := TSetToString(@System.%s)(Param0, @_ElementToString, %d, %d);'              + LineEnding +
     'end;'
   ), [FRange.Hi, LapeTypeToString(DetermineIntType(FElement.Size, FElement.BaseType in LapeSignedOrdinalTypes)), Index, Result, FRange.Lo, FRange.Hi]);
 end;

@@ -8,12 +8,12 @@ end;
 
 procedure Test;
 begin
-  TerminateScript;
+  TerminateScript();
 end;
 
 procedure InTest;
 begin
-  Test;
+  Test();
 end;
 
 begin

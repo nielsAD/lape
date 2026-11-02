@@ -126,7 +126,7 @@ procedure fasta_random(n : integer; const probs: array of double);
     p_limit := @line[size];
     while p <= p_limit do
     begin
-      p^ := choose_code;
+      p^ := choose_code();
       inc(p);
     end;
     writeln( line );

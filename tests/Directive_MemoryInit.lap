@@ -1,5 +1,4 @@
 {$memoryinit on}
-{$autoinvoke off}
 
 function Doo: Boolean;
 begin
@@ -13,7 +12,7 @@ begin
   Write('1: '); Doo();
   Write('2: '); Doo();
 
-  f := Doo;
+  f := @Doo;
 
   Write('3: ');
   if f() then

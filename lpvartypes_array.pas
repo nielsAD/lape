@@ -201,9 +201,9 @@ begin
     '  if (Len <= 0) then'                                                                  + LineEnding +
     '    Result := '#39'[]'#39''                                                            + LineEnding +
     '  else'                                                                                + LineEnding +
-    '    Result := TArrayToString(System._ArrayToString)('                                  + LineEnding +
+    '    Result := TArrayToString(@System._ArrayToString)('                                 + LineEnding +
     '      Param0['+IntToStr(VarLo().AsInteger)+'],'                                        + LineEnding +
-    '      _ElementToString, Len, System.SizeOf(Param0[0]));'                               + LineEnding +
+    '      @_ElementToString, Len, System.SizeOf(Param0[0]));'                              + LineEnding +
     'end;');
 end;
 

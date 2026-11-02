@@ -15,13 +15,13 @@ end;
 procedure test2;
 begin
   try
-    test;
+    test();
   except
     WriteLn('Ohai1');
   end;
 end;
 
 begin
-  test2;
+  test2();
   WriteLn('Ohai2'); 
 end;

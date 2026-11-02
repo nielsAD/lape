@@ -21,7 +21,7 @@ type
 procedure InitializePascalScriptBasics(Compiler: TLapeCompiler; Initialize: PSInitSet = [psiSettings, psiTypeAlias, psiMagicMethod, psiFunctionWrappers, psiExceptions]);
 
 const
-  LapePascalScriptCompilerOptions = [lcoLooseSemicolon, lcoAutoInvoke];
+  LapePascalScriptCompilerOptions = [lcoLooseSemicolon];
 
 implementation
 

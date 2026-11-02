@@ -221,7 +221,7 @@ end;
 					(spectral_line[C_line] - spectral_line[F_line])) *
 					((s[i, Index_Of_Refraction] - 1.0) / s[i, Dispersion]);
 			end;
-			transit_surface;
+			transit_surface();
 			from_index := to_index;
 			if i < current_surfaces then begin
 				object_distance := object_distance - s[i, Edge_Thickness];

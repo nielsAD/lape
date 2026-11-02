@@ -116,6 +116,7 @@ const
   lpeInvalidSetType = 'Invalid set type "%s": a set is of an enum, AnsiChar or Byte';
   lpeLostClosingParenthesis = 'Found closing parenthesis without matching opening parenthesis';
   lpeLostConditional = 'Found conditional without matching opening statement';
+  lpeMethodNotInvoked = 'A method has to be called with () or have its address taken with @';
   lpeMethodOfObjectExpected = 'Expected method of object';
   lpeNoDefaultForParam = 'No default value for parameter %d found';
   lpeNoForwardMatch = 'Forwarded declaration doesn''t match';

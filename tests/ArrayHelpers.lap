@@ -14,14 +14,14 @@ begin
   Assert(a.CopyRange(1,3).Equals([2,3,4]));
   Assert(a.Contains(a.Random()));
   Assert(a.Slice(0,5,2).Equals([1,3,5]));
-  Assert(a.Mode = 1);
-  Assert(a.Min = 1);
-  Assert(a.Max = 5);
-  Assert(a.Sum = 15);
-  Assert(Abs(a.Mean - 3) < 0.001);
-  Assert(Abs(a.Median - 3) < 0.001);
-  Assert(Abs(a.Stdev - 1.414) < 0.001);
-  Assert(Abs(a.Variance - 2) < 0.001);
+  Assert(a.Mode() = 1);
+  Assert(a.Min() = 1);
+  Assert(a.Max() = 5);
+  Assert(a.Sum() = 15);
+  Assert(Abs(a.Mean() - 3) < 0.001);
+  Assert(Abs(a.Median() - 3) < 0.001);
+  Assert(Abs(a.Stdev() - 1.414) < 0.001);
+  Assert(Abs(a.Variance() - 2) < 0.001);
 
   Assert(a.Pop = 5);
   Assert(a.Delete(1) = 2);

@@ -1,0 +1,8 @@
+// A method is called with () or addressed with @: on its own it is neither
+procedure P;
+begin
+end;
+
+begin
+  P;
+end.

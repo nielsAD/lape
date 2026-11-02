@@ -137,9 +137,9 @@ end;
 var i : integer;
     n : Integer;
 begin
-  offsetMomentum;
-  WriteLn(Format('%.11f', [energy]));
+  offsetMomentum();
+  WriteLn(Format('%.11f', [energy()]));
   n := 200000;
   for i := 1 to n do advance(0.01);
-  WriteLn(Format('%.11f', [energy]));
+  WriteLn(Format('%.11f', [energy()]));
 end.

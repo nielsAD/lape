@@ -34,7 +34,7 @@ type string123 = type string;
 
 procedure string123.wap(a: Integer); static; overload;
 begin
-  wap;
+  wap();
 end;
 
 begin

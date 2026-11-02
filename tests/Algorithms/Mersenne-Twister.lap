@@ -122,7 +122,7 @@ const
 
 begin
   InitMTbyArray(init, 4);
-  WriteLn(IRanMT);
+  WriteLn(IRanMT());
 end.
 
 { ******************************************************************

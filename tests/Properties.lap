@@ -1,5 +1,4 @@
 {$assertions ON}
-{$autoinvoke OFF}
 
 type
   TFoo = record

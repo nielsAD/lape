@@ -1,5 +1,3 @@
-{$autoinvoke on}
-
 type
   PPoint = ^TPoint;
   TPoint = record
@@ -56,7 +54,7 @@ end;
 
 procedure T3DPoint.Test; override;
 begin
-  inherited;
+  inherited();
   WriteLn('T3DPoint: ', z);
 end;
 
@@ -71,7 +69,7 @@ end;
 
 procedure T3DPoint.Init; override;
 begin
-  inherited;
+  inherited();
   with Self do
   begin
     TMethod(@Test) := [@T3DPoint.Test, @Self];
@@ -94,11 +92,11 @@ end;
 var
   p: PPoint;
 begin
-  p := TPoint.Create;
+  p := TPoint.Create();
   p^.Test();
   p^.Free();
 
-  P3DPoint(p) := T3DPoint.Create;
+  P3DPoint(p) := T3DPoint.Create();
   p^.Test();
   p^.Free();
 end;

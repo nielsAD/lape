@@ -66,13 +66,13 @@ procedure TNest.nest(c: TNest); override;
   begin
     Inc(a, d.a);
     Inc(b, d.b);
-    inherited;
+    inherited();
     Inc(c.a, d.a);
     Inc(c.b, d.b);
   end;
 begin
   innerNest([21, 12]);
-  inherited;
+  inherited();
 end;
 
 var
