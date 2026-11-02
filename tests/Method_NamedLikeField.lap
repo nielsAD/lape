@@ -1,0 +1,15 @@
+type
+  TB = record n: Int32; end;
+
+function TB.N: Int32;
+begin
+  Result := 1;
+end;
+
+var
+  b: TB;
+begin
+  b.n := 5;
+  WriteLn(b.N);
+  WriteLn(b.N());
+end.

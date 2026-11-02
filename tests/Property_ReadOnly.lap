@@ -1,0 +1,6 @@
+type TB = record v: Int32; end;
+property TB.Count(): Int32; begin Result := 3; end;
+var b: TB;
+begin
+  b.Count := 3;
+end.

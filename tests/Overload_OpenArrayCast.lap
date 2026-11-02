@@ -1,0 +1,13 @@
+// A list picks the overload it fits, also of nested procedures that use a local around them
+type
+  TPoint = record X, Y: Int32; end;
+  TBox = record X1, Y1, X2, Y2: Int32; end;
+procedure Outer;
+var Seen: String;
+  procedure Show(p: TPoint); overload; begin Seen += Chr(80); WriteLn(Seen); end;
+  procedure Show(b: TBox); overload; begin Seen += Chr(66); WriteLn(Seen); end;
+begin
+  Show([1, 2]);
+  Show([1, 2, 3, 4]);
+end;
+begin Outer(); end.

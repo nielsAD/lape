@@ -26,7 +26,7 @@ type
     function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; override;
 
     function getMethodIndex(AType: TLapeType_Method; Pos: PDocPos = nil): Integer; override;
-    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType=nil; AObjectType: TLapeType=nil; Pos: PDocPos = nil): Integer; override;
+    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType=nil; AObjectType: TLapeType=nil; Pos: PDocPos = nil; Fits: TLapeArgFits = nil): Integer; override;
 
     function CreateFunction(Body: String; VarType: TLapeType; ParamTypes: array of TLapeType; ResultType: TLapeType = nil; Pos: PDocPos = nil): TLapeGlobalVar;
   end;
@@ -259,7 +259,7 @@ begin
     Result := -1;
 end;
 
-function TLapeType_Helper.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Pos: PDocPos): Integer;
+function TLapeType_Helper.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Pos: PDocPos; Fits: TLapeArgFits): Integer;
 
   function EqualMethod(Method: TLapeType_MethodOfType): Boolean;
 
@@ -274,7 +274,9 @@ function TLapeType_Helper.getMethodIndex(AParams: TLapeTypeArray; AResult: TLape
     if (not EqualTypes(AObjectType, Method.ObjectType)) or (Length(AParams) <> Method.Params.Count) then
       Exit(False);
     for i := 0 to High(AParams) do
-      if (not EqualTypes(AParams[i], Method.Params[i].VarType)) then
+      if (not EqualTypes(AParams[i], Method.Params[i].VarType)) and
+         ((not Assigned(Fits)) or (Method.Params[i].VarType = nil) or (not Fits(i, Method.Params[i].VarType)))
+      then
         Exit(False);
 
     Result := True;
@@ -289,6 +291,8 @@ begin
     if EqualMethod(TLapeType_MethodOfType(Methods[i].VarType)) then
       Exit(i);
   end;
+  if Assigned(Fits) then
+    Exit(-1);
   Result := FDeclarations.IndexOf(getFunc(AObjectType, AParams, AResult, Pos));
 end;
 

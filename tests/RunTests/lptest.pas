@@ -55,6 +55,16 @@ begin
   _Write(PlpString(Params^[0])^, PlpString(Params^[1])^);
 end;
 
+
+procedure _GetCurrHeapUsed(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
+begin
+  {$IFDEF FPC}
+  PPtrUInt(Result)^ := GetFPCHeapStatus().CurrHeapUsed;
+  {$ELSE}
+  PPtrUInt(Result)^ := 0;
+  {$ENDIF}
+end;
+
 procedure _WriteLnWrap(Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   _WriteLn(PlpString(Params^[0])^);
@@ -83,6 +93,7 @@ begin
 
     addGlobalMethod('procedure _Write(s: string); override;', @_WriteWrap, @Output);
     addGlobalMethod('procedure _WriteLn; override;', @_WriteLnWrap, @Output);
+    addGlobalFunc('function GetCurrHeapUsed: PtrUInt;', @_GetCurrHeapUsed);
 
     try
       if (not Compile()) then

@@ -1,0 +1,27 @@
+type
+  TA = record v: Int32; end;
+  TB = type TA;
+
+property TA.Value(): Int32;
+begin
+  Result := Self.v;
+end;
+
+property TA.Value(x: Int32);
+begin
+  Self.v := x;
+end;
+
+property TB.Value(): Int32; override;
+begin
+  Result := inherited() * 100;
+end;
+
+var
+  a: TA;
+  b: TB;
+begin
+  a.Value := 2;
+  b.Value := 3;
+  WriteLn(a.Value, ' ', b.Value, ' ', b.v);
+end.

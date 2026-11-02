@@ -1,0 +1,29 @@
+// Get()^.P += 5 works out Get() once, for the read and the write
+type
+  TR = record v: Int32; end;
+
+var
+  r: TR;
+  Calls: Int32;
+
+property TR.P: Int32;
+begin
+  Result := Self.v;
+end;
+
+property TR.P(x: Int32);
+begin
+  Self.v := x;
+end;
+
+function Get: ^TR;
+begin
+  Inc(Calls);
+  Result := @r;
+end;
+
+begin
+  r.v := 1;
+  Get()^.P += 5;
+  WriteLn(r.v, ' calls ', Calls);
+end.

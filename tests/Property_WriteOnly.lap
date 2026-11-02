@@ -1,0 +1,6 @@
+type TB = record v: Int32; end;
+property TB.Sink(v: Int32); begin Self.v := v; end;
+var b: TB; x: Int32;
+begin
+  x := b.Sink;
+end.

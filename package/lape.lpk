@@ -36,7 +36,7 @@
 https://github.com/nielsAD/lape"/>
     <License Value="GNU Lesser GPL"/>
     <Version Minor="2"/>
-    <Files Count="53">
+    <Files Count="54">
       <Item1>
         <Filename Value="..\lape.inc"/>
         <Type Value="Include"/>
@@ -249,6 +249,10 @@ https://github.com/nielsAD/lape"/>
         <Filename Value="..\lpmessages.pas"/>
         <UnitName Value="lpmessages"/>
       </Item53>
+      <Item54>
+        <Filename Value="..\lpinvoke.pas"/>
+        <UnitName Value="lpinvoke"/>
+      </Item54>
     </Files>
     <RequiredPkgs Count="1">
       <Item1>

@@ -1,0 +1,7 @@
+type TB = record v: Int32; end;
+property TB.Item(i: Int32): Int32; begin Result := i; end;
+property TB.Item(i: Int32; v: Int32); begin end;
+var b: TB;
+begin
+  b.Item := Int64(4);
+end.
