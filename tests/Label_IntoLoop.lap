@@ -1,0 +1,6 @@
+label a;
+var i: Int32;
+begin
+  goto a;
+  for i := 1 to 2 do begin a: WriteLn(i); end;
+end.

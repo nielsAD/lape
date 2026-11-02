@@ -1,0 +1,68 @@
+// Where a goto can go: forward, back, out of a loop, out of a try (its finally runs) or except, into an if
+procedure Jumps;
+label a, b, c, d, e, f;
+var
+  i: Int32;
+begin
+  goto a;
+  WriteLn('skipped');
+  b:
+  WriteLn('back');
+  goto c;
+  a:
+  WriteLn('forward');
+  goto b;
+  c:
+  for i := 1 to 10 do
+    if (i = 3) then
+      goto d;
+  d:
+  WriteLn('out of a loop at ', i);
+
+  try
+    goto e;
+  finally
+    WriteLn('finally');
+  end;
+  WriteLn('skipped');
+  if (i = 0) then
+  begin
+    e:
+    WriteLn('into an if');
+  end;
+
+  try
+    raise 'x';
+  except
+    goto f;
+  end;
+  WriteLn('skipped');
+  f:
+  WriteLn('out of except');
+end;
+
+// (a method's labels are its own)
+procedure Outer;
+label a;
+
+  procedure Inner;
+  label a;
+  begin
+    goto a;
+    WriteLn('skipped');
+    a:
+    WriteLn('inner');
+  end;
+
+begin
+  Inner();
+  goto a;
+  WriteLn('skipped');
+  a:
+  WriteLn('outer');
+end;
+
+begin
+  Jumps();
+  Outer();
+end.

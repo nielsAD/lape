@@ -1,0 +1,8 @@
+forward
+back
+out of a loop at 3
+finally
+into an if
+out of except
+inner
+outer

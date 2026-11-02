@@ -1,0 +1,9 @@
+label a;
+procedure P;
+begin
+  goto a;
+end;
+begin
+  a:
+  P();
+end.
