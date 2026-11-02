@@ -1,0 +1,31 @@
+// A trace through the script's own routines: a method of a record, recursion and a nested procedure
+type
+  TCounter = record
+    Count: Int32;
+  end;
+
+procedure Check(Depth: Int32);
+
+  procedure Fail;
+  begin
+    raise 'Too deep';
+  end;
+
+begin
+  if (Depth = 0) then
+    Fail()
+  else
+    Check(Depth - 1);
+end;
+
+procedure TCounter.Step;
+begin
+  Check(Self.Count);
+end;
+
+var
+  c: TCounter;
+begin
+  c.Count := 2;
+  c.Step();
+end.

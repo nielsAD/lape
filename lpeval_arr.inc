@@ -3509,10 +3509,6 @@ Arr[op_cmp_NotEqual][ltPointer][ltDynArray] := Arr[op_cmp_NotEqual][ltPointer][l
 Arr[op_cmp_NotEqual][ltDynArray][ltPointer] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
 Arr[op_cmp_NotEqual][ltDynArray][ltDynArray] := Arr[op_cmp_NotEqual][ltPointer][ltPointer];
 
-//Method
-Arr[op_Dot][ltUnknown][ltPointer] := @lpeTMethod_DOT;
-Arr[op_Index][ltUnknown][ltPointer] := @lpeTMethod_IDX;
-
 Arr[op_Assign][ltPointer][ltScriptMethod]   := @lpePointer_ASGN_SMethod;
 Arr[op_Assign][ltPointer][ltImportedMethod] := Arr[op_Assign][ltPointer][ltPointer];
 Arr[op_Assign][ltImportedMethod][ltPointer] := Arr[op_Assign][ltPointer][ltPointer];

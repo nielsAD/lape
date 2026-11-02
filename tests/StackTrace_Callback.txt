@@ -1,0 +1,6 @@
+Runtime error: "Unlucky" at line 5, column 5 in file "StackTrace_Callback.lap"
+Stack Trace:
+  0) Line 5 in function "CompareOrFail" in file "StackTrace_Callback.lap"
+  1) Line 30, Col 16 in internal function "_ArraySort"
+  2) Line 11 in function "SortAll" in file "StackTrace_Callback.lap"
+  3) Line 17 in "main" in file "StackTrace_Callback.lap"

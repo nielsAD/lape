@@ -1,0 +1,4 @@
+Runtime error: "Division by zero" at line 7, column 21 in file "Directive_MacroError.lap"
+Stack Trace:
+  0) Line 7 in function "F" in file "Directive_MacroError.lap"
+  1) Line 11 in "main" in file "Directive_MacroError.lap"

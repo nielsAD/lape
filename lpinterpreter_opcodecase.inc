@@ -9,10 +9,10 @@
 
 case opCodeP(Code)^ of
   ocNone: Break;
+  ocUnused: DoUnused();
   ocIsScriptMethod: DoIsScriptMethod();
   ocGetExceptionMessage: DoGetExceptionMessage();
   ocGetExceptionLocation: DoGetExceptionLocation();
-  ocGetCallerLocation: DoGetCallerLocation();
   ocGetCallerAddress: DoGetCallerAddress();
   ocGetScriptMethodName: DoGetScriptMethodName();
   ocDumpCallStack: DoDumpCallStack();
