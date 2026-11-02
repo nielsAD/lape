@@ -1,0 +1,48 @@
+// What Objectify makes of a parameter or local keeps working after that method returned
+type
+  TIntFunc = function(x: Int32): Int32;
+  TIntMethod = function(x: Int32): Int32 of object;
+
+var
+  Kept: TIntMethod;
+  f: TIntFunc;
+
+function Twice(x: Int32): Int32; begin Result := x * 2; end;
+function Square(x: Int32): Int32; begin Result := x * x; end;
+
+function FromParam(g: TIntFunc): TIntMethod;
+begin
+  Result := Objectify(@g);
+end;
+
+function FromLocal: TIntMethod;
+var
+  g: TIntFunc;
+begin
+  g := @Square;
+  Result := Objectify(@g);
+end;
+
+// writes over the stack the calls before used
+function Churn(Depth: Int32): Int32;
+var
+  a: Int64 = -1;
+begin
+  if (Depth > 0) then
+    Result := Churn(Depth - 1) + a + 1;
+end;
+
+begin
+  Kept := FromParam(@Twice);
+  Churn(20);
+  WriteLn(Kept(5));
+
+  Kept := FromLocal();
+  Churn(20);
+  WriteLn(Kept(5));
+
+  f := @Twice;
+  Kept := Objectify(@f);
+  f := @Square;
+  WriteLn(Kept(6));
+end.

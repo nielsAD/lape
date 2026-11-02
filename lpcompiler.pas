@@ -692,7 +692,8 @@ begin
     Method := TLapeTree_Method.Create(Result, FStackInfo, Self);
     Method.Statements := TLapeTree_StatementList.Create(Method);
 
-    Callback := _ResVar.New(FStackInfo.addSelfVar(lptConstRef, getGlobalType('ConstPointer')));
+    // (Self is the method that it calls, see TLapeTree_InternalMethod_Objectify.Compile)
+    Callback := _ResVar.New(FStackInfo.addSelfVar(lptNormal, getGlobalType('ConstPointer')));
     Callback.VarType := addManagedType(TLapeType_Method.Create(AType));
 
     Invoke := TLapeTree_Invoke.Create(TLapeTree_ResVar.Create(Callback, Self), Self);
