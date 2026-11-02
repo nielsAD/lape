@@ -68,7 +68,7 @@ begin
     end;
 
     if (psiFunctionWrappers in Initialize) then
-      addDelayedCode(
+      addCode(
         LapeDelayedFlags +
         'function StrGet(var s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
         'function StrGet2(s: string; Index: SizeInt): Char; begin Result := s[Index]; end;' + LineEnding +
@@ -93,7 +93,7 @@ begin
         'erOutOfMemory, erException, erNullPointerException, erNullVariantError,' +
         'erInterfaceNotSupported, erCustomError)',
         'TIFException');
-      addDelayedCode(
+      addCode(
         LapeDelayedFlags +
         'function ExceptionToString(Ex: TIFException; Param: string): string; begin '         +
           'Result := ToString(Ex);'                                                           +

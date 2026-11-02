@@ -108,8 +108,6 @@ type
 
     function getBaseType: ELapeBaseType; virtual;
     function getSize: SizeInt; virtual;
-    function getLo: TLapeGlobalVar; virtual;
-    function getHi: TLapeGlobalVar; virtual;
     function getInitialization: Boolean; virtual;
     function getFinalization: Boolean; virtual;
 
@@ -122,8 +120,6 @@ type
 
     property BaseType: ELapeBaseType read getBaseType;
     property Size: SizeInt read getSize;
-    property Lo: TLapeGlobalVar read getLo;
-    property Hi: TLapeGlobalVar read getHi;
     property NeedInitialization: Boolean read getInitialization;
     property NeedFinalization: Boolean read getFinalization;
 
@@ -181,26 +177,24 @@ type
 
   TLapeGlobalVar = class(TLapeVar)
   protected
-    FBasePtr: Pointer;
     FPtr: Pointer;
+    FOwnsPtr: Boolean;
     FKnown: Boolean;
     function getAsString: lpString; virtual;
     function getAsInt: Int64; virtual;
     procedure setConstant(AConst: Boolean); override;
     procedure setKnown(AKnown: Boolean); virtual;
   public
-    DoManage: Boolean;
-    constructor Create(AVarType: TLapeType; Initialize: Boolean = True; ManagePtr: Boolean = True; AName: lpString = ''; AList: TLapeDeclarationList = nil); reintroduce; overload; virtual;
-    constructor Create(AVarType: TLapeType; Ptr: Pointer; ManagePtr: Boolean = False; AName: lpString = ''; AList: TLapeDeclarationList = nil); reintroduce; overload; virtual;
+    // With memory of its own
+    constructor Create(AVarType: TLapeType; AName: lpString = ''; AList: TLapeDeclarationList = nil); reintroduce; overload; virtual;
+    // What is at Ptr, which stays the caller's
+    constructor Create(AVarType: TLapeType; Ptr: Pointer; AName: lpString = ''; AList: TLapeDeclarationList = nil); reintroduce; overload; virtual;
     destructor Destroy; override;
 
     function CreateCopy(CopyContent: Boolean = True): TLapeGlobalVar; virtual;
-    function CompatibleWith(Other: TLapeGlobalVar): Boolean; virtual;
-
-    function isNull: Boolean; virtual;
-    function Equals(Other: TLapeGlobalVar): Boolean; reintroduce; virtual;
 
     property Ptr: Pointer read FPtr;
+    property OwnsPtr: Boolean read FOwnsPtr;
     property AsString: lpString read getAsString;
     property AsInteger: Int64 read getAsInt;
     // what it holds is known when compiling
@@ -1072,22 +1066,6 @@ begin
     Result := -1;
 end;
 
-function TLapeVar.getLo: TLapeGlobalVar;
-begin
-  if HasType() then
-    Result := VarType.VarLo(nil)
-  else
-    Result := nil;
-end;
-
-function TLapeVar.getHi: TLapeGlobalVar;
-begin
-  if HasType() then
-    Result := VarType.VarHi(nil)
-  else
-    Result := nil;
-end;
-
 function TLapeVar.getInitialization: Boolean;
 begin
   if HasType() then
@@ -1251,39 +1229,29 @@ begin
   FKnown := AKnown;
 end;
 
-constructor TLapeGlobalVar.Create(AVarType: TLapeType; Initialize: Boolean = True; ManagePtr: Boolean = True; AName: lpString = ''; AList: TLapeDeclarationList = nil);
+constructor TLapeGlobalVar.Create(AVarType: TLapeType; AName: lpString = ''; AList: TLapeDeclarationList = nil);
 begin
   inherited Create(AVarType, AName, AList);
 
-  FBasePtr := nil;
-  FPtr := nil;
-  DoManage := ManagePtr;
-
-  if Initialize and (Size > 0) then
-  begin
-    //Assure aligned memory
-    FBasePtr := AllocMem(Size + 16);
-    FPtr := {$IFDEF FPC}Align(FBasePtr, 16){$ELSE}Pointer((PtrUInt(FBasePtr) + 15) and not 15){$ENDIF};
-  end;
+  FOwnsPtr := True;
+  if (Size > 0) then
+    FPtr := AllocMem(Size);
 end;
 
-constructor TLapeGlobalVar.Create(AVarType: TLapeType; Ptr: Pointer; ManagePtr: Boolean = False; AName: lpString = ''; AList: TLapeDeclarationList = nil);
+constructor TLapeGlobalVar.Create(AVarType: TLapeType; Ptr: Pointer; AName: lpString = ''; AList: TLapeDeclarationList = nil);
 begin
-  Create(AVarType, False, ManagePtr, AName, AList);
+  inherited Create(AVarType, AName, AList);
+
   FPtr := Ptr;
 end;
 
 destructor TLapeGlobalVar.Destroy;
 begin
-  if (FPtr <> nil) and DoManage then
+  if (FPtr <> nil) and FOwnsPtr then
   begin
     if HasType() then
       VarType.FinalizeConst(Self);
-
-    if (FBasePtr <> nil) then
-      FreeMem(FBaseptr)
-    else
-      FreeMem(FPtr);
+    FreeMem(FPtr);
   end;
 
   inherited;
@@ -1294,10 +1262,10 @@ type
   TLapeClassType = class of TLapeGlobalVar;
 begin
   if (not CopyContent) then
-    Result := TLapeClassType(Self.ClassType).Create(VarType, FPtr, False, '')
+    Result := TLapeClassType(Self.ClassType).Create(VarType, FPtr)
   else
   begin
-    Result := TLapeClassType(Self.ClassType).Create(VarType, True, True, '');
+    Result := TLapeClassType(Self.ClassType).Create(VarType);
     if HasType() then
     begin
       Result.isConstant := False;
@@ -1307,45 +1275,6 @@ begin
   Result.isConstant := Self.isConstant;
   Result.Known := Self.Known;
   Result.DocPos := FDocPos;
-end;
-
-function TLapeGlobalVar.Equals(Other: TLapeGlobalVar): Boolean;
-var
-  Res: TLapeGlobalVar;
-begin
-  if (Other <> nil) and HasType() then
-    Res := VarType.EvalConst(op_cmp_Equal, Self, Other, [])
-  else
-    Exit(False);
-
-  try
-    Result := (Res.BaseType in LapeBoolTypes) and (Res.AsInteger <> 0);
-  finally
-    Res.Free();
-  end;
-end;
-
-function TLapeGlobalVar.isNull: Boolean;
-var
-  i: Integer;
-  Int: Int64;
-begin
-  Int := AsInteger;
-  Result := (Int = 0);
-
-  if (not Result) and (Int = -1) and HasType() then
-  begin
-    for i := 0 to Size do
-      if (PByteArray(Ptr)^[i] <> 0) then
-        Exit(False);
-
-    Result := True;
-  end;
-end;
-
-function TLapeGlobalVar.CompatibleWith(Other: TLapeGlobalVar): Boolean;
-begin
-  Result := (Other <> nil) and HasType() and VarType.CompatibleWith(Other.VarType);
 end;
 
 function TLapeType.getEvalRes(Op: EOperator; Left, Right: ELapeBaseType): ELapeBaseType;
@@ -1542,9 +1471,9 @@ end;
 function TLapeType.NewGlobalVarP(Ptr: Pointer = nil; AName: lpString = ''): TLapeGlobalVar;
 begin
   if (Ptr = nil) then
-    Result := TLapeGlobalVar.Create(Self, True, True, AName)
+    Result := TLapeGlobalVar.Create(Self, AName)
   else
-    Result := TLapeGlobalVar.Create(Self, Ptr, False, AName);
+    Result := TLapeGlobalVar.Create(Self, Ptr, AName);
 end;
 
 function TLapeType.NewGlobalVarStr(Str: AnsiString; AName: lpString = ''): TLapeGlobalVar;

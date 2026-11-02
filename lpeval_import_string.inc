@@ -95,7 +95,7 @@ addGlobalFunc('Function IsDelimiter(Delimiters, s: string; Index: SizeInt): Bool
 
 addGlobalFunc('function StringOfChar(c: Char; l: SizeInt): string;', @_LapeStringOfChar);
 
-addDelayedCode(LapeDelayedFlags +
+addCode(LapeDelayedFlags +
   'function Chr(IntValue: UInt8):  AnsiChar; overload; begin Result := AnsiChar(IntValue); end;' + LineEnding +
   'function Chr(IntValue: UInt16): WideChar; overload; begin Result := WideChar(IntValue); end;'
 ,  '!addDelayedCode::Chr');

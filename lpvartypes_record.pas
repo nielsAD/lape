@@ -422,7 +422,7 @@ begin
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Right, NullResVar);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar);
-        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3);
+        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['_Move']), SizeOf(Pointer) * 3);
         Result := Left;
         Result.VarType := Self;
       end;
@@ -478,7 +478,7 @@ begin
         Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
         Dest := NullResVar;
 
-        FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['!cmp']), Result, SizeOf(Pointer) * 3);
+        FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['_CompareMem']), Result, SizeOf(Pointer) * 3);
         if (op = op_cmp_NotEqual) then
           FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar);
       end;

@@ -380,10 +380,7 @@ procedure TLapeType_DynArray.VarSetLength(AVar: TLapeGlobalVar; ALen: SizeInt);
 var
   Arr: Pointer;
 begin
-  if AVar.isNull() then
-    Arr := nil
-  else
-    Arr := PPointer(AVar.Ptr)^;
+  Arr := PPointer(AVar.Ptr)^;
 
   VarSetLength(Arr, ALen);
   PPointer(AVar.Ptr)^ := Arr;
@@ -1158,7 +1155,7 @@ begin
         else
           FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, Left, NullResVar);
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, _ResVar.New(IndexHigh), NullResVar);
-        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['!move']), SizeOf(Pointer) * 3);
+        FCompiler.Emitter._InvokeImportedProc(_ResVar.New(FCompiler['_Move']), SizeOf(Pointer) * 3);
         Result := Left;
 
         if wasConstant then

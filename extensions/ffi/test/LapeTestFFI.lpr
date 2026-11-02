@@ -940,8 +940,8 @@ begin
 
       addGlobalType({$IFDEF Lape_NoExtended}'Double'{$ELSE}'Extended'{$ENDIF}, 'lpFloat');
 
-      addDelayedCode('function LapeCallback: Int32; begin Result := 1989; end;');
-      addDelayedCode('function TTest.LapeCallback: Int32; begin Assert(Self.MagicToken = 12345); Result := 1989; end;');
+      addCode('function LapeCallback: Int32; begin Result := 1989; end;');
+      addCode('function TTest.LapeCallback: Int32; begin Assert(Self.MagicToken = 12345); Result := 1989; end;');
 
       addGlobalVar('TFFI_ABI', 'TFFI_ABI('+IntToStr(Ord(ExportABI))+')', 'TEST_ABI').isConstant := True;
 

@@ -331,7 +331,7 @@ procedure InitializeFFI(Compiler: TLapeCompiler; Initialize: FFIInitSet = [fsiNa
 var
   f: TFFIABI;
   s, a: string;
-  t, m: TLapeType;
+  t: TLapeType;
 begin
   if (Compiler = nil) then
     Exit;
@@ -365,49 +365,22 @@ begin
   begin
     t := Compiler.addManagedType(TLapeType_ClosureDisposer.Create(Compiler));
     t := Compiler.addManagedType(TLapeType_DynArray.Create(t, Compiler));
-    Compiler.addGlobalFunc([TLapeType(nil)], [lptVar], [TLapeGlobalVar(nil)], @_ClosureDisposer, '!closuredisposer');
+    Compiler.addGlobalFunc('procedure _ClosureDisposer(var Closure);', @_ClosureDisposer);
     Compiler.addGlobalVar(TLapeType_DynArray(t).NewGlobalVar(nil), '!ffi_natify_closures'); //TFFINatifyClosures
     Compiler.addGlobalVar(TLapeType_DynArray(t).NewGlobalVar(nil), '!ffi_lapify_closures'); //TFFILapifyClosures
   end;
 
-  m := Compiler.getGlobalType('TMethod');
-  Assert(m <> nil);
-
   if (fsiNatify in Initialize) then
   begin
-    Compiler.addGlobalFunc(
-      [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
-      [lptConstRef,         lptVar,              lptNormal],
-      [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
-      Compiler.getBaseType(ltPointer),
-      @_Natify, '!ffi_natify'
-    );
-    Compiler.addGlobalFunc(
-      [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
-      [lptConstRef,         lptVar,              lptNormal],
-      [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
-      m,
-      @_NatifyMethod, '!ffi_natify_method'
-    );
+    Compiler.addGlobalFunc('function _ffi_natify(constref Func; var Closures; Index: SizeInt): Pointer;', @_Natify);
+    Compiler.addGlobalFunc('function _ffi_natify_method(constref Func; var Closures; Index: SizeInt): TMethod;', @_NatifyMethod);
     Compiler.InternalMethodMap['Natify'] := TLapeTree_InternalMethod_Natify;
   end;
 
   if (fsiLapify in Initialize) then
   begin
-    Compiler.addGlobalFunc(
-      [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
-      [lptConstRef,         lptVar,              lptNormal],
-      [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
-      Compiler.getBaseType(ltPointer),
-      @_Lapify, '!ffi_lapify'
-    );
-    Compiler.addGlobalFunc(
-      [TLapeType(nil),      t,                   Compiler.getBaseType(ltSizeInt)],
-      [lptConstRef,         lptVar,              lptNormal],
-      [TLapeGlobalVar(nil), TLapeGlobalVar(nil), TLapeGlobalVar(nil)],
-      m,
-      @_LapifyMethod, '!ffi_lapify_method'
-    );
+    Compiler.addGlobalFunc('function _ffi_lapify(constref Func; var Closures; Index: SizeInt): Pointer;', @_Lapify);
+    Compiler.addGlobalFunc('function _ffi_lapify_method(constref Func; var Closures; Index: SizeInt): TMethod;', @_LapifyMethod);
     Compiler.InternalMethodMap['Lapify'] := TLapeTree_InternalMethod_Lapify;
   end;
 
@@ -657,7 +630,7 @@ begin
   // (cleaned up: an empty one is assigned, which lets go of the closures)
   if (Op = op_Assign) and (Right.VarType = Self) and (Right.VarPos.MemPos = mpMem) and (Right.VarPos.GlobalVar <> nil) and
      (PPointer(Right.VarPos.GlobalVar.Ptr)^ = nil) then
-    with TLapeTree_Invoke.Create('!closuredisposer', FCompiler) do
+    with TLapeTree_Invoke.Create('_ClosureDisposer', FCompiler) do
     try
       addParam(TLapeTree_Var.Create(Left, FCompiler));
       Compile();
@@ -812,9 +785,9 @@ begin
   Index := AddNatifyClosure(TFFINatifyClosures(FClosures.Ptr^), Closure);
 
   if MethodOfObject(Method.Header) then
-    Natify := '!ffi_natify_method'
+    Natify := '_ffi_natify_method'
   else
-    Natify := '!ffi_natify';
+    Natify := '_ffi_natify';
 
   Param := Self.Params[0].Compile();
 
@@ -907,9 +880,9 @@ begin
   Index := AddLapifyClosure(TFFILapifyClosures(FClosures.Ptr^), Closure);
 
   if MethodOfObject(Method.Header) then
-    Lapify := '!ffi_lapify_method'
+    Lapify := '_ffi_lapify_method'
   else
-    Lapify := '!ffi_lapify';
+    Lapify := '_ffi_lapify';
 
   with TLapeTree_Invoke.Create(Lapify, Self) do
   try
