@@ -666,7 +666,7 @@ begin
   with TLapeTree_Invoke.Create('!closuredisposer', FCompiler, Pos) do
   try
     addParam(TLapeTree_ResVar.Create(AVar, FCompiler, Pos));
-    Compile(Offset).Spill(1);
+    Compile(Offset);
   finally
     Free();
   end
@@ -827,7 +827,7 @@ begin
       with ElseBody as TLapeTree_Invoke do
         addParam(TLapeTree_String.Create(FormatLocation(lpeScriptMethodExpected, Self.DocPos), FCompiler));
 
-      Compile(Offset).Spill(1);
+      Compile(Offset);
     finally
       Free();
     end;

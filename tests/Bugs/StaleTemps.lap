@@ -1,0 +1,53 @@
+{$assertions on}
+// A temporary is empty when used again, however the code that used it before was left
+
+type
+  TRec = record a: TIntegerArray; b: String; end;
+
+function Rec(r: TRec): Int32;
+begin
+  Result := Length(r.a) + Length(r.b);
+end;
+
+function Arr(n: Int32): TIntegerArray;
+begin
+  SetLength(Result, n);
+end;
+
+function Left(): Int32;
+var
+  i: Int32;
+begin
+  for i := 0 to 1 do
+    if (Length(Arr(3)) > 0) then
+      Exit(Rec([]));
+end;
+
+procedure Test;
+var
+  i: Int32;
+begin
+  for i := 0 to 2 do
+    if (Length(Arr(3)) > 0) then
+      Break;
+  Assert(Rec([]) = 0);
+
+  for i := 0 to 2 do
+    if (Length(Arr(3)) > 0) then
+      Continue;
+  Assert(Rec([]) = 0);
+
+  try
+    if (Length(Arr(3)) > 0) then
+      raise 'boom';
+  except
+  end;
+  Assert(Rec([]) = 0);
+
+  Assert(Left() = 0);
+end;
+
+begin
+  Test();
+  WriteLn('ok');
+end.

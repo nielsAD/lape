@@ -369,7 +369,7 @@ begin
   try
     addParam(TLapeTree_ResVar.Create(AVar, FCompiler, Pos));
     addParam(TLapeTree_ResVar.Create(ALen, FCompiler, Pos));
-    Compile(Offset).Spill(1);
+    Compile(Offset);
   finally
     Free();
   end;
@@ -484,17 +484,17 @@ begin
     Check := TLapeTree_Invoke.Create('_RangeCheck', FCompiler, Pos);
     with Check do
     try
-      addParam(TLapeTree_ResVar.Create(AIndex.IncLock(), Check));
+      addParam(TLapeTree_ResVar.Create(AIndex, Check));
 
       Len := TLapeTree_InternalMethod_Low.Create(FCompiler, Pos);
-      Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Check));
+      Len.addParam(TLapeTree_ResVar.Create(AVar, Check));
       addParam(TLapeTree_ExprBase(Len.FoldConstants()));
 
       Len := TLapeTree_InternalMethod_High.Create(FCompiler, Pos);
-      Len.addParam(TLapeTree_ResVar.Create(AVar.IncLock(), Check));
+      Len.addParam(TLapeTree_ResVar.Create(AVar, Check));
       addParam(TLapeTree_ExprBase(Len.FoldConstants()));
 
-      Compile(Offset).Spill(1);
+      Compile(Offset);
     finally
       Free();
     end;
@@ -612,7 +612,7 @@ end;
 function TLapeType_DynArray.Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight: TResVar; Flags: ELapeEvalFlags; var Offset: Integer; Pos: PDocPos = nil): TResVar;
 var
   tmpType: ELapeBaseType;
-  tmpVar: TLapeStackTempVar;
+  tmpVar: TLapeStackVar;
   IndexVar, tmpResVar: TResVar;
   wasConstant: Boolean;
   Node: TLapeTree_Base;
@@ -656,7 +656,6 @@ begin
             Offset,
             Pos
           );
-        IndexVar.Spill(1);
       end;
     finally
       FBaseType := tmpType;
@@ -670,7 +669,8 @@ begin
 
     if (ALeft.VarPos.MemPos = mpStack) then
     begin
-      tmpVar := FCompiler.getTempVar(Self);
+      tmpVar := FCompiler.StackInfo.addVar(TLapeStackVar.Create(Self, nil));
+      tmpVar.isConstant := False;
       ALeft := _ResVar.New(tmpVar);
     end;
 
@@ -696,25 +696,25 @@ begin
         TLapeTree_Operator(Condition).Left := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler);
         with TLapeTree_Operator(TLapeTree_Operator(Condition).Left) do
         begin
-          Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
+          Left := TLapeTree_ResVar.Create(ALeft, Condition);
           Right := TLapeTree_GlobalVar.Create('nil', ltPointer, Condition);
         end;
 
         TLapeTree_Operator(Condition).Right := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler);
         with TLapeTree_Operator(TLapeTree_Operator(Condition).Right) do
         begin
-          Left := TLapeTree_ResVar.Create(ALeft.IncLock(), Condition);
-          Right := TLapeTree_ResVar.Create(ARight.IncLock(), Condition);
+          Left := TLapeTree_ResVar.Create(ALeft, Condition);
+          Right := TLapeTree_ResVar.Create(ARight, Condition);
         end;
 
         Body := TLapeTree_InternalMethod_SetLength.Create(Condition);
         with TLapeTree_InternalMethod_SetLength(Body) do
         begin
-          addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), Body));
+          addParam(TLapeTree_ResVar.Create(ALeft, Body));
           addParam(TLapeTree_Integer.Create(0, Body));
         end;
 
-        Compile(Offset).Spill(1);
+        Compile(Offset);
       finally
         Free();
       end;
@@ -733,11 +733,11 @@ begin
         [ALeft, ARight], Offset, Pos)}
 
       with TLapeType_StaticArray(ARight.VarType).Range do
-        VarSetLength(ALeft.IncLock(), _ResVar.New(FCompiler.getConstant(Hi - Lo + 1)), Offset, Pos);
+        VarSetLength(ALeft, _ResVar.New(FCompiler.getConstant(Hi - Lo + 1)), Offset, Pos);
 
       with TLapeTree_Operator.Create(op_Index, FCompiler, Pos) do
       try
-        Left := TLapeTree_ResVar.Create(ALeft.IncLock(), FCompiler, Pos);
+        Left := TLapeTree_ResVar.Create(ALeft, FCompiler, Pos);
         Right := TLapeTree_Integer.Create(0, Left);
 
         CompilerOptions := CompilerOptions - [lcoRangeCheck];
@@ -749,8 +749,8 @@ begin
       IndexVar.VarType := ARight.VarType;
       with TLapeTree_Operator.Create(op_Assign, FCompiler, Pos) do
       try
-        Left := TLapeTree_ResVar.Create(IndexVar.IncLock(), FCompiler, Pos);
-        Right := TLapeTree_ResVar.Create(ARight.IncLock(), Left);
+        Left := TLapeTree_ResVar.Create(IndexVar, FCompiler, Pos);
+        Right := TLapeTree_ResVar.Create(ARight, Left);
         Compile(Offset);
       finally
         Free();
@@ -760,7 +760,7 @@ begin
     begin
       with TLapeTree_InternalMethod_SetLength.Create(FCompiler, Pos) do
       try
-        addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), FCompiler, Pos));
+        addParam(TLapeTree_ResVar.Create(ALeft, FCompiler, Pos));
         addParam(TLapeTree_GlobalVar.Create(FCompiler.getConstant(0), FCompiler, Pos));
 
         Compile(Offset);
@@ -774,7 +774,6 @@ begin
     if (tmpVar <> nil) then
     begin
       FCompiler.Emitter._PopVarToStack(Size, tmpVar.Offset, Offset, Pos);
-      ALeft.Spill(1);
     end;
   end
   else if (op = op_Plus) and (BaseType = ltDynArray) and HasType() and FPType.CompatibleWith(ARight.VarType) then
@@ -807,9 +806,9 @@ begin
       Right := TLapeTree_Integer.Create(1, Left);
       with TLapeTree_Operator(Left) do
       begin
-        Left := TLapeTree_ResVar.Create(IndexVar.IncLock(2), FCompiler, Pos);
+        Left := TLapeTree_ResVar.Create(IndexVar, FCompiler, Pos);
         Right := TLapeTree_InternalMethod_Length.Create(Left);
-        TLapeTree_InternalMethod_Length(Right).addParam(TLapeTree_ResVar.Create(Result.IncLock(), Left));
+        TLapeTree_InternalMethod_Length(Right).addParam(TLapeTree_ResVar.Create(Result, Left));
       end;
 
       Dest := VarResVar;
@@ -818,23 +817,22 @@ begin
       Free();
     end;
 
-    VarSetLength(Result.IncLock(), tmpResVar, Offset, Pos);
+    VarSetLength(Result, tmpResVar, Offset, Pos);
     with TLapeTree_Operator.Create(op_Assign, FCompiler, Pos) do
     try
       Left := TLapeTree_Operator.Create(op_Index, FCompiler, Pos);
       with TLapeTree_Operator(Left) do
       begin
         CompilerOptions := CompilerOptions - [lcoRangeCheck];
-        Left := TLapeTree_ResVar.Create(Result.IncLock(), FCompiler, Pos);
-        Right := TLapeTree_ResVar.Create(IndexVar.IncLock(), Left);
+        Left := TLapeTree_ResVar.Create(Result, FCompiler, Pos);
+        Right := TLapeTree_ResVar.Create(IndexVar, Left);
       end;
-      Right := TLapeTree_ResVar.Create(ARight.IncLock(), Left);
+      Right := TLapeTree_ResVar.Create(ARight, Left);
       Compile(Offset);
     finally
       Free();
     end;
 
-    IndexVar.Spill(1);
     if wasConstant then
       Result.Writeable := False;
   end
@@ -860,10 +858,10 @@ begin
     with TLapeTree_InternalMethod_Insert.Create(FCompiler, Pos) do
     try
       addParam(TLapeTree_ResVar.Create(ARight, FCompiler, Pos));
-      addParam(TLapeTree_ResVar.Create(Result.IncLock(), FCompiler, Pos));
+      addParam(TLapeTree_ResVar.Create(Result, FCompiler, Pos));
       Node := TLapeTree_InternalMethod_Length.Create(FCompiler, Pos);
       TLapeTree_InternalMethod_Length(Node).addParam(
-        TLapeTree_ResVar.Create(Result.IncLock(), FCompiler)
+        TLapeTree_ResVar.Create(Result, FCompiler)
       );
       addParam(Node as TLapeTree_ExprBase);
 
@@ -891,22 +889,22 @@ begin
           Free();
         end;
 
-      Result := _ResVar.New(FCompiler.getTempVar(FPType, 1));
+      Result := _ResVar.New(FCompiler.getTempVar(FPType));
       Result := FPType.Eval(op_Assign, tmpResVar, Result, Eval(op_Index, tmpResVar, ALeft, IndexVar, [lefRangeCheck], Offset, Pos), [], Offset, Pos);
       Result.isConstant := True;
 
       if (Typ is TLapeType_ArrayHelper_Pop) then
         with TLapeTree_InternalMethod_SetLength.Create(FCompiler, Pos) do
         try
-          addParam(TLapeTree_ResVar.Create(ALeft.IncLock(), FCompiler, Pos));
+          addParam(TLapeTree_ResVar.Create(ALeft, FCompiler, Pos));
 
           // Length=High for strings because 1 based indexing...
           if (ALeft.VarType.BaseType in LapeStringTypes) then
           begin
             addParam(TLapeTree_InternalMethod_Pred.Create(FCompiler, Pos));
-            TLapeTree_InternalMethod_Pred(Params[1]).addParam(TLapeTree_ResVar.Create(IndexVar.IncLock(), FCompiler, Pos));
+            TLapeTree_InternalMethod_Pred(Params[1]).addParam(TLapeTree_ResVar.Create(IndexVar, FCompiler, Pos));
           end else
-            addParam(TLapeTree_ResVar.Create(IndexVar.IncLock(), FCompiler, Pos));
+            addParam(TLapeTree_ResVar.Create(IndexVar, FCompiler, Pos));
 
           Compile(Offset);
         finally
@@ -939,14 +937,14 @@ begin
       end
     else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
     begin
-      Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool, 1));
+      Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
       Result.isConstant := True;
       inherited Eval(op_cmp_Equal, Result, ALeft, _ResVar.New(FCompiler.getConstant('nil', ltPointer)), [], Offset, Pos);
     end
     else
       LapeException(lpeImpossible, DocPos);
 
-    Assert(Result.isConstant and ((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0)));
+    Assert(Result.isConstant);
   end else
     Result := inherited;
 end;
@@ -1139,7 +1137,7 @@ begin
       LeftVar := Eval(op_Addr, tmpVar, Left, NullResVar, [], Offset, Pos)
     else
     begin
-      LeftVar := Left.IncLock();
+      LeftVar := Left;
       LeftVar.VarPos.isPointer := False;
       LeftVar.VarType := FCompiler.getPointerType(PType, PConst);
     end;
@@ -1169,12 +1167,8 @@ begin
           Offset,
           Pos
         );
-      tmpVar.Spill(1);
     end;
   finally
-    if (not Left.VarPos.isPointer) or (Left.VarPos.Offset > 0) then
-      LeftVar.Spill(1);
-
     Left.Writeable := not wasConstant;
     Result.CopyFlags(Left);
   end
@@ -1196,7 +1190,7 @@ begin
           FCompiler.Emitter._GrowStack(Size, Offset, Pos);
           Left.VarPos.ForceVariable := True;
 
-          IndexLow := FCompiler.getTempVar(ltPointer, 1);
+          IndexLow := FCompiler.getTempVar(ltPointer);
           FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), _ResVar.New(IndexLow), Left, NullResVar, Offset, Pos);
 
           wasConstant := True;
@@ -1216,10 +1210,7 @@ begin
         Result := Left;
 
         if wasConstant then
-        begin
-          TLapeStackTempVar(IndexLow).Declock(1);
           Left.VarPos.ForceVariable := False;
-        end;
       end;
     end
     else
@@ -1239,7 +1230,7 @@ begin
 
       with TLapeTree_For.Create(FCompiler) do
       try
-        Counter := TLapeTree_ResVar.Create(CounterVar.IncLock(), FCompiler);
+        Counter := TLapeTree_ResVar.Create(CounterVar, FCompiler);
         Limit := TLapeTree_ResVar.Create(_ResVar.New(FCompiler.getConstant(FRange.Hi)), FCompiler);
 
         Body := TLapeTree_Operator.Create(op_Assign, FCompiler);
@@ -1250,16 +1241,15 @@ begin
         end;
 
         IndexOperator := TLapeTree_Operator(Body).Left as TLapeTree_Operator;
-        IndexOperator.Left := TLapeTree_ResVar.Create(Left.IncLock(), IndexOperator);
-        IndexOperator.Right := TLapeTree_ResVar.Create(CounterVar.IncLock(), IndexOperator);
+        IndexOperator.Left := TLapeTree_ResVar.Create(Left, IndexOperator);
+        IndexOperator.Right := TLapeTree_ResVar.Create(CounterVar, IndexOperator);
 
         IndexOperator := TLapeTree_Operator(Body).Right as TLapeTree_Operator;
-        IndexOperator.Left := TLapeTree_ResVar.Create(Right.IncLock(), IndexOperator);
-        IndexOperator.Right := TLapeTree_ResVar.Create(CounterVar.IncLock(), IndexOperator);
+        IndexOperator.Left := TLapeTree_ResVar.Create(Right, IndexOperator);
+        IndexOperator.Right := TLapeTree_ResVar.Create(CounterVar, IndexOperator);
 
-        Compile(Offset).Spill(1);
+        Compile(Offset);
       finally
-        CounterVar.Spill(1);
 
         Free();
       end;
@@ -1296,12 +1286,12 @@ begin
 
     with TLapeTree_For.Create(FCompiler) do
     try
-      Counter := TLapeTree_ResVar.Create(IndexVar.IncLock(), FCompiler);
+      Counter := TLapeTree_ResVar.Create(IndexVar, FCompiler);
       Limit := TLapeTree_ResVar.Create(_ResVar.New(FCompiler.getConstant(FRange.Hi)), FCompiler);
 
       IndexOp := TLapeTree_Operator.Create(op_Index, FCompiler);
-      IndexOp.Left := TLapeTree_ResVar.Create(AVar.IncLock(), FCompiler);
-      IndexOp.Right := TLapeTree_ResVar.Create(IndexVar.IncLock(), FCompiler);
+      IndexOp.Left := TLapeTree_ResVar.Create(AVar, FCompiler);
+      IndexOp.Right := TLapeTree_ResVar.Create(IndexVar, FCompiler);
 
       // Compiler.FinalizeVar
       Body := TLapeTree_InternalMethod_Dispose.Create(FCompiler);
@@ -1310,7 +1300,6 @@ begin
 
       Compile(Offset);
     finally
-      IndexVar.Spill(1);
 
       Free();
     end;
@@ -1375,7 +1364,7 @@ begin
   with TLapeTree_Invoke.Create('UniqueString', FCompiler, Pos) do
   try
     addParam(TLapeTree_ResVar.Create(AVar, FCompiler, Pos));
-    Compile(Offset).Spill(1);
+    Compile(Offset);
   finally
     Free();
   end;
@@ -1450,7 +1439,7 @@ begin
   Assert(Left.VarType is TLapeType_Pointer);
 
   if (op = op_Index) and (lefAssigning in Flags) then
-    VarUnique(Left.IncLock(), Offset, Pos);
+    VarUnique(Left, Offset, Pos);
   Result := inherited;
   if (op = op_Index) and HasType() then
   begin
@@ -1610,7 +1599,6 @@ begin
       if Result.HasType() and (Result.VarType is TLapeType_ShortString) and (FRange.Hi <> TLapeType_ShortString(Result.VarType).Range.Hi) then
       begin
         Result := Eval(op_Assign, Dest, Left, Result, [], Offset, Pos);
-        tmpString.Spill(1);
       end;
     end
   else

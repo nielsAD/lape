@@ -267,13 +267,12 @@ begin
     while (Self.FParams.Count > 0) do
       addParam(Self.FParams[0]);
 
-    Compile(Offset).Spill(1);
+    Compile(Offset);
   finally
     Free();
   end;
 
   Result.isConstant := True;
-  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
 end;
 
 function TLapeTree_InternalMethod_Reverse.Compile(var Offset: Integer): TResVar;
@@ -303,12 +302,11 @@ begin
           try
             Left := TLapeTree_Operator.Create(op_Index, Self);
 
-            TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self);
+            TLapeTree_Operator(Left).Left := TLapeTree_ResVar.Create(ArrayVar, Self);
             TLapeTree_Operator(Left).Right := TLapeTree_GlobalVar.Create(ArrayVar.VarType.VarLo(), Self);
 
             ArrayPointer := Compile(Offset);
           finally
-            ArrayVar.DecLock(1);
 
             Free();
           end;
@@ -326,14 +324,14 @@ begin
     ArrayType := TLapeType_DynArray(ArrayVar.VarType).PType;
     with TLapeTree_Invoke.Create('_ArrayReverse', Self) do
     try
-      addParam(TLapeTree_ResVar.Create(ArrayPointer.IncLock(), Self));
+      addParam(TLapeTree_ResVar.Create(ArrayPointer, Self));
       addParam(TLapeTree_Integer.Create(ArrayType.Size, Self));
 
       case ArrayVar.VarType.BaseType of
         ltDynArray:
           begin
             ArrayHigh := TLapeTree_InternalMethod_High.Create(Self);
-            ArrayHigh.addParam(TLapeTree_ResVar.Create(ArrayVar.IncLock(), Self));
+            ArrayHigh.addParam(TLapeTree_ResVar.Create(ArrayVar, Self));
 
             addParam(ArrayHigh);
           end;
@@ -342,9 +340,8 @@ begin
           addParam(TLapeTree_Integer.Create(TLapeType_StaticArray(ArrayVar.VarType).Range.Hi - TLapeType_StaticArray(ArrayVar.VarType).Range.Lo, Self));
       end;
 
-      Compile(Offset).Spill(1);
+      Compile(Offset);
     finally
-      ArrayPointer.DecLock(1);
 
       Free();
     end;
@@ -395,14 +392,13 @@ begin
 
   with TLapeTree_InternalMethod_Reverse.Create(Self) do
   try
-    addParam(TLapeTree_ResVar.Create(Result.IncLock(), Self));
+    addParam(TLapeTree_ResVar.Create(Result, Self));
 
-    Compile(Offset).Spill(1);
+    Compile(Offset);
   finally
     Free();
   end;
 
-  Assert((Result.VarPos.MemPos <> mpVar) or (Result.Lock > 0));
 end;
 
 function TLapeTree_InternalMethod_Unique.resType: TLapeType;

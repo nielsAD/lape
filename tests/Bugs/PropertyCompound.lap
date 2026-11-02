@@ -1,0 +1,35 @@
+{$assertions on}
+// b.Item[x] += y works out x once, for the read and the write
+
+type
+  TBox = record v: array[0..9] of Int32; end;
+
+var
+  Calls: Int32;
+
+property TBox.Item(i: Int32): Int32;
+begin
+  Result := Self.v[i];
+end;
+
+property TBox.Item(i: Int32; Value: Int32);
+begin
+  Self.v[i] := Value;
+end;
+
+function Idx(i: Int32): Int32;
+begin
+  Inc(Calls);
+  Result := i;
+end;
+
+var
+  b: TBox;
+  k: Int32;
+begin
+  b.Item[Idx(3)] += 2;
+  for k := 0 to 2 do
+    b.Item[Idx(k) + 1] += k;
+  Assert((b.v[2] = 1) and (b.v[3] = 4) and (Calls = 4));
+  WriteLn('ok');
+end.
