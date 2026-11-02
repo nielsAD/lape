@@ -239,7 +239,7 @@ begin
     Result := c.ParseMethodHeader(s, False);
 
     if (Result = nil) then
-      LapeException(lpeInvalidEvaluation);
+      LapeExceptionFmt(lpeExpected, ['Method header']);
   finally
     c.resetTokenizerState(OldState);
   end;

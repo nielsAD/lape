@@ -248,7 +248,7 @@ var
   tmpLeft, tmpRight: TLapeGlobalVar;
 begin
   if (not (BaseType in LapeArrayTypes - [ltStaticArray])) then
-    LapeException(lpeInvalidEvaluation);
+    LapeException(lpeExpectedArray);
   if (not HasType()) then
     Exit;
 
@@ -392,7 +392,7 @@ var
   Lo, Hi: TLapeGlobalVar;
 begin
   if (AVar = nil) or (not AIndex.HasType()) then
-    LapeException(lpeInvalidEvaluation)
+    LapeException(lpeExpressionExpected)
   else if (not (AIndex.VarType.BaseType in LapeOrdinalTypes)) then
     LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString])
   else if (not (lefConstRangeCheck in Flags)) then
@@ -420,7 +420,7 @@ var
   Check, Len: TLapeTree_Invoke;
 begin
   if (not AIndex.HasType()) then
-    LapeException(lpeInvalidEvaluation)
+    LapeException(lpeExpressionExpected)
   else if (not (AIndex.VarType.BaseType in LapeOrdinalTypes)) then
     LapeExceptionFmt(lpeInvalidIndex, [AIndex.VarType.AsString])
   else if (([lefRangeCheck, lefConstRangeCheck]) * Flags = []) then
@@ -509,7 +509,7 @@ begin
     else if (Typ is TLapeType_ArrayHelper_Low) or (Typ is TLapeType_ArrayHelper_High) or (Typ is TLapeType_ArrayHelper_Length) then
       Result := FCompiler.getBaseType(ltSizeInt)
     else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
-      Result := FCompiler.getBaseType(ltEvalBool)
+      Result := FCompiler.getBaseType(ltBoolean)
     else
       Result := nil
   else
@@ -614,9 +614,10 @@ function TLapeType_DynArray.Eval(Op: EOperator; var Dest: TResVar; ALeft, ARight
 var
   tmpType: ELapeBaseType;
   tmpVar: TLapeStackVar;
-  IndexVar, tmpResVar: TResVar;
+  IndexVar, tmpResVar, Differs: TResVar;
   wasConstant: Boolean;
   Node: TLapeTree_Base;
+  JumpOver: TCodeLabel;
 begin
   Assert(FCompiler <> nil);
   Assert(ALeft.VarType is TLapeType_Pointer);
@@ -683,35 +684,15 @@ begin
         'end;'
       , ['Left', 'Right'], [], [ALeft, ARight], Offset, FCompiler.DocPos)}
 
-      with TLapeTree_If.Create(FCompiler) do
-      try
-        Condition := TLapeTree_Operator.Create(op_AND, Self.FCompiler);
+      JumpOver := FCompiler.Emitter.NewLabel();
+      FCompiler.Emitter.JumpTo(JumpOver, FCompiler.Emitter._JmpRIfNot(0, ALeft));
 
-        TLapeTree_Operator(Condition).Left := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler);
-        with TLapeTree_Operator(TLapeTree_Operator(Condition).Left) do
-        begin
-          Left := TLapeTree_Var.Create(ALeft, Condition);
-          Right := TLapeTree_Var.Create(FCompiler.getBaseType(ltPointer).EmptyValue, Condition);
-        end;
+      Differs := NullResVar;
+      Differs := Eval(op_cmp_NotEqual, Differs, ALeft, ARight, []);
+      FCompiler.Emitter.JumpTo(JumpOver, FCompiler.Emitter._JmpRIfNot(0, Differs));
 
-        TLapeTree_Operator(Condition).Right := TLapeTree_Operator.Create(op_cmp_NotEqual, Self.FCompiler);
-        with TLapeTree_Operator(TLapeTree_Operator(Condition).Right) do
-        begin
-          Left := TLapeTree_Var.Create(ALeft, Condition);
-          Right := TLapeTree_Var.Create(ARight, Condition);
-        end;
-
-        Body := TLapeTree_InternalMethod_SetLength.Create(Condition);
-        with TLapeTree_InternalMethod_SetLength(Body) do
-        begin
-          addParam(TLapeTree_Var.Create(ALeft, Body));
-          addParam(TLapeTree_Var.Create(FCompiler.getIntConst(0, ltNativeInt), Body));
-        end;
-
-        Compile();
-      finally
-        Free();
-      end;
+      VarSetLength(ALeft, _ResVar.New(FCompiler.getIntConst(0, ltNativeInt)));
+      FCompiler.Emitter.PlaceLabel(JumpOver);
 
       inherited;
     end
@@ -892,7 +873,7 @@ begin
     end
     else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
     begin
-      Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
+      Result := _ResVar.New(FCompiler.getTempVar(ltBoolean));
       Result.isConstant := True;
       inherited Eval(op_cmp_Equal, Result, ALeft, _ResVar.New(FCompiler.getBaseType(ltPointer).EmptyValue), []);
     end

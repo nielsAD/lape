@@ -126,6 +126,7 @@ type
   PCodePos = ^TCodePos;
 
   TCodeOffset = SizeInt;
+  TCodeLabel = Integer; // a place in the code, see TLapeCodeEmitterBase.NewLabel
   PCodeOffset = ^TCodeOffset;
 
   TStackInc = NativeInt;
@@ -133,14 +134,12 @@ type
   TVarStackOffset = NativeUInt;
   TPointerOffset = NativeInt;
   TParamSize = NativeUInt;
-  EvalBool = LongBool;
 
   PStackInc = ^TStackInc;
   PStackOffset = ^TStackOffset;
   PVarStackOffset = ^TVarStackOffset;
   PPointerOffset = ^TPointerOffset;
   PParamSize = ^TParamSize;
-  PEvalBool = ^EvalBool;
 
   EMemoryPos = (mpNone, mpStack, mpMem, mpVar);
   TLapeEvalProc = procedure(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -531,7 +530,6 @@ const
   ltSizeInt = ltNativeInt;
   ltSizeUInt = ltNativeUInt;
 
-  ltEvalBool = ltLongBool;
 
   {$IFDEF Lape_NoExtended}
   ltFloat = ltDouble;
@@ -578,7 +576,6 @@ const
   LapeRefTypes = LapeArrayTypes - [ltShortString, ltStaticArray];
   LapePointerTypes = [ltPointer] + LapeProcTypes + LapeRefTypes;
   LapeStackTypes = LapeOrdinalTypes + LapeRealTypes + LapeSetTypes;
-  LapeIfTypes = LapeOrdinalTypes + LapeStringTypes + LapePointerTypes + LapeRealTypes + [ltVariant, ltRecord];
   LapeNoInitTypes = LapeOrdinalTypes + LapeRealTypes + [ltUnknown, ltPointer, ltScriptMethod, ltImportedMethod, ltShortString];
 
   NullDocPos: TDocPos = (Line: 0; Col: 0; FileName: '');

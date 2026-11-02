@@ -1,0 +1,26 @@
+// `and` and `or` leave their right side alone when the left one says enough
+function T(Name: String): Boolean;
+begin
+  Write(Name, ' ');
+  Result := True;
+end;
+
+function F(Name: String): Boolean;
+begin
+  Write(Name, ' ');
+  Result := False;
+end;
+
+var
+  b: Boolean;
+  i: Int32;
+begin
+  if F('a') and T('b') then WriteLn('no');
+  WriteLn();
+  if T('a') or F('b') then WriteLn('yes');
+  b := F('a') or (T('b') and F('c')) or T('d');
+  WriteLn(b);
+  while (i < 2) and T('w') do
+    Inc(i);
+  WriteLn();
+end.

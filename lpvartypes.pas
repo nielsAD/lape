@@ -19,7 +19,6 @@ type
   ECompilerOption = (
     lcoAssertions,                     // {$C} {$ASSERTIONS}
     lcoRangeCheck,                     // {$R} {$RANGECHECKS}
-    lcoShortCircuit,                   // {$B} {$BOOLEVAL}
     lcoAlwaysInitialize,               // {$M} {$MEMORYINIT}
     lcoLooseSemicolon,                 // {$L} {$LOOSESEMICOLON}
     lcoLooseSyntax,                    // {$X} {$EXTENDEDSYNTAX}
@@ -48,7 +47,7 @@ type
   EStackFlagsSet = set of EStackFlags;
 
 const
-  Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoShortCircuit, lcoAlwaysInitialize, lcoConstAddress, lcoInheritableRecords];
+  Lape_OptionsDef = [lcoArrayHelpers, lcoCOperators, lcoRangeCheck, lcoHints, lcoAlwaysInitialize, lcoConstAddress, lcoInheritableRecords];
   Lape_PackRecordsDef = 8;
 
 type
@@ -684,7 +683,7 @@ type
 
     function getConst(Value: Pointer; BaseType: ELapeBaseType): TLapeGlobalVar; virtual;
     function getIntConst(Value: Int64; BaseType: ELapeBaseType = ltUnknown): TLapeGlobalVar; virtual; // ltUnknown: the smallest whole number type that holds it
-    function getBoolConst(Value: Boolean; BaseType: ELapeBaseType = ltEvalBool): TLapeGlobalVar; virtual;
+    function getBoolConst(Value: Boolean; BaseType: ELapeBaseType = ltBoolean): TLapeGlobalVar; virtual;
     function getCharConst(Value: Integer; BaseType: ELapeBaseType = ltAnsiChar): TLapeGlobalVar; virtual;
     function getFloatConst(Value: lpFloat; BaseType: ELapeBaseType = ltFloat): TLapeGlobalVar; virtual;
     function getStringConst(Value: lpString; BaseType: ELapeBaseType = ltString): TLapeGlobalVar; virtual;
@@ -1731,10 +1730,15 @@ begin
     else
     begin
       Result := ResType.NewGlobalVarP();
-      if (Right = nil) then
-        EvalProc(Result.Ptr, Left.Ptr, nil)
-      else
-        EvalProc(Result.Ptr, Left.Ptr, Right.Ptr);
+      try
+        if (Right = nil) then
+          EvalProc(Result.Ptr, Left.Ptr, nil)
+        else
+          EvalProc(Result.Ptr, Left.Ptr, Right.Ptr);
+      except
+        FreeAndNil(Result);
+        raise;
+      end;
     end;
   finally
     if (not (op in AssignOperators)) and (Result <> nil) and (Left <> nil) then
@@ -2189,7 +2193,7 @@ begin
       if (Right <> nil) and Right.HasType() then
         LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
       else
-        LapeException(lpeInvalidEvaluation)
+        LapeException(lpeExpressionExpected)
     else
       Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));
 
@@ -2253,7 +2257,7 @@ begin
       if Right.HasType() then
         LapeExceptionFmt(lpeInvalidIndex, [Right.VarType.AsString])
       else
-        LapeException(lpeInvalidEvaluation)
+        LapeException(lpeExpressionExpected)
     else
       Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));
 
@@ -3630,7 +3634,7 @@ begin
   end;
 
   if e then
-    LapeException(lpeInvalidEvaluation);
+    LapeException(lpeImpossible);
 end;
 
 function TLapeCodeEmitter._InvokeImportedProc(AMemPos: TResVar; AParamSize: TParamSize): Integer;
@@ -3648,7 +3652,7 @@ begin
   end;
 
   if e then
-    LapeException(lpeInvalidEvaluation);
+    LapeException(lpeImpossible);
 end;
 
 function TLapeCodeEmitter._InvokeImportedFunc(AMemPos, AResPos: TResVar; AParamSize: TParamSize): Integer;
@@ -3685,7 +3689,7 @@ begin
   end;
 
   if e then
-    LapeException(lpeInvalidEvaluation);
+    LapeException(lpeImpossible);
 end;
 
 function TLapeCodeEmitter._JmpRIf(Jmp: TCodeOffset; Cond: TResVar): Integer;
@@ -3740,7 +3744,7 @@ begin
   end;
 
   if e then
-    LapeException(lpeInvalidEvaluation);
+    LapeException(lpeInvalidJump);
 end;
 
 function TLapeCodeEmitter._JmpRIfNot(Jmp: TCodeOffset; Cond: TResVar): Integer;
@@ -3795,7 +3799,7 @@ begin
   end;
 
   if e then
-    LapeException(lpeInvalidEvaluation);
+    LapeException(lpeInvalidJump);
 end;
 
 function TLapeCodeEmitter._Eval(AProc: TLapeEvalProc; Dest, Left, Right: TResVar): Integer;
@@ -3831,7 +3835,7 @@ begin
   {$I lpcodeemitter_evalcase.inc}
 
   if e then
-    LapeException(lpeInvalidEvaluation);
+    LapeException(lpeImpossible);
 end;
 
 constructor TLapeConstantList.Create;
@@ -4240,7 +4244,7 @@ begin
   Result := FConstants.Get(Self, BaseType, @Value);
 end;
 
-function TLapeCompilerBase.getBoolConst(Value: Boolean; BaseType: ELapeBaseType = ltEvalBool): TLapeGlobalVar;
+function TLapeCompilerBase.getBoolConst(Value: Boolean; BaseType: ELapeBaseType = ltBoolean): TLapeGlobalVar;
 var
   Kept: Int64;
 begin

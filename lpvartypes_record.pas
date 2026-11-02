@@ -296,7 +296,7 @@ begin
           Result := inherited;
           Exit;
         end;
-      Result := FCompiler.getBaseType(ltEvalBool);
+      Result := FCompiler.getBaseType(ltBoolean);
     end
     else
       Result := inherited
@@ -472,20 +472,20 @@ begin
         FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), tmpVar, RightVar, NullResVar);
 
         //Result := NullResVar;
-        //Result.VarType := Compiler.getBaseType(ltEvalBool);
+        //Result.VarType := Compiler.getBaseType(ltBoolean);
         //FCompiler.getDestVar(Dest, Result, op);
 
-        Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
+        Result := _ResVar.New(FCompiler.getTempVar(ltBoolean));
         Dest := NullResVar;
 
         FCompiler.Emitter._InvokeImportedFunc(_ResVar.New(FCompiler['_CompareMem']), Result, SizeOf(Pointer) * 3);
         if (op = op_cmp_NotEqual) then
-          FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar);
+          FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltBoolean, ltUnknown), Result, Result, NullResVar);
       end;
     end
     else
     begin
-      Result := _ResVar.New(FCompiler.getTempVar(ltEvalBool));
+      Result := _ResVar.New(FCompiler.getTempVar(ltBoolean));
       Dest := NullResVar;
 
       SetLength(LoopOffset, FFieldMap.Count);
@@ -508,7 +508,7 @@ begin
         FCompiler.Emitter.PatchJump(LoopOffset[i], FCompiler.Emitter.CodeLen);
 
       if (op = op_cmp_NotEqual) then
-        FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltEvalBool, ltUnknown), Result, Result, NullResVar);
+        FCompiler.Emitter._Eval(getEvalProc(op_NOT, ltBoolean, ltUnknown), Result, Result, NullResVar);
     end
   else
     Result := inherited;

@@ -186,8 +186,6 @@ type
   TLapeType_LongBool = class(TLapeType_Bool)
     public constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''); reintroduce; virtual; end;
 
-  TLapeType_EvalBool = TLapeType_LongBool;
-
   // A set of an enum, a range of one, AnsiChar or Byte: holds the values of Range
   TLapeType_Set = class(TLapeType)
   protected
@@ -808,7 +806,7 @@ begin
   try
     tmpType := Right.VarType;
     if (not (BaseType in LapeOrdinalTypes)) or (not Right.HasType()) or (not (Right.VarType.BaseType in LapeOrdinalTypes)) then
-      LapeException(lpeInvalidEvaluation);
+      LapeExceptionFmt(lpeExpected, ['Ordinal']);
 
     Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, BaseType in LapeSignedOrdinalTypes));
     Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));
@@ -843,7 +841,7 @@ begin
   if Right.HasType() and EvalAsSubType(Op, Right.VarType) then
   begin
     if (not (BaseType in LapeOrdinalTypes)) or (not Right.HasType()) or (not (Right.VarType.BaseType in LapeOrdinalTypes)) then
-      LapeException(lpeInvalidEvaluation);
+      LapeExceptionFmt(lpeExpected, ['Ordinal']);
 
     Left.VarType := FCompiler.getBaseType(DetermineIntType(Size, BaseType in LapeSignedOrdinalTypes));
     Right.VarType := FCompiler.getBaseType(DetermineIntType(Right.VarType.Size, Right.VarType.BaseType in LapeSignedOrdinalTypes));

@@ -1,0 +1,21 @@
+// and/or of constants is a Boolean, also when the left side alone says it
+const
+  A = True and LongBool(5);
+  B = LongBool(0) and True;
+
+procedure Say(x: Boolean); overload;
+begin
+  WriteLn('Boolean ', x);
+end;
+
+procedure Say(x: LongBool); overload;
+begin
+  WriteLn('LongBool ', x);
+end;
+
+begin
+  WriteLn(SizeOf(A), ' ', Ord(A));
+  WriteLn(SizeOf(B), ' ', Ord(B));
+  Say(A);
+  Say(B);
+end.

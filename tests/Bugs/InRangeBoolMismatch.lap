@@ -1,6 +1,3 @@
-// `function InRange: Boolean` was doing PEvalBool(Result)^
-// 1 byte boolean vs 4 byte boolean, this random code trigged it.
-
 type
   TPointArray = array of record x,y: Int32; end;
 

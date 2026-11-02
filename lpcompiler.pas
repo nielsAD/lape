@@ -1526,7 +1526,6 @@ begin
   addGlobalType(TLapeType_Pointer.Create(Self, nil, True), 'ConstPointer');
   addGlobalType(getBaseType(ltString).CreateAlias(), 'string');
   addGlobalType(getBaseType(ltChar).CreateAlias(), 'Char');
-  addGlobalType(getBaseType(ltEvalBool).CreateAlias(), 'EvalBool');
   addGlobalType('packed record Method, Self: Pointer; end;', 'TMethod');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeInt), True)).CreateAlias(), 'SizeInt');
   addGlobalType(getBaseType(DetermineIntType(SizeOf(SizeUInt), False)).CreateAlias(), 'SizeUInt');
@@ -1536,7 +1535,7 @@ begin
   addGlobalType(getBaseType(DetermineIntType(SizeOf(PtrUInt), False)).CreateAlias(), 'PtrUInt');
 
   addGlobalFunc('procedure _Move(var Src, Dst; s: SizeInt);', @_LapeMove);
-  addGlobalFunc('function _CompareMem(var p1, p2; s: SizeInt): EvalBool;', @_LapeCompareMem);
+  addGlobalFunc('function _CompareMem(var p1, p2; s: SizeInt): Boolean;', @_LapeCompareMem);
 
   addGlobalType('array of String', 'TStringArray');
   addGlobalType('array of Boolean', 'TBooleanArray');
@@ -1547,16 +1546,16 @@ begin
   addGlobalType('array of Extended', 'TExtendedArray');
   {$ENDIF}
 
-  addGlobalVar(getBaseType(ltEvalBool).NewGlobalVarStr('1'), 'True').isConstant := True;
-  addGlobalVar(getBaseType(ltEvalBool).NewGlobalVarStr('0'), 'False').isConstant := True;
+  addGlobalVar(getBaseType(ltBoolean).NewGlobalVarStr('1'), 'True').isConstant := True;
+  addGlobalVar(getBaseType(ltBoolean).NewGlobalVarStr('0'), 'False').isConstant := True;
 
   addGlobalFunc('function _LocationToStr(DocPos: Pointer): string;', @_LapeLocationToStr);
 
   addGlobalFunc('procedure _Write(s: string);', @_LapeWrite);
   addGlobalFunc('procedure _WriteLn();', @_LapeWriteLn);
 
-  addGlobalFunc('procedure _Assert(Expr: EvalBool); overload;', @_LapeAssert);
-  addGlobalFunc('procedure _Assert(Expr: EvalBool; Msg: string); overload;', @_LapeAssertMsg);
+  addGlobalFunc('procedure _Assert(Expr: Boolean); overload;', @_LapeAssert);
+  addGlobalFunc('procedure _Assert(Expr: Boolean; Msg: string); overload;', @_LapeAssertMsg);
   addGlobalFunc('procedure _RangeCheck(Idx, Lo, Hi: SizeInt);', @_LapeRangeCheck);
 
   addGlobalFunc('procedure _SStr_SetLen(var s; l, m: UInt8);', @_LapeSStr_SetLen);
@@ -1578,14 +1577,14 @@ begin
   addGlobalFunc('procedure _WStr_Insert(Src: WideString; var Dst: WideString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeWStr_Insert);
   addGlobalFunc('procedure _UStr_Insert(Src: UnicodeString; var Dst: UnicodeString; Pos: SizeInt = 1; Count: SizeInt = 0);', @_LapeUStr_Insert);
 
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Int32);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt32; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_UInt32);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int64; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Int64);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt64; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_UInt64);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Single; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Single);
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Double; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Double);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int32; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Int32);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt32; SortUp: Boolean); overload;', @_LapeArraySortWeighted_UInt32);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Int64; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Int64);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of UInt64; SortUp: Boolean); overload;', @_LapeArraySortWeighted_UInt64);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Single; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Single);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Double; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Double);
   {$IFNDEF Lape_NoExtended}
-  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Extended; SortUp: EvalBool); overload;', @_LapeArraySortWeighted_Extended);
+  addGlobalFunc('procedure _ArraySortWeighted(A: Pointer; ElSize, Len: SizeInt; Weights: array of Extended; SortUp: Boolean); overload;', @_LapeArraySortWeighted_Extended);
   {$ENDIF}
 
   addGlobalFunc('procedure _ArrayReverse(A: Pointer; ElSize, Len: SizeInt); overload;', @_LapeArrayReverse);
@@ -1597,9 +1596,9 @@ begin
 
   addGlobalFunc('procedure FillMem(var p; s: SizeInt; b: UInt8 = 0);', @_LapeFillMem);
   addGlobalFunc('procedure Move(constref Src; var Dst; s: SizeInt);', @_LapeMove);
-  addGlobalFunc('function CompareMem(constref p1, p2; Length: SizeInt): EvalBool;', @_LapeCompareMem);
+  addGlobalFunc('function CompareMem(constref p1, p2; Length: SizeInt): Boolean;', @_LapeCompareMem);
 
-  addGlobalFunc('function Assigned(constref p): EvalBool;', @_LapeAssigned);
+  addGlobalFunc('function Assigned(constref p): Boolean;', @_LapeAssigned);
 
   addGlobalFunc('function BitCount(constref Value; Size: UInt8): UInt32;', @_LapeBitCount);
 
@@ -1966,9 +1965,6 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     if (Name = 'rangechecks') then
       Result := (lcoRangeCheck in FOptions)
     else
-    if (Name = 'booleval') then
-      Result := (lcoShortCircuit in FOptions)
-    else
     if (Name = 'memoryinit') then
       Result := (lcoAlwaysInitialize in FOptions)
     else
@@ -2032,7 +2028,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     else if (Argument = 'off') or (Argument = '-') then
       Exclude(FOptions, Option)
     else
-      LapeException(lpeInvalidCondition, Sender.DocPos);
+      LapeExceptionFmt(lpeExpected, ['On or off'], Sender.DocPos);
   end;
 
   procedure setAlignment(Argument: lpString);
@@ -2047,7 +2043,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
     begin
       FOptions_PackRecords := StrToIntDef(string(Argument), 0);
       if (not (FOptions_PackRecords in [1, 2, 4, 8, 16])) then
-        LapeException(lpeInvalidCondition, Sender.DocPos);
+        LapeExceptionFmt(lpeExpected, ['1, 2, 4, 8 or 16'], Sender.DocPos);
     end;
   end;
 
@@ -2070,7 +2066,7 @@ function TLapeCompiler.HandleDirective(Sender: TLapeTokenizerBase; Directive, Ar
       end;
 
       if (Name = '') then
-        LapeException(lpeInvalidEvaluation, Sender.DocPos);
+        LapeExceptionFmt(lpeExpected, ['Directive name'], Sender.DocPos);
 
       addDefine(Name, Value);
     end else
@@ -2173,9 +2169,6 @@ begin
     else
     if (Directive = 'r') or (Directive = 'rangechecks') then
       setOption(lcoRangeCheck)
-    else
-    if (Directive = 'b') or (Directive = 'booleval') then
-      setOption(lcoShortCircuit)
     else
     if (Directive = 'm') or (Directive = 'memoryinit') then
       setOption(lcoAlwaysInitialize)
@@ -3705,7 +3698,7 @@ end;
 function TLapeCompiler.ParseVarBlock(OneOnly: Boolean = False; ValidEnd: EParserTokenSet = [tk_sym_SemiColon]): TLapeTree_VarList;
 var
   i: Integer;
-  isConst, wasShortCircuit: Boolean;
+  isConst: Boolean;
   Identifiers: TStringArray;
   Positions: TDocPosArray;
   VarType: TLapeType;
@@ -3719,9 +3712,6 @@ begin
   Result := TLapeTree_VarList.Create(Self);
   try
     isConst := (Tokenizer.Tok = tk_kw_Const);
-    wasShortCircuit := isConst and (lcoShortCircuit in FOptions);
-    if wasShortCircuit then
-      FOptions := FOptions - [lcoShortCircuit];
 
     Next();
     repeat
@@ -3824,8 +3814,6 @@ begin
       end;
     until (Next() <> tk_Identifier) or OneOnly;
 
-    if wasShortCircuit then
-      FOptions := FOptions + [lcoShortCircuit];
   except
     Result.Free();
     if (DefExpr <> nil) then
@@ -3939,7 +3927,7 @@ var
     except
       DocPos := OpNode.DocPos;
       OpNode.Free();
-      LapeException(lpeInvalidEvaluation, DocPos);
+      LapeException(lpeExpressionExpected, DocPos);
     end;
 
     try
@@ -4460,7 +4448,7 @@ begin
       if (VarStack.Count = 0) and (Tokenizer.Tok in ReturnOn) then
         Exit(nil)
       else
-        LapeException(lpeInvalidEvaluation, Tokenizer.DocPos);
+        LapeException(lpeExpressionExpected, Tokenizer.DocPos);
 
     Result := ValueOf(VarStack.Pop());
     if DoFold and (not TLapeTree_Base.isEmpty(Result)) then
@@ -4799,12 +4787,10 @@ begin
   Result := TLapeTree_Repeat.Create(Self);
 
   try
-
     Result.Body := ParseStatementList();
     Expect(tk_kw_Until, False, False);
     Result.Condition := ParseExpression();
     ParseExpressionEnd(ExprEnd);
-
   except
     Result.Free();
     raise;
@@ -4816,7 +4802,6 @@ begin
   Result := TLapeTree_Try.Create(Self);
 
   try
-
     Result.Body := ParseStatementList();
     Expect([tk_kw_Except, tk_kw_Finally], False, False);
     if (Tokenizer.Tok = tk_kw_Except) then
@@ -4841,13 +4826,11 @@ begin
   Result := TLapeTree_While.Create(Self);
 
   try
-
     Result.Condition := ParseExpression();
     Expect(tk_kw_Do, False, False);
     Result.Body := ParseStatement(True, ExprEnd + [tk_kw_Else]);
     if (FLastTok = tk_kw_Else) then
       Result.ElseBody := ParseStatement(False, ExprEnd);
-
   except
     Result.Free();
     raise;
@@ -4863,7 +4846,6 @@ begin
   Count := 0;
 
   try
-
     repeat
       if (Tokenizer.Tok in [tk_kw_With, tk_sym_Comma]) then
       begin
@@ -4881,7 +4863,6 @@ begin
 
     Result.Body := ParseStatement(True, ExprEnd);
     FStackInfo.delWith(Count);
-
   except
     FStackInfo.delWith(Count);
     Result.Free();
@@ -5624,7 +5605,7 @@ begin
         if (Method.Method = nil) or (not Method.Method.HasType()) or
            (Method.Method.VarType.BaseType <> ltImportedMethod)
         then
-          LapeException(lpeInvalidEvaluation);
+          LapeExceptionFmt(lpeExpected, ['Imported method']);
 
         Result := Method.Method;
         PPointer(Result.Ptr)^ := Value;

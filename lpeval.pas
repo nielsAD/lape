@@ -130,7 +130,7 @@ var
   LapeEvalRes: TLapeEvalRes;
   LapeEvalArr: TLapeEvalArr;
 
-  LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$BOOLEVAL ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
+  LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
 
   _LapeToString_Set: lpString =
     'function _%sSetToString(ASet: ConstPointer;'                                        + LineEnding +
@@ -196,7 +196,7 @@ var
     'var'                                                                                + LineEnding +
     '  i, OldLen, NewSize: SizeInt;'                                                     + LineEnding +
     '  NewP: Pointer;'                                                                   + LineEnding +
-    '  DoFree: EvalBool;'                                                                + LineEnding +
+    '  DoFree: Boolean;'                                                                + LineEnding +
     'begin'                                                                              + LineEnding +
     '  NewSize := NewLen * ElSize;'                                                      + LineEnding +
     '  DoFree := NewSize <= 0;'                                                          + LineEnding +
@@ -280,7 +280,7 @@ var
     'var'                                                                                + LineEnding +
     '  i, OldLen, NewSize: SizeInt;'                                                     + LineEnding +
     '  NewP: Pointer;'                                                                   + LineEnding +
-    '  DoFree: EvalBool;'                                                                + LineEnding +
+    '  DoFree: Boolean;'                                                                + LineEnding +
     'begin'                                                                              + LineEnding +
     '  NewSize := NewLen;'                                                               + LineEnding +
     '  DoFree := NewSize <= 0;'                                                          + LineEnding +
@@ -539,7 +539,7 @@ end;
 
 procedure _LapeAssigned(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := Assigned(Params^[0]) and Assigned(PPointer(Params^[0])^);
+  PBoolean(Result)^ := Assigned(Params^[0]) and Assigned(PPointer(Params^[0])^);
 end;
 
 procedure _LapeRaiseString(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -549,13 +549,13 @@ end;
 
 procedure _LapeAssert(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (not PEvalBool(Params^[0])^) then
+  if (not PBoolean(Params^[0])^) then
     LapeException(lpeAssertionFailure);
 end;
 
 procedure _LapeAssertMsg(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  if (not PEvalBool(Params^[0])^) then
+  if (not PBoolean(Params^[0])^) then
     LapeExceptionFmt(lpeAssertionFailureMsg, [PlpString(Params^[1])^]);
 end;
 
@@ -597,7 +597,7 @@ end;
 
 procedure _LapeCompareMem(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  PEvalBool(Result)^ := CompareMem(Params^[0], Params^[1], PSizeInt(Params^[2])^);
+  PBoolean(Result)^ := CompareMem(Params^[0], Params^[1], PSizeInt(Params^[2])^);
 end;
 
 procedure _LapeBitCount(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -640,49 +640,49 @@ procedure _LapeArraySortWeighted_Int32(const Params: PParamArray); {$IFDEF Lape_
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int32>;
 begin
-  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PBoolean(Params^[4])^);
 end;
 
 procedure _LapeArraySortWeighted_UInt32(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<UInt32>;
 begin
-  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PBoolean(Params^[4])^);
 end;
 
 procedure _LapeArraySortWeighted_Int64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Int64>;
 begin
-  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PBoolean(Params^[4])^);
 end;
 
 procedure _LapeArraySortWeighted_UInt64(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<UInt64>;
 begin
-  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PBoolean(Params^[4])^);
 end;
 
 procedure _LapeArraySortWeighted_Single(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Single>;
 begin
-  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PBoolean(Params^[4])^);
 end;
 
 procedure _LapeArraySortWeighted_Double(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Double>;
 begin
-  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PBoolean(Params^[4])^);
 end;
 
 procedure _LapeArraySortWeighted_Extended(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 type
   Sorter = {$IFDEF FPC}specialize{$ENDIF} TLapeSorter<Extended>;
 begin
-  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PEvalBool(Params^[4])^);
+  Sorter.QuickSort(PByte(Params^[0]^), PSizeInt(Params^[1])^, PSizeInt(Params^[2])^, Sorter.TWeightArr(Params^[3]^), PBoolean(Params^[4])^);
 end;
 
 procedure _LapeArrayReverse(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -981,7 +981,7 @@ end;
 
 procedure LapeEval_Error(const Dest, Left, Right: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
-  LapeException(lpeInvalidEvaluation);
+  LapeException(lpeImpossible);
 end;
 
 procedure ClearEvalRes(var Arr: TLapeEvalRes);

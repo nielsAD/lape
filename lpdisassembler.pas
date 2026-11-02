@@ -121,7 +121,7 @@ var
   procedure DoIsScriptMethod; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('IsScriptMethod');
-    _WriteLn('IncStack %d', [SizeOf(EvalBool) - SizeOf(Pointer)]);
+    _WriteLn('IncStack %d', [SizeOf(Boolean) - SizeOf(Pointer)]);
     Inc(Code, ocSize);
   end;
 

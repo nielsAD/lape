@@ -40,6 +40,12 @@ type
     FStrings: array of RawByteString;
     FStringCount: Integer;
     FCurrentDocPos: TDocPos;
+    // Where each is (-1: not yet) and the jumps that wait for it
+    FLabels: array of record
+      At: Integer;
+      Jumps: TIntegerArray;
+    end;
+    FLabelCount: Integer;
 
     FMaxStack: Integer;
     FStackPos: Integer;
@@ -87,6 +93,12 @@ type
     function NewStack(Size: Integer = 0; Max: Integer = 0): Integer; virtual;
 
     procedure PatchJump(At, Target: Integer); virtual;
+    // A place in the code that jumps can go to before it is known
+    function NewLabel: TCodeLabel; virtual;
+    procedure PlaceLabel(ALabel: TCodeLabel); virtual;
+    function PlaceNewLabel: TCodeLabel; virtual;
+    // The jump at At goes to ALabel
+    procedure JumpTo(ALabel: TCodeLabel; At: Integer); virtual;
     function PatchTry(At, Target: Integer; JmpFinally: UInt32): Integer; virtual;
     function PatchUnused(At: Integer): Integer; virtual;
     function PatchJmpR(At, Target: Integer): Integer; virtual;
@@ -334,6 +346,8 @@ begin
   FDocPosCount := 0;
   FMethods := nil;
   FMethodCount := 0;
+  FLabels := nil;
+  FLabelCount := 0;
   FStrings := nil;
   FStringCount := 0;
 
@@ -371,6 +385,48 @@ procedure TLapeCodeEmitterBase.PatchJump(At, Target: Integer);
 begin
   Assert((At >= 0) and (At + ocSize + SizeOf(TCodeOffset) <= FCodeCur));
   PCodeOffset(@FCode[At + ocSize])^ := Target - At;
+end;
+
+function TLapeCodeEmitterBase.NewLabel: TCodeLabel;
+begin
+  if (FLabelCount >= Length(FLabels)) then
+    SetLength(FLabels, 64 + FLabelCount * 2);
+
+  Result := FLabelCount;
+  FLabels[Result].At := -1;
+  Inc(FLabelCount);
+end;
+
+procedure TLapeCodeEmitterBase.PlaceLabel(ALabel: TCodeLabel);
+var
+  i: Integer;
+begin
+  Assert(FLabels[ALabel].At < 0);
+
+  FLabels[ALabel].At := FCodeCur;
+  for i := 0 to High(FLabels[ALabel].Jumps) do
+    PatchJump(FLabels[ALabel].Jumps[i], FCodeCur);
+  FLabels[ALabel].Jumps := nil;
+end;
+
+function TLapeCodeEmitterBase.PlaceNewLabel: TCodeLabel;
+begin
+  Result := NewLabel();
+  PlaceLabel(Result);
+end;
+
+procedure TLapeCodeEmitterBase.JumpTo(ALabel: TCodeLabel; At: Integer);
+var
+  i: Integer;
+begin
+  if (FLabels[ALabel].At >= 0) then
+    PatchJump(At, FLabels[ALabel].At)
+  else
+  begin
+    i := Length(FLabels[ALabel].Jumps);
+    SetLength(FLabels[ALabel].Jumps, i + 1);
+    FLabels[ALabel].Jumps[i] := At;
+  end;
 end;
 
 function TLapeCodeEmitterBase.PatchTry(At, Target: Integer; JmpFinally: UInt32): Integer;
@@ -544,7 +600,7 @@ end;
 function TLapeCodeEmitterBase._IsScriptMethod: Integer;
 begin
   Result := _op(ocIsScriptMethod);
-  DecStack(SizeOf(Pointer) - SizeOf(EvalBool));
+  DecStack(SizeOf(Pointer) - SizeOf(Boolean));
 end;
 
 function TLapeCodeEmitterBase._GetExceptionMessage: Integer;

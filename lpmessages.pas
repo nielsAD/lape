@@ -87,11 +87,10 @@ const
   lpeInvalidAssignment = 'Invalid assignment';
   lpeInvalidCast = 'Invalid cast';
   lpeInvalidCaseStatement = 'Invalid case statement';
-  lpeInvalidCondition = 'Invalid condition';
+  lpeInvalidCondition = 'Type "%s" cannot be a condition';
   lpeInvalidConstructMethod = 'Invalid construct method';
   lpeInvalidConstructMethod1 = 'Invalid construct method: "%s"';
   lpeInvalidCompareMethod = 'Invalid compare method';
-  lpeInvalidEvaluation = 'Invalid evaluation';
   lpeInvalidForward = 'Forwarded declaration "%s" not resolved';
   lpeInvalidLabel = 'Invalid label';
   lpeCannotJumpToLabel = 'Cannot jump to label "%s"';

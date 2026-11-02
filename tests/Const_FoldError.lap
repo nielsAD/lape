@@ -1,0 +1,17 @@
+// Working out a constant can fail: then it is left for when the program runs, and nothing stays behind
+const
+  A = True or (1 div 0 > 0);
+
+var
+  i: Int32 = 0;
+  b: Boolean;
+
+begin
+  WriteLn(A);
+  if False and (1 div 0 > 0) then
+    WriteLn('no');
+  b := False and (1 div 0 > 0);
+  WriteLn(b);
+  if (i > 0) and (1 div 0 > 0) then
+    WriteLn('no');
+end.
