@@ -10,8 +10,8 @@ type
 
 procedure TEmptyRec.Test; static;
 begin
-  Assert(X = 10);
-  Assert(Y = 20);
+  Assert(Self.X = 10);
+  Assert(Self.Y = 20);
 end;
 
 procedure TEmptyInheritedRec.Test;

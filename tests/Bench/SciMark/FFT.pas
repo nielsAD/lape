@@ -1,5 +1,3 @@
-procedure FFT_transform(_N: Integer; data: TDoubleArray); forward;
-procedure FFT_inverse(_N: Integer; data: TDoubleArray); forward;
 
 
 function int_log2(n: Integer): Integer;

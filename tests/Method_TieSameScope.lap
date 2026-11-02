@@ -1,0 +1,14 @@
+// A tie between overloads of one scope picks neither
+procedure Bar(a: Int64; b: Int32);
+begin
+end;
+
+procedure Bar(a: Int32; b: Int64);
+begin
+end;
+
+var
+  i: Int32;
+begin
+  Bar(i, i);
+end.

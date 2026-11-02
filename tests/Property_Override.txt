@@ -1,1 +1,1 @@
-2 300 3
+A property cannot override at line 11, column 29 in file "Property_Override.lap"

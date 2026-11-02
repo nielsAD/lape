@@ -1,7 +1,7 @@
 {$assertions on}
 
 begin
-  Assert(Length({$macro includedfiles}) = 0);
+  Assert(Length({$macro includedfiles}) = 2);
 end;
 
 {$i ../include.inc}

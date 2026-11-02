@@ -1,0 +1,17 @@
+function f: Int32;
+begin
+  Result := 1;
+end;
+
+function Outer: Int32;
+  function f: Int32; static; override;
+  begin
+    Result := 2;
+  end;
+begin
+  Result := f();
+end;
+
+begin
+  WriteLn(Outer());
+end.

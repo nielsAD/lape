@@ -19,18 +19,14 @@ type
   TLapeTree_Invoke = class(TLapeTree_DestExprBase)
   protected
     FCallee: TLapeTree_ExprBase;
-    FPicked: TLapeGlobalVar;
     FParams: TLapeExpressionList;
 
     procedure CheckHints(VarType: TLapeType); virtual;
-    procedure CheckPickedMethod(VarType: TLapeType); virtual;
+    procedure CheckCalled(VarType: TLapeType); virtual;
+    procedure NoMethodFits(const Methods: TLapeDeclArray); virtual;
 
-    // TLapeTree_OpenArray casting for overloaded.getMethodIndex
-    function CastsExactly(Index: Integer; ParamType: TLapeType): Boolean;
-    function CastsLoosely(Index: Integer; ParamType: TLapeType): Boolean;
-
-    function PickOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType): Integer; virtual;
-    function PickedMethod: TLapeGlobalVar; virtual;
+    // What is called, and the Self to give it when it has one
+    function EmitCallee(out SelfVar: TResVar): TResVar; virtual;
 
     procedure setCallee(Node: TLapeTree_ExprBase); virtual;
 
@@ -39,11 +35,11 @@ type
     function getParamTypesStr: lpString; virtual;
 
     // AVar on the stack: its address (Addr), or a copy
-    function pushToStack(AVar: TResVar; Addr: Boolean = True): TResVar; virtual;
+    procedure pushToStack(AVar: TResVar); virtual;
     procedure pushRefParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar); virtual;
     procedure pushValueParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar); virtual;
     // The Self that a method of an object holds, on the stack
-    procedure pushSelf(Called: TResVar); virtual;
+    procedure pushSelf(Called, SelfVar: TResVar); virtual;
     procedure pushParams(Method: TLapeType_Method; var Args: TResVarArray; Imported: Boolean); virtual;
 
     function CallScript(Called: TResVar; var Args: TResVarArray; ResultVar: TResVar): TResVar; virtual;
@@ -57,7 +53,6 @@ type
     constructor Create(Ident: TLapeTree_ExprBase; ASource: TLapeTree_Base); reintroduce; overload; virtual;
     constructor Create(Ident: lpString; ACompiler: TLapeCompilerBase); reintroduce;overload; virtual;
     constructor Create(Ident: lpString; ASource: TLapeTree_Base); reintroduce; overload; virtual;
-    constructor Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base); reintroduce; overload; virtual;
     destructor Destroy; override;
 
     procedure ClearCache; override;
@@ -70,34 +65,38 @@ type
 
     // callee: what method is being called
     function Compile: TResVar; override;
-    property Callee: TLapeTree_ExprBase read FCallee write setCallee;
+    property Callee: TLapeTree_ExprBase read FCallee;
     // what params to invoke with
     property Params: TLapeExpressionList read FParams;
   end;
 
   // object `new` constructor
+  // A call of a value: a method variable, what a call returned, a method that is already known
+  TLapeTree_InvokePtr = class(TLapeTree_Invoke)
+  protected
+    function EmitCallee(out SelfVar: TResVar): TResVar; override;
+  public
+    constructor Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base); reintroduce; overload; virtual;
+  end;
+
   TLapeTree_InvokeConstruct = class(TLapeTree_Invoke)
   protected
     FObjectType: TLapeType;
-    FHasConstruct: Boolean;
 
-    procedure CheckPickedMethod(VarType: TLapeType); override;
+    procedure CheckCalled(VarType: TLapeType); override;
     function CompileInto(ResultVar: TResVar): TResVar; override;
   public
     constructor Create(ObjType: TLapeType; ASource: TLapeTree_Base); reintroduce; overload; virtual;
-    property HasConstruct: Boolean read FHasConstruct;
   end;
 
   TLapeTree_InvokeProperty = class(TLapeTree_Invoke)
   protected
-    FPropertyType: EPropertyType;
     FAssignOp: EOperator;
 
-    procedure CheckPickedMethod(VarType: TLapeType); override;
-    function PickOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType): Integer; override;
-  public
+    procedure NoMethodFits(const Methods: TLapeDeclArray); override;
+    function EmitCallee(out SelfVar: TResVar): TResVar; override;
     function Compile: TResVar; override;
-    property PropertyType: EPropertyType read FPropertyType write FPropertyType;
+  public
     property AssignOp: EOperator read FAssignOp write FAssignOp;
   end;
 
@@ -128,7 +127,7 @@ begin
   if not (lcoHints in FCompilerOptions) then
     Exit;
 
-  if (VarType is TLapeType_Method) and TLapeType_Method(VarType).HasHints() then
+  if TLapeType_Method(VarType).HasHints() then
     with TLapeType_Method(VarType).Hints do
     begin
       if (ldhDeprecated in Types) then
@@ -142,97 +141,40 @@ begin
     end;
 end;
 
-procedure TLapeTree_Invoke.CheckPickedMethod(VarType: TLapeType);
-var
-  i: Integer;
-  Overloaded: TLapeType_OverloadedMethod;
-  Msg, Available: String;
+procedure TLapeTree_Invoke.CheckCalled(VarType: TLapeType);
 begin
-  if (not (VarType is TLapeType_Method)) and (not (VarType is TLapeType_OverloadedMethod)) then
+  if (not (VarType is TLapeType_Method)) then
     LapeException(lpeCannotInvoke, FCallee.DocPos);
 
   // disallow calling object construct methods normally: only `new` or the inherited of a Construct, which give the object
-  if (VarType is TLapeType_Method) and (TLapeType_Method(VarType).Res is TLapeType_Object) and
-     (VarType.Name = 'Construct') and (not (Self is TLapeTree_InvokeConstruct)) then
+  if (TLapeType_Method(VarType).Res is TLapeType_Object) and (VarType.Name = 'Construct') and (not (Self is TLapeTree_InvokeConstruct)) then
     LapeException(lpeCannonInvokeConstruct, FCallee.DocPos);
-
-  if (VarType is TLapeType_OverloadedMethod) then
-  begin
-    Overloaded := TLapeType_OverloadedMethod(VarType);
-
-    if (Overloaded.MethodCount > 0) then
-    begin
-      Available := Format(lphAvailableMethods, [GetMethodName(VarType)]);
-      for i := 0 to Overloaded.MethodCount - 1 do
-      begin
-        if (i > 0) then
-          Available := Available + LineEnding;
-        Available := Available + '> ' + MethodToString(Overloaded.Methods[i].VarType);
-      end;
-    end else
-      Available := '';
-
-    if (Overloaded.MethodDef = mdProperty) then
-      Msg := lpeNoProperty
-    else
-      Msg := lpeNoOverloadedMethod;
-
-    if (Available <> '') then
-      LapeExceptionFmt(Msg, [getParamTypesStr()], FCallee.DocPos, Available)
-    else
-      LapeExceptionFmt(Msg, [getParamTypesStr()], FCallee.DocPos);
-  end;
 end;
 
-function TLapeTree_Invoke.CastsExactly(Index: Integer; ParamType: TLapeType): Boolean;
-begin
-  Result := (FParams[Index] is TLapeTree_OpenArray) and TLapeTree_OpenArray(FParams[Index]).canCastTo(ParamType, True);
-end;
-
-function TLapeTree_Invoke.CastsLoosely(Index: Integer; ParamType: TLapeType): Boolean;
-begin
-  Result := (FParams[Index] is TLapeTree_OpenArray) and TLapeTree_OpenArray(FParams[Index]).canCastTo(ParamType, False);
-end;
-
-function TLapeTree_Invoke.PickOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType): Integer;
+procedure TLapeTree_Invoke.NoMethodFits(const Methods: TLapeDeclArray);
 var
-  ObjectType: TLapeType;
-  ParamTypes: TLapeTypeArray;
+  i: Integer;
+  Msg, Available: String;
 begin
-  ObjectType := nil;
-  if (FCallee is TLapeTree_Member) and (TLapeTree_Member(FCallee).Left <> nil) then
-    ObjectType := TLapeTree_Member(FCallee).Left.resType()
-  else if (FCallee is TLapeTree_Operator) and (TLapeTree_Operator(FCallee).Left <> nil) then
-    ObjectType := TLapeTree_Operator(FCallee).Left.resType();
-
-  // as they are, then with open array casting
-  ParamTypes := getParamTypes();
-  Result := Overloaded.getMethodIndex(ParamTypes, ExpectType, ObjectType);
-  if (Result < 0) then
-    Result := Overloaded.getMethodIndex(ParamTypes, ExpectType, ObjectType, {$IFDEF FPC}@{$ENDIF}CastsExactly);
-  if (Result < 0) then
-    Result := Overloaded.getMethodIndex(ParamTypes, ExpectType, ObjectType, {$IFDEF FPC}@{$ENDIF}CastsLoosely);
-end;
-
-function TLapeTree_Invoke.PickedMethod: TLapeGlobalVar;
-var
-  Typ: TLapeType;
-  Index: Integer;
-begin
-  Result := nil;
-  if isEmpty(FCallee) then
-    Exit;
-  Typ := FCallee.resType();
-  if (not (Typ is TLapeType_OverloadedMethod)) then
-    Exit;
-
-  if (FPicked = nil) then
+  Available := '';
+  for i := 0 to High(Methods) do
   begin
-    Index := PickOverload(TLapeType_OverloadedMethod(Typ), nil);
-    if (Index >= 0) then
-      FPicked := TLapeType_OverloadedMethod(Typ).Methods[Index];
+    if (i = 0) then
+      Available := Format(lphAvailableMethods, [GetMethodName(TLapeGlobalVar(Methods[0]).VarType)])
+    else
+      Available := Available + LineEnding;
+    Available := Available + '> ' + MethodToString(TLapeGlobalVar(Methods[i]).VarType);
   end;
-  Result := FPicked;
+
+  if IsProperty(Methods) then
+    Msg := lpeNoProperty
+  else
+    Msg := lpeNoOverloadedMethod;
+
+  if (Available <> '') then
+    LapeExceptionFmt(Msg, [getParamTypesStr()], FCallee.DocPos, Available)
+  else
+    LapeExceptionFmt(Msg, [getParamTypesStr()], FCallee.DocPos);
 end;
 
 procedure TLapeTree_Invoke.setCallee(Node: TLapeTree_ExprBase);
@@ -258,15 +200,8 @@ begin
 end;
 
 function TLapeTree_Invoke.getParamTypes: TLapeTypeArray;
-var
-  i: Integer;
 begin
-  SetLength(Result, FParams.Count);
-  for i := 0 to FParams.Count - 1 do
-    if isEmpty(FParams[i]) then
-      Result[i] := nil
-    else
-      Result[i] := FParams[i].resType();
+  Result := ExprTypes(FParams);
 end;
 
 function TLapeTree_Invoke.getParamTypesStr: lpString;
@@ -296,8 +231,8 @@ constructor TLapeTree_Invoke.Create(Ident: TLapeTree_ExprBase; ACompiler: TLapeC
 begin
   inherited Create(ACompiler);
 
-  setCallee(Ident);
   FParams := TLapeExpressionList.Create(nil, dupAccept, False);
+  setCallee(Ident);
   FConstant := bFalse;
 end;
 
@@ -312,18 +247,13 @@ end;
 constructor TLapeTree_Invoke.Create(Ident: lpString; ACompiler: TLapeCompilerBase);
 begin
   Assert(ACompiler <> nil);
-  Create(TLapeTree_Var.Create(ACompiler[Ident], ACompiler), ACompiler);
+  Create(GlobalNode(Ident, ACompiler), ACompiler);
 end;
 
 constructor TLapeTree_Invoke.Create(Ident: lpString; ASource: TLapeTree_Base);
 begin
   Assert((ASource <> nil) and (ASource.Compiler <> nil));
-  Create(TLapeTree_Var.Create(ASource.Compiler[Ident], ASource), ASource);
-end;
-
-constructor TLapeTree_Invoke.Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base);
-begin
-  Create(TLapeTree_Var.Create(Ident, ASource), ASource);
+  Create(GlobalNode(Ident, ASource.Compiler, ASource), ASource);
 end;
 
 destructor TLapeTree_Invoke.Destroy;
@@ -342,7 +272,8 @@ end;
 
 procedure TLapeTree_Invoke.ClearCache;
 begin
-  FPicked := nil;
+  if (FCallee is TLapeTree_MethodByName) then
+    FCallee.ClearCache();
   inherited;
 end;
 
@@ -355,22 +286,10 @@ begin
 end;
 
 function TLapeTree_Invoke.setExpectedType(ExpectType: TLapeType): TLapeTree_Base;
-var
-  Typ: TLapeType;
-  Index: Integer;
 begin
   Result := Self;
-  if (ExpectType = nil) or isEmpty(FCallee) then
-    Exit;
-
-  FPicked := nil;
-  Typ := FCallee.resType();
-  if (Typ is TLapeType_OverloadedMethod) then
-  begin
-    Index := PickOverload(TLapeType_OverloadedMethod(Typ), ExpectType);
-    if (Index >= 0) then
-      FPicked := TLapeType_OverloadedMethod(Typ).Methods[Index];
-  end;
+  if (FCallee is TLapeTree_MethodByName) then
+    FCallee.setExpectedType(ExpectType);
 end;
 
 function TLapeTree_Invoke.resType: TLapeType;
@@ -378,13 +297,15 @@ var
   Typ: TLapeType;
   Picked: TLapeGlobalVar;
 begin
-  if (FResType = nil) and (not isEmpty(FCallee)) then
+  if (FResType = nil) and (FCallee <> nil) then
   begin
-    Picked := PickedMethod();
-    if (Picked <> nil) then
-      Typ := Picked.VarType
-    else
-      Typ := FCallee.resType();
+    Typ := FCallee.resType();
+    if (FCallee is TLapeTree_MethodByName) then
+    begin
+      Picked := TLapeTree_MethodByName(FCallee).Resolve(FParams);
+      if (Picked <> nil) then
+        Typ := Picked.VarType;
+    end;
 
     if (Typ is TLapeType_Method) then
       FResType := TLapeType_Method(Typ).Res;
@@ -393,36 +314,20 @@ begin
   Result := inherited;
 end;
 
-function TLapeTree_Invoke.pushToStack(AVar: TResVar; Addr: Boolean = True): TResVar;
+procedure TLapeTree_Invoke.pushToStack(AVar: TResVar);
 var
-  NullVar: TResVar;
+  Stack: TResVar;
 begin
   if (AVar.VarPos.MemPos = mpStack) then
-    Exit(AVar);
-  if (AVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) and ((AVar.VarType <> nil) or Addr) then
-  begin
-    Result := NullResVar;
-    NullVar := NullResVar;
-
-    Result.VarPos.MemPos := mpStack;
-    if Addr then
-    begin
-      Result.VarType := FCompiler.getBaseType(ltPointer);
-      FCompiler.Emitter.DocPos := DocPos;
-      FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Result, AVar, NullResVar);
-    end
-    else
-    begin
-      FCompiler.Emitter.DocPos := DocPos;
-      if AVar.HasType() and AVar.VarType.NeedInitialization then
-        FCompiler.Emitter._InitStack(AVar.VarType.Size);
-      Result.VarType := AVar.VarType;
-      FCompiler.Emitter.DocPos := DocPos;
-      Result := AVar.VarType.Eval(op_Assign, NullVar, Result, AVar, [lefAssigningParam]);
-    end;
-  end
-  else
+    Exit;
+  if (AVar.VarPos.MemPos = NullResVar.VarPos.MemPos) then
     LapeException(lpeImpossible, FCompiler.DocPos);
+
+  Stack := NullResVar;
+  Stack.VarPos.MemPos := mpStack;
+  Stack.VarType := FCompiler.getBaseType(ltPointer);
+  FCompiler.Emitter.DocPos := DocPos;
+  FCompiler.Emitter._Eval(getEvalProc(op_Addr, ltUnknown, ltUnknown), Stack, AVar, NullResVar);
 end;
 
 procedure TLapeTree_Invoke.pushRefParam(Method: TLapeType_Method; const Param: TLapeParameter; ArgExpr: TLapeTree_ExprBase; var Arg: TResVar);
@@ -449,7 +354,7 @@ begin
     NullVar := NullResVar;
     Copy := _ResVar.New(FCompiler.getTempVar(Param.VarType));
     FCompiler.Emitter.DocPos := DocPos;
-    Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, [lefAssigningParam]);
+    Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, []);
   end;
 
   pushToStack(Arg);
@@ -495,24 +400,31 @@ begin
   if Copy.VarType.NeedInitialization then
     FCompiler.Emitter._InitStack(Copy.VarType.Size);
   FCompiler.Emitter.DocPos := DocPos;
-  Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, [lefAssigningParam]);
+  Arg := Param.VarType.Eval(op_Assign, NullVar, Copy, Arg, []);
   Assert((Arg.VarPos.MemPos = mpStack) and Arg.HasType());
 end;
 
-procedure TLapeTree_Invoke.pushSelf(Called: TResVar);
+procedure TLapeTree_Invoke.pushSelf(Called, SelfVar: TResVar);
 var
-  SelfPtr: TResVar;
+  SelfPtr, Stack, NullVar: TResVar;
 begin
-  if (Called.VarType is TLapeType_MethodOfObject) and (Called.VarPos.MemPos <> mpStack) then
+  if (SelfVar.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+    pushToStack(SelfVar)
+  else if (Called.VarType is TLapeType_MethodOfObject) and (Called.VarPos.MemPos <> mpStack) then
   begin
-    if (Called.VarType is TLapeType_MethodOfType) and ((FCallee is TLapeTree_Var) and (TLapeTree_Var(FCallee).GlobalVar <> nil)) then
-      LapeExceptionFmt(lpeStaticMethodExpected, [GetMethodName(TLapeTree_Var(FCallee).GlobalVar.VarType)], Callee.DocPos);
+    if (Called.VarType is TLapeType_MethodOfType) and (Called.VarPos.MemPos = mpMem) and (Called.VarPos.GlobalVar is TLapeMethod) then
+      LapeExceptionFmt(lpeStaticMethodExpected, [GetMethodName(Called.VarType)], Callee.DocPos);
 
     SelfPtr := Called;
     SelfPtr.VarType := FCompiler.getBaseType(ltPointer);
     SelfPtr.IncOffset(SizeOf(Pointer));
 
-    pushToStack(SelfPtr, False);
+    Stack := NullResVar;
+    Stack.VarPos.MemPos := mpStack;
+    Stack.VarType := SelfPtr.VarType;
+    NullVar := NullResVar;
+    FCompiler.Emitter.DocPos := DocPos;
+    SelfPtr.VarType.Eval(op_Assign, NullVar, Stack, SelfPtr, []);
   end;
 end;
 
@@ -645,12 +557,50 @@ begin
   Assert(Result.VarPos.MemPos = ScriptRes.VarPos.MemPos);
 end;
 
+function TLapeTree_Invoke.EmitCallee(out SelfVar: TResVar): TResVar;
+var
+  Picked: TLapeGlobalVar;
+  Header: TLapeType_Method;
+  LeftVar: TResVar;
+begin
+  if (not (FCallee is TLapeTree_MethodByName)) then
+    LapeException(lpeCannotInvoke, FCallee.DocPos);
+
+  Picked := TLapeTree_MethodByName(FCallee).Resolve(FParams);
+  if (Picked = nil) then
+    with TLapeTree_MethodByName(FCallee) do
+      if (Methods() <> nil) or isArrayHelper() then
+        NoMethodFits(Methods())
+      else
+        LapeExceptionFmt(lpeUnknownDeclaration, [Name], DocPos);
+
+  Result := _ResVar.New(Picked);
+
+  // (on the stack it can not be pointed at: the method and Self go together)
+  Header := TLapeType_Method(Picked.VarType);
+  if TLapeTree_MethodByName(FCallee).SelfFor(Header, LeftVar, SelfVar) and (SelfVar.VarPos.MemPos = mpStack) then
+  begin
+    FCompiler.Emitter.DocPos := DocPos;
+    Result := Header.BindSelf(Picked, SelfVar);
+    SelfVar := NullResVar;
+  end;
+end;
+
+constructor TLapeTree_InvokePtr.Create(Ident: TLapeGlobalVar; ASource: TLapeTree_Base);
+begin
+  inherited Create(TLapeTree_Var.Create(Ident, ASource), ASource);
+end;
+
+function TLapeTree_InvokePtr.EmitCallee(out SelfVar: TResVar): TResVar;
+begin
+  SelfVar := NullResVar;
+  Result := FCallee.Compile();
+end;
+
 function TLapeTree_Invoke.CompileInto(ResultVar: TResVar): TResVar;
 var
   i, ParamCount, ArgIndex: Integer;
-  Picked, IndexVar: TLapeGlobalVar;
-  Overloaded: TLapeType_OverloadedMethod;
-  Called, NullVar: TResVar;
+  Called, SelfVar: TResVar;
   Method: TLapeType_Method;
   Args: TResVarArray;
 begin
@@ -658,38 +608,9 @@ begin
   if (FCallee = nil) then
     LapeException(lpeImpossible, DocPos);
 
-  Picked := PickedMethod();
-  if (Picked = nil) then
-    Called := FCallee.Compile()
-  else
-  begin
-    Overloaded := TLapeType_OverloadedMethod(FCallee.resType());
-    IndexVar := FCompiler.getIntConst(Overloaded.Declarations.IndexOf(Picked));
-    Assert(IndexVar.AsInteger >= 0);
+  Called := EmitCallee(SelfVar);
 
-    if ((FCallee is TLapeTree_Var) and (TLapeTree_Var(FCallee).GlobalVar <> nil)) and
-       Overloaded.CanEvalConst(op_Index, TLapeTree_Var(FCallee).GlobalVar, IndexVar)
-    then
-      Called := _ResVar.New(FCompiler.addManagedDecl(Overloaded.EvalConst(op_Index, TLapeTree_Var(FCallee).GlobalVar, IndexVar, [])) as TLapeGlobalVar)
-    else if (FCallee is TLapeTree_Member) and MethodOfObject(Picked.VarType) and IsMethodItself(Picked.VarType) then
-    begin
-      TLapeTree_Member(FCallee).Picked := Picked;
-      try
-        Called := FCallee.Compile();
-      finally
-        TLapeTree_Member(FCallee).Picked := nil;
-      end;
-    end
-    else
-    begin
-      Called := FCallee.Compile();
-      NullVar := NullResVar;
-      FCompiler.Emitter.DocPos := DocPos;
-      Called := Overloaded.Eval(op_Index, NullVar, Called, _ResVar.New(IndexVar), []);
-    end;
-  end;
-
-  CheckPickedMethod(Called.VarType);
+  CheckCalled(Called.VarType);
   CheckHints(Called.VarType);
   Method := TLapeType_Method(Called.VarType);
 
@@ -700,14 +621,14 @@ begin
   if (lcoInitExternalResult in FCompilerOptions) then
     Dest := NullResVar;
 
-  pushSelf(Called);
+  pushSelf(Called, SelfVar);
 
   // build param vars
   SetLength(Args, Method.Params.Count);
   for i := 0 to Method.Params.Count - 1 do
   begin
     ArgIndex := i - Method.ImplicitParams;
-    if isEmpty(FParams[ArgIndex]) then
+    if (FParams[ArgIndex] = nil) then
       if (Method.Params[i].Default <> nil) then
         Args[i] := _ResVar.New(Method.Params[i].Default).InScope(FCompiler.StackInfo)
       else
@@ -738,26 +659,17 @@ begin
 end;
 
 constructor TLapeTree_InvokeConstruct.Create(ObjType: TLapeType; ASource: TLapeTree_Base);
-var
-  Construct: TLapeTree_Member;
 begin
-  Construct := TLapeTree_Member.Create(TLapeTree_VarType.Create(ObjType, ASource), lpString('Construct'), ASource);
-  FHasConstruct := (Construct.resType() <> nil);
-  inherited Create(Construct, ASource);
+  inherited Create(TLapeTree_MethodByName.Create(TLapeTree_VarType.Create(ObjType, ASource), lpString('Construct'), ASource), ASource);
   FObjectType := ObjType;
 end;
 
-procedure TLapeTree_InvokeConstruct.CheckPickedMethod(VarType: TLapeType);
+procedure TLapeTree_InvokeConstruct.CheckCalled(VarType: TLapeType);
 begin
-  if (VarType is TLapeType_Method) then
-  begin
-    if (VarType is TLapeType_MethodOfObject) then
-      LapeExceptionFmt(lpeInvalidConstructMethod1, ['Not static method'], VarType.DocPos);
-    if (not FObjectType.Equals(TLapeType_Method(VarType).Res)) then
-      LapeExceptionFmt(lpeInvalidConstructMethod1, ['Result is not object type'], VarType.DocPos);
-  end
-  else if (VarType <> nil) and (not (VarType is TLapeType_OverloadedMethod)) then
-    LapeException(lpeInvalidConstructMethod, VarType.DocPos);
+  if (VarType is TLapeType_MethodOfObject) then
+    LapeExceptionFmt(lpeInvalidConstructMethod1, ['Not static method'], VarType.DocPos);
+  if (not FObjectType.Equals(TLapeType_Method(VarType).Res)) then
+    LapeExceptionFmt(lpeInvalidConstructMethod1, ['Result is not object type'], VarType.DocPos);
 
   inherited;
 end;
@@ -769,42 +681,44 @@ begin
   Result := inherited;
 end;
 
-procedure TLapeTree_InvokeProperty.CheckPickedMethod(VarType: TLapeType);
+procedure TLapeTree_InvokeProperty.NoMethodFits(const Methods: TLapeDeclArray);
 var
   i: Integer;
   Reads, Writes: Boolean;
 begin
-  if (VarType is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(VarType).MethodDef = mdProperty) then
-    with TLapeType_OverloadedMethod(VarType) do
-    begin
-      Writes := False;
-      Reads := False;
-      for i := 0 to MethodCount - 1 do
-        if (TLapeType_Method(Methods[i].VarType).Res = nil) then
-          Writes := True
-        else
-          Reads := True;
+  Writes := False;
+  Reads := False;
+  for i := 0 to High(Methods) do
+    if (TLapeType_Method(TLapeGlobalVar(Methods[i]).VarType).Res = nil) then
+      Writes := True
+    else
+      Reads := True;
 
-      if (FPropertyType = ptWrite) and (not Writes) then
-        LapeExceptionFmt(lpePropertyReadOnly, [GetMethodName(VarType)], FCallee.DocPos);
-      if (FPropertyType = ptRead) and (not Reads) then
-        LapeExceptionFmt(lpePropertyWriteOnly, [GetMethodName(VarType)], FCallee.DocPos);
-    end;
+  if (FAssignOp in AssignOperators) and (not Writes) then
+    LapeExceptionFmt(lpePropertyReadOnly, [GetMethodName(TLapeGlobalVar(Methods[0]).VarType)], FCallee.DocPos);
+  if (not (FAssignOp in AssignOperators)) and (not Reads) then
+    LapeExceptionFmt(lpePropertyWriteOnly, [GetMethodName(TLapeGlobalVar(Methods[0]).VarType)], FCallee.DocPos);
 
   inherited;
 end;
 
-function TLapeTree_InvokeProperty.PickOverload(Overloaded: TLapeType_OverloadedMethod; ExpectType: TLapeType): Integer;
+// (a write has no result, a read has one)
+function TLapeTree_InvokeProperty.EmitCallee(out SelfVar: TResVar): TResVar;
+var
+  Picked: TLapeGlobalVar;
 begin
+  Picked := TLapeTree_MethodByName(FCallee).Resolve(FParams);
+  if (Picked <> nil) and ((TLapeType_Method(Picked.VarType).Res = nil) <> (FAssignOp in AssignOperators)) then
+    NoMethodFits(TLapeTree_MethodByName(FCallee).Methods());
+
   Result := inherited;
-  if (Result >= 0) and ((TLapeType_Method(Overloaded.Methods[Result].VarType).Res = nil) <> (FPropertyType = ptWrite)) then
-    Result := -1;
 end;
 
 function TLapeTree_InvokeProperty.Compile: TResVar;
 var
   Value, Arg: TLapeTree_ExprBase;
   ReadCall: TLapeTree_InvokeProperty;
+  ReadCallee: TLapeTree_MethodByName;
   NewValue: TLapeTree_Operator;
   ArgVar: TResVar;
   i: Integer;
@@ -822,16 +736,22 @@ begin
   // x.P[a] += v
   // becomes x.P[a] := x.P[a] + v
   // evaluating x and a only once
-  if (FPropertyType = ptWrite) and (FAssignOp in CompoundOperators) then
+  if (FAssignOp in CompoundOperators) then
   begin
     Value := FParams[FParams.Count - 1];
     FParams.Delete(FParams.Count - 1);
 
-    if (FCallee is TLapeTree_Member) and (not isEmpty(TLapeTree_Member(FCallee).Left)) then
-      with TLapeTree_Member(FCallee) do
+    Assert(FCallee is TLapeTree_MethodByName);
+    with TLapeTree_MethodByName(FCallee) do
+      if (Left is TLapeTree_VarType) then
+        ReadCallee := TLapeTree_MethodByName.Create(TLapeTree_VarType.Create(TLapeTree_VarType(Left).VarType, Left), Name, Left)
+      else
+      begin
         Left := TLapeTree_Var.Create(CompileToVar(Left), Left);
+        ReadCallee := TLapeTree_MethodByName.Create(TLapeTree_Var.Create(TLapeTree_Var(Left).ResVar, Left), Name, Left);
+      end;
 
-    ReadCall := TLapeTree_InvokeProperty.Create(TLapeTree_Var.Create(CompileToVar(FCallee), FCallee), Self);
+    ReadCall := TLapeTree_InvokeProperty.Create(ReadCallee, Self);
     for i := 0 to FParams.Count - 1 do
     begin
       ArgVar := CompileToVar(FParams[i]);
@@ -853,7 +773,6 @@ end;
 constructor TLapeTree_InternalMethod.Create(ACompiler: TLapeCompilerBase);
 begin
   inherited Create(TLapeTree_ExprBase(nil), ACompiler);
-  FConstant := bFalse;
 end;
 
 procedure TLapeTree_InternalMethod.ClearCache;

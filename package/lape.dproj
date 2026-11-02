@@ -105,6 +105,9 @@
 			<DCCReference Include="rtl.dcp"/>
 			<DCCReference Include="..\lpcodeemitter.pas"/>
 			<DCCReference Include="..\lpcompiler.pas"/>
+			<DCCReference Include="..\lpmethodparser.pas"/>
+			<DCCReference Include="..\lpexpressionparser.pas"/>
+			<DCCReference Include="..\lpgeneratedmethods.pas"/>
 			<DCCReference Include="..\lpdisassembler.pas"/>
 			<DCCReference Include="..\lpeval.pas"/>
 			<DCCReference Include="..\lpmessages.pas"/>
@@ -113,7 +116,6 @@
 			<DCCReference Include="..\lptree.pas"/>
 			<DCCReference Include="..\lpinvoke.pas"/>
 			<DCCReference Include="..\lptypes.pas"/>
-			<DCCReference Include="..\lputils.pas"/>
 			<DCCReference Include="..\lpvartypes.pas"/>
 			<DCCReference Include="..\lpvartypes_array.pas"/>
 			<DCCReference Include="..\lpvartypes_ord.pas"/>

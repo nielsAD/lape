@@ -43,10 +43,9 @@ type
     tk_kw_External,
     tk_kw_Finally,
     tk_kw_For,
-    tk_kw_Forward,
     tk_kw_Function,
     tk_kw_If,
-    {$IFDEF Lape_PascalLabels}tk_kw_Label,{$ENDIF}
+    tk_kw_Label,
     tk_kw_Of,
     tk_kw_Object,
     tk_kw_Operator,
@@ -180,6 +179,10 @@ type
     function getDocPos: TDocPos; override;
   public
     RelativeFileNames: Boolean;
+    // A directive is a token, that is not run
+    KeepDirectives: Boolean;
+    // Past this Pos there is nothing more to read
+    StopAt: Integer;
 
     constructor Create(AFileName: lpString = ''); reintroduce; virtual;
     procedure Reset; virtual;
@@ -202,6 +205,7 @@ type
     // Where every token of it is (a macro: where it is used; empty: where it is in its text)
     property FixedPos: TDocPos read FFixedPos write FFixedPos;
     property Tok: EParserToken read FTok;
+    property Pos: Integer read FPos;
     property TokString: lpString read getTokString;
     property OnHandleDirective: TLapeHandleDirective read FOnHandleDirective write FOnHandleDirective;
   end;
@@ -270,7 +274,6 @@ const
     (
       (Keyword: 'FINALLY'; Token: tk_kw_Finally),
       (Keyword: 'FOR'; Token: tk_kw_For),
-      (Keyword: 'FORWARD'; Token: tk_kw_Forward),
       (Keyword: 'FUNCTION'; Token: tk_kw_Function)
     ),
     // G
@@ -288,9 +291,9 @@ const
     // K
     (),
     // L
-    ({$IFDEF Lape_PascalLabels}
+    (
       (Keyword: 'LABEL'; Token: tk_kw_Label)
-    {$ENDIF}),
+    ),
     // M
     (
       (Keyword: 'MOD'; Token: tk_op_MOD)
@@ -625,13 +628,18 @@ begin
 
     ';': Result := tk_sym_SemiColon;
     '{':
-      if (p[1] = '$') then
+      if (p[1] = '$') and (not KeepDirectives) then
       begin
         Inc(FPos);
         Result := setTok(tk_Directive);
         if (not HandleDirective()) then
           UnknownDirective();
         Exit;
+      end
+      else if (p[1] = '$') then
+      begin
+        p := ScanBraceComment(p);
+        Result := tk_Directive;
       end
       else
       begin
@@ -1142,6 +1150,9 @@ end;
 
 function TLapeTokenizerBase.Next: EParserToken;
 begin
+  if (StopAt > 0) and (FPos >= StopAt) then
+    Exit(setTok(tk_NULL));
+
   Inc(FPos);
 
   if (FTok = tk_NewLine) then

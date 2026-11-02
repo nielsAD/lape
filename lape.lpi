@@ -88,7 +88,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="62">
+    <Units Count="64">
       <Unit0>
         <Filename Value="lape.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -306,41 +306,49 @@
         <IsPartOfProject Value="True"/>
       </Unit52>
       <Unit53>
-        <Filename Value="lputils.pas"/>
+        <Filename Value="extensions\ffi\lpffi.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit53>
       <Unit54>
-        <Filename Value="extensions\ffi\lpffi.pas"/>
+        <Filename Value="extensions\ffi\ffi.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit54>
       <Unit55>
-        <Filename Value="extensions\ffi\ffi.pas"/>
+        <Filename Value="extensions\ffi\lpffiwrappers.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit55>
       <Unit56>
-        <Filename Value="extensions\ffi\lpffiwrappers.pas"/>
+        <Filename Value="lpmessages.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit56>
       <Unit57>
-        <Filename Value="lpmessages.pas"/>
+        <Filename Value="lpeval_headers_variant.inc"/>
         <IsPartOfProject Value="True"/>
       </Unit57>
       <Unit58>
-        <Filename Value="lpeval_headers_variant.inc"/>
+        <Filename Value="lpeval_import_variant.inc"/>
         <IsPartOfProject Value="True"/>
       </Unit58>
       <Unit59>
-        <Filename Value="lpeval_import_variant.inc"/>
+        <Filename Value="lpeval_wrappers_variant.inc"/>
         <IsPartOfProject Value="True"/>
       </Unit59>
       <Unit60>
-        <Filename Value="lpeval_wrappers_variant.inc"/>
+        <Filename Value="lpinvoke.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit60>
       <Unit61>
-        <Filename Value="lpinvoke.pas"/>
+        <Filename Value="lpmethodparser.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit61>
+      <Unit63>
+        <Filename Value="lpexpressionparser.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit63>
+      <Unit62>
+        <Filename Value="lpgeneratedmethods.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit62>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

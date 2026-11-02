@@ -40,11 +40,12 @@ type
     procedure addField(FieldType: TLapeType; AName: lpString; AAlignment: UInt16 = 1); virtual;
     procedure addConstField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: lpString); virtual;
 
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
+    function VarToStringBody: lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
     function NewGlobalVar(AName: lpString = ''): TLapeGlobalVar; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function HasField(AName: lpString): Boolean; override;
     function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar; override;
     function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags): TResVar; override;
@@ -212,7 +213,7 @@ begin
   addDeclaration(Field);
 end;
 
-function TLapeType_Record.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+function TLapeType_Record.VarToStringBody: lpString;
 var
   i: Integer;
 begin
@@ -222,8 +223,8 @@ begin
     begin
       if (i > 0) then
         Result := Result + ' + ' + #39', '#39;
-      if (ToStr <> nil) and (ToStr.getMethod(getTypeArray([FieldType])) <> nil) then
-        Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(Param0.' + FFieldMap.Key[i] + ')';
+      if (FCompiler.GlobalScope.findMethod('ToString', getTypeArray([FieldType])) <> nil) then
+        Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(' + ValuePrefix(FieldType) + 'Param0.' + FFieldMap.Key[i] + ')';
     end;
   Result := Result + ' + '#39'}'#39'; end;';
 end;
@@ -302,6 +303,11 @@ begin
       Result := inherited
   else
     Result := inherited;
+end;
+
+function TLapeType_Record.HasField(AName: lpString): Boolean;
+begin
+  Result := FFieldMap.ExistsKey(AName);
 end;
 
 function TLapeType_Record.EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType;

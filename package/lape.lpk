@@ -36,7 +36,7 @@
 https://github.com/nielsAD/lape"/>
     <License Value="GNU Lesser GPL"/>
     <Version Minor="2"/>
-    <Files Count="54">
+    <Files Count="56">
       <Item1>
         <Filename Value="..\lape.inc"/>
         <Type Value="Include"/>
@@ -242,17 +242,25 @@ https://github.com/nielsAD/lape"/>
         <UnitName Value="lpvartypes_record"/>
       </Item51>
       <Item52>
-        <Filename Value="..\lputils.pas"/>
-        <UnitName Value="lputils"/>
-      </Item52>
-      <Item53>
         <Filename Value="..\lpmessages.pas"/>
         <UnitName Value="lpmessages"/>
-      </Item53>
-      <Item54>
+      </Item52>
+      <Item53>
         <Filename Value="..\lpinvoke.pas"/>
         <UnitName Value="lpinvoke"/>
+      </Item53>
+      <Item54>
+        <Filename Value="..\lpmethodparser.pas"/>
+        <UnitName Value="lpmethodparser"/>
       </Item54>
+      <Item55>
+        <Filename Value="..\lpgeneratedmethods.pas"/>
+        <UnitName Value="lpgeneratedmethods"/>
+      </Item55>
+      <Item56>
+        <Filename Value="..\lpexpressionparser.pas"/>
+        <UnitName Value="lpexpressionparser"/>
+      </Item56>
     </Files>
     <RequiredPkgs Count="1">
       <Item1>

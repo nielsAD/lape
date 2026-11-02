@@ -1,0 +1,4 @@
+// What the host's code runs comes before the script
+begin
+  WriteLn(HostValue);
+end.

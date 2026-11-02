@@ -1,0 +1,22 @@
+// A field does not hide a type in ^Name
+type
+  T = record a: Int32; end;
+  R = record T: Int32; end;
+
+procedure R.m;
+type
+  P = ^T;
+var
+  v: record a: Int32; end;
+  q: P;
+begin
+  v.a := 3;
+  q := @v;
+  WriteLn(q^.a);
+end;
+
+var
+  x: R;
+begin
+  x.m();
+end.

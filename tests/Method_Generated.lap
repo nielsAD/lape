@@ -1,0 +1,14 @@
+type TIA = array of Int32;
+procedure TIA.Sort(x: Double); begin WriteLn('mine ', x); end;
+function ToString(x: Int32; y: Int32): string; begin Result := 'two'; end;
+var a: TIA := [3,1,2];
+var q: Int8 := 1;
+begin
+  // (a method of the type that only fits goes before what is generated)
+  a.Sort(1);
+  a.Sort();
+  WriteLn(a);
+  // (a global one that only fits is used when nothing is generated)
+  WriteLn(ToString(1, 2));
+  WriteLn(ToString(q));
+end.

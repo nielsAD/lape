@@ -914,6 +914,7 @@ var
   i: TImportClosure;
   e: TExportClosure;
   v: TLapeGlobalVar;
+  h: TLapeType_Method;
   s: lpString;
   p: Integer;
   m: TLapeTree_Method;
@@ -975,15 +976,22 @@ begin
       begin
         if (s <> '') then
           s := s + ',';
-        s := s + 'Param' + IntToStr(p);
+        s := s + TLapeType_Method(v.VarType).Params[p].Name;
       end;
 
-      if (TLapeType_Method(v.VarType).Res <> nil) then
-        s := 'begin Result := ' + v.Name + '(' + s + '); end;'
-      else
-        s := 'begin '           + v.Name + '(' + s + '); end;';
+      // (a method of a type is called through Self: the one that calls it is a method of that type too)
+      s := v.Name + '(' + s + ')';
+      if (v.VarType is TLapeType_MethodOfType) then
+        s := 'Self.' + s;
 
-      m := addGlobalFunc(v.VarType as TLapeType_Method, 'TestMe', s);
+      if (TLapeType_Method(v.VarType).Res <> nil) then
+        s := 'begin Result := ' + s + '; end;'
+      else
+        s := 'begin '           + s + '; end;';
+
+      h := v.VarType.CreateCopy() as TLapeType_Method;
+      h.Name := 'TestMe';
+      m := addGlobalFunc(addManagedType(h) as TLapeType_Method, s);
 
       if (m = nil) or (m.Method = nil) or (not Compile()) then
         LapeException('Could not compile ' + Header);

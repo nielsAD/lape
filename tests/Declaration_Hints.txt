@@ -1,6 +1,6 @@
 Local declaration "Green" hides another at line 12, column 13 in file "Declaration_Hints.lap"
 Local declaration "Red" hides another at line 14, column 3 in file "Declaration_Hints.lap"
 Local declaration "Foo" hides another at line 16, column 13 in file "Declaration_Hints.lap"
-Result never set at line 25, column 24 in file "Declaration_Hints.lap"
 Variable "NeverUsed" not used at line 27, column 3 in file "Declaration_Hints.lap"
+Result never set at line 25, column 10 in file "Declaration_Hints.lap"
 0

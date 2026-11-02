@@ -17,7 +17,7 @@ end;
 
 function NativeInt.Next(s: string): NativeInt; overload;
 begin
-  Result := Next(Self.Create(s));
+  Result := Self.Next(Self.Create(s));
 end;
 
 procedure NativeInt.Inc(i: NativeInt = 1);
@@ -27,7 +27,7 @@ end;
 
 procedure NativeInt.Next(); overload;
 begin
-  Inc();
+  Self.Inc();
 end;
 
 const i: NativeInt := NativeInt.Create('1');

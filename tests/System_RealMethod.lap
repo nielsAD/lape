@@ -1,0 +1,15 @@
+// System.Name is the internal method, whatever the script calls its own
+var
+  a: array of Int32;
+  Length: Int32 := 4;
+
+procedure SetLength(x: Int32);
+begin
+  WriteLn('mine ', x);
+end;
+
+begin
+  SetLength(1);
+  System.SetLength(a, 3);
+  WriteLn(Length, ' ', System.Length(a));
+end.

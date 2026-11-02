@@ -28,17 +28,7 @@ addGlobalFunc('function DateTimeToStr(const DateTime: TDateTime): string;', @_La
 addGlobalFunc('function DateToStr(const DateTime: TDateTime): string;', @_LapeDateToStr);
 addGlobalFunc('function TimeToStr(const DateTime: TDateTime): string;', @_LapeTimeToStr);
 
-TLapeType_OverloadedMethod(Globals['ToString'].VarType).addMethod(
-  TLapeType_Method(addManagedType(
-    TLapeType_Method.Create(
-      Self,
-      [getGlobalType('TDateTime')],
-      [lptConstRef],
-      [TLapeGlobalVar(nil)],
-      getBaseType(ltString)
-    )
-  )).NewGlobalVar(@_LapeDateTimeToStr)
-);
+addGlobalFunc('function ToString(constref DateTime: TDateTime): string;', @_LapeDateTimeToStr);
 
 addGlobalFunc('function Date: TDateTime;', @_LapeDate);
 addGlobalFunc('function Time: TDateTime;', @_LapeTime);

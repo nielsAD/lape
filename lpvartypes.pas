@@ -27,9 +27,8 @@ type
     lcoHints,                          // {$H} {$HINTS}
     lcoCOperators,                     //      {$COPERATORS}
     lcoAutoObjectify,                  //      {$AUTOOBJECTIFY}
-    lcoExplicitSelf,                   //      {$EXPLICITSELF}
     lcoVerboseCompile,                 //      {$VERBOSECOMPILE}
-    lcoDuplicateLocalNameHints,        //
+    lcoDuplicateLocalNameHints,        //      {$DUPLICATELOCALNAMEHINTS}
     lcoArrayHelpers,                   //
     lcoInheritableRecords,             //
     lcoRelativeFileNames,              //
@@ -56,7 +55,7 @@ type
   TLapeStackVar = class;
   TLapeStackInfo = class;
   TLapeGlobalVar = class;
-  TLapeType_OverloadedMethod = class;
+  TLapeType_Method = class;
   TLapeCompilerBase = class;
 
   TLapeBaseTypes = array[ELapeBaseType] of TLapeType;
@@ -98,6 +97,8 @@ type
     ParType: ELapeParameterType;
     VarType: TLapeType;
     Default: TLapeVar;
+    Name: lpString;
+    DocPos: TDocPos;
   end;
   TLapeParameterList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeParameter>;
 
@@ -159,19 +160,12 @@ type
     property ParType: ELapeParameterType read FParType;
   end;
 
-  // TLapeStackInfo.addSelfVar
-  TLapeSelfVar = class(TLapeParameterVar);
-  // TLapeStackInfo.addResultVar
-  TLapeResultVar = class(TLapeParameterVar);
-
   TLapeStackInheritedVar = class(TLapeParameterVar)
   protected
     FParent: TLapeStackVar;
-    FDepth: Integer;
   public
     constructor Create(AParent: TLapeStackVar; AStack: TLapeVarStack; AList: TLapeDeclarationList = nil); reintroduce; virtual;
     property Parent: TLapeStackVar read FParent;
-    property Depth: Integer read FDepth;
   end;
 
   TLapeGlobalVar = class(TLapeVar)
@@ -200,13 +194,11 @@ type
     property Known: Boolean read FKnown write setKnown;
   end;
 
-  // `inherited` of an override called on the override's Self (SelfVar)
-  TLapeInheritedMethod = class(TLapeGlobalVar)
-  public
-    SelfVar: TLapeVar;
+  // A method. Several of a name can be declared side by side, see findMethods
+  TLapeMethod = class(TLapeGlobalVar)
   end;
 
-  ELapeEvalFlag = (lefAssigning, lefAssigningParam, lefInvoking, lefConstAddress, lefConstRangeCheck, lefRangeCheck);
+  ELapeEvalFlag = (lefAssigning, lefConstAddress, lefConstRangeCheck, lefRangeCheck);
   ELapeEvalFlags = set of ELapeEvalFlag;
 
   TLapeType = class(TLapeDeclaration)
@@ -252,7 +244,8 @@ type
     function CompatibleWith(Other: TLapeType): Boolean; virtual;
     procedure ClearCache; virtual;
 
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; virtual;
+    // The body of its ToString. Nothing: it has no way of its own
+    function VarToStringBody: lpString; virtual;
     function VarToString(AVar: Pointer): lpString; virtual;
     function VarToInt(AVar: Pointer): Int64; virtual;
     function VarLo(AVar: Pointer = nil): TLapeGlobalVar; virtual;
@@ -265,10 +258,14 @@ type
     procedure addDeclaration(ADecl: TLapeDeclaration); virtual;
     procedure ClearDeclarations; override;
 
-    // Declared on it, or (CheckParent) on its ParentType and so on
-    function getDeclaration(AName: lpString; CheckParent: Boolean = True): TLapeDeclaration; virtual;
-    function hasDeclaration(AName: lpString; CheckParent: Boolean = True): Boolean; overload; virtual;
-    function hasDeclaration(ADecl: TLapeDeclaration; CheckParent: Boolean = True): Boolean; overload; virtual;
+    // Declared on it, or on its ParentType and so on
+    function getDeclaration(AName: lpString): TLapeDeclaration; virtual;
+    // Its methods of the name and those of the types it comes from (a nearer one hides one that takes the same)
+    function findMethods(AName: lpString): TLapeDeclArray; virtual;
+    // What it has under the name. Nil: methods, which a call picks from
+    function getMember(AName: lpString): TLapeDeclaration; virtual;
+    // Whether AName is something of the type itself, which comes before its methods of the name (a field, an inline helper)
+    function HasField(AName: lpString): Boolean; virtual;
     // Whether .AName means anything: a declaration, or what the type does itself (a field, an element, a helper)
     function HasMember(AName: lpString): Boolean; virtual;
 
@@ -281,8 +278,6 @@ type
     function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; virtual;
     function EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar; virtual;
     function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags): TResVar; virtual;
-    // Left.Method as a value: Method (a method of object) with Left as its Self
-    function EvalMethodOfObject(Left: TResVar; Method: TLapeGlobalVar; Flags: ELapeEvalFlags): TResVar; virtual;
 
     procedure FinalizeConst(AVar: TLapeGlobalVar); virtual;
 
@@ -301,30 +296,8 @@ type
     property EmptyValue: TLapeGlobalVar read getEmptyValue;
     // array of it (a TLapeType_DynArray)
     property ArrayOf: TLapeType read getArrayOf;
-    // (what is declared on it; a method of it goes in here as it is, checked by who declares it, see TLapeCompiler.ParseMethod)
+    // (what is declared on it; a method of it goes in here as it is, checked by who declares it, see TLapeMethodParser)
     property Declarations: TLapeDeclarationList read getDeclarations;
-  end;
-
-  TLapeTTypeClass = class of TLapeType_Type;
-  TLapeType_Type = class(TLapeType)
-  protected
-    FTType: TLapeType;
-    function getAsString: lpString; override;
-  public
-    constructor Create(AType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
-
-    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar; override;
-    property TType: TLapeType read FTType;
-  end;
-
-  TLapeType_TypeEnum = class(TLapeType_Type)
-  protected
-    function HasMembers: Boolean; override;
-  public
-    function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar; override;
   end;
 
   TLapeType_Pointer = class(TLapeType)
@@ -337,10 +310,10 @@ type
     function CreateCopy: TLapeType; override;
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
 
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
+    function VarToStringBody: lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
 
-    function NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; AsValue: Boolean = True): TLapeGlobalVar; virtual;
+    function NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''): TLapeGlobalVar; virtual;
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''): TLapeGlobalVar; override;
 
     function HasType: Boolean;
@@ -372,40 +345,41 @@ type
   TLapeType_Method = class(TLapeType)
   protected
     FParams: TLapeParameterList;
+    FObjectType: TLapeType;
     procedure setBaseType(ABaseType: ELapeBaseType); override;
     function getSize: SizeInt; override;
     function getAsString: lpString; override;
     function getParamSize: SizeInt; virtual;
-    function getParamInitialization: Boolean; virtual;
   public
-    FreeParams: Boolean;
     ImplicitParams: Integer;
     Res: TLapeType;
     MethodDef: EMethodDef;
 
-    constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''); reintroduce; overload; virtual;
+    constructor Create(ACompiler: TLapeCompilerBase; ARes: TLapeType = nil; AName: lpString = ''); reintroduce; overload; virtual;
     constructor Create(ACompiler: TLapeCompilerBase; AParams: array of TLapeType; AParTypes: array of ELapeParameterType; AParDefaults: array of TLapeGlobalVar; ARes: TLapeType = nil; AName: lpString = ''); reintroduce; overload; virtual;
     constructor Create(AMethod: TLapeType_Method); overload; virtual;
     function CreateCopy: TLapeType; override;
     destructor Destroy; override;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
+    function VarToStringBody: lpString; override;
 
     function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True; IgnoreDefault: Boolean = False): Boolean; virtual;
     procedure addParam(Param: TLapeParameter); virtual;
-    procedure setImported(AVar: TLapeGlobalVar; isImported: Boolean); virtual;
 
-    function NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''): TLapeGlobalVar; overload; virtual;
-    function NewGlobalVar(CodePos: TCodePos; AName: lpString = ''): TLapeGlobalVar; overload; virtual;
+    // (a method declaration, of the host or of the script: a TLapeMethod)
+    function NewGlobalVar(Ptr: Pointer = nil): TLapeGlobalVar; overload; virtual;
+    function NewGlobalVar(CodePos: TCodePos): TLapeGlobalVar; overload; virtual;
+    // Method, of this type, with SelfVar: a TMethod of the two
+    function BindSelf(Method: TLapeGlobalVar; SelfVar: TResVar): TResVar; virtual;
+    function ParamTypes: TLapeTypeArray; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
 
     property Params: TLapeParameterList read FParams;
+    // The type it is declared on (a static method has this too)
+    property ObjectType: TLapeType read FObjectType write FObjectType;
     property ParamSize: SizeInt read getParamSize;
-    property ParamInitialization: Boolean read getParamInitialization;
   end;
 
   TLapeType_MethodOfObject = class(TLapeType_Method)
@@ -416,15 +390,12 @@ type
     function getAsString: lpString; override;
     function getParamSize: SizeInt; override;
   public
-    HiddenSelf: Boolean;
-
-    constructor Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''); override;
-    function CreateCopy: TLapeType; override;
+    constructor Create(ACompiler: TLapeCompilerBase; ARes: TLapeType = nil; AName: lpString = ''); override;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
+    function VarToStringBody: lpString; override;
 
-    function NewGlobalVar(AMethod: TMethod; AName: lpString = ''): TLapeGlobalVar; overload; virtual;
+    function NewGlobalVar(AMethod: TMethod): TLapeGlobalVar; overload; virtual;
 
     function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
@@ -433,91 +404,35 @@ type
 
   TLapeType_MethodOfType = class(TLapeType_MethodOfObject)
   protected
-    FObjectType: TLapeType;
     function getAsString: lpString; override;
   public
-    SelfParam: ELapeParameterType;
-
-    constructor Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = ''); reintroduce; overload; virtual;
-    constructor Create(AMethod: TLapeType_Method; AObjType: TLapeType); overload; virtual;
+    constructor Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; ARes: TLapeType = nil; AName: lpString = ''); reintroduce; virtual;
 
     function CreateCopy: TLapeType; override;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
-    function EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True; IgnoreDefault: Boolean = False): Boolean; override;
-
-    property ObjectType: TLapeType read FObjectType;
   end;
 
-  // Whether argument Index, that has no type of its own yet (an open array), fits a parameter of ParamType
-  TLapeArgFits = function(Index: Integer; ParamType: TLapeType): Boolean of object;
-
-  TLapeGetOverloadedMethod = function(Sender: TLapeType_OverloadedMethod;
-    AObjectType: TLapeType = nil; AParams: TLapeTypeArray = nil; AResult: TLapeType = nil): TLapeGlobalVar of object;
-
-  TLapeType_OverloadedMethod = class(TLapeType)
-  protected
-    FOfObject: TInitBool;
-    FHiddenSelf: TInitBool;
-
-    function getAsString: lpString; override;
-    function getMethodAt(Index: Integer): TLapeGlobalVar;
-    function getMethodCount: Integer;
-  public
-    OnFunctionNotFound: TLapeGetOverloadedMethod;
-    NeedFullMatch: Boolean;
-    MethodDef: EMethodDef;
-
-    constructor Create(ACompiler: TLapeCompilerBase; AName: lpString = ''); reintroduce; virtual;
-    function CreateCopy: TLapeType; override;
-
-    procedure addDeclaration(ADecl: TLapeDeclaration); override;
-    procedure addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False); virtual;
-    function overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar; overload; virtual;
-    function overrideMethod(AMethod, Old: TLapeGlobalVar): TLapeGlobalVar; overload; virtual;
-
-    function getMethodIndex(AType: TLapeType_Method): Integer; overload; virtual;
-    function getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType = nil; AObjectType: TLapeType = nil; Fits: TLapeArgFits = nil): Integer; overload; virtual;
-    function getMethod(AType: TLapeType_Method): TLapeGlobalVar; overload; virtual;
-    function getMethod(AParams: TLapeTypeArray; AResult: TLapeType = nil; AObjectType: TLapeType = nil): TLapeGlobalVar; overload; virtual;
-
-    function NewGlobalVar(AName: lpString = ''): TLapeGlobalVar; virtual;
-
-    function EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType; override;
-
-    function CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean; override;
-    function EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
-    function Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar; override;
-
-    property MethodsOfObject: TInitBool read FOfObject;
-    property Methods[Index: Integer]: TLapeGlobalVar read getMethodAt;
-    property MethodCount: Integer read getMethodCount;
-  end;
+  // Asked for a method that is not there (ToString of a type, arr.Sort), see addMethodGenerate. nil: not one of its own
+  TLapeGenerateMethod = function(AName: lpString; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar of object;
+  TLapeGenerateMethods = array of TLapeGenerateMethod;
 
   TLapeWithDeclaration = class(TLapeDeclaration)
   public
     WithType: TLapeType;
     WithVar: TResVar;
-    IsType: Boolean;
 
     constructor Create(AWithType: TLapeType); reintroduce; virtual;
+    function HasMember(AName: lpString): Boolean; virtual;
   end;
   TLapeWithDeclarationList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeWithDeclaration>;
-
-  // An internal method under its name in the global scope (MethodClass is a TLapeTree_InternalMethodClass). A
-  // declaration of the script by that name takes its place, as a local hides it.
-  TLapeInternalMethodDeclaration = class(TLapeDeclaration)
-  public
-    MethodClass: TClass;
-  end;
 
   // What is declared in a scope (variables, methods, types etc)
   TLapeStackInfo = class(TLapeDeclarationList)
   protected
     FVarStack: TLapeVarStack;
     FWithStack: TLapeWithDeclarationList;
-    FSelfWith: TLapeWithDeclaration;
+    FResultVar: TLapeStackVar;
     FOldStackPos: Integer;
     FOldMaxStack: Integer;
     FTemps: TLapeVarStack; // the temporary variables that are handed out, in that order
@@ -531,6 +446,7 @@ type
     function getFinalization: Boolean; virtual;
   protected
     FOwner: TLapeStackInfo;
+    FAround: TLapeStackInfo;
     FDepth: Integer;
     FRoot: TLapeStackInfo;
     FCompiler: TLapeCompilerBase;
@@ -546,6 +462,8 @@ type
 
     // The scope around it (nil is global); how many are around it (0 is global); the global one
     property Owner: TLapeStackInfo read FOwner write setOwner;
+    // Where it was declared: Owner changes when a method is compiled, after the rest is read
+    property Around: TLapeStackInfo read FAround;
     property Depth: Integer read FDepth;
     property Root: TLapeStackInfo read FRoot;
     property Compiler: TLapeCompilerBase read FCompiler;
@@ -559,10 +477,12 @@ type
     // Its variables go: what else is declared in it stays
     procedure ClearVars; virtual;
 
-    // Of a with (CheckWith; a new declaration, that the caller frees), then here, then of SelfWith (CheckWith)
+    // Of a with (CheckWith; a new declaration, that the caller frees), then here
     function getDeclaration(AName: lpString; CheckWith: Boolean): TLapeDeclaration; virtual;
-    function hasDeclaration(AName: lpString; CheckWith: Boolean): Boolean; overload; virtual;
-    function hasDeclaration(ADecl: TLapeDeclaration; CheckWith: Boolean): Boolean; overload; virtual;
+    function hasDeclaration(AName: lpString; CheckWith: Boolean): Boolean; virtual;
+    // The methods of the name from here outwards, as getDeclaration looks (what is not a method stops it)
+    function findMethods(AName: lpString): TLapeDeclArray; virtual;
+    function findMethod(AName: lpString; AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
 
     // To release every temporary variable that is handed out from here on
     // Before statement: note the count of TLapeStackTempVar
@@ -572,6 +492,8 @@ type
     function getTempVar(VarType: TLapeType): TLapeStackTempVar; virtual;
 
     procedure addDeclaration(ADecl: TLapeDeclaration); override;
+    // Whether AName can not be declared here: Self, in a method of a type or what is in one
+    function isReserved(AName: lpString): Boolean; virtual;
     function addVar(StackVar: TLapeStackVar): TLapeStackVar; overload; virtual;
     // (no name: a temporary; of the global scope: a global variable; else one on the stack)
     function addVar(VarType: TLapeType; AName: lpString = ''): TLapeVar; overload; virtual;
@@ -588,7 +510,7 @@ type
 
     property VarStack: TLapeVarStack read FVarStack;
     property WithStack: TLapeWithDeclarationList read FWithStack;
-    property SelfWith: TLapeWithDeclaration read FSelfWith write FSelfWith;
+    property ResultVar: TLapeStackVar read FResultVar;
     property Vars[Index: Integer]: TLapeStackVar read getVar; default;
     property VarCount: Integer read getVarCount;
     property TotalSize: SizeInt read getTotalSize;
@@ -614,12 +536,6 @@ type
   end;
 
   TLapeHint = procedure(Sender: TLapeCompilerBase; Msg: lpString) of object;
-  // A type as a value: the variable that was made for it (see getTypeVar)
-  TLapeCachedTypeVar = record
-    VarType: TLapeType;
-    TypeVar: TLapeGlobalVar;
-  end;
-  TLapeCachedTypeVarList = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TLapeCachedTypeVar>;
 
   // no strings or floats
   TLapeConstantList = class(TLapeBaseClass)
@@ -642,7 +558,7 @@ type
     FBaseTypes: TLapeBaseTypes;
     FManagedDeclarations: TLapeDeclarationList;
     FConstants: TLapeConstantList;
-    FCachedTypeVars: TLapeCachedTypeVarList;
+    FMethodGenerates: TLapeGenerateMethods;
 
     FBaseOptions: ECompilerOptionsSet;
     FBaseOptions_PackRecords: UInt8;
@@ -660,9 +576,7 @@ type
     procedure setOptions(AOptions: ECompilerOptionsSet); virtual;
     procedure setPackRecords(APackRecords: UInt8); virtual;
   public
-    FreeEmitter: Boolean;
-
-    constructor Create(AEmitter: TLapeCodeEmitter = nil; ManageEmitter: Boolean = True); reintroduce; virtual;
+    constructor Create; reintroduce; virtual;
     destructor Destroy; override;
     procedure Clear; virtual;
 
@@ -694,13 +608,18 @@ type
     function getTempStackVar(VarType: ELapeBaseType): TResVar; overload; virtual;
     function getTempStackVar(VarType: TLapeType): TResVar; overload; virtual;
 
-    function getTypeVar(AType: ELapeBaseType): TLapeGlobalVar; overload; virtual;
-    function getTypeVar(AType: TLapeType): TLapeGlobalVar; overload; virtual;
     function getGlobalVar(AName: lpString): TLapeGlobalVar; virtual;
     function getGlobalType(AName: lpString): TLapeType; virtual;
 
+    // Callback is asked for each method that is not there, by every name: it makes the ones that are its own
+    procedure addMethodGenerate(Callback: TLapeGenerateMethod); virtual;
+    function GenerateMethod(AName: lpString; AObjectType: TLapeType; const AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+    // Of Methods, of the name AName: FitMethod, or what is generated. Of a global name what is generated goes before
+    // a method that only fits, of a type after it
+    function PickMethod(AName: lpString; const Methods: TLapeDeclArray; AObjectType: TLapeType; const AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar; virtual;
+
     // (LocalOnly: what is declared in AStackInfo itself, not what a with of it has)
-    function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): TLapeDeclaration; virtual;
+    function getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration; virtual;
     function hasDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean; overload; virtual;
     function hasDeclaration(ADecl: TLapeDeclaration; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): Boolean; overload; virtual;
 
@@ -727,15 +646,30 @@ procedure RequireOperators(Compiler: TLapeCompilerBase; ops: array of EOperator;
 function ResolveCompoundOp(op:EOperator; typ:TLapeType): EOperator;
 function getTypeArray(Arr: array of TLapeType): TLapeTypeArray;
 
+// How far Given is from Asked when it is given for it (lape-lite's steps); -1: it cannot be given
+function TypeDistance(Asked, Given: TLapeType): Integer;
+// How far a call with AParams (and wanting AResult) is from Method; -1: it cannot be called so. Exact: types as asked
+function MethodDistance(Method: TLapeType_Method; Exact: Boolean; const AParams: TLapeTypeArray; AResult: TLapeType): Integer;
+// Adds the methods of Decls to Methods, but not one that takes the same as one of Methods (which are nearer).
+// False: Decls are no methods, and hide the rest
+function addMethods(var Methods: TLapeDeclArray; const Decls: TLapeDeclArray): Boolean;
+// Of Methods: the one with just the header AType (nil: none)
+function SameMethod(const Methods: TLapeDeclArray; AType: TLapeType_Method; IgnoreDefault: Boolean = False): TLapeGlobalVar;
+// Of Methods: the nearest for a call with AParams, wanting AResult (nil: none, or two as near in one scope; with Fits the first)
+function FitMethod(const Methods: TLapeDeclArray; NeedFullMatch: Boolean; const AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar;
+
 function GetMethodName(VarType: TLapeType): lpString;
 function MethodToString(VarType: TLapeType): lpString;
 function MethodOfObject(VarType: TLapeType): Boolean;
 
 function IsMethod(typ: TLapeType): Boolean;
-function IsMethodItself(Typ: TLapeType): Boolean;
-function WritesSelf(Typ: TLapeType): Boolean;
-function IsProperty(typ: TLapeType): Boolean; overload;
-function IsProperty(typ: TLapeType; out isIndexable: Boolean): Boolean; overload;
+// In script code made here: what goes in front of something of this type for its value
+function ValuePrefix(typ: TLapeType): lpString;
+// The only one of Methods, when that is what its name means (it is not a property)
+function OnlyMethod(const Methods: TLapeDeclArray): TLapeGlobalVar;
+// Whether Methods are of a property (Indexable: one takes something)
+function IsProperty(const Methods: TLapeDeclArray): Boolean; overload;
+function IsProperty(const Methods: TLapeDeclArray; out Indexable: Boolean): Boolean; overload;
 
 const
   TypeID_Unknown = Ord(Low(ELapeBaseType)) - 1;
@@ -745,8 +679,7 @@ const
   VarResVar:   TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpVar;   StackVar : nil));
   StackResVar: TResVar = (VarType: nil; VarPos: (isPointer: False; Offset: 0; MemPos: mpStack; ForceVariable: False));
 
-  NullParameter: TLapeParameter = (ParType: lptNormal; VarType: nil; Default: nil);
-  NullCachedTypeVar: TLapeCachedTypeVar = (VarType: nil; TypeVar: nil);
+  NullParameter: TLapeParameter = (ParType: lptNormal; VarType: nil; Default: nil; Name: ''; DocPos: (Line: 0; Col: 0; FileName: ''));
 
   Lape_RefParams   = [lptConstRef, lptOut, lptVar];
   Lape_ConstParams = [lptConst, lptConstRef];
@@ -767,19 +700,8 @@ uses
 
 // I think doing a simple check rather than overload.getMethodIndex should be fine for op overloads
 function HasOperatorOverload(Compiler: TLapeCompilerBase; op: EOperator; LeftType, RightType: TLapeType; out Res: TLapeType): Boolean;
-
-  function CompatibleParam(L, R: TLapeType): Boolean;
-  begin
-    Result := R.CompatibleWith(L) or (
-      (L is TLapeType_StaticArray) and // static > dynamic arrays is supported too
-      (R is TLapeType_DynArray) and
-      (TLapeType_StaticArray(L).PType.CompatibleWith(TLapeType_DynArray(R).PType))
-    );
-  end;
-
 var
-  Ovl: TLapeGlobalVar;
-  Overloaded: TLapeType_OverloadedMethod;
+  Methods: TLapeDeclArray;
   Method: TLapeType_Method;
   i: Integer;
 begin
@@ -787,22 +709,17 @@ begin
   if not (op in OverloadableOperators) then
     Exit;
 
-  Ovl := Compiler['!op_' + op_name[op]];
-  if (Ovl is TLapeGlobalVar) and (Ovl.VarType is TLapeType_OverloadedMethod) then
+  Methods := Compiler.GlobalScope.findMethods('!op_' + op_name[op]);
+  for i := 0 to High(Methods) do
   begin
-    Overloaded := TLapeType_OverloadedMethod(Ovl.VarType);
-    for i := 0 to Overloaded.MethodCount - 1 do
-    begin
-      Method := TLapeType_Method(Overloaded.Methods[i].VarType);
-      if (Method.Params.Count <> 2) or (Method.Res = nil) then
-        Continue;
+    Method := TLapeType_Method(TLapeGlobalVar(Methods[i]).VarType);
+    if (Method.Params.Count <> 2) or (Method.Res = nil) then
+      Continue;
 
-      if CompatibleParam(LeftType, Method.Params[0].VarType) and CompatibleParam(RightType, Method.Params[1].VarType) then
-      begin
-        Res := Method.Res;
-        Result := True;
-        Exit;
-      end;
+    if Method.Params[0].VarType.CompatibleWith(LeftType) and Method.Params[1].VarType.CompatibleWith(RightType) then
+    begin
+      Res := Method.Res;
+      Exit(True);
     end;
   end;
 end;
@@ -851,12 +768,196 @@ begin
     Result[i] := Arr[i];
 end;
 
+// In steps:
+//     0  the type itself
+//     1  a type that is the same but for its name
+//    10  nothing can get lost: a whole number that it can hold all of, a wider fraction or string, a like pointer
+//    50  a whole number of the other sign, that is as big at least
+//   100  a whole number where a fraction is asked
+//   200  the rest: something can get lost
+// Within a step the nearest is the least far.
+function TypeDistance(Asked, Given: TLapeType): Integer;
+
+  // (whether Asked has every value that Given has)
+  function HoldsAll: Boolean;
+  begin
+    Result := (Asked.VarLo().AsInteger <= Given.VarLo().AsInteger) and (UInt64(Asked.VarHi().AsInteger) >= UInt64(Given.VarHi().AsInteger));
+  end;
+
+begin
+  // (pointers: a step for another type, for another constness, and for a pointee it was not given; as lite)
+  if (Asked is TLapeType_Pointer) and (Given is TLapeType_Pointer) then
+    if (not Asked.CompatibleWith(Given)) then
+      Exit(-1)
+    else
+      Exit(Ord(not Asked.Equals(Given, False)) + Ord(TLapeType_Pointer(Asked).PConst <> TLapeType_Pointer(Given).PConst) +
+        Ord(TLapeType_Pointer(Asked).HasType() and (not TLapeType_Pointer(Given).HasType())));
+
+  if Asked.Equals(Given) then
+    Exit(0);
+  if (not Asked.CompatibleWith(Given)) then
+    Exit(-1);
+
+  if (Asked.BaseType in LapeOrdinalTypes) and (Given.BaseType in LapeOrdinalTypes) then
+  begin
+    if ((Asked.BaseType in LapeBoolTypes) and (Given.BaseType in LapeBoolTypes)) or HoldsAll() then
+      Result := 10
+    else if (Asked.BaseType in LapeIntegerTypes) and (Given.BaseType in LapeIntegerTypes) and (Asked.Size >= Given.Size) then
+      Result := 50
+    else
+      Result := 200;
+
+    Inc(Result, Abs(Asked.Size - Given.Size));
+    if ((Asked.BaseType in LapeSignedOrdinalTypes) <> (Given.BaseType in LapeSignedOrdinalTypes)) then
+      Inc(Result);
+    Exit;
+  end;
+
+  // (methods that can be assigned hold the same)
+  if (Asked is TLapeType_Method) and (Given is TLapeType_Method) then
+    Exit(1)
+  else if (Asked.BaseType = Given.BaseType) then
+    Exit(10);
+
+  if (Asked.BaseType in LapeRealTypes) and (Given.BaseType in LapeIntegerTypes) then
+    Result := 100
+  else if (((Asked.BaseType in LapeRealTypes) and (Given.BaseType in LapeRealTypes)) or
+           ((Asked.BaseType in LapeStringTypes) and (Given.BaseType in LapeStringTypes + LapeCharTypes))) then
+    if (Asked.BaseType >= Given.BaseType) then
+      Result := 10
+    else
+      Result := 200
+  else
+    Exit(200 + Abs(Asked.Size - Given.Size));
+
+  Inc(Result, Abs(Ord(Asked.BaseType) - Ord(Given.BaseType)));
+end;
+
+// (the variables a nested method takes of its outer ones come first and are not given: ImplicitParams; a parameter
+//  that is written to takes only its own type)
+function MethodDistance(Method: TLapeType_Method; Exact: Boolean; const AParams: TLapeTypeArray; AResult: TLapeType): Integer;
+var
+  i, Arg, Distance: Integer;
+  Given: TLapeType;
+begin
+  if (Length(AParams) > Method.Params.Count - Method.ImplicitParams) or ((AResult <> nil) and (Method.Res = nil)) then
+    Exit(-1);
+
+  Result := 0;
+  if (AResult <> nil) then
+  begin
+    Result := TypeDistance(AResult, Method.Res);
+    if (Result < 0) then
+      Exit;
+  end;
+
+  for i := Method.ImplicitParams to Method.Params.Count - 1 do
+    with Method.Params[i] do
+    begin
+      Arg := i - Method.ImplicitParams;
+      if (Arg >= Length(AParams)) then
+        if (Default = nil) then
+          Exit(-1)
+        else
+          Continue;
+
+      // (a name of several methods is no type: of a call of several it takes a cast, TInts(@g))
+      Given := AParams[Arg];
+      if (Given = nil) then
+        Exit(-1);
+
+      if (VarType = nil) then
+        Distance := 1
+      else
+        Distance := TypeDistance(VarType, Given);
+
+      if (Distance < 0) or ((Distance > 0) and (VarType <> nil) and (Exact or (not (ParType in Lape_ValParams)))) then
+        Exit(-1);
+      Inc(Result, Distance);
+    end;
+end;
+
+function addMethods(var Methods: TLapeDeclArray; const Decls: TLapeDeclArray): Boolean;
+var
+  Nearer: Integer;
+
+  procedure Add(Decl: TLapeDeclaration);
+  var
+    i: Integer;
+  begin
+    for i := 0 to High(Methods) do
+      if TLapeType_Method(TLapeGlobalVar(Methods[i]).VarType).EqualParams(TLapeType_Method(TLapeGlobalVar(Decl).VarType)) then
+      begin
+        // (of this scope: an override, which hides what it overrides)
+        if (i >= Nearer) then
+          Methods[i] := Decl;
+        Exit;
+      end;
+
+    SetLength(Methods, Length(Methods) + 1);
+    Methods[High(Methods)] := Decl;
+  end;
+
+var
+  i: Integer;
+begin
+  Result := (Length(Decls) = 0) or (Decls[0] is TLapeMethod);
+  if (not Result) then
+    Exit;
+
+  Nearer := Length(Methods);
+  for i := 0 to High(Decls) do
+    if (Decls[i] is TLapeMethod) then
+      Add(Decls[i]);
+end;
+
+function SameMethod(const Methods: TLapeDeclArray; AType: TLapeType_Method; IgnoreDefault: Boolean = False): TLapeGlobalVar;
+var
+  i: Integer;
+begin
+  Result := nil;
+  for i := 0 to High(Methods) do
+    if TLapeType_Method(TLapeGlobalVar(Methods[i]).VarType).EqualParams(AType, True, IgnoreDefault) then
+      Exit(TLapeGlobalVar(Methods[i]));
+end;
+
+// (Methods come nearest first: a tie goes to the nearer scope or type, as FPC; a tie in one scope picks none)
+function FitMethod(const Methods: TLapeDeclArray; NeedFullMatch: Boolean; const AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  i, Distance, Nearest: Integer;
+  Best: TLapeDeclaration;
+begin
+  Result := nil;
+  Best := nil;
+  Nearest := High(Integer);
+
+  for i := 0 to High(Methods) do
+  begin
+    Distance := MethodDistance(TLapeType_Method(TLapeGlobalVar(Methods[i]).VarType), NeedFullMatch, AParams, AResult);
+    if (Distance < 0) then
+      Continue;
+
+    if (Distance < Nearest) then
+    begin
+      Best := Methods[i];
+      Result := TLapeGlobalVar(Best);
+      Nearest := Distance;
+    end
+    else if (Distance = Nearest) and (Methods[i].DeclarationList = Best.DeclarationList) then
+      Result := nil;
+  end;
+end;
+
+function OnlyMethod(const Methods: TLapeDeclArray): TLapeGlobalVar;
+begin
+  Result := nil;
+  if (Length(Methods) = 1) and (not IsProperty(Methods)) then
+    Result := TLapeGlobalVar(Methods[0]);
+end;
+
 function GetMethodName(VarType: TLapeType): lpString;
 begin
   Result := '';
-
-  if (VarType is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(VarType).MethodCount > 0) then
-    VarType := TLapeType_OverloadedMethod(VarType).Methods[0].VarType;
 
   if (VarType is TLapeType_Method) then
   begin
@@ -915,56 +1016,37 @@ end;
 
 function MethodOfObject(VarType: TLapeType): Boolean;
 begin
-  Result := (VarType is TLapeType_MethodOfObject) or
-           ((VarType is TLapeType_OverloadedMethod) and
-            (TLapeType_OverloadedMethod(VarType).MethodsOfObject <> bFalse));
+  Result := VarType is TLapeType_MethodOfObject;
 end;
 
 function IsMethod(typ: TLapeType): Boolean;
 begin
-  Result := (Typ is TLapeType_Method) or (Typ is TLapeType_OverloadedMethod);
+  Result := Typ is TLapeType_Method;
 end;
 
-function IsProperty(typ: TLapeType): Boolean;
+function IsProperty(const Methods: TLapeDeclArray): Boolean;
 begin
-  Result := (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
+  Result := (Length(Methods) > 0) and (TLapeType_Method(TLapeGlobalVar(Methods[0]).VarType).MethodDef = mdProperty);
 end;
 
-function IsProperty(typ: TLapeType; out isIndexable: Boolean): Boolean;
+function IsProperty(const Methods: TLapeDeclArray; out Indexable: Boolean): Boolean;
 var
   i: Integer;
 begin
-  isIndexable := False;
-
-  Result := (Typ is TLapeType_OverloadedMethod) and (TLapeType_OverloadedMethod(Typ).MethodDef = mdProperty);
+  Indexable := False;
+  Result := IsProperty(Methods);
   if Result then
-    with TLapeType_OverloadedMethod(Typ) do
-      for i := 0 to MethodCount - 1 do
-        if (TLapeType_Method(Methods[i].VarType).Params.Count > 0) then
-        begin
-          isIndexable := True;
-          Break;
-        end;
+    for i := 0 to High(Methods) do
+      if (TLapeType_Method(TLapeGlobalVar(Methods[i]).VarType).Params.Count > 0) then
+        Indexable := True;
 end;
 
-function IsMethodItself(Typ: TLapeType): Boolean;
+function ValuePrefix(typ: TLapeType): lpString;
 begin
-  Result := (Typ is TLapeType_OverloadedMethod) or ((Typ is TLapeType_Method) and (Typ.BaseType in [ltScriptMethod, ltImportedMethod]));
-end;
-
-function WritesSelf(Typ: TLapeType): Boolean;
-var
-  i: Integer;
-begin
-  if (Typ is TLapeType_MethodOfType) then
-    Exit(not (TLapeType_MethodOfType(Typ).SelfParam in Lape_ValParams));
-
-  Result := False;
-  if (Typ is TLapeType_OverloadedMethod) then
-    with TLapeType_OverloadedMethod(Typ) do
-      for i := 0 to MethodCount - 1 do
-        if WritesSelf(Methods[i].VarType) then
-          Exit(True);
+  if IsMethod(typ) then
+    Result := '@'
+  else
+    Result := '';
 end;
 
 function TResVar.getConstant: Boolean;
@@ -1174,28 +1256,24 @@ end;
 
 constructor TLapeStackInheritedVar.Create(AParent: TLapeStackVar; AStack: TLapeVarStack; AList: TLapeDeclarationList = nil);
 var
-  Level: Integer;
+  OwnName: lpString;
 begin
   Assert(AParent <> nil);
   Assert(not (AParent is TLapeStackTempVar));
 
-  Level := 1;
+  OwnName := '!' + AParent.Name;
   if (AParent is TLapeStackInheritedVar) then
-  begin
-    Level := TLapeStackInheritedVar(AParent).Depth + 1;
     AParent := TLapeStackInheritedVar(AParent).Parent;
-  end;
   Assert(not (AParent is TLapeStackInheritedVar));
 
   if AParent.isConstant then
-    inherited Create(lptConstRef, AParent.VarType, AStack, StringOfChar(lpChar('!'), Level) + AParent.Name, AList)
+    inherited Create(lptConstRef, AParent.VarType, AStack, OwnName, AList)
   else
-    inherited Create(lptVar, AParent.VarType, AStack, StringOfChar(lpChar('!'), Level) + AParent.Name, AList);
+    inherited Create(lptVar, AParent.VarType, AStack, OwnName, AList);
   FDocPos := AParent.DocPos;
 
   FParent := AParent;
   FParent.IsUsed := True;
-  FDepth := Level;
 end;
 
 function TLapeGlobalVar.getAsString: lpString;
@@ -1384,7 +1462,7 @@ begin
   FAsString := '';
 end;
 
-function TLapeType.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+function TLapeType.VarToStringBody: lpString;
 begin
   Result := '';
 end;
@@ -1511,7 +1589,7 @@ begin
   end;
 end;
 
-function TLapeType.getDeclaration(AName: lpString; CheckParent: Boolean = True): TLapeDeclaration;
+function TLapeType.getDeclaration(AName: lpString): TLapeDeclaration;
 var
   Typ: TLapeType;
 begin
@@ -1522,41 +1600,43 @@ begin
       Typ := Typ.FAliasType;
     if Typ.Declarations.Get(AName, Result) then
       Exit;
-    if (not CheckParent) then
-      Break;
     Typ := Typ.ParentType;
   end;
   Result := nil;
 end;
 
-function TLapeType.hasDeclaration(AName: lpString; CheckParent: Boolean = True): Boolean;
+function TLapeType.findMethods(AName: lpString): TLapeDeclArray;
+var
+  Typ: TLapeType;
 begin
-  Result := (getDeclaration(AName, CheckParent) <> nil);
+  Result := nil;
+
+  Typ := Self;
+  while (Typ <> nil) do
+  begin
+    while (Typ.FAliasType <> nil) do
+      Typ := Typ.FAliasType;
+    if (not addMethods(Result, Typ.Declarations.GetAll(AName))) then
+      Break;
+    Typ := Typ.ParentType;
+  end;
+end;
+
+function TLapeType.getMember(AName: lpString): TLapeDeclaration;
+begin
+  Result := getDeclaration(AName);
+  if (Result is TLapeMethod) then
+    Result := nil;
+end;
+
+function TLapeType.HasField(AName: lpString): Boolean;
+begin
+  Result := False;
 end;
 
 function TLapeType.HasMember(AName: lpString): Boolean;
 begin
-  Result := (EvalMemberRes(AName) <> nil);
-end;
-
-function TLapeType.hasDeclaration(ADecl: TLapeDeclaration; CheckParent: Boolean = True): Boolean;
-var
-  Typ: TLapeType;
-begin
-  Result := False;
-  if (ADecl = nil) or (ADecl.DeclarationList = nil) then
-    Exit;
-
-  Typ := Self;
-  while (Typ <> nil) and (not Result) do
-  begin
-    while (Typ.FAliasType <> nil) do
-      Typ := Typ.FAliasType;
-    Result := (ADecl.DeclarationList = Typ.Declarations);
-    if (not CheckParent) then
-      Break;
-    Typ := Typ.ParentType;
-  end;
+  Result := (EvalMemberRes(AName) <> nil) or (getDeclaration(AName) <> nil);
 end;
 
 function TLapeType.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
@@ -1613,7 +1693,7 @@ begin
 
   Result := ((Left = nil) or Left.Known) and ((Right = nil) or Right.Known);
   if (not Result) and (Right <> nil) and Right.Known then
-    if (op = op_Index) and (BaseType in [ltUnknown{overloaded method}, ltShortString, ltStaticArray]) then
+    if (op = op_Index) and (BaseType in [ltShortString, ltStaticArray]) then
       Result := Right.HasType() and (Right.VarType.BaseType in LapeOrdinalTypes);
 end;
 
@@ -1685,7 +1765,7 @@ begin
         else
           LapeException(lpeVariableExpected);
 
-      if (ResType <> nil) or ((op = op_Deref) and ((not Left.HasType()) or (Left.BaseType = ltPointer))) then
+      if (ResType <> nil) or ((op = op_Deref) and (Left.BaseType = ltPointer)) then
         if (op = op_Addr) then
           Exit(TLapeGlobalVar.Create(ResType, @Left.Ptr))
         else if (op = op_Deref) then
@@ -1833,63 +1913,54 @@ begin
     then
       Result.VarType := FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, Self, True))
     else
-      LapeException(lpeVariableExpected)
-  else if (not Result.HasType()) and (op = op_Deref) and ((not Left.HasType()) or (Left.VarType.BaseType = ltPointer)) then
-    Result.VarType := TLapeType.Create(ltUnknown, FCompiler);
+      LapeException(lpeVariableExpected);
 
-  try
-    if (not Right.HasType()) then
-      EvalProc := getEvalProc(Op, FBaseType, ltUnknown)
-    else if (op <> op_Assign) or CompatibleWith(Right.VarType) then
-      EvalProc := getEvalProc(Op, FBaseType, Right.VarType.BaseType)
-    else
-      EvalProc := nil;
+  if (not Right.HasType()) then
+    EvalProc := getEvalProc(Op, FBaseType, ltUnknown)
+  else if (op <> op_Assign) or CompatibleWith(Right.VarType) then
+    EvalProc := getEvalProc(Op, FBaseType, Right.VarType.BaseType)
+  else
+    EvalProc := nil;
 
-    if (not Result.HasType()) or (not ValidEvalFunction(EvalProc)) then
-      if (op = op_Assign) and Right.HasType() then
-        LapeExceptionFmt(lpeIncompatibleAssignment, [Right.VarType.AsString, AsString])
-      else if (not (op in UnaryOperators)) and ((not Left.HasType()) or (not Right.HasType()) or (not Left.VarType.Equals(Right.VarType, False))) then
-        if (Left.HasType() and Right.HasType() and Left.VarType.Equals(Right.VarType, False)) or
-          (((not Left.HasType()) or (not Right.HasType()) or  (Left.VarType.Size >= Right.VarType.Size)) and (not TryCast(True, Result))  and (not TryCast(False, Result))) or
-          ((     Left.HasType() and      Right.HasType()) and (Left.VarType.Size  < Right.VarType.Size)  and (not TryCast(False, Result)) and (not TryCast(True, Result)))
-        then
-          if Right.HasType() then
-            LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString ])
-          else
-            LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, LapeTypeToString(ltUnknown)])
+  if (not Result.HasType()) or (not ValidEvalFunction(EvalProc)) then
+    if (op = op_Assign) and Right.HasType() then
+      LapeExceptionFmt(lpeIncompatibleAssignment, [Right.VarType.AsString, AsString])
+    else if (not (op in UnaryOperators)) and ((not Left.HasType()) or (not Right.HasType()) or (not Left.VarType.Equals(Right.VarType, False))) then
+      if (Left.HasType() and Right.HasType() and Left.VarType.Equals(Right.VarType, False)) or
+        (((not Left.HasType()) or (not Right.HasType()) or  (Left.VarType.Size >= Right.VarType.Size)) and (not TryCast(True, Result))  and (not TryCast(False, Result))) or
+        ((     Left.HasType() and      Right.HasType()) and (Left.VarType.Size  < Right.VarType.Size)  and (not TryCast(False, Result)) and (not TryCast(True, Result)))
+      then
+        if Right.HasType() then
+          LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, Right.VarType.AsString ])
         else
-          Exit
-      else if (op in UnaryOperators) or (Left.HasType() and Left.VarType.Equals(Right.VarType, False)) then
-        LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
+          LapeExceptionFmt(lpeIncompatibleOperator2, [LapeOperatorToString(op), AsString, LapeTypeToString(ltUnknown)])
       else
-        LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
-
-    FCompiler.getDestVar(Dest, Result, op);
-
-    if (op in AssignOperators) then
-    begin
-      if (not Left.HasType()) or (not Right.HasType()) or (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
-        LapeException(lpeInvalidAssignment);
-
-      FCompiler.Emitter._Eval(EvalProc, Left, Right, NullResVar);
-      Result := Left;
-    end
+        Exit
+    else if (op in UnaryOperators) or (Left.HasType() and Left.VarType.Equals(Right.VarType, False)) then
+      LapeExceptionFmt(lpeIncompatibleOperator1, [LapeOperatorToString(op), AsString])
     else
-      FCompiler.Emitter._Eval(EvalProc, Result, Left, Right);
+      LapeExceptionFmt(lpeIncompatibleOperator, [LapeOperatorToString(op)]);
 
-    if (op = op_Deref) then
-      Result.VarPos.isPointer := (Result.VarPos.MemPos = mpVar);
-  finally
-    if Result.HasType() and (Result.VarType.ClassType = TLapeType) and (Result.VarType.BaseType = ltUnknown) then
-      FreeAndNil(Result.VarType);
-  end;
+  FCompiler.getDestVar(Dest, Result, op);
+
+  if (op in AssignOperators) then
+  begin
+    if (not Left.HasType()) or (not Right.HasType()) or (Dest.VarPos.MemPos <> NullResVar.VarPos.MemPos) then
+      LapeException(lpeInvalidAssignment);
+
+    FCompiler.Emitter._Eval(EvalProc, Left, Right, NullResVar);
+    Result := Left;
+  end
+  else
+    FCompiler.Emitter._Eval(EvalProc, Result, Left, Right);
+
 end;
 
 function TLapeType.EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType;
 var
   Decl: TLapeDeclaration;
 begin
-  Decl := getDeclaration(AName);
+  Decl := getMember(AName);
   if (Decl is TLapeType) then
     Result := TLapeType(Decl)
   else if (Decl is TLapeVar) then
@@ -1899,17 +1970,8 @@ begin
 end;
 
 function TLapeType.EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar;
-var
-  Decl: TLapeDeclaration;
 begin
   Result := nil;
-  Decl := getDeclaration(AName);
-  if (Decl is TLapeType) then
-    Result := FCompiler.getTypeVar(TLapeType(Decl))
-  // (a method of a script is not known before its address is, and one of an object is bound to it where it runs)
-  else if (Decl is TLapeGlobalVar) and TLapeGlobalVar(Decl).Known and (TLapeGlobalVar(Decl).BaseType = ltImportedMethod) and
-          (not MethodOfObject(TLapeGlobalVar(Decl).VarType)) then
-    Result := TLapeGlobalVar(Decl);
 end;
 
 function TLapeType.EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags): TResVar;
@@ -1920,37 +1982,14 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
 
-  Decl := getDeclaration(AName);
+  Decl := getMember(AName);
   if (Decl = nil) then
     LapeExceptionFmt(lpeUnknownDeclaration, [AName]);
 
   if (Decl is TLapeType) then
-    Decl := FCompiler.getTypeVar(TLapeType(Decl));
-
-  Result := _ResVar.New(Decl as TLapeGlobalVar);
-  if MethodOfObject(Result.VarType) and IsMethodItself(Result.VarType) then
-    Result := EvalMethodOfObject(Left, TLapeGlobalVar(Decl), Flags);
-end;
-
-function TLapeType.EvalMethodOfObject(Left: TResVar; Method: TLapeGlobalVar; Flags: ELapeEvalFlags): TResVar;
-var
-  SelfVar, tmpVar: TResVar;
-begin
-  if (not (lefInvoking in Flags)) and Left.isConstant then
     LapeException(lpeVariableExpected);
 
-  Result := _ResVar.New(FCompiler.getTempVar(FCompiler.getGlobalType('TMethod')));
-  Result.VarType := Method.VarType;
-
-  SelfVar := Left;
-  if Left.isConstant and WritesSelf(Method.VarType) and (not (Left.VarType is TLapeType_Type)) then
-  begin
-    SelfVar := _ResVar.New(FCompiler.getTempVar(Left.VarType));
-    tmpVar := NullResVar;
-    Left.VarType.Eval(op_Assign, tmpVar, SelfVar, Left, [lefAssigning]);
-  end;
-
-  FCompiler.Emitter._Eval({$IFDEF FPC}@{$ENDIF}lpeTMethod_ASGN, Result, _ResVar.New(Method), SelfVar);
+  Result := _ResVar.New(Decl as TLapeGlobalVar);
 end;
 
 procedure TLapeType.FinalizeConst(AVar: TLapeGlobalVar);
@@ -1998,70 +2037,6 @@ begin
   end;
 end;
 
-function TLapeType_Type.getAsString: lpString;
-begin
-  if (FTType <> nil) then
-    Result := FTType.AsString
-  else
-    Result := '';
-end;
-
-constructor TLapeType_Type.Create(AType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = '');
-begin
-  inherited Create(ltUnknown, ACompiler, AName);
-
-  FTType := AType;
-  FParentType := FTType;
-end;
-
-function TLapeType_Type.CreateCopy: TLapeType;
-begin
-  Result := TLapeTTypeClass(Self.ClassType).Create(FTType, FCompiler, '');
-  Result.DocPos := FDocPos;
-  Result.ParentType := Self;
-  Result.TypeID := TypeID;
-end;
-
-function TLapeType_Type.EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar;
-var
-  Decl: TLapeDeclaration;
-begin
-  Result := inherited;
-  if (Result = nil) and (Left <> nil) and Left.isConstant then
-  begin
-    Decl := getDeclaration(AName);
-    if (Decl is TLapeGlobalVar) then
-      Result := TLapeGlobalVar(Decl);
-  end;
-end;
-
-function TLapeType_Type.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
-begin
-  Result := nil;
-end;
-
-function TLapeType_TypeEnum.HasMembers: Boolean;
-begin
-  Result := (FTType is TLapeType_Enum) or inherited;
-end;
-
-// element of the enum
-function TLapeType_TypeEnum.EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType;
-begin
-  if (FTType is TLapeType_Enum) and TLapeType_Enum(FTType).HasElement(AName) then
-    Result := FTType
-  else
-    Result := inherited;
-end;
-
-function TLapeType_TypeEnum.EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar;
-begin
-  if (FTType is TLapeType_Enum) and TLapeType_Enum(FTType).HasElement(AName) then
-    Result := FTType.NewGlobalVarStr(AName)
-  else
-    Result := inherited;
-end;
-
 function TLapeType_Pointer.getAsString: lpString;
 begin
   if (FAsString = '') and (FBaseType = ltPointer) then
@@ -2090,15 +2065,15 @@ begin
     Result := inherited;
 end;
 
-function TLapeType_Pointer.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+function TLapeType_Pointer.VarToStringBody: lpString;
 begin
   Result := 'begin Result := System.ToString(Pointer(Param0));';
-  if HasType() and (ToStr <> nil) and (ToStr.getMethod(getTypeArray([PType])) <> nil) then
+  if HasType() and (FCompiler.GlobalScope.findMethod('ToString', getTypeArray([PType])) <> nil) then
   begin
     Result := Result                   +
       'if (Param0 <> nil) then '       +
       'try'                            +
-      '  Result := Result + '#39' ('#39' + System.ToString(Param0^) + '#39')'#39';' +
+      '  Result := Result + '#39' ('#39' + System.ToString(' + ValuePrefix(PType) + 'Param0^) + '#39')'#39';' +
       'except end;';
   end;
   Result := Result + 'end;';
@@ -2124,20 +2099,10 @@ begin
   Result.TypeID := TypeID;
 end;
 
-function TLapeType_Pointer.NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''; AsValue: Boolean = True): TLapeGlobalVar;
+function TLapeType_Pointer.NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''): TLapeGlobalVar;
 begin
-  if AsValue then
-  begin
-    Result := NewGlobalVarP(nil, AName);
-    PPointer(Result.FPtr)^ := Ptr;
-  end
-  else if (Ptr = nil) then
-  begin
-    Result := NewGlobalVarP(Pointer(-1), AName);
-    Result.FPtr := nil;
-  end
-  else
-    Result := NewGlobalVarP(Ptr, AName);
+  Result := NewGlobalVarP(nil, AName);
+  PPointer(Result.FPtr)^ := Ptr;
 end;
 
 function TLapeType_Pointer.NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''): TLapeGlobalVar;
@@ -2288,15 +2253,20 @@ begin
     if wasConstant and (Result.VarPos.MemPos <> mpStack) then
       Result.isConstant := True;
   end
-  else
+  else if (op = op_Deref) then
   begin
-    Result := inherited;
+    // (where it is, is a pointer: of a Pointer what is there has no type)
+    Result := NullResVar;
+    Result.VarType := Self;
+    FCompiler.getDestVar(Dest, Result, op_Deref);
+    FCompiler.Emitter._Eval(getEvalProc(op_Deref, FBaseType, ltUnknown), Result, Left, NullResVar);
+    Result.VarType := EvalRes(op_Deref);
+    Result.VarPos.isPointer := True;
     // (what a pointer to const points to may not be written)
-    if (op = op_Deref) and PConst then
-      Result.isConstant := True
-    else if (op = op_Deref) then
-      Result.isConstant := False;
-  end;
+    Result.isConstant := PConst;
+  end
+  else
+    Result := inherited;
 end;
 
 function TLapeType_StrictPointer.getAsString: lpString;
@@ -2407,24 +2377,11 @@ begin
     Result := Result + SizeOf(Pointer);
 end;
 
-function TLapeType_Method.getParamInitialization: Boolean;
-var
-  i: Integer;
-begin
-  Result := False;
-  for i := 0 to FParams.Count - 1 do
-    if (not (FParams[i].ParType in Lape_RefParams)) and (FParams[i].VarType <> nil) and FParams[i].VarType.NeedInitialization then
-      Exit(True);
-end;
-
-constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = '');
+constructor TLapeType_Method.Create(ACompiler: TLapeCompilerBase; ARes: TLapeType = nil; AName: lpString = '');
 begin
   inherited Create(ltPointer, ACompiler, AName);
 
-  FreeParams := (AParams = nil);
-  if (AParams = nil) then
-    AParams := TLapeParameterList.Create(NullParameter, dupAccept, False);
-  FParams := AParams;
+  FParams := TLapeParameterList.Create(NullParameter, dupAccept, False);
   Res := ARes;
 end;
 
@@ -2436,7 +2393,7 @@ begin
   if (Length(AParams) <> Length(AParTypes)) or (Length(AParams) <> Length(AParDefaults)) then
     LapeExceptionFmt(lpeArrayLengthsDontMatch, [Format('%d, %d, %d', [Length(AParams), Length(AParTypes), Length(AParDefaults)])]);
 
-  Create(ACompiler, nil, ARes, AName);
+  Create(ACompiler, ARes, AName);
   for i := 0 to High(AParams) do
   begin
     Param.ParType := AParTypes[i];
@@ -2449,7 +2406,7 @@ end;
 constructor TLapeType_Method.Create(AMethod: TLapeType_Method);
 begin
   Assert(AMethod <> nil);
-  Create(AMethod.Compiler, nil, AMethod.Res, AMethod.Name);
+  Create(AMethod.Compiler, AMethod.Res, AMethod.Name);
   FDocPos := AMethod.DocPos;
   Params.ImportFromArray(AMethod.Params.ExportToArray());
 
@@ -2467,7 +2424,7 @@ function TLapeType_Method.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_Method;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, nil, Res, '');
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, Res, '');
   Result.DocPos := FDocPos;
   TLapeType_Method(Result).Params.ImportFromArray(FParams.ExportToArray());
 
@@ -2482,8 +2439,7 @@ end;
 
 destructor TLapeType_Method.Destroy;
 begin
-  if FreeParams then
-    FParams.Free();
+  FParams.Free();
   inherited;
 end;
 
@@ -2494,9 +2450,9 @@ begin
     Result := (Other.BaseType = BaseType);
 end;
 
-function TLapeType_Method.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+function TLapeType_Method.VarToStringBody: lpString;
 begin
-  Result := 'begin Result := '#39 + AsString + ' ('#39' + System.ToString(Pointer(Param0)) + '#39')'#39'; end;';
+  Result := 'begin Result := '#39 + AsString + ' ('#39' + System.ToString(Pointer(@Param0)) + '#39')'#39'; end;';
 end;
 
 function TLapeType_Method.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True; IgnoreDefault: Boolean = False): Boolean;
@@ -2560,51 +2516,38 @@ begin
   FParams.Add(Param);
 end;
 
-procedure TLapeType_Method.setImported(AVar: TLapeGlobalVar; isImported: Boolean);
-var
-  MethodType: ELapeBaseType;
+function TLapeType_Method.NewGlobalVar(Ptr: Pointer = nil): TLapeGlobalVar;
 begin
-  if isImported then
-    MethodType := ltImportedMethod
-  else
-    MethodType := ltScriptMethod;
-
-  if (AVar = nil) or (AVar.BaseType = MethodType) then
-    Exit;
-
-  // (a copy, known by the same name)
-  AVar.VarType := CreateCopy();
-  AVar.VarType.Name := Name;
-  AVar.VarType.FBaseType := MethodType;
-  if (FCompiler <> nil) then
-    AVar.VarType := FCompiler.addManagedType(AVar.VarType);
-end;
-
-function TLapeType_Method.NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''): TLapeGlobalVar;
-begin
-  Result := NewGlobalVarP(nil, AName);
-  setImported(Result, True);
+  FBaseType := ltImportedMethod;
+  Result := TLapeMethod.Create(Self, Name);
   PPointer(Result.Ptr)^ := Ptr;
 end;
 
-function TLapeType_Method.NewGlobalVar(CodePos: TCodePos; AName: lpString = ''): TLapeGlobalVar;
+function TLapeType_Method.NewGlobalVar(CodePos: TCodePos): TLapeGlobalVar;
 begin
-  Result := NewGlobalVarP(nil, AName);
-  setImported(Result, False);
+  FBaseType := ltScriptMethod;
+  Result := TLapeMethod.Create(Self, Name);
   PCodePos(Result.Ptr)^ := CodePos;
 end;
 
-function TLapeType_Method.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
-var
-  m: TLapeGlobalVar;
+function TLapeType_Method.BindSelf(Method: TLapeGlobalVar; SelfVar: TResVar): TResVar;
 begin
-  if (Right <> nil) and (Right is TLapeType_OverloadedMethod) then
-  begin
-    m := TLapeType_OverloadedMethod(Right).getMethod(Self);
-    if (m <> nil) then
-      Right := m.VarType;
-  end;
+  Result := _ResVar.New(FCompiler.getTempVar(FCompiler.getGlobalType('TMethod')));
+  Result.VarType := Self;
+  FCompiler.Emitter._Eval({$IFDEF FPC}@{$ENDIF}lpeTMethod_ASGN, Result, _ResVar.New(Method), SelfVar);
+end;
 
+function TLapeType_Method.ParamTypes: TLapeTypeArray;
+var
+  i: Integer;
+begin
+  SetLength(Result, Params.Count);
+  for i := 0 to High(Result) do
+    Result[i] := Params[i].VarType;
+end;
+
+function TLapeType_Method.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
+begin
   if (Op = op_Assign) and (Right <> nil) then
     if (Right is TLapeType_Method) then
       if Equals(Right) and (FBaseType in [ltPointer, Right.BaseType]) then
@@ -2620,32 +2563,6 @@ begin
       Result := inherited
   else
     Result := inherited;
-end;
-
-function TLapeType_Method.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
-var
-  m: TLapeGlobalVar;
-begin
-  if (Right <> nil) and Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
-  begin
-    m := TLapeType_OverloadedMethod(Right.VarType).getMethod(Self);
-    if (m <> nil) then
-      Right := m;
-  end;
-  Result := inherited;
-end;
-
-function TLapeType_Method.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
-var
-  m: TLapeGlobalVar;
-begin
-  if Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
-  begin
-    m := TLapeType_OverloadedMethod(Right.VarType).getMethod(Self);
-    if (m <> nil) then
-      Right := _ResVar.New(m);
-  end;
-  Result := inherited;
 end;
 
 function TLapeType_MethodOfObject.getSize: SizeInt;
@@ -2667,17 +2584,11 @@ begin
   Result := Result + SizeOf(Pointer);
 end;
 
-constructor TLapeType_MethodOfObject.Create(ACompiler: TLapeCompilerBase; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = '');
+constructor TLapeType_MethodOfObject.Create(ACompiler: TLapeCompilerBase; ARes: TLapeType = nil; AName: lpString = '');
 begin
   inherited;
   FMethodRecord := FCompiler.getGlobalType('TMethod');
   Assert(FMethodRecord <> nil);
-end;
-
-function TLapeType_MethodOfObject.CreateCopy: TLapeType;
-begin
-  Result := inherited CreateCopy();
-  TLapeType_MethodOfObject(Result).HiddenSelf := HiddenSelf;
 end;
 
 function TLapeType_MethodOfObject.Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean;
@@ -2685,28 +2596,19 @@ begin
   Result := (Other is TLapeType_MethodOfObject) and inherited;
 end;
 
-function TLapeType_MethodOfObject.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+function TLapeType_MethodOfObject.VarToStringBody: lpString;
 begin
-  Result := 'begin Result := '#39 + AsString + ' '#39' + System.ToString(TMethod(Param0)); end;';
+  Result := 'begin Result := '#39 + AsString + ' '#39' + System.ToString(TMethod(@Param0)); end;';
 end;
 
-function TLapeType_MethodOfObject.NewGlobalVar(AMethod: TMethod; AName: lpString = ''): TLapeGlobalVar;
+function TLapeType_MethodOfObject.NewGlobalVar(AMethod: TMethod): TLapeGlobalVar;
 begin
-  Result := NewGlobalVar(nil, AName);
+  Result := NewGlobalVar(Pointer(nil));
   TMethod(Result.Ptr^) := AMethod;
 end;
 
 function TLapeType_MethodOfObject.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
-var
-  m: TLapeGlobalVar;
 begin
-  if (Right <> nil) and (Right is TLapeType_OverloadedMethod) then
-  begin
-    m := TLapeType_OverloadedMethod(Right).getMethod(Self);
-    if (m <> nil) then
-      Right := m.VarType;
-  end;
-
   if (lcoAutoObjectify in FCompiler.Options) then
     if (op = op_Assign) and (Right <> nil) and (Right.ClassType = TLapeType_Method) and TLapeType_Method(Right).EqualParams(Self) then
     begin
@@ -2727,18 +2629,10 @@ end;
 function TLapeType_MethodOfObject.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
 var
   VarType: TLapeType;
-  MethodIndex: Integer;
 begin
   Assert((Left = nil) or (Left.VarType = Self));
   if (Left <> nil) then
     Left.VarType := FMethodRecord;
-
-  if (Right <> nil) and Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
-  begin
-    MethodIndex := TLapeType_OverloadedMethod(Right.VarType).getMethodIndex(Self);
-    if (MethodIndex >= 0) then
-      Right := Right.VarType.EvalConst(op_Index, Right, FCompiler.getIntConst(MethodIndex), Flags);
-  end;
 
   try
     if (Op in CompareOperators) then
@@ -2767,20 +2661,9 @@ end;
 function TLapeType_MethodOfObject.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
 var
   tmpRes: TResVar;
-  MethodIndex: Integer;
 begin
   Assert(Left.VarType = Self);
   Left.VarType := FMethodRecord;
-
-  if Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
-  begin
-    MethodIndex := TLapeType_OverloadedMethod(Right.VarType).getMethodIndex(Self);
-    if (MethodIndex >= 0) then
-    begin
-      tmpRes := NullResVar;
-      Right := Right.VarType.Eval(op_Index, tmpRes, Right, _ResVar.New(FCompiler.getIntConst(MethodIndex)), Flags);
-    end;
-  end;
 
   if (lcoAutoObjectify in FCompiler.Options) then
     if (Op = op_Assign) and Right.HasType and (Right.VarType.ClassType = TLapeType_Method) then
@@ -2821,18 +2704,10 @@ begin
   Result := '(' + FObjectType.AsString + ').' + inherited;
 end;
 
-constructor TLapeType_MethodOfType.Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; AParams: TLapeParameterList; ARes: TLapeType = nil; AName: lpString = '');
+constructor TLapeType_MethodOfType.Create(ACompiler: TLapeCompilerBase; AObjType: TLapeType; ARes: TLapeType = nil; AName: lpString = '');
 begin
   Assert(AObjType <> nil);
-  inherited Create(ACompiler, AParams, ARes, AName);
-  FObjectType := AObjType;
-  SelfParam := Lape_SelfParam;
-end;
-
-constructor TLapeType_MethodOfType.Create(AMethod: TLapeType_Method; AObjType: TLapeType);
-begin
-  Assert(AObjType <> nil);
-  inherited Create(AMethod);
+  inherited Create(ACompiler, ARes, AName);
   FObjectType := AObjType;
 end;
 
@@ -2840,11 +2715,10 @@ function TLapeType_MethodOfType.CreateCopy: TLapeType;
 type
   TLapeClassType = class of TLapeType_MethodOfType;
 begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, FObjectType, nil, Res, '');
+  Result := TLapeClassType(Self.ClassType).Create(FCompiler, FObjectType, Res, '');
   Result.DocPos := FDocPos;
   TLapeType_MethodOfType(Result).Params.ImportFromArray(FParams.ExportToArray());
 
-  TLapeType_MethodOfType(Result).SelfParam := SelfParam;
   TLapeType_MethodOfType(Result).MethodDef := MethodDef;
   TLapeType_MethodOfType(Result).ImplicitParams := ImplicitParams;
 
@@ -2858,405 +2732,8 @@ function TLapeType_MethodOfType.Equals(Other: TLapeType; ContextOnly: Boolean = 
 begin
   Result :=
     (Other is TLapeType_MethodOfType) and
-    (SelfParam = TLapeType_MethodOfType(Other).SelfParam) and
     ObjectType.Equals(TLapeType_MethodOfType(Other).ObjectType, ContextOnly) and
     inherited;
-end;
-
-function TLapeType_MethodOfType.EqualParams(Other: TLapeType_Method; ContextOnly: Boolean = True; IgnoreDefault: Boolean = False): Boolean;
-begin
-  Result := inherited;
-  if Result and (not ContextOnly) and (Other is TLapeType_MethodOfType) then
-    Result := SelfParam = TLapeType_MethodOfType(Other).SelfParam;
-end;
-
-function TLapeType_OverloadedMethod.getMethodAt(Index: Integer): TLapeGlobalVar;
-begin
-  Result := Declarations[Index] as TLapeGlobalVar;
-end;
-
-function TLapeType_OverloadedMethod.getMethodCount: Integer;
-begin
-  Result := Declarations.Count;
-end;
-
-function TLapeType_OverloadedMethod.getAsString: lpString;
-begin
-  if (FAsString = '') then
-  begin
-    if (Name <> '') then
-      FAsString := Name
-    else
-      FAsString := 'Overloaded Method';
-    FAsString := FAsString + ' [' + lpString(IntToStr(MethodCount)) + ']'
-  end;
-  Result := inherited;
-end;
-
-constructor TLapeType_OverloadedMethod.Create(ACompiler: TLapeCompilerBase; AName: lpString = '');
-begin
-  inherited Create(ltUnknown, ACompiler, AName);
-
-  FOfObject := bUnknown;
-  FHiddenSelf := bUnknown;
-  OnFunctionNotFound := nil;
-  NeedFullMatch := False;
-end;
-
-function TLapeType_OverloadedMethod.CreateCopy: TLapeType;
-type
-  TLapeClassType = class of TLapeType_OverloadedMethod;
-begin
-  Result := TLapeClassType(Self.ClassType).Create(FCompiler, '');
-  Result.DocPos := FDocPos;
-
-  TLapeType_OverloadedMethod(Result).FOfObject := FOfObject;
-  TLapeType_OverloadedMethod(Result).FHiddenSelf := FHiddenSelf;
-  TLapeType_OverloadedMethod(Result).MethodDef := MethodDef;
-  Result.ParentType := Self;
-  Result.TypeID := TypeID;
-end;
-
-procedure TLapeType_OverloadedMethod.addDeclaration(ADecl: TLapeDeclaration);
-begin
-  LapeException(lpeImpossible);
-end;
-
-procedure TLapeType_OverloadedMethod.addMethod(AMethod: TLapeGlobalVar; DoOverride: Boolean = False);
-var
-  i: Integer;
-  Other: TLapeType_OverloadedMethod;
-begin
-  if (AMethod = nil) or (not AMethod.HasType()) or
-     (not ((AMethod.VarType is TLapeType_Method) or (AMethod.VarType is TLapeType_OverloadedMethod)))
-  then
-    LapeException(lpeImpossible);
-
-  AMethod.isConstant := True;
-  AMethod.Known := False;
-
-  if (FHiddenSelf = bUnknown) then
-  begin
-    if MethodOfObject(AMethod.VarType) and TLapeType_MethodOfObject(AMethod.VarType).HiddenSelf then
-      FHiddenSelf := bTrue
-    else
-      FHiddenSelf := bFalse;
-  end;
-
-  if MethodOfObject(AMethod.VarType) then
-    case FOfObject of
-      bUnknown: FOfObject := bTrue;
-      bFalse: LapeException(lpeCannotMixStaticOverload);
-    end
-  else
-    case FOfObject of
-      bUnknown: FOfObject := bFalse;
-      bTrue: if not (FHiddenSelf = bTrue) then LapeException(lpeCannotMixStaticOverload);
-    end;
-
-  if (AMethod.VarType is TLapeType_OverloadedMethod) then
-  begin
-    Other := TLapeType_OverloadedMethod(AMethod.VarType);
-    for i := 0 to Other.MethodCount - 1 do
-      addMethod(Other.Methods[i].CreateCopy(False));
-  end
-  else if DoOverride then
-  begin
-    // (what it replaces was this one's own)
-    AMethod := overrideMethod(AMethod);
-    if FDeclarations.FreeDecls and (AMethod <> nil) then
-      AMethod.Free();
-  end
-  else
-  begin
-    for i := 0 to MethodCount - 1 do
-      if TLapeType_Method(Methods[i].VarType).EqualParams(AMethod.VarType as TLapeType_Method) then
-        LapeExceptionFmt(lpeDuplicateDeclaration, [AMethod.VarType.AsString]);
-
-    FDeclarations.addDeclaration(AMethod);
-  end;
-end;
-
-function TLapeType_OverloadedMethod.overrideMethod(AMethod: TLapeGlobalVar): TLapeGlobalVar;
-var
-  i: Integer;
-begin
-  if (AMethod = nil) or (not AMethod.HasType()) or
-     (not ((AMethod.VarType is TLapeType_Method) or (AMethod.VarType is TLapeType_OverloadedMethod)))
-  then
-    LapeException(lpeImpossible);
-
-  for i := 0 to MethodCount - 1 do
-    if TLapeType_Method(Methods[i].VarType).EqualParams(AMethod.VarType as TLapeType_Method) then
-      Exit(overrideMethod(AMethod, Methods[i]));
-  Result := overrideMethod(AMethod, nil);
-end;
-
-function TLapeType_OverloadedMethod.overrideMethod(AMethod, Old: TLapeGlobalVar): TLapeGlobalVar;
-begin
-  if (AMethod = nil) or (not AMethod.HasType()) or
-     (not ((AMethod.VarType is TLapeType_Method) or (AMethod.VarType is TLapeType_OverloadedMethod)))
-  then
-    LapeException(lpeImpossible);
-
-  Result := Old;
-  AMethod.isConstant := True;
-  AMethod.Known := False;
-  if (Old <> nil) then
-    FDeclarations.Delete(Old);
-  FDeclarations.addDeclaration(AMethod);
-end;
-
-function TLapeType_OverloadedMethod.getMethodIndex(AType: TLapeType_Method): Integer;
-var
-  i: Integer;
-  ObjectType: TLapeType;
-  Params: TLapeTypeArray;
-begin
-  if (AType = nil) then
-    Exit(-1);
-
-  for i := 0 to MethodCount - 1 do
-    if TLapeType_Method(Methods[i].VarType).EqualParams(AType) then
-      Exit(i);
-
-  SetLength(Params, AType.Params.Count);
-  for i := 0 to High(params) do
-    Params[i] := AType.Params[i].VarType;
-
-  ObjectType := nil;
-  if (AType is TLapeType_MethodOfType) then
-    ObjectType := TLapeType_MethodOfType(AType).ObjectType;
-
-  if ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
-    Result := FDeclarations.IndexOf(OnFunctionNotFound(Self, ObjectType, Params, AType.Res))
-  else
-    Result := -1;
-end;
-
-function TLapeType_OverloadedMethod.getMethodIndex(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType; Fits: TLapeArgFits): Integer;
-
-  function SizeWeight(a, b: TLapeType): SizeInt; {$IFDEF Lape_Inline}inline;{$ENDIF}
-  begin
-    Result := Abs(a.Size - b.Size);
-    if (a.BaseType <> b.BaseType) then
-      Result := Result + 1;
-
-    if (a.BaseType in LapeRealTypes) and (b.BaseType in LapeRealTypes+LapeIntegerTypes) then
-      if (a.BaseType >= b.BaseType) then
-        if (b.BaseType in LapeIntegerTypes) then
-          Result := (Ord(a.BaseType) - Ord(b.BaseType)) + 12
-        else
-          Result := Ord(a.BaseType) - Ord(b.BaseType)
-      else
-        Result := (Ord(b.BaseType) - Ord(a.BaseType)) + 4
-    else if (a.BaseType in LapeBoolTypes) and (b.BaseType in LapeBoolTypes) then
-      Result := Ord(a.BaseType) - Ord(b.BaseType)
-    else if (a.BaseType in LapeStringTypes) and (b.BaseType in LapeStringTypes) then
-      if (a.BaseType >= b.BaseType) then
-        Result := Ord(a.BaseType) - Ord(b.BaseType)
-      else
-        Result := (Ord(b.BaseType) - Ord(a.BaseType)) * 4
-    else if (a.BaseType in LapeArrayTypes) and (b.BaseType in LapeArrayTypes) then
-      {nothing}
-    else if (a.BaseType in LapePointerTypes) and (b.BaseType in LapePointerTypes) then
-      if (TLapeType_Pointer(a).PConst <> TLapeType_Pointer(b).PConst) then
-        Result := Result + 1
-      else
-        {nothing}
-    else if (a.BaseType in LapeOrdinalTypes) and (b.BaseType in LapeOrdinalTypes) then
-    begin
-      if (a.VarLo().AsInteger <= b.VarLo().AsInteger) and (UInt64(a.VarHi().AsInteger) >= UInt64(b.VarHi().AsInteger)) then
-          Result := Result - 1
-      else if (a.Size < b.Size) then
-        Result := Result + 24;
-      if ((a.BaseType in LapeSignedIntegerTypes) = (b.BaseType in LapeSignedIntegerTypes)) then
-        Result := Result - 1;
-    end
-    else
-    begin
-      Result := Result * 2;
-      if (a.Size < b.Size) then
-        Result := Result * 2;
-    end;
-  end;
-
-var
-  MethodIndex, ParamsCount, AIndx, i: Integer;
-  Weight, MinWeight: SizeInt;
-  Match: Boolean;
-begin
-  Result := -1;
-  MinWeight := High(Integer);
-
-  for MethodIndex := 0 to MethodCount - 1 do
-    with TLapeType_Method(Methods[MethodIndex].VarType) do
-    begin
-      ParamsCount := Params.Count - ImplicitParams;
-      if (Length(AParams) > ParamsCount) or ((AResult <> nil) and (Res = nil)) then
-        Continue;
-
-      if (AResult = nil) or AResult.Equals(Res, False) then
-        Weight := (ParamsCount * 4)
-      else if AResult.Equals(Res) then
-        Weight := (ParamsCount * 4) + 3
-      else if (not AResult.CompatibleWith(Res)) then
-        Continue
-      else
-        Weight := SizeWeight(AResult, Res) + (ParamsCount + 1) * 4;
-
-      Match := True;
-      for i := ImplicitParams to Params.Count - 1 do
-      begin
-        AIndx := i - ImplicitParams;
-        Match := False;
-
-        if ((AIndx >= Length(AParams)) or (AParams[AIndx] = nil)) and (Params[i].Default = nil) then
-          Break
-        else if Assigned(Fits) and (AIndx < Length(AParams)) and (Params[i].VarType <> nil) and Fits(AIndx, Params[i].VarType) then
-          Weight := Weight - 4
-        else if (AIndx >= Length(AParams)) or (AParams[AIndx] = nil) or (Params[i].VarType = nil) or Params[i].VarType.Equals(AParams[AIndx]) then
-          if (AIndx >= Length(AParams)) or (AParams[AIndx] = nil) or ((Params[i].VarType <> nil) and Params[i].VarType.Equals(AParams[AIndx], False)) then
-            Weight := Weight - 4
-          else if NeedFullMatch then
-            if (Params[i].VarType = nil) then
-              Weight := Weight - 1
-            else
-              Break
-          else
-            Weight := Weight - 3
-        else if (not (Params[i].ParType in Lape_ValParams)) or NeedFullMatch then
-          Break
-        else if (not Params[i].VarType.CompatibleWith(AParams[AIndx])) then
-          Break
-        else
-          Weight := Weight + SizeWeight(Params[i].VarType, AParams[AIndx]);
-        Match := True;
-      end;
-
-      if Match then
-        if (Weight < MinWeight) then
-        begin
-          Result := MethodIndex;
-          MinWeight := Weight;
-        end
-        else if (Weight = MinWeight) and (not Assigned(Fits)) then
-          Result := -1;
-    end;
-
-  if (Result < 0) and (not Assigned(Fits)) and ({$IFNDEF FPC}@{$ENDIF}OnFunctionNotFound <> nil) then
-    Result := FDeclarations.IndexOf(OnFunctionNotFound(Self, AObjectType, AParams, AResult));
-end;
-
-function TLapeType_OverloadedMethod.getMethod(AType: TLapeType_Method): TLapeGlobalVar;
-begin
-  Result := Methods[getMethodIndex(AType)];
-end;
-
-function TLapeType_OverloadedMethod.getMethod(AParams: TLapeTypeArray; AResult: TLapeType; AObjectType: TLapeType): TLapeGlobalVar;
-begin
-  Result := Methods[getMethodIndex(AParams, AResult, AObjectType)];
-end;
-
-function TLapeType_OverloadedMethod.NewGlobalVar(AName: lpString = ''): TLapeGlobalVar;
-begin
-  Result := NewGlobalVarP(nil, AName);
-  Result.isConstant := True;
-  Result.Known := False;
-end;
-
-function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
-begin
-  Result := nil;
-end;
-
-function TLapeType_OverloadedMethod.EvalRes(Op: EOperator; Right: TLapeGlobalVar; Flags: ELapeEvalFlags = []): TLapeType;
-var
-  Method: TLapeGlobalVar;
-begin
-  if (Op = op_Index) and (Right <> nil) and (Right.BaseType in LapeIntegerTypes) then
-  begin
-    Method := Methods[Right.AsInteger];
-    if (Method = nil) then
-      LapeExceptionFmt(lpeIndexOutOfRange, [Right.AsInteger,0,MethodCount-1]);
-
-    Result := Method.VarType
-  end
-  else
-    Result := inherited;
-end;
-
-function TLapeType_OverloadedMethod.CanEvalConst(Op: EOperator; Left, Right: TLapeGlobalVar): Boolean;
-begin
-  Assert((Left = nil) or (Left.VarType = Self));
-  if (Op = op_Index) and (Left <> nil) and (Right <> nil) and (Right.BaseType in LapeIntegerTypes) then
-    Result := Right.AsInteger < MethodCount
-  else
-    Result := inherited;
-end;
-
-function TLapeType_OverloadedMethod.EvalConst(Op: EOperator; Left, Right: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar;
-begin
-  Assert((Left = nil) or (Left.VarType = Self));
-  if (Op = op_Index) and (Left <> nil) and (Right <> nil) and (Right.BaseType in LapeIntegerTypes) then
-  begin
-    Result := Methods[Right.AsInteger];
-    if (Result = nil) then
-      LapeExceptionFmt(lpeIndexOutOfRange, [Right.AsInteger,0,MethodCount-1]);
-
-    if MethodOfObject(Result.VarType) and (Left.Ptr <> nil) and (TMethod(Left.Ptr^).Data <> nil) then
-    begin
-      Result := Result.CreateCopy();
-      TMethod(Result.Ptr^).Data := TMethod(Left.Ptr^).Data;
-    end;
-  end
-  else
-    Result := inherited;
-end;
-
-function TLapeType_OverloadedMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
-var
-  Res, Part, SelfPart: TResVar;
-  Method: TLapeGlobalVar;
-begin
-  Assert(Left.VarType = Self);
-  if (Op = op_Index) and (Right.VarPos.MemPos = mpMem) and Right.HasType() and
-      Right.isConstant and (Right.VarType.BaseType in LapeIntegerTypes)
-  then
-  begin
-    Method := Methods[Right.VarPos.GlobalVar.AsInteger];
-    if (Method = nil) then
-      LapeExceptionFmt(lpeIndexOutOfRange, [Right.VarPos.GlobalVar.AsInteger,0,MethodCount-1]);
-
-    Result := _ResVar.New(Method);
-
-    if MethodOfObject(Result.VarType) then
-    begin
-      Dest := NullResVar;
-
-      if (not Left.isConstant) then
-        Res := Left
-      else
-        Res := _ResVar.New(FCompiler.getTempVar(Result.VarType));
-
-      Assert(Left.VarPos.MemPos <> mpStack);
-
-      // Self stays, or is copied when Left can not be written
-      FCompiler.Emitter._Eval({$IFDEF FPC}@{$ENDIF}lpeTMethod_ASGN, Res, Result, NullResVar);
-      if Left.isConstant then
-      begin
-        Part := Res;
-        Part.IncOffset(SizeOf(Pointer));
-        SelfPart := Left;
-        SelfPart.IncOffset(SizeOf(Pointer));
-        FCompiler.Emitter._Eval(getEvalProc(op_Assign, ltPointer, ltPointer), Part, SelfPart, NullResVar);
-      end;
-      Res.VarType := Result.VarType;
-      Result := Res;
-    end;
-  end
-  else
-    Result := inherited;
 end;
 
 constructor TLapeWithDeclaration.Create(AWithType: TLapeType);
@@ -3264,6 +2741,11 @@ begin
   inherited Create();
   WithType := AWithType;
   WithVar := NullResVar;
+end;
+
+function TLapeWithDeclaration.HasMember(AName: lpString): Boolean;
+begin
+  Result := (WithType <> nil) and WithType.HasMember(AName);
 end;
 
 function TLapeStackInfo.getVar(Index: Integer): TLapeStackVar;
@@ -3351,6 +2833,7 @@ begin
 
   FCompiler := ACompiler;
   Owner := AOwner;
+  FAround := AOwner;
   FVarStack := TLapeVarStack.Create(nil, dupAccept, False);
   FTemps := TLapeVarStack.Create(nil, dupAccept, False);
   FWithStack := TLapeWithDeclarationList.Create(nil, dupAccept, False);
@@ -3406,15 +2889,36 @@ var
 begin
   if CheckWith then
     for i := FWithStack.Count - 1 downto 0 do
-      if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.HasMember(AName) then
+      if FWithStack[i].HasMember(AName) then
         Exit(FWithStack[i]);
 
-  if Get(AName, Result) then
-    Exit;
+  if (not Get(AName, Result)) then
+    Result := nil;
+end;
+
+function TLapeStackInfo.findMethods(AName: lpString): TLapeDeclArray;
+var
+  Stack: TLapeStackInfo;
+  i: Integer;
+begin
   Result := nil;
 
-  if CheckWith and (FSelfWith <> nil) and FSelfWith.WithType.HasMember(AName) then
-    Result := FSelfWith;
+  Stack := Self;
+  while (Stack <> nil) do
+  begin
+    for i := Stack.WithStack.Count - 1 downto 0 do
+      if Stack.WithStack[i].HasMember(AName) then
+        Exit;
+
+    // (what is not a method does not hide one)
+    addMethods(Result, Stack.GetAll(AName));
+    Stack := Stack.Around;
+  end;
+end;
+
+function TLapeStackInfo.findMethod(AName: lpString; AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar;
+begin
+  Result := FCompiler.PickMethod(AName, findMethods(AName), nil, AParams, AResult);
 end;
 
 function TLapeStackInfo.hasDeclaration(AName: lpString; CheckWith: Boolean): Boolean;
@@ -3423,23 +2927,10 @@ var
 begin
   if CheckWith then
     for i := FWithStack.Count - 1 downto 0 do
-      if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.HasMember(AName) then
+      if FWithStack[i].HasMember(AName) then
         Exit(True);
 
-  Result := (getDeclaration(AName, False) <> nil) or
-    (CheckWith and (FSelfWith <> nil) and FSelfWith.WithType.HasMember(AName));
-end;
-
-function TLapeStackInfo.hasDeclaration(ADecl: TLapeDeclaration; CheckWith: Boolean): Boolean;
-var
-  i: Integer;
-begin
-  if CheckWith then
-    for i := FWithStack.Count - 1 downto 0 do
-      if (FWithStack[i].WithType <> nil) and FWithStack[i].WithType.hasDeclaration(ADecl) then
-        Exit(True);
-
-  Result := Has(ADecl) or (CheckWith and (FSelfWith <> nil) and FSelfWith.WithType.hasDeclaration(ADecl));
+  Result := (getDeclaration(AName, False) <> nil);
 end;
 
 function TLapeStackInfo.getTempVar(VarType: TLapeType): TLapeStackTempVar;
@@ -3490,29 +2981,54 @@ begin
 end;
 
 procedure TLapeStackInfo.addDeclaration(ADecl: TLapeDeclaration);
-var
-  Internal: TLapeDeclaration;
+
+  // (a method overloads the others of its name: what the scope has of it are methods)
+  function Overloads: Boolean;
+  var
+    Decls: TLapeDeclArray;
+    i: Integer;
+  begin
+    if (not (ADecl is TLapeMethod)) then
+      Exit(False);
+
+    Decls := GetAll(ADecl.Name);
+    for i := 0 to High(Decls) do
+      if (not (Decls[i] is TLapeMethod)) then
+        Exit(False);
+    Result := True;
+  end;
+
 begin
   if (ADecl = nil) then
     Exit;
 
-  // in place of an internal method by its name
-  if (Depth = 0) and (ADecl.Name <> '') and (not (ADecl is TLapeInternalMethodDeclaration)) then
-  begin
-    Internal := getDeclaration(ADecl.Name, False);
-    if (Internal is TLapeInternalMethodDeclaration) then
-      Delete(Internal, True);
-  end;
-
-  // (a name is declared once in a scope, the global one too, whatever its withs have; only the global one has System.
+  // (a name is declared once in a scope, the global one too, whatever its withs have.
   // A global method is not checked: the program that runs Lape can put one in place of another, see addGlobalMethod)
   if (Depth > 0) or (not ((ADecl is TLapeGlobalVar) and (TLapeGlobalVar(ADecl).VarType is TLapeType_Method))) then
     if ((ADecl.Name = '') and Has(ADecl)) or
-       ((ADecl.Name <> '') and (hasDeclaration(ADecl.Name, False) or ((Depth > 0) and LapeSameString(ADecl.Name, LapeSystemName))))
+       ((ADecl.Name <> '') and (hasDeclaration(ADecl.Name, False) and (not Overloads())))
     then
       LapeExceptionFmt(lpeDuplicateDeclaration, [ADecl.Name]);
 
   inherited addDeclaration(ADecl);
+end;
+
+function TLapeStackInfo.isReserved(AName: lpString): Boolean;
+var
+  Stack: TLapeStackInfo;
+begin
+  // (System. is not to be hidden)
+  Result := LapeSameString(AName, LapeSystemName);
+  if Result or (Depth = 0) or (not LapeSameString(AName, 'Self')) then
+    Exit;
+
+  Stack := Self;
+  while (Stack <> nil) do
+  begin
+    if (Stack.Method is TLapeType_Method) and (TLapeType_Method(Stack.Method).ObjectType <> nil) then
+      Exit(True);
+    Stack := Stack.Around;
+  end;
 end;
 
 function TLapeStackInfo.addVar(StackVar: TLapeStackVar): TLapeStackVar;
@@ -3548,13 +3064,14 @@ end;
 function TLapeStackInfo.addSelfVar(ParType: ELapeParameterType; VarType: TLapeType): TLapeStackVar;
 begin
   Assert(VarType <> nil);
-  Result := addVar(TLapeSelfVar.Create(ParType, VarType, nil, 'Self'));
+  Result := addVar(TLapeParameterVar.Create(ParType, VarType, nil, 'Self'));
 end;
 
 function TLapeStackInfo.addResultVar(VarType: TLapeType): TLapeStackVar;
 begin
   Assert(VarType <> nil);
-  Result := addVar(TLapeResultVar.Create(lptOut, VarType, nil, 'Result'));
+  Result := addVar(TLapeParameterVar.Create(lptOut, VarType, nil, 'Result'));
+  FResultVar := Result;
 end;
 
 function TLapeStackInfo.inheritVar(StackVar: TLapeStackVar): TLapeStackVar;
@@ -3900,8 +3417,7 @@ end;
 
 procedure TLapeCompilerBase.setEmitter(AEmitter: TLapeCodeEmitter);
 begin
-  if FreeEmitter and (FEmitter <> nil) then
-    FEmitter.Free();
+  FEmitter.Free();
   FEmitter := AEmitter;
   if (FEmitter <> nil) then
     FEmitter.Reset();
@@ -3935,7 +3451,7 @@ begin
   GlobalScope.WithStack.Clear();
 end;
 
-constructor TLapeCompilerBase.Create(AEmitter: TLapeCodeEmitter = nil; ManageEmitter: Boolean = True);
+constructor TLapeCompilerBase.Create;
 begin
   inherited Create();
 
@@ -3944,14 +3460,10 @@ begin
 
   FOnHint := nil;
 
-  FreeEmitter := ManageEmitter;
-  if (AEmitter = nil) then
-    AEmitter := TLapeCodeEmitter.Create();
-  FEmitter := AEmitter;
+  FEmitter := TLapeCodeEmitter.Create();
 
   FManagedDeclarations := TLapeDeclarationList.Create();
   FStackInfo := TLapeStackInfo.Create(Self);
-  FCachedTypeVars := TLapeCachedTypeVarList.Create(NullCachedTypeVar, dupAccept, False);
   FConstants := TLapeConstantList.Create();
 
   Clear();
@@ -3967,7 +3479,6 @@ begin
   FreeAndNil(FStackInfo);
   FreeAndNil(FManagedDeclarations);
   FreeAndNil(FConstants);
-  FreeAndNil(FCachedTypeVars);
 
   inherited;
 end;
@@ -3987,7 +3498,7 @@ begin
     FManagedDeclarations.Items[i].ClearDeclarations();
   FManagedDeclarations.Clear();
   FConstants.Clear();
-  FCachedTypeVars.Clear();
+  FMethodGenerates := nil;
   FTypeID := TypeID_User;
 
   FBaseTypes[ltUInt8] := TLapeType_UInt8.Create(Self, LapeTypeToString(ltUInt8));
@@ -4020,6 +3531,7 @@ begin
   for BaseType in LapeBaseTypes do
     if (FBaseTypes[BaseType] <> nil) then
       GlobalScope.addDeclaration(FBaseTypes[BaseType]);
+
 end;
 
 procedure TLapeCompilerBase.VarToDefault(AVar: TResVar);
@@ -4199,6 +3711,9 @@ function TLapeCompilerBase.addGlobalVar(AVar: TLapeGlobalVar; AName: lpString = 
 begin
   if (AVar <> nil) then
   begin
+    // (a method has the name of its header)
+    Assert((AName = '') or (not (AVar is TLapeMethod)));
+
     if (AName <> '') then
       AVar.Name := AName;
     AVar.isConstant := False;
@@ -4351,41 +3866,22 @@ begin
   Result.VarType := VarType;
 end;
 
-function TLapeCompilerBase.getTypeVar(AType: ELapeBaseType): TLapeGlobalVar;
-begin
-  Result := getTypeVar(FBaseTypes[AType]);
-end;
-
-function TLapeCompilerBase.getTypeVar(AType: TLapeType): TLapeGlobalVar;
-var
-  i: Integer;
-  Cached: TLapeCachedTypeVar;
-begin
-  for i := 0 to FCachedTypeVars.Count - 1 do
-    if (FCachedTypeVars[i].VarType = AType) then
-      Exit(FCachedTypeVars[i].TypeVar);
-
-  // (of a set, that of its element: which is where it is kept, as before)
-  if (AType is TLapeType_Set) then
-    AType := TLapeType_Set(AType).Element;
-
-  if (AType is TLapeType_Enum) then
-    Result := addManagedDecl(addManagedType(TLapeType_TypeEnum.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar
-  else
-    Result := addManagedDecl(addManagedType(TLapeType_Type.Create(AType, Self)).NewGlobalVarP()) as TLapeGlobalVar;
-
-  Cached.VarType := AType;
-  Cached.TypeVar := Result;
-  FCachedTypeVars.Add(Cached);
-end;
-
 function TLapeCompilerBase.getGlobalVar(AName: lpString): TLapeGlobalVar;
 var
-  Decl: TLapeDeclaration;
+  Decls: TLapeDeclArray;
+  i: Integer;
 begin
   Result := nil;
-  if GlobalScope.Get(AName, Decl) and (Decl is TLapeGlobalVar) then
-    Result := TLapeGlobalVar(Decl);
+  Decls := GlobalScope.GetAll(AName);
+  if (Length(Decls) = 0) or (not (Decls[0] is TLapeGlobalVar)) then
+    Exit;
+  Result := TLapeGlobalVar(Decls[0]);
+
+  // (an override of it: another method of the name is not what is asked for)
+  if (Result is TLapeMethod) then
+    for i := 1 to High(Decls) do
+      if (Decls[i] is TLapeMethod) and TLapeType_Method(TLapeGlobalVar(Decls[0]).VarType).EqualParams(TLapeType_Method(TLapeGlobalVar(Decls[i]).VarType)) then
+        Result := TLapeGlobalVar(Decls[i]);
 end;
 
 function TLapeCompilerBase.getGlobalType(AName: lpString): TLapeType;
@@ -4397,7 +3893,39 @@ begin
     Result := TLapeType(Decl);
 end;
 
-function TLapeCompilerBase.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False): TLapeDeclaration;
+procedure TLapeCompilerBase.addMethodGenerate(Callback: TLapeGenerateMethod);
+begin
+  SetLength(FMethodGenerates, Length(FMethodGenerates) + 1);
+  FMethodGenerates[High(FMethodGenerates)] := Callback;
+end;
+
+function TLapeCompilerBase.GenerateMethod(AName: lpString; AObjectType: TLapeType; const AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  i: Integer;
+begin
+  Result := nil;
+  for i := 0 to High(FMethodGenerates) do
+  begin
+    Result := FMethodGenerates[i](AName, AObjectType, AParams, AResult);
+    if (Result <> nil) then
+      Exit;
+  end;
+end;
+
+function TLapeCompilerBase.PickMethod(AName: lpString; const Methods: TLapeDeclArray; AObjectType: TLapeType; const AParams: TLapeTypeArray; AResult: TLapeType = nil): TLapeGlobalVar;
+var
+  isGlobal: Boolean;
+begin
+  isGlobal := (AObjectType = nil);
+
+  Result := FitMethod(Methods, isGlobal, AParams, AResult);
+  if (Result = nil) then
+    Result := GenerateMethod(AName, AObjectType, AParams, AResult);
+  if (Result = nil) and isGlobal then
+    Result := FitMethod(Methods, False, AParams, AResult);
+end;
+
+function TLapeCompilerBase.getDeclaration(AName: lpString; AStackInfo: TLapeStackInfo = nil; LocalOnly: Boolean = False; CheckWith: Boolean = True): TLapeDeclaration;
 var
   Stack: TLapeStackInfo;
 begin
@@ -4408,7 +3936,7 @@ begin
   Stack := AStackInfo;
   while (Stack <> nil) do
   begin
-    Result := Stack.getDeclaration(AName, not LocalOnly);
+    Result := Stack.getDeclaration(AName, CheckWith and (not LocalOnly));
 
     if (Result is TLapeStackVar) and (TLapeStackVar(Result).Stack <> AStackInfo.VarStack) then
     begin
@@ -4431,13 +3959,14 @@ var
 begin
   if (AStackInfo = nil) then
     AStackInfo := FStackInfo;
+  if LocalOnly and AStackInfo.isReserved(AName) then
+    Exit(True);
 
   Stack := AStackInfo;
   while (Stack <> nil) do
   begin
     if Stack.hasDeclaration(AName, not LocalOnly) then
-      if (not LocalOnly) or (not (Stack.getDeclaration(AName, False) is TLapeInternalMethodDeclaration)) then
-        Exit(True);
+      Exit(True);
     if LocalOnly then
       Break;
     Stack := Stack.Owner;
@@ -4456,7 +3985,7 @@ begin
   Stack := AStackInfo;
   while (Stack <> nil) do
   begin
-    if Stack.hasDeclaration(ADecl, not LocalOnly) then
+    if Stack.Has(ADecl) then
       Exit(True);
     if LocalOnly then
       Break;

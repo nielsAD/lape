@@ -23,7 +23,7 @@ implementation
 {$R *.dfm}
 
 uses
-  lptypes, lpcompiler, lptokenizer, lpvartypes, lputils, lpinterpreter;
+  lptypes, lpcompiler, lptokenizer, lpvartypes, lpinterpreter;
 
 procedure _Write(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
@@ -51,7 +51,15 @@ begin
     Compiler.addGlobalMethod('procedure _Write(s: String); override;', @_Write, Self);
     Compiler.addGlobalMethod('procedure _WriteLn; override;', @_WriteLn, Self);
 
-    InitializePascalScriptBasics(Compiler, [psiTypeAlias]);
+    Compiler.addGlobalType(Compiler.getBaseType(DetermineIntType(SizeOf(Byte), False)).CreateAlias(), 'Byte');
+    Compiler.addGlobalType(Compiler.getBaseType(DetermineIntType(SizeOf(ShortInt), True)).CreateAlias(), 'ShortInt');
+    Compiler.addGlobalType(Compiler.getBaseType(DetermineIntType(SizeOf(Word), False)).CreateAlias(), 'Word');
+    Compiler.addGlobalType(Compiler.getBaseType(DetermineIntType(SizeOf(SmallInt), True)).CreateAlias(), 'SmallInt');
+    Compiler.addGlobalType(Compiler.getBaseType(DetermineIntType(SizeOf(LongWord), False)).CreateAlias(), 'LongWord');
+    Compiler.addGlobalType(Compiler.getBaseType(DetermineIntType(SizeOf(LongInt), True)).CreateAlias(), 'LongInt');
+    Compiler.addGlobalType(Compiler.getBaseType(DetermineIntType(SizeOf(Cardinal), False)).CreateAlias(), 'Cardinal');
+    Compiler.addGlobalType(Compiler.getBaseType(DetermineIntType(SizeOf(Integer), True)).CreateAlias(), 'Integer');
+    Compiler.addGlobalType('^Char', 'PChar');
 
     try
       T := GetTickCount64();

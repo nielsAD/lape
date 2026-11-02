@@ -8,22 +8,22 @@ type
 
 property TFoo.Width(NewWidth:Int32);
 begin
-  FWidth := NewWidth;
+  Self.FWidth := NewWidth;
 end;
 
 property TFoo.Width(): Int32;
 begin
-  Result := FWidth;
+  Result := Self.FWidth;
 end;
 
 property TFoo.Index(x,y: Int32): Int32;
 begin
-  Result := FData[y*FWidth+x];
+  Result := Self.FData[y*Self.FWidth+x];
 end;
 
 property TFoo.Index(x,y: Int32; value:Int32);
 begin
-  FData[y*FWidth+x] := value;
+  Self.FData[y*Self.FWidth+x] := value;
 end;
 
 

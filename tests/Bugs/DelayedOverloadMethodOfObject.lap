@@ -7,7 +7,7 @@ end;
 
 procedure Pointer.Test;
 begin
-  Foo();      // Compilation error: "Don't know which overloaded method to call with params ()"
+  Self.Foo();      // Compilation error: "Don't know which overloaded method to call with params ()"
   Self.Foo();
 end;
 

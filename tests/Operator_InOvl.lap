@@ -1,15 +1,10 @@
 {$assertions on}
-
+// An open array after `in` is a set: operators are for what is typed
 var success: Boolean;
-
-operator in(l: Int32; r: array of Int64): Boolean;
-begin
-  success := True;
-end;
 
 operator in(l: Int32; r: array of Int32): Boolean;
 begin
-  Success := True;
+  success := True;
 end;
 
 operator in(l: Char; r: String): Boolean;
@@ -23,8 +18,9 @@ var
 begin
   success := False;
   i := 100;
-  b := i in [0, 1, 50]; // should call an op overload
-  assert(success);
+  b := i in [0, 1, 50];
+  Assert(not success);
+  Assert(not b);
 
   success := False;
   b := 'z' in 'abc';

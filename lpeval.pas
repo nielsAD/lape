@@ -73,7 +73,6 @@ procedure _LapeAStr_Unique(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;
 procedure _LapeWStr_Unique(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeUStr_Unique(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 
-procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeToString_Int8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 procedure _LapeToString_UInt16(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
@@ -130,7 +129,7 @@ var
   LapeEvalRes: TLapeEvalRes;
   LapeEvalArr: TLapeEvalArr;
 
-  LapeDelayedFlags: lpString = '{$ASSERTIONS ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
+  LapeCodeFlags: lpString = '{$ASSERTIONS ON}{$CONSTADDRESS ON}{$RANGECHECKS ON}{$LOOSESEMICOLON OFF}{$EXTENDEDSYNTAX OFF}{$HINTS OFF}' + LineEnding;
 
   _LapeToString_Set: lpString =
     'function _%sSetToString(ASet: ConstPointer;'                                        + LineEnding +
@@ -786,11 +785,6 @@ end;
 procedure _LapeUStr_Unique(const Params: PParamArray); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
 begin
   UniqueString(PUnicodeString(Params^[0])^);
-end;
-
-procedure _LapeToString_Unknown(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}
-begin
-  PlpString(Result)^ := '*UNKNOWN*';
 end;
 
 procedure _LapeToString_UInt8(const Params: PParamArray; const Result: Pointer); {$IFDEF Lape_CDECL}cdecl;{$ENDIF}

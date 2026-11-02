@@ -1,0 +1,12 @@
+// Nothing is generated for a name of several methods
+type
+  TInts = procedure(x: Int32);
+
+procedure g(x: Int32); overload; begin end;
+procedure g(x: string); overload; begin end;
+
+var
+  a: array of TInts;
+begin
+  WriteLn(IndexOf(@g, a));
+end.

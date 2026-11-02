@@ -1,0 +1,21 @@
+// The directives of a body run once, when it is parsed, where it is
+// (what is set where a body is written holds in it, not what is set later)
+{$DEFINE Inside}
+procedure Defined;
+begin
+  {$IFDEF Inside} WriteLn('inside'); {$ELSE} WriteLn('not inside'); {$ENDIF}
+end;
+{$UNDEF Inside}
+
+// (parsing a body stops at its end: what follows is not read again, with what it defined)
+procedure Stops;
+begin
+  {$DEFINE InStops}
+end;
+{$IFDEF InStops}
+  {$ERROR read past the end of the body}
+{$ENDIF}
+
+begin
+  Defined();
+end.

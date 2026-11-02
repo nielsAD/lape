@@ -1,3 +1,4 @@
+// A property cannot override
 type
   TA = record v: Int32; end;
   TB = type TA;
@@ -7,21 +8,10 @@ begin
   Result := Self.v;
 end;
 
-property TA.Value(x: Int32);
-begin
-  Self.v := x;
-end;
-
 property TB.Value(): Int32; override;
 begin
-  Result := inherited() * 100;
+  Result := 1;
 end;
 
-var
-  a: TA;
-  b: TB;
 begin
-  a.Value := 2;
-  b.Value := 3;
-  WriteLn(a.Value, ' ', b.Value, ' ', b.v);
 end.

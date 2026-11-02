@@ -10,7 +10,7 @@ type
 
 function ta.test: string;
 begin
-  Result := a + 'a';
+  Result := Self.a + 'a';
 end;
 
 function tb.test: string; override;

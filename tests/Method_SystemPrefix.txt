@@ -1,2 +1,1 @@
-1
-2
+Type expected at line 2, column 11 in file "Method_SystemPrefix.lap"

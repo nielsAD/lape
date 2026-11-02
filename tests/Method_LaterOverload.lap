@@ -1,0 +1,19 @@
+// Bodies come after every declaration: one declared after a call is there for it
+function f(x: string): string;
+begin
+  Result := 'string';
+end;
+
+function g: string;
+begin
+  Result := f('a');
+end;
+
+function f(x: Char): string; overload;
+begin
+  Result := 'char';
+end;
+
+begin
+  WriteLn(g(), ' ', f('a'));
+end.

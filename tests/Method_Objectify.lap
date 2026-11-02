@@ -1,6 +1,9 @@
 {$assertions on}
 {$autoobjectify on}
 
+type
+  TRand = function(Min, Max: Int64): Int64;
+
 function Rand(Min, Max: Int64): Int64;
 begin
   Result := Random(Min, Max);
@@ -16,6 +19,8 @@ begin
   Result := Objectify(@Callback)(10,10);
 end;
 
+var
+  Host: TRand;
 begin
   // ltScriptMethod
   Assert(Test1(@Rand)=10);
@@ -25,9 +30,10 @@ begin
   Assert(Objectify(@Rand)(10,10)=10);
 
   // ltImportedMethod
-  Assert(Test1(@Random[0])=10);
-  Assert(Test2(@Random[0])=10);
+  Host := @Random;
+  Assert(Test1(@Random)=10);
+  Assert(Test2(@Random)=10);
 
-  Assert(Objectify(@Random[0])(10,10)=10);
-  Assert(Objectify(@Random[0])(10,10)=10);
+  Assert(Objectify(@Host)(10,10)=10);
+  Assert(Objectify(@Host)(10,10)=10);
 end;

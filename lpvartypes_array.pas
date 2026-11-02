@@ -20,12 +20,12 @@ type
   protected
     function getAsString: lpString; override;
 
-    function canInlineHelper(AName: lpString; out Typ: TLapeType): Boolean;
+    function canInlineHelper(AName: lpString; out Typ: TLapeDeclaration): Boolean;
   public
     constructor Create(ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''); reintroduce; virtual;
     function CreateCopy: TLapeType; override;
 
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
+    function VarToStringBody: lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
     function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
     function VarHi(AVar: Pointer = nil): TLapeGlobalVar; override;
@@ -38,6 +38,7 @@ type
     procedure RangeCheck(var AVar, AIndex: TResVar; Flags: ELapeEvalFlags); overload; virtual;
 
     function EvalRes(Op: EOperator; ARight: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType; override;
+    function HasField(AName: lpString): Boolean; override;
     function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; override;
     function EvalMember(var Dest: TResVar; ALeft: TResVar; AName: lpString; Flags: ELapeEvalFlags): TResVar; override;
     function EvalConst(Op: EOperator; ALeft, ARight: TLapeGlobalVar; Flags: ELapeEvalFlags): TLapeGlobalVar; override;
@@ -130,24 +131,17 @@ begin
   Result := inherited;
 end;
 
-function TLapeType_DynArray.canInlineHelper(AName: lpString; out Typ: TLapeType): Boolean;
-var
-  Decl: TLapeDeclaration;
+function TLapeType_DynArray.canInlineHelper(AName: lpString; out Typ: TLapeDeclaration): Boolean;
 begin
-  Decl := getDeclaration(AName);
-  if (Decl is TLapeGlobalVar) then
-  begin
-    Typ := TLapeGlobalVar(Decl).VarType;
+  Typ := getDeclaration(AName);
+  Result := Typ is TLapeArrayHelper_Inline;
+end;
 
-    Result := (Typ is TLapeType_ArrayHelper_First) or
-              (Typ is TLapeType_ArrayHelper_Last) or
-              (Typ is TLapeType_ArrayHelper_Pop) or
-              (Typ is TLapeType_ArrayHelper_High) or
-              (Typ is TLapeType_ArrayHelper_Low) or
-              (Typ is TLapeType_ArrayHelper_Length) or
-              (Typ is TLapeType_ArrayHelper_IsEmpty);
-  end else
-    Result := False;
+function TLapeType_DynArray.HasField(AName: lpString): Boolean;
+var
+  Typ: TLapeDeclaration;
+begin
+  Result := canInlineHelper(AName, Typ);
 end;
 
 constructor TLapeType_DynArray.Create(ArrayType: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = '');
@@ -174,22 +168,18 @@ begin
   Result.TypeID := TypeID;
 end;
 
-function TLapeType_DynArray.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
-var
-  Index: Integer;
+function TLapeType_DynArray.VarToStringBody: lpString;
 begin
   Result := '';
-  if (ToStr = nil) or (FCompiler = nil) or (not HasType()) then
-    Exit;
-
-  Index := ToStr.getMethodIndex(getTypeArray([PType]), FCompiler.getBaseType(ltString));
-  if (Index < 0) then
+  if (not HasType()) or (FCompiler.GlobalScope.findMethod('ToString', getTypeArray([PType]), FCompiler.getBaseType(ltString)) = nil) then
     Exit;
 
   Result := lpString(
-    '  function _ElementToString(p: System.ConstPointer): System.string; static;'           + LineEnding +
+    'type'                                                                                  + LineEnding +
+    '  TElement = PType(Param0);'                                                           + LineEnding +
+    '  function _ElementToString(constref Element: TElement): System.string; static;'       + LineEnding +
     '  begin'                                                                               + LineEnding +
-    '    Result := System.ToString['+IntToStr(Index)+'](p^);'                               + LineEnding +
+    '    Result := System.ToString(' + ValuePrefix(PType) + 'Element);'                     + LineEnding +
     '  end;'                                                                                + LineEnding +
     'type'                                                                                  + LineEnding +
     '  TArrayToString = private function(constref Arr; AToString: System.ConstPointer; Len, Size: System.SizeInt): System.string;' + LineEnding +
@@ -201,8 +191,8 @@ begin
     '    Result := '#39'[]'#39''                                                            + LineEnding +
     '  else'                                                                                + LineEnding +
     '    Result := TArrayToString(@System._ArrayToString)('                                 + LineEnding +
-    '      Param0['+IntToStr(VarLo().AsInteger)+'],'                                        + LineEnding +
-    '      @_ElementToString, Len, System.SizeOf(Param0[0]));'                              + LineEnding +
+    '      ' + ValuePrefix(PType) + 'Param0['+IntToStr(VarLo().AsInteger)+'],'              + LineEnding +
+    '      @_ElementToString, Len, System.SizeOf(' + ValuePrefix(PType) + 'Param0[0]));'    + LineEnding +
     'end;');
 end;
 
@@ -381,7 +371,6 @@ var
   Arr: Pointer;
 begin
   Arr := PPointer(AVar.Ptr)^;
-
   VarSetLength(Arr, ALen);
   PPointer(AVar.Ptr)^ := Arr;
 end;
@@ -501,14 +490,14 @@ end;
 
 function TLapeType_DynArray.EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType;
 var
-  Typ: TLapeType;
+  Typ: TLapeDeclaration;
 begin
   if CanInlineHelper(AName, Typ) then
-    if (Typ is TLapeType_ArrayHelper_First) or (Typ is TLapeType_ArrayHelper_Last) or (Typ is TLapeType_ArrayHelper_Pop) then
+    if (Typ is TLapeArrayHelper_First) or (Typ is TLapeArrayHelper_Last) or (Typ is TLapeArrayHelper_Pop) then
       Result := FPType
-    else if (Typ is TLapeType_ArrayHelper_Low) or (Typ is TLapeType_ArrayHelper_High) or (Typ is TLapeType_ArrayHelper_Length) then
+    else if (Typ is TLapeArrayHelper_Low) or (Typ is TLapeArrayHelper_High) or (Typ is TLapeArrayHelper_Length) then
       Result := FCompiler.getBaseType(ltSizeInt)
-    else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
+    else if (Typ is TLapeArrayHelper_IsEmpty) then
       Result := FCompiler.getBaseType(ltBoolean)
     else
       Result := nil
@@ -698,15 +687,6 @@ begin
     end
     else if (ARight.VarType is TLapeType_StaticArray) then
     begin
-      {FCompiler.EmitCode(
-        'System.SetLength(Left, '+IntToStr(
-          TLapeType_StaticArray(ARight.VarType).Range.Hi -
-          TLapeType_StaticArray(ARight.VarType).Range.Lo + 1)               +
-        ');'                                                                +
-        'PType(@Left[0])^ := Right;',
-        ['PType', 'Left', 'Right'], [FCompiler.getTypeVar(FCompiler.addManagedType(TLapeType_Pointer.Create(FCompiler, ARight.VarType, False)))],
-        [ALeft, ARight], Offset, FCompiler.DocPos)}
-
       with TLapeType_StaticArray(ARight.VarType).Range do
         VarSetLength(ALeft, _ResVar.New(FCompiler.getIntConst(Hi - Lo + 1)));
 
@@ -809,7 +789,7 @@ function TLapeType_DynArray.EvalMember(var Dest: TResVar; ALeft: TResVar; AName:
 var
   IndexVar, tmpResVar: TResVar;
   Node: TLapeTree_Base;
-  Typ: TLapeType;
+  Typ: TLapeDeclaration;
 begin
   IndexVar := NullResVar;
   tmpResVar := NullResVar;
@@ -818,11 +798,11 @@ begin
   begin
     Dest := NullResVar;
 
-    if (Typ is TLapeType_ArrayHelper_First) or
-       (Typ is TLapeType_ArrayHelper_Last) or
-       (Typ is TLapeType_ArrayHelper_Pop) then
+    if (Typ is TLapeArrayHelper_First) or
+       (Typ is TLapeArrayHelper_Last) or
+       (Typ is TLapeArrayHelper_Pop) then
     begin
-      if (Typ is TLapeType_ArrayHelper_First) then
+      if (Typ is TLapeArrayHelper_First) then
         IndexVar := _ResVar.New(VarLo())
       else
         with TLapeTree_InternalMethod_High.Create(FCompiler) do
@@ -837,7 +817,7 @@ begin
       Result := FPType.Eval(op_Assign, tmpResVar, Result, Eval(op_Index, tmpResVar, ALeft, IndexVar, [lefRangeCheck]), []);
       Result.isConstant := True;
 
-      if (Typ is TLapeType_ArrayHelper_Pop) then
+      if (Typ is TLapeArrayHelper_Pop) then
         with TLapeTree_InternalMethod_SetLength.Create(FCompiler) do
         try
           addParam(TLapeTree_Var.Create(ALeft, FCompiler));
@@ -855,11 +835,11 @@ begin
           Free();
         end;
     end
-    else if (Typ is TLapeType_ArrayHelper_Low) or (Typ is TLapeType_ArrayHelper_High) or (Typ is TLapeType_ArrayHelper_Length) then
+    else if (Typ is TLapeArrayHelper_Low) or (Typ is TLapeArrayHelper_High) or (Typ is TLapeArrayHelper_Length) then
     begin
-      if (Typ is TLapeType_ArrayHelper_Low) then
+      if (Typ is TLapeArrayHelper_Low) then
         Node := TLapeTree_InternalMethod_Low.Create(FCompiler)
-      else if (Typ is TLapeType_ArrayHelper_High) then
+      else if (Typ is TLapeArrayHelper_High) then
         Node := TLapeTree_InternalMethod_High.Create(FCompiler)
       else
         Node := TLapeTree_InternalMethod_Length.Create(FCompiler);
@@ -871,7 +851,7 @@ begin
         Node.Free();
       end;
     end
-    else if (Typ is TLapeType_ArrayHelper_IsEmpty) then
+    else if (Typ is TLapeArrayHelper_IsEmpty) then
     begin
       Result := _ResVar.New(FCompiler.getTempVar(ltBoolean));
       Result.isConstant := True;

@@ -29,7 +29,7 @@ procedure y.test(a, b: Integer); overload;
   end;
 
 begin
-  test(a);
+  Self.test(a);
   test1(a, b, 0);
 end;
 

@@ -1,7 +1,5 @@
 {$assertions on}
 
-function NextMethod: string; forward;
-
 function Method: string;
 begin
   Result := 'met' + NextMethod();
@@ -12,11 +10,9 @@ begin
   Result := 'hod';
 end;
 
-function Int8.NextMethod: string; forward;
-
 function Int8.Method: string;
 begin
-  Result := 'met' + NextMethod();
+  Result := 'met' + Self.NextMethod();
 end;
 
 function Int8.NextMethod: string;

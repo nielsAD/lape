@@ -30,14 +30,6 @@ var
     b := c;
   end;
 
-  procedure innerNest(c: Integer); override;
-  var
-    z: Integer = 1;
-  begin
-    z := z + 1;
-    inherited(c+1);
-  end;
-
   procedure innerNest(s: string); overload;
   begin
     WriteLn(s);
@@ -56,16 +48,14 @@ type
 
 procedure TNest.nest(c: TNest);
 begin
-  WriteLn(c.a + a, ' ', b + c.b);
+  WriteLn(c.a + Self.a, ' ', Self.b + c.b);
 end;
 
 procedure TNest.nest(c: TNest); override;
   procedure innerNest(d: TNest);
-  var
-    Self: string = 'Fool me once';
   begin
-    Inc(a, d.a);
-    Inc(b, d.b);
+    Inc(Self.a, d.a);
+    Inc(Self.b, d.b);
     inherited();
     Inc(c.a, d.a);
     Inc(c.b, d.b);

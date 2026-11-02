@@ -95,10 +95,10 @@ addGlobalFunc('Function IsDelimiter(Delimiters, s: string; Index: SizeInt): Bool
 
 addGlobalFunc('function StringOfChar(c: Char; l: SizeInt): string;', @_LapeStringOfChar);
 
-addCode(LapeDelayedFlags +
+addCode(LapeCodeFlags +
   'function Chr(IntValue: UInt8):  AnsiChar; overload; begin Result := AnsiChar(IntValue); end;' + LineEnding +
   'function Chr(IntValue: UInt16): WideChar; overload; begin Result := WideChar(IntValue); end;'
-,  '!addDelayedCode::Chr');
+,  '!addCode::Chr');
 
 addGlobalFunc('procedure String.SetLength(NewLen: Int32);', @_LapeString_SetLength);
 addGlobalFunc('property String.Length: Int32;', @_LapeString_Length);

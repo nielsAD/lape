@@ -1,0 +1,39 @@
+// What is declared later can be addressed, as it can be called
+type
+  TProc = procedure;
+  T = record x: Int32; end;
+
+procedure T.Go;
+var
+  p: procedure of object;
+begin
+  p := @Self.Later;
+  p();
+end;
+
+procedure Early;
+var
+  p: TProc;
+begin
+  p := @Later;
+  p();
+  p := @System.Later;
+  p();
+end;
+
+procedure T.Later;
+begin
+  WriteLn('method ', Self.x);
+end;
+
+procedure Later;
+begin
+  WriteLn('global');
+end;
+
+var
+  r: T = [5];
+begin
+  r.Go();
+  Early();
+end.

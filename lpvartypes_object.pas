@@ -35,13 +35,13 @@ type
     destructor Destroy; override;
 
     procedure ClearCache; override;
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
+    function VarToStringBody: lpString; override;
 
     procedure addField(FieldType: TLapeType; AName: lpString); virtual;
     procedure addConstField(FieldType: TLapeType; FieldValue: TLapeGlobalVar; AName: lpString); virtual;
 
+    function HasField(AName: lpString): Boolean; override;
     function EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType; override;
-    function EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar; override;
     function EvalMember(var Dest: TResVar; Left: TResVar; AName: lpString; Flags: ELapeEvalFlags): TResVar; override;
 
     procedure addArrayHelpers; override;
@@ -125,7 +125,7 @@ begin
   FAsString := '';
 end;
 
-function TLapeType_Object.VarToStringBody(ToStr: TLapeType_OverloadedMethod): lpString;
+function TLapeType_Object.VarToStringBody: lpString;
 var
   i: Integer;
 begin
@@ -140,8 +140,8 @@ begin
     begin
       if (i > 0) then
         Result := Result + ' + ' + #39', '#39;
-      if (ToStr <> nil) and (ToStr.getMethod(getTypeArray([FieldType])) <> nil) then
-        Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(Param0.' + FFieldMap.Key[i] + ')';
+      if (FCompiler.GlobalScope.findMethod('ToString', getTypeArray([FieldType])) <> nil) then
+        Result := Result + ' + '#39 + FFieldMap.Key[i] + ' = '#39' + System.ToString(' + ValuePrefix(FieldType) + 'Param0.' + FFieldMap.Key[i] + ')';
     end;
 
   Result := Result + ' + '#39'}'#39'; end;';
@@ -194,18 +194,15 @@ begin
   addDeclaration(Field);
 end;
 
+function TLapeType_Object.HasField(AName: lpString): Boolean;
+begin
+  Result := FFieldMap.ExistsKey(AName);
+end;
+
 function TLapeType_Object.EvalMemberRes(AName: lpString; Flags: ELapeEvalFlags = []): TLapeType;
 begin
   if FFieldMap.ExistsKey(AName) then
     Result := FFieldMap[AName].FieldType
-  else
-    Result := inherited;
-end;
-
-function TLapeType_Object.EvalMemberConst(Left: TLapeGlobalVar; AName: lpString; Flags: ELapeEvalFlags = []): TLapeGlobalVar;
-begin
-  if FFieldMap.ExistsKey(AName) then
-    Result := nil
   else
     Result := inherited;
 end;

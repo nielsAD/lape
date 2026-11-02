@@ -31,7 +31,7 @@ type
     function CreateCopy: TLapeType; override;
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; override;
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
+    function VarToStringBody: lpString; override;
 
     function NewGlobalVar(Ptr: Pointer = nil; AName: lpString = ''): TLapeGlobalVar; virtual;
 
@@ -61,6 +61,7 @@ type
     constructor Create(ACompiler: TLapeCompilerBase); override;
     procedure ClearCache; override;
     function isConstant: Boolean; override;
+    function FoldConstants(DoFree: Boolean = True): TLapeTree_Base; override;
     function resType: TLapeType; override;
     function Evaluate: TLapeGlobalVar; override;
     function Compile: TResVar; override;
@@ -321,7 +322,7 @@ begin
   Assert(Globals['!ffi_lapify_closures'] <> nil);
   AddLapifyClosure(TFFILapifyClosures(Globals['!ffi_lapify_closures'].Ptr^), Closure);
 
-  TLapeType_Method(Header.VarType).setImported(Header, True);
+  Header.VarType.BaseType := ltImportedMethod;
   PPointer(Header.Ptr)^ := Closure.Func;
 
   Result := (Closure.Func <> nil);
@@ -435,7 +436,7 @@ begin
   Result := (Other is TLapeType_NativeMethod) and FHeader.Equals(TLapeType_NativeMethod(Other).Header, ContextOnly);
 end;
 
-function TLapeType_NativeMethod.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+function TLapeType_NativeMethod.VarToStringBody: lpString;
 var
   CastTo: lpString;
 begin
@@ -453,18 +454,9 @@ begin
 end;
 
 function TLapeType_NativeMethod.EvalRes(Op: EOperator; Right: TLapeType = nil; Flags: ELapeEvalFlags = []): TLapeType;
-var
-  m: TLapeGlobalVar;
 begin
   if (Op = op_Assign) and (Right <> nil) then
   begin
-    if (Right <> nil) and (Right is TLapeType_OverloadedMethod) then
-    begin
-      m := TLapeType_OverloadedMethod(Right).getMethod(FHeader);
-      if (m <> nil) then
-        Right := m.VarType;
-    end;
-
     if lcoAutoObjectify in FCompiler.Options then
     begin
       FObjectify := (Right.ClassType = TLapeType_Method) and
@@ -543,8 +535,6 @@ begin
 end;
 
 function TLapeType_NativeMethod.Eval(Op: EOperator; var Dest: TResVar; Left, Right: TResVar; Flags: ELapeEvalFlags): TResVar;
-var
-  m: TLapeGlobalVar;
 begin
   Assert(Left.VarType = Self);
 
@@ -561,13 +551,6 @@ begin
   end else
   begin
     Left.VarType := FHeader;
-
-    if Right.HasType() and (Right.VarType is TLapeType_OverloadedMethod) then
-    begin
-      m := TLapeType_OverloadedMethod(Right.VarType).getMethod(FHeader);
-      if (m <> nil) then
-        Right := _ResVar.New(m);
-    end;
 
     if (op = op_Assign) and Right.HasType() and CompatibleWith(Right.VarType) then
     begin
@@ -670,12 +653,10 @@ begin
   if (FConstant = bUnknown) then
   begin
     FConstant := bFalse;
-    if (FParams.Count >= 1) and (not isEmpty(FParams[0])) then
+    if (FParams.Count >= 1) then
     begin
       ParamType := FParams[0].resType();
-      if (ParamType <> nil) and (ParamType is TLapeType_Type) and
-         (TLapeType_Type(ParamType).TType is TLapeType_Method)
-      then
+      if (FParams[0] is TLapeTree_VarType) and (ParamType is TLapeType_Method) then
         FConstant := bTrue;
     end;
   end;
@@ -689,9 +670,9 @@ var
   ABI: TFFIABI;
 begin
   if (FResType = nil) then
-    if ((FParams.Count = 1) or (FParams.Count = 2)) and (not isEmpty(FParams[0])) then
+    if ((FParams.Count = 1) or (FParams.Count = 2)) then
     begin
-      if (FParams.Count = 1) or isEmpty(FParams[1]) then
+      if (FParams.Count = 1) or (FParams[1] = nil) then
         ABI := FFI_DEFAULT_ABI
       else if FParams[1].isConstant and FABIType.Equals(FParams[1].resType()) then
         ABI := TFFIABI(FParams[1].Evaluate().AsInteger)
@@ -699,8 +680,6 @@ begin
         ABI := FFI_UNKNOWN_ABI;
 
       ParamType := FParams[0].resType();
-      if (ParamType <> nil) and (ParamType is TLapeType_Type) then
-        ParamType := TLapeType_Type(ParamType).TType;
 
       if (ParamType <> nil) and (ParamType is TLapeType_Method) then
       begin
@@ -712,28 +691,42 @@ begin
 end;
 
 function TLapeTree_InternalMethod_Native.Evaluate: TLapeGlobalVar;
-var
-  Method: TLapeType_NativeMethod;
 begin
   if (FRes = nil) then
-    if (FParams.Count < 1) or (FParams.Count > 2) or isEmpty(FParams[0]) then
+    if (FParams.Count < 1) or (FParams.Count > 2) then
       LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos)
-    else if isConstant() then
-    begin
-      Method := resType() as TLapeType_NativeMethod;
-      if (Method <> nil) and (Method.ABI = FFI_UNKNOWN_ABI) then
-        if (FParams.Count = 2) and (not (FParams[1].isConstant)) then
-          LapeException(lpeConstantExpected, [FParams[1], Self])
-        else
-          LapeExceptionFmt(lpeExpected, [FABIType.AsString], [FParams[1], Self]);
-
-      if (Method <> nil) then
-        FRes := FCompiler.getTypeVar(Method);
-    end
-    else
+    else if (not isConstant()) then
       LapeException(lpeInvalidCast, [FParams[0], Self]);
 
   Result := inherited;
+end;
+
+// (of a method type it is a type: what is left is the name of that)
+function TLapeTree_InternalMethod_Native.FoldConstants(DoFree: Boolean = True): TLapeTree_Base;
+var
+  Method: TLapeType_NativeMethod;
+  Replacement: TLapeTree_ExprBase;
+begin
+  Method := nil;
+  if (FParams.Count >= 1) and (FParams.Count <= 2) and isConstant() then
+    Method := resType() as TLapeType_NativeMethod;
+
+  if (Method = nil) then
+    Exit(inherited);
+
+  if (Method.ABI = FFI_UNKNOWN_ABI) then
+    if (FParams.Count = 2) and (not (FParams[1].isConstant)) then
+      LapeException(lpeConstantExpected, [FParams[1], Self])
+    else
+      LapeExceptionFmt(lpeExpected, [FABIType.AsString], [FParams[1], Self]);
+
+  Replacement := TLapeTree_VarType.Create(Method, Self);
+  Replacement.Parent := FParent;
+
+  FParent := nil;
+  if DoFree then
+    Free();
+  Result := Replacement;
 end;
 
 function TLapeTree_InternalMethod_Native.Compile: TResVar;
@@ -765,7 +758,7 @@ var
   Param: TResVar;
 begin
   Method := resType() as TLapeType_NativeMethod;
-  if (FParams.Count < 1) or (FParams.Count > 2) or isEmpty(FParams[0]) then
+  if (FParams.Count < 1) or (FParams.Count > 2) then
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos)
   else if isConstant() or (Method = nil) then
     LapeException(lpeInvalidCast, [FParams[0], Self])
@@ -831,7 +824,7 @@ var
   ParamType: TLapeType;
 begin
   if (FResType = nil) then
-    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    if (FParams.Count = 1) then
     begin
       ParamType := FParams[0].resType();
       if (ParamType <> nil) and (ParamType is TLapeType_NativeMethod) then
@@ -862,7 +855,7 @@ var
   Index: Integer;
   Lapify: lpString;
 begin
-  if (FParams.Count <> 1) or isEmpty(FParams[0]) then
+  if (FParams.Count <> 1) then
     LapeExceptionFmt(lpeWrongNumberParams, [1], DocPos)
   else if (resType() = nil) then
     LapeException(lpeInvalidCast, [FParams[0], Self]);

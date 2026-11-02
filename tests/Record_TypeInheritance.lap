@@ -11,7 +11,7 @@ type
 
 function t1.getA: Integer;
 begin
-  Result := a + 1;
+  Result := Self.a + 1;
 end;
 
 function t2.getA: Integer; override;

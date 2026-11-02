@@ -11,7 +11,7 @@ type
 
 property TThing.Item(index: Integer): Integer;
 begin
-  Result := Rec.Arr[index].i;
+  Result := Self.Rec.Arr[index].i;
 end;
 
 var

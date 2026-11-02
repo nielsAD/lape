@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils,
-  lptypes;
+  lptypes, lpvartypes;
 
 type
   TLapeTester = class(TLapeBaseClass)
@@ -16,6 +16,7 @@ type
   public
     constructor Create(AFolder: string = '..'; ADebug: Boolean = False); reintroduce;
 
+    class function GenerateHostMethod(AName: lpString; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
     class procedure TestFile(FileName: string; out Output: lpString; ExpectFile: string = '');
     function TestFiles: Boolean;
 
@@ -27,7 +28,7 @@ implementation
 
 uses
   {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF} strutils,
-  lpvartypes, lpcompiler, lptokenizer, lpmessages, lpinterpreter, lputils;
+  lpcompiler, lptokenizer, lpmessages, lpinterpreter;
 
 constructor TLapeTester.Create(AFolder: string = '..'; ADebug: Boolean = False);
 begin
@@ -37,6 +38,20 @@ begin
   FFolder := IncludeTrailingPathDelimiter(ExpandFileName(AFolder));
   if (not DirectoryExists(FFolder)) then
     LapeException(lpString('Cannot find folder ' + FFolder));
+end;
+
+var
+  HostCompiler: TLapeCompiler;
+
+// A method made when a script asks for it: a body from a string, with a conditional left open
+class function TLapeTester.GenerateHostMethod(AName: lpString; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+begin
+  Result := nil;
+  if (AObjectType = nil) and (AName = 'HostOpen') then
+    Result := HostCompiler.addGlobalFunc(
+      TLapeType_Method(HostCompiler.addManagedType(TLapeType_Method.Create(HostCompiler, [], [], [], nil, AName))),
+      '{$IFNDEF NOPE}' + LineEnding + 'begin' + LineEnding + 'end;'
+    ).Method;
 end;
 
 procedure _Write(var Output: lpString; s: lpString);
@@ -89,14 +104,29 @@ begin
   try
     Tokenizer.FileName := ExtractFileName(Tokenizer.FileName);
     Options := Options - [lcoHints];
-    InitializePascalScriptBasics(GetSelf() as TLapeCompiler, [psiTypeAlias]);
+
+    // the names that Pascal has for the integer types
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(Byte), False)).CreateAlias(), 'Byte');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(ShortInt), True)).CreateAlias(), 'ShortInt');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(Word), False)).CreateAlias(), 'Word');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(SmallInt), True)).CreateAlias(), 'SmallInt');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(LongWord), False)).CreateAlias(), 'LongWord');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(LongInt), True)).CreateAlias(), 'LongInt');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(Cardinal), False)).CreateAlias(), 'Cardinal');
+    addGlobalType(getBaseType(DetermineIntType(SizeOf(Integer), True)).CreateAlias(), 'Integer');
+    addGlobalType('^Char', 'PChar');
 
     addGlobalMethod('procedure _Write(s: string); override;', @_WriteWrap, @Output);
     addGlobalMethod('procedure _WriteLn; override;', @_WriteLnWrap, @Output);
     addGlobalFunc('function GetCurrHeapUsed: PtrUInt;', @_GetCurrHeapUsed);
-    // (a host's code with a method, delayed to before the program)
+    // (a host's code with a method)
     if (Copy(ExtractFileName(FileName), 1, 11) = 'HostDelayed') then
-      addCode('procedure HostFail(x: Int32);' + LineEnding + 'begin' + LineEnding + '  if (x > 2) then' + LineEnding + '    raise ''host '' + ToString(x);' + LineEnding + 'end;', '', False);
+    begin
+      HostCompiler := GetSelf() as TLapeCompiler;
+      addMethodGenerate({$IFDEF FPC}@{$ENDIF}GenerateHostMethod);
+      addCode('procedure HostFail(x: Int32);' + LineEnding + 'begin' + LineEnding + '  if (x > 2) then' + LineEnding + '    raise ''host '' + ToString(x);' + LineEnding + 'end;');
+      addCode('var HostValue: Int32 := 7;' + LineEnding + 'begin' + LineEnding + '  HostValue := HostValue + 1;' + LineEnding + 'end;', '', False);
+    end;
 
     try
       if (not Compile()) then

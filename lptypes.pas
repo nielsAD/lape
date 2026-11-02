@@ -148,7 +148,6 @@ type
 
   ELoopType = (loopUp, loopDown, loopOver);
   ELoopOverWhat = (loopOverArray, loopOverEnum, loopOverSet);
-  EPropertyType = (ptRead, ptWrite);
   EMethodDef = (mdUnspecified, mdOperator, mdProperty);
 
   ELapeBaseType = (
@@ -388,20 +387,6 @@ type
     property Count: Integer read FCount;
   end;
 
-  {$IFDEF FPC}generic{$ENDIF} TLapeNotifier<_T> = class(TLapeBaseClass)
-  public type
-    TNotifyProc = procedure(Sender: _T);
-    TNotifiers = {$IFDEF FPC}specialize{$ENDIF} TLapeList<TNotifyProc>;
-  protected
-    FNotifiers: TNotifiers;
-  public
-    constructor Create; reintroduce; virtual;
-    destructor Destroy; override;
-
-    procedure AddProc(const Proc: TNotifyProc); virtual;
-    procedure Notify(Sender: _T); virtual;
-  end;
-
   {$IFDEF FPC}generic{$ENDIF} TLapeSorter<_T> = class
   public type
     TWeightArr = array of _T;
@@ -451,6 +436,8 @@ type
     // The first that was declared with the name
     function Get(AName: lpString; out Decl: TLapeDeclaration): Boolean; overload; virtual;
     function Get(AName: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean; overload; virtual;
+    // Every one declared with the name, in the order they were declared
+    function GetAll(const AName: lpString): TLapeDeclArray; virtual;
     function GetByClass(AClass: TLapeDeclarationClass): TLapeDeclArray; virtual;
 
     function ExportToArray: TLapeDeclArray; virtual;
@@ -2114,37 +2101,6 @@ begin
   RemoveItem(i);
 end;
 
-constructor TLapeNotifier{$IFNDEF FPC}<_T>{$ENDIF}.Create;
-begin
-  inherited;
-
-  FNotifiers := TNotifiers.Create(nil, dupIgnore, False);
-end;
-
-destructor TLapeNotifier{$IFNDEF FPC}<_T>{$ENDIF}.Destroy;
-begin
-  FNotifiers.Free();
-
-  inherited;
-end;
-
-procedure TLapeNotifier{$IFNDEF FPC}<_T>{$ENDIF}.AddProc(const Proc: TNotifyProc);
-begin
-  FNotifiers.Add(Proc);
-end;
-
-procedure TLapeNotifier{$IFNDEF FPC}<_T>{$ENDIF}.Notify(Sender: _T);
-var
-  i: Integer;
-  p: TNotifyProc;
-begin
-  for i := FNotifiers.Count - 1 downto 0 do
-  begin
-    p := FNotifiers[i];
-    p(Sender);
-  end;
-end;
-
 function TLapeDeclarationList.ByName: Boolean;
 begin
   if (FNames = nil) and (FCount > LookedThrough) then
@@ -2322,6 +2278,29 @@ begin
         Result := True;
         Break;
       end;
+end;
+
+function TLapeDeclarationList.GetAll(const AName: lpString): TLapeDeclArray;
+var
+  Hash: UInt32;
+  i, Len: Integer;
+begin
+  Result := nil;
+  if (AName = '') or (FCount = 0) then
+    Exit;
+
+  Hash := LapeHashAlpha(AName);
+  if ByName() then
+    Exit(TLapeDeclArray(FNames.FindAll(AName, Hash)));
+
+  Len := 0;
+  for i := 0 to FCount - 1 do
+    if (FItems[i].FNameHash = Hash) and LapeSameString(FItems[i].FName, AName) then
+    begin
+      SetLength(Result, Len + 1);
+      Result[Len] := FItems[i];
+      Inc(Len);
+    end;
 end;
 
 function TLapeDeclarationList.Get(AName: lpString; AClass: TLapeDeclarationClass; out Decl: TLapeDeclaration): Boolean;

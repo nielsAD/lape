@@ -1,0 +1,13 @@
+// The address of an untyped constref parameter is a pointer to const
+procedure f(constref x);
+var
+  q: Pointer;
+begin
+  q := @x;
+end;
+
+var
+  i: Int32;
+begin
+  f(i);
+end.

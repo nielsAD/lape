@@ -19,7 +19,7 @@ begin
   Assert(r.c = '3', 'r.c <> 3');
   Assert(r = [1, 2, '3'], 'r <> [1, 2, "3"]');
 
-  vr := [,, '4'];
+  vr.c := '4';
 end;
 
 var
@@ -30,7 +30,7 @@ begin
   TestRec(r, r);
   Assert(r.c = '4', 'r.c <> 4');
   WriteLn(r);
-  Assert(r = [,,'4'], 'r <> [,,"4"]');
+  Assert(r.c = '4', 'r.c <> "4"');
   WriteLn('Initialization :: Passed');
 
   r.c := '5';

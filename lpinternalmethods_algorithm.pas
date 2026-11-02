@@ -224,7 +224,7 @@ function TLapeTree_InternalMethod_Sorted.resType: TLapeType;
 var
   ParamType: TLapeType;
 begin
-  if (FResType = nil) and (FParams.Count > 0) and (not isEmpty(FParams[0])) then
+  if (FResType = nil) and (FParams.Count > 0) then
   begin
     ParamType := FParams[0].resType();
 
@@ -349,7 +349,7 @@ function TLapeTree_InternalMethod_Reversed.resType: TLapeType;
 var
   ParamType: TLapeType;
 begin
-  if (FResType = nil) and (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+  if (FResType = nil) and (FParams.Count = 1) then
   begin
     ParamType := FParams[0].resType();
 
@@ -400,7 +400,7 @@ function TLapeTree_InternalMethod_Unique.resType: TLapeType;
 var
   ParamType: TLapeType;
 begin
-  if (FResType = nil) and (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+  if (FResType = nil) and (FParams.Count = 1) then
   begin
     ParamType := FParams[0].resType();
 
@@ -437,7 +437,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayUnique', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType);
 
-  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayUnique'], Self));
+  setCallee(GlobalNode('_ArrayUnique', FCompiler, Self));
   Result := inherited;
 end;
 
@@ -446,7 +446,7 @@ var
   Typ: TLapeType;
 begin
   if (FResType = nil) then
-    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    if (FParams.Count = 1) then
     begin
       Typ := FParams[0].resType();
       if (Typ is TLapeType_DynArray) then
@@ -475,7 +475,7 @@ begin
   if (ArrayType = nil) then
     LapeException(lpeExpectedArray, DocPos);
 
-  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMedian'], Self));
+  setCallee(GlobalNode('_ArrayMedian', FCompiler, Self));
   Result := inherited;
 end;
 
@@ -484,7 +484,7 @@ var
   Typ: TLapeType;
 begin
   if (FResType = nil) then
-    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    if (FParams.Count = 1) then
     begin
       Typ := FParams[0].resType();
       if (Typ is TLapeType_DynArray) then
@@ -514,7 +514,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayMode', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_Equal], ArrayElementType);
 
-  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMode'], Self));
+  setCallee(GlobalNode('_ArrayMode', FCompiler, Self));
   Result := inherited;
 end;
 
@@ -523,7 +523,7 @@ var
   Typ: TLapeType;
 begin
   if (FResType = nil) then
-    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    if (FParams.Count = 1) then
     begin
       Typ := FParams[0].resType();
       if (Typ is TLapeType_DynArray) then
@@ -550,7 +550,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayMin', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_LessThan], ArrayElementType);
 
-  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMin'], Self));
+  setCallee(GlobalNode('_ArrayMin', FCompiler, Self));
   Result := inherited;
 end;
 
@@ -559,7 +559,7 @@ var
   Typ: TLapeType;
 begin
   if (FResType = nil) then
-    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    if (FParams.Count = 1) then
     begin
       Typ := FParams[0].resType();
       if (Typ is TLapeType_DynArray) then
@@ -586,7 +586,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayMax', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_GreaterThan], ArrayElementType);
 
-  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMax'], Self));
+  setCallee(GlobalNode('_ArrayMax', FCompiler, Self));
   Result := inherited;
 end;
 
@@ -595,7 +595,7 @@ var
   Typ: TLapeType;
 begin
   if (FResType = nil) then
-    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    if (FParams.Count = 1) then
     begin
       Typ := FParams[0].resType();
 
@@ -628,7 +628,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArraySum', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_Plus], TLapeType_DynArray(FParams[0].resType()).PType);
 
-  setCallee(TLapeTree_Var.Create(FCompiler['_ArraySum'], Self));
+  setCallee(GlobalNode('_ArraySum', FCompiler, Self));
   Result := inherited;
 end;
 
@@ -637,7 +637,7 @@ var
   Typ: TLapeType;
 begin
   if (FResType = nil) then
-    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    if (FParams.Count = 1) then
     begin
       Typ := FParams[0].resType();
 
@@ -667,7 +667,7 @@ begin
   if (not HasMagicMethod(Compiler, '_ArrayMean', getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_Plus], TLapeType_DynArray(FParams[0].resType()).PType);
 
-  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayMean'], Self));
+  setCallee(GlobalNode('_ArrayMean', FCompiler, Self));
   Result := inherited;
 end;
 
@@ -676,7 +676,7 @@ var
   Typ: TLapeType;
 begin
   if (FResType = nil) then
-    if (FParams.Count = 1) and (not isEmpty(FParams[0])) then
+    if (FParams.Count = 1) then
     begin
       Typ := FParams[0].resType();
 
@@ -702,7 +702,7 @@ begin
   if (not (FParams[0].resType() is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayVariance'], Self));
+  setCallee(GlobalNode('_ArrayVariance', FCompiler, Self));
   Result := inherited;
 end;
 
@@ -723,7 +723,7 @@ begin
   if (not (FParams[0].resType() is TLapeType_DynArray)) then
     LapeException(lpeExpectedArray, DocPos);
 
-  setCallee(TLapeTree_Var.Create(FCompiler['_ArrayStdev'], Self));
+  setCallee(GlobalNode('_ArrayStdev', FCompiler, Self));
   Result := inherited;
 end;
 
@@ -750,7 +750,7 @@ begin
   Result := NullResVar;
   Dest := NullResVar;
 
-  if (FParams.Count <> 2) or isEmpty(FParams[0]) or isEmpty(FParams[1]) then
+  if (FParams.Count <> 2) then
     LapeExceptionFmt(lpeWrongNumberParams, [2], DocPos);
   if (resType() = nil) then
     LapeException(lpeExpectedArray, DocPos);
@@ -759,7 +759,7 @@ begin
   if (not HasMagicMethod(Compiler, FMethod, getParamTypes(), resType())) then
     RequireOperators(FCompiler, [op_cmp_Equal], TLapeType_DynArray(FParams[0].resType()).PType);
 
-  setCallee(TLapeTree_Var.Create(FCompiler[FMethod], Self));
+  setCallee(GlobalNode(FMethod, FCompiler, Self));
   Result := inherited;
 end;
 

@@ -189,7 +189,7 @@ function _ParseMethodHeader(Compiler: TLapeCompiler; Header: lpString): TLapeTyp
 implementation
 
 uses
-  lpmessages, lptokenizer, lpeval, lpinterpreter_types, lpvartypes_array, lpvartypes_record, lpffi;
+  lpmessages, lptokenizer, lpeval, lpinterpreter_types, lpvartypes_array, lpvartypes_record, lpffi, lpmethodparser;
 
 const
   PowerTwoRegs = [SizeOf(UInt8), SizeOf(UInt16), SizeOf(UInt32), SizeOf(UInt64)];
@@ -227,7 +227,6 @@ type
 function _ParseMethodHeader(Compiler: TLapeCompiler; Header: lpString): TLapeType_Method;
 var
   c: __LapeCompiler absolute Compiler;
-  s: lpString;
   OldState: Pointer;
 begin
   Assert(Compiler <> nil);
@@ -236,10 +235,7 @@ begin
   OldState := c.getTempTokenizerState(Header + ';', 'ffi');
   try
     c.Expect([tk_kw_Function, tk_kw_Procedure, tk_kw_Property, tk_kw_Operator]);
-    Result := c.ParseMethodHeader(s, False);
-
-    if (Result = nil) then
-      LapeExceptionFmt(lpeExpected, ['Method header']);
+    Result := TLapeMethodParser(c).ParseMethodHeader();
   finally
     c.resetTokenizerState(OldState);
   end;
@@ -921,13 +917,9 @@ begin
     if MethodOfObject(Header) then
     begin
       SelfParam := NullParameter;
+      SelfParam.ParType := Lape_SelfParam;
       if (Header is TLapeType_MethodOfType) then
-      begin
-        SelfParam.ParType := TLapeType_MethodOfType(Header).SelfParam;
         SelfParam.VarType := TLapeType_MethodOfType(Header).ObjectType;
-      end
-      else
-        SelfParam.ParType := Lape_SelfParam;
       Result.addArg(LapeParamToFFIType(SelfParam, ABI), True, LapeFFIPointerParam(SelfParam, ABI))
     end;
 

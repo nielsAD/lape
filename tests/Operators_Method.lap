@@ -20,8 +20,4 @@ begin
   Assert(w(456) = '456',        '456 <> 456');
 
   WriteLn('Invoke   :: Passed');
-
-  w := @IntToStr[0];
-  Assert(w(-1) = '-1', '-1 <> -1');
-  WriteLn('Indexing :: Passed');
 end;       

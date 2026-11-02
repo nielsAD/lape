@@ -94,7 +94,6 @@ type
     // A range of an enum's elements (VarType is that enum)
     function isEnumRange: Boolean; virtual;
 
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
 
     function VarLo(AVar: Pointer = nil): TLapeGlobalVar; override;
@@ -142,7 +141,7 @@ type
 
     function Equals(Other: TLapeType; ContextOnly: Boolean = True): Boolean; reintroduce; override;
 
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
+    function VarToStringBody: lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
 
     function NewGlobalVarStr(Str: UnicodeString; AName: lpString = ''): TLapeGlobalVar; override;
@@ -199,7 +198,7 @@ type
     constructor Create(AElement: TLapeType; ACompiler: TLapeCompilerBase; AName: lpString = ''); reintroduce; virtual;
     function CreateCopy: TLapeType; override;
 
-    function VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString; override;
+    function VarToStringBody: lpString; override;
     function VarToString(AVar: Pointer): lpString; override;
 
     function NewGlobalVar(Values: array of UInt8; AName: lpString = ''): TLapeGlobalVar; virtual;
@@ -414,21 +413,6 @@ begin
     FBaseType := AVarType.BaseType;
   FRange := ARange;
   FVarType := AVarType;
-end;
-
-function TLapeType_SubRange.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
-var
-  Index: Integer;
-begin
-  Result := '';
-  if (ToStr = nil) or (FCompiler = nil) or (FVarType = nil) then
-    Exit;
-
-  Index := ToStr.getMethodIndex(getTypeArray([FVarType]), FCompiler.getBaseType(ltString));
-  if (Index < 0) then
-    Exit;
-
-  Result := 'begin Result := System.ToString['+lpString(IntToStr(Index))+'](Param0); end;';
 end;
 
 function TLapeType_SubRange.VarToString(AVar: Pointer): lpString;
@@ -687,7 +671,7 @@ begin
         Exit(False);
 end;
 
-function TLapeType_Enum.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
+function TLapeType_Enum.VarToStringBody: lpString;
 var
   i: Integer;
   Shown: lpString;
@@ -1074,16 +1058,12 @@ begin
     LapeExceptionFmt(lpeOutOfTypeRange1, [FRange.Hi, Low(TLapeLargeSetItem), High(TLapeLargeSetItem)]);
 end;
 
-function TLapeType_Set.VarToStringBody(ToStr: TLapeType_OverloadedMethod = nil): lpString;
-var
-  Index: Integer;
+function TLapeType_Set.VarToStringBody: lpString;
 begin
   Result := '';
-  if (ToStr = nil) or (FCompiler = nil) or (not (FElement.BaseType in LapeOrdinalTypes)) then
-    Exit;
-
-  Index := ToStr.getMethodIndex(getTypeArray([FElement]), FCompiler.getBaseType(ltString));
-  if (Index < 0) then
+  if (not (FElement.BaseType in LapeOrdinalTypes)) or
+     (FCompiler.GlobalScope.findMethod('ToString', getTypeArray([FElement]), FCompiler.getBaseType(ltString)) = nil)
+  then
     Exit;
 
   if FSmall then
@@ -1092,19 +1072,20 @@ begin
     Result := '_LargeSetToString';
 
   Result := Format(lpString(
+    'type'                                                                                  + LineEnding +
+    '  TElement = PType(Param0);'                                                           + LineEnding +
     '  function _ElementToString(p: System.ConstPointer): System.string; static;'           + LineEnding +
     '  type'                                                                                + LineEnding +
     '    TEnum = (se0, se1 = %d);'                                                          + LineEnding +
-    '    TRangeToString = function(constref r: System.%s): string;'                         + LineEnding +
     '  begin'                                                                               + LineEnding +
-    '    Result := TRangeToString(@System.ToString[%d])(Ord(TEnum(p^)));'                   + LineEnding +
+    '    Result := System.ToString(TElement(Ord(TEnum(p^))));'                              + LineEnding +
     '  end;'                                                                                + LineEnding +
     'type'                                                                                  + LineEnding +
     '  TSetToString = private function(constref ASet; AToString: System.ConstPointer; Lo, Hi: System.SizeInt): System.string;' + LineEnding +
     'begin'                                                                                 + LineEnding +
     '  Result := TSetToString(@System.%s)(Param0, @_ElementToString, %d, %d);'              + LineEnding +
     'end;'
-  ), [FRange.Hi, LapeTypeToString(DetermineIntType(FElement.Size, FElement.BaseType in LapeSignedOrdinalTypes)), Index, Result, FRange.Lo, FRange.Hi]);
+  ), [FRange.Hi, Result, FRange.Lo, FRange.Hi]);
 end;
 
 function TLapeType_Set.VarToString(AVar: Pointer): lpString;

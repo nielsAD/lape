@@ -12,7 +12,6 @@ type
 
   TRandom = Random_struct;
 
-function Random_nextDouble(var R: TRandom): Double; forward;
 
 const
   MDIG = 32;

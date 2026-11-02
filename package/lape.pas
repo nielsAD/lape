@@ -10,7 +10,7 @@ interface
 uses
   lpcodeemitter, lpcompiler, lpdisassembler, lpeval, lpinterpreter, 
   lptokenizer, lptree, lptypes, lpvartypes, lpvartypes_array, lpvartypes_ord, 
-  lpvartypes_record, lputils, lpmessages, lpinvoke;
+  lpvartypes_record, lpmessages, lpinvoke;
 
 implementation
 

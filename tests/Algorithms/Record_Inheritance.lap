@@ -2,9 +2,9 @@ type
   PPoint = ^TPoint;
   TPoint = record
     x, y: Int32;
-    Ohai: private procedure of object;
-    Test: private procedure of object;
-    Free: private procedure of object;
+    OnOhai: private procedure of object;
+    OnTest: private procedure of object;
+    OnFree: private procedure of object;
   end;
 
   P3DPoint = ^T3DPoint;
@@ -19,7 +19,7 @@ end;
 
 procedure TPoint.Test;
 begin
-  WriteLn('TPoint: ', x, ', ', y);
+  WriteLn('TPoint: ', Self.x, ', ', Self.y);
 end;
 
 procedure TPoint.Free;
@@ -35,9 +35,9 @@ procedure TPoint.Init;
 begin
   with Self do
   begin
-    TMethod(@Ohai) := [@TPoint.Ohai, @Self];
-    TMethod(@Test) := [@TPoint.Test, @Self];
-    TMethod(@Free) := [@TPoint.Free, @Self];
+    OnOhai := @Self.Ohai;
+    OnTest := @Self.Test;
+    OnFree := @Self.Free;
   end;
 end;
 
@@ -55,7 +55,7 @@ end;
 procedure T3DPoint.Test; override;
 begin
   inherited();
-  WriteLn('T3DPoint: ', z);
+  WriteLn('T3DPoint: ', Self.z);
 end;
 
 procedure T3DPoint.Free; override;
@@ -72,8 +72,8 @@ begin
   inherited();
   with Self do
   begin
-    TMethod(@Test) := [@T3DPoint.Test, @Self];
-    TMethod(@Free) := [@T3DPoint.Free, @Self];
+    OnTest := @Self.Test;
+    OnFree := @Self.Free;
   end;
 end;
 
@@ -93,10 +93,10 @@ var
   p: PPoint;
 begin
   p := TPoint.Create();
-  p^.Test();
-  p^.Free();
+  p^.OnTest();
+  p^.OnFree();
 
   P3DPoint(p) := T3DPoint.Create();
-  p^.Test();
-  p^.Free();
+  p^.OnTest();
+  p^.OnFree();
 end;

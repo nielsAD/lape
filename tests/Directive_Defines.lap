@@ -6,7 +6,7 @@
 {$UNDEF Val}
 {$DEFINE Val := 2}
 
-// after a method header, which the compiler looks ahead past
+// after a method header it is in the method's body, and stays there
 procedure P; {$DEFINE AfterHeader}
 begin
 end;

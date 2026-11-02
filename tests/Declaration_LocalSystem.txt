@@ -1,1 +1,1 @@
-Duplicate declaration "system"
+Duplicate declaration "system" at line 4, column 16 in file "Declaration_LocalSystem.lap"
