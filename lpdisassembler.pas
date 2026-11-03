@@ -19,24 +19,44 @@ uses
   lptypes, lpvartypes;
 
 type
-  TLapeDisassemblerPointerMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<string>;
+  TLapeDisassemblerPrint = procedure(const Line: string) of object;
 
-// (Code, CodeLen: what a compiler made; its tables say where each instruction is from)
-procedure DisassembleCode(Code: PByte; CodeLen: Integer; PointerNames: TLapeDisassemblerPointerMap); overload;
-procedure DisassembleCode(Code: PByte; CodeLen: Integer; PointerNames: array of TLapeDeclArray); overload;
+procedure DisassembleCode(
+  Code: PByte; CodeLen: Integer;
+  Decls: array of TLapeDeclArray;
+  Print: TLapeDisassemblerPrint = nil
+);
 
 implementation
 
 uses
   lpmessages, lpinterpreter_types, lpeval, lpeval_extra;
 
-procedure DisassembleCode(Code: PByte; CodeLen: Integer; PointerNames: TLapeDisassemblerPointerMap);
+type
+  // (what an address is called: an eval routine, a declaration, a global by where its value is)
+  TLapeDisassemblerPointerMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<string>;
+  // (the stack depth at a jump's target, by its address)
+  TLapeDisassemblerDepthMap = {$IFDEF FPC}specialize{$ENDIF} TLapeDictionary<Integer>;
+
+function PointerKey(p: Pointer): lpString;
+begin
+  Result := lpString(IntToHex(PtrUInt(p), 0));
+end;
+
+procedure Disassemble(Code: PByte; CodeLen: Integer; NamedAddresses: TLapeDisassemblerPointerMap; Print: TLapeDisassemblerPrint);
 var
   CodeBase: PByte;
-  p, Pos: TDocPos;
-  // (the instruction being written, and what it does to the stack)
-  Pending, PendingEffect: string;
+  LastFile: lpString; // the file the last instruction is from
+  AddressWidth: Integer;
+  Pending: string;
   PendingAt: Integer;
+  PendingDepth: Integer; // (how much was on the stack before the pending instruction)
+  StackDepth: Integer; // (how much the method has put on the stack so far)
+  JumpDepths: TLapeDisassemblerDepthMap;
+  Section: array of record
+    Address, Name, Rest: string;
+  end;
+  SectionCount: Integer;
 
   function IntToStr(i: Int64): string; overload;
   begin
@@ -44,73 +64,150 @@ var
   end;
 
   function IntToStr(p: Pointer): string; overload;
-  var s: string;
   begin
     if (p = nil) then
       Result := 'nil'
+    else if (NamedAddresses <> nil) and NamedAddresses.ExistsKey(PointerKey(p)) then
+      Result := NamedAddresses[PointerKey(p)]
     else
-    begin
-      s := IntToHex(PtrUInt(p), 0);
-      if (PointerNames <> nil) and PointerNames.ExistsKey(lpString(s)) then
-        Result := PointerNames[lpString(s)]
-      else
-        Result := '$' + s;
-    end;
+      Result := '$' + string(PointerKey(p));
   end;
 
-  // Its name in a column of its own
-  function PadName(const s: string): string;
-  const
-    NameWidth = 22;
+  procedure PrintLine(const s: string = '');
+  begin
+    if Assigned(Print) then
+      Print(s)
+    else
+      WriteLn(s);
+  end;
+
+  function Address(At: Integer): string;
+  begin
+    Result := '$' + IntToHex(At, AddressWidth);
+  end;
+
+  procedure SplitName(const s: string; out Name, Rest: string);
   var
     i: Integer;
   begin
-    i := System.Pos(' ', s);
-    if (i = 0) or (i > NameWidth) then
-      Exit(s);
-    Result := Copy(s, 1, i - 1) + StringOfChar(' ', NameWidth - i + 1) + Copy(s, i + 1, MaxInt);
+    i := System.Pos(') ', s);
+    if (Copy(s, 1, 6) = 'Eval (') and (i > 0) then
+    begin
+      Name := 'Eval ' + Copy(s, 7, i - 7);
+      Rest := Copy(s, i + 2, MaxInt);
+    end
+    else
+    begin
+      i := System.Pos(' ', s);
+      if (i = 0) then
+        i := Length(s) + 1;
+      Name := Copy(s, 1, i - 1);
+      Rest := Copy(s, i + 1, MaxInt);
+    end;
+  end;
+
+  procedure AddLine(const Address, Name, Rest: string);
+  begin
+    if (SectionCount = Length(Section)) then
+      SetLength(Section, SectionCount * 2 + 64);
+    Section[SectionCount].Address := Address;
+    Section[SectionCount].Name := Name;
+    Section[SectionCount].Rest := Rest;
+    Inc(SectionCount);
+  end;
+
+  procedure EndSection;
+  var
+    i, Width: Integer;
+  begin
+    Width := 0;
+    for i := 0 to SectionCount - 1 do
+      if (Section[i].Address <> '') and (Length(Section[i].Name) > Width) then
+        Width := Length(Section[i].Name);
+
+    for i := 0 to SectionCount - 1 do
+      with Section[i] do
+        if (Address = '') then
+          PrintLine(Name)
+        else if (Rest = '') then
+          PrintLine(Address + '  ' + Name)
+        else
+          PrintLine(Address + '  ' + Name + StringOfChar(' ', Width - Length(Name) + 3) + Rest);
+    SectionCount := 0;
+  end;
+
+  // Stack[StackPos] and Stack[StackPos - N] as where they are from the method's start: Stack[+16]
+  function RelativeStack(const s: string; Depth: Integer): string;
+  const
+    Key = 'Stack[StackPos';
+  var
+    i, j, n: Integer;
+  begin
+    Result := '';
+    i := 1;
+    while (i <= Length(s)) do
+      if (Copy(s, i, Length(Key)) = Key) then
+      begin
+        j := i + Length(Key);
+        n := 0;
+        if (Copy(s, j, 3) = ' - ') then
+        begin
+          Inc(j, 3);
+          while (j <= Length(s)) and (s[j] in ['0'..'9']) do
+          begin
+            n := n * 10 + Ord(s[j]) - Ord('0');
+            Inc(j);
+          end;
+        end;
+        if (Depth - n >= 0) then
+          Result := Result + 'Stack[+' + SysUtils.IntToStr(Depth - n)
+        else
+          Result := Result + 'Stack[' + SysUtils.IntToStr(Depth - n);
+        i := j; // (at its ])
+      end
+      else
+      begin
+        Result := Result + s[i];
+        Inc(i);
+      end;
+  end;
+
+  // (a jump's targets, its $ addresses, are where the stack is as deep as after it)
+  procedure KeepJumpDepths(const s: string);
+  var
+    i, j: Integer;
+  begin
+    if (Copy(s, 1, 4) <> 'Jump') and (Copy(s, 1, 3) <> 'Jmp') and (Copy(s, 1, 6) <> 'IncTry') then
+      Exit;
+    for i := 1 to Length(s) do
+      if (s[i] = '$') then
+      begin
+        j := i + 1;
+        while (j <= Length(s)) and (s[j] in ['0'..'9', 'A'..'F', 'a'..'f']) do
+          Inc(j);
+        if (j > i + 1) then
+          JumpDepths[lpString(IntToHex(StrToInt64('$' + Copy(s, i + 1, j - i - 1)), 0))] := StackDepth;
+      end;
   end;
 
   procedure Flush;
+  var
+    Name, Rest: string;
   begin
     if (Pending = '') then
       Exit;
-    WriteLn('$', IntToHex(PendingAt, 8), '  ', PadName(Pending), PendingEffect);
+    KeepJumpDepths(Pending);
+    SplitName(RelativeStack(Pending, PendingDepth), Name, Rest);
+    AddLine(Address(PendingAt), Name, Rest);
     Pending := '';
-    PendingEffect := '';
-  end;
-
-  // What it does to the stack goes on the instruction's line
-  function StackEffect(const s: string; out Effect: string): Boolean;
-  var
-    Name: string;
-    n: Int64;
-  begin
-    Name := Copy(s, 1, System.Pos(' ', s) - 1);
-    Result := ((Name = 'IncStackPos') or (Name = 'DecStackPos') or (Name = 'IncStack')) and
-              TryStrToInt64(Copy(s, Length(Name) + 2, MaxInt), n);
-    if (not Result) then
-      Exit;
-    if (Name = 'DecStackPos') then
-      n := -n;
-    if (n >= 0) then
-      Effect := '  [stack +' + SysUtils.IntToStr(n) + ']'
-    else
-      Effect := '  [stack ' + SysUtils.IntToStr(n) + ']';
   end;
 
   procedure _WriteLn(const s: string); overload;
-  var
-    Effect: string;
   begin
-    if (Pending <> '') and (PendingAt = Code - CodeBase) and StackEffect(s, Effect) then
-      PendingEffect := PendingEffect + Effect
-    else
-    begin
-      Flush();
-      Pending := s;
-      PendingAt := Code - CodeBase;
-    end;
+    Flush();
+    Pending := s;
+    PendingAt := Code - CodeBase;
+    PendingDepth := StackDepth;
   end;
 
   procedure _WriteLn(const s: string; const Args: array of const); overload;
@@ -118,52 +215,51 @@ var
     _WriteLn(Format(s, args));
   end;
 
+  // What the instruction just written does to StackPos (as the interpreter does it)
+  procedure StackChange(n: Integer);
+  begin
+    Inc(StackDepth, n);
+  end;
+
   procedure DoIsScriptMethod; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('IsScriptMethod');
-    _WriteLn('IncStack %d', [SizeOf(Boolean) - SizeOf(Pointer)]);
+    StackChange(-(SizeOf(Pointer) - SizeOf(Boolean)));
     Inc(Code, ocSize);
   end;
 
   procedure DoDumpCallStack;
   begin
     _WriteLn('DumpCallStack');
-    _WriteLn('IncStack %d', [SizeOf(lpString)]);
+    StackChange(-(SizeOf(Int32) + SizeOf(Pointer)));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetScriptMethodName;
   begin
     _WriteLn('GetScriptMethodName');
-    _WriteLn('IncStack %d', [SizeOf(ShortString) - SizeOf(Pointer)]);
+    StackChange(SizeOf(ShortString) - SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetExceptionMessage;
   begin
     _WriteLn('GetExceptionMessage');
-    _WriteLn('IncStack %d', [SizeOf(ShortString)]);
+    StackChange(-SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetExceptionLocation;
   begin
     _WriteLn('GetExceptionLocation');
-    _WriteLn('IncStack %d', [SizeOf(Pointer)]);
+    StackChange(SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
   procedure DoGetCallerAddress;
   begin
     _WriteLn('GetCallerAddress');
-    _WriteLn('IncStack %d', [SizeOf(Pointer)]);
-    Inc(Code, ocSize);
-  end;
-
-  procedure DoDynArrayRangeCheck; {$IFDEF Lape_Inline}inline;{$ENDIF}
-  begin
-    _WriteLn('DynArrayRangeCheck');
-    _WriteLn('IncStack %d', [SizeOf(Pointer) + SizeOf(SizeInt)]);
+    StackChange(SizeOf(Pointer));
     Inc(Code, ocSize);
   end;
 
@@ -179,12 +275,6 @@ var
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
-  procedure DoInitVarLen; {$IFDEF Lape_Inline}inline;{$ENDIF}
-  begin
-    _WriteLn('InitVarStackLen %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
-    Inc(Code, SizeOf(TStackOffset) + ocSize);
-  end;
-
   procedure DoInitStack; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('InitStack %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
@@ -194,6 +284,7 @@ var
   procedure DoGrowStack; {$IFDEF Lape_Inline}inline;{$ENDIF}
   begin
     _WriteLn('GrowStack %d', [PStackOffset(PtrUInt(Code) + ocSize)^]);
+    StackChange(PStackOffset(PtrUInt(Code) + ocSize)^);
     Inc(Code, SizeOf(TStackOffset) + ocSize);
   end;
 
@@ -232,7 +323,7 @@ var
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
       _WriteLn('PopStackToVar %d %d', [Size, VOffset]);
-      _WriteLn('DecStackPos %d', [Size]);
+      StackChange(-Integer(Size));
     end;
     Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
   end;
@@ -242,7 +333,7 @@ var
     with POC_PopStackToVar(PtrUInt(Code) + ocSize)^ do
     begin
       _WriteLn('PopVarToStack %d %d', [Size, VOffset]);
-      _WriteLn('IncStackPos %d', [Size]);
+      StackChange(Size);
     end;
     Inc(Code, ocSize + SizeOf(TOC_PopStackToVar));
   end;
@@ -317,7 +408,7 @@ var
   {$I lpdisassembler_dojump.inc}
   {$I lpdisassembler_doeval.inc}
 
-  // The code's tables, after it: its strings by index, its DocPos entries, its methods; and its trailer
+  // The code's tables, after it: its strings, its DocPos entries, its methods; and its trailer
   procedure WriteTables;
   var
     Trailer: TCodeTrailer;
@@ -325,52 +416,57 @@ var
     i: UInt32;
     Entry: TCodeDocPosEntry;
     MethodEntry: TCodeMethodEntry;
+
+    procedure Heading(const Name: string; Count, Size: UInt32);
+    begin
+      PrintLine();
+      PrintLine('-- ' + Name + ' (' + IntToStr(Count) + ', ' + IntToStr(Size) + ' bytes)');
+    end;
+
   begin
     if (not CodeTrailer(CodeBase, CodeLen, Trailer)) then
       Exit;
 
-    WriteLn;
-    WriteLn('-- strings (', Trailer.StringTableCount, ', ', Trailer.StringTableSize, ' bytes)');
+    Heading('strings', Trailer.StringTableCount, Trailer.StringTableSize);
     At := Trailer.StringTableStart;
     for i := 1 to Trailer.StringTableCount do
     begin
-      WriteLn('$', IntToHex(At, 8), '  [', At - Trailer.StringTableStart, '] "', string(CodeString(CodeBase, CodeLen, At - Trailer.StringTableStart)), '"');
+      PrintLine('"' + string(CodeString(CodeBase, CodeLen, At - Trailer.StringTableStart)) + '"');
       Inc(At, StrLen(PAnsiChar(PtrUInt(CodeBase) + At)) + 1);
     end;
 
-    WriteLn;
-    WriteLn('-- DocPos (', Trailer.DocPosTableCount, ', ', Trailer.DocPosTableSize, ' bytes)');
+    Heading('DocPos', Trailer.DocPosTableCount, Trailer.DocPosTableSize);
     At := Trailer.DocPosTableStart;
     for i := 1 to Trailer.DocPosTableCount do
     begin
-      Move(PByte(PtrUInt(CodeBase) + At)^, Entry, SizeOf(Entry));
+      Entry := TCodeDocPosEntry(Pointer(PtrUInt(CodeBase) + At)^);
       if (Entry.Line = 0) then
-        WriteLn('$', IntToHex(At, 8), '  from $', IntToHex(Entry.CodeOffset, 8), '  (no position)')
+        PrintLine(Address(Entry.CodeOffset) + '  (no position)')
       else
-        WriteLn('$', IntToHex(At, 8), '  from $', IntToHex(Entry.CodeOffset, 8), '  ', string(CodeString(CodeBase, CodeLen, Entry.FileName)), ':', Entry.Line, ':', Entry.Col);
+        PrintLine(Address(Entry.CodeOffset) + '  ' + string(CodeString(CodeBase, CodeLen, Entry.FileName)) + ':' + IntToStr(Entry.Line) + ':' + IntToStr(Entry.Col));
       Inc(At, SizeOf(Entry));
     end;
 
-    WriteLn;
-    WriteLn('-- methods (', Trailer.MethodTableCount, ', ', Trailer.MethodTableSize, ' bytes)');
+    Heading('methods', Trailer.MethodTableCount, Trailer.MethodTableSize);
     At := Trailer.MethodTableStart;
     for i := 1 to Trailer.MethodTableCount do
     begin
-      Move(PByte(PtrUInt(CodeBase) + At)^, MethodEntry, SizeOf(MethodEntry));
-      WriteLn('$', IntToHex(At, 8), '  at $', IntToHex(MethodEntry.CodeOffset, 8), '  ', string(CodeString(CodeBase, CodeLen, MethodEntry.Name)));
+      MethodEntry := TCodeMethodEntry(Pointer(PtrUInt(CodeBase) + At)^);
+      PrintLine(Address(MethodEntry.CodeOffset) + '  ' + string(CodeString(CodeBase, CodeLen, MethodEntry.Name)));
       Inc(At, SizeOf(MethodEntry));
     end;
 
-    WriteLn;
-    WriteLn('-- trailer');
-    WriteLn('$', IntToHex(At, 8), '  version ', Trailer.Version, ', program ', Trailer.ProgramSize, ' bytes');
+    PrintLine();
+    PrintLine('-- trailer');
+    PrintLine('version ' + IntToStr(Trailer.Version) + ', program ' + IntToStr(Trailer.ProgramSize) + ' bytes');
   end;
 
-  // Before the instruction at Code: the program's or a method's start, where it is from
+  // Before the instruction at Code: the program's or a method's start, and the file it is from
   procedure WriteHeaders;
   var
     Offset: Integer;
     Name: lpString;
+    Pos: TDocPos;
   begin
     Offset := Code - CodeBase;
 
@@ -378,121 +474,166 @@ var
       Name := 'main'
     else
       Name := CodeMethodName(CodeBase, CodeLen, Offset);
+
+    // (a method's start says which file it is in: `"Name" in File`; a file that changes inside one gets a line of its name)
+    Pos := CodeDocPos(CodeBase, CodeLen, Offset);
     if (Name <> '') then
     begin
-      WriteLn;
-      WriteLn('-- ', string(Name));
-    end;
-
-    Pos := CodeDocPos(CodeBase, CodeLen, Offset);
-    if (p.FileName <> Pos.FileName) or (p.Line <> Pos.Line) or (p.Col <> Pos.Col) then
+      EndSection();
+      StackDepth := 0;
+      if (Offset > 0) then
+        PrintLine(); // (between it and the function before it)
+      if Pos.isEmpty then
+        PrintLine('"' + string(Name) + '"')
+      else
+      begin
+        PrintLine('"' + string(Name) + '" in ' + string(Pos.FileName));
+        LastFile := Pos.FileName;
+      end;
+    end
+    else if (not Pos.isEmpty) and (Pos.FileName <> LastFile) then
     begin
-      p := Pos;
-      if Pos.isInternal then
-        WriteLn('   internal ', string(Copy(Pos.FileName, 2, MaxInt)), ':', Pos.Line, ':', Pos.Col)
-      else if (not Pos.isEmpty) then
-        WriteLn('   ', string(Pos.FileName), ':', Pos.Line, ':', Pos.Col);
+      AddLine('', string(Pos.FileName), '');
+      LastFile := Pos.FileName;
     end;
   end;
 
 begin
   CodeBase := Code;
-  p := NullDocPos;
+  LastFile := '';
+  AddressWidth := Length(IntToHex(CodeLen, 0));
   Pending := '';
-  PendingEffect := '';
+  PendingDepth := 0;
+  StackDepth := 0;
+  SectionCount := 0;
 
+  JumpDepths := TLapeDisassemblerDepthMap.Create(0);
   try
-    while True do
-    begin
+    try
+      while True do
+      begin
+        Flush();
+        // (where it was jumped to from says how deep the stack is: code after a jump is not reached from above it)
+        if JumpDepths.ExistsKey(lpString(IntToHex(Code - CodeBase, 0))) then
+          StackDepth := JumpDepths[lpString(IntToHex(Code - CodeBase, 0))];
+        WriteHeaders();
+        {$I lpinterpreter_opcodecase.inc}
+      end;
       Flush();
-      WriteHeaders();
-      {$I lpinterpreter_opcodecase.inc}
+      AddLine(Address(Code - CodeBase), 'End', '');
+      EndSection();
+      WriteTables();
+    except
+      on E: Exception do
+      begin
+        Flush();
+        EndSection();
+        LapeExceptionFmt(lpeRuntime, [E.Message], CodeDocPos(CodeBase, CodeLen, Code - CodeBase));
+      end;
     end;
-    Flush();
-    WriteLn('$', IntToHex(Code - CodeBase, 8), '  End');
-    WriteTables();
-  except
-    on E: Exception do
-    begin
-      Flush();
-      LapeExceptionFmt(lpeRuntime, [E.Message], CodeDocPos(CodeBase, CodeLen, Code - CodeBase));
-    end;
+  finally
+    JumpDepths.Free();
   end;
 end;
 
-procedure Disassemble__EvalProcs(pMap: TLapeDisassemblerPointerMap);
-
-  procedure Add(Proc: TLapeEvalProc; Name: string);
-  begin
-    if ValidEvalFunction(Proc) then
-      pMap[lpString(IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}Proc), 0))] := Name;
-  end;
-
+procedure DisassembleCode(
+  Code: PByte; CodeLen: Integer;
+  Decls: array of TLapeDeclArray;
+  Print: TLapeDisassemblerPrint);
 var
-  op: EOperator;
-  t1, t2: ELapeBaseType;
-  proc: TLapeEvalProc;
-  Size: Integer;
-begin
-  Assert(pMap <> nil);
+  NamedAddresses: TLapeDisassemblerPointerMap;
 
-  // (the ones the compiler uses directly, not by operator)
-  Add({$IFDEF FPC}@{$ENDIF}lpeTMethod_ASGN, '(TMethod :=)');
-  Add(getEvalProc_StringLength(), '(Length of string)');
-  Add(getEvalProc_DynArrayLength(), '(Length of array)');
-  Add(getEvalProc_DynArrayHigh(), '(High of array)');
-  for t1 := Low(LapeIntegerTypeRange) to High(LapeIntegerTypeRange) do
+  procedure addEvalProcNames;
+  var
+    op: EOperator;
+    LeftType, RightType: ELapeBaseType;
+    Proc: TLapeEvalProc;
+    Size: Integer;
+    OpName, Left, Name: string;
   begin
-    Add(getEvalProc_DynArrayRangeCheck(t1), '(range check, ' + string(LapeTypeToString(t1)) + ' index)');
-    for Size in LapePointerIndexEvalSizes do
-      Add(getEvalProc_PointerIndex(Size, t1), '(index of ' + IntToStr(Size) + '-byte items, ' + string(LapeTypeToString(t1)) + ')');
+    // lpeval_extra
+    NamedAddresses[PointerKey(Pointer({$IFDEF FPC}@{$ENDIF}lpeTMethod_ASGN))]            := '(TMethod := TMethod)';
+    Proc := getEvalProc_StringLength();
+    NamedAddresses[PointerKey(Pointer(Proc))] := '(String length)';
+    Proc := getEvalProc_DynArrayLength();
+    NamedAddresses[PointerKey(Pointer(Proc))] := '(Array length)';
+    Proc := getEvalProc_DynArrayHigh();
+    NamedAddresses[PointerKey(Pointer(Proc))] := '(Array High)';
+
+    for LeftType := Low(LapeIntegerTypeRange) to High(LapeIntegerTypeRange) do
+    begin
+      for Size in LapePointerIndexEvalSizes do
+      begin
+        Proc := getEvalProc_PointerIndex(Size, LeftType);
+        if (Proc = nil) then
+          Continue;
+        NamedAddresses[PointerKey(Pointer(Proc))] := '(Pointer Index ' + IntToStr(Size) + ')';
+      end;
+
+      Proc := getEvalProc_DynArrayRangeCheck(LeftType);
+      if (Proc = nil) then
+        Continue;
+      NamedAddresses[PointerKey(Pointer(Proc))] := '(Range Check)';
+    end;
+
+    // lpeval
+    for op := Low(EOperator) to High(EOperator) do
+    begin
+      if (op_name[op] = '') then
+        Continue;
+      OpName := string(op_str[op]);
+
+      for LeftType := High(ELapeBaseType) downto Low(ELapeBaseType) do
+      begin
+        Left := string(LapeTypeToString(LeftType));
+        for RightType := High(ELapeBaseType) downto Low(ELapeBaseType) do
+        begin
+          Proc := getEvalProc(op, LeftType, RightType);
+          if (not ValidEvalFunction(Proc)) then
+            Continue;
+
+          if (LeftType = ltUnknown) then
+            Name := OpName
+          else if (RightType = ltUnknown) and (OpName[1] in ['a'..'z']) then
+            Name := OpName + ' ' + Left
+          else if (RightType = ltUnknown) then
+            Name := OpName + Left
+          else
+            Name := Left + ' ' + OpName + ' ' + string(LapeTypeToString(RightType));
+
+          NamedAddresses[PointerKey(Pointer(Proc))] := '(' + Name + ')';
+        end;
+      end;
+    end;
   end;
 
-  for op := Low(EOperator) to High(EOperator) do
+  procedure addPointerNames;
+  var
+    i, j: Integer;
+    Decl: TLapeDeclaration;
   begin
-    if (op_name[op] = '') then
-      Continue;
-
-    for t1 := High(ELapeBaseType) downto Low(ELapeBaseType)  do
-      for t2 := High(ELapeBaseType) downto Low(ELapeBaseType) do
+    for i := 0 to High(Decls) do
+      for j := 0 to High(Decls[i]) do
       begin
-        proc := getEvalProc(op, t1, t2);
-        // (as the operation reads: `(Int32 := Int64)`, `(-Int32)`, `(@)`)
-        if ValidEvalFunction(proc) then
-          if (t1 = ltUnknown) then
-            pMap[lpString(IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0))] := '(' + string(op_str[op]) + ')'
-          else if (t2 = ltUnknown) then
-            if (op_str[op][1] in ['a'..'z']) then
-              pMap[lpString(IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0))] := '(' + string(op_str[op]) + ' ' + string(LapeTypeToString(t1)) + ')'
-            else
-              pMap[lpString(IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0))] := '(' + string(op_str[op]) + string(LapeTypeToString(t1)) + ')'
-          else
-            pMap[lpString(IntToHex(PtrUInt({$IFNDEF FPC}@{$ENDIF}proc), 0))] := '(' + string(LapeTypeToString(t1)) + ' ' + string(op_str[op]) + ' ' + string(LapeTypeToString(t2)) + ')';
+        Decl := Decls[i][j];
+        if (not (Decl is TLapeGlobalVar)) then
+          NamedAddresses[PointerKey(Decl)] := string(Decl.Name)
+        else if (Decl.Name = '') then
+          NamedAddresses[PointerKey(TLapeGlobalVar(Decl).Ptr)] := string(TLapeGlobalVar(Decl).AsString)
+        else
+          NamedAddresses[PointerKey(TLapeGlobalVar(Decl).Ptr)] := string(Decl.Name);
       end;
   end;
-end;
 
-procedure DisassembleCode(Code: PByte; CodeLen: Integer; PointerNames: array of TLapeDeclArray);
-var
-  pMap: TLapeDisassemblerPointerMap;
-  i,j: Integer;
 begin
-  pMap := TLapeDisassemblerPointerMap.Create('');
+  NamedAddresses := TLapeDisassemblerPointerMap.Create('');
   try
-    Disassemble__EvalProcs(pMap);
+    addEvalProcNames();
+    addPointerNames();
 
-    for i := 0 to High(PointerNames) do
-      for j := 0 to High(PointerNames[i]) do
-        if (PointerNames[i][j].Name = '') and (PointerNames[i][j] is TLapeGlobalVar) then
-          pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i][j]).Ptr), 0))] := string(TLapeGlobalVar(PointerNames[i][j]).AsString)
-        else if (PointerNames[i][j] is TLapeGlobalVar) then
-          pMap[lpString(IntToHex(PtrUInt(TLapeGlobalVar(PointerNames[i][j]).Ptr), 0))] := string(PointerNames[i][j].Name)
-        else
-          pMap[lpString(IntToHex(PtrUInt(PointerNames[i][j]), 0))] := string(PointerNames[i][j].Name);
-
-    DisassembleCode(Code, CodeLen, pMap);
+    Disassemble(Code, CodeLen, NamedAddresses, Print);
   finally
-    pMap.Free();
+    NamedAddresses.Free();
   end;
 end;
 

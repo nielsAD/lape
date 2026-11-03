@@ -21,7 +21,7 @@ var
   ErrorMsg, Folder: string;
 begin
   try
-    ErrorMsg := CheckOptions('hfe', ['help', 'folder', 'explicit']);
+    ErrorMsg := CheckOptions('hfeb', ['help', 'folder', 'explicit', 'bench']);
     if (ErrorMsg <> '') then
     begin
       ShowException(Exception.Create(ErrorMsg));
@@ -39,7 +39,7 @@ begin
     else
       Folder := '..';
 
-    with TLapeTester.Create(Folder, HasOption('e', 'explicit')) do
+    with TLapeTester.Create(Folder, HasOption('e', 'explicit'), HasOption('b', 'bench')) do
     try
       if TestFiles() then
         ExitCode := 0
@@ -65,6 +65,7 @@ begin
   WriteLn('  h, help     :: You are reading it');
   WriteLn('  f, folder   :: -f "FOLDER" to specify the testing directory');
   WriteLn('  e, explicit :: Explicit debug');
+  WriteLn('  b, bench    :: Only run the benchmarks (the Bench folder)');
 end;
 
 begin

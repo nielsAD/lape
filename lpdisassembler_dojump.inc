@@ -23,28 +23,28 @@ end;
 procedure DoJmpRIf8_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIf Stack[StackPos - %d] $%x', [SizeOf(UInt8), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(UInt8)]);
+  StackChange(-(SizeOf(UInt8)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIf16_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIf Stack[StackPos - %d] $%x', [SizeOf(UInt16), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(UInt16)]);
+  StackChange(-(SizeOf(UInt16)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIf32_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIf Stack[StackPos - %d] $%x', [SizeOf(UInt32), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(UInt32)]);
+  StackChange(-(SizeOf(UInt32)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIf64_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIf Stack[StackPos - %d] $%x', [SizeOf(UInt64), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(UInt64)]);
+  StackChange(-(SizeOf(UInt64)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
@@ -107,28 +107,28 @@ end;
 procedure DoJmpRIf8_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIf (Stack[StackPos - %d])^ $%x', [SizeOf(Pointer), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(Pointer)]);
+  StackChange(-(SizeOf(Pointer)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIf16_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIf (Stack[StackPos - %d])^ $%x', [SizeOf(Pointer), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(Pointer)]);
+  StackChange(-(SizeOf(Pointer)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIf32_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIf (Stack[StackPos - %d])^ $%x', [SizeOf(Pointer), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(Pointer)]);
+  StackChange(-(SizeOf(Pointer)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIf64_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIf (Stack[StackPos - %d])^ $%x', [SizeOf(Pointer), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(Pointer)]);
+  StackChange(-(SizeOf(Pointer)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
@@ -164,28 +164,28 @@ end;
 procedure DoJmpRIfNot8_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIfNot Stack[StackPos - %d] $%x', [SizeOf(UInt8), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(UInt8)]);
+  StackChange(-(SizeOf(UInt8)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIfNot16_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIfNot Stack[StackPos - %d] $%x', [SizeOf(UInt16), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(UInt16)]);
+  StackChange(-(SizeOf(UInt16)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIfNot32_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIfNot Stack[StackPos - %d] $%x', [SizeOf(UInt32), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(UInt32)]);
+  StackChange(-(SizeOf(UInt32)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIfNot64_Stk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIfNot Stack[StackPos - %d] $%x', [SizeOf(UInt64), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(UInt64)]);
+  StackChange(-(SizeOf(UInt64)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
@@ -248,28 +248,28 @@ end;
 procedure DoJmpRIfNot8_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIfNot (Stack[StackPos - %d])^ $%x', [SizeOf(Pointer), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(Pointer)]);
+  StackChange(-(SizeOf(Pointer)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIfNot16_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIfNot (Stack[StackPos - %d])^ $%x', [SizeOf(Pointer), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(Pointer)]);
+  StackChange(-(SizeOf(Pointer)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIfNot32_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIfNot (Stack[StackPos - %d])^ $%x', [SizeOf(Pointer), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(Pointer)]);
+  StackChange(-(SizeOf(Pointer)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 
 procedure DoJmpRIfNot64_PStk; {$IFDEF Lape_Inline}inline;{$ENDIF}
 begin
   _WriteLn('JumpToRelativeIfNot (Stack[StackPos - %d])^ $%x', [SizeOf(Pointer), PtrInt(Code - CodeBase) + PCodeOffset(PtrUInt(Code) + ocSize)^]);
-  _WriteLn('DecStackPos %d', [SizeOf(Pointer)]);
+  StackChange(-(SizeOf(Pointer)));
   Inc(Code, SizeOf(TCodeOffset) + ocSize);
 end;
 

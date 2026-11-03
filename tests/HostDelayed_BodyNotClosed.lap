@@ -1,5 +1,0 @@
-// A method body from a string leaves a conditional open
-begin
-  HostOpen();
-  WriteLn('ran');
-end.

@@ -17,7 +17,6 @@ type
   public
     constructor Create(AFolder: string = '..'; ADebug: Boolean = False; ABench: Boolean = False); reintroduce;
 
-    class function GenerateHostMethod(AName: lpString; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
     class procedure TestFile(FileName: string; out Output: lpString; ExpectFile: string = '');
     function TestFiles: Boolean;
 
@@ -29,7 +28,7 @@ type
 implementation
 
 uses
-  {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF} strutils,
+  {$IFDEF MSWINDOWS}Windows,{$ENDIF} strutils,
   lpcompiler, lptokenizer, lpmessages, lpinterpreter;
 
 constructor TLapeTester.Create(AFolder: string = '..'; ADebug: Boolean = False; ABench: Boolean = False);
@@ -43,19 +42,22 @@ begin
     LapeException(lpString('Cannot find folder ' + FFolder));
 end;
 
+function HighResolutionTime: Double;
+{$IFDEF MSWINDOWS}
 var
-  HostCompiler: TLapeCompiler;
-
-// A method made when a script asks for it: a body from a string, with a conditional left open
-class function TLapeTester.GenerateHostMethod(AName: lpString; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
+  Frequency: Int64 = 0;
+  Count: Int64 = 0;
 begin
-  Result := nil;
-  if (AObjectType = nil) and (AName = 'HostOpen') then
-    Result := HostCompiler.addGlobalFunc(
-      TLapeType_Method(HostCompiler.addManagedType(TLapeType_Method.Create(HostCompiler, [], [], [], nil, AName))),
-      '{$IFNDEF NOPE}' + LineEnding + 'begin' + LineEnding + 'end;'
-    ).Method;
+  QueryPerformanceFrequency(Frequency);
+  QueryPerformanceCounter(Count);
+
+  Result := Count / Frequency * 1000;
 end;
+{$ELSE}
+begin
+  Result := GetTickCount64();
+end;
+{$ENDIF}
 
 procedure _Write(var Output: lpString; s: lpString);
 begin
@@ -125,8 +127,6 @@ begin
     // (a host's code with a method)
     if (Copy(ExtractFileName(FileName), 1, 11) = 'HostDelayed') then
     begin
-      HostCompiler := GetSelf() as TLapeCompiler;
-      addMethodGenerate({$IFDEF FPC}@{$ENDIF}GenerateHostMethod);
       addCode('procedure HostFail(x: Int32);' + LineEnding + 'begin' + LineEnding + '  if (x > 2) then' + LineEnding + '    raise ''host '' + ToString(x);' + LineEnding + 'end;');
       addCode('var HostValue: Int32 := 7;' + LineEnding + 'begin' + LineEnding + '  HostValue := HostValue + 1;' + LineEnding + 'end;', '', False);
     end;
@@ -174,16 +174,16 @@ function TLapeTester.TestFiles: Boolean;
 var
   Output: lpString;
   Fail, Pass: Integer;
-  StartTime: UInt64;
+  StartTime: Double;
 
   // Runs it: whether what it wrote is what was expected. Quiet: nothing is written, also not when it fails.
   function RunOne(const Folder, Name: string; Quiet: Boolean): Boolean;
   var
-    StartTime: UInt64;
+    StartTime: Double;
     ExpectFile: string;
   begin
     Output := '';
-    StartTime := GetTickCount();
+    StartTime := HighResolutionTime();
     try
       try
         ExpectFile := Folder + ChangeFileExt(Name, '.txt');
@@ -200,7 +200,7 @@ var
         Result := True;
         if (not Quiet) then
         begin
-          WriteLn('Passed :: ', GetTickCount() - StartTime, 'ms');
+          WriteLn('Passed :: ', Round(HighResolutionTime() - StartTime), 'ms');
           if FDebug then
             WriteLn(Output);
         end;
@@ -210,7 +210,7 @@ var
           Result := False;
           if (not Quiet) then
           begin
-            WriteLn('Failed :: ', GetTickCount() - StartTime, 'ms');
+            WriteLn('Failed :: ', Round(HighResolutionTime() - StartTime), 'ms');
             if (not FDebug) then
               WriteLn(Output);
 
@@ -324,11 +324,11 @@ var
 begin
   Fail := 0;
   Pass := 0;
-  StartTime := GetTickCount();
+  StartTime := HighResolutionTime();
 
   if (TestFolder(FFolder) = 0) then
     WriteLn('');
-  WriteLn(Format('Ran %d tests in %.2f seconds', [Pass + Fail, ((GetTickCount() - StartTime) / 1000)]));
+  WriteLn(Format('Ran %d tests in %.2f seconds', [Pass + Fail, ((HighResolutionTime() - StartTime) / 1000)]));
   WriteLn(Format('%3d / %d tests failed', [Fail, Pass + Fail]));
   WriteLn(Format('%3d / %d tests passed', [Pass, Pass + Fail]));
 
