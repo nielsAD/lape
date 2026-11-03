@@ -1,0 +1,143 @@
+
+const
+  Repeats = 4; // how many times the test is repeated to run for a good sample.
+
+type
+  TOp = (opAdd, opMove, opOut, opOpen, opClose, opClear);
+  TInstruction = record
+    Op: TOp;
+    Arg: Int32; // what is added, how far it moves, or where the other [ or ] is
+  end;
+  TProgram = array of TInstruction;
+
+var
+  Steps: Int32; // how many instructions the last run ran
+
+function Compile(Source: String): TProgram;
+var
+  Open: array of Int32; // (the [ that are still open)
+  Depth, Count, i, j: Int32;
+
+  // (a run of the same + - or < > is added to the instruction before it)
+  procedure Add(Op: TOp; Arg: Int32);
+  begin
+    if (Count > 0) and (Op in [opAdd, opMove]) and (Result[Count - 1].Op = Op) then
+      Result[Count - 1].Arg := Result[Count - 1].Arg + Arg
+    else
+    begin
+      if (Count = Length(Result)) then
+        SetLength(Result, Count * 2 + 16);
+      Result[Count].Op := Op;
+      Result[Count].Arg := Arg;
+      Inc(Count);
+    end;
+  end;
+
+begin
+  Count := 0;
+  Depth := 0;
+  SetLength(Open, Length(Source));
+
+  for i := 1 to Length(Source) do
+    case Source[i] of
+      '+': Add(opAdd, 1);
+      '-': Add(opAdd, -1);
+      '>': Add(opMove, 1);
+      '<': Add(opMove, -1);
+      '.': Add(opOut, 0);
+      '[':
+        begin
+          Add(opOpen, 0);
+          Open[Depth] := Count - 1;
+          Inc(Depth);
+        end;
+      ']':
+        begin
+          Dec(Depth);
+          j := Open[Depth];
+
+          // [-] and [+]: the cell becomes 0
+          if (Count = j + 2) and (Result[j + 1].Op = opAdd) and ((Result[j + 1].Arg = 1) or (Result[j + 1].Arg = -1)) then
+          begin
+            Count := j;
+            Add(opClear, 0);
+          end
+          else
+          begin
+            Add(opClose, j);
+            Result[j].Arg := Count - 1;
+          end;
+        end;
+    end;
+
+  SetLength(Result, Count);
+end;
+
+function Run(Code: TProgram): AnsiString;
+var
+  Tape: array of UInt8;
+  pc, p: Int32;
+begin
+  SetLength(Tape, 30000);
+  Result := '';
+  pc := 0;
+  p := 0;
+  Steps := 0;
+
+  while (pc < Length(Code)) do
+  begin
+    Inc(Steps);
+    case Code[pc].Op of
+      opAdd:   Tape[p] := Tape[p] + Code[pc].Arg;
+      opMove:  p := p + Code[pc].Arg;
+      opOut:   Result := Result + Chr(Tape[p]);
+      opOpen:  if (Tape[p] = 0) then pc := Code[pc].Arg;
+      opClose: if (Tape[p] <> 0) then pc := Code[pc].Arg;
+      opClear: Tape[p] := 0;
+    end;
+    Inc(pc);
+  end;
+end;
+
+// (each character by its number)
+function Codes(s: AnsiString): String;
+var
+  i: Int32;
+begin
+  Result := '';
+  for i := 1 to Length(s) do
+  begin
+    if (i > 1) then
+      Result := Result + ' ';
+    Result := Result + IntToStr(Ord(s[i]));
+  end;
+end;
+
+procedure Show(Name, Source: String; AsCodes, Write: Boolean);
+var
+  Code: TProgram;
+  Output: AnsiString;
+begin
+  Code := Compile(Source);
+  Output := Run(Code);
+  if AsCodes then
+    Output := Codes(Output);
+  if Write then
+    WriteLn(Name, ': ', Output, ' (', Length(Code), ' instructions, ', Steps, ' steps)');
+end;
+
+var
+  Rep: Int32;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    Show('hello', '++++++++++[>+++++++>++++++++++>+++++++++++>+++<<<<-]>++.>+.>--..+++.>++++++++++++++.' +
+         '------------.<<<++++.>----.>+.<++++.>>+.', False, Rep = Repeats);
+    Show('fibonacci', '+++++++++++++++>+>+<<[>.[->>+<<]>[-<+>>+<]>[-<+>]<<<-]', True, Rep = Repeats);
+    // (39 * 200 * 200 rounds of the innermost loop, each adding 3)
+    Show('loops in loops', '++++++++[>+++++<-]>-' +
+         '[>>++++++++++[<++++++++++++++++++++>-]<' +
+         '[>>>++++++++++[<<++++++++++++++++++++>>-]<<' +
+         '[->+++<]<-]<-]>>>.', True, Rep = Repeats);
+  end;
+end.

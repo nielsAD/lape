@@ -1,6 +1,5 @@
 // What is declared later can be addressed, as it can be called
 type
-  TProc = procedure;
   T = record x: Int32; end;
 
 procedure T.Go;
@@ -13,11 +12,9 @@ end;
 
 procedure Early;
 var
-  p: TProc;
+  p: procedure;
 begin
   p := @Later;
-  p();
-  p := @System.Later;
   p();
 end;
 

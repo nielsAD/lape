@@ -1,0 +1,79 @@
+const
+  Rounds = 150000;
+  Repeats = 10; // how many times the test is repeated to run for a good sample.
+
+function Reverse(s: String): String;
+var
+  i: Int32;
+begin
+  Result := '';
+  for i := Length(s) downto 1 do
+    Result := Result + s[i];
+end;
+
+function CountChar(s: String; c: Char): Int32;
+var
+  i: Int32;
+begin
+  Result := 0;
+  for i := 1 to Length(s) do
+    if (s[i] = c) then
+      Inc(Result);
+end;
+
+function IsPalindrome(s: String): Boolean;
+var
+  i, j: Int32;
+begin
+  i := 1;
+  j := Length(s);
+  while (i < j) do
+  begin
+    if (s[i] <> s[j]) then
+      Exit(False);
+    Inc(i);
+    Dec(j);
+  end;
+  Result := True;
+end;
+
+var
+  Rep, i, Palindromes, Sevens, Found: Int32;
+  Total: Int64;
+  s, r, Joined: String;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    Palindromes := 0;
+    Sevens := 0;
+    Found := 0;
+    Total := 0;
+    Joined := '';
+
+    for i := 1 to Rounds do
+    begin
+      s := ToString(i * 37);
+      r := Reverse(s);
+
+      if IsPalindrome(s) then
+        Inc(Palindromes);
+      Sevens := Sevens + CountChar(s, '7');
+
+      if (s < r) then
+        Total := Total + Length(s)
+      else if (s = r) then
+        Total := Total + 100
+      else
+        Total := Total + 1;
+
+      if (Pos('99', s) > 0) then
+        Inc(Found);
+
+      if (i mod 250 = 0) then
+        Joined := Joined + Copy(r, 1, 2) + '-';
+    end;
+  end;
+
+  WriteLn('palindromes: ', Palindromes, ', sevens: ', Sevens, ', with 99: ', Found, ', total: ', Total);
+  WriteLn('joined: ', Length(Joined), ' ', Copy(Joined, 1, 24), ' ', CountChar(Joined, '-'));
+end.

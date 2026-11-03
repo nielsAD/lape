@@ -1,0 +1,262 @@
+const
+  Count = 3000;
+  Repeats = 8; // how many times the test is repeated to run for a good sample.
+
+var
+  Loops: Int64; // (how many rounds the loops of the sorts made together)
+  Invokes: Int64; // (how many times a sort, or a method in one, was called)
+
+// A number that looks random, worked out from i alone: the same i always gives the same number
+function Mix(i: Int64): Int64;
+begin
+  Result := (i * 2654435761 + 12345) mod 4294967296;
+  Result := Result xor (Result shr 13);
+  Result := (Result * 1274126177) mod 4294967296;
+  Result := Result xor (Result shr 16);
+end;
+
+procedure QuickSort(var A: array of Int32; Lo, Hi: Int32);
+var
+  i, j, Pivot, t: Int32;
+begin
+  Inc(Invokes);
+  i := Lo;
+  j := Hi;
+  Pivot := A[(Lo + Hi) div 2];
+  while (i <= j) do
+  begin
+    Inc(Loops);
+    while (A[i] < Pivot) do
+    begin
+      Inc(Loops);
+      Inc(i);
+    end;
+    while (Pivot < A[j]) do
+    begin
+      Inc(Loops);
+      Dec(j);
+    end;
+    if (i <= j) then
+    begin
+      t := A[i];
+      A[i] := A[j];
+      A[j] := t;
+      Inc(i);
+      Dec(j);
+    end;
+  end;
+
+  if (Lo < j) then
+    QuickSort(A, Lo, j);
+  if (i < Hi) then
+    QuickSort(A, i, Hi);
+end;
+
+procedure ShellSort(var A: array of Int32);
+var
+  Gap, i, j, t: Int32;
+begin
+  Inc(Invokes);
+  Gap := Length(A) div 2;
+  while (Gap > 0) do
+  begin
+    Inc(Loops);
+    for i := Gap to High(A) do
+    begin
+      Inc(Loops);
+      t := A[i];
+      j := i;
+      while (j >= Gap) and (t < A[j - Gap]) do
+      begin
+        Inc(Loops);
+        A[j] := A[j - Gap];
+        Dec(j, Gap);
+      end;
+      A[j] := t;
+    end;
+    Gap := Gap div 2;
+  end;
+end;
+
+procedure HeapSort(var A: array of Int32);
+var
+  i, t: Int32;
+
+  procedure SiftDown(var A: array of Int32; Start, Stop: Int32); static;
+  var
+    Root, Child, t: Int32;
+  begin
+    Inc(Invokes);
+    Root := Start;
+    while (Root * 2 + 1 <= Stop) do
+    begin
+      Inc(Loops);
+      Child := Root * 2 + 1;
+      if (Child + 1 <= Stop) and (A[Child] < A[Child + 1]) then
+        Inc(Child);
+      if (A[Root] < A[Child]) then
+      begin
+        t := A[Root];
+        A[Root] := A[Child];
+        A[Child] := t;
+        Root := Child;
+      end
+      else
+        Exit;
+    end;
+  end;
+
+begin
+  Inc(Invokes);
+  for i := (Length(A) - 2) div 2 downto 0 do
+  begin
+    Inc(Loops);
+    SiftDown(A, i, High(A));
+  end;
+  for i := High(A) downto 1 do
+  begin
+    Inc(Loops);
+    t := A[0];
+    A[0] := A[i];
+    A[i] := t;
+    SiftDown(A, 0, i - 1);
+  end;
+end;
+
+procedure MergeSort(var A: array of Int32);
+var
+  Aux: array of Int32; // (what Merge works in)
+
+  procedure Merge(var A, Aux: array of Int32; Lo, Mid, Hi: Int32); static;
+  var
+    i, j, k: Int32;
+  begin
+    Inc(Invokes);
+    for k := Lo to Hi do
+    begin
+      Inc(Loops);
+      Aux[k] := A[k];
+    end;
+
+    i := Lo;
+    j := Mid + 1;
+    for k := Lo to Hi do
+    begin
+      Inc(Loops);
+      if (i > Mid) then
+      begin
+        A[k] := Aux[j];
+        Inc(j);
+      end
+      else if (j > Hi) then
+      begin
+        A[k] := Aux[i];
+        Inc(i);
+      end
+      else if (Aux[j] < Aux[i]) then
+      begin
+        A[k] := Aux[j];
+        Inc(j);
+      end
+      else
+      begin
+        A[k] := Aux[i];
+        Inc(i);
+      end;
+    end;
+  end;
+
+  procedure Split(var A, Aux: array of Int32; Lo, Hi: Int32); static;
+  var
+    Mid: Int32;
+  begin
+    Inc(Invokes);
+    if (Hi <= Lo) then
+      Exit;
+    Mid := Lo + (Hi - Lo) div 2;
+    Split(A, Aux, Lo, Mid);
+    Split(A, Aux, Mid + 1, Hi);
+    Merge(A, Aux, Lo, Mid, Hi);
+  end;
+
+begin
+  Inc(Invokes);
+  SetLength(Aux, Length(A));
+  Split(A, Aux, 0, High(A));
+end;
+
+// Writes whether A is Want, and how many rounds its sort's loops made and calls it made (since the Before counts)
+procedure Report(Name: String; const A, Want: array of Int32; LoopsBefore, InvokesBefore: Int64);
+var
+  i: Int32;
+  Same: Boolean;
+begin
+  Same := Length(A) = Length(Want);
+  for i := 0 to High(A) do
+    if (A[i] <> Want[i]) then
+      Same := False;
+  WriteLn(Name, ': ', Same, ', loops: ', Loops - LoopsBefore, ', invokes: ', Invokes - InvokesBefore);
+end;
+
+var
+  Data, Want, A: array of Int32;
+  Rep, i, j, t: Int32;
+  LoopsBefore, InvokesBefore: Int64;
+begin
+  SetLength(Data, Count);
+  SetLength(Want, Count);
+  SetLength(A, Count);
+  for Rep := 1 to Repeats do
+  begin
+    for i := 0 to Count - 1 do
+      Data[i] := Mix(i) mod 1000000;
+    // (the slow way, which the others are checked against: every pair, the smaller of the two in front)
+    Move(Data[0], Want[0], Count * SizeOf(Int32));
+    LoopsBefore := Loops;
+    InvokesBefore := Invokes;
+    for i := 0 to Count - 1 do
+    begin
+      Inc(Loops);
+      for j := 0 to Count - 1 do
+      begin
+        Inc(Loops);
+        if (Want[i] < Want[j]) then
+        begin
+          t := Want[j];
+          Want[j] := Want[i];
+          Want[i] := t;
+        end;
+      end;
+    end;
+    if (Rep = Repeats) then
+      Report('simple', Want, Want, LoopsBefore, InvokesBefore);
+
+    Move(Data[0], A[0], Count * SizeOf(Int32));
+    LoopsBefore := Loops;
+    InvokesBefore := Invokes;
+    QuickSort(A, 0, High(A));
+    if (Rep = Repeats) then
+      Report('quick', A, Want, LoopsBefore, InvokesBefore);
+
+    Move(Data[0], A[0], Count * SizeOf(Int32));
+    LoopsBefore := Loops;
+    InvokesBefore := Invokes;
+    ShellSort(A);
+    if (Rep = Repeats) then
+      Report('shell', A, Want, LoopsBefore, InvokesBefore);
+
+    Move(Data[0], A[0], Count * SizeOf(Int32));
+    LoopsBefore := Loops;
+    InvokesBefore := Invokes;
+    HeapSort(A);
+    if (Rep = Repeats) then
+      Report('heap', A, Want, LoopsBefore, InvokesBefore);
+
+    Move(Data[0], A[0], Count * SizeOf(Int32));
+    LoopsBefore := Loops;
+    InvokesBefore := Invokes;
+    MergeSort(A);
+    if (Rep = Repeats) then
+      Report('merge', A, Want, LoopsBefore, InvokesBefore);
+  end;
+end.

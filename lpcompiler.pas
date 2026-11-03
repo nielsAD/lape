@@ -530,6 +530,11 @@ begin
   {$IFDEF Lape_NoExtended}
   addBaseDefine('Lape_NoExtended');
   {$ENDIF}
+  {$IF SizeOf(Pointer) = 4}
+  addBaseDefine('CPU32');
+  {$ELSE}
+  addBaseDefine('CPU64');
+  {$IFEND}
 
   addGlobalVar(addManagedType(TLapeType_NilPointer.Create(Self, nil, False)).NewGlobalVarP(), 'nil').isConstant := True;
 

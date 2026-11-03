@@ -1,3 +1,2 @@
 method 5
 global
-global

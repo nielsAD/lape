@@ -1,0 +1,88 @@
+type
+  TItem = record
+    Key, Value: Int32;
+  end;
+
+const
+  Size = 2000;
+  Rounds = 15;
+  Repeats = 60; // how many times the test is repeated to run for a good sample.
+
+function SumOf(const a: array of Int32): Int64;
+var
+  i: Int32;
+begin
+  Result := 0;
+  for i := 0 to High(a) do
+    Result := Result + a[i];
+end;
+
+procedure Doubled(var a: array of Int32);
+var
+  i: Int32;
+begin
+  for i := 0 to High(a) do
+    a[i] := a[i] * 2;
+end;
+
+var
+  a, b, c, Joined: array of Int32;
+  Names: array of String;
+  Items: array of TItem;
+  Counts: array[0..99] of Int32;
+  Rep, r, i, Found: Int32;
+  Sum: Int64;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    Sum := 0;
+    for r := 1 to Rounds do
+    begin
+      a := [];
+      for i := 0 to Size - 1 do
+        a += (i * 37 + r) mod 1000;
+
+      SetLength(b, Size);
+      for i := 0 to Size - 1 do
+        b[i] := a[Size - 1 - i] + i;
+
+      Joined := a + b;
+      Sum := Sum + Length(Joined) + SumOf(Joined);
+
+      c := Copy(a, 100, 50);
+      Delete(c, 0, 10);
+      Insert(777, c, 5);
+      Doubled(c);
+      Sum := Sum + Length(c) + SumOf(c) + c[5];
+
+      Sort(b);
+      Sum := Sum + b[0] + b[Size div 2] + b[Size - 1];
+      Found := IndexOf(a[123], a);
+      Sum := Sum + Found;
+      if Contains(999, a) then
+        Inc(Sum);
+
+      for i := 0 to 99 do
+        Counts[i] := 0;
+      for i := 0 to Size - 1 do
+        Inc(Counts[a[i] mod 100]);
+      Sum := Sum + Counts[0] * 3 + Counts[37] + Counts[99] * 7;
+
+      SetLength(Names, 0);
+      for i := 0 to 199 do
+        Names += IntToStr(i * r);
+      Sum := Sum + Length(Names[199]) + Length(Names);
+
+      SetLength(Items, 500);
+      for i := 0 to High(Items) do
+      begin
+        Items[i].Key := i;
+        Items[i].Value := a[i] - b[i mod 7];
+      end;
+      for i := 0 to High(Items) do
+        Sum := Sum + Items[i].Value * (Items[i].Key mod 3);
+    end;
+  end;
+
+  WriteLn('sum: ', Sum);
+end.

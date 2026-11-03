@@ -7,12 +7,9 @@ procedure R.m;
 type
   P = ^T;
 var
-  v: record a: Int32; end;
-  q: P;
+  v: T = [3];
 begin
-  v.a := 3;
-  q := @v;
-  WriteLn(q^.a);
+  WriteLn(P(@v)^.a);
 end;
 
 var

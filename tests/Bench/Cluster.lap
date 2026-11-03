@@ -1,0 +1,110 @@
+{$rangechecks off}
+
+type
+  TSpot = record
+    x, y: Int32;
+  end;
+  TSpotArray = array of TSpot;
+  TSpotGroups = array of TSpotArray;
+
+const
+  Count = 5000;
+  Repeats = 4; // how many times the test is repeated to run for a good sample.
+
+// A number that looks random, worked out from i alone: the same i always gives the same number
+function Mix(i: Int64): Int64;
+begin
+  Result := (i * 2654435761 + 12345) mod 4294967296;
+  Result := Result xor (Result shr 13);
+  Result := (Result * 1274126177) mod 4294967296;
+  Result := Result xor (Result shr 16);
+end;
+
+function Split(Points: TSpotArray; DistX, DistY: Int32): TSpotGroups;
+var
+  xsq, ysq, xxyy, LastIndex, ProcCount, ClustSize, i, j, dx, dy: Int32;
+  Current, Group: TSpotArray;
+  p1: TSpot;
+begin
+  if (Length(Points) = 0) then
+    Exit;
+
+  xsq := DistX * DistX;
+  ysq := DistY * DistY;
+  xxyy := xsq * ysq;
+
+  LastIndex := High(Points);
+  ProcCount := 0;
+  SetLength(Current, LastIndex + 1);
+
+  while (LastIndex - ProcCount >= 0) do
+  begin
+    Current[0] := Points[0];
+    Points[0] := Points[LastIndex - ProcCount];
+    Inc(ProcCount);
+
+    ClustSize := 1;
+    i := 0;
+    while (i < ClustSize) do
+    begin
+      j := 0;
+      p1 := Current[i];
+
+      while (j <= LastIndex - ProcCount) do
+      begin
+        dx := p1.x - Points[j].x;
+        dy := p1.y - Points[j].y;
+
+        if ((dx * dx * ysq) + (dy * dy * xsq) <= xxyy) then
+        begin
+          Current[ClustSize] := Points[j];
+          Points[j] := Points[LastIndex - ProcCount];
+
+          Inc(ProcCount);
+          Inc(ClustSize);
+          Dec(j);
+        end;
+        Inc(j);
+      end;
+      Inc(i);
+    end;
+
+    SetLength(Group, ClustSize);
+    for i := 0 to ClustSize - 1 do
+      Group[i] := Current[i];
+
+    SetLength(Result, Length(Result) + 1);
+    Result[High(Result)] := Group;
+    Group := nil;
+  end;
+end;
+
+var
+  Points: TSpotArray;
+  Groups: TSpotGroups;
+  Rep, i, Biggest: Int32;
+  Sum: Int64;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    SetLength(Points, Count);
+    for i := 0 to Count - 1 do
+    begin
+      Points[i].x := Mix(2 * i) mod 1000;
+      Points[i].y := Mix(2 * i + 1) mod 1000;
+    end;
+
+    Groups := Split(Points, 14, 14);
+
+    Biggest := 0;
+    Sum := 0;
+    for i := 0 to High(Groups) do
+    begin
+      if (Length(Groups[i]) > Biggest) then
+        Biggest := Length(Groups[i]);
+      Sum := Sum + Groups[i][0].x * (i mod 5) + Groups[i][High(Groups[i])].y;
+    end;
+  end;
+
+  WriteLn('groups: ', Length(Groups), ', biggest: ', Biggest, ', sum: ', Sum);
+end.

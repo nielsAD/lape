@@ -1,0 +1,312 @@
+const
+  Width = 500;
+  Height = 500;
+
+type
+  TMatrix = array of array of Int32;
+
+function Make(W, H: Int32): TMatrix;
+begin
+  SetLength(Result, H, W);
+end;
+
+procedure Fill(var M: TMatrix; Value: Int32);
+var
+  x, y: Int32;
+begin
+  for y := 0 to High(M) do
+    for x := 0 to High(M[y]) do
+      M[y][x] := Value;
+end;
+
+// every number another one than those around it
+procedure Pattern(var M: TMatrix);
+var
+  x, y: Int32;
+begin
+  for y := 0 to High(M) do
+    for x := 0 to High(M[y]) do
+      M[y][x] := (x * 31 + y * 17 + x * y) mod 251;
+end;
+
+function Sum(M: TMatrix): Int64;
+var
+  x, y: Int32;
+begin
+  Result := 0;
+  for y := 0 to High(M) do
+    for x := 0 to High(M[y]) do
+      Result := Result + M[y][x];
+end;
+
+// a sum in which where a number is counts
+function Check(M: TMatrix): Int64;
+var
+  x, y: Int32;
+begin
+  Result := 0;
+  for y := 0 to High(M) do
+    for x := 0 to High(M[y]) do
+      Result := Result + Int64(M[y][x]) * (x + 1) + Int64(M[y][x]) * (y + 1) * 3;
+end;
+
+function Same(A, B: TMatrix): Boolean;
+var
+  x, y: Int32;
+begin
+  if (Length(A) <> Length(B)) then
+    Exit(False);
+  for y := 0 to High(A) do
+  begin
+    if (Length(A[y]) <> Length(B[y])) then
+      Exit(False);
+    for x := 0 to High(A[y]) do
+      if (A[y][x] <> B[y][x]) then
+        Exit(False);
+  end;
+  Result := True;
+end;
+
+// a quarter turn to the right: the first column, from the bottom up, becomes the first row
+function Rot90(M: TMatrix): TMatrix;
+var
+  x, y, W, H: Int32;
+begin
+  H := Length(M);
+  W := Length(M[0]);
+  Result := Make(H, W);
+  for y := 0 to H - 1 do
+    for x := 0 to W - 1 do
+      Result[x][H - 1 - y] := M[y][x];
+end;
+
+function Kernel3(a, b, c, d, e, f, g, h, i: Int32): TMatrix;
+begin
+  Result := Make(3, 3);
+  Result[0][0] := a; Result[0][1] := b; Result[0][2] := c;
+  Result[1][0] := d; Result[1][1] := e; Result[1][2] := f;
+  Result[2][0] := g; Result[2][1] := h; Result[2][2] := i;
+end;
+
+// Every number becomes the sum of itself and those around it, each times what the kernel has there, divided by
+// Divisor. Past an edge it is the number at the edge that counts.
+function Convolute(M, Kernel: TMatrix; Divisor: Int32): TMatrix;
+var
+  x, y, kx, ky, sx, sy, W, H, R, Acc: Int32;
+begin
+  H := Length(M);
+  W := Length(M[0]);
+  R := Length(Kernel) div 2;
+  Result := Make(W, H);
+
+  for y := 0 to H - 1 do
+    for x := 0 to W - 1 do
+    begin
+      Acc := 0;
+      for ky := -R to R do
+      begin
+        sy := y + ky;
+        if (sy < 0) then
+          sy := 0
+        else if (sy >= H) then
+          sy := H - 1;
+
+        for kx := -R to R do
+        begin
+          sx := x + kx;
+          if (sx < 0) then
+            sx := 0
+          else if (sx >= W) then
+            sx := W - 1;
+
+          Acc := Acc + M[sy][sx] * Kernel[ky + R][kx + R];
+        end;
+      end;
+      Result[y][x] := Acc div Divisor;
+    end;
+end;
+
+// Turned, convolved: the matrix above, Width by Height
+procedure Turns(Show: Boolean);
+var
+  M, R: TMatrix;
+  i: Int32;
+begin
+  M := Make(Width, Height);
+  Fill(M, 7);
+  if Show then
+    WriteLn('fill: ', Length(M[0]), 'x', Length(M), ' ', Sum(M));
+
+  Pattern(M);
+  if Show then
+    WriteLn('pattern: ', Sum(M), ' ', Check(M), ' ', M[0][0], ' ', M[Height - 1][Width - 1], ' ', M[Height div 3][Width div 2]);
+
+  // (a quarter turn has the sides the other way around; four of them is where it started)
+  R := Rot90(M);
+  if Show then
+    WriteLn('rot90: ', Length(R[0]), 'x', Length(R), ' ', Check(R), ' ', R[0][0], ' ', R[0][Height - 1], ' ', R[Width - 1][Height - 1], ' ', R[Width - 1][0]);
+  for i := 1 to 3 do
+    R := Rot90(R);
+  if Show then
+    WriteLn('four quarter turns: ', Same(R, M));
+
+  R := Convolute(M, Kernel3(1, 1, 1, 1, 1, 1, 1, 1, 1), 9);
+  if Show then
+    WriteLn('blurred: ', Sum(R), ' ', Check(R), ' ', R[0][0], ' ', R[Height div 2][Width div 2], ' ', R[Height - 1][Width - 1]);
+end;
+
+// A product, sums over blocks of it and Life (the second part)
+const
+  N = 120;          // the matrices are N x N
+  Block = 10;       // the blocks that are summed are Block x Block
+  Cells = 64;       // the Life grid is Cells x Cells
+  Generations = 30;
+  Repeats = 4; // (all of it again, the same each time: for a time that can be measured)
+
+type
+  TSquare = array of array of Int32;
+  TSums = array of array of Int64;
+  TGrid = array[0..Cells - 1] of array[0..Cells - 1] of UInt8;
+
+// A number that looks random, worked out from i alone: the same i always gives the same number
+function Mix(i: Int64): Int64;
+begin
+  Result := (i * 2654435761 + 12345) mod 4294967296;
+  Result := Result xor (Result shr 13);
+  Result := (Result * 1274126177) mod 4294967296;
+  Result := Result xor (Result shr 16);
+end;
+
+// (Start: where its numbers are taken from)
+function RandomMatrix(Start: Int32): TSquare;
+var
+  i, j: Int32;
+begin
+  SetLength(Result, N);
+  for i := 0 to N - 1 do
+  begin
+    SetLength(Result[i], N);
+    for j := 0 to N - 1 do
+      Result[i][j] := Mix(Start + i * N + j) mod 100;
+  end;
+end;
+
+function Transposed(const M: TSquare): TSquare;
+var
+  i, j: Int32;
+begin
+  SetLength(Result, N);
+  for i := 0 to N - 1 do
+    SetLength(Result[i], N);
+  for i := 0 to N - 1 do
+    for j := 0 to N - 1 do
+      Result[j][i] := M[i][j];
+end;
+
+// (B is given transposed: a row of it is a column of B)
+function Product(const A, BT: TSquare): TSquare;
+var
+  i, j, k, Sum: Int32;
+begin
+  SetLength(Result, N);
+  for i := 0 to N - 1 do
+  begin
+    SetLength(Result[i], N);
+    for j := 0 to N - 1 do
+    begin
+      Sum := 0;
+      for k := 0 to N - 1 do
+        Sum := Sum + A[i][k] * BT[j][k];
+      Result[i][j] := Sum;
+    end;
+  end;
+end;
+
+// The biggest sum of a Block x Block square of M, from a table where Sums[i][j] is the sum of all above and left of i, j
+function BiggestBlock(const M: TSquare): Int64;
+var
+  Sums: TSums;
+  i, j: Int32;
+  s: Int64;
+begin
+  SetLength(Sums, N + 1);
+  for i := 0 to N do
+    SetLength(Sums[i], N + 1);
+  for i := 1 to N do
+    for j := 1 to N do
+      Sums[i][j] := M[i - 1][j - 1] + Sums[i - 1][j] + Sums[i][j - 1] - Sums[i - 1][j - 1];
+
+  Result := 0;
+  for i := Block to N do
+    for j := Block to N do
+    begin
+      s := Sums[i][j] - Sums[i - Block][j] - Sums[i][j - Block] + Sums[i - Block][j - Block];
+      if (s > Result) then
+        Result := s;
+    end;
+end;
+
+// Life on a grid whose edges wrap round: how many are alive at the end
+function Life: Int32;
+var
+  Grid, Next: TGrid;
+  g, i, j, di, dj, Around: Int32;
+begin
+  for i := 0 to Cells - 1 do
+    for j := 0 to Cells - 1 do
+      if (Mix(2 * N * N + i * Cells + j) mod 4 = 0) then
+        Grid[i][j] := 1
+      else
+        Grid[i][j] := 0;
+
+  for g := 1 to Generations do
+  begin
+    for i := 0 to Cells - 1 do
+      for j := 0 to Cells - 1 do
+      begin
+        Around := 0;
+        for di := -1 to 1 do
+          for dj := -1 to 1 do
+            if (di <> 0) or (dj <> 0) then
+              Around := Around + Grid[(i + di + Cells) mod Cells][(j + dj + Cells) mod Cells];
+
+        if (Around = 3) or ((Around = 2) and (Grid[i][j] = 1)) then
+          Next[i][j] := 1
+        else
+          Next[i][j] := 0;
+      end;
+    Grid := Next;
+  end;
+
+  Result := 0;
+  for i := 0 to Cells - 1 do
+    for j := 0 to Cells - 1 do
+      Result := Result + Grid[i][j];
+end;
+
+var
+  A, B, C: TSquare;
+  Rep, i, j, Alive: Int32;
+  Weighted, Trace, Biggest: Int64;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    Turns(Rep = Repeats);
+    A := RandomMatrix(0);
+    B := RandomMatrix(N * N);
+    C := Product(A, Transposed(B));
+
+    Weighted := 0;
+    Trace := 0;
+    for i := 0 to N - 1 do
+    begin
+      Trace := Trace + C[i][i];
+      for j := 0 to N - 1 do
+        Weighted := Weighted + Int64(C[i][j]) * ((i * 3 + j) mod 11);
+    end;
+    Biggest := BiggestBlock(C);
+    Alive := Life();
+  end;
+
+  WriteLn('product: ', Weighted, ', trace: ', Trace, ', biggest block: ', Biggest, ', alive: ', Alive);
+end.

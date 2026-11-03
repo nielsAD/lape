@@ -1,0 +1,6 @@
+mandelbrot: 185786 double, 185786 single
+springs: 3898 double, 3898 single
+roots: 8400 halvings 50284 double, 5400 halvings -19417 single
+sqrt: 59650625 double (built in 59650625), 59650627 single
+path: 19470965 double, 19470972 single
+rays: 195 hits 964072 double, 195 hits 964072 single

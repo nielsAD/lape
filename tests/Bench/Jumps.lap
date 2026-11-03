@@ -1,0 +1,123 @@
+const
+  Rounds = 200000;
+  Repeats = 20; // how many times the test is repeated to run for a good sample.
+
+var
+  Finals: Int64;
+
+function Classify(i: Int32): Int32;
+begin
+  if (i mod 15 = 0) then
+    Exit(3);
+  if (i mod 5 = 0) then
+    Exit(2);
+  if (i mod 3 = 0) then
+    Exit(1);
+  Result := 0;
+end;
+
+function Gotos(i: Int32): Int32;
+label
+  A, B, C, Done;
+begin
+  case i mod 3 of
+    0: goto A;
+    1: goto B;
+  else
+    goto C;
+  end;
+
+  A:
+  Result := 1;
+  goto Done;
+  B:
+  Result := 2;
+  goto Done;
+  C:
+  Result := 4;
+  Done:
+  Result := Result * 2;
+end;
+
+function CaseOf(i: Int32): Int32;
+begin
+  case i mod 10 of
+    0:    Result := 7;
+    1, 2: Result := 3;
+    3..5: Result := 5;
+    6:    Result := 1;
+  else
+    Result := 2;
+  end;
+end;
+
+function Risky(i: Int32): Int32;
+begin
+  if (i mod 1000 = 0) then
+    raise 'bad ' + ToString(i);
+  Result := i and 15;
+end;
+
+function Guarded(i: Int32): Int32;
+begin
+  try
+    if (i mod 7 = 0) then
+      Exit(1);
+    Result := 2;
+  finally
+    Inc(Finals);
+  end;
+end;
+
+var
+  Rep, i, j, k: Int32;
+  Sum, Caught: Int64;
+  Last: String;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    Sum := 0;
+    Caught := 0;
+    Finals := 0;
+    for i := 1 to Rounds do
+    begin
+      Sum := Sum + Classify(i) + Gotos(i) + CaseOf(i) + Guarded(i);
+
+      try
+        Sum := Sum + Risky(i);
+      except
+        Inc(Caught);
+        Last := GetExceptionMessage();
+      end;
+
+      for j := 0 to 7 do
+      begin
+        if (j = (i and 7)) then
+          Break;
+        if ((j and 1) = 1) then
+          Continue;
+        Inc(Sum);
+      end;
+
+      k := 0;
+      while True do
+      try
+        Inc(k);
+        if (k >= (i and 3) + 1) then
+          Break;
+      finally
+        Inc(Finals);
+      end;
+
+      try
+        if ((i and 3) = 0) then
+          Continue;
+        Sum := Sum + 1;
+      finally
+        Inc(Finals);
+      end;
+    end;
+  end;
+
+  WriteLn('sum: ', Sum, ', caught: ', Caught, ' (last: ', Last, '), finally ran: ', Finals);
+end.

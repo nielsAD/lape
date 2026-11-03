@@ -1,0 +1,112 @@
+type
+  TCounter = record
+    Total: Int64;
+  end;
+
+  TFunc = function(x: Int32): Int32;
+  TMethodFunc = function(x: Int32): Int32 of object;
+
+const
+  Rounds = 100000;
+  Repeats = 24; // how many times the test is repeated to run for a good sample.
+
+function Twice(x: Int32): Int32;
+begin
+  Result := x * 2;
+end;
+
+function AddOne(x: Int32): Int32;
+begin
+  Result := x + 1;
+end;
+
+procedure Bump(var Total: Int64; x: Int32);
+begin
+  Total := Total + x;
+end;
+
+function Pick(const a, b: Int32): Int32;
+begin
+  if (a > b) then
+    Result := a
+  else
+    Result := b;
+end;
+
+function Half(x: Int32): Int32; overload;
+begin
+  Result := x div 2;
+end;
+
+function Half(x: Double): Double; overload;
+begin
+  Result := x / 2;
+end;
+
+procedure TCounter.Add(x: Int32);
+begin
+  Self.Total := Self.Total + x;
+end;
+
+function TCounter.Scaled(x: Int32): Int32;
+begin
+  Result := x * 3;
+end;
+
+function TCounter.Zero: Int32; static;
+begin
+  Result := 0;
+end;
+
+function Depth(n: Int32): Int32;
+begin
+  if (n = 0) then
+    Result := 0
+  else
+    Result := 1 + Depth(n - 1);
+end;
+
+function Outer(x: Int32): Int32;
+
+  function Inner(y: Int32): Int32;
+  begin
+    Result := y + x;
+  end;
+
+begin
+  Result := Inner(1) + Inner(2);
+end;
+
+function Apply(Callback: TFunc; x: Int32): Int32;
+begin
+  Result := Callback(x);
+end;
+
+var
+  c: TCounter;
+  f: TFunc;
+  m: TMethodFunc;
+  Rep, i: Int32;
+  Total: Int64;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    c.Total := 0;
+    Total := 0;
+    m := @c.Scaled;
+    for i := 1 to Rounds do
+    begin
+      if ((i and 1) = 0) then
+        f := @Twice
+      else
+        f := @AddOne;
+
+      Total := Total + Twice(i) + f(i) + m(i) + Pick(i, 100) + Half(i) + Round(Half(i * 1.0)) + TCounter.Zero() +
+               Depth(i and 7) + Outer(i) + Apply(@Twice, i) + Max(i, 50) + Abs(-i);
+      Bump(Total, i and 3);
+      c.Add(i and 7);
+    end;
+  end;
+
+  WriteLn('total: ', Total, ', counter: ', c.Total);
+end.

@@ -1,0 +1,2 @@
+palindromes: 393, sevens: 88379, with 99: 6722, total: 743521
+joined: 1800 05-00-05-00-05-00-05-00- 600

@@ -1,0 +1,5 @@
+simple: True, loops: 9003000, invokes: 0
+quick: True, loops: 35853, invokes: 2697
+shell: True, loops: 58492, invokes: 1
+heap: True, loops: 34609, invokes: 4500
+merge: True, loops: 69808, invokes: 8999

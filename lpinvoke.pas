@@ -95,8 +95,8 @@ type
 
     procedure NoMethodFits(const Methods: TLapeDeclArray); override;
     function EmitCallee(out SelfVar: TResVar): TResVar; override;
-    function Compile: TResVar; override;
   public
+    function Compile: TResVar; override;
     property AssignOp: EOperator read FAssignOp write FAssignOp;
   end;
 

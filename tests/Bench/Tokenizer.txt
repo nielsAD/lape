@@ -1,0 +1,2 @@
+text: 644457, tokens: 318366, deepest: 179
+numbers: 25351 1046314804, names: 41636 346869, operators: 74853, other: 14956

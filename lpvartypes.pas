@@ -187,7 +187,6 @@ type
     function CreateCopy(CopyContent: Boolean = True): TLapeGlobalVar; virtual;
 
     property Ptr: Pointer read FPtr;
-    property OwnsPtr: Boolean read FOwnsPtr;
     property AsString: lpString read getAsString;
     property AsInteger: Int64 read getAsInt;
     // what it holds is known when compiling

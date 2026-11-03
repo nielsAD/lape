@@ -1,0 +1,47 @@
+{$assertions on}
+
+type
+  TIntArray = array of Int32;
+
+// The base types that are the same size on every platform
+begin
+  Assert(SizeOf(UInt8) = 1,          'UInt8');
+  Assert(SizeOf(Int8) = 1,           'Int8');
+  Assert(SizeOf(UInt16) = 2,         'UInt16');
+  Assert(SizeOf(Int16) = 2,          'Int16');
+  Assert(SizeOf(UInt32) = 4,         'UInt32');
+  Assert(SizeOf(Int32) = 4,          'Int32');
+  Assert(SizeOf(UInt64) = 8,         'UInt64');
+  Assert(SizeOf(Int64) = 8,          'Int64');
+  Assert(SizeOf(Currency) = 8,       'Currency');
+  Assert(SizeOf(Single) = 4,         'Single');
+  Assert(SizeOf(Double) = 8,         'Double');
+  Assert(SizeOf(Boolean) = 1,        'Boolean');
+  Assert(SizeOf(ByteBool) = 1,       'ByteBool');
+  Assert(SizeOf(WordBool) = 2,       'WordBool');
+  Assert(SizeOf(LongBool) = 4,       'LongBool');
+  Assert(SizeOf(AnsiChar) = 1,       'AnsiChar');
+  Assert(SizeOf(WideChar) = 2,       'WideChar');
+  Assert(SizeOf(ShortString) = 256,  'ShortString');
+
+  // (the size of a pointer: strings and dynamic arrays are one)
+  {$IFDEF CPU32}
+  Assert(SizeOf(Pointer) = 4,        'Pointer');
+  Assert(SizeOf(NativeInt) = 4,      'NativeInt');
+  Assert(SizeOf(NativeUInt) = 4,     'NativeUInt');
+  Assert(SizeOf(PtrUInt) = 4,        'PtrUInt');
+  Assert(SizeOf(String) = 4,         'String');
+  Assert(SizeOf(AnsiString) = 4,     'AnsiString');
+  Assert(SizeOf(UnicodeString) = 4,  'UnicodeString');
+  Assert(SizeOf(TIntArray) = 4,      'TIntArray');
+  {$ELSE}
+  Assert(SizeOf(Pointer) = 8,        'Pointer');
+  Assert(SizeOf(NativeInt) = 8,      'NativeInt');
+  Assert(SizeOf(NativeUInt) = 8,     'NativeUInt');
+  Assert(SizeOf(PtrUInt) = 8,        'PtrUInt');
+  Assert(SizeOf(String) = 8,         'String');
+  Assert(SizeOf(AnsiString) = 8,     'AnsiString');
+  Assert(SizeOf(UnicodeString) = 8,  'UnicodeString');
+  Assert(SizeOf(TIntArray) = 8,      'TIntArray');
+  {$ENDIF}
+end.

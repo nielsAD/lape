@@ -1,0 +1,525 @@
+type
+  TVecD = record
+    x, y, z: Double;
+  end;
+  TVecS = record
+    x, y, z: Single;
+  end;
+
+const
+  Grid = 64;
+  MaxIter = 200;
+  Points = 40;
+  Steps = 2000;
+  Polys = 300;
+  SqrtUpTo = 2000;
+  PathPoints = 1500;
+  Spheres = 60;
+  Rays = 300;
+  Repeats = 40; // how many times the test is repeated to run for a good sample.
+
+var
+  // The whole numbers that the points of the geometry are made of: hundredths, from -10 to 10. The path first,
+  // three for each point, then three for each centre of a sphere and one for its radius, then six for each ray
+  // (where it starts, and which way it goes).
+  Coords: array of Int32;
+
+// A number that looks random, worked out from i alone: the same i always gives the same number
+function Mix(i: Int64): Int64;
+begin
+  Result := (i * 2654435761 + 12345) mod 4294967296;
+  Result := Result xor (Result shr 13);
+  Result := (Result * 1274126177) mod 4294967296;
+  Result := Result xor (Result shr 16);
+end;
+
+procedure MakeCoords;
+var
+  i: Int32;
+begin
+  SetLength(Coords, 3 * PathPoints + 4 * Spheres + 6 * Rays);
+  for i := 0 to High(Coords) do
+  begin
+    Coords[i] := Mix(i) mod 2001 - 1000;
+  end;
+end;
+
+function MandelDouble: Int32;
+var
+  px, py, i: Int32;
+  x0, y0, x, y, xx, yy: Double;
+begin
+  Result := 0;
+  for py := 0 to Grid - 1 do
+  begin
+    y0 := py * 2.5 / Grid - 1.25;
+    for px := 0 to Grid - 1 do
+    begin
+      x0 := px * 3.0 / Grid - 2.25;
+      x := 0;
+      y := 0;
+      xx := 0;
+      yy := 0;
+      i := 0;
+      while (i < MaxIter) and (xx + yy <= 4.0) do
+      begin
+        y := 2.0 * x * y + y0;
+        x := xx - yy + x0;
+        xx := x * x;
+        yy := y * y;
+        Inc(i);
+      end;
+      Result := Result + i;
+    end;
+  end;
+end;
+
+function MandelSingle: Int32;
+var
+  px, py, i: Int32;
+  x0, y0, x, y, xx, yy, Two, Four, Width, Height, Left, Top, Cells: Single;
+begin
+  Two := 2.0;
+  Four := 4.0;
+  Width := 3.0;
+  Height := 2.5;
+  Left := 2.25;
+  Top := 1.25;
+  Cells := Grid;
+
+  Result := 0;
+  for py := 0 to Grid - 1 do
+  begin
+    y0 := py * Height / Cells - Top;
+    for px := 0 to Grid - 1 do
+    begin
+      x0 := px * Width / Cells - Left;
+      x := 0;
+      y := 0;
+      xx := 0;
+      yy := 0;
+      i := 0;
+      while (i < MaxIter) and (xx + yy <= Four) do
+      begin
+        y := Two * x * y + y0;
+        x := xx - yy + x0;
+        xx := x * x;
+        yy := y * y;
+        Inc(i);
+      end;
+      Result := Result + i;
+    end;
+  end;
+end;
+
+// Points pulled to the middle by a spring each, slowed down a little, moved on by their speed every step. What
+// they are at the end, added up (in thousandths).
+function SpringsDouble: Int64;
+var
+  x, y, vx, vy: array of Double;
+  i, s: Int32;
+  dt, k, Damp, Sum: Double;
+begin
+  SetLength(x, Points);
+  SetLength(y, Points);
+  SetLength(vx, Points);
+  SetLength(vy, Points);
+  for i := 0 to Points - 1 do
+  begin
+    x[i] := (i mod 7) - 3.0;
+    y[i] := (i mod 5) - 2.0;
+    vx[i] := (i mod 3) * 0.5;
+    vy[i] := 0;
+  end;
+
+  dt := 0.01;
+  k := 4.0;
+  Damp := 0.999;
+  for s := 1 to Steps do
+    for i := 0 to Points - 1 do
+    begin
+      vx[i] := (vx[i] - k * x[i] * dt) * Damp;
+      vy[i] := (vy[i] - k * y[i] * dt) * Damp;
+      x[i] := x[i] + vx[i] * dt;
+      y[i] := y[i] + vy[i] * dt;
+    end;
+
+  Sum := 0;
+  for i := 0 to Points - 1 do
+    Sum := Sum + x[i] + y[i];
+  Result := Round(Sum * 1000);
+end;
+
+function SpringsSingle: Int64;
+var
+  x, y, vx, vy: array of Single;
+  i, s: Int32;
+  dt, k, Damp, Half, Sum: Single;
+begin
+  SetLength(x, Points);
+  SetLength(y, Points);
+  SetLength(vx, Points);
+  SetLength(vy, Points);
+  Half := 0.5;
+  for i := 0 to Points - 1 do
+  begin
+    x[i] := (i mod 7) - 3;
+    y[i] := (i mod 5) - 2;
+    vx[i] := (i mod 3) * Half;
+    vy[i] := 0;
+  end;
+
+  dt := 0.01;
+  k := 4.0;
+  Damp := 0.999;
+  for s := 1 to Steps do
+    for i := 0 to Points - 1 do
+    begin
+      vx[i] := (vx[i] - k * x[i] * dt) * Damp;
+      vy[i] := (vy[i] - k * y[i] * dt) * Damp;
+      x[i] := x[i] + vx[i] * dt;
+      y[i] := y[i] + vy[i] * dt;
+    end;
+
+  Sum := 0;
+  for i := 0 to Points - 1 do
+    Sum := Sum + x[i] + y[i];
+  Result := Round(Sum * 1000);
+end;
+
+// x*x*x + a*x*x + b*x + c, which goes from below 0 to above it between -100 and 100: where it is 0, found by
+// halving that until it is narrow enough. How many halvings that took, and the roots added up (in thousandths).
+procedure RootsDouble(var Halvings, Total: Int64);
+var
+  n, Count: Int32;
+  a, b, c, Lo, Hi, Mid, fLo, fMid: Double;
+begin
+  Halvings := 0;
+  Total := 0;
+  for n := 1 to Polys do
+  begin
+    a := (n mod 11) - 5;
+    b := (n mod 13) - 6;
+    c := (n mod 17) - 8.5;
+    Lo := -100;
+    Hi := 100;
+    fLo := ((Lo + a) * Lo + b) * Lo + c;
+    Count := 0;
+    while (Hi - Lo > 0.000001) do
+    begin
+      Mid := (Lo + Hi) / 2;
+      fMid := ((Mid + a) * Mid + b) * Mid + c;
+      if ((fMid < 0) = (fLo < 0)) then
+      begin
+        Lo := Mid;
+        fLo := fMid;
+      end
+      else
+        Hi := Mid;
+      Inc(Count);
+    end;
+    Halvings := Halvings + Count;
+    Total := Total + Round(Lo * 1000);
+  end;
+end;
+
+procedure RootsSingle(var Halvings, Total: Int64);
+var
+  n, Count: Int32;
+  a, b, c, Lo, Hi, Mid, fLo, fMid, Two, Zero, Narrow: Single;
+begin
+  Two := 2;
+  Zero := 0;
+  Narrow := 0.001;
+  Halvings := 0;
+  Total := 0;
+  for n := 1 to Polys do
+  begin
+    a := (n mod 11) - 5;
+    b := (n mod 13) - 6;
+    c := (n mod 17) - 8;
+    Lo := -100;
+    Hi := 100;
+    fLo := ((Lo + a) * Lo + b) * Lo + c;
+    Count := 0;
+    while (Hi - Lo > Narrow) do
+    begin
+      Mid := (Lo + Hi) / Two;
+      fMid := ((Mid + a) * Mid + b) * Mid + c;
+      if ((fMid < Zero) = (fLo < Zero)) then
+      begin
+        Lo := Mid;
+        fLo := fMid;
+      end
+      else
+        Hi := Mid;
+      Inc(Count);
+    end;
+    Halvings := Halvings + Count;
+    Total := Total + Round(Lo * 1000);
+  end;
+end;
+
+// The square root, worked out by hand (Newton's way): from a guess that is too big, a better one each time, until
+// it does not get smaller any more
+function SqrtDouble(x: Double): Double;
+var
+  Last: Double;
+begin
+  Result := 0;
+  if (x <= 0) then
+    Exit;
+
+  Result := x;
+  if (Result < 1) then
+    Result := 1;
+  repeat
+    Last := Result;
+    Result := (Result + x / Result) / 2;
+  until (Result >= Last);
+  Result := Last;
+end;
+
+function DistanceDouble(a, b: TVecD): Double;
+begin
+  Result := SqrtDouble((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y) + (b.z - a.z) * (b.z - a.z));
+end;
+
+// Whether the ray from O that goes the way D (of length 1) hits the sphere around C of radius R, in front of O:
+// Dist is how far away that is then
+function HitDouble(O, D, C: TVecD; R: Double; var Dist: Double): Boolean;
+var
+  ox, oy, oz, b, Disc, Root: Double;
+begin
+  Result := False;
+  ox := O.x - C.x;
+  oy := O.y - C.y;
+  oz := O.z - C.z;
+  b := ox * D.x + oy * D.y + oz * D.z;
+  Disc := b * b - (ox * ox + oy * oy + oz * oz - R * R);
+  if (Disc < 0) then
+    Exit;
+
+  Root := SqrtDouble(Disc);
+  Dist := -b - Root;
+  if (Dist < 0) then
+    Dist := -b + Root;
+  Result := (Dist >= 0);
+end;
+
+// The point that Coords has at i, i + 1 and i + 2
+function VecD(i: Int32): TVecD;
+begin
+  Result.x := Coords[i] / 100;
+  Result.y := Coords[i + 1] / 100;
+  Result.z := Coords[i + 2] / 100;
+end;
+
+// The square roots of 1 to SqrtUpTo (and the same of the built-in one), how long the path is, and how many of the
+// rays hit a sphere and how far away that is: added up, in thousandths
+procedure GeometryDouble(var Roots, BuiltIn, Path, Hits, HitDist: Int64);
+var
+  i, j, At: Int32;
+  Total, Dist, Len: Double;
+  Centers: array of TVecD;
+  Radii: array of Double;
+  O, D, Zero: TVecD;
+begin
+  Roots := 0;
+  BuiltIn := 0;
+  for i := 1 to SqrtUpTo do
+  begin
+    Roots := Roots + Round(SqrtDouble(i) * 1000);
+    BuiltIn := BuiltIn + Round(Sqrt(i) * 1000);
+  end;
+
+  Total := 0;
+  for i := 0 to PathPoints - 2 do
+    Total := Total + DistanceDouble(VecD(3 * i), VecD(3 * (i + 1)));
+  Path := Round(Total * 1000);
+
+  At := 3 * PathPoints;
+  SetLength(Centers, Spheres);
+  SetLength(Radii, Spheres);
+  for j := 0 to Spheres - 1 do
+  begin
+    Centers[j] := VecD(At + 4 * j);
+    Radii[j] := (Coords[At + 4 * j + 3] + 1000) / 1000 + 0.5;
+  end;
+
+  // (what the length of a ray is measured from: it is 0 already, which FPC would not have it, to check this with)
+  Zero.x := 0;
+  Zero.y := 0;
+  Zero.z := 0;
+
+  At := 3 * PathPoints + 4 * Spheres;
+  Hits := 0;
+  Total := 0;
+  for i := 0 to Rays - 1 do
+  begin
+    O := VecD(At + 6 * i);
+    D := VecD(At + 6 * i + 3);
+    Len := DistanceDouble(Zero, D);
+    if (Len = 0) then
+      Continue;
+    D.x := D.x / Len;
+    D.y := D.y / Len;
+    D.z := D.z / Len;
+
+    for j := 0 to Spheres - 1 do
+      if HitDouble(O, D, Centers[j], Radii[j], Dist) then
+      begin
+        Inc(Hits);
+        Total := Total + Dist;
+      end;
+  end;
+  HitDist := Round(Total * 1000);
+end;
+
+function SqrtSingle(x: Single): Single;
+var
+  Last, Zero, One, Two: Single;
+begin
+  Zero := 0;
+  One := 1;
+  Two := 2;
+  Result := 0;
+  if (x <= Zero) then
+    Exit;
+
+  Result := x;
+  if (Result < One) then
+    Result := One;
+  repeat
+    Last := Result;
+    Result := (Result + x / Result) / Two;
+  until (Result >= Last);
+  Result := Last;
+end;
+
+function DistanceSingle(a, b: TVecS): Single;
+begin
+  Result := SqrtSingle((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y) + (b.z - a.z) * (b.z - a.z));
+end;
+
+function HitSingle(O, D, C: TVecS; R: Single; var Dist: Single): Boolean;
+var
+  ox, oy, oz, b, Disc, Root, Zero: Single;
+begin
+  Zero := 0;
+  Result := False;
+  ox := O.x - C.x;
+  oy := O.y - C.y;
+  oz := O.z - C.z;
+  b := ox * D.x + oy * D.y + oz * D.z;
+  Disc := b * b - (ox * ox + oy * oy + oz * oz - R * R);
+  if (Disc < Zero) then
+    Exit;
+
+  Root := SqrtSingle(Disc);
+  Dist := -b - Root;
+  if (Dist < Zero) then
+    Dist := -b + Root;
+  Result := (Dist >= Zero);
+end;
+
+function VecS(i: Int32): TVecS;
+var
+  Hundred: Single;
+begin
+  Hundred := 100;
+  Result.x := Coords[i];
+  Result.y := Coords[i + 1];
+  Result.z := Coords[i + 2];
+  Result.x := Result.x / Hundred;
+  Result.y := Result.y / Hundred;
+  Result.z := Result.z / Hundred;
+end;
+
+procedure GeometrySingle(var Roots, Path, Hits, HitDist: Int64);
+var
+  i, j, At: Int32;
+  Total, Dist, Len, r, Half, Thousand: Single;
+  Centers: array of TVecS;
+  Radii: array of Single;
+  O, D, Zero: TVecS;
+begin
+  Half := 0.5;
+  Thousand := 1000;
+
+  Roots := 0;
+  for i := 1 to SqrtUpTo do
+  begin
+    r := i;
+    Roots := Roots + Round(SqrtSingle(r) * Thousand);
+  end;
+
+  Total := 0;
+  for i := 0 to PathPoints - 2 do
+    Total := Total + DistanceSingle(VecS(3 * i), VecS(3 * (i + 1)));
+  Path := Round(Total * Thousand);
+
+  At := 3 * PathPoints;
+  SetLength(Centers, Spheres);
+  SetLength(Radii, Spheres);
+  for j := 0 to Spheres - 1 do
+  begin
+    Centers[j] := VecS(At + 4 * j);
+    r := Coords[At + 4 * j + 3] + 1000;
+    Radii[j] := r / Thousand + Half;
+  end;
+
+  Zero.x := 0;
+  Zero.y := 0;
+  Zero.z := 0;
+
+  At := 3 * PathPoints + 4 * Spheres;
+  Hits := 0;
+  Total := 0;
+  for i := 0 to Rays - 1 do
+  begin
+    O := VecS(At + 6 * i);
+    D := VecS(At + 6 * i + 3);
+    Len := DistanceSingle(Zero, D);
+    if (Len = 0) then
+      Continue;
+    D.x := D.x / Len;
+    D.y := D.y / Len;
+    D.z := D.z / Len;
+
+    for j := 0 to Spheres - 1 do
+      if HitSingle(O, D, Centers[j], Radii[j], Dist) then
+      begin
+        Inc(Hits);
+        Total := Total + Dist;
+      end;
+  end;
+  HitDist := Round(Total * Thousand);
+end;
+
+var
+  Rep: Int32;
+  md, ms: Int32;
+  sd, ss, hd, td, hs, ts: Int64;
+  rd, bd, pd, nd, dd, rs, ps, ns, ds: Int64;
+begin
+  MakeCoords();
+  for Rep := 1 to Repeats do
+  begin
+    md := MandelDouble();
+    ms := MandelSingle();
+    sd := SpringsDouble();
+    ss := SpringsSingle();
+    RootsDouble(hd, td);
+    RootsSingle(hs, ts);
+    GeometryDouble(rd, bd, pd, nd, dd);
+    GeometrySingle(rs, ps, ns, ds);
+  end;
+
+  WriteLn('mandelbrot: ', md, ' double, ', ms, ' single');
+  WriteLn('springs: ', sd, ' double, ', ss, ' single');
+  WriteLn('roots: ', hd, ' halvings ', td, ' double, ', hs, ' halvings ', ts, ' single');
+  WriteLn('sqrt: ', rd, ' double (built in ', bd, '), ', rs, ' single');
+  WriteLn('path: ', pd, ' double, ', ps, ' single');
+  WriteLn('rays: ', nd, ' hits ', dd, ' double, ', ns, ' hits ', ds, ' single');
+end.

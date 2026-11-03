@@ -1,0 +1,1 @@
+groups: 776, biggest: 94, sum: 1152476

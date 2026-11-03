@@ -1,0 +1,105 @@
+type
+  TPoint = record
+    x, y: Int32;
+  end;
+
+  TBig = record
+    a, b, c, d: Int64;
+    Name: String;
+  end;
+
+const
+  Rounds = 200000;
+  Repeats = 10; // how many times the test is repeated to run for a good sample.
+
+var
+  GInt: Int32;
+  GInt64: Int64;
+  GDouble: Double;
+  GStr: String;
+  GPoint: TPoint;
+  GBig: TBig;
+  GArr: array of Int32;
+
+function Assign(i: Int32): Int64;
+var
+  a, b: Int32;
+  c, n: Int64;
+  d, e: Double;
+  s, t: String;
+  p, q: TPoint;
+  Big, Big2: TBig;
+  Arr, Arr2: array of Int32;
+  St: array[0..3] of Int32;
+  Ch: Char;
+  Bo: Boolean;
+  v: Variant;
+begin
+  a := i;
+  b := a;
+  c := b;
+  c := c * 3;
+  d := a;
+  e := d / 2;
+
+  s := 'x';
+  t := s;
+  t := t + s;
+
+  p.x := a;
+  p.y := b;
+  q := p;
+  q.x := q.x + 1;
+
+  Big.a := c;
+  Big.Name := t;
+  Big2 := Big;
+  Big2.b := Big2.a + 1;
+
+  // (an array is shared: what Arr2 writes Arr has too)
+  SetLength(Arr, 2);
+  Arr[0] := a;
+  Arr2 := Arr;
+  Arr2[1] := 5;
+
+  St[0] := a;
+  St[1] := St[0] + 1;
+  St[2] := St[1];
+  St[3] := St[2] * 2;
+
+  Ch := Chr(65 + a mod 26);
+  Bo := (a and 1) = 1;
+  v := a;
+  v := v + 1;
+  n := v;
+
+  a += 3;
+  b -= 2;
+  c *= 2;
+  d /= 2;
+
+  GInt := a;
+  GInt64 := c;
+  GDouble := e;
+  GStr := t;
+  GPoint := q;
+  GBig := Big2;
+  GArr := Arr;
+
+  Result := a + b + c + Round(d) + Round(e) + Length(s) + Length(t) + p.x + q.x + Big2.b + Length(Big2.Name) +
+            Arr[1] + Arr2[0] + St[3] + Ord(Ch) + Ord(Bo) + n;
+end;
+
+var
+  Rep, i: Int32;
+  Sum: Int64;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    Sum := 0;
+    for i := 1 to Rounds do
+      Sum := Sum + Assign(i);
+  end;
+
+  WriteLn('sum: ', Sum, ', globals: ', GInt, ' ', GInt64, ' ', Round(GDouble), ' ', GStr, ' ', GPoint.x, ' ', GBig.b, ' ', GArr[1]);
+end.

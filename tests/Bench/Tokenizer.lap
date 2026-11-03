@@ -1,0 +1,137 @@
+type
+  TKind = (kNumber, kName, kOperator, kOpen, kClose, kSpace, kOther);
+  TKinds = set of TKind;
+
+  TToken = record
+    Kind: TKind;
+    Start, Len: Int32;
+  end;
+  TTokenArray = array of TToken;
+
+const
+  Pieces = 240000;
+  Repeats = 8; // how many times the test is repeated to run for a good sample.
+
+// A number that looks random, worked out from i alone: the same i always gives the same number
+function Mix(i: Int64): Int64;
+begin
+  Result := (i * 2654435761 + 12345) mod 4294967296;
+  Result := Result xor (Result shr 13);
+  Result := (Result * 1274126177) mod 4294967296;
+  Result := Result xor (Result shr 16);
+end;
+
+function KindOf(c: Char): TKind;
+begin
+  case c of
+    '0'..'9': Result := kNumber;
+    'a'..'z', 'A'..'Z', '_': Result := kName;
+    '+', '-', '*', '/', '=', '<', '>': Result := kOperator;
+    '(': Result := kOpen;
+    ')': Result := kClose;
+    ' ': Result := kSpace;
+    else Result := kOther;
+  end;
+end;
+
+function MakeText(Count: Int32): String;
+var
+  Words: array of String;
+  i: Int32;
+begin
+  Words := ['alpha', 'beta_2', '12', '(', ')', ' + ', ' ', '4096', 'x', ' * ', ' < ', 'Gamma', '7', ' = ', '#', ' - '];
+
+  Result := '';
+  for i := 1 to Count do
+    Result := Result + Words[Mix(i) mod Length(Words)];
+end;
+
+function Tokenize(Text: String): TTokenArray;
+var
+  i, Start, Count: Int32;
+  Kind, Next: TKind;
+begin
+  Count := 0;
+  SetLength(Result, 64);
+
+  i := 1;
+  while (i <= Length(Text)) do
+  begin
+    Start := i;
+    Kind := KindOf(Text[i]);
+    Inc(i);
+
+    // (a name goes on with letters and digits, a number with digits: anything else is one character)
+    while (i <= Length(Text)) do
+    begin
+      Next := KindOf(Text[i]);
+      if not (((Kind = kName) and (Next in [kName, kNumber])) or ((Kind = kNumber) and (Next = kNumber)) or
+              ((Kind = kSpace) and (Next = kSpace)))
+      then
+        Break;
+      Inc(i);
+    end;
+
+    if (Count = Length(Result)) then
+      SetLength(Result, Count * 2);
+    Result[Count].Kind := Kind;
+    Result[Count].Start := Start;
+    Result[Count].Len := i - Start;
+    Inc(Count);
+  end;
+
+  SetLength(Result, Count);
+end;
+
+var
+  Text: String;
+  Tokens: TTokenArray;
+  Counts: array of Int32;
+  Rep, i, j, Depth, Deepest, Number: Int32;
+  Numbers, Names: Int64;
+  Values: TKinds;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    Text := MakeText(Pieces);
+    Tokens := Tokenize(Text);
+
+    Counts := nil;
+    SetLength(Counts, Ord(High(TKind)) + 1);
+    Values := [kNumber, kName];
+    Depth := 0;
+    Deepest := 0;
+    Numbers := 0;
+    Names := 0;
+
+    for i := 0 to High(Tokens) do
+    begin
+      Inc(Counts[Ord(Tokens[i].Kind)]);
+
+      case Tokens[i].Kind of
+        kOpen:
+          begin
+            Inc(Depth);
+            if (Depth > Deepest) then
+              Deepest := Depth;
+          end;
+        kClose:
+          if (Depth > 0) then
+            Dec(Depth);
+        kNumber:
+          begin
+            Number := 0;
+            for j := Tokens[i].Start to Tokens[i].Start + Tokens[i].Len - 1 do
+              Number := (Number * 10 + Ord(Text[j]) - Ord('0')) mod 1000003;
+            Numbers := Numbers + Number;
+          end;
+      end;
+
+      if (Tokens[i].Kind in Values) and (Tokens[i].Len > 1) then
+        Names := Names + Tokens[i].Len;
+    end;
+  end;
+
+  WriteLn('text: ', Length(Text), ', tokens: ', Length(Tokens), ', deepest: ', Deepest);
+  WriteLn('numbers: ', Counts[Ord(kNumber)], ' ', Numbers, ', names: ', Counts[Ord(kName)], ' ', Names, ', operators: ', Counts[Ord(kOperator)], ', other: ', Counts[Ord(kOther)]);
+end.

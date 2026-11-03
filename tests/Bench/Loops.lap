@@ -1,0 +1,125 @@
+type
+  TColor = (Red, Green, Blue, Yellow);
+
+const
+  N = 4000;
+  Rounds = 40;
+  Repeats = 75; // how many times the test is repeated to run for a good sample.
+  Big = 1 shl 20; // (4 MB of Int32: more than a cache holds)
+  Hops = 4000;
+
+// A number that looks random, worked out from i alone: the same i always gives the same number
+function Mix(i: Int64): Int64;
+begin
+  Result := (i * 2654435761 + 12345) mod 4294967296;
+  Result := Result xor (Result shr 13);
+  Result := (Result * 1274126177) mod 4294967296;
+  Result := Result xor (Result shr 16);
+end;
+
+// A loop in this frame, then one in a frame deeper, its bound worked out from this one's
+function Nest(Depth, Count: Int32): Int64;
+var
+  i: Int32;
+begin
+  Result := 0;
+  for i := 1 to Count do
+    Result := Result + (i xor Depth);
+  if (Depth > 0) then
+    Result := Result + Nest(Depth - 1, (Count * 7 + Depth) mod 61 + 1);
+end;
+
+var
+  Chain: array of Int32; // (one cycle through all of it, in an order that looks random)
+  k, t: Int32;
+  Arr: array of Int32;
+  Text: String;
+  Color: TColor;
+  Rep, r, i, j, v, Len: Int32;
+  Ch: Char;
+  Sum: Int64;
+begin
+  // (Sattolo's shuffle: every place leads to another, round all of them once)
+  SetLength(Chain, Big);
+  for i := 0 to Big - 1 do
+    Chain[i] := i;
+  for i := Big - 1 downto 1 do
+  begin
+    j := Mix(i) mod i;
+    t := Chain[i];
+    Chain[i] := Chain[j];
+    Chain[j] := t;
+  end;
+
+  for Rep := 1 to Repeats do
+  begin
+    SetLength(Arr, N);
+    for i := 0 to N - 1 do
+      Arr[i] := (i * 13) mod 97;
+    Text := '';
+    for i := 1 to 500 do
+      Text := Text + Chr(Ord('a') + i mod 26);
+
+    Sum := 0;
+    for r := 1 to Rounds do
+    begin
+      for i := 1 to N do
+        Sum := Sum + i;
+      for i := N downto 1 do
+        Sum := Sum - (i and 3);
+      for i := 0 to N with 3 do
+        Sum := Sum + i;
+
+      for v in Arr do
+        Sum := Sum + v;
+      for Ch in Text do
+        Sum := Sum + Ord(Ch);
+      for Color in TColor do
+        Sum := Sum + Ord(Color) * 10;
+
+      i := 0;
+      while (i < N) do
+      begin
+        Inc(i, 7);
+        Sum := Sum + i;
+      end;
+
+      i := N;
+      repeat
+        Dec(i, 5);
+        Sum := Sum + (i and 7);
+      until (i <= 0);
+
+      for i := 0 to 59 do
+        for j := 0 to 59 do
+        begin
+          if ((i + j) mod 37 = 36) then
+            Break;
+          if ((j and 3) = 0) then
+            Continue;
+          Inc(Sum);
+        end;
+
+      // (the bound is read again each time round)
+      Len := 10;
+      i := 0;
+      while (i < Len) do
+      begin
+        if (i mod 3 = 0) and (Len < 100) then
+          Inc(Len, 2);
+        Sum := Sum + Len;
+        Inc(i);
+      end;
+
+      // (each hop lands somewhere else in an array too big for a cache)
+      k := (r * 7919) mod Big;
+      for i := 1 to Hops do
+        k := Chain[k];
+      Sum := Sum + k;
+
+      Sum := Sum + Nest(12, r mod 50 + 10);
+    end;
+  end;
+
+  WriteLn('sum: ', Sum);
+end.

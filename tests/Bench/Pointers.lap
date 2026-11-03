@@ -1,0 +1,88 @@
+type
+  PInt32 = ^Int32;
+  TPair = record
+    a, b: Int32;
+  end;
+
+const
+  Count = 20000;
+  Rounds = 10;
+  Repeats = 200; // how many times the test is repeated to run for a good sample.
+
+var
+  Ints: array of Int32;
+  Pairs: array of TPair;
+  p, q, Last: ^Int32;
+  pp: ^TPair;
+  Raw: Pointer;
+  Rep, r, i: Int32;
+  Sum, Bytes: Int64;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    SetLength(Ints, Count);
+    SetLength(Pairs, Count);
+    for i := 0 to Count - 1 do
+    begin
+      Ints[i] := (i * 7) mod 101;
+      Pairs[i].a := i mod 13;
+      Pairs[i].b := i mod 17;
+    end;
+
+    Sum := 0;
+    Bytes := 0;
+    for r := 1 to Rounds do
+    begin
+      // (up to the last one, a step of one element at a time)
+      p := @Ints[0];
+      Last := @Ints[Count - 1];
+      while (p <= Last) do
+      begin
+        Sum := Sum + p^;
+        Inc(p);
+      end;
+
+      // (every other element by index)
+      p := @Ints[0];
+      i := 0;
+      while (i < Count) do
+      begin
+        Sum := Sum + p[i]^;
+        Inc(i, 2);
+      end;
+
+      // (a number of bytes on, and how far that is)
+      q := p + 400;
+      Sum := Sum + q^;
+      Bytes := Bytes + (PtrUInt(q) - PtrUInt(p));
+
+      // (from the end back)
+      p := Last;
+      for i := 1 to 1000 do
+      begin
+        Sum := Sum + p^;
+        Dec(p);
+      end;
+
+      // (written through it)
+      p := @Ints[0];
+      for i := 0 to 99 do
+      begin
+        p^ := p^ + 1;
+        Inc(p);
+      end;
+
+      pp := @Pairs[0];
+      for i := 0 to Count - 1 do
+      begin
+        Sum := Sum + pp^.a * 2 + pp^.b;
+        Inc(pp);
+      end;
+
+      Raw := @Ints[5];
+      Sum := Sum + PInt32(Raw)^;
+    end;
+  end;
+
+  WriteLn('sum: ', Sum, ', bytes: ', Bytes, ', first: ', Ints[0], ', 99th: ', Ints[99], ', 100th: ', Ints[100]);
+end.

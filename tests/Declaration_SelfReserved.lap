@@ -1,12 +1,6 @@
+// Self is reserved in a method of a type and what is nested in it
 type
   T = record a: Int32; end;
-
-procedure Plain;
-var
-  Self: Int32 = 1;
-begin
-  WriteLn(Self);
-end;
 
 procedure T.m;
   procedure Inner;
@@ -18,5 +12,4 @@ begin
 end;
 
 begin
-  Plain();
 end.

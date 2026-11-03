@@ -177,6 +177,7 @@ begin
   StartPos := Tokenizer.DocPos;
   Token := Tokenizer.Tok;
   FirstIsChar := (Token = tk_typ_Char);
+  Str := '';
   FirstCode := 0;
   Count := 0;
 

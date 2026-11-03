@@ -240,8 +240,8 @@ type
     // (Casting: the arguments that open arrays can be cast for, nil when none are)
     function PickFor(const Params: TLapeTypeArray; Wanted: TLapeType; Casting: TLapeExpressionList): TLapeGlobalVar; virtual;
     function PickForArgs(Args: TLapeExpressionList): TLapeGlobalVar; virtual;
-    function Compile: TResVar; override;
   public
+    function Compile: TResVar; override;
     constructor Create(AName: lpString; AScope: TLapeStackInfo; ACompiler: TLapeCompilerBase); reintroduce; overload; virtual;
     constructor Create(ALeft: TLapeTree_ExprBase; AName: lpString; ACompiler: TLapeCompilerBase); reintroduce; overload; virtual;
     constructor Create(ALeft: TLapeTree_ExprBase; AName: lpString; ASource: TLapeTree_Base); overload; virtual;
@@ -298,7 +298,6 @@ type
   TLapeTree_VarType = class(TLapeTree_ExprBase)
   protected
     FVarType: TLapeType;
-    function Compile: TResVar; override;
   public
     constructor Create(AVarType: TLapeType; ACompiler: TLapeCompilerBase); reintroduce; overload; virtual;
     constructor Create(AVarType: TLapeType; ASource: TLapeTree_Base); overload; virtual;
@@ -306,6 +305,7 @@ type
     function isConstant: Boolean; override;
     function resType: TLapeType; override;
     function Evaluate: TLapeGlobalVar; override;
+    function Compile: TResVar; override;
 
     property VarType: TLapeType read FVarType;
   end;
@@ -2657,10 +2657,12 @@ var
 begin
   Method := Resolve();
   if (Method = nil) then
-    if (Methods() <> nil) then
-      LapeExceptionFmt(lpeNoOverloadedMethod, ['*unknown*'], DocPos)
+    if (Methods() = nil) then
+      LapeExceptionFmt(lpeUnknownDeclaration, [FName], DocPos)
+    else if (FWanted <> nil) then
+      LapeExceptionFmt(lpeIncompatibleAssignment, [FName, FWanted.AsString], DocPos)
     else
-      LapeExceptionFmt(lpeUnknownDeclaration, [FName], DocPos);
+      LapeExceptionFmt(lpeNoOverloadedMethod, ['*unknown*'], DocPos);
 
   FDest := NullResVar;
   Result := _ResVar.New(Method);

@@ -1,0 +1,35 @@
+const
+  Rounds = 150000;
+  Repeats = 60; // how many times the test is repeated to run for a good sample.
+
+var
+  Rep, i, a, b: Int32;
+  c, x, Sum, Trues: Int64;
+  d: Double;
+  Ok: Boolean;
+begin
+  for Rep := 1 to Repeats do
+  begin
+    Sum := 0;
+    Trues := 0;
+    for i := 1 to Rounds do
+    begin
+      a := i and 1023;
+      b := ((i shr 3) and 255) + 1;
+      c := Int64(i) * 7;
+
+      x := ((((a * 3 + b) * (a - b)) div (b + 1)) mod 1000) + ((c shl 2) xor (c shr 1)) - ((a or b) and (a xor b));
+      x := x + (-(a - b * 2) * ((a + 1) mod (b + 2))) - ((c mod 9) * (c div 13 mod 7));
+
+      d := ((a + 0.5) * (b - 0.25)) / (b + 1) - Sqrt(a + 1) * 2 + (c mod 100) / 8;
+
+      Ok := ((a > b) and ((c mod 3) = 0)) or ((not (a = b)) and ((b mod 5) <> 0) and (x < 1000000));
+      if Ok then
+        Inc(Trues);
+
+      Sum := Sum + x + Round(d * 100);
+    end;
+  end;
+
+  WriteLn('sum: ', Sum, ', true: ', Trues);
+end.

@@ -13,8 +13,9 @@ type
   private
     FFolder: string;
     FDebug: Boolean;
+    FBench: Boolean;
   public
-    constructor Create(AFolder: string = '..'; ADebug: Boolean = False); reintroduce;
+    constructor Create(AFolder: string = '..'; ADebug: Boolean = False; ABench: Boolean = False); reintroduce;
 
     class function GenerateHostMethod(AName: lpString; AObjectType: TLapeType; AParams: TLapeTypeArray; AResult: TLapeType): TLapeGlobalVar;
     class procedure TestFile(FileName: string; out Output: lpString; ExpectFile: string = '');
@@ -22,6 +23,7 @@ type
 
     property Folder: string read FFolder;
     property Debug: Boolean read FDebug;
+    property Bench: Boolean read FBench; // (only the scripts in the Bench folder are run)
   end;
 
 implementation
@@ -30,11 +32,12 @@ uses
   {$IFDEF FPC}LCLIntf,{$ELSE}{$IFDEF MSWINDOWS}Windows,{$ENDIF}{$ENDIF} strutils,
   lpcompiler, lptokenizer, lpmessages, lpinterpreter;
 
-constructor TLapeTester.Create(AFolder: string = '..'; ADebug: Boolean = False);
+constructor TLapeTester.Create(AFolder: string = '..'; ADebug: Boolean = False; ABench: Boolean = False);
 begin
   inherited Create();
 
   FDebug := ADebug;
+  FBench := ABench;
   FFolder := IncludeTrailingPathDelimiter(ExpandFileName(AFolder));
   if (not DirectoryExists(FFolder)) then
     LapeException(lpString('Cannot find folder ' + FFolder));
@@ -240,20 +243,46 @@ var
   end;
   {$ENDIF}
 
+  // Whether the scripts in Folder are run: the benchmarks (the Bench folder) with --bench, the others without
+  function Runs(const Folder: string): Boolean;
+  begin
+    Result := SameText(ExtractFileName(ExcludeTrailingPathDelimiter(Folder)), 'Bench') = FBench;
+  end;
+
+  // (the names in a column as wide as the longest of the folder's)
+  function NameWidth(Folder: string): Integer;
+  var
+    Res: TSearchRec;
+  begin
+    Result := 0;
+    if (FindFirst(Folder + '*.lap', faAnyFile - faDirectory, Res) = 0) then
+    try
+      repeat
+        if (Length(Res.Name) > Result) then
+          Result := Length(Res.Name);
+      until (FindNext(Res) <> 0);
+    finally
+      SysUtils.FindClose(Res);
+    end;
+  end;
+
   function TestFolder(Folder: string): Integer;
   var
     Res: TSearchRec;
     Passed: Boolean;
     Left: PtrInt;
+    Width: Integer;
   begin
     Result := 0;
+    Width := NameWidth(Folder);
 
-    if (FindFirst(Folder + '*.lap', faAnyFile - faDirectory, Res) = 0) then
+    if Runs(Folder) and (FindFirst(Folder + '*.lap', faAnyFile - faDirectory, Res) = 0) then
     try
-      WriteLn('Entering ', ExtractFileName(ExcludeTrailingPathDelimiter(Folder)), '..');
-
       repeat
-        Write(Format('Testing %35s :: ', [ExtractFileName(Res.Name)]));
+        if (Result = 0) then
+          WriteLn('Entering ', ExtractFileName(ExcludeTrailingPathDelimiter(Folder)), '..');
+
+        Write(Format('%-*s :: ', [Width, ExtractFileName(Res.Name)]));
         Inc(Result);
 
         // (something can be made the first time it is needed and kept from then on, by this program: what seems
@@ -284,8 +313,8 @@ var
     if (FindFirst(Folder + '*', faAnyFile, Res) = 0) then
     try
       repeat
-        if ((Res.Attr and faDirectory) <> 0) and (Res.Name <> '.') and (Res.Name <> '..') and (Res.Name <> 'Bench') then
-          Result := TestFolder(Folder + Res.Name + PathDelim);
+        if ((Res.Attr and faDirectory) <> 0) and (Res.Name <> '.') and (Res.Name <> '..') then
+          Inc(Result, TestFolder(Folder + Res.Name + PathDelim));
       until (FindNext(Res) <> 0);
     finally
       SysUtils.FindClose(Res);
