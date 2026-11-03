@@ -72,6 +72,9 @@ jobs:
           
           cd tests/RunTests/ && ./LapeTest
 
+      - name: Bench Lape
+        run: cd tests/RunTests/ && ./LapeTest --bench
+
       - name: Test Lape FFI
         if: ${{ matrix.config.ffi != '' }}
         run: |
